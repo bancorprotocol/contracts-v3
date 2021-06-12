@@ -11,6 +11,8 @@ import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 import '@typechain/hardhat';
 
+import { HardhatUserConfig } from 'hardhat/config';
+
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
@@ -24,8 +26,6 @@ const loadENVKey = <T>(envKeyName: string) => {
 };
 
 const configNetworks = configFile.networks || {};
-
-import { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
     networks: {
