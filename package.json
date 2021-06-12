@@ -1,0 +1,19 @@
+{
+    "name": "root",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "install": "lerna bootstrap && lerna link",
+        "build": "lerna run build --stream",
+        "test": "lerna run test --stream"
+    },
+    "dependencies": {
+        "lerna": "^4.0.0"
+    },
+    "devDependencies": {
+        "prettier": "^2.3.1",
+        "prettier-package-json": "^2.6.0"
+    }
+}
