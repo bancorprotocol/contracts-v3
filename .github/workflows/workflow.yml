@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: packages/v3
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '15.5.0'
+
+      - name: Install Requirements
+        run: sudo apt-get install libusb-1.0-0-dev libudev-dev
+
+      - name: Install NPM Dependencies
+        run: yarn install
+
+      - name: Test
+        run: yarn test
