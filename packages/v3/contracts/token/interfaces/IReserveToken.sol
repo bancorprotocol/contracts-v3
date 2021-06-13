@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 /**
  * @dev This contract is used to represent reserve tokens, which are tokens that can either be regular ERC20 tokens or
