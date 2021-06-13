@@ -22,7 +22,7 @@ jobs:
           node-version: '15.5.0'
 
       - name: Install Requirements
-        run: sudo apt-get install libusb-1.0
+        run: sudo apt-get install libusb-1.0-0-dev
 
       - name: Install NPM Dependencies
         run: yarn install
