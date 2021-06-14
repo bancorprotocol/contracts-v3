@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 import "./interfaces/ITokenHolder.sol";
 
@@ -32,7 +32,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         IReserveToken reserveToken,
         address payable to,
         uint256 amount
-    ) public virtual override ownerOnly validAddress(to) {
+    ) public virtual override onlyOwner validAddress(to) {
         reserveToken.safeTransfer(to, amount);
     }
 
@@ -47,7 +47,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         IReserveToken[] calldata reserveTokens,
         address payable to,
         uint256[] calldata amounts
-    ) public virtual override ownerOnly validAddress(to) {
+    ) public virtual override onlyOwner validAddress(to) {
         uint256 length = reserveTokens.length;
         require(length == amounts.length, "ERR_INVALID_LENGTH");
 
