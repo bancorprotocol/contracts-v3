@@ -23,14 +23,14 @@ contract Owned is IOwned {
     }
 
     // allows execution by the owner only
-    modifier ownerOnly {
-        _ownerOnly();
+    modifier onlyOwner {
+        _onlyOwner();
 
         _;
     }
 
     // error message binary size optimization
-    function _ownerOnly() private view {
+    function _onlyOwner() private view {
         require(msg.sender == _owner, "ERR_ACCESS_DENIED");
     }
 
@@ -43,10 +43,10 @@ contract Owned is IOwned {
      *
      * note the new owner still needs to accept the transfer
      */
-    function transferOwnership(address newOwnerCandidate) public override ownerOnly {
-        require(newOwnerCandidate != _owner, "ERR_SAME_OWNER");
+    function transferOwnership(address ownershipRecipient) public override onlyOwner {
+        require(ownershipRecipient != _owner, "ERR_SAME_OWNER");
 
-        _newOwner = newOwnerCandidate;
+        _newOwner = ownershipRecipient;
     }
 
     /**

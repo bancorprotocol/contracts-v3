@@ -7,7 +7,7 @@ pragma solidity 0.7.6;
 interface IOwned {
     function owner() external view returns (address);
 
-    function transferOwnership(address newOwner) external;
+    function transferOwnership(address ownershipRecipient) external;
 
     function acceptOwnership() external;
 }
