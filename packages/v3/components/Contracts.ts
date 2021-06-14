@@ -2,22 +2,7 @@ import { ethers } from 'hardhat';
 import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } from '@ethersproject/contracts';
 import { Signer } from '@ethersproject/abstract-signer';
 
-import {
-    ERC20,
-    ERC20__factory,
-    Owned,
-    Owned__factory,
-    TestMathEx,
-    TestMathEx__factory,
-    TestReserveToken,
-    TestReserveToken__factory,
-    TestSafeERC20Ex,
-    TestSafeERC20Ex__factory,
-    TestStandardToken,
-    TestStandardToken__factory,
-    TokenHolder,
-    TokenHolder__factory
-} from 'typechain';
+import { ERC20, Owned, TestMathEx, TestReserveToken, TestSafeERC20Ex, TestStandardToken, TokenHolder } from 'typechain';
 
 // Replace type of the last param of a function
 type LastIndex<T extends readonly any[]> = ((...t: T) => void) extends (x: any, ...r: infer R) => void
@@ -31,18 +16,18 @@ type ReplaceLast<F, TReplace> = F extends (...args: infer T) => infer R
     : never;
 
 export type Overrides = OldOverrides & { from?: Signer };
-export type Contract = OldContract & { __contractName__: string };
 
-const deployOrAttach = <C extends Contract, F extends ContractFactory>(
-    deployParamLength: number,
-    contractName: string,
-    passedSigner?: Signer
-) => {
+export type ContractName = { __contractName__: string; alpha: string };
+export type Contract = OldContract & ContractName;
+
+const deployOrAttach = <C extends Contract, F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     type ParamsTypes = ReplaceLast<F['deploy'], Overrides>;
 
     return {
         deploy: async (...args: Parameters<ParamsTypes>): Promise<C> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+
+            const deployParamLength = (await ethers.getContractFactory(contractName)).deploy.length;
 
             // If similar then last param is override
             if (args.length != 0 && args.length === deployParamLength) {
@@ -81,48 +66,25 @@ const attachOnly = <C extends Contract>(contractName: string, passedSigner?: Sig
 
 export type ContractTypes = Contract | Owned | TestReserveToken | TestSafeERC20Ex | TestStandardToken | TokenHolder;
 
-type ContractName = { __contractName__: string };
+const getDeployOrAttach = <C extends Contract>(contractName: string, signer?: Signer) => {
+    type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+    const alpha = ethers.getContractFactory(contractName);
+
+    return deployOrAttach<C, ThenArg<typeof alpha>>(contractName, signer);
+};
 
 const getContracts = (signer?: Signer) => {
     return {
         // Link every contract to a default signer
         connect: (signer: Signer) => getContracts(signer),
 
-        ERC20: deployOrAttach<ERC20 & ContractName, ERC20__factory>(
-            ERC20__factory.prototype.deploy.length,
-            'ERC20',
-            signer
-        ),
-        Owned: deployOrAttach<Owned & ContractName, Owned__factory>(
-            Owned__factory.prototype.deploy.length,
-            'Owned',
-            signer
-        ),
-        TestMathEx: deployOrAttach<TestMathEx & ContractName, TestMathEx__factory>(
-            TestMathEx__factory.prototype.deploy.length,
-            'TestMathEx',
-            signer
-        ),
-        TestReserveToken: deployOrAttach<TestReserveToken & ContractName, TestReserveToken__factory>(
-            TestReserveToken__factory.prototype.deploy.length,
-            'TestReserveToken',
-            signer
-        ),
-        TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex & ContractName, TestSafeERC20Ex__factory>(
-            TestSafeERC20Ex__factory.prototype.deploy.length,
-            'TestSafeERC20Ex',
-            signer
-        ),
-        TestStandardToken: deployOrAttach<TestStandardToken & ContractName, TestStandardToken__factory>(
-            TestStandardToken__factory.prototype.deploy.length,
-            'TestStandardToken',
-            signer
-        ),
-        TokenHolder: deployOrAttach<TokenHolder & ContractName, TokenHolder__factory>(
-            TokenHolder__factory.prototype.deploy.length,
-            'TokenHolder',
-            signer
-        )
+        ERC20: getDeployOrAttach<ERC20 & ContractName>('ERC20', signer),
+        Owned: getDeployOrAttach<Owned & ContractName>('Owned', signer),
+        TestMathEx: getDeployOrAttach<TestMathEx & ContractName>('TestMathEx', signer),
+        TestReserveToken: getDeployOrAttach<TestReserveToken & ContractName>('TestReserveToken', signer),
+        TestSafeERC20Ex: getDeployOrAttach<TestSafeERC20Ex & ContractName>('TestSafeERC20Ex', signer),
+        TestStandardToken: getDeployOrAttach<TestStandardToken & ContractName>('TestStandardToken', signer),
+        TokenHolder: getDeployOrAttach<TokenHolder & ContractName>('TokenHolder', signer)
     };
 };
 
