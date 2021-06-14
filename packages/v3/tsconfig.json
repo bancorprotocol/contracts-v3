@@ -1,5 +1,9 @@
 {
     "extends": "../../tsconfig.json",
-    "include": ["./test"],
-    "files": ["./hardhat.config.ts"]
+    "compilerOptions": {
+        "baseUrl": "./"
+    },
+    "include": ["./test", "./tasks", "./components"],
+    "files": ["./hardhat.config.ts"],
+    "paths": {}
 }

@@ -1,32 +1,20 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const { BigNumber } = require('ethers');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 
-const { NATIVE_TOKEN_ADDRESS } = require('../helpers/Constants');
+import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 
-const Contracts = require('../helpers/Contracts');
+import Contracts from 'components/Contracts';
+
+import { getBalance } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { TestReserveToken } from '../../typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
-let reserveToken;
-let sender;
-let accounts;
-
-const getBalance = async (reserveToken, account) => {
-    const reserveTokenAddress = reserveToken.address || reserveToken;
-    const address = account.address || account;
-
-    if (reserveTokenAddress === NATIVE_TOKEN_ADDRESS) {
-        return ethers.provider.getBalance(address);
-    }
-
-    if (typeof reserveToken === 'string') {
-        const token = await Contracts.TestStandardToken.attach(reserveToken);
-        return await token.balanceOf(address);
-    }
-
-    return reserveToken.balanceOf(address);
-};
+let reserveToken: TestReserveToken;
+let sender: string;
+let accounts: SignerWithAddress[];
 
 describe('ReserveToken', () => {
     before(async () => {
@@ -39,8 +27,8 @@ describe('ReserveToken', () => {
     });
 
     for (const hasETH of [true, false]) {
-        let token;
-        let recipient;
+        let token: any;
+        let recipient: SignerWithAddress;
 
         context(`${hasETH ? 'ETH' : 'ERC20'} reserve token`, () => {
             beforeEach(async () => {
@@ -64,44 +52,44 @@ describe('ReserveToken', () => {
             });
 
             it('should properly get the right balance', async () => {
-                expect(await reserveToken.balanceOf(token.address, sender)).to.equal(await getBalance(token, sender));
+                expect(await reserveToken.balanceOf(token.address, sender)).to.equal(await getBalance(sender, token));
             });
 
             for (const amount of [BigNumber.from(0), BigNumber.from(10000)]) {
                 it('should properly transfer the reserve token', async () => {
-                    const prevSenderBalance = await getBalance(token, sender);
-                    const prevRecipientBalance = await getBalance(token, recipient);
+                    const prevSenderBalance = await getBalance(sender, token);
+                    const prevRecipientBalance = await getBalance(recipient, token);
 
                     await reserveToken.safeTransfer(token.address, recipient.address, amount);
 
-                    expect(await getBalance(token, sender)).to.equal(prevSenderBalance.sub(amount));
-                    expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
+                    expect(await getBalance(sender, token)).to.equal(prevSenderBalance.sub(amount));
+                    expect(await getBalance(recipient, token)).to.equal(prevRecipientBalance.add(amount));
                 });
             }
 
             if (hasETH) {
                 it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
-                    const prevSenderBalance = await getBalance(token, sender);
-                    const prevRecipientBalance = await getBalance(token, recipient);
+                    const prevSenderBalance = await getBalance(sender, token);
+                    const prevRecipientBalance = await getBalance(recipient, token);
 
                     const amount = BigNumber.from(100000);
                     await reserveToken.ensureApprove(token.address, sender, amount);
                     await reserveToken.safeTransferFrom(token.address, sender, recipient.address, amount);
 
-                    expect(await getBalance(token, sender)).to.equal(prevSenderBalance);
-                    expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
+                    expect(await getBalance(sender, token)).to.equal(prevSenderBalance);
+                    expect(await getBalance(recipient, token)).to.equal(prevRecipientBalance);
                 });
             } else {
                 for (const amount of [BigNumber.from(0), BigNumber.from(10000)]) {
                     it('should properly transfer the reserve token on behalf of a different account', async () => {
-                        const prevSenderBalance = await getBalance(token, sender);
-                        const prevRecipientBalance = await getBalance(token, recipient);
+                        const prevSenderBalance = await getBalance(sender, token);
+                        const prevRecipientBalance = await getBalance(recipient, token);
 
                         await reserveToken.ensureApprove(token.address, sender, amount);
                         await reserveToken.safeTransferFrom(token.address, sender, recipient.address, amount);
 
-                        expect(await getBalance(token, sender)).to.equal(prevSenderBalance.sub(amount));
-                        expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
+                        expect(await getBalance(sender, token)).to.equal(prevSenderBalance.sub(amount));
+                        expect(await getBalance(recipient, token)).to.equal(prevRecipientBalance.add(amount));
                     });
 
                     it('should setting the allowance', async () => {
