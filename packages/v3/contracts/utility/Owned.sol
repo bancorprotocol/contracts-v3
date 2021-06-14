@@ -43,10 +43,10 @@ contract Owned is IOwned {
      *
      * note the new owner still needs to accept the transfer
      */
-    function transferOwnership(address ownershipRecipient) public override onlyOwner {
-        require(ownershipRecipient != _owner, "ERR_SAME_OWNER");
+    function transferOwnership(address ownerCandidate) public override onlyOwner {
+        require(ownerCandidate != _owner, "ERR_SAME_OWNER");
 
-        _newOwner = ownershipRecipient;
+        _newOwner = ownerCandidate;
     }
 
     /**
