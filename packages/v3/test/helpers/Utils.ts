@@ -4,11 +4,8 @@ import Contracts from 'components/Contracts';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-export const getBalance = async (wallet: string | SignerWithAddress, token?: string | { address: string }) => {
+export const getBalance = async (token: string | { address: string }, wallet: string | SignerWithAddress) => {
     const walletAddress = typeof wallet === 'string' ? wallet : wallet.address;
-    if (token === undefined) {
-        return ethers.provider.getBalance(walletAddress);
-    }
     const tokenAddress = typeof token === 'string' ? token : token.address;
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
         return ethers.provider.getBalance(walletAddress);
@@ -16,10 +13,10 @@ export const getBalance = async (wallet: string | SignerWithAddress, token?: str
     return await (await Contracts.TestStandardToken.attach(tokenAddress)).balanceOf(walletAddress);
 };
 
-export const getBalances = async (wallet: string | SignerWithAddress, tokenAddresses: string[]) => {
+export const getBalances = async (tokenAddresses: string[], wallet: string | SignerWithAddress) => {
     const balances: { [balance: string]: BigNumber } = {};
     for (const tokenAddress of tokenAddresses) {
-        balances[tokenAddress] = await getBalance(wallet, tokenAddress);
+        balances[tokenAddress] = await getBalance(tokenAddress, wallet);
     }
 
     return balances;

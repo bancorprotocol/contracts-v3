@@ -45,21 +45,21 @@ describe('TokenHolder', () => {
                 });
 
                 it('should allow the owner to withdraw', async () => {
-                    const prevBalance = await getBalance(receiver.address, tokenAddress);
+                    const prevBalance = await getBalance(tokenAddress, receiver.address);
 
                     const amount = BigNumber.from(100);
                     await holder.withdrawTokens(tokenAddress, receiver.address, amount);
 
-                    const balance = await getBalance(receiver.address, tokenAddress);
+                    const balance = await getBalance(tokenAddress, receiver.address);
                     expect(balance).to.equal(prevBalance.add(amount));
                 });
 
                 it('should not revert when withdrawing zero amount', async () => {
-                    const prevBalance = await getBalance(receiver.address, tokenAddress);
+                    const prevBalance = await getBalance(tokenAddress, receiver.address);
 
                     await holder.withdrawTokens(tokenAddress, receiver.address, BigNumber.from(0));
 
-                    const balance = await getBalance(receiver.address, tokenAddress);
+                    const balance = await getBalance(tokenAddress, receiver.address);
                     expect(balance).to.equal(prevBalance);
                 });
 
@@ -82,7 +82,7 @@ describe('TokenHolder', () => {
                 });
 
                 it('should revert when attempting to withdraw an amount greater than the holder balance', async () => {
-                    const balance = await getBalance(holder.address, tokenAddress);
+                    const balance = await getBalance(tokenAddress, holder.address);
                     const amount = balance.add(BigNumber.from(1));
 
                     if (isETH) {
@@ -111,11 +111,11 @@ describe('TokenHolder', () => {
         });
 
         it('should allow the owner to withdraw', async () => {
-            const prevBalances = await getBalances(receiver.address, tokenAddresses);
+            const prevBalances = await getBalances(tokenAddresses, receiver.address);
 
             await holder.withdrawTokensMultiple(tokenAddresses, receiver.address, Object.values(amounts));
 
-            const newBalances = await getBalances(receiver.address, tokenAddresses);
+            const newBalances = await getBalances(tokenAddresses, receiver.address);
             for (const [tokenAddress, prevBalance] of Object.entries(prevBalances)) {
                 expect(newBalances[tokenAddress]).to.equal(prevBalance.add(amounts[tokenAddress]));
             }
@@ -152,12 +152,12 @@ describe('TokenHolder', () => {
         });
 
         it('should revert when attempting to withdraw an amount greater than the holder balance', async () => {
-            let balances = await getBalances(holder.address, tokenAddresses);
+            let balances = await getBalances(tokenAddresses, holder.address);
             balances[NATIVE_TOKEN_ADDRESS] = balances[NATIVE_TOKEN_ADDRESS].add(BigNumber.from(1));
             await expect(holder.withdrawTokensMultiple(tokenAddresses, receiver.address, Object.values(balances))).to.be
                 .reverted;
 
-            balances = await getBalances(holder.address, tokenAddresses);
+            balances = await getBalances(tokenAddresses, holder.address);
             balances[token2.address] = balances[token2.address].add(BigNumber.from(1));
             await expect(
                 holder.withdrawTokensMultiple(tokenAddresses, receiver.address, Object.values(balances))
