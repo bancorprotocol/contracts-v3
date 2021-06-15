@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 
 import Contracts from 'components/Contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { Owned } from '../../typechain';
+import { Owned } from 'typechain';
 
 let contract: Owned;
 let owner: SignerWithAddress;

@@ -8,7 +8,7 @@ import Contracts from 'components/Contracts';
 
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { TestReserveToken } from '../../typechain';
+import { TestReserveToken } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 

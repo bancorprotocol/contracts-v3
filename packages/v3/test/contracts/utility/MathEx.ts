@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 
-import { TestMathEx } from '../../typechain';
+import { TestMathEx } from 'typechain';
 import Contracts from 'components/Contracts';
 import MathUtils from '../helpers/MathUtils';
 
