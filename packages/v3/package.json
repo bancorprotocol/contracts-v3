@@ -19,6 +19,7 @@
         "!/contracts/helpers"
     ],
     "scripts": {
+        "hh": "hardhat",
         "build": "hardhat compile",
         "test": "NODE_OPTIONS='--max-old-space-size=6144' hardhat test",
         "testb": "BAIL=1 yarn test",

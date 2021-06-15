@@ -15,6 +15,8 @@ import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 import '@typechain/hardhat';
 
+import './tasks';
+
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
