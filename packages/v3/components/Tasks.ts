@@ -4,14 +4,14 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import { BigNumber, BigNumberish } from 'ethers';
 
-// This is meant to go away as soon as hardhat implement this https://github.com/nomiclabs/hardhat/issues/1518
+// This is meant to go away as soon as hardhat implements this https://github.com/nomiclabs/hardhat/issues/1518
 
-export function importCsjOrEsModule(filePath: string): any {
+export const importCsjOrEsModule = (filePath: string) => {
     const imported = require(filePath);
     return imported.default !== undefined ? imported.default : imported;
-}
+};
 
-export function lazyAction(pathToAction: string) {
+export const lazyAction = (pathToAction: string) => {
     return (taskArgs: any, hre: any, runSuper: any) => {
         const actualPath = path.isAbsolute(pathToAction)
             ? pathToAction
@@ -20,7 +20,7 @@ export function lazyAction(pathToAction: string) {
 
         return action(taskArgs, hre, runSuper);
     };
-}
+};
 
 // Task
 export type taskOverride = { gasPrice?: BigNumberish };
@@ -35,12 +35,19 @@ export const newDefaultTask = (taskName: string, description: string) =>
         .addParam('ledgerPath', 'Ledger path', "m/44'/60'/0'/0", types.string)
         .addParam('gasPrice', 'GasPrice in gwei', 0, types.int);
 
-//
 export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: defaultParam) => {
+    const signer = args.ledger
+        ? new LedgerSigner(hre.ethers.provider, 'hid', args.ledgerPath)
+        : (await hre.ethers.getSigners())[0];
+
+    if (args.gasPrice === 0) {
+        throw new Error("Gas Price shouldn't be equal to 0");
+    }
+
+    const gasPrice = BigNumber.from(args.gasPrice);
+
     return {
-        signer: args.ledger
-            ? new LedgerSigner(hre.ethers.provider, 'hid', args.ledgerPath)
-            : (await hre.ethers.getSigners())[0],
-        gasPrice: args.gasPrice === 0 ? undefined : BigNumber.from(args.gasPrice)
+        signer,
+        gasPrice
     };
 };

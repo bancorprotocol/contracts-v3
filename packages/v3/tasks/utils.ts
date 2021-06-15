@@ -7,36 +7,19 @@ import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
 export type deployFct = <C extends Contract>(name: string, toDeployContract: Promise<C>) => Promise<C>;
 export type executeFct = (txExecution: Promise<ContractTransaction>) => Promise<ContractReceipt>;
 
-// Basic
-export const basicDeploy: deployFct = async <C extends Contract>(
-    _: string,
-    toDeployContract: Promise<C>
-): Promise<C> => {
-    const contract = await toDeployContract;
-    const receipt = await contract.deployTransaction.wait();
+export class executionError extends Error {
+    tx: ContractTransaction;
+    receipt: ContractReceipt;
 
-    if (receipt.status !== 1) {
-        throw new Error('Deploy failed');
+    constructor(tx: ContractTransaction, receipt: ContractReceipt) {
+        super('Execution Error');
+        this.receipt = receipt;
+        this.tx = tx;
     }
-
-    return contract;
-};
-export const basicExecute = async (txExecution: Promise<ContractTransaction>): Promise<ContractReceipt> => {
-    const tx = await txExecution;
-    const receipt = await tx.wait();
-
-    if (receipt.status !== 1) {
-        throw new Error('Tx failed');
-    }
-
-    return receipt;
-};
+}
 
 // Advanced
-export const advancedDeploy: deployFct = async <C extends Contract>(
-    name: string,
-    toDeployContract: Promise<C>
-): Promise<C> => {
+export const deploy: deployFct = async <C extends Contract>(name: string, toDeployContract: Promise<C>): Promise<C> => {
     const contract = await toDeployContract;
     console.log(`Deploying contract ${name} (${contract.__contractName__})`);
     console.log('Tx: ', contract.deployTransaction.hash);
@@ -45,22 +28,21 @@ export const advancedDeploy: deployFct = async <C extends Contract>(
     const receipt = await contract.deployTransaction.wait();
 
     if (receipt.status !== 1) {
-        throw new Error('Deploy failed');
+        throw new executionError(contract.deployTransaction, receipt);
     }
 
     console.log(`Deployed at ${contract.address} 🚀 `);
     return contract;
 };
-export const advancedExecute: executeFct = async (
-    txExecution: Promise<ContractTransaction>
-): Promise<ContractReceipt> => {
+
+export const execute: executeFct = async (txExecution: Promise<ContractTransaction>): Promise<ContractReceipt> => {
     const tx = await txExecution;
     console.log('Executing tx: ', tx.hash);
 
     const receipt = await tx.wait();
 
     if (receipt.status !== 1) {
-        throw new Error('Tx failed');
+        throw new executionError(tx, receipt);
     }
 
     console.log('Executed ✨');
@@ -74,6 +56,7 @@ export const saveConfig = async (fileName: string, obj: Object) => {
         JSON.stringify(obj, null, 4)
     );
 };
+
 export const loadConfig = async <C>(path: string): Promise<C> => {
     return JSON.parse(fs.readFileSync(path, 'utf8')) as C;
 };
