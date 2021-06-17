@@ -4,7 +4,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 
 import { ERC20, Owned, TestMathEx, TestReserveToken, TestSafeERC20Ex, TestStandardToken, TokenHolder } from 'typechain';
 
-// Replace type of the last param of a function
+// Replace the type of the last param of a function
 type LastIndex<T extends readonly any[]> = ((...t: T) => void) extends (x: any, ...r: infer R) => void
     ? Exclude<keyof T, keyof R>
     : never;
@@ -29,7 +29,7 @@ const deployOrAttach = <C extends Contract, F extends ContractFactory>(contractN
 
             const deployParamLength = (await ethers.getContractFactory(contractName)).deploy.length;
 
-            // If similar then last param is override
+            // If similar length, override the last param
             if (args.length != 0 && args.length === deployParamLength) {
                 const overrides = args.pop() as Overrides;
 
