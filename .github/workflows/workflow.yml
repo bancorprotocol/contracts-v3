@@ -21,7 +21,10 @@ jobs:
         with:
           node-version: '15.5.0'
 
-      - name: Install Requirements
+      - name: Update Package Information
+        run: sudo apt-get update
+
+      - name: Install Packages
         run: sudo apt-get install libusb-1.0-0-dev libudev-dev
 
       - name: Install NPM Dependencies
