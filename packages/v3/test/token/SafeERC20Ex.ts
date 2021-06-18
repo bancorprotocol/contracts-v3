@@ -1,17 +1,19 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const { BigNumber } = require('ethers');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 
-const Contracts = require('../helpers/Contracts');
+import Contracts from 'components/Contracts';
+import { TestSafeERC20Ex, TestStandardToken } from '../../typechain';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
-let safeERC20;
-let token;
+let safeERC20: TestSafeERC20Ex;
+let token: TestStandardToken;
 
-let accounts;
-let sender;
-let spender;
+let accounts: SignerWithAddress[];
+let spender: SignerWithAddress;
+let sender: string;
 
 describe('SafeERC20Ex', () => {
     before(async () => {

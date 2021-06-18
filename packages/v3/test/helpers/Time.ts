@@ -1,8 +1,8 @@
-const { ethers } = require('hardhat');
-const { BigNumber } = require('ethers');
+import { ethers } from 'hardhat';
+import { BigNumber, BigNumberish } from 'ethers';
 
 const advanceBlock = async () => {
-    return await ethers.provider.send('evm_mine');
+    return await ethers.provider.send('evm_mine', []);
 };
 
 const latest = async () => {
@@ -10,26 +10,26 @@ const latest = async () => {
     return BigNumber.from(block.timestamp);
 };
 
-module.exports = {
+export default {
     advanceBlock,
     latest,
     duration: {
-        seconds: function (val) {
+        seconds: function (val: BigNumberish) {
             return BigNumber.from(val);
         },
-        minutes: function (val) {
+        minutes: function (val: BigNumberish) {
             return BigNumber.from(val).mul(this.seconds('60'));
         },
-        hours: function (val) {
+        hours: function (val: BigNumberish) {
             return BigNumber.from(val).mul(this.minutes('60'));
         },
-        days: function (val) {
+        days: function (val: BigNumberish) {
             return BigNumber.from(val).mul(this.hours('24'));
         },
-        weeks: function (val) {
+        weeks: function (val: BigNumberish) {
             return BigNumber.from(val).mul(this.days('7'));
         },
-        years: function (val) {
+        years: function (val: BigNumberish) {
             return BigNumber.from(val).mul(this.days('365'));
         }
     }

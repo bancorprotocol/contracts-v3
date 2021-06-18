@@ -1,32 +1,20 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const { BigNumber } = require('ethers');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 
-const { NATIVE_TOKEN_ADDRESS } = require('../helpers/Constants');
+import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 
-const Contracts = require('../helpers/Contracts');
+import Contracts from 'components/Contracts';
+
+import { getBalance } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { TestReserveToken } from '../../typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
-let reserveToken;
-let sender;
-let accounts;
-
-const getBalance = async (reserveToken, account) => {
-    const reserveTokenAddress = reserveToken.address || reserveToken;
-    const address = account.address || account;
-
-    if (reserveTokenAddress === NATIVE_TOKEN_ADDRESS) {
-        return ethers.provider.getBalance(address);
-    }
-
-    if (typeof reserveToken === 'string') {
-        const token = await Contracts.TestStandardToken.attach(reserveToken);
-        return await token.balanceOf(address);
-    }
-
-    return reserveToken.balanceOf(address);
-};
+let reserveToken: TestReserveToken;
+let sender: string;
+let accounts: SignerWithAddress[];
 
 describe('ReserveToken', () => {
     before(async () => {
@@ -39,8 +27,8 @@ describe('ReserveToken', () => {
     });
 
     for (const hasETH of [true, false]) {
-        let token;
-        let recipient;
+        let token: any;
+        let recipient: SignerWithAddress;
 
         context(`${hasETH ? 'ETH' : 'ERC20'} reserve token`, () => {
             beforeEach(async () => {

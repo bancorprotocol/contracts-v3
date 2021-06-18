@@ -1,12 +1,14 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
 
-const Contracts = require('../helpers/Contracts');
+import Contracts from 'components/Contracts';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { Owned } from '../../typechain';
 
-let contract;
-let owner;
-let newOwner;
-let accounts;
+let contract: Owned;
+let owner: SignerWithAddress;
+let newOwner: SignerWithAddress;
+let accounts: SignerWithAddress[];
 
 describe('Owned', () => {
     before(async () => {

@@ -1,17 +1,20 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const { BigNumber } = require('ethers');
+import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 
-const { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } = require('../helpers/Constants');
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+import Contracts from 'components/Contracts';
+import { TestStandardToken, TokenHolder } from '../../typechain';
+import { getBalance, getBalances } from '../helpers/Utils';
 
-const Contracts = require('../helpers/Contracts');
+let holder: TokenHolder;
+let token: TestStandardToken;
+let token2: TestStandardToken;
 
-let holder;
-let token;
-let token2;
-let receiver;
-let nonOwner;
-let accounts;
+let receiver: SignerWithAddress;
+let nonOwner: SignerWithAddress;
+let accounts: SignerWithAddress[];
 
 describe('TokenHolder', () => {
     before(async () => {
@@ -20,23 +23,6 @@ describe('TokenHolder', () => {
         receiver = accounts[2];
         nonOwner = accounts[8];
     });
-
-    const getBalance = async (tokenAddress, account) => {
-        if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-            return ethers.provider.getBalance(account);
-        }
-
-        return await (await Contracts.TestStandardToken.attach(tokenAddress)).balanceOf(account);
-    };
-
-    const getBalances = async (tokenAddresses, account) => {
-        const balances = {};
-        for (const tokenAddress of tokenAddresses) {
-            balances[tokenAddress] = await getBalance(tokenAddress, account);
-        }
-
-        return balances;
-    };
 
     beforeEach(async () => {
         holder = await Contracts.TokenHolder.deploy();
@@ -52,7 +38,7 @@ describe('TokenHolder', () => {
     describe('withdraw asset', () => {
         for (const isETH of [true, false]) {
             context(isETH ? 'ETH' : 'ERC20', async () => {
-                let tokenAddress;
+                let tokenAddress: string;
 
                 beforeEach(async () => {
                     tokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : token.address;
@@ -112,12 +98,11 @@ describe('TokenHolder', () => {
     });
 
     describe('withdraw multiple assets', () => {
-        let tokenAddresses;
-        let amounts;
+        let tokenAddresses: string[];
+        let amounts: { [address: string]: BigNumber } = {};
 
         beforeEach(async () => {
             tokenAddresses = [NATIVE_TOKEN_ADDRESS, token.address, token2.address];
-            amounts = {};
 
             for (let i = 0; i < tokenAddresses.length; ++i) {
                 const tokenAddress = tokenAddresses[i];

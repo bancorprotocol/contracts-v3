@@ -1,19 +1,20 @@
-const { expect } = require('chai');
-const { BigNumber } = require('ethers');
+import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 
-const MathUtils = require('../helpers/MathUtils');
-const Contracts = require('../helpers/Contracts');
+import { TestMathEx } from '../../typechain';
+import Contracts from 'components/Contracts';
+import MathUtils from '../helpers/MathUtils';
 
 const { Decimal, floorSqrt, ceilSqrt, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 
-const MAX_UINT128 = Decimal(2).pow(128).sub(1);
-const MAX_UINT256 = Decimal(2).pow(256).sub(1);
-const SCALES = [6, 18, 30].map((n) => Decimal(10).pow(n)).concat(MAX_UINT128);
+const MAX_UINT128 = new Decimal(2).pow(128).sub(1);
+const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
+const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128);
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
 const PR_MAX_ERROR = '0.00000000000000000000000000000000000001';
 
 describe('MathEx', () => {
-    let mathContract;
+    let mathContract: TestMathEx;
 
     before(async () => {
         mathContract = await Contracts.TestMathEx.deploy();
@@ -69,9 +70,9 @@ describe('MathEx', () => {
     }
 
     for (const scale of SCALES) {
-        for (let i = Decimal(1); i.lte(scale); i = i.mul(10)) {
+        for (let i = new Decimal(1); i.lte(scale); i = i.mul(10)) {
             const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
-            for (let j = Decimal(1); j.lte(scale); j = j.mul(10)) {
+            for (let j = new Decimal(1); j.lte(scale); j = j.mul(10)) {
                 const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
                 it(`reducedRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = reducedRatio(a, b, scale);
@@ -95,9 +96,9 @@ describe('MathEx', () => {
     }
 
     for (const scale of SCALES) {
-        for (let i = Decimal(1); i.lte(scale); i = i.mul(10)) {
+        for (let i = new Decimal(1); i.lte(scale); i = i.mul(10)) {
             const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
-            for (let j = Decimal(1); j.lte(scale); j = j.mul(10)) {
+            for (let j = new Decimal(1); j.lte(scale); j = j.mul(10)) {
                 const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
                 it(`normalizedRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = normalizedRatio(a, b, scale);
@@ -121,9 +122,9 @@ describe('MathEx', () => {
     }
 
     for (const scale of SCALES) {
-        for (let i = Decimal(1); i.lte(scale); i = i.mul(10)) {
+        for (let i = new Decimal(1); i.lte(scale); i = i.mul(10)) {
             const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
-            for (let j = Decimal(i); j.lte(scale); j = j.mul(10)) {
+            for (let j = new Decimal(i); j.lte(scale); j = j.mul(10)) {
                 const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
                 it(`accurateRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = accurateRatio(a, b, scale);
@@ -134,7 +135,7 @@ describe('MathEx', () => {
         }
     }
 
-    for (const scale of [1, 2, 3, 4].map((x) => Decimal(x))) {
+    for (const scale of [1, 2, 3, 4].map((x) => new Decimal(x))) {
         for (const a of [
             MAX_UINT256.div(3).floor(),
             MAX_UINT256.div(3).ceil(),
@@ -207,9 +208,9 @@ describe('MathEx', () => {
                     for (const ax of px < 256 ? [-1, 0, +1] : [-1]) {
                         for (const ay of py < 256 ? [-1, 0, +1] : [-1]) {
                             for (const az of pz < 256 ? [-1, 0, +1] : [-1]) {
-                                const x = Decimal(2).pow(px).add(ax);
-                                const y = Decimal(2).pow(py).add(ay);
-                                const z = Decimal(2).pow(pz).add(az);
+                                const x = new Decimal(2).pow(px).add(ax);
+                                const y = new Decimal(2).pow(py).add(ay);
+                                const z = new Decimal(2).pow(pz).add(az);
                                 testMulDiv(methodName, x, y, z);
                             }
                         }
@@ -223,12 +224,12 @@ describe('MathEx', () => {
         for (const px of [64, 128, 192, 256]) {
             for (const py of [64, 128, 192, 256]) {
                 for (const pz of [64, 128, 192, 256]) {
-                    for (const ax of [Decimal(2).pow(px >> 1), 1]) {
-                        for (const ay of [Decimal(2).pow(py >> 1), 1]) {
-                            for (const az of [Decimal(2).pow(pz >> 1), 1]) {
-                                const x = Decimal(2).pow(px).sub(ax);
-                                const y = Decimal(2).pow(py).sub(ay);
-                                const z = Decimal(2).pow(pz).sub(az);
+                    for (const ax of [new Decimal(2).pow(px >> 1), 1]) {
+                        for (const ay of [new Decimal(2).pow(py >> 1), 1]) {
+                            for (const az of [new Decimal(2).pow(pz >> 1), 1]) {
+                                const x = new Decimal(2).pow(px).sub(ax);
+                                const y = new Decimal(2).pow(py).sub(ay);
+                                const z = new Decimal(2).pow(pz).sub(az);
                                 testMulDiv(methodName, x, y, z);
                             }
                         }
@@ -245,9 +246,9 @@ describe('MathEx', () => {
                     for (const ax of [3, 5, 7]) {
                         for (const ay of [3, 5, 7]) {
                             for (const az of [3, 5, 7]) {
-                                const x = Decimal(2).pow(px).divToInt(ax);
-                                const y = Decimal(2).pow(py).divToInt(ay);
-                                const z = Decimal(2).pow(pz).divToInt(az);
+                                const x = new Decimal(2).pow(px).divToInt(ax);
+                                const y = new Decimal(2).pow(py).divToInt(ay);
+                                const z = new Decimal(2).pow(pz).divToInt(az);
                                 testMulDiv(methodName, x, y, z);
                             }
                         }
@@ -257,7 +258,7 @@ describe('MathEx', () => {
         }
     }
 
-    function expectAlmostEqual(actual, expected, range) {
+    function expectAlmostEqual(actual: any, expected: any, range: any) {
         const x = expected[0].mul(actual[1].toString());
         const y = expected[1].mul(actual[0].toString());
         if (!x.eq(y)) {
@@ -270,16 +271,16 @@ describe('MathEx', () => {
         }
     }
 
-    function testMulDiv(methodName, x, y, z) {
+    function testMulDiv(methodName: any, x: any, y: any, z: any) {
         it(`${methodName}(${x}, ${y}, ${z})`, async () => {
-            const expected = MathUtils[methodName](x, y, z);
+            const expected = (MathUtils as any)[methodName](x, y, z);
             if (expected.lte(MAX_UINT256)) {
-                const actual = await mathContract[methodName](x.toFixed(), y.toFixed(), z.toFixed());
+                const actual = await (mathContract as any)[methodName](x.toFixed(), y.toFixed(), z.toFixed());
                 expect(actual).to.equal(BigNumber.from(expected.toFixed()));
             } else {
-                await expect(mathContract[methodName](x.toFixed(), y.toFixed(), z.toFixed())).to.be.revertedWith(
-                    'ERR_OVERFLOW'
-                );
+                await expect(
+                    (mathContract as any)[methodName](x.toFixed(), y.toFixed(), z.toFixed())
+                ).to.be.revertedWith('ERR_OVERFLOW');
             }
         });
     }
