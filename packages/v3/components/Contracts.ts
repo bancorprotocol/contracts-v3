@@ -64,8 +64,6 @@ const attachOnly = <C extends Contract>(contractName: string, passedSigner?: Sig
     };
 };
 
-export type ContractTypes = Contract | Owned | TestReserveToken | TestSafeERC20Ex | TestStandardToken | TokenHolder;
-
 const getDeployOrAttach = <C extends Contract>(contractName: string, signer?: Signer) => {
     type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
     const alpha = ethers.getContractFactory(contractName);
