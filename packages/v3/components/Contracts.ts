@@ -2,7 +2,18 @@ import { ethers } from 'hardhat';
 import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } from '@ethersproject/contracts';
 import { Signer } from '@ethersproject/abstract-signer';
 
-import { ERC20, Owned, TestMathEx, TestReserveToken, TestSafeERC20Ex, TestStandardToken, TokenHolder } from 'typechain';
+import {
+    ERC20,
+    ERC20Burnable,
+    Owned,
+    PoolToken,
+    TestERC20Burnable,
+    TestMathEx,
+    TestReserveToken,
+    TestSafeERC20Ex,
+    TestStandardToken,
+    TokenHolder
+} from 'typechain';
 
 // Replace the type of the last param of a function
 type LastIndex<T extends readonly any[]> = ((...t: T) => void) extends (x: any, ...r: infer R) => void
@@ -78,6 +89,8 @@ const getContracts = (signer?: Signer) => {
 
         ERC20: getDeployOrAttach<ERC20 & ContractName>('ERC20', signer),
         Owned: getDeployOrAttach<Owned & ContractName>('Owned', signer),
+        PoolToken: getDeployOrAttach<PoolToken & ContractName>('PoolToken', signer),
+        TestERC20Burnable: getDeployOrAttach<TestERC20Burnable & ContractName>('TestERC20Burnable', signer),
         TestMathEx: getDeployOrAttach<TestMathEx & ContractName>('TestMathEx', signer),
         TestReserveToken: getDeployOrAttach<TestReserveToken & ContractName>('TestReserveToken', signer),
         TestSafeERC20Ex: getDeployOrAttach<TestSafeERC20Ex & ContractName>('TestSafeERC20Ex', signer),
