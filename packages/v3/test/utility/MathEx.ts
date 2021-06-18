@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 
-import { TestMathEx } from '../../typechain';
 import Contracts from 'components/Contracts';
-import MathUtils from '../helpers/MathUtils';
+import { TestMathEx } from 'typechain';
+
+import MathUtils from 'test/helpers/MathUtils';
 
 const { Decimal, floorSqrt, ceilSqrt, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 

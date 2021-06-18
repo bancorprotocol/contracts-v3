@@ -3,10 +3,12 @@ import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+
 import Contracts from 'components/Contracts';
-import { TestStandardToken, TokenHolder } from '../../typechain';
-import { getBalance, getBalances } from '../helpers/Utils';
+import { TestStandardToken, TokenHolder } from 'typechain';
+
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
+import { getBalance, getBalances } from 'test/helpers/Utils';
 
 let holder: TokenHolder;
 let token: TestStandardToken;

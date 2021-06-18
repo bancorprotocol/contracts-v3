@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-import Contracts from 'components/Contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { Owned } from '../../typechain';
+
+import Contracts from 'components/Contracts';
+
+import { Owned } from 'typechain';
 
 let contract: Owned;
 let owner: SignerWithAddress;
