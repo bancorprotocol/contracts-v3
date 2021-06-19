@@ -25,7 +25,7 @@ describe('PoolToken', () => {
     });
 
     beforeEach(async () => {
-        poolToken = await Contracts.PoolToken.deploy('POOL', 'POOL', 18);
+        poolToken = await Contracts.PoolToken.deploy('POOL', 'POOL');
         owner = accounts[0];
         nonOwner = accounts[1];
         spender = accounts[2];

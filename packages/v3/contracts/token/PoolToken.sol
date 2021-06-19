@@ -19,13 +19,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     /**
      * @dev initializes a new PoolToken contract
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimals
-    ) ERC20(name, symbol) ERC20Permit("Bancor") {
-        _setupDecimals(decimals);
-    }
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit("Bancor") {}
 
     /**
      * @dev increases the token supply and sends the new tokens to the given account
