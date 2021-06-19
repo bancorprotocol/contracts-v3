@@ -8,9 +8,10 @@ import Contracts from 'components/Contracts';
 import { Owned } from 'typechain';
 
 let contract: Owned;
+
+let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
 let newOwner: SignerWithAddress;
-let accounts: SignerWithAddress[];
 
 describe('Owned', () => {
     before(async () => {

@@ -12,17 +12,19 @@ import { ZERO_ADDRESS } from 'test/helpers/Constants';
 let burnable: TestERC20Burnable;
 let owner: SignerWithAddress;
 let burner: SignerWithAddress;
+
 let accounts: SignerWithAddress[];
 
 describe('ERC20Burnable', () => {
     before(async () => {
         accounts = await ethers.getSigners();
+
+        owner = accounts[0];
+        burner = accounts[1];
     });
 
     beforeEach(async () => {
         burnable = await Contracts.TestERC20Burnable.deploy('ERC', 'ERC1', 100000);
-        owner = accounts[0];
-        burner = accounts[1];
     });
 
     describe('burning', () => {

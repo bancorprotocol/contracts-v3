@@ -13,8 +13,9 @@ import { getBalance } from 'test/helpers/Utils';
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
 let reserveToken: TestReserveToken;
-let sender: string;
+
 let accounts: SignerWithAddress[];
+let sender: string;
 
 describe('ReserveToken', () => {
     before(async () => {

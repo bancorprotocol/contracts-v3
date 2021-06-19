@@ -14,9 +14,9 @@ let holder: TokenHolder;
 let token: TestStandardToken;
 let token2: TestStandardToken;
 
+let accounts: SignerWithAddress[];
 let receiver: SignerWithAddress;
 let nonOwner: SignerWithAddress;
-let accounts: SignerWithAddress[];
 
 describe('TokenHolder', () => {
     before(async () => {
