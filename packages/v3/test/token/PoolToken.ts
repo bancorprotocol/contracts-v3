@@ -8,30 +8,56 @@ import Wallet from 'ethereumjs-wallet';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { PoolToken } from 'typechain';
+import { PoolToken, TestStandardToken } from 'typechain';
 
 import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
 import { latest, duration } from 'test/helpers/Time';
 
 let poolToken: PoolToken;
+let reserveToken: TestStandardToken;
+
+let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
 let spender: SignerWithAddress;
 let nonOwner: SignerWithAddress;
-let accounts: SignerWithAddress[];
+
+const NAME = 'Pool Token';
+const SYMBOL = 'POOL';
 
 describe('PoolToken', () => {
     before(async () => {
         accounts = await ethers.getSigners();
-    });
 
-    beforeEach(async () => {
-        poolToken = await Contracts.PoolToken.deploy('POOL', 'POOL');
         owner = accounts[0];
         nonOwner = accounts[1];
         spender = accounts[2];
     });
 
+    beforeEach(async () => {
+        reserveToken = await Contracts.TestStandardToken.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
+    });
+
+    describe('construction', () => {
+        it('should be properly initialized', async () => {
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            expect(await poolToken.name()).to.equal(NAME);
+            expect(await poolToken.symbol()).to.equal(SYMBOL);
+            expect(await poolToken.totalSupply()).to.equal(BigNumber.from(0));
+            expect(await poolToken.baseToken()).to.equal(reserveToken.address);
+        });
+
+        it('should revert when initialized with an invalid base token', async () => {
+            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, ZERO_ADDRESS)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+    });
+
     describe('minting', () => {
+        beforeEach(async () => {
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+        });
+
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
             await expect(poolToken.mint(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
                 'ERR_INVALID_EXTERNAL_ADDRESS'
@@ -52,7 +78,6 @@ describe('PoolToken', () => {
     });
 
     describe('permitting', () => {
-        const NAME = 'Bancor';
         const VERSION = '1';
         const HARDHAT_CHAIN_ID = 31337;
         const PERMIT_TYPE: 'EIP712Domain' | 'Permit' = 'Permit';
@@ -93,8 +118,8 @@ describe('PoolToken', () => {
             verifyingContract: string,
             owner: string,
             spender: string,
-            amount: number,
-            nonce: number,
+            amount: BigNumberish,
+            nonce: BigNumberish,
             deadline: BigNumberish = MAX_UINT256.toString()
         ) => ({
             primaryType: PERMIT_TYPE,
@@ -104,7 +129,15 @@ describe('PoolToken', () => {
         });
 
         beforeEach(async () => {
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+
             await poolToken.mint(sender, BigNumber.from(10000));
+        });
+
+        it('should have the correct domain separator', async () => {
+            expect(await poolToken.DOMAIN_SEPARATOR()).to.equal(
+                await domainSeparator(NAME, VERSION, HARDHAT_CHAIN_ID, poolToken.address)
+            );
         });
 
         it('should permit', async function () {
