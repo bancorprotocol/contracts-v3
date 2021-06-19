@@ -17,7 +17,7 @@ import "./ERC20Burnable.sol";
  * @dev This contract implements a mintable, burnable, and EIP2612 signed approvals
  */
 contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
-    IReserveToken private immutable _baseToken;
+    IReserveToken private immutable _baseReserveToken;
 
     /**
      * @dev initializes a new PoolToken contract
@@ -25,16 +25,16 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     constructor(
         string memory name,
         string memory symbol,
-        IReserveToken initBaseToken
-    ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initBaseToken)) {
-        _baseToken = initBaseToken;
+        IReserveToken initBaseReserveToken
+    ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initBaseReserveToken)) {
+        _baseReserveToken = initBaseReserveToken;
     }
 
     /**
-     * @dev returns the address of the base token
+     * @dev returns the address of the base reserve token
      */
-    function baseToken() external view returns (IReserveToken) {
-        return _baseToken;
+    function baseReserveToken() external view returns (IReserveToken) {
+        return _baseReserveToken;
     }
 
     /**

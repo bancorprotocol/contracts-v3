@@ -43,10 +43,10 @@ describe('PoolToken', () => {
             expect(await poolToken.name()).to.equal(NAME);
             expect(await poolToken.symbol()).to.equal(SYMBOL);
             expect(await poolToken.totalSupply()).to.equal(BigNumber.from(0));
-            expect(await poolToken.baseToken()).to.equal(reserveToken.address);
+            expect(await poolToken.baseReserveToken()).to.equal(reserveToken.address);
         });
 
-        it('should revert when initialized with an invalid base token', async () => {
+        it('should revert when initialized with an invalid base reserve token', async () => {
             await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, ZERO_ADDRESS)).to.be.revertedWith(
                 'ERR_INVALID_ADDRESS'
             );
