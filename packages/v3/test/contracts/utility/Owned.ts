@@ -2,12 +2,9 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-<<<<<<< HEAD:packages/v3/test/contracts/utility/Owned.ts
-=======
 
 import Contracts from 'components/Contracts';
 
->>>>>>> cc856fc74e07c9a65b087c48297db6d1ebfa239c:packages/v3/test/utility/Owned.ts
 import { Owned } from 'typechain';
 
 let contract: Owned;
