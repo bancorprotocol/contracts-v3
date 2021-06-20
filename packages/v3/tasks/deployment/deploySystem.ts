@@ -1,23 +1,29 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { loadConfig, deploy as deployFct, execute as executeFct } from '../utils';
+import { deploy, execute } from '../utils';
 import { Signer } from '@ethersproject/abstract-signer';
 import { defaultParam, getDefaultParams, taskOverride } from 'components/Tasks';
-import { DeploymentConfig } from 'components/Types';
+import { DeploymentConfig, SystemConfig } from 'components/Types';
+import Contracts from 'components/Contracts';
 
 export const deploySystem = async (
     signer: Signer,
     config: DeploymentConfig,
-    overrides: taskOverride,
-    deploy = deployFct,
-    execute = executeFct
-) => {};
+    overrides: taskOverride
+): Promise<SystemConfig> => {
+    const tokenHolder = await deploy('tokenHolder', Contracts.TokenHolder.deploy());
 
-export default async (
-    args: defaultParam & {
-        configPath: string;
-    },
-    hre: HardhatRuntimeEnvironment
-) => {
-    const { signer, gasPrice } = await getDefaultParams(hre, args);
-    const config = await loadConfig(args.configPath);
+
+
+    return {
+        tokenHolder: {
+            address: tokenHolder.address,
+            roles: 
+        }
+    };
+};
+
+export default async (args: defaultParam, hre: HardhatRuntimeEnvironment) => {
+    const { signer, config, overrides } = await getDefaultParams<DeploymentConfig>(hre, args);
+
+    await deploySystem(signer, config, overrides);
 };

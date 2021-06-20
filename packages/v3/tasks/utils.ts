@@ -56,7 +56,3 @@ export const saveConfig = async (fileName: string, obj: Object) => {
         JSON.stringify(obj, null, 4)
     );
 };
-
-export const loadConfig = async <C>(path: string): Promise<C> => {
-    return JSON.parse(fs.readFileSync(path, 'utf8')) as C;
-};

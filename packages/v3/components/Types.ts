@@ -1,3 +1,24 @@
-export type DeploymentConfig = {};
+// Token
+export type token = {};
 
-export type SystemConfig = {};
+// Pools
+export type pool = {};
+export type poolToDeploy = {};
+
+export type ROLES = 'ALPHA' | 'BETA';
+
+export type deployedContract = {
+    address: string;
+};
+
+export type tokenHolder = {
+    roles: ROLES[];
+};
+
+export type DeploymentConfig = {
+    tokenHolder: tokenHolder;
+};
+
+export type SystemConfig = {
+    tokenHolder: tokenHolder & deployedContract;
+};
