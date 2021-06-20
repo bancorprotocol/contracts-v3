@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
 import Contracts from 'components/Contracts';
-import { NATIVE_TOKEN_ADDRESS } from './Constants';
+import { NATIVE_TOKEN_ADDRESS } from '../../../components/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export const getBalance = async (token: string | { address: string }, wallet: string | SignerWithAddress) => {

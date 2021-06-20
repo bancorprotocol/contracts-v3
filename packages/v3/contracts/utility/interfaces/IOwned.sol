@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 /**
  * @dev Owned interface
@@ -7,7 +7,7 @@ pragma solidity 0.6.12;
 interface IOwned {
     function owner() external view returns (address);
 
-    function transferOwnership(address newOwner) external;
+    function transferOwnership(address ownerCandidate) external;
 
     function acceptOwnership() external;
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.6.12;
+pragma solidity 0.7.6;
 
 import "./interfaces/IOwned.sol";
 
@@ -18,19 +18,19 @@ contract Owned is IOwned {
     /**
      * @dev initializes a new Owned instance
      */
-    constructor() public {
+    constructor() {
         _owner = msg.sender;
     }
 
     // allows execution by the owner only
-    modifier ownerOnly {
-        _ownerOnly();
+    modifier onlyOwner {
+        _onlyOwner();
 
         _;
     }
 
     // error message binary size optimization
-    function _ownerOnly() private view {
+    function _onlyOwner() private view {
         require(msg.sender == _owner, "ERR_ACCESS_DENIED");
     }
 
@@ -43,10 +43,10 @@ contract Owned is IOwned {
      *
      * note the new owner still needs to accept the transfer
      */
-    function transferOwnership(address newOwner) public override ownerOnly {
-        require(newOwner != _owner, "ERR_SAME_OWNER");
+    function transferOwnership(address ownerCandidate) public override onlyOwner {
+        require(ownerCandidate != _owner, "ERR_SAME_OWNER");
 
-        _newOwner = newOwner;
+        _newOwner = ownerCandidate;
     }
 
     /**
