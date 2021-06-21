@@ -21,13 +21,14 @@ let reserveToken: TestStandardToken;
 let accounts: SignerWithAddress[];
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
+let admin: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
 describe('BancorVault', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        [deployer, sender, proxyAdmin] = accounts;
+        [deployer, sender, admin, proxyAdmin] = accounts;
     });
 
     beforeEach(async () => {
@@ -150,13 +151,27 @@ describe('BancorVault', () => {
                             );
                             expect(await getBalance(token, vault.address)).to.equal(vaultBalance.sub(remainder));
                         });
+
+                        context('when paused', () => {
+                            beforeEach(async () => {
+                                await vault.connect(deployer).grantRole(ROLE_ADMIN, admin.address);
+
+                                expect(await vault.isPaused()).to.be.false;
+
+                                await vault.connect(admin).pause();
+
+                                expect(await vault.isPaused()).to.be.true;
+                            });
+
+                            testWithdrawRestricted('Pausable: paused');
+                        });
                     };
 
-                    const testWithdrawRestricted = () => {
+                    const testWithdrawRestricted = (reason: string = 'ERR_ACCESS_DENIED') => {
                         it('should not be able to withdraw any tokens', async () => {
                             await expect(
                                 vault.connect(sender).withdrawTokens(token.address, sender.address, amount)
-                            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                            ).to.be.revertedWith(reason);
                         });
                     };
 
