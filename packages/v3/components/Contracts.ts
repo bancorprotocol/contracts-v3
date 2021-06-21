@@ -4,15 +4,23 @@ import { Signer } from '@ethersproject/abstract-signer';
 
 import {
     ERC20,
-    ERC20Burnable,
+    ERC20__factory,
     Owned,
+    Owned__factory,
     PoolToken,
+    PoolToken__factory,
     TestERC20Burnable,
+    TestERC20Burnable__factory,
     TestMathEx,
+    TestMathEx__factory,
     TestReserveToken,
+    TestReserveToken__factory,
     TestSafeERC20Ex,
+    TestSafeERC20Ex__factory,
     TestStandardToken,
-    TokenHolder
+    TestStandardToken__factory,
+    TokenHolder,
+    TokenHolder__factory
 } from 'typechain';
 
 // Replace the type of the last param of a function
@@ -75,27 +83,32 @@ const attachOnly = <C extends Contract>(contractName: string, passedSigner?: Sig
     };
 };
 
-const getDeployOrAttach = <C extends Contract>(contractName: string, signer?: Signer) => {
-    type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
-    const alpha = ethers.getContractFactory(contractName);
-
-    return deployOrAttach<C, ThenArg<typeof alpha>>(contractName, signer);
-};
-
 const getContracts = (signer?: Signer) => {
     return {
         // Link every contract to a default signer
         connect: (signer: Signer) => getContracts(signer),
 
-        ERC20: getDeployOrAttach<ERC20 & ContractName>('ERC20', signer),
-        Owned: getDeployOrAttach<Owned & ContractName>('Owned', signer),
-        PoolToken: getDeployOrAttach<PoolToken & ContractName>('PoolToken', signer),
-        TestERC20Burnable: getDeployOrAttach<TestERC20Burnable & ContractName>('TestERC20Burnable', signer),
-        TestMathEx: getDeployOrAttach<TestMathEx & ContractName>('TestMathEx', signer),
-        TestReserveToken: getDeployOrAttach<TestReserveToken & ContractName>('TestReserveToken', signer),
-        TestSafeERC20Ex: getDeployOrAttach<TestSafeERC20Ex & ContractName>('TestSafeERC20Ex', signer),
-        TestStandardToken: getDeployOrAttach<TestStandardToken & ContractName>('TestStandardToken', signer),
-        TokenHolder: getDeployOrAttach<TokenHolder & ContractName>('TokenHolder', signer)
+        ERC20: deployOrAttach<ERC20 & ContractName, ERC20__factory>('ERC20', signer),
+        Owned: deployOrAttach<Owned & ContractName, Owned__factory>('Owned', signer),
+        PoolToken: deployOrAttach<PoolToken & ContractName, PoolToken__factory>('PoolToken', signer),
+        TestERC20Burnable: deployOrAttach<TestERC20Burnable & ContractName, TestERC20Burnable__factory>(
+            'TestERC20Burnable',
+            signer
+        ),
+        TestMathEx: deployOrAttach<TestMathEx & ContractName, TestMathEx__factory>('TestMathEx', signer),
+        TestReserveToken: deployOrAttach<TestReserveToken & ContractName, TestReserveToken__factory>(
+            'TestReserveToken',
+            signer
+        ),
+        TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex & ContractName, TestSafeERC20Ex__factory>(
+            'TestSafeERC20Ex',
+            signer
+        ),
+        TestStandardToken: deployOrAttach<TestStandardToken & ContractName, TestStandardToken__factory>(
+            'TestStandardToken',
+            signer
+        ),
+        TokenHolder: deployOrAttach<TokenHolder & ContractName, TokenHolder__factory>('TokenHolder', signer)
     };
 };
 
