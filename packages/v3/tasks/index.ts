@@ -1,2 +1,2 @@
-import './deployment';
 import './management';
+import './migration';

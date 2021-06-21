@@ -50,9 +50,9 @@ export const execute: executeFct = async (txExecution: Promise<ContractTransacti
 };
 
 // File management
-export const saveConfig = async (fileName: string, obj: Object) => {
+export const saveSystem = async (obj: Object) => {
     await fs.promises.writeFile(
-        path.join(hre.config.paths.root, './deployments-data/', fileName + '.' + hre.network.name + '.json'),
+        path.join(hre.config.paths.root, './deployments/', hre.network.name, 'system.json'),
         JSON.stringify(obj, null, 4)
     );
 };

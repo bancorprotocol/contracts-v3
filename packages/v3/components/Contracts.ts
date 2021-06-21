@@ -12,7 +12,8 @@ import {
     TestReserveToken,
     TestSafeERC20Ex,
     TestStandardToken,
-    TokenHolder
+    TokenHolder,
+    TokenHolder__factory
 } from 'typechain';
 
 // Replace the type of the last param of a function
@@ -95,7 +96,7 @@ const getContracts = (signer?: Signer) => {
         TestReserveToken: getDeployOrAttach<TestReserveToken & ContractName>('TestReserveToken', signer),
         TestSafeERC20Ex: getDeployOrAttach<TestSafeERC20Ex & ContractName>('TestSafeERC20Ex', signer),
         TestStandardToken: getDeployOrAttach<TestStandardToken & ContractName>('TestStandardToken', signer),
-        TokenHolder: getDeployOrAttach<TokenHolder & ContractName>('TokenHolder', signer)
+        TokenHolder: deployOrAttach<TokenHolder & ContractName, TokenHolder__factory>('TokenHolder', signer)
     };
 };
 

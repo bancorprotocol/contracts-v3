@@ -4,6 +4,7 @@ import { task, types } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import { BigNumber, BigNumberish } from 'ethers';
+import Contracts from './Contracts';
 
 // This is meant to go away as soon as hardhat implements this https://github.com/nomiclabs/hardhat/issues/1518
 
@@ -25,8 +26,10 @@ export const lazyAction = (pathToAction: string) => {
 
 // Task
 
+const CONFIG_NETWORK = {} as const;
+
 const DEPLOYMENT_FILE_NAME = 'deployment.config.json';
-const SYSTEM_FILE_NAME = 'system.config.json';
+const SYSTEM_FILE_NAME = 'system.json';
 
 export type taskOverride = { gasPrice?: BigNumberish };
 export type defaultParam = {
@@ -49,17 +52,21 @@ export const getDefaultParams = async <C>(
     args: defaultParam,
     isFreshDeployment = false
 ) => {
+    const fileName = isFreshDeployment ? DEPLOYMENT_FILE_NAME : SYSTEM_FILE_NAME;
+
+    // Signer check
     const signer = args.ledger
         ? new LedgerSigner(hre.ethers.provider, 'hid', args.ledgerPath)
         : (await hre.ethers.getSigners())[0];
 
-    if (args.gasPrice === 0) {
+    // Overrides check
+    let overrides: taskOverride = {};
+
+    if (args.gasPrice === 0 && hre.network.name !== 'hardhat') {
         throw new Error("Gas Price shouldn't be equal to 0");
     }
+    overrides.gasPrice = args.gasPrice === 0 ? undefined : BigNumber.from(args.gasPrice);
 
-    const gasPrice = BigNumber.from(args.gasPrice);
-
-    const fileName = isFreshDeployment ? DEPLOYMENT_FILE_NAME : SYSTEM_FILE_NAME;
     const pathToFile = path.join(hre.config.paths.root, 'deployments', hre.network.name, fileName);
 
     let config: C;
@@ -68,10 +75,6 @@ export const getDefaultParams = async <C>(
     } catch {
         throw new Error(`There is an issue loading the config file at path; ${pathToFile}.`);
     }
-
-    const overrides: taskOverride = {
-        gasPrice: gasPrice
-    };
 
     return {
         signer,
