@@ -47,10 +47,9 @@ export type Contract = OldContract & ContractName;
 
 const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     type ParamsTypes = ReplaceLast<F['deploy'], Overrides>;
-    type C = AsyncReturnType<F['deploy']> & ContractName;
 
     return {
-        deploy: async (...args: Parameters<ParamsTypes>): Promise<C> => {
+        deploy: async (...args: Parameters<ParamsTypes>): Promise<AsyncReturnType<F['deploy']> & ContractName> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
 
             const deployParamLength = (await ethers.getContractFactory(contractName)).deploy.length;
@@ -65,31 +64,32 @@ const deployOrAttach = <F extends ContractFactory>(contractName: string, passedS
                 );
                 delete overrides.from;
 
-                const contract = (await contractFactory.deploy(...args, overrides)) as C;
+                const contract = (await contractFactory.deploy(...args, overrides)) as AsyncReturnType<F['deploy']> &
+                    ContractName;
                 contract.__contractName__ = contractName;
                 return contract;
             }
             const contract = (await (
                 await ethers.getContractFactory(contractName, defaultSigner)
-            ).deploy(...args)) as C;
+            ).deploy(...args)) as AsyncReturnType<F['deploy']> & ContractName;
             contract.__contractName__ = contractName;
             return contract;
         },
-        attach: attachOnly<C>(contractName, passedSigner).attach
+        attach: attachOnly<F>(contractName, passedSigner).attach
     };
 };
 
-const attachOnly = <C>(contractName: string, passedSigner?: Signer) => {
+const attachOnly = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     return {
-        attach: async (address: string, signer?: Signer): Promise<C> => {
+        attach: async (address: string, signer?: Signer): Promise<AsyncReturnType<F['deploy']> & ContractName> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
             const contract = (await ethers.getContractAt(
                 contractName,
                 address,
                 signer ? signer : defaultSigner
-            )) as unknown as Contract;
+            )) as AsyncReturnType<F['deploy']> & ContractName;
             contract.__contractName__ = contractName;
-            return contract as unknown as C;
+            return contract;
         }
     };
 };
