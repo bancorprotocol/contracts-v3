@@ -3,6 +3,8 @@ import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } f
 import { Signer } from '@ethersproject/abstract-signer';
 
 import {
+    BancorVault,
+    BancorVault__factory,
     ERC20,
     ERC20__factory,
     Owned,
@@ -19,6 +21,8 @@ import {
     TestSafeERC20Ex__factory,
     TestStandardToken,
     TestStandardToken__factory,
+    TransparentUpgradeableProxy,
+    TransparentUpgradeableProxy__factory
 } from 'typechain';
 
 // Replace the type of the last param of a function
@@ -86,6 +90,7 @@ const getContracts = (signer?: Signer) => {
         // Link every contract to a default signer
         connect: (signer: Signer) => getContracts(signer),
 
+        BancorVault: deployOrAttach<BancorVault & ContractName, BancorVault__factory>('BancorVault', signer),
         ERC20: deployOrAttach<ERC20 & ContractName, ERC20__factory>('ERC20', signer),
         Owned: deployOrAttach<Owned & ContractName, Owned__factory>('Owned', signer),
         PoolToken: deployOrAttach<PoolToken & ContractName, PoolToken__factory>('PoolToken', signer),
@@ -106,6 +111,10 @@ const getContracts = (signer?: Signer) => {
             'TestStandardToken',
             signer
         ),
+        TransparentUpgradeableProxy: deployOrAttach<
+            TransparentUpgradeableProxy & ContractName,
+            TransparentUpgradeableProxy__factory
+        >('TransparentUpgradeableProxy', signer)
     };
 };
 
