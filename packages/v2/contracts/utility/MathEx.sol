@@ -5,19 +5,17 @@ pragma solidity 0.6.12;
  * @dev This library provides a set of complex math operations.
  */
 library MathEx {
-    uint256 private constant MAX_EXP_BIT_LEN = 4;
-    uint256 private constant MAX_EXP = 2**MAX_EXP_BIT_LEN - 1;
     uint256 private constant MAX_UINT256 = uint256(-1);
 
     /**
      * @dev returns the largest integer smaller than or equal to the square root of a positive integer
      */
-    function floorSqrt(uint256 num) internal pure returns (uint256) {
-        uint256 x = num / 2 + 1;
-        uint256 y = (x + num / x) / 2;
+    function floorSqrt(uint256 n) internal pure returns (uint256) {
+        uint256 x = n / 2 + 1;
+        uint256 y = (x + n / x) / 2;
         while (x > y) {
             x = y;
-            y = (x + num / x) / 2;
+            y = (x + n / x) / 2;
         }
         return x;
     }
@@ -25,10 +23,9 @@ library MathEx {
     /**
      * @dev returns the smallest integer larger than or equal to the square root of a positive integer
      */
-    function ceilSqrt(uint256 num) internal pure returns (uint256) {
-        uint256 x = floorSqrt(num);
-
-        return x * x == num ? x : x + 1;
+    function ceilSqrt(uint256 n) internal pure returns (uint256) {
+        uint256 x = floorSqrt(n);
+        return x * x == n ? x : x + 1;
     }
 
     /**
