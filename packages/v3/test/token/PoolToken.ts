@@ -28,9 +28,7 @@ describe('PoolToken', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        owner = accounts[0];
-        nonOwner = accounts[1];
-        spender = accounts[2];
+        [owner, nonOwner, spender] = accounts;
     });
 
     beforeEach(async () => {
