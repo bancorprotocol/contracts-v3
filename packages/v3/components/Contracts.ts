@@ -19,8 +19,6 @@ import {
     TestSafeERC20Ex__factory,
     TestStandardToken,
     TestStandardToken__factory,
-    TokenHolder,
-    TokenHolder__factory
 } from 'typechain';
 
 // Replace the type of the last param of a function
@@ -108,7 +106,6 @@ const getContracts = (signer?: Signer) => {
             'TestStandardToken',
             signer
         ),
-        TokenHolder: deployOrAttach<TokenHolder & ContractName, TokenHolder__factory>('TokenHolder', signer)
     };
 };
 
