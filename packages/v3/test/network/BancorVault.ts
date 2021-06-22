@@ -223,7 +223,7 @@ describe('BancorVault', () => {
         });
     };
 
-    context('as a proxy', () => {
+    context('as a regular contract ', () => {
         testVault(async (networkTokenAddress) => {
             vault = await Contracts.BancorVault.deploy(networkTokenAddress);
             await vault.initialize();
@@ -232,7 +232,7 @@ describe('BancorVault', () => {
         });
     });
 
-    context('as a regular contract', () => {
+    context('as a proxy', () => {
         testVault(async (networkTokenAddress) => {
             const logic = await Contracts.BancorVault.deploy(networkTokenAddress);
 
