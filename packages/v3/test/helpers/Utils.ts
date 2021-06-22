@@ -43,7 +43,7 @@ export const transfer = async (
     const targetAddress = typeof target === 'string' ? target : target.address;
     const tokenAddress = token.address;
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
-        return sourceAccount.sendTransaction({ to: targetAddress, value: amount });
+        return await sourceAccount.sendTransaction({ to: targetAddress, value: amount });
     }
     return await (await Contracts.TestERC20Token.attach(tokenAddress))
         .connect(sourceAccount)
