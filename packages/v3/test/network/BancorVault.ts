@@ -221,6 +221,82 @@ describe('BancorVault', () => {
                 });
             }
         });
+
+        describe('pausing/unpausing', () => {
+            beforeEach(async () => {
+                vault = await createVault(networkToken.address);
+            });
+
+            const testPause = () => {
+                it('should pause the contract', async () => {
+                    await vault.connect(sender).pause();
+
+                    expect(await vault.isPaused()).to.be.true;
+                });
+
+                context('when paused', () => {
+                    beforeEach(async () => {
+                        await vault.connect(deployer).grantRole(ROLE_ADMIN, admin.address);
+                        await vault.connect(admin).pause();
+
+                        expect(await vault.isPaused()).to.be.true;
+                    });
+
+                    it('should unpause the contract', async () => {
+                        await vault.connect(sender).unpause();
+
+                        expect(await vault.isPaused()).to.be.false;
+                    });
+                });
+            };
+
+            const testPauseRestricted = () => {
+                it('should revert when a non-admin is attempting to pause', async () => {
+                    await expect(vault.connect(sender).pause()).to.be.revertedWith('ERR_ACCESS_DENIED');
+                });
+
+                context('when paused', () => {
+                    beforeEach(async () => {
+                        await vault.connect(deployer).grantRole(ROLE_ADMIN, admin.address);
+                        await vault.connect(admin).pause();
+
+                        expect(await vault.isPaused()).to.be.true;
+                    });
+
+                    it('should revert when a non-admin is attempting unpause', async () => {
+                        await expect(vault.connect(sender).unpause()).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    });
+                });
+            };
+
+            context('admin', () => {
+                beforeEach(async () => {
+                    await vault.connect(deployer).grantRole(ROLE_ADMIN, sender.address);
+                });
+
+                testPause();
+            });
+
+            context('regular account', () => {
+                testPauseRestricted();
+            });
+
+            context('asset manager', () => {
+                beforeEach(async () => {
+                    await vault.connect(deployer).grantRole(ROLE_ASSET_MANAGER, sender.address);
+                });
+
+                testPauseRestricted();
+            });
+
+            context('network token manager', () => {
+                beforeEach(async () => {
+                    await vault.connect(deployer).grantRole(ROLE_NETWORK_TOKEN_MANAGER, sender.address);
+                });
+
+                testPauseRestricted();
+            });
+        });
     };
 
     context('as a regular contract ', () => {
