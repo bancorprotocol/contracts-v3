@@ -179,7 +179,7 @@ describe('BancorVault', () => {
                         );
                     });
 
-                    it('should not revert when withdrawing 0 tokens', async () => {
+                    it('should allow withdrawing 0 tokens', async () => {
                         const prevVaultBalance = await getBalance(token, vault.address);
 
                         await vault.withdrawTokens(token.address, target.address, BigNumber.from(0));
