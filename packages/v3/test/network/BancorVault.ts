@@ -7,8 +7,9 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import Contracts from 'components/Contracts';
 import { BancorVault, TestERC20Token } from 'typechain';
 
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, roles } from 'test/helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
+import { expectAccessList, roles } from 'test/helpers/AccessControl';
 
 const {
     BancorVault: { ROLE_ADMIN, ROLE_ASSET_MANAGER, ROLE_NETWORK_TOKEN_MANAGER }
@@ -42,17 +43,25 @@ describe('BancorVault', () => {
             it('should be properly initialized', async () => {
                 vault = await createVault(networkToken.address);
 
-                expect(await vault.getRoleMemberCount(ROLE_ADMIN)).to.equal(BigNumber.from(1));
-                expect(await vault.getRoleMemberCount(ROLE_ASSET_MANAGER)).to.equal(BigNumber.from(1));
-                expect(await vault.getRoleMemberCount(ROLE_NETWORK_TOKEN_MANAGER)).to.equal(BigNumber.from(0));
-
-                expect(await vault.getRoleAdmin(ROLE_ADMIN)).to.equal(ROLE_ADMIN);
-                expect(await vault.getRoleAdmin(ROLE_ASSET_MANAGER)).to.equal(ROLE_ASSET_MANAGER);
-                expect(await vault.getRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER)).to.equal(ROLE_ASSET_MANAGER);
-
-                expect(await vault.hasRole(ROLE_ADMIN, deployer.address)).to.be.true;
-                expect(await vault.hasRole(ROLE_ASSET_MANAGER, deployer.address)).to.be.true;
-                expect(await vault.hasRole(ROLE_NETWORK_TOKEN_MANAGER, deployer.address)).to.be.false;
+                await expectAccessList(vault, [
+                    {
+                        role: ROLE_ADMIN,
+                        adminRole: ROLE_ADMIN,
+                        initMemberCount: 1,
+                        initialMember: deployer.address
+                    },
+                    {
+                        role: ROLE_ASSET_MANAGER,
+                        adminRole: ROLE_ASSET_MANAGER,
+                        initMemberCount: 1,
+                        initialMember: deployer.address
+                    },
+                    {
+                        role: ROLE_NETWORK_TOKEN_MANAGER,
+                        adminRole: ROLE_ASSET_MANAGER,
+                        initMemberCount: 0
+                    }
+                ]);
             });
 
             it('should revert when initialized with an invalid reserve token', async () => {
