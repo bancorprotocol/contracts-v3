@@ -107,19 +107,9 @@ describe('BancorVault', () => {
                         it('should revert when trying to withdraw more tokens than the vault holds', async () => {
                             const amountToWithdraw = amount.add(BigNumber.from(100));
 
-                            if (symbol !== 'ETH') {
-                                await expect(
-                                    vault
-                                        .connect(sender)
-                                        .withdrawTokens(token.address, target.address, amountToWithdraw)
-                                ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
-                            } else {
-                                await expect(
-                                    vault
-                                        .connect(sender)
-                                        .withdrawTokens(token.address, target.address, amountToWithdraw)
-                                ).to.be.reverted;
-                            }
+                            await expect(
+                                vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
+                            ).to.be.revertedWith(symbol !== 'ETH' ? 'ERC20: transfer amount exceeds balance' : '');
                         });
 
                         it('should be able to withdraw any tokens', async () => {
