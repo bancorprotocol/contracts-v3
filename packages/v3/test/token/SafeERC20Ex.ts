@@ -6,12 +6,12 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
 
-import { TestSafeERC20Ex, TestStandardToken } from 'typechain';
+import { TestSafeERC20Ex, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
 let safeERC20: TestSafeERC20Ex;
-let token: TestStandardToken;
+let token: TestERC20Token;
 
 let accounts: SignerWithAddress[];
 let spender: SignerWithAddress;
@@ -28,7 +28,7 @@ describe('SafeERC20Ex', () => {
         safeERC20 = await Contracts.TestSafeERC20Ex.deploy();
         sender = safeERC20.address;
 
-        token = await Contracts.TestStandardToken.deploy('ERC', 'ERC1', TOTAL_SUPPLY);
+        token = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', TOTAL_SUPPLY);
 
         await token.transfer(safeERC20.address, TOTAL_SUPPLY.div(BigNumber.from(2)));
     });

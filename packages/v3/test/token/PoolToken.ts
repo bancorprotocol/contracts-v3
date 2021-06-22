@@ -8,13 +8,13 @@ import Wallet from 'ethereumjs-wallet';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { PoolToken, TestStandardToken } from 'typechain';
+import { PoolToken, TestERC20Token } from 'typechain';
 
 import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
 import { latest, duration } from 'test/helpers/Time';
 
 let poolToken: PoolToken;
-let reserveToken: TestStandardToken;
+let reserveToken: TestERC20Token;
 
 let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
@@ -32,7 +32,7 @@ describe('PoolToken', () => {
     });
 
     beforeEach(async () => {
-        reserveToken = await Contracts.TestStandardToken.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
     });
 
     describe('construction', () => {

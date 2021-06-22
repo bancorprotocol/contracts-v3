@@ -4,11 +4,11 @@ import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { TestStandardToken } from 'typechain';
+import { TestERC20Token } from 'typechain';
 
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 
-export type TokenWithAddress = TestStandardToken | { address: string };
+export type TokenWithAddress = TestERC20Token | { address: string };
 
 export const getTransactionCost = async (res: ContractTransaction) => {
     const cumulativeGasUsed = (await res.wait()).cumulativeGasUsed;
@@ -22,7 +22,7 @@ export const getBalance = async (token: TokenWithAddress, account: string | Sign
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
         return ethers.provider.getBalance(accountAddress);
     }
-    return await (await Contracts.TestStandardToken.attach(tokenAddress)).balanceOf(accountAddress);
+    return await (await Contracts.TestERC20Token.attach(tokenAddress)).balanceOf(accountAddress);
 };
 
 export const getBalances = async (tokens: TokenWithAddress[], account: string | SignerWithAddress) => {
@@ -45,7 +45,7 @@ export const transfer = async (
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
         return sourceAccount.sendTransaction({ to: targetAddress, value: amount });
     }
-    return await (await Contracts.TestStandardToken.attach(tokenAddress))
+    return await (await Contracts.TestERC20Token.attach(tokenAddress))
         .connect(sourceAccount)
         .transfer(targetAddress, amount);
 };

@@ -5,7 +5,7 @@ import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { BancorVault, TestStandardToken } from 'typechain';
+import { BancorVault, TestERC20Token } from 'typechain';
 
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, roles } from 'test/helpers/Constants';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
@@ -15,8 +15,8 @@ const {
 } = roles;
 
 let vault: BancorVault;
-let networkToken: TestStandardToken;
-let reserveToken: TestStandardToken;
+let networkToken: TestERC20Token;
+let reserveToken: TestERC20Token;
 
 let accounts: SignerWithAddress[];
 let deployer: SignerWithAddress;
@@ -33,8 +33,8 @@ describe('BancorVault', () => {
     });
 
     beforeEach(async () => {
-        networkToken = await Contracts.TestStandardToken.deploy('BNT', 'BNT', BigNumber.from(1_000_000_000));
-        reserveToken = await Contracts.TestStandardToken.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        networkToken = await Contracts.TestERC20Token.deploy('BNT', 'BNT', BigNumber.from(1_000_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
     });
 
     const testVault = (createVault: (networkTokenAddress: string) => Promise<BancorVault>) => {
