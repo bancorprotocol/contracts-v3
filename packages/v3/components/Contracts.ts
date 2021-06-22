@@ -4,14 +4,21 @@ import { Signer } from '@ethersproject/abstract-signer';
 
 import {
     ERC20,
-    ERC20Burnable,
+    ERC20__factory,
     Owned,
+    Owned__factory,
     PoolToken,
+    PoolToken__factory,
     TestERC20Burnable,
+    TestERC20Burnable__factory,
     TestMathEx,
+    TestMathEx__factory,
     TestReserveToken,
+    TestReserveToken__factory,
     TestSafeERC20Ex,
+    TestSafeERC20Ex__factory,
     TestStandardToken,
+    TestStandardToken__factory,
     TokenHolder,
     TokenHolder__factory
 } from 'typechain';
@@ -27,16 +34,22 @@ type ReplaceLast<F, TReplace> = F extends (...args: infer T) => infer R
     ? (...args: ReplaceLastParam<T, TReplace>) => R
     : never;
 
+export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
+    ? U
+    : T extends (...args: any) => infer U
+    ? U
+    : any;
+
 export type Overrides = OldOverrides & { from?: Signer };
 
-export type ContractName = { __contractName__: string; alpha: string };
+export type ContractName = { __contractName__: string };
 export type Contract = OldContract & ContractName;
 
-const deployOrAttach = <C extends Contract, F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
+const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     type ParamsTypes = ReplaceLast<F['deploy'], Overrides>;
 
     return {
-        deploy: async (...args: Parameters<ParamsTypes>): Promise<C> => {
+        deploy: async (...args: Parameters<ParamsTypes>): Promise<AsyncReturnType<F['deploy']> & ContractName> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
 
             const deployParamLength = (await ethers.getContractFactory(contractName)).deploy.length;
@@ -51,36 +64,34 @@ const deployOrAttach = <C extends Contract, F extends ContractFactory>(contractN
                 );
                 delete overrides.from;
 
-                const contract = (await contractFactory.deploy(...args, overrides)) as C;
+                const contract = (await contractFactory.deploy(...args, overrides)) as AsyncReturnType<F['deploy']> &
+                    ContractName;
                 contract.__contractName__ = contractName;
                 return contract;
             }
             const contract = (await (
                 await ethers.getContractFactory(contractName, defaultSigner)
-            ).deploy(...args)) as C;
+            ).deploy(...args)) as AsyncReturnType<F['deploy']> & ContractName;
             contract.__contractName__ = contractName;
             return contract;
         },
-        attach: attachOnly<C>(contractName, passedSigner).attach
+        attach: attachOnly<F>(contractName, passedSigner).attach
     };
 };
 
-const attachOnly = <C extends Contract>(contractName: string, passedSigner?: Signer) => {
+const attachOnly = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     return {
-        attach: async (address: string, signer?: Signer): Promise<C> => {
+        attach: async (address: string, signer?: Signer): Promise<AsyncReturnType<F['deploy']> & ContractName> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
-            const contract = (await ethers.getContractAt(contractName, address, signer ? signer : defaultSigner)) as C;
+            const contract = (await ethers.getContractAt(
+                contractName,
+                address,
+                signer ? signer : defaultSigner
+            )) as AsyncReturnType<F['deploy']> & ContractName;
             contract.__contractName__ = contractName;
             return contract;
         }
     };
-};
-
-const getDeployOrAttach = <C extends Contract>(contractName: string, signer?: Signer) => {
-    type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
-    const alpha = ethers.getContractFactory(contractName);
-
-    return deployOrAttach<C, ThenArg<typeof alpha>>(contractName, signer);
 };
 
 const getContracts = (signer?: Signer) => {
@@ -88,15 +99,15 @@ const getContracts = (signer?: Signer) => {
         // Link every contract to a default signer
         connect: (signer: Signer) => getContracts(signer),
 
-        ERC20: getDeployOrAttach<ERC20 & ContractName>('ERC20', signer),
-        Owned: getDeployOrAttach<Owned & ContractName>('Owned', signer),
-        PoolToken: getDeployOrAttach<PoolToken & ContractName>('PoolToken', signer),
-        TestERC20Burnable: getDeployOrAttach<TestERC20Burnable & ContractName>('TestERC20Burnable', signer),
-        TestMathEx: getDeployOrAttach<TestMathEx & ContractName>('TestMathEx', signer),
-        TestReserveToken: getDeployOrAttach<TestReserveToken & ContractName>('TestReserveToken', signer),
-        TestSafeERC20Ex: getDeployOrAttach<TestSafeERC20Ex & ContractName>('TestSafeERC20Ex', signer),
-        TestStandardToken: getDeployOrAttach<TestStandardToken & ContractName>('TestStandardToken', signer),
-        TokenHolder: deployOrAttach<TokenHolder & ContractName, TokenHolder__factory>('TokenHolder', signer)
+        ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
+        Owned: deployOrAttach<Owned__factory>('Owned', signer),
+        PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
+        TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
+        TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
+        TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
+        TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
+        TestStandardToken: deployOrAttach<TestStandardToken__factory>('TestStandardToken', signer),
+        TokenHolder: deployOrAttach<TokenHolder__factory>('TokenHolder', signer)
     };
 };
 

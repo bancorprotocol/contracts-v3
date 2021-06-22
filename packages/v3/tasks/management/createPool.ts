@@ -1,17 +1,24 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { deploy, execute, saveSystem } from '../utils';
+import { saveSystem } from '../utils';
 import { Signer } from '@ethersproject/abstract-signer';
-import { getDefaultParams, taskOverride } from 'components/Tasks';
-import { System } from 'components/Types';
+import { getDefaultParamsWithConfig, taskOverride } from 'components/Tasks';
 import { createPoolArgs } from '.';
+import { System } from 'components/Types';
 
-export const createPool = async (signer: Signer, config: System, overrides: taskOverride, poolId: string) => {
-    // @TODO
-    return config;
+export const createPool = async (signer: Signer, poolId: string, overrides: taskOverride) => {
+    console.log(`Creating pool: { ID: ${poolId} }`);
+
+    // Do something
+
+    return {};
 };
 
 export default async (args: createPoolArgs, hre: HardhatRuntimeEnvironment) => {
-    const { signer, config, overrides } = await getDefaultParams<System>(hre, args);
+    const { signer, config, overrides } = await getDefaultParamsWithConfig<System>(hre, args);
 
-    await saveSystem(await createPool(signer, config, overrides, args.poolId));
+    const pool = await createPool(signer, args.poolId, overrides);
+
+    // config.pools.add(pool);
+
+    await saveSystem(config);
 };

@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { deployOldSystem } from 'tasks/migration/deployOld';
+import { deploySystem } from 'tasks/migration/deploy';
 import { migrateSystem } from 'tasks/migration/migrate';
 
 let accounts: SignerWithAddress[];
@@ -17,7 +17,7 @@ describe('Migration', () => {
     });
 
     it('', async () => {
-        const system = await deployOldSystem(accounts[0], {}, {});
+        const system = await deploySystem(accounts[0], {}, {});
         const newSystem = await migrateSystem(accounts[0], system, {});
 
         // Do some test on newSystem
