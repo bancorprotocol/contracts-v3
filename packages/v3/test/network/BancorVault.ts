@@ -8,7 +8,7 @@ import Contracts from 'components/Contracts';
 import { BancorVault, TestStandardToken } from 'typechain';
 
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, roles } from 'test/helpers/Constants';
-import { TokenWithAddress, getTransactionCost, getBalance, transfer } from 'test/helpers/Utils';
+import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
 
 const {
     BancorVault: { ROLE_ADMIN, ROLE_ASSET_MANAGER, ROLE_NETWORK_TOKEN_MANAGER }
@@ -21,6 +21,7 @@ let reserveToken: TestStandardToken;
 let accounts: SignerWithAddress[];
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
+let target: SignerWithAddress;
 let admin: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
@@ -28,7 +29,7 @@ describe('BancorVault', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        [deployer, sender, admin, proxyAdmin] = accounts;
+        [deployer, sender, target, admin, proxyAdmin] = accounts;
     });
 
     beforeEach(async () => {
@@ -101,54 +102,42 @@ describe('BancorVault', () => {
                                 await expect(
                                     vault
                                         .connect(sender)
-                                        .withdrawTokens(token.address, sender.address, amountToWithdraw)
+                                        .withdrawTokens(token.address, target.address, amountToWithdraw)
                                 ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                             } else {
                                 await expect(
                                     vault
                                         .connect(sender)
-                                        .withdrawTokens(token.address, sender.address, amountToWithdraw)
+                                        .withdrawTokens(token.address, target.address, amountToWithdraw)
                                 ).to.be.reverted;
                             }
                         });
 
                         it('should be able to withdraw any tokens', async () => {
-                            const prevSenderBalance = await getBalance(token, sender.address);
+                            const prevTargetBalance = await getBalance(token, target.address);
                             const prevVaultBalance = await getBalance(token, vault.address);
 
                             const remainder = BigNumber.from(1);
                             const partialAmount = amount.sub(remainder);
                             let res = await vault
                                 .connect(sender)
-                                .withdrawTokens(token.address, sender.address, partialAmount);
+                                .withdrawTokens(token.address, target.address, partialAmount);
                             await expect(res)
                                 .to.emit(vault, 'TokensWithdrawn')
-                                .withArgs(token.address, sender.address, partialAmount);
+                                .withArgs(token.address, sender.address, target.address, partialAmount);
 
-                            let transactionCost = BigNumber.from(0);
-                            if (symbol === 'ETH') {
-                                transactionCost = transactionCost.add(await getTransactionCost(res));
-                            }
-
-                            let senderBalance = await getBalance(token, sender.address);
+                            let targetBalance = await getBalance(token, target.address);
                             let vaultBalance = await getBalance(token, vault.address);
 
-                            expect(senderBalance).to.equal(prevSenderBalance.add(partialAmount).sub(transactionCost));
+                            expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
                             expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
 
-                            res = await vault.connect(sender).withdrawTokens(token.address, sender.address, remainder);
+                            res = await vault.connect(sender).withdrawTokens(token.address, target.address, remainder);
                             await expect(res)
                                 .to.emit(vault, 'TokensWithdrawn')
-                                .withArgs(token.address, sender.address, remainder);
+                                .withArgs(token.address, sender.address, target.address, remainder);
 
-                            transactionCost = BigNumber.from(0);
-                            if (symbol === 'ETH') {
-                                transactionCost = transactionCost.add(await getTransactionCost(res));
-                            }
-
-                            expect(await getBalance(token, sender.address)).to.equal(
-                                senderBalance.add(remainder).sub(transactionCost)
-                            );
+                            expect(await getBalance(token, target.address)).to.equal(targetBalance.add(remainder));
                             expect(await getBalance(token, vault.address)).to.equal(vaultBalance.sub(remainder));
                         });
 
@@ -170,7 +159,7 @@ describe('BancorVault', () => {
                     const testWithdrawRestricted = (reason: string = 'ERR_ACCESS_DENIED') => {
                         it('should not be able to withdraw any tokens', async () => {
                             await expect(
-                                vault.connect(sender).withdrawTokens(token.address, sender.address, amount)
+                                vault.connect(sender).withdrawTokens(token.address, target.address, amount)
                             ).to.be.revertedWith(reason);
                         });
                     };
@@ -194,7 +183,7 @@ describe('BancorVault', () => {
                     it('should not revert when withdrawing 0 tokens', async () => {
                         const prevVaultBalance = await getBalance(token, vault.address);
 
-                        await vault.withdrawTokens(token.address, sender.address, BigNumber.from(0));
+                        await vault.withdrawTokens(token.address, target.address, BigNumber.from(0));
 
                         expect(await getBalance(token, vault.address)).to.equal(prevVaultBalance);
                     });
