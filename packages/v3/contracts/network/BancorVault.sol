@@ -34,12 +34,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     /**
      * @dev triggered when tokens have been withdrawn from the vault
      */
-    event TokensWithdrawn(
-        IReserveToken indexed reserveToken,
-        address indexed caller,
-        address indexed target,
-        uint256 amount
-    );
+    event TokensWithdrawn(IReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
     constructor(IERC20 networkToken) validAddress(address(networkToken)) {
         _networkToken = networkToken;
