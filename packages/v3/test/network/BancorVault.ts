@@ -64,7 +64,7 @@ describe('BancorVault', () => {
                 ]);
             });
 
-            it('should revert when initialized with an invalid reserve token', async () => {
+            it('should revert when initialized with an invalid network token', async () => {
                 await expect(createVault(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
             });
         });
