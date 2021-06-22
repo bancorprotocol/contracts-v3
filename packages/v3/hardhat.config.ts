@@ -10,6 +10,7 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 
 import 'solidity-coverage';
+import 'hardhat-dependency-compiler';
 import 'hardhat-contract-sizer';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
@@ -56,18 +57,25 @@ const config: HardhatUserConfig = {
         }
     },
 
+    dependencyCompiler: {
+        paths: ['@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol']
+    },
+
     etherscan: {
         apiKey: loadAPIKey('etherscan')
     },
+
     contractSizer: {
         alphaSort: true,
         runOnCompile: false,
         disambiguatePaths: false
     },
+
     abiExporter: {
         path: './data/abi',
         clear: true
     },
+
     gasReporter: {
         currency: 'USD',
         enabled: loadENVKey('PROFILE')
