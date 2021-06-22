@@ -56,13 +56,13 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     }
 
     modifier onlyAdmin {
-        _hasRole(ROLE_ADMIN);
+        _hasRole(ROLE_ADMIN, msg.sender);
 
         _;
     }
 
-    function _hasRole(bytes32 role) internal view {
-        require(hasRole(role, msg.sender), "ERR_ACCESS_DENIED");
+    function _hasRole(bytes32 role, address account) internal view {
+        require(hasRole(role, account), "ERR_ACCESS_DENIED");
     }
 
     // prettier-ignore
