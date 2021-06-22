@@ -25,7 +25,7 @@
         "profile": "PROFILE=1 yarn test",
         "size": "hardhat size-contracts",
         "verify": "hardhat verify",
-        "coverage": "NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
+        "coverage": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
         "flatten": "hardhat flatten",
         "lint": "yarn lint:js && yarn lint:sol",
         "lint:js": "eslint .",
@@ -33,7 +33,7 @@
         "format": "prettier --check --write contracts/**/*.sol test/**/*.js --config .prettierrc",
         "snyk-protect": "snyk protect",
         "prepare": "yarn build && yarn snyk-protect",
-        "clean": "rm -rf artifacts cache data typechain"
+        "clean": "rm -rf artifacts cache data coverage typechain"
     },
     "dependencies": {
         "hardhat": "2.4.0"
