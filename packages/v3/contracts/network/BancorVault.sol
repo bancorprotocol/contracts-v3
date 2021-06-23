@@ -68,6 +68,10 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     // prettier-ignore
     receive() external payable override {}
 
+    function version() external pure override returns (uint16) {
+        return 0;
+    }
+
     /**
      * @dev returns whether withdrawals are currently paused
      */
