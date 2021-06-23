@@ -85,6 +85,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
      *
      * requirements:
      *
+     * - the contract shouldn't be paused
      * - the caller must have the right privileges to withdraw this token:
      *   - for the network token: the ROLE_NETWORK_TOKEN_MANAGER or the ROLE_ASSET_MANAGER role
      *   - for any other reserve token or ETH: the ROLE_ASSET_MANAGER role
