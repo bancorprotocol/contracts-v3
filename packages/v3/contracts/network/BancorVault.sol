@@ -66,16 +66,33 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     }
 
     // prettier-ignore
-    receive() external payable override virtual {}
+    receive() external payable override {}
 
-    function isPaused() external view virtual override returns (bool) {
+    /**
+     * @dev returns whether withdrawals are currently paused
+     */
+    function isPaused() external view override returns (bool) {
         return paused();
     }
 
+    /**
+     * @dev pauses withdrawals
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_ADMIN privileges
+     */
     function pause() external override onlyAdmin {
         _pause();
     }
 
+    /**
+     * @dev unpauses withdrawals
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_ADMIN privileges
+     */
     function unpause() external override onlyAdmin {
         _unpause();
     }
@@ -94,7 +111,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
         IReserveToken reserveToken,
         address payable target,
         uint256 amount
-    ) external virtual override validAddress(target) nonReentrant whenNotPaused {
+    ) external override validAddress(target) nonReentrant whenNotPaused {
         require(
             (address(reserveToken) == address(_networkToken) &&
                 (hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender) || hasRole(ROLE_ASSET_MANAGER, msg.sender))) ||
