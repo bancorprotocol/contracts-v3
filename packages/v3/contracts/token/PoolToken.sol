@@ -40,7 +40,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     /**
      * @dev increases the token supply and sends the new tokens to the given account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      */

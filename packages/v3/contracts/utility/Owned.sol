@@ -37,7 +37,7 @@ contract Owned is IOwned {
     /**
      * @dev allows transferring the contract ownership
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      *

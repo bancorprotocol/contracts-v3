@@ -24,7 +24,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
      * @dev withdraws funds held by the contract and sends them to an account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      */
@@ -39,7 +39,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
      * @dev withdraws multiple funds held by the contract and sends them to an account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      */

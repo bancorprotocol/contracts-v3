@@ -24,7 +24,7 @@ abstract contract ERC20Burnable is ERC20, IERC20Burnable {
     /**
      * @dev Destroys tokens from a recipient, deducting from the caller's allowance
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must have allowance for recipient's tokens of at least the specified amount
      */

@@ -83,7 +83,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     /**
      * @dev withdraws funds held by the contract and sends them to an account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must have the right privileges to withdraw this token:
      *   - for the network token: the ROLE_NETWORK_TOKEN_MANAGER or the ROLE_ASSET_MANAGER role
