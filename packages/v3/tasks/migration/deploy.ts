@@ -1,7 +1,6 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { saveSystem, deploy, execute, startExecutionLog } from '../utils';
 import { Signer } from '@ethersproject/abstract-signer';
-import { defaultParam, executionConfig, getDefaultParamsWithConfig, taskOverride } from 'components/Tasks';
+import { executionConfig, getDefaultParamsWithConfig, taskOverride, TaskType } from 'components/Tasks';
 import { DeploymentConfig, System } from 'components/Types';
 import Contracts from 'components/Contracts';
 import { createPool } from 'tasks/management/createPool';
@@ -13,7 +12,7 @@ export const deploySystem = async (
     config: DeploymentConfig,
     overrides: taskOverride
 ): Promise<System> => {
-    const tokenHolder = await deploy('tokenHolder', executionConfig, Contracts.TokenHolder.deploy);
+    const tokenHolder = await deploy('tokenHolder', executionConfig, Contracts.Owned.deploy);
 
     const pool = await createPool(signer, '122', overrides);
 
@@ -31,8 +30,8 @@ export const deploySystem = async (
     };
 };
 
-export default async (args: defaultParam, hre: HardhatRuntimeEnvironment) => {
-    startExecutionLog('deploySystem');
+export const deploySystemTask: TaskType = async (args, hre) => {
+    startExecutionLog('deploySystem', true);
 
     const { signer, executionConfig, config, overrides } = await getDefaultParamsWithConfig<DeploymentConfig>(
         hre,
@@ -40,5 +39,6 @@ export default async (args: defaultParam, hre: HardhatRuntimeEnvironment) => {
         true
     );
 
-    await saveSystem(await deploySystem(signer, executionConfig, config, overrides), true);
+    await saveSystem(await deploySystem(signer, executionConfig, config, overrides));
 };
+export default deploySystemTask;

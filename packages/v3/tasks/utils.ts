@@ -25,9 +25,17 @@ export class executionError extends Error {
 let currentExecutionType: string;
 let currentExecutionTime: string;
 
-export const startExecutionLog = (type: string) => {
+export const startExecutionLog = (type: string, resetHistory = false) => {
     currentExecutionType = type;
     currentExecutionTime = Date.now().toString();
+
+    const pathToHistory = path.join(hre.config.paths.root, './deployments/', hre.network.name, 'history.json');
+
+    if (resetHistory) {
+        try {
+            fs.unlinkSync(pathToHistory);
+        } catch {}
+    }
 };
 
 // Advanced
@@ -83,7 +91,7 @@ export const execute = async <T extends (...args: any[]) => Promise<ContractTran
 };
 
 // File management
-export const saveSystem = async (obj: Object, freshStart = false) => {
+export const saveSystem = async (obj: Object) => {
     await fs.promises.writeFile(
         path.join(hre.config.paths.root, './deployments/', hre.network.name, 'system.json'),
         JSON.stringify(obj, null, 4)
@@ -135,10 +143,10 @@ export const saveHistory = async (obj: executeLog | deployLog) => {
             let reWriteHistory: executions = {};
             reWriteHistory[currentExecutionTime] = newHistory;
             reWriteHistory = { ...reWriteHistory, ...existingHistory };
-            await fs.promises.writeFile(pathToHistory, JSON.stringify(reWriteHistory, null, 4));
+            await fs.promises.writeFile(pathToHistory, JSON.stringify(reWriteHistory, null, 4) + '\n');
             return;
         }
-        await fs.promises.writeFile(pathToHistory, JSON.stringify(existingHistory, null, 4));
+        await fs.promises.writeFile(pathToHistory, JSON.stringify(existingHistory, null, 4) + '\n');
     } catch {
         // If file not created, create one
         const newHistory: executions = {};
@@ -147,6 +155,6 @@ export const saveHistory = async (obj: executeLog | deployLog) => {
             startTime: new Date(Number(currentExecutionTime)).toUTCString(),
             history: [obj]
         };
-        await fs.promises.writeFile(pathToHistory, JSON.stringify(newHistory, null, 4));
+        await fs.promises.writeFile(pathToHistory, JSON.stringify(newHistory, null, 4) + '\n');
     }
 };

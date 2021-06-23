@@ -4,7 +4,6 @@ import { task, types } from 'hardhat/config';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import { BigNumber, BigNumberish } from 'ethers';
-import Contracts from './Contracts';
 
 // This is meant to go away as soon as hardhat implements this https://github.com/nomiclabs/hardhat/issues/1518
 
@@ -25,6 +24,8 @@ export const lazyAction = (pathToAction: string) => {
 };
 
 // Task
+
+export type TaskType = (args: defaultParam, hre: HardhatRuntimeEnvironment) => void;
 
 const DEPLOYMENT_FILE_NAME = 'deployment.config.json';
 const SYSTEM_FILE_NAME = 'system.json';

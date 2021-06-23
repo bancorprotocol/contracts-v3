@@ -21,3 +21,5 @@ allFiredEvents
 scTopics
 
 config.json
+
+deployments/hardhat

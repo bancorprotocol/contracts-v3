@@ -6,7 +6,7 @@ import Contracts from 'components/Contracts';
 import { NewSystem, System } from 'components/Types';
 
 export const migrateSystem = async (signer: Signer, config: System, overrides: taskOverride): Promise<NewSystem> => {
-    const tokenHolder1 = await Contracts.TokenHolder.deploy(overrides);
+    const tokenHolder1 = await Contracts.Owned.deploy(overrides);
 
     return {
         tokenHolder: config.tokenHolder,

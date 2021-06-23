@@ -3,10 +3,13 @@ export type deployedContract = {
     tx: string;
 };
 
-export type DeploymentConfig = {};
-
+// Components
 export type tokenHolder = {};
 
+// Deployment Config
+export type DeploymentConfig = {};
+
+// System
 export type System = {
     tokenHolder: tokenHolder & deployedContract;
 };
