@@ -79,7 +79,7 @@ class Branch():
 class Pool():
     def __init__(self, id, swapFee, tkn, bnt):
         self.id = id
-        self.swapFee = swapFee
+        self.swapFee = int(float(swapFee.strip('%')) / 100 * PPM)
         self.branches = {token.symbol: Branch(token) for token in [tkn, bnt]} 
     def setRates(self, tknRate, bntRate):
         self.branches[TKN].reserveRate = tknRate

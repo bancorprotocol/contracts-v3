@@ -1,5 +1,5 @@
 [
-	{"operation": "newPool", "swapFee": 1000, "numOfUsers": 3, "initialAmount": 1000000},
+	{"operation": "newPool", "swapFee": "0.1%", "numOfUsers": 3, "initialAmount": 1000000},
 	{"operation": "setRates", "tknRate": 1, "bntRate": 1},
 	{"operation": "addLiquidity", "token": "TKN", "user": "user1", "amount": 100000},
 	{"operation": "addLiquidity", "token": "BNT", "user": "user1", "amount": 100000},
