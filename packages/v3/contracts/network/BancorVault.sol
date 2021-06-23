@@ -120,8 +120,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
         uint256 amount
     ) external override validAddress(target) nonReentrant whenNotPaused {
         require(
-            (address(reserveToken) == address(_networkToken) &&
-                (hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender) || hasRole(ROLE_ASSET_MANAGER, msg.sender))) ||
+            (address(reserveToken) == address(_networkToken) && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
                 hasRole(ROLE_ASSET_MANAGER, msg.sender),
             "ERR_ACCESS_DENIED"
         );
