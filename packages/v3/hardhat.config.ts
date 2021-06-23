@@ -7,14 +7,14 @@ import 'tsconfig-paths/register';
 
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-ethers';
-import '@nomiclabs/hardhat-etherscan';
+import '@typechain/hardhat';
 
+import '@nomiclabs/hardhat-etherscan';
 import 'solidity-coverage';
 import 'hardhat-dependency-compiler';
 import 'hardhat-contract-sizer';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
-import '@typechain/hardhat';
 
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};

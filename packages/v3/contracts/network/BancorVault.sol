@@ -36,6 +36,9 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
      */
     event TokensWithdrawn(IReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
+    /**
+     * @dev A "virtual" constructor that is only used to set immutable state variables
+     */
     constructor(IERC20 networkToken) validAddress(address(networkToken)) {
         _networkToken = networkToken;
     }
