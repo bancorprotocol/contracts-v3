@@ -3,27 +3,16 @@ import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } f
 import { Signer } from '@ethersproject/abstract-signer';
 
 import {
-    BancorVault,
     BancorVault__factory,
-    ERC20,
     ERC20__factory,
-    Owned,
     Owned__factory,
-    PoolToken,
     PoolToken__factory,
-    TestERC20Burnable,
     TestERC20Burnable__factory,
-    TestMathEx,
     TestMathEx__factory,
-    TestReserveToken,
     TestReserveToken__factory,
-    TestSafeERC20Ex,
     TestSafeERC20Ex__factory,
-    TestERC20Token,
     TestERC20Token__factory,
-    TokenHolder,
     TokenHolder__factory,
-    TransparentUpgradeableProxy,
     TransparentUpgradeableProxy__factory
 } from 'typechain';
 
