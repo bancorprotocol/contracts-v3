@@ -72,7 +72,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     receive() external payable override {}
 
     function version() external pure override returns (uint16) {
-        return 0;
+        return 1;
     }
 
     /**

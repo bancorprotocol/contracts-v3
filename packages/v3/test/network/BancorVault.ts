@@ -43,7 +43,7 @@ describe('BancorVault', () => {
             it('should be properly initialized', async () => {
                 vault = await createVault(networkToken.address);
 
-                expect(await vault.version()).to.equal(0);
+                expect(await vault.version()).to.equal(1);
 
                 await expectAccessList(vault, [
                     {
