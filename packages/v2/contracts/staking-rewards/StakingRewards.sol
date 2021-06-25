@@ -44,7 +44,7 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
     uint32 private constant MAX_MULTIPLIER = PPM_RESOLUTION + MULTIPLIER_INCREMENT * 4;
 
     // the rewards halving factor we need to take into account during the sanity verification process.
-    uint8 private constant REWARDS_HALVING_FACTOR = 2;
+    uint8 private constant REWARDS_HALVING_FACTOR = 4;
 
     // since we will be dividing by the total amount of protected tokens in units of wei, we can encounter cases
     // where the total amount in the denominator is higher than the product of the rewards rate and staking duration. In
