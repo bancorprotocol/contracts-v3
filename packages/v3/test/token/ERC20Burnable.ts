@@ -19,8 +19,7 @@ describe('ERC20Burnable', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        owner = accounts[0];
-        burner = accounts[1];
+        [owner, burner] = accounts;
     });
 
     beforeEach(async () => {

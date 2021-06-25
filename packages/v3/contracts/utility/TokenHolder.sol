@@ -24,7 +24,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
      * @dev withdraws funds held by the contract and sends them to an account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      */
@@ -32,14 +32,14 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         IReserveToken reserveToken,
         address payable to,
         uint256 amount
-    ) public virtual override onlyOwner validAddress(to) {
+    ) external virtual override onlyOwner validAddress(to) {
         reserveToken.safeTransfer(to, amount);
     }
 
     /**
      * @dev withdraws multiple funds held by the contract and sends them to an account
      *
-     * Requirements:
+     * requirements:
      *
      * - the caller must be the owner of the contract
      */
@@ -47,7 +47,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         IReserveToken[] calldata reserveTokens,
         address payable to,
         uint256[] calldata amounts
-    ) public virtual override onlyOwner validAddress(to) {
+    ) external virtual override onlyOwner validAddress(to) {
         uint256 length = reserveTokens.length;
         require(length == amounts.length, "ERR_INVALID_LENGTH");
 

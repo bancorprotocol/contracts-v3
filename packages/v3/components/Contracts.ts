@@ -3,24 +3,17 @@ import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } f
 import { Signer } from '@ethersproject/abstract-signer';
 
 import {
-    ERC20,
+    BancorVault__factory,
     ERC20__factory,
-    Owned,
     Owned__factory,
-    PoolToken,
     PoolToken__factory,
-    TestERC20Burnable,
     TestERC20Burnable__factory,
-    TestMathEx,
     TestMathEx__factory,
-    TestReserveToken,
     TestReserveToken__factory,
-    TestSafeERC20Ex,
     TestSafeERC20Ex__factory,
-    TestStandardToken,
-    TestStandardToken__factory,
-    TokenHolder,
-    TokenHolder__factory
+    TestERC20Token__factory,
+    TokenHolder__factory,
+    TransparentUpgradeableProxy__factory
 } from 'typechain';
 
 // Replace the type of the last param of a function
@@ -99,6 +92,7 @@ const getContracts = (signer?: Signer) => {
         // Link every contract to a default signer
         connect: (signer: Signer) => getContracts(signer),
 
+        BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
         ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
         Owned: deployOrAttach<Owned__factory>('Owned', signer),
         PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
@@ -106,8 +100,12 @@ const getContracts = (signer?: Signer) => {
         TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
         TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
         TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
-        TestStandardToken: deployOrAttach<TestStandardToken__factory>('TestStandardToken', signer),
-        TokenHolder: deployOrAttach<TokenHolder__factory>('TokenHolder', signer)
+        TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
+        TokenHolder: deployOrAttach<TokenHolder__factory>('TokenHolder', signer),
+        TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
+            'TransparentUpgradeableProxy',
+            signer
+        )
     };
 };
 
