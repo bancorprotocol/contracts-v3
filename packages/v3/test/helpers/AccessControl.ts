@@ -9,12 +9,16 @@ const {
 } = ethers;
 
 export const roles = {
-    ROLE_ADMIN: id('ROLE_ADMIN'),
-    ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
-    ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
+    BancorVault: {
+        ROLE_ADMIN: id('ROLE_ADMIN'),
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
+        ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
+    }
 };
 
-const roleNames = Object.values(roles);
+const roleNames = Object.values(roles)
+    .map((contractRoles) => Object.values(contractRoles))
+    .flat(1);
 
 export const expectRole = async (
     contract: AccessControlUpgradeable,
