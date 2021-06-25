@@ -9,11 +9,9 @@ import { BancorVault, TestERC20Token } from 'typechain';
 
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
-import { expectAccessList, roles } from 'test/helpers/AccessControl';
+import { expectRole, roles } from 'test/helpers/AccessControl';
 
-const {
-    BancorVault: { ROLE_ADMIN, ROLE_ASSET_MANAGER, ROLE_NETWORK_TOKEN_MANAGER }
-} = roles;
+const { ROLE_ADMIN, ROLE_ASSET_MANAGER, ROLE_NETWORK_TOKEN_MANAGER } = roles;
 
 let vault: BancorVault;
 let networkToken: TestERC20Token;
@@ -45,25 +43,9 @@ describe('BancorVault', () => {
 
                 expect(await vault.version()).to.equal(1);
 
-                await expectAccessList(vault, [
-                    {
-                        role: ROLE_ADMIN,
-                        adminRole: ROLE_ADMIN,
-                        initMemberCount: 1,
-                        initialMember: deployer.address
-                    },
-                    {
-                        role: ROLE_ASSET_MANAGER,
-                        adminRole: ROLE_ASSET_MANAGER,
-                        initMemberCount: 1,
-                        initialMember: deployer.address
-                    },
-                    {
-                        role: ROLE_NETWORK_TOKEN_MANAGER,
-                        adminRole: ROLE_ASSET_MANAGER,
-                        initMemberCount: 0
-                    }
-                ]);
+                await expectRole(vault, ROLE_ADMIN, ROLE_ADMIN, [deployer.address]);
+                await expectRole(vault, ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER, [deployer.address]);
+                await expectRole(vault, ROLE_NETWORK_TOKEN_MANAGER, ROLE_ASSET_MANAGER);
             });
 
             it('should revert when initialized with an invalid network token', async () => {

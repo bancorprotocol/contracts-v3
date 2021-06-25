@@ -9,28 +9,23 @@ const {
 } = ethers;
 
 export const roles = {
-    BancorVault: {
-        ROLE_ADMIN: id('ROLE_ADMIN'),
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
-        ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
-    }
+    ROLE_ADMIN: id('ROLE_ADMIN'),
+    ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
+    ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
 };
 
-interface AccessListRole {
-    role: string;
-    adminRole: string;
-    initMemberCount: number;
-    initialMember?: string;
-}
+const roleNames = Object.values(roles);
 
-export const expectAccessList = async (contract: AccessControlUpgradeable, roles: AccessListRole[]) => {
-    for (const role of roles) {
-        const { role: name, adminRole, initMemberCount, initialMember } = role;
-        expect(await contract.getRoleAdmin(name)).to.equal(adminRole);
-        expect(await contract.getRoleMemberCount(name)).to.equal(BigNumber.from(initMemberCount));
+export const expectRole = async (
+    contract: AccessControlUpgradeable,
+    role: typeof roleNames[number],
+    adminRole: string,
+    initialMembers: string[] = []
+) => {
+    expect(await contract.getRoleAdmin(role)).to.equal(adminRole);
+    expect(await contract.getRoleMemberCount(role)).to.equal(BigNumber.from(initialMembers?.length));
 
-        if (initMemberCount > 0 && initialMember) {
-            expect(await contract.hasRole(name, initialMember)).to.be.true;
-        }
+    for (const initialMember of initialMembers) {
+        expect(await contract.hasRole(role, initialMember)).to.be.true;
     }
 };
