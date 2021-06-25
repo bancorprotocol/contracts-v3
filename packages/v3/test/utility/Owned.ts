@@ -7,6 +7,8 @@ import Contracts from 'components/Contracts';
 
 import { Owned } from 'typechain';
 
+import Errors from 'test/helpers/Errors';
+
 let contract: Owned;
 
 let accounts: SignerWithAddress[];
@@ -60,7 +62,7 @@ describe('Owned', () => {
         const nonOwner = accounts[2];
 
         await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith(
-            'ERR_ACCESS_DENIED'
+            Errors.ERR_ACCESS_DENIED
         );
     });
 
@@ -72,6 +74,6 @@ describe('Owned', () => {
     });
 
     it("verifies that it's not possible to transfer ownership to the same owner", async () => {
-        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith('ERR_SAME_OWNER');
+        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith(Errors.ERR_SAME_OWNER);
     });
 });

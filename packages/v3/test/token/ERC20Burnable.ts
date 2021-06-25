@@ -8,6 +8,7 @@ import Contracts from 'components/Contracts';
 import { TestERC20Burnable } from 'typechain';
 
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
+import Errors from 'test/helpers/Errors';
 
 let burnable: TestERC20Burnable;
 let owner: SignerWithAddress;
@@ -110,7 +111,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, amount);
             await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWith(
-                'ERR_INSUFFICIENT_ALLOWANCE'
+                Errors.ERR_INSUFFICIENT_ALLOWANCE
             );
         });
 
@@ -120,7 +121,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, allowance);
             await expect(burnable.connect(owner).burnFrom(owner.address, allowance.add(1))).to.be.revertedWith(
-                'ERR_INSUFFICIENT_ALLOWANCE'
+                Errors.ERR_INSUFFICIENT_ALLOWANCE
             );
         });
     });

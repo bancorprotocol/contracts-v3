@@ -4,6 +4,7 @@ import { BigNumber } from 'ethers';
 import Contracts from 'components/Contracts';
 import { TestMathEx } from 'typechain';
 
+import Errors from 'test/helpers/Errors';
 import MathUtils from 'test/helpers/MathUtils';
 
 const { Decimal, floorSqrt, ceilSqrt, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
@@ -281,7 +282,7 @@ describe('MathEx', () => {
             } else {
                 await expect(
                     (mathContract as any)[methodName](x.toFixed(), y.toFixed(), z.toFixed())
-                ).to.be.revertedWith('ERR_OVERFLOW');
+                ).to.be.revertedWith(Errors.ERR_OVERFLOW);
             }
         });
     }

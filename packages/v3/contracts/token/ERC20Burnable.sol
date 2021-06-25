@@ -3,6 +3,8 @@ pragma solidity 0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import "../utility/Errors.sol";
+
 import "./interfaces/IERC20Burnable.sol";
 
 /**
@@ -29,7 +31,7 @@ abstract contract ERC20Burnable is ERC20, IERC20Burnable {
      * - the caller must have allowance for recipient's tokens of at least the specified amount
      */
     function burnFrom(address recipient, uint256 amount) external virtual override {
-        uint256 decreasedAllowance = allowance(recipient, msg.sender).sub(amount, "ERR_INSUFFICIENT_ALLOWANCE");
+        uint256 decreasedAllowance = allowance(recipient, msg.sender).sub(amount, ERR_INSUFFICIENT_ALLOWANCE);
 
         _approve(recipient, msg.sender, decreasedAllowance);
 

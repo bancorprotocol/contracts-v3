@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 
 import "./interfaces/ITokenHolder.sol";
 
+import "./Errors.sol";
 import "./Owned.sol";
 import "./Utils.sol";
 
@@ -49,7 +50,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
         uint256[] calldata amounts
     ) external virtual override onlyOwner validAddress(to) {
         uint256 length = reserveTokens.length;
-        require(length == amounts.length, "ERR_INVALID_LENGTH");
+        require(length == amounts.length, ERR_INVALID_LENGTH);
 
         for (uint256 i = 0; i < length; ++i) {
             reserveTokens[i].safeTransfer(to, amounts[i]);

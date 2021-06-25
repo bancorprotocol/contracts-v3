@@ -3,6 +3,8 @@ pragma solidity 0.7.6;
 
 import "./interfaces/IOwned.sol";
 
+import "./Errors.sol";
+
 /**
  * @dev This contract provides support and utilities for contract ownership.
  */
@@ -31,7 +33,7 @@ contract Owned is IOwned {
 
     // error message binary size optimization
     function _onlyOwner() private view {
-        require(msg.sender == _owner, "ERR_ACCESS_DENIED");
+        require(msg.sender == _owner, ERR_ACCESS_DENIED);
     }
 
     /**
@@ -44,7 +46,7 @@ contract Owned is IOwned {
      * note the new owner still needs to accept the transfer
      */
     function transferOwnership(address ownerCandidate) public override onlyOwner {
-        require(ownerCandidate != _owner, "ERR_SAME_OWNER");
+        require(ownerCandidate != _owner, ERR_SAME_OWNER);
 
         _newOwner = ownerCandidate;
     }
@@ -53,7 +55,7 @@ contract Owned is IOwned {
      * @dev used by a new owner to accept an ownership transfer
      */
     function acceptOwnership() public override {
-        require(msg.sender == _newOwner, "ERR_ACCESS_DENIED");
+        require(msg.sender == _newOwner, ERR_ACCESS_DENIED);
 
         emit OwnerUpdate(_owner, _newOwner);
 

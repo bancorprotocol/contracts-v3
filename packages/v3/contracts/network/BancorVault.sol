@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
+import "../utility/Errors.sol";
 import "../utility/Utils.sol";
 
 import "../token/ReserveToken.sol";
@@ -65,7 +66,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     }
 
     function _hasRole(bytes32 role, address account) internal view {
-        require(hasRole(role, account), "ERR_ACCESS_DENIED");
+        require(hasRole(role, account), ERR_ACCESS_DENIED);
     }
 
     // prettier-ignore
@@ -122,7 +123,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
         require(
             (address(reserveToken) == address(_networkToken) && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
                 hasRole(ROLE_ASSET_MANAGER, msg.sender),
-            "ERR_ACCESS_DENIED"
+            ERR_ACCESS_DENIED
         );
 
         reserveToken.safeTransfer(target, amount);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
+import "./Errors.sol";
+
 /**
  * @dev This library provides a set of complex math operations.
  */
@@ -165,7 +167,7 @@ library MathEx {
         }
 
         // assert `x * y / z < 2 ^ 256`
-        require(xyh < z, "ERR_OVERFLOW");
+        require(xyh < z, ERR_OVERFLOW);
 
         uint256 m = mulMod(x, y, z); // `m = x * y % z`
         (uint256 nh, uint256 nl) = sub512(xyh, xyl, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
@@ -191,7 +193,7 @@ library MathEx {
     ) internal pure returns (uint256) {
         uint256 w = mulDivF(x, y, z);
         if (mulMod(x, y, z) > 0) {
-            require(w < MAX_UINT256, "ERR_OVERFLOW");
+            require(w < MAX_UINT256, ERR_OVERFLOW);
             return w + 1;
         }
         return w;
