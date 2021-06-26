@@ -170,7 +170,7 @@ describe('TokenHolderUpgradeable', () => {
         });
     };
 
-    context('as a regular contract ', () => {
+    context('as a regular contract', () => {
         testTokenHolder(async () => {
             const holder = await Contracts.TokenHolderUpgradeable.deploy();
             await holder.initialize();

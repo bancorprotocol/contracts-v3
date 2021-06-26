@@ -295,7 +295,7 @@ describe('BancorVault', () => {
         });
     };
 
-    context('as a regular contract ', () => {
+    context('as a regular contract', () => {
         testVault(async (networkTokenAddress) => {
             const vault = await Contracts.BancorVault.deploy(networkTokenAddress);
             await vault.initialize();
