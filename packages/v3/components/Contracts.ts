@@ -5,14 +5,14 @@ import { Signer } from '@ethersproject/abstract-signer';
 import {
     BancorVault__factory,
     ERC20__factory,
-    Owned__factory,
     PoolToken__factory,
     TestERC20Burnable__factory,
     TestMathEx__factory,
+    TestOwnedUpgradeable__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestERC20Token__factory,
-    TokenHolder__factory,
+    TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from 'typechain';
 
@@ -94,14 +94,14 @@ const getContracts = (signer?: Signer) => {
 
         BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
         ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
-        Owned: deployOrAttach<Owned__factory>('Owned', signer),
         PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
         TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
         TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
+        TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
         TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
         TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
         TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
-        TokenHolder: deployOrAttach<TokenHolder__factory>('TokenHolder', signer),
+        TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),
         TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
             'TransparentUpgradeableProxy',
             signer

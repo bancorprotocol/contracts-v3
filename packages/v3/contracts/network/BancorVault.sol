@@ -31,23 +31,43 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     // the address of the network token
     IERC20 private immutable _networkToken;
 
+    // upgrade forward-compatibility storage gap
+    uint256[50] private __gap;
+
     /**
      * @dev triggered when tokens have been withdrawn from the vault
      */
     event TokensWithdrawn(IReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
     /**
-     * @dev A "virtual" constructor that is only used to set immutable state variables
+     * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IERC20 networkToken) validAddress(address(networkToken)) {
         _networkToken = networkToken;
     }
 
+    /**
+     * @dev fully initializes the contract and its parents
+     */
     function initialize() external initializer {
+        __BancorVault_init();
+    }
+
+    /**
+     * @dev initializes the contract and its parents
+     */
+    function __BancorVault_init() internal initializer {
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
 
+        __BancorVault_init_unchained();
+    }
+
+    /**
+     * @dev performs contract-specific initialization
+     */
+    function __BancorVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER);

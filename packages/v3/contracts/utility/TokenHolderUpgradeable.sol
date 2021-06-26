@@ -3,20 +3,37 @@ pragma solidity 0.7.6;
 
 import "./interfaces/ITokenHolder.sol";
 
-import "./Owned.sol";
+import "./OwnedUpgradeable.sol";
 import "./Utils.sol";
 
 import "../token/ReserveToken.sol";
 
 /**
- * @dev This contract provides a safety mechanism for allowing the owner to
- * send tokens that were sent to the contract by mistake back to the sender
- *
- * we consider every contract to be a 'token holder' since it's currently not possible
- * for a contract to deny receiving tokens
+ * @dev This contract provides an owned token and ETH wallet.
  */
-contract TokenHolder is ITokenHolder, Owned, Utils {
+contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
+
+    // upgrade forward-compatibility storage gap
+    uint256[50] private __gap;
+
+    function initialize() external initializer {
+        __TokenHolderUpgradeable_init();
+    }
+
+    /**
+     * @dev initializes the contract and its parents
+     */
+    function __TokenHolderUpgradeable_init() internal initializer {
+        __Owned_init_unchained();
+
+        __TokenHolderUpgradeable_init_unchained();
+    }
+
+    /**
+     * @dev performs contract-specific initialization
+     */
+    function __TokenHolderUpgradeable_init_unchained() internal initializer {}
 
     // prettier-ignore
     receive() external payable override virtual {}
