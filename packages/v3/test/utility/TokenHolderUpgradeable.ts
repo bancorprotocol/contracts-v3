@@ -11,7 +11,7 @@ import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { getBalance, getBalances, TokenWithAddress } from 'test/helpers/Utils';
 
 let holder: TokenHolderUpgradeable;
-let token: TestERC20Token;
+let token1: TestERC20Token;
 let token2: TestERC20Token;
 
 let accounts: SignerWithAddress[];
@@ -28,7 +28,7 @@ describe('TokenHolderUpgradeable', () => {
     });
 
     beforeEach(async () => {
-        token = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', 100000);
+        token1 = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', 100000);
         token2 = await Contracts.TestERC20Token.deploy('ERC', 'ERC2', 100000);
     });
 
@@ -37,7 +37,7 @@ describe('TokenHolderUpgradeable', () => {
             holder = await createTokenHolder();
 
             await accounts[0].sendTransaction({ to: holder.address, value: 5000 });
-            await token.transfer(holder.address, BigNumber.from(1000));
+            await token1.transfer(holder.address, BigNumber.from(1000));
             await token2.transfer(holder.address, BigNumber.from(1000));
         });
 
@@ -47,7 +47,7 @@ describe('TokenHolderUpgradeable', () => {
                     let asset: TokenWithAddress;
 
                     beforeEach(async () => {
-                        asset = isETH ? { address: NATIVE_TOKEN_ADDRESS } : token;
+                        asset = isETH ? { address: NATIVE_TOKEN_ADDRESS } : token1;
                     });
 
                     it('should allow the owner to withdraw', async () => {
@@ -105,7 +105,7 @@ describe('TokenHolderUpgradeable', () => {
             let amounts: { [address: string]: BigNumber } = {};
 
             beforeEach(async () => {
-                assets = [{ address: NATIVE_TOKEN_ADDRESS }, token, token2];
+                assets = [{ address: NATIVE_TOKEN_ADDRESS }, token1, token2];
                 assetAddresses = assets.map((a) => a.address);
 
                 for (let i = 0; i < assets.length; ++i) {
@@ -135,14 +135,14 @@ describe('TokenHolderUpgradeable', () => {
 
             it('should revert when attempting to withdraw from an invalid asset address', async () => {
                 await expect(
-                    holder.withdrawTokensMultiple([token.address, ZERO_ADDRESS], receiver.address, [
+                    holder.withdrawTokensMultiple([token1.address, ZERO_ADDRESS], receiver.address, [
                         BigNumber.from(1),
                         BigNumber.from(1)
                     ])
                 ).to.be.revertedWith('Address: call to non-contract');
 
                 await expect(
-                    holder.withdrawTokensMultiple([ZERO_ADDRESS, token.address], receiver.address, [
+                    holder.withdrawTokensMultiple([ZERO_ADDRESS, token1.address], receiver.address, [
                         BigNumber.from(1),
                         BigNumber.from(1)
                     ])
