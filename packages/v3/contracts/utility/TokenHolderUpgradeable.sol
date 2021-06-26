@@ -25,7 +25,7 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
      * @dev initializes the contract and its parents
      */
     function __TokenHolderUpgradeable_init() internal initializer {
-        __Owned_init_unchained();
+        __Owned_init();
 
         __TokenHolderUpgradeable_init_unchained();
     }
