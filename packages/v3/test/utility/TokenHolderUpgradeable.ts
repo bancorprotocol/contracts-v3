@@ -44,6 +44,12 @@ describe('TokenHolderUpgradeable', () => {
             await token2.transfer(holder.address, BigNumber.from(1000));
         });
 
+        describe('construction', async () => {
+            it('should be properly initialized', async () => {
+                expect(await holder.version()).to.equal(1);
+            });
+        });
+
         describe('withdraw asset', () => {
             for (const isETH of [true, false]) {
                 context(isETH ? 'ETH' : 'ERC20', async () => {

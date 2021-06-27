@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "../utility/Utils.sol";
+import "../utility/Upgradeable.sol";
 
 import "../token/ReserveToken.sol";
 
@@ -15,7 +16,14 @@ import "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Vault contract
  */
-contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract BancorVault is
+    IBancorVault,
+    Upgradeable,
+    AccessControlUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    Utils
+{
     using SafeERC20 for IERC20;
     using ReserveToken for IReserveToken;
 
@@ -32,7 +40,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     IERC20 private immutable _networkToken;
 
     // upgrade forward-compatibility storage gap
-    uint256[50 - 0] private __gap;
+    uint256[MAX_GAP - 0] private __gap;
 
     /**
      * @dev triggered when tokens have been withdrawn from the vault
