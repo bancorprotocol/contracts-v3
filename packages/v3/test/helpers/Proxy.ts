@@ -25,7 +25,7 @@ export const shouldHaveGap = (contractName: string, firstStateVariable?: string)
         expect(gapSize).to.be.within(0, MAX_GAP_SIZE);
 
         if (firstStateVariable) {
-            // if the contract defines more than a single contract-level specific storage - calculate the total number of
+            // if the contract defines any contract-level specific storage - calculate the total number of
             // used slots and make sure that it equals exactly to the MAX_GAP_SIZE slots
             const firstStorage = findLast(storage, (data) => data.label === firstStateVariable);
             expect(lastStorage.slot - firstStorage.slot + gapSize).to.equal(MAX_GAP_SIZE);
