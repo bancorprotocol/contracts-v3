@@ -13,7 +13,7 @@ abstract contract OwnedUpgradeable is IOwned, Initializable {
     address private _newOwner;
 
     // upgrade forward-compatibility storage gap
-    uint256[48] private __gap;
+    uint256[50 - 2] private __gap;
 
     /**
      * @dev triggered when the owner is updated

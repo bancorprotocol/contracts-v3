@@ -9,6 +9,7 @@ import { TestERC20Token, TokenHolderUpgradeable } from 'typechain';
 
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { getBalance, getBalances, TokenWithAddress } from 'test/helpers/Utils';
+import { shouldHaveGap } from 'test/helpers/Proxy';
 
 let holder: TokenHolderUpgradeable;
 let token1: TestERC20Token;
@@ -21,6 +22,8 @@ let nonOwner: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
 describe('TokenHolderUpgradeable', () => {
+    shouldHaveGap('TokenHolderUpgradeable');
+
     before(async () => {
         accounts = await ethers.getSigners();
 

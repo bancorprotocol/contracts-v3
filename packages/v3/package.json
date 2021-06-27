@@ -69,6 +69,7 @@
         "hardhat-abi-exporter": "^2.2.1",
         "hardhat-contract-sizer": "^2.0.3",
         "hardhat-dependency-compiler": "^1.1.1",
+        "hardhat-deploy": "^0.8.9",
         "hardhat-gas-reporter": "^1.0.4",
         "lodash": "^4.17.21",
         "mocha": "^9.0.1",
