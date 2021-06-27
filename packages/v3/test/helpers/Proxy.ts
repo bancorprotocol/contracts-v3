@@ -22,7 +22,6 @@ export const shouldHaveGap = (contractName: string, firstStateVariable?: string)
         // extract the length of the gap from the spec. For example, for ihe type "t_array(t_uint256)49_storage", the
         // size of the gap is 49
         const gapSize = Number(lastStorage.type.match(GAP_SIZE_REGEXP)[1]);
-        expect(gapSize).to.be.within(0, MAX_GAP_SIZE);
 
         if (firstStateVariable) {
             // if the contract defines any contract-level specific storage - calculate the total number of
