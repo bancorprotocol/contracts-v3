@@ -22,6 +22,8 @@ contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, U
         __TokenHolderUpgradeable_init();
     }
 
+    // solhint-disable func-name-mixedcase
+
     /**
      * @dev initializes the contract and its parents
      */
@@ -36,9 +38,13 @@ contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, U
      */
     function __TokenHolderUpgradeable_init_unchained() internal initializer {}
 
-    // prettier-ignore
-    receive() external payable override virtual {}
+    receive() external payable virtual override {}
 
+    // solhint-enable func-name-mixedcase
+
+    /**
+     * @dev returns the current version of the contract
+     */
     function version() external pure override returns (uint16) {
         return 1;
     }

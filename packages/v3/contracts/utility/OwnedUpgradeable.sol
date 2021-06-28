@@ -20,6 +20,8 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
      */
     event OwnerUpdate(address indexed prevOwner, address indexed newOwner);
 
+    // solhint-disable func-name-mixedcase
+
     /**
      * @dev initializes the contract and its parents
      */
@@ -33,6 +35,8 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     function __Owned_init_unchained() internal initializer {
         _setOwner(msg.sender);
     }
+
+    // solhint-enable func-name-mixedcase
 
     // allows execution by the owner only
     modifier onlyOwner {
