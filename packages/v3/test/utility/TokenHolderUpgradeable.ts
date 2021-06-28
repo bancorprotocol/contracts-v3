@@ -75,7 +75,7 @@ describe('TokenHolderUpgradeable', () => {
                         ).to.be.revertedWith('ERR_ACCESS_DENIED');
                     });
 
-                    it('should revert when attempting to withdraw from an invalid asset address', async () => {
+                    it('should revert when attempting to withdraw with an invalid asset address', async () => {
                         await expect(
                             holder.withdrawTokens(ZERO_ADDRESS, receiver.address, BigNumber.from(1))
                         ).to.be.revertedWith('Address: call to non-contract');
@@ -133,7 +133,7 @@ describe('TokenHolderUpgradeable', () => {
                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
             });
 
-            it('should revert when attempting to withdraw from an invalid asset address', async () => {
+            it('should revert when attempting to withdraw with an invalid asset address', async () => {
                 await expect(
                     holder.withdrawTokensMultiple([token1.address, ZERO_ADDRESS], receiver.address, [
                         BigNumber.from(1),
