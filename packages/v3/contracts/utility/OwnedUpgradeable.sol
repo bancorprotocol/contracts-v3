@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-
 import "./interfaces/IOwned.sol";
+
+import "./Upgradeable.sol";
 
 /**
  * @dev This contract provides support and utilities for contract ownership.
  */
-abstract contract OwnedUpgradeable is IOwned, Initializable {
+abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     address private _owner;
     address private _newOwner;
 
     // upgrade forward-compatibility storage gap
-    uint256[50 - 2] private __gap;
+    uint256[MAX_GAP - 2] private __gap;
 
     /**
      * @dev triggered when the owner is updated

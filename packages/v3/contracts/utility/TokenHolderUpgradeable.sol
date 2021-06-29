@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
+import "./interfaces/IVersioned.sol";
 import "./interfaces/ITokenHolder.sol";
 
 import "./OwnedUpgradeable.sol";
@@ -11,11 +12,11 @@ import "../token/ReserveToken.sol";
 /**
  * @dev This contract provides an owned token and ETH wallet.
  */
-contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
+contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
 
     // upgrade forward-compatibility storage gap
-    uint256[50 - 0] private __gap;
+    uint256[MAX_GAP - 0] private __gap;
 
     function initialize() external initializer {
         __TokenHolderUpgradeable_init();
@@ -37,6 +38,10 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
 
     // prettier-ignore
     receive() external payable override virtual {}
+
+    function version() external pure override returns (uint16) {
+        return 1;
+    }
 
     /**
      * @dev withdraws funds held by the contract and sends them to an account
