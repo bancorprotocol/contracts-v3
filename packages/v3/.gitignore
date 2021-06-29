@@ -9,7 +9,7 @@ yarn-error.log*
 
 cache
 artifacts
-data
+/data
 typechain
 
 .coverage_artifacts

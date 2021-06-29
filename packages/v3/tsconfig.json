@@ -3,7 +3,7 @@
     "compilerOptions": {
         "baseUrl": "./"
     },
-    "include": ["./test", "./tasks", "./components"],
+    "include": ["./test", "./tasks", "./components", "./migration"],
     "files": ["./hardhat.config.ts"],
     "paths": {}
 }
