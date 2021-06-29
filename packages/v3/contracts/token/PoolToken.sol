@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/drafts/ERC20Permit.sol";
 import "./interfaces/IPoolToken.sol";
 import "./interfaces/IReserveToken.sol";
 
-import "../utility/Owned.sol";
+import "../utility/OwnedUpgradeable.sol";
 import "../utility/Utils.sol";
 
 import "./ERC20Burnable.sol";
@@ -16,7 +16,7 @@ import "./ERC20Burnable.sol";
 /**
  * @dev This contract implements a mintable, burnable, and EIP2612 signed approvals
  */
-contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
+contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, Utils {
     IReserveToken private immutable _reserveToken;
 
     /**
@@ -28,6 +28,8 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
         IReserveToken initReserveToken
     ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
         _reserveToken = initReserveToken;
+
+        __Owned_init();
     }
 
     /**
