@@ -3,12 +3,17 @@ pragma solidity 0.7.6;
 
 import "./interfaces/IOwned.sol";
 
+import "./Upgradeable.sol";
+
 /**
  * @dev This contract provides support and utilities for contract ownership.
  */
-contract Owned is IOwned {
+abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     address private _owner;
     address private _newOwner;
+
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 2] private __gap;
 
     /**
      * @dev triggered when the owner is updated
@@ -16,10 +21,17 @@ contract Owned is IOwned {
     event OwnerUpdate(address indexed prevOwner, address indexed newOwner);
 
     /**
-     * @dev initializes a new Owned instance
+     * @dev initializes the contract and its parents
      */
-    constructor() {
-        _owner = msg.sender;
+    function __Owned_init() internal initializer {
+        __Owned_init_unchained();
+    }
+
+    /**
+     * @dev performs contract-specific initialization
+     */
+    function __Owned_init_unchained() internal initializer {
+        _setOwner(msg.sender);
     }
 
     // allows execution by the owner only
@@ -55,10 +67,7 @@ contract Owned is IOwned {
     function acceptOwnership() public override {
         require(msg.sender == _newOwner, "ERR_ACCESS_DENIED");
 
-        emit OwnerUpdate(_owner, _newOwner);
-
-        _owner = _newOwner;
-        _newOwner = address(0);
+        _setOwner(_newOwner);
     }
 
     /**
@@ -73,5 +82,15 @@ contract Owned is IOwned {
      */
     function newOwner() external view returns (address) {
         return _newOwner;
+    }
+
+    /**
+     * @dev sets the new owner internally
+     */
+    function _setOwner(address ownerCandidate) private {
+        emit OwnerUpdate(_owner, ownerCandidate);
+
+        _owner = ownerCandidate;
+        _newOwner = address(0);
     }
 }

@@ -10,6 +10,7 @@ import { BancorVault, TestERC20Token } from 'typechain';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
 import { expectRole, roles } from 'test/helpers/AccessControl';
+import { shouldHaveGap } from 'test/helpers/Proxy';
 
 const { BancorVault: BancorVaultRoles } = roles;
 
@@ -25,6 +26,8 @@ let admin: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
 describe('BancorVault', () => {
+    shouldHaveGap('BancorVault');
+
     before(async () => {
         accounts = await ethers.getSigners();
 
@@ -295,7 +298,7 @@ describe('BancorVault', () => {
         });
     };
 
-    context('as a regular contract ', () => {
+    context('as a regular contract', () => {
         testVault(async (networkTokenAddress) => {
             const vault = await Contracts.BancorVault.deploy(networkTokenAddress);
             await vault.initialize();

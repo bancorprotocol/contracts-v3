@@ -5,15 +5,19 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
 
-import { Owned } from 'typechain';
+import { TestOwnedUpgradeable } from 'typechain';
 
-let contract: Owned;
+import { shouldHaveGap } from 'test/helpers/Proxy';
+
+let contract: TestOwnedUpgradeable;
 
 let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
 let newOwner: SignerWithAddress;
 
-describe('Owned', () => {
+describe('OwnedUpgradeable', () => {
+    shouldHaveGap('OwnedUpgradeable', '_owner');
+
     before(async () => {
         accounts = await ethers.getSigners();
 
@@ -22,7 +26,8 @@ describe('Owned', () => {
     });
 
     beforeEach(async () => {
-        contract = await Contracts.Owned.deploy();
+        contract = await Contracts.TestOwnedUpgradeable.deploy();
+        await contract.initialize();
     });
 
     it('verifies the owner after construction', async () => {

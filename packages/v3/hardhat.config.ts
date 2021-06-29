@@ -8,10 +8,11 @@ import 'tsconfig-paths/register';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
-
-import '@nomiclabs/hardhat-etherscan';
-import 'solidity-coverage';
 import 'hardhat-dependency-compiler';
+import 'hardhat-deploy';
+
+import 'solidity-coverage';
+import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-contract-sizer';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
@@ -55,6 +56,11 @@ const config: HardhatUserConfig = {
             },
             metadata: {
                 bytecodeHash: 'none'
+            },
+            outputSelection: {
+                '*': {
+                    '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
+                }
             }
         }
     },
