@@ -15,7 +15,7 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
 
     // upgrade forward-compatibility storage gap
-    uint256[50] private __gap;
+    uint256[50 - 0] private __gap;
 
     function initialize() external initializer {
         __TokenHolderUpgradeable_init();

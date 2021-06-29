@@ -32,7 +32,7 @@ contract BancorVault is IBancorVault, AccessControlUpgradeable, PausableUpgradea
     IERC20 private immutable _networkToken;
 
     // upgrade forward-compatibility storage gap
-    uint256[50] private __gap;
+    uint256[50 - 0] private __gap;
 
     /**
      * @dev triggered when tokens have been withdrawn from the vault

@@ -7,6 +7,8 @@ import Contracts from 'components/Contracts';
 
 import { TestOwnedUpgradeable } from 'typechain';
 
+import { shouldHaveGap } from 'test/helpers/Proxy';
+
 let contract: TestOwnedUpgradeable;
 
 let accounts: SignerWithAddress[];
@@ -14,6 +16,8 @@ let owner: SignerWithAddress;
 let newOwner: SignerWithAddress;
 
 describe('OwnedUpgradeable', () => {
+    shouldHaveGap('OwnedUpgradeable', '_owner');
+
     before(async () => {
         accounts = await ethers.getSigners();
 
