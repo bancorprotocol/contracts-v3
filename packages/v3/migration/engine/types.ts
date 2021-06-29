@@ -1,21 +1,14 @@
 import { Signer } from 'ethers';
-import { deployExecuteType } from './utils';
+import { deployExecuteType } from './executions';
 
-export type defaultParam = {
-    ledger: boolean;
-    ledgerPath: string;
-    gasPrice: number;
-    confirmationToWait: number;
-};
-
-export type State = {
+export type SystemState = {
     migrationState: {
         latestMigration: number;
     };
     networkState: any;
 };
 
-export type token = {
+export type deployedContract = {
     address: string;
     tx: string;
 };

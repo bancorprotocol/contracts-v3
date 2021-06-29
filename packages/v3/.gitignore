@@ -23,3 +23,6 @@ scTopics
 contracts/hardhat-dependency-compiler
 
 config.json
+
+migration/data/hardhat
+migration/data/localhost

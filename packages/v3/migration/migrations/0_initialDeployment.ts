@@ -1,9 +1,9 @@
 import Contracts from 'components/Contracts';
 import { parseUnits } from 'ethers/lib/utils';
-import { Migration, token } from 'migration/engine/types';
+import { Migration, deployedContract } from 'migration/engine/types';
 
 export type State = {
-    BNT: token;
+    BNT: deployedContract;
 };
 
 const migration: Migration = {
