@@ -104,7 +104,7 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
     const migrationsData: {
         fullPath: string;
         fileName: string;
-        migrationId: number;
+        migrationTimestamp: number;
     }[] = [];
     for (const migrationFilePath of migrationFilesPath) {
         const fileName = path.basename(migrationFilePath);
@@ -113,12 +113,14 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
             migrationsData.push({
                 fullPath: migrationFilePath,
                 fileName: fileName,
-                migrationId: migrationId
+                migrationTimestamp: migrationId
             });
         }
     }
     // Even if migrations should be automatically sorted by the dir fetching, sort again just in case
-    migrationsData.sort((a, b) => (a.migrationId > b.migrationId ? 1 : b.migrationId > a.migrationId ? -1 : 0));
+    migrationsData.sort((a, b) =>
+        a.migrationTimestamp > b.migrationTimestamp ? 1 : b.migrationTimestamp > a.migrationTimestamp ? -1 : 0
+    );
 
     return {
         signer,

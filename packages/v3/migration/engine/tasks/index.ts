@@ -1,4 +1,4 @@
-import { lazyAction } from 'components/Tasks';
+import { lazyAction } from 'components/TasksUtils';
 import { task, types } from 'hardhat/config';
 
 const PATH_TO_ENGINE_TASKS_FOLDER = 'migration/engine/tasks/';
@@ -19,11 +19,11 @@ task('migrate', 'Migrate the network')
     .addParam('gasPrice', 'GasPrice in gwei', 0, types.int)
     .addParam('confirmationToWait', 'Number of confirmation to wait', 1, types.int)
     .addFlag('reset', 'Reset the migration data')
-    .setAction(lazyAction(PATH_TO_ENGINE_TASKS_FOLDER + 'migration.ts'));
+    .setAction(lazyAction(PATH_TO_ENGINE_TASKS_FOLDER + 'migrate.ts'));
 
 export type createMigrationParamTask = {
     migrationName: string;
 };
 task('createMigration', 'Create a migration file')
-    .addParam('migrationName', 'Name of the migration name')
+    .addPositionalParam('migrationName', 'Name of the migration name')
     .setAction(lazyAction(PATH_TO_ENGINE_TASKS_FOLDER + 'createMigration.ts'));

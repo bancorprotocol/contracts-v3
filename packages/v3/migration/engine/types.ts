@@ -15,5 +15,5 @@ export type deployedContract = {
 
 export interface Migration {
     up: (signer: Signer, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
-    healthcheck: (signer: Signer, state: any, { deploy, execute }: deployExecuteType) => Promise<boolean>;
+    healthcheck: (signer: Signer, newState: any, { deploy, execute }: deployExecuteType) => Promise<boolean>;
 }

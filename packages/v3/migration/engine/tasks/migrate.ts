@@ -1,6 +1,6 @@
 import { Migration } from '../types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { importCsjOrEsModule } from 'components/Tasks';
+import { importCsjOrEsModule } from 'components/TasksUtils';
 import { getMigrateParams } from '../utils';
 import { log } from '../logger';
 import { migrateParamTask } from '.';
@@ -20,7 +20,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
     for (const migrationData of migrationsData) {
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
-        log.executing(`Executing ${migrationData.fileName}, id: ${migrationData.migrationId}`);
+        log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         try {
             currentNetworkState = await migration.up(signer, currentNetworkState, deployExecute);
@@ -33,7 +33,10 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
             }
 
             // If healthcheck passed, update the state and write it to the system
-            state.migrationState = { latestMigration: migrationData.migrationId };
+            state = {
+                migrationState: { latestMigration: migrationData.migrationTimestamp },
+                networkState: currentNetworkState
+            };
             writeState(state);
         } catch (e) {
             log.error('Migration execution failed');
