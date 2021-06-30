@@ -36,6 +36,8 @@ The engine expose 1 small task, and one main task `migrate`.
 
 Migrate the system from point A to point B.
 
+`yarn hh migrate --help` for more info on params.
+
 Algorithm:
 
 ##### Fetch `{ signer, migrationsData, initialState, writeState, deployExecute }`
@@ -74,6 +76,8 @@ Algorithm:
 ###### createMigration
 
 Create a migration file based from a template.
+
+`yarn hh createMigration --help` for more info on params.
 
 ```ts
 import Contracts from 'components/Contracts';

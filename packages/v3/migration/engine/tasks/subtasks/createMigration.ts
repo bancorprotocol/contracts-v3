@@ -1,9 +1,9 @@
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
-import { log } from '../logger';
-import { createMigrationParamTask } from '.';
-import { MIGRATION_FOLDER } from '../utils';
+import { log } from '../../logger';
+import { createMigrationParamTask } from '..';
+import { MIGRATION_FOLDER } from '../../utils';
 
 export default async (args: createMigrationParamTask, hre: HardhatRuntimeEnvironment) => {
     const templateMigrationFile = `import Contracts from 'components/Contracts';

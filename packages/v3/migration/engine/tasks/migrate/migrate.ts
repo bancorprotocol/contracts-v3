@@ -1,9 +1,9 @@
-import { Migration } from '../types';
+import { Migration } from '../../types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { importCsjOrEsModule } from 'components/TasksUtils';
-import { getMigrateParams } from '../utils';
-import { log } from '../logger';
-import { migrateParamTask } from '.';
+import { log } from '../../logger';
+import { migrateParamTask } from '..';
+import { getMigrateParams } from './migrateUtils';
 
 export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {
     const { signer, migrationsData, initialState, writeState, deployExecute } = await getMigrateParams(hre, args);
