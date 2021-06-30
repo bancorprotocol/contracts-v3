@@ -9,7 +9,7 @@ import "./OwnedUpgradeable.sol";
 import "./Utils.sol";
 
 /**
- * @dev This contract implement a token and ETH holder.
+ * @dev This contract provides an owned token and ETH wallet
  */
 contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
