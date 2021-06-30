@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "../utility/Utils.sol";
 import "../utility/Upgradeable.sol";
+import "../utility/Utils.sol";
 
 import "../token/ReserveToken.sol";
 

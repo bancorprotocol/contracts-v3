@@ -33,6 +33,13 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     }
 
     /**
+     * @dev returns the current version of the contract
+     */
+    function version() external pure override returns (uint16) {
+        return 1;
+    }
+
+    /**
      * @dev returns the address of the reserve token
      */
     function reserveToken() external view returns (IReserveToken) {
