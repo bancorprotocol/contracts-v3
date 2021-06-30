@@ -61,6 +61,8 @@ contract BancorVault is
         __BancorVault_init();
     }
 
+    // solhint-disable func-name-mixedcase
+
     /**
      * @dev initializes the contract and its parents
      */
@@ -86,6 +88,8 @@ contract BancorVault is
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
+    // solhint-enable func-name-mixedcase
+
     modifier onlyAdmin {
         _hasRole(ROLE_ADMIN, msg.sender);
 
@@ -96,9 +100,11 @@ contract BancorVault is
         require(hasRole(role, account), "ERR_ACCESS_DENIED");
     }
 
-    // prettier-ignore
     receive() external payable override {}
 
+    /**
+     * @dev returns the current version of the contract
+     */
     function version() external pure override returns (uint16) {
         return 1;
     }
