@@ -67,9 +67,9 @@ Algorithm:
 2. Run every migration in a loop as follow:
    -> Importing the migration file.
    -> Executing the `up` function of that migration file.
-   ---> If `up` throw, exit. // @TODO add `down` functionnality (this is going to be complicated here).
+   ---> If `up` throw, exit. // @TODO add call to `down` functionnality (this is going to be complicated here).
    -> Executing the `healthcheck` function of that migration file.
-   ---> If healthcheck returns false, exit. // @TODO add `down` functionnality.
+   ---> If healthcheck returns false, exit. // @TODO add call to `down` functionnality.
    -> Update the latestMigration to the current migration's timestamp.
    -> Update the networkState to the new networkState
 
