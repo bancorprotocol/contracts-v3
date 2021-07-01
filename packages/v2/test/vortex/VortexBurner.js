@@ -540,10 +540,7 @@ describe('VortexBurner', () => {
                             it('should revert when attempting to burn the network fees', async () => {
                                 const tokenAddresses = getTokenAddresses(testTokens);
 
-                                // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
-                                await expect(vortex.burn(tokenAddresses)).to.be.reverted.but.not.to.be.revertedWith(
-                                    'ERR_ZERO_TARGET_AMOUNT'
-                                );
+                                await expect(vortex.burn(tokenAddresses)).to.be.revertedWith('ERR_ZERO_TARGET_AMOUNT');
                             });
                         });
                     }
