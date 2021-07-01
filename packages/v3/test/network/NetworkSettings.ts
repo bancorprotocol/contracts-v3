@@ -19,6 +19,8 @@ let proxyAdmin: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
 
+const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+
 const DEFAULT_NETWORK_FEE = BigNumber.from(10000);
 const DEFAULT_EXIT_FEE = BigNumber.from(5000);
 const DEFAULT_FLASH_LOAN_FEE = BigNumber.from(1000);
@@ -37,7 +39,7 @@ describe('NetworkSettings', () => {
         networkFeeWallet = await Contracts.TokenHolderUpgradeable.deploy();
         await networkFeeWallet.initialize();
 
-        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', TOTAL_SUPPLY);
     });
 
     const testNetworkSettings = (
@@ -204,11 +206,7 @@ describe('NetworkSettings', () => {
                         'ERR_NOT_WHITELISTED'
                     );
 
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(
-                        'TKN2',
-                        'TKN2',
-                        BigNumber.from(1_000_000_000)
-                    );
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN2', 'TKN2', TOTAL_SUPPLY);
                     await expect(
                         settings.removeTokenFromProtectedTokensWhitelist(reserveToken2.address)
                     ).to.be.revertedWith('ERR_NOT_WHITELISTED');
