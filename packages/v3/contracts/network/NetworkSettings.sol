@@ -34,7 +34,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     uint32 private _flashLoanFeePPM;
 
     // maximum deviation of the average rate from the spot rate (in units of PPM)
-    uint32 private _averageRateMaxDeviationPPM = 5000;
+    uint32 private _averageRateMaxDeviationPPM;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 6] private __gap;
