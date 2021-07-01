@@ -6,7 +6,7 @@ const { Decimal } = require('../../../helpers/MathUtils');
 const { latest, duration } = require('../../../helpers/Time');
 const { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, registry } = require('../../../helpers/Constants');
 
-const Contracts = require('../../../helpers/Contracts');
+const Contracts = require('../../../../components/Contracts').default;
 
 let now;
 let bancorNetwork;
@@ -365,10 +365,7 @@ describe('StandardPoolConverter', () => {
 
                     await poolToken.transferOwnership(converter.address);
 
-                    // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
-                    await expect(converter.acceptAnchorOwnership()).to.be.reverted.but.not.to.be.revertedWith(
-                        'ERR_INVALID_RESERVE_COUNT'
-                    );
+                    await expect(converter.acceptAnchorOwnership()).to.be.revertedWith('ERR_INVALID_RESERVE_COUNT');
                 });
 
                 context('with an upgrader', () => {
@@ -387,7 +384,6 @@ describe('StandardPoolConverter', () => {
                     });
 
                     it('should revert when the owner attempts to transfer the anchor ownership', async () => {
-                        // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
                         await expect(converter.transferAnchorOwnership(nonOwner.address)).to.be.revertedWith(
                             'ERR_ACCESS_DENIED'
                         );
@@ -399,10 +395,9 @@ describe('StandardPoolConverter', () => {
 
                         await contractRegistry.registerAddress(registry.CONVERTER_UPGRADER, newUpgrader.address);
 
-                        // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
                         await expect(
                             converter.connect(newUpgrader).transferAnchorOwnership(nonOwner.address)
-                        ).to.be.reverted.but.not.to.be.revertedWith('ERR_ACCESS_DENIED');
+                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
                     });
 
                     context('when the owner is the upgrader contract', () => {
@@ -420,10 +415,9 @@ describe('StandardPoolConverter', () => {
                         });
 
                         it('should revert when a non owner attempts to transfer the anchor ownership', async () => {
-                            // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
                             await expect(
                                 converter.connect(nonOwner).transferAnchorOwnership(nonOwner.address)
-                            ).to.be.reverted.but.not.to.be.revertedWith('ERR_ACCESS_DENIED');
+                            ).to.be.revertedWith('ERR_ACCESS_DENIED');
                         });
                     });
                 });
@@ -450,10 +444,7 @@ describe('StandardPoolConverter', () => {
                 it('should revert when a non owner attempts to upgrade the converter', async () => {
                     const { converter } = await createPool({ ethIndex });
 
-                    // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
-                    await expect(converter.connect(nonOwner).upgrade()).to.be.reverted.but.not.to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
+                    await expect(converter.connect(nonOwner).upgrade()).to.be.revertedWith('ERR_ACCESS_DENIED');
                 });
             });
 
@@ -481,10 +472,9 @@ describe('StandardPoolConverter', () => {
                 it('should revert when a non owner attempts to update the fee', async () => {
                     const newFee = BigNumber.from(30000);
 
-                    // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
-                    await expect(
-                        converter.connect(nonOwner).setConversionFee(newFee)
-                    ).to.be.reverted.but.not.to.be.revertedWith('ERR_ACCESS_DENIED');
+                    await expect(converter.connect(nonOwner).setConversionFee(newFee)).to.be.revertedWith(
+                        'ERR_ACCESS_DENIED'
+                    );
                 });
 
                 it('verifies that an event is fired when the owner updates the fee', async () => {
@@ -619,10 +609,9 @@ describe('StandardPoolConverter', () => {
                 it('should revert when attempting to convert with identical source/target addresses', async () => {
                     const amount = BigNumber.from(500);
 
-                    // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
                     await expect(
                         convert([reserveToken1, poolToken, reserveToken1], amount, MIN_RETURN)
-                    ).to.be.reverted.but.not.to.be.revertedWith('ERR_SAME_SOURCE_TARGET');
+                    ).to.be.revertedWith('ERR_SAME_SOURCE_TARGET');
                 });
 
                 it('verifies that convert returns valid amount and fee after converting', async () => {
