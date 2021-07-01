@@ -88,7 +88,7 @@ describe('NetworkSettings', () => {
                 ).to.be.revertedWith('ERR_INVALID_FEE');
             });
 
-            it('should revert when initialized with an invalid flash loan fee', async () => {
+            it('should revert when initialized with an invalid flash-loan fee', async () => {
                 await expect(
                     createNetworkSettings(
                         networkFeeWallet.address,
@@ -387,7 +387,7 @@ describe('NetworkSettings', () => {
             });
         });
 
-        describe('flash loan fee', async () => {
+        describe('flash-loan fee', async () => {
             const newFlashLoanFee = BigNumber.from(500000);
             let settings: NetworkSettings;
 
@@ -403,19 +403,19 @@ describe('NetworkSettings', () => {
                 expect(await settings.flashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE);
             });
 
-            it('should revert when a non-owner attempts to set the flash loan fee', async () => {
+            it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
                 await expect(settings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
                     'ERR_ACCESS_DENIED'
                 );
             });
 
-            it('should revert when setting the flash loan fee to an invalid value', async () => {
+            it('should revert when setting the flash-loan fee to an invalid value', async () => {
                 await expect(settings.setFlashLoanFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
                     'ERR_INVALID_FEE'
                 );
             });
 
-            it('should be to able to set and update the flash loan fee', async () => {
+            it('should be to able to set and update the flash-loan fee', async () => {
                 const res = await settings.setFlashLoanFeePPM(newFlashLoanFee);
                 await expect(res)
                     .to.emit(settings, 'FlashLoanFeePPMUpdated')

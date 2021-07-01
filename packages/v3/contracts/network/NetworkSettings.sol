@@ -30,7 +30,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     // the withdrawal fee (in units of PPM)
     uint32 private _exitFeePPM;
 
-    // the flashLoan fee (in units of PPM)
+    // the flash-loan fee (in units of PPM)
     uint32 private _flashLoanFeePPM;
 
     // maximum deviation of the average rate from the spot rate (in units of PPM)
@@ -70,7 +70,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event ExitFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
-     * @dev triggered when the flashLoan fee is updated
+     * @dev triggered when the flash-loan fee is updated
      */
     event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
@@ -305,14 +305,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the flashLoan fee (in units of PPM)
+     * @dev returns the flash-loan fee (in units of PPM)
      */
     function flashLoanFeePPM() external view override returns (uint32) {
         return _flashLoanFeePPM;
     }
 
     /**
-     * @dev sets the flash fee (in units of PPM)
+     * @dev sets the flash-loan fee (in units of PPM)
      *
      * requirements:
      *
