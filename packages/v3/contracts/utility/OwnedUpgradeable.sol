@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 import "./interfaces/IOwned.sol";
 
 import "./Upgradeable.sol";
-import "./Utils.sol";
 
 /**
  * @dev This contract provides support and utilities for contract ownership.
