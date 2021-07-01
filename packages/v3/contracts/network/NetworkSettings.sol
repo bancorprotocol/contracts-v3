@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-
 import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
 import "../utility/OwnedUpgradeable.sol";
@@ -14,7 +12,6 @@ import "./interfaces/INetworkSettings.sol";
  * @dev Network Settings contract
  */
 contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Utils {
-    using SafeMath for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a set of tokens which are eligeble for protection
