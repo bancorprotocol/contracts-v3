@@ -145,7 +145,7 @@ describe('NetworkSettings', () => {
             });
         });
 
-        describe('protected tokens white list', async () => {
+        describe('protected tokens whitelist', async () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
