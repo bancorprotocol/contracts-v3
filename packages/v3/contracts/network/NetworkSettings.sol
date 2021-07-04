@@ -82,20 +82,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(
-        ITokenHolder initNetworkFeeWallet,
-        uint32 initNetworkFeePPM,
-        uint32 initExitFeePPM,
-        uint32 initFlashLoanFeePPM,
-        uint32 initAverageRateMaxDeviationPPM
-    ) external initializer {
-        __NetworkSettings_init(
-            initNetworkFeeWallet,
-            initNetworkFeePPM,
-            initExitFeePPM,
-            initFlashLoanFeePPM,
-            initAverageRateMaxDeviationPPM
-        );
+    function initialize() external initializer {
+        __NetworkSettings_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -103,48 +91,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkSettings_init(
-        ITokenHolder initNetworkFeeWallet,
-        uint32 initNetworkFeePPM,
-        uint32 initExitFeePPM,
-        uint32 initFlashLoanFeePPM,
-        uint32 initAverageRateMaxDeviationPPM
-    ) internal initializer {
+    function __NetworkSettings_init() internal initializer {
         __Owned_init();
 
-        __NetworkSettings_init_unchained(
-            initNetworkFeeWallet,
-            initNetworkFeePPM,
-            initExitFeePPM,
-            initFlashLoanFeePPM,
-            initAverageRateMaxDeviationPPM
-        );
+        __NetworkSettings_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkSettings_init_unchained(
-        ITokenHolder initNetworkFeeWallet,
-        uint32 initNetworkFeePPM,
-        uint32 initExitFeePPM,
-        uint32 initFlashLoanFeePPM,
-        uint32 initAverageRateMaxDeviationPPM
-    )
-        internal
-        initializer
-        validAddress(address(initNetworkFeeWallet))
-        validFee(initNetworkFeePPM)
-        validFee(initExitFeePPM)
-        validFee(initFlashLoanFeePPM)
-        validPortion(initAverageRateMaxDeviationPPM)
-    {
-        _networkFeeWallet = initNetworkFeeWallet;
-        _networkFeePPM = initNetworkFeePPM;
-        _exitFeePPM = initExitFeePPM;
-        _flashLoanFeePPM = initFlashLoanFeePPM;
-        _averageRateMaxDeviationPPM = initAverageRateMaxDeviationPPM;
-    }
+    function __NetworkSettings_init_unchained() internal initializer {}
 
     // solhint-enable func-name-mixedcase
 

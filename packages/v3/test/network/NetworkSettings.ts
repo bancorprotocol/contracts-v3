@@ -21,11 +21,6 @@ let reserveToken: TestERC20Token;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
-const DEFAULT_NETWORK_FEE = BigNumber.from(10000);
-const DEFAULT_EXIT_FEE = BigNumber.from(5000);
-const DEFAULT_FLASH_LOAN_FEE = BigNumber.from(1000);
-const DEFAULT_MAX_DEVIATION = BigNumber.from(5000);
-
 describe('NetworkSettings', () => {
     shouldHaveGap('NetworkSettings', '_protectedTokensWhitelist');
 
@@ -42,106 +37,22 @@ describe('NetworkSettings', () => {
         reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', TOTAL_SUPPLY);
     });
 
-    const testNetworkSettings = (
-        createNetworkSettings: (
-            networkFeePPMWallet: string,
-            networkFeePPM: BigNumber,
-            exitFeePPM: BigNumber,
-            flashLoanFeePPM: BigNumber,
-            averageRateMaxDeviationPPM: BigNumber
-        ) => Promise<NetworkSettings>
-    ) => {
+    const testNetworkSettings = (createNetworkSettings: () => Promise<NetworkSettings>) => {
         describe('construction', async () => {
-            it('should revert when initialized with an invalid network fee wallet', async () => {
-                await expect(
-                    createNetworkSettings(
-                        ZERO_ADDRESS,
-                        DEFAULT_NETWORK_FEE,
-                        DEFAULT_EXIT_FEE,
-                        DEFAULT_FLASH_LOAN_FEE,
-                        DEFAULT_MAX_DEVIATION
-                    )
-                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
-            });
-
-            it('should revert when initialized with an invalid network fee', async () => {
-                await expect(
-                    createNetworkSettings(
-                        networkFeeWallet.address,
-                        PPM_RESOLUTION.add(BigNumber.from(1)),
-                        DEFAULT_EXIT_FEE,
-                        DEFAULT_FLASH_LOAN_FEE,
-                        DEFAULT_MAX_DEVIATION
-                    )
-                ).to.be.revertedWith('ERR_INVALID_FEE');
-            });
-
-            it('should revert when initialized with an invalid exit fee', async () => {
-                await expect(
-                    createNetworkSettings(
-                        networkFeeWallet.address,
-                        DEFAULT_NETWORK_FEE,
-                        PPM_RESOLUTION.add(BigNumber.from(1)),
-                        DEFAULT_FLASH_LOAN_FEE,
-                        DEFAULT_MAX_DEVIATION
-                    )
-                ).to.be.revertedWith('ERR_INVALID_FEE');
-            });
-
-            it('should revert when initialized with an invalid flash-loan fee', async () => {
-                await expect(
-                    createNetworkSettings(
-                        networkFeeWallet.address,
-                        DEFAULT_NETWORK_FEE,
-                        DEFAULT_EXIT_FEE,
-                        PPM_RESOLUTION.add(BigNumber.from(1)),
-                        DEFAULT_MAX_DEVIATION
-                    )
-                ).to.be.revertedWith('ERR_INVALID_FEE');
-            });
-
-            it('should revert when initialized with an invalid deviation', async () => {
-                await expect(
-                    createNetworkSettings(
-                        networkFeeWallet.address,
-                        DEFAULT_NETWORK_FEE,
-                        DEFAULT_EXIT_FEE,
-                        DEFAULT_FLASH_LOAN_FEE,
-                        BigNumber.from(0)
-                    )
-                ).to.be.revertedWith('ERR_INVALID_PORTION');
-
-                await expect(
-                    createNetworkSettings(
-                        networkFeeWallet.address,
-                        DEFAULT_NETWORK_FEE,
-                        DEFAULT_EXIT_FEE,
-                        DEFAULT_FLASH_LOAN_FEE,
-                        PPM_RESOLUTION.add(BigNumber.from(1))
-                    )
-                ).to.be.revertedWith('ERR_INVALID_PORTION');
-            });
-
             it('should be properly initialized', async () => {
-                const settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                const settings = await createNetworkSettings();
 
                 expect(await settings.version()).to.equal(1);
 
                 expect(await settings.protectedTokensWhitelist()).to.be.empty;
                 const networkFeeParams = await settings.networkFeeParams();
-                expect(networkFeeParams[0]).to.equal(networkFeeWallet.address);
-                expect(networkFeeParams[1]).to.equal(DEFAULT_NETWORK_FEE);
-                expect(await settings.networkFeeWallet()).to.equal(networkFeeWallet.address);
-                expect(await settings.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE);
-                expect(await settings.exitFeePPM()).to.equal(DEFAULT_EXIT_FEE);
-                expect(await settings.flashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE);
-                expect(await settings.averageRateMaxDeviationPPM()).to.equal(DEFAULT_MAX_DEVIATION);
+                expect(networkFeeParams[0]).to.equal(ZERO_ADDRESS);
+                expect(networkFeeParams[1]).to.equal(BigNumber.from(0));
+                expect(await settings.networkFeeWallet()).to.equal(ZERO_ADDRESS);
+                expect(await settings.networkFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));
             });
         });
 
@@ -149,13 +60,7 @@ describe('NetworkSettings', () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
 
                 expect(await settings.protectedTokensWhitelist()).to.be.empty;
             });
@@ -228,13 +133,7 @@ describe('NetworkSettings', () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
             });
 
             it('should revert when a non-owner attempts to set a pool limit', async () => {
@@ -273,24 +172,19 @@ describe('NetworkSettings', () => {
             const newNetworkFee = BigNumber.from(100000);
             let settings: NetworkSettings;
 
-            const expectNetworkFeeParams = async (wallet: TokenHolderUpgradeable, fee: BigNumber) => {
+            const expectNetworkFeeParams = async (wallet: TokenHolderUpgradeable | undefined, fee: BigNumber) => {
+                const walletAddress = wallet?.address || ZERO_ADDRESS;
                 const networkFeeParams = await settings.networkFeeParams();
-                expect(networkFeeParams[0]).to.equal(wallet.address);
+                expect(networkFeeParams[0]).to.equal(walletAddress);
                 expect(networkFeeParams[1]).to.equal(fee);
-                expect(await settings.networkFeeWallet()).to.equal(wallet.address);
+                expect(await settings.networkFeeWallet()).to.equal(walletAddress);
                 expect(await settings.networkFeePPM()).to.equal(fee);
             };
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
 
-                await expectNetworkFeeParams(networkFeeWallet, DEFAULT_NETWORK_FEE);
+                await expectNetworkFeeParams(undefined, BigNumber.from(0));
 
                 newNetworkFeeWallet = await Contracts.TokenHolderUpgradeable.deploy();
                 await newNetworkFeeWallet.initialize();
@@ -319,14 +213,12 @@ describe('NetworkSettings', () => {
                 const res = await settings.setNetworkFeeWallet(newNetworkFeeWallet.address);
                 await expect(res)
                     .to.emit(settings, 'NetworkFeeWalletUpdated')
-                    .withArgs(networkFeeWallet.address, newNetworkFeeWallet.address);
+                    .withArgs(ZERO_ADDRESS, newNetworkFeeWallet.address);
 
-                await expectNetworkFeeParams(newNetworkFeeWallet, DEFAULT_NETWORK_FEE);
+                await expectNetworkFeeParams(newNetworkFeeWallet, BigNumber.from(0));
 
                 const res2 = await settings.setNetworkFeePPM(newNetworkFee);
-                await expect(res2)
-                    .to.emit(settings, 'NetworkFeePPMUpdated')
-                    .withArgs(DEFAULT_NETWORK_FEE, newNetworkFee);
+                await expect(res2).to.emit(settings, 'NetworkFeePPMUpdated').withArgs(BigNumber.from(0), newNetworkFee);
 
                 await expectNetworkFeeParams(newNetworkFeeWallet, newNetworkFee);
 
@@ -337,12 +229,10 @@ describe('NetworkSettings', () => {
 
                 await expectNetworkFeeParams(networkFeeWallet, newNetworkFee);
 
-                const res4 = await settings.setNetworkFeePPM(DEFAULT_NETWORK_FEE);
-                await expect(res4)
-                    .to.emit(settings, 'NetworkFeePPMUpdated')
-                    .withArgs(newNetworkFee, DEFAULT_NETWORK_FEE);
+                const res4 = await settings.setNetworkFeePPM(BigNumber.from(0));
+                await expect(res4).to.emit(settings, 'NetworkFeePPMUpdated').withArgs(newNetworkFee, BigNumber.from(0));
 
-                await expectNetworkFeeParams(networkFeeWallet, DEFAULT_NETWORK_FEE);
+                await expectNetworkFeeParams(networkFeeWallet, BigNumber.from(0));
             });
         });
 
@@ -351,15 +241,9 @@ describe('NetworkSettings', () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
 
-                expect(await settings.exitFeePPM()).to.equal(DEFAULT_EXIT_FEE);
+                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
             });
 
             it('should revert when a non-owner attempts to set the exit fee', async () => {
@@ -376,14 +260,14 @@ describe('NetworkSettings', () => {
 
             it('should be to able to set and update the exit fee', async () => {
                 const res = await settings.setExitFeePPM(newExitFee);
-                await expect(res).to.emit(settings, 'ExitFeePPMUpdated').withArgs(DEFAULT_EXIT_FEE, newExitFee);
+                await expect(res).to.emit(settings, 'ExitFeePPMUpdated').withArgs(BigNumber.from(0), newExitFee);
 
                 expect(await settings.exitFeePPM()).to.equal(newExitFee);
 
-                const res2 = await settings.setExitFeePPM(DEFAULT_EXIT_FEE);
-                await expect(res2).to.emit(settings, 'ExitFeePPMUpdated').withArgs(newExitFee, DEFAULT_EXIT_FEE);
+                const res2 = await settings.setExitFeePPM(BigNumber.from(0));
+                await expect(res2).to.emit(settings, 'ExitFeePPMUpdated').withArgs(newExitFee, BigNumber.from(0));
 
-                expect(await settings.exitFeePPM()).to.equal(DEFAULT_EXIT_FEE);
+                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
             });
         });
 
@@ -392,15 +276,9 @@ describe('NetworkSettings', () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
 
-                expect(await settings.flashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE);
+                expect(await settings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
             });
 
             it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
@@ -419,16 +297,16 @@ describe('NetworkSettings', () => {
                 const res = await settings.setFlashLoanFeePPM(newFlashLoanFee);
                 await expect(res)
                     .to.emit(settings, 'FlashLoanFeePPMUpdated')
-                    .withArgs(DEFAULT_FLASH_LOAN_FEE, newFlashLoanFee);
+                    .withArgs(BigNumber.from(0), newFlashLoanFee);
 
                 expect(await settings.flashLoanFeePPM()).to.equal(newFlashLoanFee);
 
-                const res2 = await settings.setFlashLoanFeePPM(DEFAULT_FLASH_LOAN_FEE);
+                const res2 = await settings.setFlashLoanFeePPM(BigNumber.from(0));
                 await expect(res2)
                     .to.emit(settings, 'FlashLoanFeePPMUpdated')
-                    .withArgs(newFlashLoanFee, DEFAULT_FLASH_LOAN_FEE);
+                    .withArgs(newFlashLoanFee, BigNumber.from(0));
 
-                expect(await settings.flashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE);
+                expect(await settings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
             });
         });
 
@@ -437,15 +315,9 @@ describe('NetworkSettings', () => {
             let settings: NetworkSettings;
 
             beforeEach(async () => {
-                settings = await createNetworkSettings(
-                    networkFeeWallet.address,
-                    DEFAULT_NETWORK_FEE,
-                    DEFAULT_EXIT_FEE,
-                    DEFAULT_FLASH_LOAN_FEE,
-                    DEFAULT_MAX_DEVIATION
-                );
+                settings = await createNetworkSettings();
 
-                expect(await settings.averageRateMaxDeviationPPM()).to.equal(DEFAULT_MAX_DEVIATION);
+                expect(await settings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));
             });
 
             it('should revert when a non-owner attempts to set the maximum deviation', async () => {
@@ -468,68 +340,41 @@ describe('NetworkSettings', () => {
                 const res = await settings.setAverageRateMaxDeviationPPM(newMaxDeviation);
                 await expect(res)
                     .to.emit(settings, 'AverageRateMaxDeviationPPMUpdated')
-                    .withArgs(DEFAULT_MAX_DEVIATION, newMaxDeviation);
+                    .withArgs(BigNumber.from(0), newMaxDeviation);
 
                 expect(await settings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation);
 
-                const res2 = await settings.setAverageRateMaxDeviationPPM(DEFAULT_MAX_DEVIATION);
+                const newMaxDeviation2 = BigNumber.from(5000);
+                const res2 = await settings.setAverageRateMaxDeviationPPM(newMaxDeviation2);
                 await expect(res2)
                     .to.emit(settings, 'AverageRateMaxDeviationPPMUpdated')
-                    .withArgs(newMaxDeviation, DEFAULT_MAX_DEVIATION);
+                    .withArgs(newMaxDeviation, newMaxDeviation2);
 
-                expect(await settings.averageRateMaxDeviationPPM()).to.equal(DEFAULT_MAX_DEVIATION);
+                expect(await settings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation2);
             });
         });
     };
 
     context('as a regular contract', () => {
-        testNetworkSettings(
-            async (
-                networkFeePPMWallet: string,
-                networkFeePPM: BigNumber,
-                exitFeePPM: BigNumber,
-                flashLoanFeePPM: BigNumber,
-                averageRateMaxDeviationPPM: BigNumber
-            ) => {
-                const settings = await Contracts.NetworkSettings.deploy();
-                await settings.initialize(
-                    networkFeePPMWallet,
-                    networkFeePPM,
-                    exitFeePPM,
-                    flashLoanFeePPM,
-                    averageRateMaxDeviationPPM
-                );
+        testNetworkSettings(async () => {
+            const settings = await Contracts.NetworkSettings.deploy();
+            await settings.initialize();
 
-                return settings;
-            }
-        );
+            return settings;
+        });
     });
 
     context('as a proxy', () => {
-        testNetworkSettings(
-            async (
-                networkFeePPMWallet: string,
-                networkFeePPM: BigNumber,
-                exitFeePPM: BigNumber,
-                flashLoanFeePPM: BigNumber,
-                averageRateMaxDeviationPPM: BigNumber
-            ) => {
-                const logic = await Contracts.NetworkSettings.deploy();
+        testNetworkSettings(async () => {
+            const logic = await Contracts.NetworkSettings.deploy();
 
-                const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
-                    logic.address,
-                    proxyAdmin.address,
-                    logic.interface.encodeFunctionData('initialize', [
-                        networkFeePPMWallet,
-                        networkFeePPM,
-                        exitFeePPM,
-                        flashLoanFeePPM,
-                        averageRateMaxDeviationPPM
-                    ])
-                );
+            const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
+                logic.address,
+                proxyAdmin.address,
+                logic.interface.encodeFunctionData('initialize')
+            );
 
-                return Contracts.NetworkSettings.attach(proxy.address);
-            }
-        );
+            return Contracts.NetworkSettings.attach(proxy.address);
+        });
     });
 });
