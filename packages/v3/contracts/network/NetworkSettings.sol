@@ -176,7 +176,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      */
     function addTokenToProtectedTokensWhitelist(IReserveToken token)
         external
-        override
         onlyOwner
         validExternalAddress(address(token))
     {
@@ -192,7 +191,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function removeTokenFromProtectedTokensWhitelist(IReserveToken token) external override onlyOwner {
+    function removeTokenFromProtectedTokensWhitelist(IReserveToken token) external onlyOwner {
         require(_protectedTokensWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
 
         emit TokenRemovedFromWhitelist(token);
@@ -219,12 +218,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(IReserveToken token, uint256 amount)
-        external
-        override
-        onlyOwner
-        validAddress(address(token))
-    {
+    function setPoolMintingLimit(IReserveToken token, uint256 amount) external onlyOwner validAddress(address(token)) {
         emit MintingLimitUpdated(token, _poolMintingLimits[token], amount);
 
         _poolMintingLimits[token] = amount;
@@ -262,7 +256,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      */
     function setNetworkFeeWallet(ITokenHolder newNetworkFeeWallet)
         external
-        override
         onlyOwner
         validAddress(address(newNetworkFeeWallet))
     {
@@ -278,7 +271,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setNetworkFeePPM(uint32 newNetworkFeePPM) external override onlyOwner validFee(newNetworkFeePPM) {
+    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
         emit NetworkFeePPMUpdated(_networkFeePPM, newNetworkFeePPM);
 
         _networkFeePPM = newNetworkFeePPM;
@@ -298,7 +291,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setExitFeePPM(uint32 newExitFeePPM) external override onlyOwner validFee(newExitFeePPM) {
+    function setExitFeePPM(uint32 newExitFeePPM) external onlyOwner validFee(newExitFeePPM) {
         emit ExitFeePPMUpdated(_exitFeePPM, newExitFeePPM);
 
         _exitFeePPM = newExitFeePPM;
@@ -318,7 +311,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external override onlyOwner validFee(newFlashLoanFeePPM) {
+    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyOwner validFee(newFlashLoanFeePPM) {
         emit FlashLoanFeePPMUpdated(_flashLoanFeePPM, newFlashLoanFeePPM);
 
         _flashLoanFeePPM = newFlashLoanFeePPM;
@@ -340,7 +333,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      */
     function setAverageRateMaxDeviationPPM(uint32 newAverageRateMaxDeviationPPM)
         external
-        override
         onlyOwner
         validPortion(newAverageRateMaxDeviationPPM)
     {
