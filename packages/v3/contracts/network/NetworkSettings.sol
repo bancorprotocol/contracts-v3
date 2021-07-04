@@ -40,19 +40,19 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     uint256[MAX_GAP - 6] private __gap;
 
     /**
-     * @dev triggered when a token is added to the protection whitelist
+     * @dev triggered when a reserve token is added to the protection whitelist
      */
-    event TokenAddedToWhitelist(IReserveToken indexed token);
+    event TokenAddedToWhitelist(IReserveToken indexed reserveToken);
 
     /**
-     * @dev triggered when a token is removed from the protection whitelist
+     * @dev triggered when a reserve token is removed from the protection whitelist
      */
-    event TokenRemovedFromWhitelist(IReserveToken indexed token);
+    event TokenRemovedFromWhitelist(IReserveToken indexed reserveToken);
 
     /**
-     * @dev triggered when a per-token minting limit is updated
+     * @dev triggered when a per-reserve token minting limit is updated
      */
-    event MintingLimitUpdated(IReserveToken indexed token, uint256 prevLimit, uint256 newLimit);
+    event MintingLimitUpdated(IReserveToken indexed reserveToken, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the network fee is updated
@@ -112,7 +112,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the protected tokens whitelist
+     * @dev returns the protected reserve tokens whitelist
      */
     function protectedTokensWhitelist() external view override returns (IReserveToken[] memory) {
         uint256 length = _protectedTokensWhitelist.length();
@@ -124,47 +124,47 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev adds a token to the protected tokens whitelist
+     * @dev adds a reserve token to the protected reserve tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function addTokenToProtectedTokensWhitelist(IReserveToken token)
+    function addTokenToProtectedTokensWhitelist(IReserveToken reserveToken)
         external
         onlyOwner
-        validExternalAddress(address(token))
+        validExternalAddress(address(reserveToken))
     {
-        require(_protectedTokensWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
+        require(_protectedTokensWhitelist.add(address(reserveToken)), "ERR_ALREADY_WHITELISTED");
 
-        emit TokenAddedToWhitelist(token);
+        emit TokenAddedToWhitelist(reserveToken);
     }
 
     /**
-     * @dev removes a token from the protected tokens whitelist
+     * @dev removes a reserve token from the protected reserve tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function removeTokenFromProtectedTokensWhitelist(IReserveToken token) external onlyOwner {
-        require(_protectedTokensWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
+    function removeTokenFromProtectedTokensWhitelist(IReserveToken reserveToken) external onlyOwner {
+        require(_protectedTokensWhitelist.remove(address(reserveToken)), "ERR_NOT_WHITELISTED");
 
-        emit TokenRemovedFromWhitelist(token);
+        emit TokenRemovedFromWhitelist(reserveToken);
     }
 
     /**
-     * @dev checks whether a given token is whitelisted
+     * @dev checks whether a given reserve token is whitelisted
      */
-    function isTokenWhitelisted(IReserveToken token) external view override returns (bool) {
-        return _protectedTokensWhitelist.contains(address(token));
+    function isTokenWhitelisted(IReserveToken reserveToken) external view override returns (bool) {
+        return _protectedTokensWhitelist.contains(address(reserveToken));
     }
 
     /**
-     * @dev returns the network token minting limit for a given pool
+     * @dev returns the network token minting limit for a given reserve token
      */
-    function poolMintingLimit(IReserveToken token) external view override returns (uint256) {
-        return _poolMintingLimits[token];
+    function poolMintingLimit(IReserveToken reserveToken) external view override returns (uint256) {
+        return _poolMintingLimits[reserveToken];
     }
 
     /**
@@ -174,10 +174,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(IReserveToken token, uint256 amount) external onlyOwner validAddress(address(token)) {
-        emit MintingLimitUpdated(token, _poolMintingLimits[token], amount);
+    function setPoolMintingLimit(IReserveToken reserveToken, uint256 amount)
+        external
+        onlyOwner
+        validAddress(address(reserveToken))
+    {
+        emit MintingLimitUpdated(reserveToken, _poolMintingLimits[reserveToken], amount);
 
-        _poolMintingLimits[token] = amount;
+        _poolMintingLimits[reserveToken] = amount;
     }
 
     /**
