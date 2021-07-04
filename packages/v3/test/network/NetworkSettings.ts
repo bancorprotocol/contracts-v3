@@ -39,6 +39,14 @@ describe('NetworkSettings', () => {
 
     const testNetworkSettings = (createNetworkSettings: () => Promise<NetworkSettings>) => {
         describe('construction', async () => {
+            it('should revert when attempting to reinitialize', async () => {
+                const settings = await createNetworkSettings();
+
+                await expect(settings.initialize()).to.be.revertedWith(
+                    'Initializable: contract is already initialized'
+                );
+            });
+
             it('should be properly initialized', async () => {
                 const settings = await createNetworkSettings();
 
