@@ -109,4 +109,6 @@ const getContracts = (signer?: Signer) => {
     };
 };
 
+export type Contracts = ReturnType<typeof getContracts>;
+
 export default getContracts();

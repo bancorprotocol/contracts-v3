@@ -15,17 +15,17 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         const contract = await func(...args, overrides);
 
         log.executingTx(`Deploying contract ${name} (${contract.__contractName__})`);
-        console.log(`Tx: `, contract.deployTransaction.hash);
+        log.normal(`Tx: `, contract.deployTransaction.hash);
 
-        log.greyed(`Waiting to be mined ...`);
+        log.greyed(`Waiting to be mined...`);
         const receipt = await contract.deployTransaction.wait(executionConfig.confirmationToWait);
 
         if (receipt.status !== 1) {
-            log.error(`Error while executing.`);
+            log.error(`Error while executing`);
             throw new executionError(contract.deployTransaction, receipt);
         }
 
-        log.success(`Deployed at ${contract.address} 🚀 `);
+        log.success(`Deployed ${name} at ${contract.address} 🚀 !`);
         return contract;
     };
 
@@ -35,12 +35,12 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         ...args: Parameters<T>
     ): Promise<ContractReceipt> => {
         const tx = await func(...args, overrides);
-        console.log(executionInstruction);
-        console.log(`Executing tx: `, tx.hash);
+        log.normal(executionInstruction);
+        log.normal(`Executing tx: `, tx.hash);
 
         const receipt = await tx.wait(executionConfig.confirmationToWait);
         if (receipt.status !== 1) {
-            log.error(`Error while executing.`);
+            log.error(`Error while executing`);
             throw new executionError(tx, receipt);
         }
 

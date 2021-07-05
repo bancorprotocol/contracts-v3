@@ -1,8 +1,8 @@
 # Migration
 
-## data
+## Data
 
-The `data` folder got a folder for each network used.
+The `data` folder consists of one designated folder per network.
 
 In each network folder there is a `state.json` file. It represents the migration state and the network state:
 
@@ -15,7 +15,7 @@ In each network folder there is a `state.json` file. It represents the migration
 }
 ```
 
-## migrations
+## Migrations
 
 The `migration` folder is home for all migrations file.
 
@@ -28,11 +28,11 @@ export interface Migration {
 }
 ```
 
-## engine
+## Engine
 
 The engine expose 1 small task, and one main task `migrate`.
 
-### migrate
+### Migrate
 
 Migrate the system from point A to point B.
 
@@ -42,7 +42,7 @@ Algorithm:
 
 ##### Fetch `{ signer, migrationsData, initialState, writeState, deployExecute }`
 
-`signer`: Can either be a normal signer or a ledger signer. This object is passed to the migration script.
+`signer`: Can either be a normal signer or a Ledger signer. This object is passed to the migration script.
 
 `migrationsData`: An array of migrationData to be executed (counting only the migration that haven't been already run - using the timestamp as reference). A migrationData is:
 
@@ -54,7 +54,7 @@ Algorithm:
 }
 ```
 
-`initialState`: The state of the global system on a particular network. It's fetch from the `state.json` file mentionned above. The property `networkState` of this object is passed to the migration script.
+`initialState`: The state of the global system on a particular network. It's fetched from the `state.json` file mentionned above. The property `networkState` of this object is passed to the migration script.
 
 `writeState`: A function that will replace the current state of the network with the one provided.
 
@@ -77,7 +77,7 @@ Algorithm:
 
 Create a migration file based from a template.
 
-`yarn hh createMigration --help` for more info on params.
+`yarn hh create-migration --help` for more info on params.
 
 ```ts
 import Contracts from 'components/Contracts';

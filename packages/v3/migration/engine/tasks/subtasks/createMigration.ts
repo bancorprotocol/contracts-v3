@@ -6,17 +6,24 @@ import { createMigrationParamTask } from '..';
 import { MIGRATION_FOLDER } from '../../utils';
 
 export default async (args: createMigrationParamTask, hre: HardhatRuntimeEnvironment) => {
-    const templateMigrationFile = `import Contracts from 'components/Contracts';
-import { Migration } from 'migration/engine/types';
-    
-export type State = {};
+    const templateMigrationFile = `import { Migration, deployedContract } from 'migration/engine/types';
+
+export type State = {
+    BNT: deployedContract;
+};
     
 const migration: Migration = {
-    up: async (signer, _, { deploy, execute }): Promise<State> => {
-        const contracts = Contracts.connect(signer);
-        return {};
+    up: async (signer, contracts, _, { deploy, execute }): Promise<State> => {
+        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
+        return {
+            BNT: {
+                address: BNT.address,
+                tx: BNT.deployTransaction.hash
+            }
+        };
     },
-    healthcheck: async (signer, state: State, { deploy, execute }) => {
+
+    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };

@@ -1,9 +1,10 @@
 import { Migration } from '../../types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { importCsjOrEsModule } from 'components/TasksUtils';
+import { importCsjOrEsModule } from 'components/TaskUtils';
 import { log } from '../../logger';
 import { migrateParamTask } from '..';
 import { getMigrateParams } from './migrateUtils';
+import Contracts from 'components/Contracts';
 
 export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {
     const { signer, migrationsData, initialState, writeState, deployExecute } = await getMigrateParams(hre, args);
@@ -22,12 +23,13 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
         log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
+        const contracts = Contracts.connect(signer);
         try {
-            currentNetworkState = await migration.up(signer, currentNetworkState, deployExecute);
+            currentNetworkState = await migration.up(signer, contracts, currentNetworkState, deployExecute);
 
             // If healthcheck doesn't pass
-            if (!(await migration.healthcheck(signer, currentNetworkState, deployExecute))) {
-                log.error("Healthcheck didn't pass");
+            if (!(await migration.healthcheck(signer, contracts, currentNetworkState, deployExecute))) {
+                log.error('Healthcheck failed');
                 // @TODO revert the migration here
                 return;
             }

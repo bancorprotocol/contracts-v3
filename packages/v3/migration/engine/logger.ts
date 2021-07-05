@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 
 export const log = {
+    normal: (...str: string[]) => console.log(...str),
     info: (str: string) => console.log(chalk.cyanBright`⚠️  ${str}`),
     done: (str: string) => console.log(chalk.bold.yellowBright`${str}`),
     executing: (str: string) => console.log(chalk.bold.blue`${str}`),

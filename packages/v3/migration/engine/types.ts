@@ -1,3 +1,4 @@
+import { Contracts } from 'components/Contracts';
 import { Signer } from 'ethers';
 import { deployExecuteType } from './executions';
 
@@ -14,6 +15,11 @@ export type deployedContract = {
 };
 
 export interface Migration {
-    up: (signer: Signer, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
-    healthcheck: (signer: Signer, newState: any, { deploy, execute }: deployExecuteType) => Promise<boolean>;
+    up: (signer: Signer, contracts: Contracts, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
+    healthcheck: (
+        signer: Signer,
+        contracts: Contracts,
+        newState: any,
+        { deploy, execute }: deployExecuteType
+    ) => Promise<boolean>;
 }

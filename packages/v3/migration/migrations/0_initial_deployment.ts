@@ -1,4 +1,3 @@
-import Contracts from 'components/Contracts';
 import { parseUnits } from 'ethers/lib/utils';
 import { Migration, deployedContract } from 'migration/engine/types';
 
@@ -7,9 +6,7 @@ export type State = {
 };
 
 const migration: Migration = {
-    up: async (signer, _, { deploy, execute }): Promise<State> => {
-        const contracts = Contracts.connect(signer);
-
+    up: async (signer, contracts, _, { deploy, execute }): Promise<State> => {
         const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', parseUnits('10000'));
         return {
             BNT: {
@@ -18,7 +15,8 @@ const migration: Migration = {
             }
         };
     },
-    healthcheck: async (signer, state: State, { deploy, execute }) => {
+
+    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };

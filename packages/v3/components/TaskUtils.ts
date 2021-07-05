@@ -2,7 +2,7 @@ import path from 'path';
 
 export const importCsjOrEsModule = (filePath: string) => {
     const imported = require(filePath);
-    return imported.default !== undefined ? imported.default : imported;
+    return imported.default || imported;
 };
 
 export const lazyAction = (pathToAction: string) => {

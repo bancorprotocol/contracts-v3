@@ -21,10 +21,10 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
         : (await hre.ethers.getSigners())[0];
 
     // Overrides check
-    let overrides: executeOverride = {};
+    const overrides: executeOverride = {};
 
-    if (args.gasPrice === 0 && hre.network.name === 'mainnet') {
-        throw new Error("Gas Price shouldn't be equal to 0 for mainnet use");
+    if (!args.gasPrice && hre.network.name === 'mainnet') {
+        throw new Error("Gas Price shouldn't be equal to 0 for mainnet use. Aborting");
     }
     overrides.gasPrice = args.gasPrice === 0 ? undefined : parseUnits(args.gasPrice.toString(), 'gwei');
 
@@ -34,7 +34,7 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
     };
 
     if (executionConfig.confirmationToWait <= 1 && hre.network.name === 'mainnet') {
-        throw new Error("Confirmation to wait shouldn't be lower than or equal to 1 for mainnet use");
+        throw new Error("Transaction confirmation wasn't defined. Aborting");
     }
 
     const deployExecute = initDeployExecute(executionConfig, overrides);
