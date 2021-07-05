@@ -34,7 +34,6 @@ export default migration;
         throw new Error('File name cannot be empty');
     }
 
-    // Fetch timestamp
     const migrationId = Date.now();
 
     const fileName = `${migrationId}_${args.migrationName}.ts`;

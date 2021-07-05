@@ -1,6 +1,6 @@
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
 
-export class executionError extends Error {
+export class ExecutionError extends Error {
     tx: ContractTransaction;
     receipt: ContractReceipt;
 

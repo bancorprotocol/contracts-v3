@@ -1,4 +1,4 @@
-import { executionError } from './errors';
+import { ExecutionError } from './errors';
 import { Contract } from 'components/Contracts';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
 import { log } from './logger';
@@ -22,7 +22,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
 
         if (receipt.status !== 1) {
             log.error(`Error while executing`);
-            throw new executionError(contract.deployTransaction, receipt);
+            throw new ExecutionError(contract.deployTransaction, receipt);
         }
 
         log.success(`Deployed ${name} at ${contract.address} 🚀 !`);
@@ -41,7 +41,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         const receipt = await tx.wait(executionConfig.confirmationToWait);
         if (receipt.status !== 1) {
             log.error(`Error while executing`);
-            throw new executionError(tx, receipt);
+            throw new ExecutionError(tx, receipt);
         }
 
         log.success(`Executed ✨`);

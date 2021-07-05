@@ -11,7 +11,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
     let state = initialState;
 
-    // If there is no migration to run, exit
+    // if there is no migration to run, exit
     if (migrationsData.length === 0) {
         log.done(`Nothing to migrate ⚡️`);
         return;
@@ -27,14 +27,14 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         try {
             currentNetworkState = await migration.up(signer, contracts, currentNetworkState, deployExecute);
 
-            // If healthcheck doesn't pass
+            // if healthcheck doesn't pass
             if (!(await migration.healthcheck(signer, contracts, currentNetworkState, deployExecute))) {
                 log.error('Healthcheck failed');
                 // @TODO revert the migration here
                 return;
             }
 
-            // If healthcheck passed, update the state and write it to the system
+            // if healthcheck passed, update the state and write it to the system
             state = {
                 migrationState: { latestMigration: migrationData.migrationTimestamp },
                 networkState: currentNetworkState

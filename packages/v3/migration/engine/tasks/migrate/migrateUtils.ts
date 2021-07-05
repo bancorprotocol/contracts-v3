@@ -39,12 +39,12 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
 
     // Read all files into the folder and fetch any state file
     const allDeploymentFiles = fs.readdirSync(pathToDeploymentFiles);
-    const deploymentFiles = allDeploymentFiles.filter((fileName: string) => fileName === 'state.json');
+    const deploymentFiles = allDeploymentFiles.find((fileName: string) => fileName === 'state.json');
 
     const { writeState, fetchState } = writeFetchState(hre);
 
     // If there is no state file in the network's folder, create an empty one
-    if (deploymentFiles.length === 0) {
+    if (!deploymentFiles) {
         writeState({
             migrationState: {
                 latestMigration: -1

@@ -23,14 +23,19 @@ A migration file is a typescript file that expose a particular object respecting
 
 ```ts
 export interface Migration {
-    up: (signer: Signer, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
-    healthcheck: (signer: Signer, newState: any, { deploy, execute }: deployExecuteType) => Promise<boolean>;
+    up: (signer: Signer, contracts: Contracts, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
+    healthcheck: (
+        signer: Signer,
+        contracts: Contracts,
+        newState: any,
+        { deploy, execute }: deployExecuteType
+    ) => Promise<boolean>;
 }
 ```
 
 ## Engine
 
-The engine expose 1 small task, and one main task `migrate`.
+The engine expose one small task, and one main task `migrate`.
 
 ### Migrate
 
@@ -62,7 +67,7 @@ Algorithm:
 
 ##### Running the migration
 
-1. If there is no migrationsData in the array, exit.
+1. If there is no migrationData in the array, exit.
 
 2. Run every migration in a loop as follow:
    -> Importing the migration file.
@@ -80,17 +85,24 @@ Create a migration file based from a template.
 `yarn hh create-migration --help` for more info on params.
 
 ```ts
-import Contracts from 'components/Contracts';
-import { Migration } from 'migration/engine/types';
+import { Migration, deployedContract } from 'migration/engine/types';
 
-export type State = {};
+export type State = {
+    BNT: deployedContract;
+};
 
 const migration: Migration = {
-    up: async (signer, _, { deploy, execute }): Promise<State> => {
-        const contracts = Contracts.connect(signer);
-        return {};
+    up: async (signer, contracts, _, { deploy, execute }): Promise<State> => {
+        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
+        return {
+            BNT: {
+                address: BNT.address,
+                tx: BNT.deployTransaction.hash
+            }
+        };
     },
-    healthcheck: async (signer, state: State, { deploy, execute }) => {
+
+    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };
