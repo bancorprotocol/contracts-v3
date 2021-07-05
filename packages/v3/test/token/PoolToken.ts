@@ -21,10 +21,10 @@ let owner: SignerWithAddress;
 let spender: SignerWithAddress;
 let nonOwner: SignerWithAddress;
 
-const NAME = 'Pool Token';
-const SYMBOL = 'POOL';
-
 describe('PoolToken', () => {
+    const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
+    const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
+
     before(async () => {
         accounts = await ethers.getSigners();
 
@@ -32,28 +32,41 @@ describe('PoolToken', () => {
     });
 
     beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
     });
 
     describe('construction', () => {
         it('should be properly initialized', async () => {
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
-            expect(await poolToken.name()).to.equal(NAME);
-            expect(await poolToken.symbol()).to.equal(SYMBOL);
+            poolToken = await Contracts.PoolToken.deploy(reserveToken.address, '');
+
+            const reserveTokenSymbol = await reserveToken.symbol();
+
+            expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
+            expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
             expect(await poolToken.totalSupply()).to.equal(BigNumber.from(0));
             expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
         });
 
+        it('should allow to customize the symbol of the underlying reserve token', async () => {
+            const symbol1 = 'AAA';
+            const poolToken1 = await Contracts.PoolToken.deploy(reserveToken.address, symbol1);
+            expect(await poolToken1.symbol()).to.equal(poolTokenSymbol(symbol1));
+            expect(await poolToken1.name()).to.equal(poolTokenName(symbol1));
+
+            const symbol2 = 'BBBB';
+            const poolToken2 = await Contracts.PoolToken.deploy(reserveToken.address, symbol2);
+            expect(await poolToken2.symbol()).to.equal(poolTokenSymbol(symbol2));
+            expect(await poolToken2.name()).to.equal(poolTokenName(symbol2));
+        });
+
         it('should revert when initialized with an invalid base reserve token', async () => {
-            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            await expect(Contracts.PoolToken.deploy(ZERO_ADDRESS, '')).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
     });
 
     describe('minting', () => {
         beforeEach(async () => {
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            poolToken = await Contracts.PoolToken.deploy(reserveToken.address, '');
         });
 
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
@@ -127,14 +140,14 @@ describe('PoolToken', () => {
         });
 
         beforeEach(async () => {
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            poolToken = await Contracts.PoolToken.deploy(reserveToken.address, '');
 
             await poolToken.mint(sender, BigNumber.from(10000));
         });
 
         it('should have the correct domain separator', async () => {
             expect(await poolToken.DOMAIN_SEPARATOR()).to.equal(
-                await domainSeparator(NAME, VERSION, HARDHAT_CHAIN_ID, poolToken.address)
+                await domainSeparator(await poolToken.name(), VERSION, HARDHAT_CHAIN_ID, poolToken.address)
             );
         });
 
@@ -142,7 +155,7 @@ describe('PoolToken', () => {
             const amount = BigNumber.from(1000);
 
             const data = buildData(
-                NAME,
+                await poolToken.name(),
                 VERSION,
                 HARDHAT_CHAIN_ID,
                 poolToken.address,
@@ -164,7 +177,7 @@ describe('PoolToken', () => {
             const amount = BigNumber.from(100);
 
             const data = buildData(
-                NAME,
+                await poolToken.name(),
                 VERSION,
                 HARDHAT_CHAIN_ID,
                 poolToken.address,
@@ -188,7 +201,7 @@ describe('PoolToken', () => {
 
             const otherWallet = Wallet.generate();
             const data = buildData(
-                NAME,
+                await poolToken.name(),
                 VERSION,
                 HARDHAT_CHAIN_ID,
                 poolToken.address,
@@ -210,7 +223,7 @@ describe('PoolToken', () => {
             const deadline = (await latest()).sub(duration.weeks(1));
 
             const data = buildData(
-                NAME,
+                await poolToken.name(),
                 VERSION,
                 HARDHAT_CHAIN_ID,
                 poolToken.address,
