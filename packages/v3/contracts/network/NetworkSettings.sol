@@ -28,7 +28,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     uint32 private _networkFeePPM;
 
     // the withdrawal fee (in units of PPM)
-    uint32 private _exitFeePPM;
+    uint32 private _withdrawalFeePPM;
 
     // the flash-loan fee (in units of PPM)
     uint32 private _flashLoanFeePPM;
@@ -65,9 +65,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
-     * @dev triggered when the exit fee is updated
+     * @dev triggered when the withdrawal fee is updated
      */
-    event ExitFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+    event WithdrawalFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev triggered when the flash-loan fee is updated
@@ -238,23 +238,23 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the exit fee (in units of PPM)
+     * @dev returns the withdrawal fee (in units of PPM)
      */
-    function exitFeePPM() external view override returns (uint32) {
-        return _exitFeePPM;
+    function withdrawalFeePPM() external view override returns (uint32) {
+        return _withdrawalFeePPM;
     }
 
     /**
-     * @dev sets the exit fee (in units of PPM)
+     * @dev sets the withdrawal fee (in units of PPM)
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
     function setExitFeePPM(uint32 newExitFeePPM) external onlyOwner validFee(newExitFeePPM) {
-        emit ExitFeePPMUpdated(_exitFeePPM, newExitFeePPM);
+        emit WithdrawalFeePPMUpdated(_withdrawalFeePPM, newExitFeePPM);
 
-        _exitFeePPM = newExitFeePPM;
+        _withdrawalFeePPM = newExitFeePPM;
     }
 
     /**

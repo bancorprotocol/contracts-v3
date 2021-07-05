@@ -22,7 +22,7 @@ interface INetworkSettings is IUpgradeable {
 
     function networkFeePPM() external view returns (uint32);
 
-    function exitFeePPM() external view returns (uint32);
+    function withdrawalFeePPM() external view returns (uint32);
 
     function flashLoanFeePPM() external view returns (uint32);
 

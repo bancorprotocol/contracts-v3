@@ -58,7 +58,7 @@ describe('NetworkSettings', () => {
                 expect(networkFeeParams[1]).to.equal(BigNumber.from(0));
                 expect(await settings.networkFeeWallet()).to.equal(ZERO_ADDRESS);
                 expect(await settings.networkFeePPM()).to.equal(BigNumber.from(0));
-                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
                 expect(await settings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
                 expect(await settings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));
             });
@@ -244,38 +244,38 @@ describe('NetworkSettings', () => {
             });
         });
 
-        describe('exit fee', async () => {
+        describe('withdrawal fee', async () => {
             const newExitFee = BigNumber.from(500000);
             let settings: NetworkSettings;
 
             beforeEach(async () => {
                 settings = await createNetworkSettings();
 
-                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
             });
 
-            it('should revert when a non-owner attempts to set the exit fee', async () => {
+            it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
                 await expect(settings.connect(nonOwner).setExitFeePPM(newExitFee)).to.be.revertedWith(
                     'ERR_ACCESS_DENIED'
                 );
             });
 
-            it('should revert when setting the exit fee to an invalid value', async () => {
+            it('should revert when setting the withdrawal fee to an invalid value', async () => {
                 await expect(settings.setExitFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
                     'ERR_INVALID_FEE'
                 );
             });
 
-            it('should be to able to set and update the exit fee', async () => {
+            it('should be to able to set and update the withdrawal fee', async () => {
                 const res = await settings.setExitFeePPM(newExitFee);
-                await expect(res).to.emit(settings, 'ExitFeePPMUpdated').withArgs(BigNumber.from(0), newExitFee);
+                await expect(res).to.emit(settings, 'WithdrawalFeePPMUpdated').withArgs(BigNumber.from(0), newExitFee);
 
-                expect(await settings.exitFeePPM()).to.equal(newExitFee);
+                expect(await settings.withdrawalFeePPM()).to.equal(newExitFee);
 
                 const res2 = await settings.setExitFeePPM(BigNumber.from(0));
-                await expect(res2).to.emit(settings, 'ExitFeePPMUpdated').withArgs(newExitFee, BigNumber.from(0));
+                await expect(res2).to.emit(settings, 'WithdrawalFeePPMUpdated').withArgs(newExitFee, BigNumber.from(0));
 
-                expect(await settings.exitFeePPM()).to.equal(BigNumber.from(0));
+                expect(await settings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
             });
         });
 
