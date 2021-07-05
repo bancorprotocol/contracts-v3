@@ -1,6 +1,6 @@
 const { ethers } = require('hardhat');
 
-const Contracts = require('./helpers/Contracts');
+const Contracts = require('../components/Contracts').default;
 const runDeployment = require('./helpers/runDeployment');
 
 const config = {

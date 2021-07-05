@@ -3,7 +3,7 @@ const { BigNumber } = require('ethers');
 const { ethers } = require('hardhat');
 
 const { NATIVE_TOKEN_ADDRESS, registry, ZERO_ADDRESS } = require('../helpers/Constants');
-const Contracts = require('../helpers/Contracts');
+const Contracts = require('../../components/Contracts').default;
 
 const PPM_RESOLUTION = BigNumber.from(1_000_000);
 
@@ -540,10 +540,7 @@ describe('VortexBurner', () => {
                             it('should revert when attempting to burn the network fees', async () => {
                                 const tokenAddresses = getTokenAddresses(testTokens);
 
-                                // TODO: this should break when hardhat fixes the error with solc/optimizer/revertMsg
-                                await expect(vortex.burn(tokenAddresses)).to.be.reverted.but.not.to.be.revertedWith(
-                                    'ERR_ZERO_TARGET_AMOUNT'
-                                );
+                                await expect(vortex.burn(tokenAddresses)).to.be.revertedWith('ERR_ZERO_TARGET_AMOUNT');
                             });
                         });
                     }

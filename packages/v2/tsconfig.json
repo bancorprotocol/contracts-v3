@@ -9,6 +9,6 @@
             "typechain": ["./typechain"]
         }
     },
-    "include": ["scripts", "./test"],
+    "include": ["scripts", "./test", "./components"],
     "files": ["./hardhat.config.ts"]
 }

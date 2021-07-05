@@ -7,7 +7,7 @@ const BancorFormula = require('./helpers/BancorFormula');
 
 const { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, registry } = require('./helpers/Constants');
 
-const Contracts = require('./helpers/Contracts');
+const Contracts = require('../components/Contracts').default;
 
 let network;
 let converter1;

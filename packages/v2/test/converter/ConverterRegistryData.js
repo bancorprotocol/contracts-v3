@@ -4,7 +4,7 @@ const { BigNumber } = require('ethers');
 
 const { registry } = require('../helpers/Constants');
 
-const Contracts = require('../helpers/Contracts');
+const Contracts = require('../../components/Contracts').default;
 
 let contractRegistry;
 let converterRegistry;
