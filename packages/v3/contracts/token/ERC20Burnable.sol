@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/IERC20Burnable.sol";
 
@@ -11,7 +13,7 @@ import "./interfaces/IERC20Burnable.sol";
  *
  * We have also removed the explicit use of Context and updated the code to our style.
  */
-abstract contract ERC20Burnable is ERC20, IERC20Burnable {
+abstract contract ERC20Burnable is IERC20Burnable, ERC20Upgradeable {
     using SafeMath for uint256;
 
     /**

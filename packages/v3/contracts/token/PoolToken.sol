@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-import "@openzeppelin/contracts/drafts/ERC20Permit.sol";
+import "@openzeppelin/contracts-upgradeable/drafts/ERC20PermitUpgradeable.sol";
 
 import "./interfaces/IPoolToken.sol";
 import "./interfaces/IReserveToken.sol";
@@ -16,20 +14,34 @@ import "./ERC20Burnable.sol";
 /**
  * @dev This contract implements a mintable, burnable, and EIP2612 signed approvals
  */
-contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, Utils {
+contract PoolToken is IPoolToken, ERC20Burnable, ERC20PermitUpgradeable, OwnedUpgradeable, Utils {
+    string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
+    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
+    string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
+
     IReserveToken private immutable _reserveToken;
 
     /**
-     * @dev initializes a new PoolToken contract
+     * @dev initializes a new PoolToken contract. Unless, a custom symbol is provided, we'll try to derive the name and
+     * the symbol of the pool token from the reserve token directly
      */
-    constructor(
-        string memory name,
-        string memory symbol,
-        IReserveToken initReserveToken
-    ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
-        _reserveToken = initReserveToken;
-
+    constructor(IReserveToken initReserveToken, string memory customSymbol) validAddress(address(initReserveToken)) {
         __Owned_init();
+
+        // user either the provided custom symbol or try to fetch it from the token itself
+        string memory tokenSymbol = bytes(customSymbol).length != 0
+            ? customSymbol
+            : ERC20Upgradeable(address(initReserveToken)).symbol();
+
+        string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
+        string memory name = string(
+            abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
+        );
+
+        __ERC20_init(name, symbol);
+        __ERC20Permit_init(name);
+
+        _reserveToken = initReserveToken;
     }
 
     /**
