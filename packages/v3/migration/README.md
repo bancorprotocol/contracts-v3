@@ -108,3 +108,15 @@ const migration: Migration = {
 };
 export default migration;
 ```
+
+## How to create a migration file ?
+
+```
+yarn hh create-migration migrationFileName
+```
+
+## How to execute a migration ?
+
+```
+yarn hh migrate
+```
