@@ -49,7 +49,7 @@ Algorithm:
 
 `signer`: Can either be a normal signer or a Ledger signer. This object is passed to the migration script.
 
-`migrationsData`: An array of migrationData to be executed (counting only the migration that haven't been already run - using the timestamp as reference). A migrationData is:
+`migrationsData`: A list of migrationData to be executed (counting only the migration that haven't been already run - using the timestamp as reference). A migrationData is:
 
 ```ts
 {
@@ -67,7 +67,7 @@ Algorithm:
 
 ##### Running the migration
 
-1. If there is no migrationData in the array, exit.
+1. If there is no migrationData in the list, exit.
 
 2. Run every migration in a loop as follow:
    -> Importing the migration file.
