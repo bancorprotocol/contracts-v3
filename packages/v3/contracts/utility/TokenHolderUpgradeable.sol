@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "./interfaces/IVersioned.sol";
+import "../token/ReserveToken.sol";
+
 import "./interfaces/ITokenHolder.sol";
 
 import "./OwnedUpgradeable.sol";
 import "./Utils.sol";
 
-import "../token/ReserveToken.sol";
-
 /**
- * @dev This contract provides an owned token and ETH wallet.
+ * @dev This contract provides an owned token and ETH wallet
  */
-contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, Utils {
+contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
 
     // upgrade forward-compatibility storage gap

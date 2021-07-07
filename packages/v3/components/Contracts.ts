@@ -5,6 +5,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import {
     BancorVault__factory,
     ERC20__factory,
+    NetworkSettings__factory,
     PoolToken__factory,
     TestERC20Burnable__factory,
     TestMathEx__factory,
@@ -94,6 +95,7 @@ const getContracts = (signer?: Signer) => {
 
         BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
         ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
+        NetworkSettings: deployOrAttach<NetworkSettings__factory>('NetworkSettings', signer),
         PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
         TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
         TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),

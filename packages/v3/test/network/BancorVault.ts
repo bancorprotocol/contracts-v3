@@ -14,7 +14,6 @@ import { shouldHaveGap } from 'test/helpers/Proxy';
 
 const { BancorVault: BancorVaultRoles } = roles;
 
-let vault: BancorVault;
 let networkToken: TestERC20Token;
 let reserveToken: TestERC20Token;
 
@@ -41,8 +40,18 @@ describe('BancorVault', () => {
 
     const testVault = (createVault: (networkTokenAddress: string) => Promise<BancorVault>) => {
         describe('construction', async () => {
+            it('should revert when attempting to reinitialize', async () => {
+                const vault = await createVault(networkToken.address);
+
+                await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            });
+
+            it('should revert when initialized with an invalid network token', async () => {
+                await expect(createVault(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            });
+
             it('should be properly initialized', async () => {
-                vault = await createVault(networkToken.address);
+                const vault = await createVault(networkToken.address);
 
                 expect(await vault.version()).to.equal(1);
 
@@ -56,13 +65,11 @@ describe('BancorVault', () => {
                     BancorVaultRoles.ROLE_ASSET_MANAGER
                 );
             });
-
-            it('should revert when initialized with an invalid network token', async () => {
-                await expect(createVault(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
-            });
         });
 
         describe('asset management', () => {
+            let vault: BancorVault;
+
             beforeEach(async () => {
                 vault = await createVault(networkToken.address);
             });
@@ -220,6 +227,8 @@ describe('BancorVault', () => {
         });
 
         describe('pausing/unpausing', () => {
+            let vault: BancorVault;
+
             beforeEach(async () => {
                 vault = await createVault(networkToken.address);
             });

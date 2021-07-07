@@ -45,6 +45,10 @@ describe('TokenHolderUpgradeable', () => {
         });
 
         describe('construction', async () => {
+            it('should revert when attempting to reinitialize', async () => {
+                await expect(holder.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            });
+
             it('should be properly initialized', async () => {
                 expect(await holder.version()).to.equal(1);
             });
