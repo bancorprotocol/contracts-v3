@@ -251,10 +251,10 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setWithdrawalFeePPM(uint32 newExitFeePPM) external onlyOwner validFee(newExitFeePPM) {
-        emit WithdrawalFeePPMUpdated(_withdrawalFeePPM, newExitFeePPM);
+    function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyOwner validFee(newWithdrawalFeePPM) {
+        emit WithdrawalFeePPMUpdated(_withdrawalFeePPM, newWithdrawalFeePPM);
 
-        _withdrawalFeePPM = newExitFeePPM;
+        _withdrawalFeePPM = newWithdrawalFeePPM;
     }
 
     /**
