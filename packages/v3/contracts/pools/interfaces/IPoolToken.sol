@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 
-import "./IERC20Burnable.sol";
+import "../../token/interfaces/IERC20Burnable.sol";
 
 /**
  * @dev Pool Token interface
