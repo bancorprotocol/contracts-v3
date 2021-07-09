@@ -11,12 +11,11 @@ import { ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 
 import { shouldHaveGap } from 'test/helpers/Proxy';
 
-let networkFeeWallet: TokenHolderUpgradeable;
-
 let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
+let networkFeeWallet: TokenHolderUpgradeable;
 let reserveToken: TestERC20Token;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
