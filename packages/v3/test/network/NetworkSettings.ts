@@ -245,7 +245,7 @@ describe('NetworkSettings', () => {
         });
 
         describe('withdrawal fee', async () => {
-            const newExitFee = BigNumber.from(500000);
+            const newWithdrawalFee = BigNumber.from(500000);
             let settings: NetworkSettings;
 
             beforeEach(async () => {
@@ -255,7 +255,7 @@ describe('NetworkSettings', () => {
             });
 
             it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
-                await expect(settings.connect(nonOwner).setWithdrawalFeePPM(newExitFee)).to.be.revertedWith(
+                await expect(settings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
                     'ERR_ACCESS_DENIED'
                 );
             });
@@ -267,13 +267,17 @@ describe('NetworkSettings', () => {
             });
 
             it('should be to able to set and update the withdrawal fee', async () => {
-                const res = await settings.setWithdrawalFeePPM(newExitFee);
-                await expect(res).to.emit(settings, 'WithdrawalFeePPMUpdated').withArgs(BigNumber.from(0), newExitFee);
+                const res = await settings.setWithdrawalFeePPM(newWithdrawalFee);
+                await expect(res)
+                    .to.emit(settings, 'WithdrawalFeePPMUpdated')
+                    .withArgs(BigNumber.from(0), newWithdrawalFee);
 
-                expect(await settings.withdrawalFeePPM()).to.equal(newExitFee);
+                expect(await settings.withdrawalFeePPM()).to.equal(newWithdrawalFee);
 
                 const res2 = await settings.setWithdrawalFeePPM(BigNumber.from(0));
-                await expect(res2).to.emit(settings, 'WithdrawalFeePPMUpdated').withArgs(newExitFee, BigNumber.from(0));
+                await expect(res2)
+                    .to.emit(settings, 'WithdrawalFeePPMUpdated')
+                    .withArgs(newWithdrawalFee, BigNumber.from(0));
 
                 expect(await settings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
             });
