@@ -56,31 +56,28 @@ const attachOnly = <F extends ContractFactory>(contractName: string, passedSigne
     };
 };
 
-const getContracts = (signer?: Signer) => {
-    return {
-        // Link every contract to a default signer
-        connect: (signer: Signer) => getContracts(signer),
+const getContracts = (signer?: Signer) => ({
+    connect: (signer: Signer) => getContracts(signer),
 
-        BancorNetwork: deployOrAttach<BancorNetwork__factory>('BancorNetwork', signer),
-        BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
-        ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
-        LiquidityPoolCollection: deployOrAttach<LiquidityPoolCollection__factory>('LiquidityPoolCollection', signer),
-        NetworkSettings: deployOrAttach<NetworkSettings__factory>('NetworkSettings', signer),
-        NetworkTokenPool: deployOrAttach<NetworkTokenPool__factory>('NetworkTokenPool', signer),
-        PendingWithdrawals: deployOrAttach<PendingWithdrawals__factory>('PendingWithdrawals', signer),
-        PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
-        TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
-        TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
-        TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
-        TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
-        TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
-        TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
-        TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),
-        TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
-            'TransparentUpgradeableProxy',
-            signer
-        )
-    };
-};
+    BancorNetwork: deployOrAttach<BancorNetwork__factory>('BancorNetwork', signer),
+    BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
+    ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
+    LiquidityPoolCollection: deployOrAttach<LiquidityPoolCollection__factory>('LiquidityPoolCollection', signer),
+    NetworkSettings: deployOrAttach<NetworkSettings__factory>('NetworkSettings', signer),
+    NetworkTokenPool: deployOrAttach<NetworkTokenPool__factory>('NetworkTokenPool', signer),
+    PendingWithdrawals: deployOrAttach<PendingWithdrawals__factory>('PendingWithdrawals', signer),
+    PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
+    TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
+    TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
+    TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
+    TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
+    TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
+    TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
+    TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),
+    TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
+        'TransparentUpgradeableProxy',
+        signer
+    )
+});
 
 export default getContracts();
