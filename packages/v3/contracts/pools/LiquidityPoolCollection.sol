@@ -38,6 +38,21 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
+     * @dev triggered when a pool's initial rate is updated
+     */
+    event InitialRateUpdated(IReserveToken indexed reserveToken, Fraction prevRate, Fraction newRate);
+
+    /**
+     * @dev triggered when trading in a specific pool was enabled/disabled
+     */
+    event TradingEnabled(IReserveToken indexed reserveToken, bool status);
+
+    /**
+     * @dev triggered when depositing to a specific pool was enabled/disabled
+     */
+    event DepositsEnabled(IReserveToken indexed reserveToken, bool status);
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {

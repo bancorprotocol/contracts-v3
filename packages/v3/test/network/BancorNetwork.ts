@@ -3,11 +3,16 @@ import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { NetworkSettings, PendingWithdrawals } from 'typechain';
+import { BancorNetwork, NetworkSettings, PendingWithdrawals, TokenHolderUpgradeable } from 'typechain';
 
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import { createNetworkSettings, createPendingWithdrawals, createBancorNetwork } from 'test/helpers/Factory';
+import {
+    createTokenHolder,
+    createNetworkSettings,
+    createPendingWithdrawals,
+    createBancorNetwork
+} from 'test/helpers/Factory';
 
 let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
@@ -46,6 +51,42 @@ describe('BancorNetwork', () => {
             expect(await network.protectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
+        });
+    });
+
+    describe('protection wallet', async () => {
+        let newProtectionWallet: TokenHolderUpgradeable;
+        let network: BancorNetwork;
+
+        beforeEach(async () => {
+            network = await createBancorNetwork(networkSettings, pendingWithdrawals);
+
+            newProtectionWallet = await createTokenHolder();
+        });
+
+        it('should revert when a non-owner attempts to set the protection wallet', async () => {
+            await expect(network.connect(nonOwner).setProtectionWallet(newProtectionWallet.address)).to.be.revertedWith(
+                'ERR_ACCESS_DENIED'
+            );
+        });
+
+        it('should revert when setting protection wallet to an invalid address', async () => {
+            await expect(network.setProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should be to able to set and update the protection wallet', async () => {
+            const res = await network.setProtectionWallet(newProtectionWallet.address);
+            await expect(res)
+                .to.emit(network, 'ProtectionWalletUpdated')
+                .withArgs(ZERO_ADDRESS, newProtectionWallet.address);
+            expect(await network.protectionWallet()).to.equal(newProtectionWallet.address);
+
+            const anotherwProtectionWallet = await createTokenHolder();
+
+            const res2 = await network.setProtectionWallet(anotherwProtectionWallet.address);
+            await expect(res2)
+                .to.emit(network, 'ProtectionWalletUpdated')
+                .withArgs(newProtectionWallet.address, anotherwProtectionWallet.address);
         });
     });
 });

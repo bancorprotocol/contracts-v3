@@ -29,6 +29,27 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     uint256[MAX_GAP - 2] private __gap;
 
     /**
+     * @dev triggered when liquidity pools have requested liquidity
+     */
+    event LiquidityRequested(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        uint256 amount,
+        uint256 amountProvided,
+        uint256 poolTokenAmount
+    );
+
+    /**
+     * @dev triggered when liquidity pools have renounced liquidity
+     */
+    event LiquidityRenounced(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        uint256 amount,
+        uint256 poolTokenAmount
+    );
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IBancorNetwork initNetwork, IBancorVault initVault)

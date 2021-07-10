@@ -35,7 +35,40 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     /**
      * @dev triggered when withdrawal removal window duration
      */
-    event RemovalWindowDurationpdated(uint256 prevRemovalWindowDuration, uint256 newRemovalWindowDuration);
+    event RemovalWindowDurationUpdated(uint256 prevRemovalWindowDuration, uint256 newRemovalWindowDuration);
+
+    /**
+     * @dev triggered when a provider requests to initialize a liquidity withdrawal
+     */
+    event WithdrawalInitialized(
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        uint256 indexed positionIndex,
+        uint256 poolTokenAmount
+    );
+
+    /**
+     * @dev triggered when a provider cancels a liquidity withdrawal request
+     */
+    event WithdrawalCancelled(
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        uint256 indexed positionIndex,
+        uint256 poolTokenAmount,
+        uint256 timeElapsed
+    );
+
+    /**
+     * @dev triggered when a liquidity withdrawal request has been completed
+     */
+    event WithdrawalCompleted(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        uint256 positionIndex,
+        uint256 poolTokenAmount,
+        uint256 timeElapsed
+    );
 
     /**
      * @dev fully initializes the contract and its parents
@@ -122,7 +155,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      * - the caller must be the owner of the contract
      */
     function setRemovalWindowDuration(uint256 newRemovalWindowDuration) external onlyOwner {
-        emit RemovalWindowDurationpdated(_removalWindowDuration, newRemovalWindowDuration);
+        emit RemovalWindowDurationUpdated(_removalWindowDuration, newRemovalWindowDuration);
 
         _removalWindowDuration = newRemovalWindowDuration;
     }

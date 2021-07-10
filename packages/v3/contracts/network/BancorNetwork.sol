@@ -52,6 +52,127 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event ProtectionWalletUpdated(ITokenHolder prevWallet, ITokenHolder newWallet);
 
     /**
+     * @dev triggered when a new liquidity collection pool is added
+     */
+    event PoolCollectionAdded(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+
+    /**
+     * @dev triggered when an existing liquidity collection pool is removed
+     */
+    event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+
+    /**
+     * @dev triggered when a new pool is added
+     */
+    event PoolAdded(
+        IReserveToken indexed reserveToken,
+        ILiquidityPoolCollection indexed collection,
+        uint16 indexed poolType
+    );
+
+    /**
+     * @dev triggered when an existing pool is upgraded
+     */
+    event PoolUpgraded(
+        IReserveToken indexed reserveToken,
+        ILiquidityPoolCollection prevCollection,
+        ILiquidityPoolCollection newCollection,
+        uint16 prevVersion,
+        uint16 newVersion
+    );
+
+    /**
+     * @dev triggered when liquidity is added
+     */
+    event FundsDeposited(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        ILiquidityPoolCollection collection,
+        uint256 amount,
+        uint256 poolTokenAmount
+    );
+
+    /**
+     * @dev triggered when liquidity is removed
+     */
+    event FundsWithdrawn(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        ILiquidityPoolCollection collection,
+        uint256 amount,
+        uint256 poolTokenAmount,
+        uint256 baseTokenAmount,
+        uint256 networkTokenAmount
+    );
+
+    /**
+     * @dev triggered when liquidity is migrated
+     */
+    event FundsMigrated(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        address indexed provider,
+        uint256 amount,
+        uint256 availableTokens
+    );
+
+    /**
+     * @dev triggered when the total liqudity in a pool is updated
+     */
+    event TotalLiquidityUpdated(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        uint256 stakedBalance,
+        uint256 poolTokenSupply,
+        uint256 actualBalance
+    );
+
+    /**
+     * @dev triggered when the trading liqudity in a pool is updated
+     */
+    event TradingLiquidityUpdated(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        IReserveToken indexed token,
+        uint256 liquidity
+    );
+
+    /**
+     * @dev triggered on a succesful trading
+     */
+    event TokensTraded(
+        bytes32 contextId,
+        IReserveToken indexed reserveToken,
+        IReserveToken indexed sourceToken,
+        IReserveToken indexed targetToken,
+        address trader,
+        uint256 sourceAmount,
+        uint256 targetAmount
+    );
+
+    /**
+     * @dev triggered when a flash-loan is completed
+     */
+    event FlashLoaned(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        address indexed borrower,
+        uint256 amount
+    );
+
+    /**
+     * @dev triggered when trading/flash-loan fees are collected
+     */
+    event FeesCollected(
+        bytes32 indexed contextId,
+        IReserveToken indexed reserveToken,
+        uint256 amount,
+        uint256 stakedBalance
+    );
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(INetworkSettings initSettings, IPendingWithdrawals initPendingWithdrawals)
