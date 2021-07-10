@@ -21,13 +21,13 @@ import {
     TransparentUpgradeableProxy__factory
 } from 'typechain';
 
-export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
+type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
     : T extends (...args: any) => infer U
     ? U
     : any;
 
-type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
+export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
     deploy(...args: Array<any>): Promise<Contract<F>>;

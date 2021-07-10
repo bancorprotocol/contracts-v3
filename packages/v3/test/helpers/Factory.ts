@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import { BigNumber, ContractFactory } from 'ethers';
 
-import Contracts, { AsyncReturnType, ContractBuilder } from 'components/Contracts';
+import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 
 import { TestERC20Token, NetworkSettings, PendingWithdrawals, BancorNetwork, BancorVault } from 'typechain';
 
@@ -15,7 +15,7 @@ interface ProxyArguments {
 const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
-): Promise<AsyncReturnType<F['deploy']>> => {
+): Promise<Contract<F>> => {
     const logic = await factory.deploy(...(args?.ctorArgs || []));
 
     const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
