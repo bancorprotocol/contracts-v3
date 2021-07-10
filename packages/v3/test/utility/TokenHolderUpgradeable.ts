@@ -10,6 +10,7 @@ import { TestERC20Token, TokenHolderUpgradeable } from 'typechain';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { getBalance, getBalances, TokenWithAddress } from 'test/helpers/Utils';
 import { shouldHaveGap } from 'test/helpers/Proxy';
+import { createTokenHolder } from 'test/helpers/Factory';
 
 let holder: TokenHolderUpgradeable;
 let token1: TestERC20Token;
@@ -22,18 +23,6 @@ let nonOwner: SignerWithAddress;
 let proxyAdmin: SignerWithAddress;
 
 describe('TokenHolderUpgradeable', () => {
-    const createTokenHolder = async () => {
-        const logic = await Contracts.TokenHolderUpgradeable.deploy();
-
-        const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
-            logic.address,
-            proxyAdmin.address,
-            logic.interface.encodeFunctionData('initialize')
-        );
-
-        return Contracts.TokenHolderUpgradeable.attach(proxy.address);
-    };
-
     shouldHaveGap('TokenHolderUpgradeable');
 
     before(async () => {

@@ -33,6 +33,8 @@ export const proxyAdmin = async () => (await ethers.getSigners())[9];
 
 export const createNetworkToken = async () => Contracts.TestERC20Token.deploy('BNT', 'BNT', TOTAL_SUPPLY);
 
+export const createTokenHolder = async () => createProxy(Contracts.TokenHolderUpgradeable);
+
 export const createBancorVault = async (networkToken: TestERC20Token | string) => {
     const networkTokenAddress = typeof networkToken === 'string' ? networkToken : networkToken.address;
 
