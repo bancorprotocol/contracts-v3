@@ -5,10 +5,6 @@ pragma abicoder v2;
 import "../utility/OwnedUpgradeable.sol";
 import "../utility/Utils.sol";
 
-import "../token/interfaces/IReserveToken.sol";
-
-import "../network/interfaces/IBancorNetwork.sol";
-
 import "./interfaces/ILiquidityPoolCollection.sol";
 
 /**
@@ -40,17 +36,17 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @dev triggered when a pool's initial rate is updated
      */
-    event InitialRateUpdated(IReserveToken indexed reserveToken, Fraction prevRate, Fraction newRate);
+    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
      * @dev triggered when trading in a specific pool was enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed reserveToken, bool status);
+    event TradingEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev triggered when depositing to a specific pool was enabled/disabled
      */
-    event DepositsEnabled(IReserveToken indexed reserveToken, bool status);
+    event DepositsEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -96,14 +92,21 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @dev returns the type of the pool
      */
-    function poolType() external pure returns (uint16) {
+    function poolType() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @dev returns the network contract
+     */
+    function network() external view override returns (IBancorNetwork) {
+        return _network;
     }
 
     /**
      * @dev returns the custom symbol overrides for a given reserve token
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory) {
+    function tokenSymbolOverride(IReserveToken reserveToken) external view override returns (string memory) {
         return _tokenSymbolOverrides[reserveToken];
     }
 
@@ -121,14 +124,14 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @dev returns the pool for a given reserve token
      */
-    function pool(IReserveToken reserveToken) external view returns (Pool memory) {
+    function pool(IReserveToken reserveToken) external view override returns (Pool memory) {
         return _pools[reserveToken];
     }
 
     /**
      * @dev returns the default trading fee (in units of PPM)
      */
-    function defaultTradingFeePPM() external view returns (uint32) {
+    function defaultTradingFeePPM() external view override returns (uint32) {
         return _defaultTradingFeePPM;
     }
 

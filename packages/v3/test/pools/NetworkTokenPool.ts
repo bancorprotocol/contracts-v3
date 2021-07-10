@@ -59,6 +59,8 @@ describe('NetworkTokenPool', () => {
 
             expect(await networkTokenPool.version()).to.equal(1);
 
+            expect(await networkTokenPool.network()).to.equal(network.address);
+            expect(await networkTokenPool.vault()).to.equal(vault.address);
             expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
         });
     });

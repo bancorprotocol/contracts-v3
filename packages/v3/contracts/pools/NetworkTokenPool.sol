@@ -4,9 +4,6 @@ pragma solidity 0.7.6;
 import "../utility/Upgradeable.sol";
 import "../utility/Utils.sol";
 
-import "../network/interfaces/IBancorNetwork.sol";
-import "../network/interfaces/IBancorVault.sol";
-
 import "./interfaces/INetworkTokenPool.sol";
 
 /**
@@ -22,7 +19,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     // the total staked network token balance in the network
     uint256 private _stakedBalance;
 
-    // a mapping between reserve tokens and their total minted amounts
+    // a mapping between pools and their total minted amounts
     mapping(IReserveToken => uint256) private _mintedAmounts;
 
     // upgrade forward-compatibility storage gap
@@ -33,7 +30,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
      */
     event LiquidityRequested(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         uint256 amount,
         uint256 amountProvided,
         uint256 poolTokenAmount
@@ -44,7 +41,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
      */
     event LiquidityRenounced(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         uint256 amount,
         uint256 poolTokenAmount
     );
@@ -91,16 +88,30 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     }
 
     /**
+     * @dev returns the network contract
+     */
+    function network() external view override returns (IBancorNetwork) {
+        return _network;
+    }
+
+    /**
+     * @dev returns the vault contract
+     */
+    function vault() external view override returns (IBancorVault) {
+        return _vault;
+    }
+
+    /**
      * @dev returns the total staked network token balance in the network
      */
-    function stakedBalance() external view returns (uint256) {
+    function stakedBalance() external view override returns (uint256) {
         return _stakedBalance;
     }
 
     /**
-     * @dev returns the total minted amount for a given reserve token
+     * @dev returns the total minted amount for a given pool
      */
-    function mintedAmounts(IReserveToken reserveToken) external view returns (uint256) {
-        return _mintedAmounts[reserveToken];
+    function mintedAmounts(IReserveToken pool) external view override returns (uint256) {
+        return _mintedAmounts[pool];
     }
 }

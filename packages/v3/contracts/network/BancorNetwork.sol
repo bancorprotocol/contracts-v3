@@ -10,11 +10,7 @@ import "../utility/Utils.sol";
 
 import "../token/ReserveToken.sol";
 
-import "../pools/interfaces/ILiquidityPoolCollection.sol";
-
 import "./interfaces/IBancorNetwork.sol";
-import "./interfaces/INetworkSettings.sol";
-import "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Bancor Network contract
@@ -40,7 +36,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the set of all liquidity pools
     EnumerableSetUpgradeable.AddressSet private _liquidityPools;
 
-    // a mapping between reserve tokens and their respective liquidity pool collections
+    // a mapping between pools and their respective liquidity pool collections
     mapping(IReserveToken => ILiquidityPoolCollection) private _collectionByPool;
 
     // upgrade forward-compatibility storage gap
@@ -64,17 +60,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when a new pool is added
      */
-    event PoolAdded(
-        IReserveToken indexed reserveToken,
-        ILiquidityPoolCollection indexed collection,
-        uint16 indexed poolType
-    );
+    event PoolAdded(IReserveToken indexed pool, ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
 
     /**
      * @dev triggered when an existing pool is upgraded
      */
     event PoolUpgraded(
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         ILiquidityPoolCollection prevCollection,
         ILiquidityPoolCollection newCollection,
         uint16 prevVersion,
@@ -86,7 +78,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsDeposited(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 amount,
@@ -98,7 +90,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsWithdrawn(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 amount,
@@ -112,7 +104,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsMigrated(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         address indexed provider,
         uint256 amount,
         uint256 availableTokens
@@ -123,7 +115,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         uint256 stakedBalance,
         uint256 poolTokenSupply,
         uint256 actualBalance
@@ -134,8 +126,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event TradingLiquidityUpdated(
         bytes32 indexed contextId,
+        IReserveToken indexed pool,
         IReserveToken indexed reserveToken,
-        IReserveToken indexed token,
         uint256 liquidity
     );
 
@@ -144,7 +136,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event TokensTraded(
         bytes32 contextId,
-        IReserveToken indexed reserveToken,
+        IReserveToken indexed pool,
         IReserveToken indexed sourceToken,
         IReserveToken indexed targetToken,
         address trader,
@@ -155,22 +147,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when a flash-loan is completed
      */
-    event FlashLoaned(
-        bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
-        address indexed borrower,
-        uint256 amount
-    );
+    event FlashLoaned(bytes32 indexed contextId, IReserveToken indexed pool, address indexed borrower, uint256 amount);
 
     /**
      * @dev triggered when trading/flash-loan fees are collected
      */
-    event FeesCollected(
-        bytes32 indexed contextId,
-        IReserveToken indexed reserveToken,
-        uint256 amount,
-        uint256 stakedBalance
-    );
+    event FeesCollected(bytes32 indexed contextId, IReserveToken indexed pool, uint256 amount, uint256 stakedBalance);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -219,21 +201,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev returns the pending withdrawals management contract
      */
-    function settings() external view returns (INetworkSettings) {
+    function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
 
     /**
      * @dev returns the network settings
      */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals) {
+    function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
     }
 
     /**
      * @dev returns the address of protection wallet (used for joint IL protectino)
      */
-    function protectionWallet() external view returns (ITokenHolder) {
+    function protectionWallet() external view override returns (ITokenHolder) {
         return _protectionWallet;
     }
 
@@ -257,7 +239,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev returns the set of all valid liquidity pool collections
      */
-    function poolCollections() external view returns (ILiquidityPoolCollection[] memory) {
+    function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
         for (uint256 i = 0; i < length; i++) {
@@ -269,14 +251,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev returns the last collection that was added to the liquidity pool collections set for a specific type
      */
-    function latestPoolCollection(uint16 _type) external view returns (ILiquidityPoolCollection) {
+    function latestPoolCollection(uint16 _type) external view override returns (ILiquidityPoolCollection) {
         return _latestPoolCollections[_type];
     }
 
     /**
      * @dev returns the set of all liquidity pools
      */
-    function liquidityPools() external view returns (ILiquidityPoolCollection[] memory) {
+    function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _liquidityPools.length();
         ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
         for (uint256 i = 0; i < length; i++) {
@@ -286,9 +268,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the respective liquidity pool collection for the provided reserve token
+     * @dev returns the respective liquidity pool collection for the provided pool
      */
-    function collectionByPool(IReserveToken _reserveToken) external view returns (ILiquidityPoolCollection) {
-        return _collectionByPool[_reserveToken];
+    function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
+        return _collectionByPool[pool];
     }
 }

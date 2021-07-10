@@ -12,9 +12,9 @@ import "../../token/interfaces/IReserveToken.sol";
 interface INetworkSettings is IUpgradeable {
     function protectedTokensWhitelist() external view returns (IReserveToken[] memory);
 
-    function isTokenWhitelisted(IReserveToken reserveToken) external view returns (bool);
+    function isTokenWhitelisted(IReserveToken pool) external view returns (bool);
 
-    function poolMintingLimit(IReserveToken reserveToken) external view returns (uint256);
+    function poolMintingLimit(IReserveToken pool) external view returns (uint256);
 
     function networkFeeParams() external view returns (ITokenHolder, uint32);
 

@@ -5,9 +5,26 @@ import "../../utility/interfaces/IUpgradeable.sol";
 
 import "../../token/interfaces/IReserveToken.sol";
 
+import "../../pools/interfaces/ILiquidityPoolCollection.sol";
+
+import "./INetworkSettings.sol";
+import "./IPendingWithdrawals.sol";
+
 /**
  * @dev Bancor Network interface
  */
 interface IBancorNetwork is IUpgradeable {
+    function settings() external view returns (INetworkSettings);
 
+    function pendingWithdrawals() external view returns (IPendingWithdrawals);
+
+    function protectionWallet() external view returns (ITokenHolder);
+
+    function poolCollections() external view returns (ILiquidityPoolCollection[] memory);
+
+    function latestPoolCollection(uint16 _type) external view returns (ILiquidityPoolCollection);
+
+    function liquidityPools() external view returns (ILiquidityPoolCollection[] memory);
+
+    function collectionByPool(IReserveToken pool) external view returns (ILiquidityPoolCollection);
 }

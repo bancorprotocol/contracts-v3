@@ -57,6 +57,7 @@ describe('LiquidityPoolCollection', () => {
             expect(await collection.version()).to.equal(1);
 
             expect(await collection.poolType()).to.equal(POOL_TYPE);
+            expect(await collection.network()).to.equal(network.address);
             expect(await collection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
     });
