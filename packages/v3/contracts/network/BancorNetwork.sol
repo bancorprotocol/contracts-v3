@@ -74,7 +74,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when liquidity is added
+     * @dev triggered when funds are deposited
      */
     event FundsDeposited(
         bytes32 indexed contextId,
@@ -86,7 +86,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when liquidity is removed
+     * @dev triggered when funds are withdrawn
      */
     event FundsWithdrawn(
         bytes32 indexed contextId,
