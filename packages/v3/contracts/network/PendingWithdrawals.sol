@@ -21,8 +21,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     // the withdrawal locking duration
     uint256 private _lockDuration;
 
-    // the removal window duration
-    uint256 private _removalWindowDuration;
+    // the withdrawal window duration
+    uint256 private _withdrawalWindowDuration;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 3] private __gap;
@@ -33,9 +33,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     event LockDurationUpdated(uint256 prevLockDuration, uint256 newLockDuration);
 
     /**
-     * @dev triggered when removal window duration
+     * @dev triggered when withdrawal window duration
      */
-    event RemovalWindowDurationUpdated(uint256 prevRemovalWindowDuration, uint256 newRemovalWindowDuration);
+    event WithdrawalWindowDurationUpdated(uint256 prevWithdrawalWindowDuration, uint256 newWithdrawalWindowDuration);
 
     /**
      * @dev triggered when a provider requests to start a liquidity withdrawal
@@ -93,7 +93,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      */
     function __PendingWithdrawals_init_unchained() internal initializer {
         _lockDuration = DEFAULT_LOCK_DURATION;
-        _removalWindowDuration = DEFAULT_REMOVAL_WINDOW_DURATION;
+        _withdrawalWindowDuration = DEFAULT_REMOVAL_WINDOW_DURATION;
     }
 
     // solhint-enable func-name-mixedcase
@@ -137,14 +137,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns removal window duration
+     * @dev returns withdrawal window duration
      */
-    function removalWindowDuration() external view override returns (uint256) {
-        return _removalWindowDuration;
+    function withdrawalWindowDuration() external view override returns (uint256) {
+        return _withdrawalWindowDuration;
     }
 
     /**
-     * @dev sets removal window duration.
+     * @dev sets withdrawal window duration.
      *
      * notes:
      *
@@ -154,9 +154,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      *
      * - the caller must be the owner of the contract
      */
-    function setRemovalWindowDuration(uint256 newRemovalWindowDuration) external onlyOwner {
-        emit RemovalWindowDurationUpdated(_removalWindowDuration, newRemovalWindowDuration);
+    function setRemovalWindowDuration(uint256 newWithdrawalWindowDuration) external onlyOwner {
+        emit WithdrawalWindowDurationUpdated(_withdrawalWindowDuration, newWithdrawalWindowDuration);
 
-        _removalWindowDuration = newRemovalWindowDuration;
+        _withdrawalWindowDuration = newWithdrawalWindowDuration;
     }
 }

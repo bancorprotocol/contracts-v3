@@ -22,5 +22,5 @@ interface IPendingWithdrawals is IUpgradeable {
 
     function lockDuration() external view returns (uint256);
 
-    function removalWindowDuration() external view returns (uint256);
+    function withdrawalWindowDuration() external view returns (uint256);
 }

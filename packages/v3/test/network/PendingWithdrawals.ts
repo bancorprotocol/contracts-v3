@@ -38,7 +38,7 @@ describe('PendingWithdrawals', () => {
             expect(await pendingWithdrawals.version()).to.equal(1);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
-            expect(await pendingWithdrawals.removalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
         });
     });
 
@@ -75,36 +75,36 @@ describe('PendingWithdrawals', () => {
         });
     });
 
-    describe('removal window duration', async () => {
-        const newRemovalWindowDuration = duration.weeks(1);
+    describe('withdrawal window duration', async () => {
+        const newWithdrawalWindowDuration = duration.weeks(1);
         let pendingWithdrawals: PendingWithdrawals;
 
         beforeEach(async () => {
             pendingWithdrawals = await createPendingWithdrawals();
 
-            expect(await pendingWithdrawals.removalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
         });
 
-        it('should revert when a non-owner attempts to set the removal window duration', async () => {
+        it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
             await expect(
-                pendingWithdrawals.connect(nonOwner).setRemovalWindowDuration(newRemovalWindowDuration)
+                pendingWithdrawals.connect(nonOwner).setRemovalWindowDuration(newWithdrawalWindowDuration)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should be to able to set and update the removal window duration', async () => {
-            const res = await pendingWithdrawals.setRemovalWindowDuration(newRemovalWindowDuration);
+        it('should be to able to set and update the withdrawal window duration', async () => {
+            const res = await pendingWithdrawals.setRemovalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
-                .to.emit(pendingWithdrawals, 'RemovalWindowDurationUpdated')
-                .withArgs(DEFAULT_REMOVAL_WINDOW_DURATION, newRemovalWindowDuration);
+                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
+                .withArgs(DEFAULT_REMOVAL_WINDOW_DURATION, newWithdrawalWindowDuration);
 
-            expect(await pendingWithdrawals.removalWindowDuration()).to.equal(newRemovalWindowDuration);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
 
             const res2 = await pendingWithdrawals.setRemovalWindowDuration(DEFAULT_REMOVAL_WINDOW_DURATION);
             await expect(res2)
-                .to.emit(pendingWithdrawals, 'RemovalWindowDurationUpdated')
-                .withArgs(newRemovalWindowDuration, DEFAULT_REMOVAL_WINDOW_DURATION);
+                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
+                .withArgs(newWithdrawalWindowDuration, DEFAULT_REMOVAL_WINDOW_DURATION);
 
-            expect(await pendingWithdrawals.removalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
         });
     });
 });
