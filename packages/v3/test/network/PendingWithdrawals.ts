@@ -76,7 +76,7 @@ describe('PendingWithdrawals', () => {
     });
 
     describe('withdrawal window duration', async () => {
-        const newWithdrawalWindowDuration = duration.weeks(1);
+        const newWithdrawalWindowDuration = duration.weeks(2);
         let pendingWithdrawals: PendingWithdrawals;
 
         beforeEach(async () => {
