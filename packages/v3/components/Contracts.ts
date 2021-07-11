@@ -51,7 +51,7 @@ const attachOnly = <F extends ContractFactory>(contractName: string, passedSigne
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
-            return ethers.getContractAt(contractName, address, signer ? signer : defaultSigner) as Contract<F>;
+            return ethers.getContractAt(contractName, address, signer || defaultSigner) as Contract<F>;
         }
     };
 };
