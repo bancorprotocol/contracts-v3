@@ -87,19 +87,19 @@ describe('PendingWithdrawals', () => {
 
         it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
             await expect(
-                pendingWithdrawals.connect(nonOwner).setRemovalWindowDuration(newWithdrawalWindowDuration)
+                pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should be to able to set and update the withdrawal window duration', async () => {
-            const res = await pendingWithdrawals.setRemovalWindowDuration(newWithdrawalWindowDuration);
+            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
                 .withArgs(DEFAULT_REMOVAL_WINDOW_DURATION, newWithdrawalWindowDuration);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
 
-            const res2 = await pendingWithdrawals.setRemovalWindowDuration(DEFAULT_REMOVAL_WINDOW_DURATION);
+            const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_REMOVAL_WINDOW_DURATION);
             await expect(res2)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
                 .withArgs(newWithdrawalWindowDuration, DEFAULT_REMOVAL_WINDOW_DURATION);

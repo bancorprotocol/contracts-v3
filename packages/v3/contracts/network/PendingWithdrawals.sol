@@ -154,7 +154,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      *
      * - the caller must be the owner of the contract
      */
-    function setRemovalWindowDuration(uint256 newWithdrawalWindowDuration) external onlyOwner {
+    function setWithdrawalWindowDuration(uint256 newWithdrawalWindowDuration) external onlyOwner {
         emit WithdrawalWindowDurationUpdated(_withdrawalWindowDuration, newWithdrawalWindowDuration);
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
