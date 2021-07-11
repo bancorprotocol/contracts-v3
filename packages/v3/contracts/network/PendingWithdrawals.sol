@@ -18,7 +18,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     // a mapping between accounts and their pending positions
     mapping(address => Position[]) private _positions;
 
-    // the withdrawal locking duration
+    // the locking duration
     uint256 private _lockDuration;
 
     // the withdrawal window duration
@@ -28,7 +28,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     uint256[MAX_GAP - 3] private __gap;
 
     /**
-     * @dev triggered when the withdrawal locking duration is updated
+     * @dev triggered when the locking duration is updated
      */
     event LockDurationUpdated(uint256 prevLockDuration, uint256 newLockDuration);
 
@@ -113,14 +113,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns the withdrawal locking duration
+     * @dev returns the locking duration
      */
     function lockDuration() external view override returns (uint256) {
         return _lockDuration;
     }
 
     /**
-     * @dev sets the withdrawal locking duration.
+     * @dev sets the locking duration.
      *
      * notes:
      *
