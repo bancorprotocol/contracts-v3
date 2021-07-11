@@ -15,7 +15,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a set of tokens which are eligeble for protection
-    EnumerableSetUpgradeable.AddressSet private _protectedTokensWhitelist;
+    EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token minting limits per pool
     mapping(IReserveToken => uint256) private _poolMintingLimits;
@@ -114,11 +114,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev returns the protected pools whitelist
      */
-    function protectedTokensWhitelist() external view override returns (IReserveToken[] memory) {
-        uint256 length = _protectedTokensWhitelist.length();
+    function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
+        uint256 length = _protectedTokenWhitelist.length();
         IReserveToken[] memory list = new IReserveToken[](length);
         for (uint256 i = 0; i < length; ++i) {
-            list[i] = IReserveToken(_protectedTokensWhitelist.at(i));
+            list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
         }
         return list;
     }
@@ -135,7 +135,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         onlyOwner
         validExternalAddress(address(pool))
     {
-        require(_protectedTokensWhitelist.add(address(pool)), "ERR_ALREADY_WHITELISTED");
+        require(_protectedTokenWhitelist.add(address(pool)), "ERR_ALREADY_WHITELISTED");
 
         emit TokenAddedToWhitelist(pool);
     }
@@ -148,7 +148,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function removeTokenFromProtectedTokensWhitelist(IReserveToken pool) external onlyOwner {
-        require(_protectedTokensWhitelist.remove(address(pool)), "ERR_NOT_WHITELISTED");
+        require(_protectedTokenWhitelist.remove(address(pool)), "ERR_NOT_WHITELISTED");
 
         emit TokenRemovedFromWhitelist(pool);
     }
@@ -157,7 +157,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * @dev checks whether a given pool is whitelisted
      */
     function isTokenWhitelisted(IReserveToken pool) external view override returns (bool) {
-        return _protectedTokensWhitelist.contains(address(pool));
+        return _protectedTokenWhitelist.contains(address(pool));
     }
 
     /**

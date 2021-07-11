@@ -21,7 +21,7 @@ let reserveToken: TestERC20Token;
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
 describe('NetworkSettings', () => {
-    shouldHaveGap('NetworkSettings', '_protectedTokensWhitelist');
+    shouldHaveGap('NetworkSettings', '_protectedTokenWhitelist');
 
     before(async () => {
         accounts = await ethers.getSigners();
@@ -47,7 +47,7 @@ describe('NetworkSettings', () => {
 
             expect(await settings.version()).to.equal(1);
 
-            expect(await settings.protectedTokensWhitelist()).to.be.empty;
+            expect(await settings.protectedTokenWhitelist()).to.be.empty;
             const networkFeeParams = await settings.networkFeeParams();
             expect(networkFeeParams[0]).to.equal(ZERO_ADDRESS);
             expect(networkFeeParams[1]).to.equal(BigNumber.from(0));
@@ -65,7 +65,7 @@ describe('NetworkSettings', () => {
         beforeEach(async () => {
             settings = await createNetworkSettings();
 
-            expect(await settings.protectedTokensWhitelist()).to.be.empty;
+            expect(await settings.protectedTokenWhitelist()).to.be.empty;
         });
 
         describe('adding', () => {
