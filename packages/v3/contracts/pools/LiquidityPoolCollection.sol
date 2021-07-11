@@ -94,7 +94,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the pool for a given reserve token
+     * @dev returns the pool data for a given reserve token
      */
     function pool(IReserveToken reserveToken) external view override returns (Pool memory) {
         return _pools[reserveToken];
