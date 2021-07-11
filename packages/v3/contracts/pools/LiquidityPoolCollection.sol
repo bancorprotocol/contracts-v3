@@ -38,7 +38,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed pool, bool status);
+    event TradesEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
