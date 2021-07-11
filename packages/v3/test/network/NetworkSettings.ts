@@ -156,14 +156,14 @@ describe('NetworkSettings', () => {
 
             const res = await settings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
             await expect(res)
-                .to.emit(settings, 'MintingLimitUpdated')
+                .to.emit(settings, 'PoolMintingLimitUpdated')
                 .withArgs(reserveToken.address, BigNumber.from(0), poolMintingLimit);
 
             expect(await settings.poolMintingLimit(reserveToken.address)).to.equal(poolMintingLimit);
 
             const res2 = await settings.setPoolMintingLimit(reserveToken.address, BigNumber.from(0));
             await expect(res2)
-                .to.emit(settings, 'MintingLimitUpdated')
+                .to.emit(settings, 'PoolMintingLimitUpdated')
                 .withArgs(reserveToken.address, poolMintingLimit, BigNumber.from(0));
 
             expect(await settings.poolMintingLimit(reserveToken.address)).to.equal(BigNumber.from(0));

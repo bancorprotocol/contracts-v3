@@ -52,7 +52,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev triggered when a per-pool token minting limit is updated
      */
-    event MintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the network fee is updated
@@ -175,7 +175,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
-        emit MintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
+        emit PoolMintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
 
         _poolMintingLimits[pool] = amount;
     }
