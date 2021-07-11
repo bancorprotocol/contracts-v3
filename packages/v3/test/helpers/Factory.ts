@@ -5,6 +5,8 @@ import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 
 import { TestERC20Token, NetworkSettings, PendingWithdrawals, BancorNetwork, BancorVault } from 'typechain';
 
+import { toAddress } from 'test/helpers/Utils';
+
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
 interface ProxyArguments {
@@ -35,11 +37,8 @@ export const createNetworkToken = async () => Contracts.TestERC20Token.deploy('B
 
 export const createTokenHolder = async () => createProxy(Contracts.TokenHolderUpgradeable);
 
-export const createBancorVault = async (networkToken: TestERC20Token | string) => {
-    const networkTokenAddress = typeof networkToken === 'string' ? networkToken : networkToken.address;
-
-    return createProxy(Contracts.BancorVault, { ctorArgs: [networkTokenAddress] });
-};
+export const createBancorVault = async (networkToken: TestERC20Token | string) =>
+    createProxy(Contracts.BancorVault, { ctorArgs: [toAddress(networkToken)] });
 
 export const createNetworkSettings = async () => createProxy(Contracts.NetworkSettings);
 
@@ -48,23 +47,10 @@ export const createPendingWithdrawals = async () => createProxy(Contracts.Pendin
 export const createBancorNetwork = async (
     networkSettings: NetworkSettings | string,
     pendingWithdrawals: PendingWithdrawals | string
-) => {
-    const networkSettingsAddress = typeof networkSettings === 'string' ? networkSettings : networkSettings.address;
-    const pendingWithdrawalsAddress =
-        typeof pendingWithdrawals === 'string' ? pendingWithdrawals : pendingWithdrawals.address;
+) => createProxy(Contracts.BancorNetwork, { ctorArgs: [toAddress(networkSettings), toAddress(pendingWithdrawals)] });
 
-    return createProxy(Contracts.BancorNetwork, { ctorArgs: [networkSettingsAddress, pendingWithdrawalsAddress] });
-};
+export const createLiquidityPoolCollection = async (network: BancorNetwork | string) =>
+    Contracts.LiquidityPoolCollection.deploy(toAddress(network));
 
-export const createLiquidityPoolCollection = async (network: BancorNetwork | string) => {
-    const networkAddress = typeof network === 'string' ? network : network.address;
-
-    return Contracts.LiquidityPoolCollection.deploy(networkAddress);
-};
-
-export const createNetworkTokenPool = async (network: BancorNetwork | string, vault: BancorVault | string) => {
-    const networkAddress = typeof network === 'string' ? network : network.address;
-    const vaultAddress = typeof vault === 'string' ? vault : vault.address;
-
-    return createProxy(Contracts.NetworkTokenPool, { ctorArgs: [networkAddress, vaultAddress] });
-};
+export const createNetworkTokenPool = async (network: BancorNetwork | string, vault: BancorVault | string) =>
+    createProxy(Contracts.NetworkTokenPool, { ctorArgs: [toAddress(network), toAddress(vault)] });
