@@ -55,7 +55,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
         address indexed provider,
         uint256 indexed positionIndex,
         uint256 poolTokenAmount,
-        uint256 timeElapsed
+        uint32 timeElapsed
     );
 
     /**
@@ -67,7 +67,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
         address indexed provider,
         uint256 positionIndex,
         uint256 poolTokenAmount,
-        uint256 timeElapsed
+        uint32 timeElapsed
     );
 
     /**
