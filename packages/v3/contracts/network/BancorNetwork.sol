@@ -8,8 +8,6 @@ import "../utility/OwnedUpgradeable.sol";
 import "../utility/Upgradeable.sol";
 import "../utility/Utils.sol";
 
-import "../token/ReserveToken.sol";
-
 import "./interfaces/IBancorNetwork.sol";
 
 /**
