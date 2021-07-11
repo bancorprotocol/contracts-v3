@@ -48,12 +48,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event ProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
-     * @dev triggered when a new liquidity collection pool is added
+     * @dev triggered when a new liquidity pool collection is added
      */
     event PoolCollectionAdded(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
 
     /**
-     * @dev triggered when an existing liquidity collection pool is removed
+     * @dev triggered when an existing liquidity pool collection is removed
      */
     event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
 
