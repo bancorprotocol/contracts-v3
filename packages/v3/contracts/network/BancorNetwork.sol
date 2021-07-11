@@ -197,7 +197,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the pending withdrawals management contract
+     * @dev returns the network settings contract
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
