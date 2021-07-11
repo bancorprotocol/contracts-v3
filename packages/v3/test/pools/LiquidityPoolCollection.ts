@@ -17,6 +17,7 @@ import { PPM_RESOLUTION } from 'test/helpers/Constants';
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);
 const SYMBOL = 'TKN';
+const EMPTY_STRING = '';
 
 let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
@@ -68,14 +69,16 @@ describe('LiquidityPoolCollection', () => {
         });
 
         it('should be to able to set and update a token symbol override', async () => {
+            expect(await collection.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
+
             await collection.setTokenSymbolOverride(reserveToken.address, newSymbol);
             expect(await collection.tokenSymbolOverride(reserveToken.address)).to.equal(newSymbol);
 
             await collection.setTokenSymbolOverride(reserveToken.address, SYMBOL);
             expect(await collection.tokenSymbolOverride(reserveToken.address)).to.equal(SYMBOL);
 
-            await collection.setTokenSymbolOverride(reserveToken.address, '');
-            expect(await collection.tokenSymbolOverride(reserveToken.address)).to.equal('');
+            await collection.setTokenSymbolOverride(reserveToken.address, EMPTY_STRING);
+            expect(await collection.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
         });
     });
 
