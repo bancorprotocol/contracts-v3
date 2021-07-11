@@ -6,7 +6,6 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
 import { NetworkSettings, PendingWithdrawals, BancorNetwork, LiquidityPoolCollection, TestERC20Token } from 'typechain';
-import { shouldHaveGap } from 'test/helpers/Proxy';
 import {
     createNetworkSettings,
     createPendingWithdrawals,
@@ -28,8 +27,6 @@ let network: BancorNetwork;
 let reserveToken: TestERC20Token;
 
 describe('LiquidityPoolCollection', () => {
-    shouldHaveGap('LiquidityPoolCollection', '_pools');
-
     before(async () => {
         accounts = await ethers.getSigners();
 
@@ -45,12 +42,6 @@ describe('LiquidityPoolCollection', () => {
     });
 
     describe('construction', async () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const collection = await createLiquidityPoolCollection(network);
-
-            await expect(collection.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
-        });
-
         it('should be properly initialized', async () => {
             const collection = await createLiquidityPoolCollection(network);
 

@@ -23,10 +23,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
     // the default trading fee (in units of PPM)
-    uint32 private _defaultTradingFeePPM;
-
-    // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint32 private _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
 
     /**
      * @dev triggered when the network fee is updated
@@ -52,35 +49,10 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
-        _network = initNetwork;
-    }
-
-    /**
-     * @dev fully initializes the contract and its parents
-     */
-    function initialize() external initializer {
-        __LiquidityPoolCollection_init();
-    }
-
-    // solhint-disable func-name-mixedcase
-
-    /**
-     * @dev initializes the contract and its parents
-     */
-    function __LiquidityPoolCollection_init() internal initializer {
         __Owned_init();
 
-        __LiquidityPoolCollection_init_unchained();
+        _network = initNetwork;
     }
-
-    /**
-     * @dev performs contract-specific initialization
-     */
-    function __LiquidityPoolCollection_init_unchained() internal initializer {
-        _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
-    }
-
-    // solhint-enable func-name-mixedcase
 
     /**
      * @dev returns the current version of the contract

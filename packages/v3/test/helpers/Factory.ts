@@ -59,7 +59,7 @@ export const createBancorNetwork = async (
 export const createLiquidityPoolCollection = async (network: BancorNetwork | string) => {
     const networkAddress = typeof network === 'string' ? network : network.address;
 
-    return createProxy(Contracts.LiquidityPoolCollection, { ctorArgs: [networkAddress] });
+    return Contracts.LiquidityPoolCollection.deploy(networkAddress);
 };
 
 export const createNetworkTokenPool = async (network: BancorNetwork | string, vault: BancorVault | string) => {
