@@ -21,7 +21,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // the pending withdrawals management contract
+    // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
     // the address of protection wallet (used for joint IL protectino)
