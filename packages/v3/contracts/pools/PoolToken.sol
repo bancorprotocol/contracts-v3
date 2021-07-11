@@ -14,7 +14,7 @@ import "../utility/Utils.sol";
 import "./interfaces/IPoolToken.sol";
 
 /**
- * @dev This contract implements a mintable, burnable, and EIP2612 signed approvals
+ * @dev Pool Token contract
  */
 contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, Utils {
     IReserveToken private immutable _reserveToken;

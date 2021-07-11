@@ -7,7 +7,7 @@ import "../utility/Utils.sol";
 import "./interfaces/INetworkTokenPool.sol";
 
 /**
- * @dev Bancor Network contract
+ * @dev Network Token Pool contract
  */
 contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     // the network contract

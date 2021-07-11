@@ -9,7 +9,7 @@ import "../utility/Utils.sol";
 import "./interfaces/IPendingWithdrawals.sol";
 
 /**
- * @dev Bancor Network contract
+ * @dev Pending Withdrawals contract
  */
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeable, Utils {
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;

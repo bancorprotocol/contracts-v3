@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-/*
-    Time implementing contract
-*/
+/**
+ * @dev time implementing contract
+ */
 contract Time {
     /**
      * @dev returns the current time

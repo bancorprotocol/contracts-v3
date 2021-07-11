@@ -11,7 +11,7 @@ import "../../network/interfaces/IBancorNetwork.sol";
 import "./IPoolToken.sol";
 
 /**
- * @dev Liquidity Pool Collection interfaces
+ * @dev Liquidity Pool Collection interface
  */
 interface ILiquidityPoolCollection {
     struct Pool {

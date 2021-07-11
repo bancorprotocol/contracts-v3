@@ -6,7 +6,7 @@ import "./interfaces/IOwned.sol";
 import "./Upgradeable.sol";
 
 /**
- * @dev This contract provides support and utilities for contract ownership.
+ * @dev this contract provides support and utilities for contract ownership
  */
 abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     address private _owner;

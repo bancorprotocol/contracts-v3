@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 /**
- * @dev This library provides a set of complex math operations.
+ * @dev this library provides a set of complex math operations
  */
 library MathEx {
     uint256 private constant MAX_UINT256 = uint256(-1);

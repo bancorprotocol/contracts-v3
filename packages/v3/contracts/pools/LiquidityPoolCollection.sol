@@ -8,7 +8,7 @@ import "../utility/Utils.sol";
 import "./interfaces/ILiquidityPoolCollection.sol";
 
 /**
- * @dev This contract implements a mintable, burnable, and EIP2612 signed approvals
+ * @dev Liquidity Pool Collection contract
  */
 contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, Utils {
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
