@@ -15,7 +15,7 @@ interface IPendingWithdrawals is IUpgradeable {
     struct Position {
         IPoolToken poolToken;
         uint256 amount;
-        uint256 createAt;
+        uint256 createdAt;
     }
 
     function positions(address account) external view returns (Position[] memory);
