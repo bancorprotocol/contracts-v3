@@ -22,7 +22,7 @@ interface IBancorNetwork is IUpgradeable {
 
     function poolCollections() external view returns (ILiquidityPoolCollection[] memory);
 
-    function latestPoolCollection(uint16 _type) external view returns (ILiquidityPoolCollection);
+    function latestPoolCollection(uint16 poolType) external view returns (ILiquidityPoolCollection);
 
     function liquidityPools() external view returns (ILiquidityPoolCollection[] memory);
 

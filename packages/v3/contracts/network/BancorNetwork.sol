@@ -251,8 +251,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev returns the last collection that was added to the liquidity pool collections set for a specific type
      */
-    function latestPoolCollection(uint16 _type) external view override returns (ILiquidityPoolCollection) {
-        return _latestPoolCollections[_type];
+    function latestPoolCollection(uint16 poolType) external view override returns (ILiquidityPoolCollection) {
+        return _latestPoolCollections[poolType];
     }
 
     /**
