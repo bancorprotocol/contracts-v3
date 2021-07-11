@@ -31,7 +31,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     event LiquidityRequested(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 amount,
+        uint256 amountRequested,
         uint256 amountProvided,
         uint256 poolTokenAmount
     );
@@ -42,7 +42,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     event LiquidityRenounced(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 amount,
+        uint256 amountRenounced,
         uint256 poolTokenAmount
     );
 
