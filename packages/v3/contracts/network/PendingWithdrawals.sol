@@ -21,7 +21,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     // the withdrawal locking duration
     uint256 private _lockDuration;
 
-    // the withdrawal removal window duration
+    // the removal window duration
     uint256 private _removalWindowDuration;
 
     // upgrade forward-compatibility storage gap
@@ -33,7 +33,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     event LockDurationUpdated(uint256 prevLockDuration, uint256 newLockDuration);
 
     /**
-     * @dev triggered when withdrawal removal window duration
+     * @dev triggered when removal window duration
      */
     event RemovalWindowDurationUpdated(uint256 prevRemovalWindowDuration, uint256 newRemovalWindowDuration);
 
@@ -137,14 +137,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns withdrawal removal window duration
+     * @dev returns removal window duration
      */
     function removalWindowDuration() external view override returns (uint256) {
         return _removalWindowDuration;
     }
 
     /**
-     * @dev sets withdrawal removal window duration.
+     * @dev sets removal window duration.
      *
      * notes:
      *
