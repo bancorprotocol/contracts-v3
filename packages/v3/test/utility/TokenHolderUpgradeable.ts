@@ -103,7 +103,7 @@ describe('TokenHolderUpgradeable', () => {
                     const amount = balance.add(BigNumber.from(1));
 
                     await expect(holder.withdrawTokens(asset.address, receiver.address, amount)).to.be.revertedWith(
-                        !isETH ? 'ERC20: transfer amount exceeds balance' : ''
+                        isETH ? '' : 'ERC20: transfer amount exceeds balance'
                     );
                 });
             });
