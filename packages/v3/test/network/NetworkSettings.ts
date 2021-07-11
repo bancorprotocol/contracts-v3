@@ -70,20 +70,20 @@ describe('NetworkSettings', () => {
 
         describe('adding', () => {
             it('should revert when a non-owner attempts to add a token', async () => {
-                await expect(
-                    settings.connect(nonOwner).addTokenToProtectedTokensWhitelist(reserveToken.address)
-                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                await expect(settings.connect(nonOwner).addTokenToWhitelist(reserveToken.address)).to.be.revertedWith(
+                    'ERR_ACCESS_DENIED'
+                );
             });
 
             it('should revert when adding an invalid address', async () => {
-                await expect(settings.addTokenToProtectedTokensWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
+                await expect(settings.addTokenToWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
                     'ERR_INVALID_EXTERNAL_ADDRESS'
                 );
             });
 
             it('should revert when adding an already whitelisted token', async () => {
-                await settings.addTokenToProtectedTokensWhitelist(reserveToken.address);
-                await expect(settings.addTokenToProtectedTokensWhitelist(reserveToken.address)).to.be.revertedWith(
+                await settings.addTokenToWhitelist(reserveToken.address);
+                await expect(settings.addTokenToWhitelist(reserveToken.address)).to.be.revertedWith(
                     'ERR_ALREADY_WHITELISTED'
                 );
             });
@@ -91,7 +91,7 @@ describe('NetworkSettings', () => {
             it('should whitelist a token', async () => {
                 expect(await settings.isTokenWhitelisted(reserveToken.address)).to.be.false;
 
-                const res = await settings.addTokenToProtectedTokensWhitelist(reserveToken.address);
+                const res = await settings.addTokenToWhitelist(reserveToken.address);
                 await expect(res).to.emit(settings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
 
                 expect(await settings.isTokenWhitelisted(reserveToken.address)).to.be.true;
@@ -100,30 +100,28 @@ describe('NetworkSettings', () => {
 
         describe('removing', () => {
             beforeEach(async () => {
-                await settings.addTokenToProtectedTokensWhitelist(reserveToken.address);
+                await settings.addTokenToWhitelist(reserveToken.address);
             });
 
             it('should revert when a non-owner attempts to remove a token', async () => {
                 await expect(
-                    settings.connect(nonOwner).removeTokenFromProtectedTokensWhitelist(reserveToken.address)
+                    settings.connect(nonOwner).removeTokenFromWhitelist(reserveToken.address)
                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
             });
 
             it('should revert when removing a non-whitelisted token', async () => {
-                await expect(settings.removeTokenFromProtectedTokensWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
-                    'ERR_NOT_WHITELISTED'
-                );
+                await expect(settings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith('ERR_NOT_WHITELISTED');
 
                 const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN2', 'TKN2', TOTAL_SUPPLY);
-                await expect(
-                    settings.removeTokenFromProtectedTokensWhitelist(reserveToken2.address)
-                ).to.be.revertedWith('ERR_NOT_WHITELISTED');
+                await expect(settings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
+                    'ERR_NOT_WHITELISTED'
+                );
             });
 
             it('should remove a token', async () => {
                 expect(await settings.isTokenWhitelisted(reserveToken.address)).to.be.true;
 
-                const res = await settings.removeTokenFromProtectedTokensWhitelist(reserveToken.address);
+                const res = await settings.removeTokenFromWhitelist(reserveToken.address);
                 await expect(res).to.emit(settings, 'TokenRemovedFromWhitelist').withArgs(reserveToken.address);
 
                 expect(await settings.isTokenWhitelisted(reserveToken.address)).to.be.false;

@@ -130,11 +130,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function addTokenToProtectedTokensWhitelist(IReserveToken pool)
-        external
-        onlyOwner
-        validExternalAddress(address(pool))
-    {
+    function addTokenToWhitelist(IReserveToken pool) external onlyOwner validExternalAddress(address(pool)) {
         require(_protectedTokenWhitelist.add(address(pool)), "ERR_ALREADY_WHITELISTED");
 
         emit TokenAddedToWhitelist(pool);
@@ -147,7 +143,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function removeTokenFromProtectedTokensWhitelist(IReserveToken pool) external onlyOwner {
+    function removeTokenFromWhitelist(IReserveToken pool) external onlyOwner {
         require(_protectedTokenWhitelist.remove(address(pool)), "ERR_NOT_WHITELISTED");
 
         emit TokenRemovedFromWhitelist(pool);
