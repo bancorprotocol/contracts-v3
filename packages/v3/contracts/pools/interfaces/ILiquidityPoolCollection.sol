@@ -16,13 +16,13 @@ import "./IPoolToken.sol";
 interface ILiquidityPoolCollection {
     struct Pool {
         IPoolToken poolToken;
+        uint32 tradingFeePPM;
+        bool depositsEnabled;
         uint256 tradingLiquidity;
         uint256 tradingLiquidityProduct;
         uint256 stakedBalance;
         Fraction initialRate;
         uint256 depositLimit;
-        uint32 tradingFeePPM;
-        bool depositsEnabled;
     }
 
     function poolType() external pure returns (uint16);
