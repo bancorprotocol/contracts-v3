@@ -100,7 +100,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when liquidity is migrated
+     * @dev triggered when funds are migrated
      */
     event FundsMigrated(
         bytes32 indexed contextId,
@@ -132,7 +132,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered on a succesful trading
+     * @dev triggered on a successful trade
      */
     event TokensTraded(
         bytes32 contextId,
