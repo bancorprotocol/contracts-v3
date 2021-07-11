@@ -24,7 +24,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
-    // the address of protection wallet (used for joint IL protectino)
+    // the address of protection wallet (used for external protection)
     ITokenHolder private _protectionWallet;
 
     // the set of all valid liquidity pool collections
@@ -213,14 +213,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the address of protection wallet (used for joint IL protectino)
+     * @dev returns the address of protection wallet
      */
     function protectionWallet() external view override returns (ITokenHolder) {
         return _protectionWallet;
     }
 
     /**
-     * @dev sets the address of protection wallet (used for joint IL protectino)
+     * @dev sets the address of protection wallet
      *
      * requirements:
      *
