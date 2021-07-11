@@ -38,7 +38,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     event RemovalWindowDurationUpdated(uint256 prevRemovalWindowDuration, uint256 newRemovalWindowDuration);
 
     /**
-     * @dev triggered when a provider requests to initialize a liquidity withdrawal
+     * @dev triggered when a provider requests to start a liquidity withdrawal
      */
     event WithdrawalInitialized(
         IReserveToken indexed pool,
