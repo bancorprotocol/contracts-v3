@@ -116,8 +116,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 stakedBalance,
         uint256 poolTokenSupply,
+        uint256 stakedBalance,
         uint256 actualBalance
     );
 
