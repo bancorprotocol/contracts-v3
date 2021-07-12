@@ -240,7 +240,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ILiquidityPoolCollection(_poolCollections.at(i));
         }
         return list;
@@ -259,7 +259,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _liquidityPools.length();
         ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ILiquidityPoolCollection(_liquidityPools.at(i));
         }
         return list;

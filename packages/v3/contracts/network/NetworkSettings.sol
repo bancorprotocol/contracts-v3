@@ -117,7 +117,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
         IReserveToken[] memory list = new IReserveToken[](length);
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
         }
         return list;

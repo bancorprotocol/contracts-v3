@@ -78,7 +78,7 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
         uint256 length = reserveTokens.length;
         require(length == amounts.length, "ERR_INVALID_LENGTH");
 
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             reserveTokens[i].safeTransfer(to, amounts[i]);
         }
     }

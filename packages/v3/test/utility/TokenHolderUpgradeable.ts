@@ -119,7 +119,7 @@ describe('TokenHolderUpgradeable', () => {
             assets = [{ address: NATIVE_TOKEN_ADDRESS }, token1, token2];
             assetAddresses = assets.map((a) => a.address);
 
-            for (let i = 0; i < assets.length; ++i) {
+            for (let i = 0; i < assets.length; i++) {
                 const asset = assets[i];
                 amounts[asset.address] = BigNumber.from(100 * (i + 1));
             }
