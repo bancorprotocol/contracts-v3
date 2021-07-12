@@ -14,8 +14,8 @@ import "./interfaces/INetworkSettings.sol";
 contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    // a set of tokens which are eligeble for protection
-    EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
+    // a set of tokens which are eligeble for insurace
+    EnumerableSetUpgradeable.AddressSet private _insuredTokenWhitelist;
 
     // a mapping of network token minting limits per pool
     mapping(IReserveToken => uint256) private _poolMintingLimits;
@@ -40,12 +40,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     uint256[MAX_GAP - 6] private __gap;
 
     /**
-     * @dev triggered when a token is added to the protection whitelist
+     * @dev triggered when a token is added to the insurace whitelist
      */
     event TokenAddedToWhitelist(IReserveToken indexed token);
 
     /**
-     * @dev triggered when a token is removed from the protection whitelist
+     * @dev triggered when a token is removed from the insurace whitelist
      */
     event TokenRemovedFromWhitelist(IReserveToken indexed token);
 
@@ -112,39 +112,39 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the protected tokens whitelist
+     * @dev returns the insured tokens whitelist
      */
-    function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
-        uint256 length = _protectedTokenWhitelist.length();
+    function insuredTokenWhitelist() external view override returns (IReserveToken[] memory) {
+        uint256 length = _insuredTokenWhitelist.length();
         IReserveToken[] memory list = new IReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
+            list[i] = IReserveToken(_insuredTokenWhitelist.at(i));
         }
         return list;
     }
 
     /**
-     * @dev adds a token to the protected tokens whitelist
+     * @dev adds a token to the insured tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
     function addTokenToWhitelist(IReserveToken token) external onlyOwner validExternalAddress(address(token)) {
-        require(_protectedTokenWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
+        require(_insuredTokenWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
 
         emit TokenAddedToWhitelist(token);
     }
 
     /**
-     * @dev removes a token from the protected tokens whitelist
+     * @dev removes a token from the insured tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
     function removeTokenFromWhitelist(IReserveToken token) external onlyOwner {
-        require(_protectedTokenWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
+        require(_insuredTokenWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
 
         emit TokenRemovedFromWhitelist(token);
     }
@@ -153,7 +153,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * @dev checks whether a given token is whitelisted
      */
     function isTokenWhitelisted(IReserveToken token) external view override returns (bool) {
-        return _protectedTokenWhitelist.contains(address(token));
+        return _insuredTokenWhitelist.contains(address(token));
     }
 
     /**

@@ -22,8 +22,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
-    // the address of protection wallet (used for external protection)
-    ITokenHolder private _protectionWallet;
+    // the address of the insurance wallet
+    ITokenHolder private _insuranceWallet;
 
     // the set of all valid liquidity pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -41,9 +41,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     uint256[MAX_GAP - 7] private __gap;
 
     /**
-     * @dev triggered when the protection wallet is updated
+     * @dev triggered when the insurance wallet is updated
      */
-    event ProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
+    event InsuranceWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
      * @dev triggered when a new liquidity pool collection is added
@@ -211,27 +211,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the address of protection wallet
+     * @dev returns the address of the insurance wallet
      */
-    function protectionWallet() external view override returns (ITokenHolder) {
-        return _protectionWallet;
+    function insuranceWallet() external view override returns (ITokenHolder) {
+        return _insuranceWallet;
     }
 
     /**
-     * @dev sets the address of protection wallet
+     * @dev sets the address of the insurance wallet
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function setProtectionWallet(ITokenHolder newProtectionWallet)
+    function setInsuranceWallet(ITokenHolder newInsuranceWallet)
         external
-        validAddress(address(newProtectionWallet))
+        validAddress(address(newInsuranceWallet))
         onlyOwner
     {
-        emit ProtectionWalletUpdated(_protectionWallet, newProtectionWallet);
+        emit InsuranceWalletUpdated(_insuranceWallet, newInsuranceWallet);
 
-        _protectionWallet = newProtectionWallet;
+        _insuranceWallet = newInsuranceWallet;
     }
 
     /**

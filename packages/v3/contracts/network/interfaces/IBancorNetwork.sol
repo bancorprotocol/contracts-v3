@@ -18,7 +18,7 @@ interface IBancorNetwork is IUpgradeable {
 
     function pendingWithdrawals() external view returns (IPendingWithdrawals);
 
-    function protectionWallet() external view returns (ITokenHolder);
+    function insuranceWallet() external view returns (ITokenHolder);
 
     function poolCollections() external view returns (ILiquidityPoolCollection[] memory);
 

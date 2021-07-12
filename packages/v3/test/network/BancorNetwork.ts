@@ -21,7 +21,7 @@ let networkSettings: NetworkSettings;
 let pendingWithdrawals: PendingWithdrawals;
 
 describe('BancorNetwork', () => {
-    shouldHaveGap('BancorNetwork', '_protectionWallet');
+    shouldHaveGap('BancorNetwork', '_insuranceWallet');
 
     before(async () => {
         accounts = await ethers.getSigners();
@@ -48,45 +48,45 @@ describe('BancorNetwork', () => {
 
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
-            expect(await network.protectionWallet()).to.equal(ZERO_ADDRESS);
+            expect(await network.insuranceWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
         });
     });
 
-    describe('protection wallet', async () => {
-        let newProtectionWallet: TokenHolderUpgradeable;
+    describe('insurance wallet', async () => {
+        let newInsuranceWallet: TokenHolderUpgradeable;
         let network: BancorNetwork;
 
         beforeEach(async () => {
             network = await createBancorNetwork(networkSettings, pendingWithdrawals);
 
-            newProtectionWallet = await createTokenHolder();
+            newInsuranceWallet = await createTokenHolder();
         });
 
-        it('should revert when a non-owner attempts to set the protection wallet', async () => {
-            await expect(network.connect(nonOwner).setProtectionWallet(newProtectionWallet.address)).to.be.revertedWith(
+        it('should revert when a non-owner attempts to set the insurance wallet', async () => {
+            await expect(network.connect(nonOwner).setInsuranceWallet(newInsuranceWallet.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
         });
 
-        it('should revert when setting protection wallet to an invalid address', async () => {
-            await expect(network.setProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        it('should revert when setting insurance wallet to an invalid address', async () => {
+            await expect(network.setInsuranceWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should be to able to set and update the protection wallet', async () => {
-            const res = await network.setProtectionWallet(newProtectionWallet.address);
+        it('should be to able to set and update the insurance wallet', async () => {
+            const res = await network.setInsuranceWallet(newInsuranceWallet.address);
             await expect(res)
-                .to.emit(network, 'ProtectionWalletUpdated')
-                .withArgs(ZERO_ADDRESS, newProtectionWallet.address);
-            expect(await network.protectionWallet()).to.equal(newProtectionWallet.address);
+                .to.emit(network, 'InsuranceWalletUpdated')
+                .withArgs(ZERO_ADDRESS, newInsuranceWallet.address);
+            expect(await network.insuranceWallet()).to.equal(newInsuranceWallet.address);
 
-            const anotherwProtectionWallet = await createTokenHolder();
+            const anotherwInsuranceWallet = await createTokenHolder();
 
-            const res2 = await network.setProtectionWallet(anotherwProtectionWallet.address);
+            const res2 = await network.setInsuranceWallet(anotherwInsuranceWallet.address);
             await expect(res2)
-                .to.emit(network, 'ProtectionWalletUpdated')
-                .withArgs(newProtectionWallet.address, anotherwProtectionWallet.address);
+                .to.emit(network, 'InsuranceWalletUpdated')
+                .withArgs(newInsuranceWallet.address, anotherwInsuranceWallet.address);
         });
     });
 });
