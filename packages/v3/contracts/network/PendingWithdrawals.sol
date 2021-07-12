@@ -40,7 +40,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     /**
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
      */
-    event WithdrawalInitialized(
+    event WithdrawalInitiated(
         IReserveToken indexed pool,
         address indexed provider,
         uint256 indexed positionIndex,
