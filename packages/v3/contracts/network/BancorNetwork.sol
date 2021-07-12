@@ -231,7 +231,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     {
         emit InsuranceWalletUpdated(_insuranceWallet, newInsuranceWallet);
 
+        newInsuranceWallet.acceptOwnership();
+
         _insuranceWallet = newInsuranceWallet;
+    }
+
+    /**
+     * @dev transfers the ownership of the insurance wallet
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     * - the new owner needs to accept the transfer
+     */
+    function transferInsuranceWalletOwnership(address newOwner) external onlyOwner {
+        _insuranceWallet.transferOwnership(newOwner);
     }
 
     /**
