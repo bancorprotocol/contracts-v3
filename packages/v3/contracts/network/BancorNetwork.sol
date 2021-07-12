@@ -204,7 +204,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the pending withdrawals
+     * @dev returns the pending withdrawals contract
      */
     function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
