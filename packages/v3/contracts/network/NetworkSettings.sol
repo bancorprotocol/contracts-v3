@@ -52,7 +52,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev triggered when a per-pool minting limit is updated
      */
-    event PoolMintingLimitUpdated(IReserveToken indexed token, uint256 prevLimit, uint256 newLimit);
+    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the network fee is updated
@@ -159,8 +159,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev returns the network token minting limit for a given token
      */
-    function poolMintingLimit(IReserveToken token) external view override returns (uint256) {
-        return _poolMintingLimits[token];
+    function poolMintingLimit(IReserveToken pool) external view override returns (uint256) {
+        return _poolMintingLimits[pool];
     }
 
     /**
@@ -170,10 +170,10 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(IReserveToken token, uint256 amount) external onlyOwner validAddress(address(token)) {
-        emit PoolMintingLimitUpdated(token, _poolMintingLimits[token], amount);
+    function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
+        emit PoolMintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
 
-        _poolMintingLimits[token] = amount;
+        _poolMintingLimits[pool] = amount;
     }
 
     /**
