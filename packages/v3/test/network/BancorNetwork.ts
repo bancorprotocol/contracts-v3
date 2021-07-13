@@ -34,12 +34,6 @@ describe('BancorNetwork', () => {
             await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it.skip('should revert when initialized with an invalid pending withdrawals contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
-        });
-
         it('should be properly initialized', async () => {
             const { network, networkSettings, pendingWithdrawals } = await createSystem();
 
@@ -50,6 +44,41 @@ describe('BancorNetwork', () => {
             expect(await network.protectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
+        });
+    });
+
+    describe('pending withdrawals', () => {
+        let network: BancorNetwork;
+
+        beforeEach(async () => {
+            network = await Contracts.BancorNetwork.deploy(dummy.address);
+            await network.initialize();
+        });
+
+        it('should revert when a non-owner attempts to set the protection wallet', async () => {
+            await expect(network.connect(nonOwner).initializePendingWithdrawals(dummy.address)).to.be.revertedWith(
+                'ERR_ACCESS_DENIED'
+            );
+        });
+
+        it('should revert when attempting to reinitialize the pending withdrawals contract', async () => {
+            await expect(network.initializePendingWithdrawals(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when attempting to reinitialize the pending withdrawals contract', async () => {
+            await network.initializePendingWithdrawals(dummy.address);
+
+            await expect(network.initializePendingWithdrawals(dummy.address)).to.be.revertedWith(
+                'ERR_ALREADY_INITIALIZED'
+            );
+        });
+
+        it('should allow initializing the pending withdrawals contract', async () => {
+            expect(await network.pendingWithdrawals()).to.equal(ZERO_ADDRESS);
+
+            await network.initializePendingWithdrawals(dummy.address);
+
+            expect(await network.pendingWithdrawals()).to.equal(dummy.address);
         });
     });
 
