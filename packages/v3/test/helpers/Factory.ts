@@ -38,7 +38,6 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
     // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
     const cached = logicCache[factory.contractName];
     if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
-        console.log('REUSING', factory.contractName);
         return cached.contract;
     }
 
