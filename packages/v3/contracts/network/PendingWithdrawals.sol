@@ -13,7 +13,7 @@ import "./interfaces/IPendingWithdrawals.sol";
  */
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeable, Utils {
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
-    uint256 private constant DEFAULT_REMOVAL_WINDOW_DURATION = 3 days;
+    uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -110,7 +110,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      */
     function __PendingWithdrawals_init_unchained() internal initializer {
         _lockDuration = DEFAULT_LOCK_DURATION;
-        _withdrawalWindowDuration = DEFAULT_REMOVAL_WINDOW_DURATION;
+        _withdrawalWindowDuration = DEFAULT_WITHDRAWAL_WINDOW_DURATION;
     }
 
     // solhint-enable func-name-mixedcase
@@ -123,28 +123,28 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns the network contract
+     * @inheritdoc IPendingWithdrawals
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @dev returns the network pool token contract
+     * @inheritdoc IPendingWithdrawals
      */
     function networkTokenPool() external view override returns (INetworkTokenPool) {
         return _networkTokenPool;
     }
 
     /**
-     * @dev returns mapping between accounts and their pending positions
+     * @inheritdoc IPendingWithdrawals
      */
     function positions(address account) external view override returns (Position[] memory) {
         return _positions[account];
     }
 
     /**
-     * @dev returns the lock duration
+     * @inheritdoc IPendingWithdrawals
      */
     function lockDuration() external view override returns (uint256) {
         return _lockDuration;
@@ -168,7 +168,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns withdrawal window duration
+     * @inheritdoc IPendingWithdrawals
      */
     function withdrawalWindowDuration() external view override returns (uint256) {
         return _withdrawalWindowDuration;

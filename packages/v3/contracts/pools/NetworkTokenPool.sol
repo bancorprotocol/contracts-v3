@@ -88,28 +88,28 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns the network contract
+     * @inheritdoc INetworkTokenPool
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @dev returns the vault contract
+     * @inheritdoc INetworkTokenPool
      */
     function vault() external view override returns (IBancorVault) {
         return _vault;
     }
 
     /**
-     * @dev returns the total staked network token balance in the network
+     * @inheritdoc INetworkTokenPool
      */
     function stakedBalance() external view override returns (uint256) {
         return _stakedBalance;
     }
 
     /**
-     * @dev returns the total minted amount for a given pool
+     * @inheritdoc INetworkTokenPool
      */
     function mintedAmounts(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];

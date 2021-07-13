@@ -79,7 +79,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
-        uint256 amount,
+        uint256 depositAmount,
         uint256 poolTokenAmount
     );
 
@@ -91,7 +91,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
-        uint256 amount,
+        uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
         uint256 networkTokenAmount
@@ -137,9 +137,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         IReserveToken indexed sourceToken,
         IReserveToken indexed targetToken,
-        address trader,
         uint256 sourceAmount,
-        uint256 targetAmount
+        uint256 targetAmount,
+        address trader
     );
 
     /**
@@ -193,14 +193,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the network settings contract
+     * @inheritdoc IBancorNetwork
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
 
     /**
-     * @dev returns the pending withdrawals contract
+     * @inheritdoc IBancorNetwork
      */
     function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
@@ -225,7 +225,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the address of the protection wallet
+     * @inheritdoc IBancorNetwork
      */
     function protectionWallet() external view override returns (ITokenHolder) {
         return _protectionWallet;
@@ -263,7 +263,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the set of all valid liquidity pool collections
+     * @inheritdoc IBancorNetwork
      */
     function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
@@ -275,14 +275,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the last collection that was added to the liquidity pool collections set for a specific type
+     * @inheritdoc IBancorNetwork
      */
     function latestPoolCollection(uint16 poolType) external view override returns (ILiquidityPoolCollection) {
         return _latestPoolCollections[poolType];
     }
 
     /**
-     * @dev returns the set of all liquidity pools
+     * @inheritdoc IBancorNetwork
      */
     function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _liquidityPools.length();
@@ -294,7 +294,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the respective liquidity pool collection for the provided pool
+     * @inheritdoc IBancorNetwork
      */
     function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
         return _collectionByPool[pool];

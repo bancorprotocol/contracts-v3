@@ -11,7 +11,7 @@ import { createSystem } from 'test/helpers/Factory';
 import { PendingWithdrawals } from 'typechain';
 
 const DEFAULT_LOCK_DURATION = duration.days(7);
-const DEFAULT_REMOVAL_WINDOW_DURATION = duration.days(3);
+const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 
 let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
@@ -55,7 +55,7 @@ describe('PendingWithdrawals', () => {
             expect(await pendingWithdrawals.network()).to.equal(network.address);
             expect(await pendingWithdrawals.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
     });
 
@@ -99,7 +99,7 @@ describe('PendingWithdrawals', () => {
         beforeEach(async () => {
             ({ pendingWithdrawals } = await createSystem());
 
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
@@ -112,16 +112,16 @@ describe('PendingWithdrawals', () => {
             const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(DEFAULT_REMOVAL_WINDOW_DURATION, newWithdrawalWindowDuration);
+                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION, newWithdrawalWindowDuration);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
 
-            const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_REMOVAL_WINDOW_DURATION);
+            const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
             await expect(res2)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(newWithdrawalWindowDuration, DEFAULT_REMOVAL_WINDOW_DURATION);
+                .withArgs(newWithdrawalWindowDuration, DEFAULT_WITHDRAWAL_WINDOW_DURATION);
 
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_REMOVAL_WINDOW_DURATION);
+            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
     });
 });

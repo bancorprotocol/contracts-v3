@@ -67,7 +67,13 @@ const createProxy = async <F extends ContractFactory>(
 };
 
 export const createNetworkToken = async () => Contracts.TestERC20Token.deploy('BNT', 'BNT', TOTAL_SUPPLY);
-export const createTokenHolder = async () => createProxy(Contracts.TokenHolderUpgradeable);
+
+export const createTokenHolder = async () => {
+    const tokenHolder = await Contracts.TokenHolderUpgradeable.deploy();
+    await tokenHolder.initialize();
+
+    return tokenHolder;
+};
 
 export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);

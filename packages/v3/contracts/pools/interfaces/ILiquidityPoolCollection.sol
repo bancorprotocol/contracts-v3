@@ -25,13 +25,28 @@ interface ILiquidityPoolCollection {
         uint256 depositLimit;
     }
 
+    /**
+     * @dev returns the type of the pool
+     */
     function poolType() external pure returns (uint16);
 
+    /**
+     * @dev returns the network contract
+     */
     function network() external view returns (IBancorNetwork);
 
+    /**
+     * @dev returns the custom symbol overrides for a given reserve token
+     */
     function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
 
+    /**
+     * @dev returns the pool data for a given reserve token
+     */
     function pool(IReserveToken reserveToken) external view returns (Pool memory);
 
+    /**
+     * @dev returns the default trading fee (in units of PPM)
+     */
     function defaultTradingFeePPM() external view returns (uint32);
 }

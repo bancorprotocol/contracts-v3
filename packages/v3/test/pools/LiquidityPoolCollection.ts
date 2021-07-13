@@ -82,25 +82,25 @@ describe('LiquidityPoolCollection', () => {
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
             await expect(
-                collection.connect(nonOwner).setDefaultTradingFreePPM(newDefaultTradingFree)
+                collection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFree)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(collection.setDefaultTradingFreePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
+            await expect(collection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
                 'ERR_INVALID_FEE'
             );
         });
 
         it('should be to able to set and update the default trading fee', async () => {
-            const res = await collection.setDefaultTradingFreePPM(newDefaultTradingFree);
+            const res = await collection.setDefaultTradingFeePPM(newDefaultTradingFree);
             await expect(res)
                 .to.emit(collection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(DEFAULT_TRADING_FEE_PPM, newDefaultTradingFree);
 
             expect(await collection.defaultTradingFeePPM()).to.equal(newDefaultTradingFree);
 
-            const res2 = await collection.setDefaultTradingFreePPM(DEFAULT_TRADING_FEE_PPM);
+            const res2 = await collection.setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
             await expect(res2)
                 .to.emit(collection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(newDefaultTradingFree, DEFAULT_TRADING_FEE_PPM);

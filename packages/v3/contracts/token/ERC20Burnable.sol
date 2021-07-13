@@ -15,18 +15,14 @@ abstract contract ERC20Burnable is ERC20, IERC20Burnable {
     using SafeMath for uint256;
 
     /**
-     * @dev Destroys tokens from the caller.
+     * @inheritdoc IERC20Burnable
      */
     function burn(uint256 amount) external virtual override {
         _burn(msg.sender, amount);
     }
 
     /**
-     * @dev Destroys tokens from a recipient, deducting from the caller's allowance
-     *
-     * requirements:
-     *
-     * - the caller must have allowance for recipient's tokens of at least the specified amount
+     * @inheritdoc IERC20Burnable
      */
     function burnFrom(address recipient, uint256 amount) external virtual override {
         uint256 decreasedAllowance = allowance(recipient, msg.sender).sub(amount, "ERR_INSUFFICIENT_ALLOWANCE");
