@@ -25,9 +25,9 @@ interface IBancorNetwork is IUpgradeable {
     function pendingWithdrawals() external view returns (IPendingWithdrawals);
 
     /**
-     * @dev returns the address of the protection wallet
+     * @dev returns the address of the external protection wallet
      */
-    function protectionWallet() external view returns (ITokenHolder);
+    function externalProtectionWallet() external view returns (ITokenHolder);
 
     /**
      * @dev returns the set of all valid liquidity pool collections

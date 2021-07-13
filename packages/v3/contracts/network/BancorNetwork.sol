@@ -22,8 +22,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the pending withdrawals contract
     IPendingWithdrawals private _pendingWithdrawals;
 
-    // the address of the protection wallet
-    ITokenHolder private _protectionWallet;
+    // the address of the external protection wallet
+    ITokenHolder private _externalProtectionWallet;
 
     // the set of all valid liquidity pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -41,9 +41,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     uint256[MAX_GAP - 7] private __gap;
 
     /**
-     * @dev triggered when the protection wallet is updated
+     * @dev triggered when the external protection wallet is updated
      */
-    event ProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
+    event ExternalProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
      * @dev triggered when a new liquidity pool collection is added
@@ -227,12 +227,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function protectionWallet() external view override returns (ITokenHolder) {
-        return _protectionWallet;
+    function externalProtectionWallet() external view override returns (ITokenHolder) {
+        return _externalProtectionWallet;
     }
 
     /**
-     * @dev sets the address of the protection wallet
+     * @dev sets the address of the external protection wallet
      *
      * requirements:
      *
@@ -243,15 +243,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(newProtectionWallet))
         onlyOwner
     {
-        emit ProtectionWalletUpdated(_protectionWallet, newProtectionWallet);
+        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newProtectionWallet);
 
         newProtectionWallet.acceptOwnership();
 
-        _protectionWallet = newProtectionWallet;
+        _externalProtectionWallet = newProtectionWallet;
     }
 
     /**
-     * @dev transfers the ownership of the protection wallet
+     * @dev transfers the ownership of the external protection wallet
      *
      * requirements:
      *
@@ -259,7 +259,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the new owner needs to accept the transfer
      */
     function transferProtectionWalletOwnership(address newOwner) external onlyOwner {
-        _protectionWallet.transferOwnership(newOwner);
+        _externalProtectionWallet.transferOwnership(newOwner);
     }
 
     /**
