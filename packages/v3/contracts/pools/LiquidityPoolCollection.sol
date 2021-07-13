@@ -118,7 +118,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      *
      * - the caller must be the owner of the contract
      */
-    function setDefaultTradingFreePPM(uint32 newDefaultTradingFeePPM)
+    function setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM)
         external
         onlyOwner
         validFee(newDefaultTradingFeePPM)
