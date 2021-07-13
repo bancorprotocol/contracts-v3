@@ -79,7 +79,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
-        uint256 amount,
+        uint256 depositAmount,
         uint256 poolTokenAmount
     );
 
@@ -91,7 +91,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         address indexed provider,
         ILiquidityPoolCollection collection,
-        uint256 amount,
+        uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
         uint256 networkTokenAmount
