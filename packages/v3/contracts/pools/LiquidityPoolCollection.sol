@@ -30,7 +30,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     uint32 private _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
 
     /**
-     * @dev triggered when the network fee is updated
+     * @dev triggered when the trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
