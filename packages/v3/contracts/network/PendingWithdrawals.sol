@@ -13,7 +13,7 @@ import "./interfaces/IPendingWithdrawals.sol";
  */
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeable, Utils {
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
-    uint256 private constant DEFAULT_REMOVAL_WINDOW_DURATION = 3 days;
+    uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
     // a mapping between accounts and their pending positions
     mapping(address => Position[]) private _positions;
@@ -93,7 +93,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      */
     function __PendingWithdrawals_init_unchained() internal initializer {
         _lockDuration = DEFAULT_LOCK_DURATION;
-        _withdrawalWindowDuration = DEFAULT_REMOVAL_WINDOW_DURATION;
+        _withdrawalWindowDuration = DEFAULT_WITHDRAWAL_WINDOW_DURATION;
     }
 
     // solhint-enable func-name-mixedcase
