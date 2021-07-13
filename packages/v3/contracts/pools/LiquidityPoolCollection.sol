@@ -40,12 +40,12 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
-     * @dev triggered when trading in a specific pool is enabled/disabled
+     * @dev triggered when trades in a specific pool are enabled/disabled
      */
     event TradesEnabled(IReserveToken indexed pool, bool status);
 
     /**
-     * @dev triggered when depositing to a specific pool is enabled/disabled
+     * @dev triggered when deposits to a specific pool are enabled/disabled
      */
     event DepositsEnabled(IReserveToken indexed pool, bool status);
 
