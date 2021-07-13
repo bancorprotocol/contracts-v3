@@ -20,7 +20,6 @@ let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
 let receiver: SignerWithAddress;
 let nonOwner: SignerWithAddress;
-let proxyAdmin: SignerWithAddress;
 
 describe('TokenHolderUpgradeable', () => {
     shouldHaveGap('TokenHolderUpgradeable');
@@ -28,7 +27,7 @@ describe('TokenHolderUpgradeable', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        [owner, receiver, nonOwner, proxyAdmin] = accounts;
+        [owner, receiver, nonOwner] = accounts;
     });
 
     beforeEach(async () => {

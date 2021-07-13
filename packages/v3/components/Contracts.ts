@@ -11,6 +11,7 @@ import {
     NetworkTokenPool__factory,
     PendingWithdrawals__factory,
     PoolToken__factory,
+    ProxyAdmin__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
     TestMathEx__factory,
@@ -30,12 +31,14 @@ type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any)
 export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
+    contractName: string;
     deploy(...args: Array<any>): Promise<Contract<F>>;
     attach(address: string, passedSigner?: Signer): Promise<Contract<F>>;
 }
 
 const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer): ContractBuilder<F> => {
     return {
+        contractName,
         deploy: async (...args: Parameters<any>): Promise<Contract<F>> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
 
@@ -67,6 +70,7 @@ const getContracts = (signer?: Signer) => ({
     NetworkTokenPool: deployOrAttach<NetworkTokenPool__factory>('NetworkTokenPool', signer),
     PendingWithdrawals: deployOrAttach<PendingWithdrawals__factory>('PendingWithdrawals', signer),
     PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
+    ProxyAdmin: deployOrAttach<ProxyAdmin__factory>('ProxyAdmin', signer),
     TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),

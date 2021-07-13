@@ -20,7 +20,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     INetworkSettings private immutable _settings;
 
     // the pending withdrawals contract
-    IPendingWithdrawals private immutable _pendingWithdrawals;
+    IPendingWithdrawals private _pendingWithdrawals;
 
     // the address of the protection wallet
     ITokenHolder private _protectionWallet;
@@ -155,12 +155,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(INetworkSettings initSettings, IPendingWithdrawals initPendingWithdrawals)
-        validAddress(address(initSettings))
-        validAddress(address(initPendingWithdrawals))
-    {
+    constructor(INetworkSettings initSettings) validAddress(address(initSettings)) {
         _settings = initSettings;
-        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     /**
@@ -208,6 +204,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
+    }
+
+    /**
+     * @dev initializes the address of the pending withdrawals contract
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     * - it's only possible to set the address of the contract once
+     */
+    function initializePendingWithdrawals(IPendingWithdrawals initPendingWithdrawals)
+        external
+        onlyOwner
+        validAddress(address(initPendingWithdrawals))
+    {
+        require(address(_pendingWithdrawals) == address(0x0), "ERR_ALREADY_INITIALIZED");
+
+        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     /**

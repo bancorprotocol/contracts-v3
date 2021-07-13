@@ -6,12 +6,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
 import { NetworkSettings, PendingWithdrawals, BancorNetwork, LiquidityPoolCollection, TestERC20Token } from 'typechain';
-import {
-    createNetworkSettings,
-    createPendingWithdrawals,
-    createBancorNetwork,
-    createLiquidityPoolCollection
-} from 'test/helpers/Factory';
+import { createSystem } from 'test/helpers/Factory';
 import { PPM_RESOLUTION } from 'test/helpers/Constants';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
@@ -22,9 +17,6 @@ const EMPTY_STRING = '';
 let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
 
-let networkSettings: NetworkSettings;
-let pendingWithdrawals: PendingWithdrawals;
-let network: BancorNetwork;
 let reserveToken: TestERC20Token;
 
 describe('LiquidityPoolCollection', () => {
@@ -35,16 +27,12 @@ describe('LiquidityPoolCollection', () => {
     });
 
     beforeEach(async () => {
-        networkSettings = await createNetworkSettings();
-        pendingWithdrawals = await createPendingWithdrawals();
-        network = await createBancorNetwork(networkSettings, pendingWithdrawals);
-
         reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
     });
 
     describe('construction', async () => {
         it('should be properly initialized', async () => {
-            const collection = await createLiquidityPoolCollection(network);
+            const { collection, network } = await createSystem();
 
             expect(await collection.version()).to.equal(1);
 
@@ -59,7 +47,7 @@ describe('LiquidityPoolCollection', () => {
         let collection: LiquidityPoolCollection;
 
         beforeEach(async () => {
-            collection = await createLiquidityPoolCollection(network);
+            ({ collection } = await createSystem());
         });
 
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
@@ -87,7 +75,7 @@ describe('LiquidityPoolCollection', () => {
         let collection: LiquidityPoolCollection;
 
         beforeEach(async () => {
-            collection = await createLiquidityPoolCollection(network);
+            ({ collection } = await createSystem());
 
             expect(await collection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });

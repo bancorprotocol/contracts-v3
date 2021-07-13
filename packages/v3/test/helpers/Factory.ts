@@ -1,56 +1,89 @@
-import { ethers } from 'hardhat';
-import { BigNumber, ContractFactory } from 'ethers';
+import { BaseContract, BigNumber, ContractFactory } from 'ethers';
+import { isEqual } from 'lodash';
 
 import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 
-import { TestERC20Token, NetworkSettings, PendingWithdrawals, BancorNetwork, BancorVault } from 'typechain';
+import { ProxyAdmin } from 'typechain';
 
 import { toAddress } from 'test/helpers/Utils';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
+type CtorArgs = Parameters<any>;
+type InitArgs = Parameters<any>;
+
 interface ProxyArguments {
-    initArgs?: Parameters<any>;
-    ctorArgs?: Parameters<any>;
+    initArgs?: InitArgs;
+    ctorArgs?: CtorArgs;
 }
+
+interface Logic {
+    ctorArgs: CtorArgs;
+    contract: BaseContract;
+}
+
+let logicCache: Record<string, Logic> = {};
+
+let admin: ProxyAdmin;
+
+export const proxyAdmin = async () => {
+    if (!admin) {
+        admin = await Contracts.ProxyAdmin.deploy();
+    }
+
+    return admin;
+};
+
+const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
+    // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
+    const cached = logicCache[factory.contractName];
+    if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
+        console.log('REUSING', factory.contractName);
+        return cached.contract;
+    }
+
+    const logic = await factory.deploy(...(ctorArgs || []));
+    logicCache[factory.contractName] = { ctorArgs, contract: logic };
+
+    return logic;
+};
+
+const createTransparentProxy = async (logic: BaseContract, initArgs: InitArgs = []) => {
+    const admin = await proxyAdmin();
+    return Contracts.TransparentUpgradeableProxy.deploy(
+        logic.address,
+        admin.address,
+        logic.interface.encodeFunctionData('initialize', initArgs)
+    );
+};
 
 const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
-    const logic = await factory.deploy(...(args?.ctorArgs || []));
-
-    const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
-        logic.address,
-        (
-            await proxyAdmin()
-        ).address,
-        logic.interface.encodeFunctionData('initialize', args?.initArgs || [])
-    );
+    const logic = await createLogic(factory, args?.ctorArgs);
+    const proxy = await createTransparentProxy(logic, args?.initArgs);
 
     return factory.attach(proxy.address);
 };
 
-export const proxyAdmin = async () => (await ethers.getSigners())[9];
-
 export const createNetworkToken = async () => Contracts.TestERC20Token.deploy('BNT', 'BNT', TOTAL_SUPPLY);
-
 export const createTokenHolder = async () => createProxy(Contracts.TokenHolderUpgradeable);
 
-export const createBancorVault = async (networkToken: TestERC20Token | string) =>
-    createProxy(Contracts.BancorVault, { ctorArgs: [toAddress(networkToken)] });
+export const createSystem = async () => {
+    const networkSettings = await createProxy(Contracts.NetworkSettings);
+    const network = await createProxy(Contracts.BancorNetwork, { ctorArgs: [toAddress(networkSettings)] });
+    const networkToken = await createNetworkToken();
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [toAddress(networkToken)] });
+    const networkTokenPool = await createProxy(Contracts.NetworkTokenPool, {
+        ctorArgs: [toAddress(network), toAddress(vault)]
+    });
+    const pendingWithdrawals = await createProxy(Contracts.PendingWithdrawals, {
+        ctorArgs: [toAddress(network), toAddress(networkTokenPool)]
+    });
+    const collection = await Contracts.LiquidityPoolCollection.deploy(toAddress(network));
 
-export const createNetworkSettings = async () => createProxy(Contracts.NetworkSettings);
+    await network.initializePendingWithdrawals(pendingWithdrawals.address);
 
-export const createPendingWithdrawals = async () => createProxy(Contracts.PendingWithdrawals);
-
-export const createBancorNetwork = async (
-    networkSettings: NetworkSettings | string,
-    pendingWithdrawals: PendingWithdrawals | string
-) => createProxy(Contracts.BancorNetwork, { ctorArgs: [toAddress(networkSettings), toAddress(pendingWithdrawals)] });
-
-export const createLiquidityPoolCollection = async (network: BancorNetwork | string) =>
-    Contracts.LiquidityPoolCollection.deploy(toAddress(network));
-
-export const createNetworkTokenPool = async (network: BancorNetwork | string, vault: BancorVault | string) =>
-    createProxy(Contracts.NetworkTokenPool, { ctorArgs: [toAddress(network), toAddress(vault)] });
+    return { networkSettings, network, networkToken, vault, networkTokenPool, pendingWithdrawals, collection };
+};
