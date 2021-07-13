@@ -66,21 +66,21 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the type of the pool
+     * @inheritdoc ILiquidityPoolCollection
      */
     function poolType() external pure override returns (uint16) {
         return 1;
     }
 
     /**
-     * @dev returns the network contract
+     * @inheritdoc ILiquidityPoolCollection
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @dev returns the custom symbol overrides for a given reserve token
+     * @inheritdoc ILiquidityPoolCollection
      */
     function tokenSymbolOverride(IReserveToken reserveToken) external view override returns (string memory) {
         return _tokenSymbolOverrides[reserveToken];
@@ -98,14 +98,14 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the pool data for a given reserve token
+     * @inheritdoc ILiquidityPoolCollection
      */
     function pool(IReserveToken reserveToken) external view override returns (Pool memory) {
         return _pools[reserveToken];
     }
 
     /**
-     * @dev returns the default trading fee (in units of PPM)
+     * @inheritdoc ILiquidityPoolCollection
      */
     function defaultTradingFeePPM() external view override returns (uint32) {
         return _defaultTradingFeePPM;

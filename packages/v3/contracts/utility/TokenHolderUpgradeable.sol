@@ -49,11 +49,7 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     }
 
     /**
-     * @dev withdraws funds held by the contract and sends them to an account
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
+     * @inheritdoc ITokenHolder
      */
     function withdrawTokens(
         IReserveToken reserveToken,
@@ -64,11 +60,7 @@ contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     }
 
     /**
-     * @dev withdraws multiple funds held by the contract and sends them to an account
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
+     * @inheritdoc ITokenHolder
      */
     function withdrawTokensMultiple(
         IReserveToken[] calldata reserveTokens,

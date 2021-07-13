@@ -112,7 +112,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the protected tokens whitelist
+     * @inheritdoc INetworkSettings
      */
     function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
@@ -150,14 +150,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev checks whether a given token is whitelisted
+     * @inheritdoc INetworkSettings
      */
     function isTokenWhitelisted(IReserveToken token) external view override returns (bool) {
         return _protectedTokenWhitelist.contains(address(token));
     }
 
     /**
-     * @dev returns the network token minting limit for a given token
+     * @inheritdoc INetworkSettings
      */
     function poolMintingLimit(IReserveToken pool) external view override returns (uint256) {
         return _poolMintingLimits[pool];
@@ -177,23 +177,21 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the network fee parameters (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function networkFeeParams() external view override returns (ITokenHolder, uint32) {
         return (_networkFeeWallet, _networkFeePPM);
     }
 
     /**
-     * @dev returns the wallet that receives the global network fees
+     * @inheritdoc INetworkSettings
      */
     function networkFeeWallet() external view override returns (ITokenHolder) {
         return _networkFeeWallet;
     }
 
     /**
-     * @dev returns the global network fee (in units of PPM)
-     *
-     * note that the network fee is a portion of the total fees from each pool
+     * @inheritdoc INetworkSettings
      */
     function networkFeePPM() external view override returns (uint32) {
         return _networkFeePPM;
@@ -230,7 +228,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the withdrawal fee (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function withdrawalFeePPM() external view override returns (uint32) {
         return _withdrawalFeePPM;
@@ -250,7 +248,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the flash-loan fee (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function flashLoanFeePPM() external view override returns (uint32) {
         return _flashLoanFeePPM;
@@ -270,7 +268,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the maximum deviation of the average rate from the spot rate (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function averageRateMaxDeviationPPM() external view override returns (uint32) {
         return _averageRateMaxDeviationPPM;

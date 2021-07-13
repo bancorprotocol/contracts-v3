@@ -106,14 +106,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns mapping between accounts and their pending positions
+     * @inheritdoc IPendingWithdrawals
      */
     function positions(address account) external view override returns (Position[] memory) {
         return _positions[account];
     }
 
     /**
-     * @dev returns the lock duration
+     * @inheritdoc IPendingWithdrawals
      */
     function lockDuration() external view override returns (uint256) {
         return _lockDuration;
@@ -137,7 +137,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     }
 
     /**
-     * @dev returns withdrawal window duration
+     * @inheritdoc IPendingWithdrawals
      */
     function withdrawalWindowDuration() external view override returns (uint256) {
         return _withdrawalWindowDuration;

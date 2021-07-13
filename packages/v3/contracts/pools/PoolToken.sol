@@ -47,11 +47,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     }
 
     /**
-     * @dev increases the token supply and sends the new tokens to the given account
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
+     * @inheritdoc IPoolToken
      */
     function mint(address recipient, uint256 amount) external override onlyOwner validExternalAddress(recipient) {
         _mint(recipient, amount);

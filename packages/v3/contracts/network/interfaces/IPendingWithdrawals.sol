@@ -18,9 +18,18 @@ interface IPendingWithdrawals is IUpgradeable {
         uint256 createdAt;
     }
 
+    /**
+     * @dev returns mapping between accounts and their pending positions
+     */
     function positions(address account) external view returns (Position[] memory);
 
+    /**
+     * @dev returns the lock duration
+     */
     function lockDuration() external view returns (uint256);
 
+    /**
+     * @dev returns withdrawal window duration
+     */
     function withdrawalWindowDuration() external view returns (uint256);
 }

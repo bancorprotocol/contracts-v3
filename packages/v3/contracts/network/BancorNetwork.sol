@@ -197,21 +197,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the network settings contract
+     * @inheritdoc IBancorNetwork
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
 
     /**
-     * @dev returns the pending withdrawals contract
+     * @inheritdoc IBancorNetwork
      */
     function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
     }
 
     /**
-     * @dev returns the address of the protection wallet
+     * @inheritdoc IBancorNetwork
      */
     function protectionWallet() external view override returns (ITokenHolder) {
         return _protectionWallet;
@@ -249,7 +249,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the set of all valid liquidity pool collections
+     * @inheritdoc IBancorNetwork
      */
     function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
@@ -261,14 +261,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the most recent collection that was added to the liquidity pool collections set for a specific type
+     * @inheritdoc IBancorNetwork
      */
     function latestPoolCollection(uint16 poolType) external view override returns (ILiquidityPoolCollection) {
         return _latestPoolCollections[poolType];
     }
 
     /**
-     * @dev returns the set of all liquidity pools
+     * @inheritdoc IBancorNetwork
      */
     function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
         uint256 length = _liquidityPools.length();
@@ -280,7 +280,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the respective liquidity pool collection for the provided pool
+     * @inheritdoc IBancorNetwork
      */
     function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
         return _collectionByPool[pool];
