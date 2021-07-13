@@ -10,7 +10,7 @@ import "../../token/interfaces/IReserveToken.sol";
  * @dev Network Settings interface
  */
 interface INetworkSettings is IUpgradeable {
-    function insuredTokenWhitelist() external view returns (IReserveToken[] memory);
+    function protectedTokenWhitelist() external view returns (IReserveToken[] memory);
 
     function isTokenWhitelisted(IReserveToken pool) external view returns (bool);
 

@@ -22,8 +22,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
-    // the address of the insurance wallet
-    ITokenHolder private _insuranceWallet;
+    // the address of the protection wallet
+    ITokenHolder private _protectionWallet;
 
     // the set of all valid liquidity pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -41,9 +41,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     uint256[MAX_GAP - 7] private __gap;
 
     /**
-     * @dev triggered when the insurance wallet is updated
+     * @dev triggered when the protection wallet is updated
      */
-    event InsuranceWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
+    event ProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
      * @dev triggered when a new liquidity pool collection is added
@@ -211,41 +211,41 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev returns the address of the insurance wallet
+     * @dev returns the address of the protection wallet
      */
-    function insuranceWallet() external view override returns (ITokenHolder) {
-        return _insuranceWallet;
+    function protectionWallet() external view override returns (ITokenHolder) {
+        return _protectionWallet;
     }
 
     /**
-     * @dev sets the address of the insurance wallet
+     * @dev sets the address of the protection wallet
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function setInsuranceWallet(ITokenHolder newInsuranceWallet)
+    function setProtectionWallet(ITokenHolder newProtectionWallet)
         external
-        validAddress(address(newInsuranceWallet))
+        validAddress(address(newProtectionWallet))
         onlyOwner
     {
-        emit InsuranceWalletUpdated(_insuranceWallet, newInsuranceWallet);
+        emit ProtectionWalletUpdated(_protectionWallet, newProtectionWallet);
 
-        newInsuranceWallet.acceptOwnership();
+        newProtectionWallet.acceptOwnership();
 
-        _insuranceWallet = newInsuranceWallet;
+        _protectionWallet = newProtectionWallet;
     }
 
     /**
-     * @dev transfers the ownership of the insurance wallet
+     * @dev transfers the ownership of the protection wallet
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      * - the new owner needs to accept the transfer
      */
-    function transferInsuranceWalletOwnership(address newOwner) external onlyOwner {
-        _insuranceWallet.transferOwnership(newOwner);
+    function transferProtectionWalletOwnership(address newOwner) external onlyOwner {
+        _protectionWallet.transferOwnership(newOwner);
     }
 
     /**
