@@ -137,9 +137,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed pool,
         IReserveToken indexed sourceToken,
         IReserveToken indexed targetToken,
-        address trader,
         uint256 sourceAmount,
-        uint256 targetAmount
+        uint256 targetAmount,
+        address trader
     );
 
     /**
