@@ -9,6 +9,10 @@ import "./interfaces/ILiquidityPoolCollection.sol";
 
 /**
  * @dev Liquidity Pool Collection contract
+ *
+ * notes:
+ *
+ * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, Utils {
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
