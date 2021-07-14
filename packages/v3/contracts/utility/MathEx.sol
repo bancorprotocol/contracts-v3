@@ -2,7 +2,7 @@
 pragma solidity 0.7.6;
 
 /**
- * @dev This library provides a set of complex math operations.
+ * @dev this library provides a set of complex math operations
  */
 library MathEx {
     uint256 private constant MAX_UINT256 = uint256(-1);
@@ -123,7 +123,7 @@ library MathEx {
     function geometricMean(uint256[] memory values) internal pure returns (uint256) {
         uint256 numOfDigits = 0;
         uint256 length = values.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             numOfDigits += decimalLength(values[i]);
         }
         return uint256(10)**(roundDivUnsafe(numOfDigits, length) - 1);
@@ -241,7 +241,7 @@ library MathEx {
     function inv256(uint256 d) private pure returns (uint256) {
         // approximate the root of `f(x) = 1 / x - d` using the newton–raphson convergence method
         uint256 x = 1;
-        for (uint256 i = 0; i < 8; ++i) {
+        for (uint256 i = 0; i < 8; i++) {
             x = unsafeMul(x, unsafeSub(2, unsafeMul(x, d))); // `x = x * (2 - x * d) mod 2 ^ 256`
         }
         return x;

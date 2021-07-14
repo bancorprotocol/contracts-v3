@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "./interfaces/IUpgradeable.sol";
 
 /**
- * @dev This contract provides common utilities for upgradeable contracts
+ * @dev this contract provides common utilities for upgradeable contracts
  */
 abstract contract Upgradeable is IUpgradeable, Initializable {
     uint32 internal constant MAX_GAP = 50;

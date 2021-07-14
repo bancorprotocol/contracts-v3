@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @dev Utilities & Common Modifiers
+ * @dev common utilities
  */
 contract Utils {
     uint32 internal constant PPM_RESOLUTION = 1000000;

@@ -6,7 +6,7 @@ import "./interfaces/IOwned.sol";
 import "./Upgradeable.sol";
 
 /**
- * @dev This contract provides support and utilities for contract ownership.
+ * @dev this contract provides support and utilities for contract ownership
  */
 abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     address private _owner;
@@ -51,13 +51,14 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     }
 
     /**
-     * @dev allows transferring the contract ownership
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     *
-     * note the new owner still needs to accept the transfer
+     * @inheritdoc IOwned
+     */
+    function owner() public view override returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @inheritdoc IOwned
      */
     function transferOwnership(address ownerCandidate) public override onlyOwner {
         require(ownerCandidate != _owner, "ERR_SAME_OWNER");
@@ -66,19 +67,12 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     }
 
     /**
-     * @dev used by a new owner to accept an ownership transfer
+     * @inheritdoc IOwned
      */
     function acceptOwnership() public override {
         require(msg.sender == _newOwner, "ERR_ACCESS_DENIED");
 
         _setOwner(_newOwner);
-    }
-
-    /**
-     * @dev returns the address of the current owner
-     */
-    function owner() public view override returns (address) {
-        return _owner;
     }
 
     /**

@@ -15,7 +15,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a set of tokens which are eligeble for protection
-    EnumerableSetUpgradeable.AddressSet private _protectedTokensWhitelist;
+    EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token minting limits per pool
     mapping(IReserveToken => uint256) private _poolMintingLimits;
@@ -40,19 +40,19 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     uint256[MAX_GAP - 6] private __gap;
 
     /**
-     * @dev triggered when a reserve token is added to the protection whitelist
+     * @dev triggered when a token is added to the protection whitelist
      */
-    event TokenAddedToWhitelist(IReserveToken indexed reserveToken);
+    event TokenAddedToWhitelist(IReserveToken indexed token);
 
     /**
-     * @dev triggered when a reserve token is removed from the protection whitelist
+     * @dev triggered when a token is removed from the protection whitelist
      */
-    event TokenRemovedFromWhitelist(IReserveToken indexed reserveToken);
+    event TokenRemovedFromWhitelist(IReserveToken indexed token);
 
     /**
-     * @dev triggered when a per-reserve token minting limit is updated
+     * @dev triggered when a per-pool minting limit is updated
      */
-    event MintingLimitUpdated(IReserveToken indexed reserveToken, uint256 prevLimit, uint256 newLimit);
+    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the network fee is updated
@@ -112,59 +112,55 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the protected reserve tokens whitelist
+     * @inheritdoc INetworkSettings
      */
-    function protectedTokensWhitelist() external view override returns (IReserveToken[] memory) {
-        uint256 length = _protectedTokensWhitelist.length();
+    function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
+        uint256 length = _protectedTokenWhitelist.length();
         IReserveToken[] memory list = new IReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = IReserveToken(_protectedTokensWhitelist.at(i));
+            list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
         }
         return list;
     }
 
     /**
-     * @dev adds a reserve token to the protected reserve tokens whitelist
+     * @dev adds a token to the protected tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function addTokenToProtectedTokensWhitelist(IReserveToken reserveToken)
-        external
-        onlyOwner
-        validExternalAddress(address(reserveToken))
-    {
-        require(_protectedTokensWhitelist.add(address(reserveToken)), "ERR_ALREADY_WHITELISTED");
+    function addTokenToWhitelist(IReserveToken token) external onlyOwner validExternalAddress(address(token)) {
+        require(_protectedTokenWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
 
-        emit TokenAddedToWhitelist(reserveToken);
+        emit TokenAddedToWhitelist(token);
     }
 
     /**
-     * @dev removes a reserve token from the protected reserve tokens whitelist
+     * @dev removes a token from the protected tokens whitelist
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function removeTokenFromProtectedTokensWhitelist(IReserveToken reserveToken) external onlyOwner {
-        require(_protectedTokensWhitelist.remove(address(reserveToken)), "ERR_NOT_WHITELISTED");
+    function removeTokenFromWhitelist(IReserveToken token) external onlyOwner {
+        require(_protectedTokenWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
 
-        emit TokenRemovedFromWhitelist(reserveToken);
+        emit TokenRemovedFromWhitelist(token);
     }
 
     /**
-     * @dev checks whether a given reserve token is whitelisted
+     * @inheritdoc INetworkSettings
      */
-    function isTokenWhitelisted(IReserveToken reserveToken) external view override returns (bool) {
-        return _protectedTokensWhitelist.contains(address(reserveToken));
+    function isTokenWhitelisted(IReserveToken token) external view override returns (bool) {
+        return _protectedTokenWhitelist.contains(address(token));
     }
 
     /**
-     * @dev returns the network token minting limit for a given reserve token
+     * @inheritdoc INetworkSettings
      */
-    function poolMintingLimit(IReserveToken reserveToken) external view override returns (uint256) {
-        return _poolMintingLimits[reserveToken];
+    function poolMintingLimit(IReserveToken pool) external view override returns (uint256) {
+        return _poolMintingLimits[pool];
     }
 
     /**
@@ -174,34 +170,28 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(IReserveToken reserveToken, uint256 amount)
-        external
-        onlyOwner
-        validAddress(address(reserveToken))
-    {
-        emit MintingLimitUpdated(reserveToken, _poolMintingLimits[reserveToken], amount);
+    function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
+        emit PoolMintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
 
-        _poolMintingLimits[reserveToken] = amount;
+        _poolMintingLimits[pool] = amount;
     }
 
     /**
-     * @dev returns the network fee parameters (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function networkFeeParams() external view override returns (ITokenHolder, uint32) {
         return (_networkFeeWallet, _networkFeePPM);
     }
 
     /**
-     * @dev returns the wallet that receives the global network fees
+     * @inheritdoc INetworkSettings
      */
     function networkFeeWallet() external view override returns (ITokenHolder) {
         return _networkFeeWallet;
     }
 
     /**
-     * @dev returns the global network fee (in units of PPM)
-     *
-     * note that the network fee is a portion of the total fees from each pool
+     * @inheritdoc INetworkSettings
      */
     function networkFeePPM() external view override returns (uint32) {
         return _networkFeePPM;
@@ -238,7 +228,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the withdrawal fee (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function withdrawalFeePPM() external view override returns (uint32) {
         return _withdrawalFeePPM;
@@ -258,7 +248,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the flash-loan fee (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function flashLoanFeePPM() external view override returns (uint32) {
         return _flashLoanFeePPM;
@@ -278,7 +268,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev returns the maximum deviation of the average rate from the spot rate (in units of PPM)
+     * @inheritdoc INetworkSettings
      */
     function averageRateMaxDeviationPPM() external view override returns (uint32) {
         return _averageRateMaxDeviationPPM;
