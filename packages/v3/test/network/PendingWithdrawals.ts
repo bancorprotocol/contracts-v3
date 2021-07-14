@@ -21,9 +21,7 @@ describe('PendingWithdrawals', () => {
     shouldHaveGap('PendingWithdrawals', '_positions');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner, dummy] = accounts;
+        [, nonOwner, dummy] = await ethers.getSigners();
     });
 
     describe('construction', async () => {

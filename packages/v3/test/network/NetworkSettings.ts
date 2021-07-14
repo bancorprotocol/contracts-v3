@@ -12,7 +12,6 @@ import { createTokenHolder, createSystem } from 'test/helpers/Factory';
 
 let networkFeeWallet: TokenHolderUpgradeable;
 
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
@@ -23,9 +22,7 @@ describe('NetworkSettings', () => {
     shouldHaveGap('NetworkSettings', '_protectedTokenWhitelist');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner] = accounts;
+        [, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {

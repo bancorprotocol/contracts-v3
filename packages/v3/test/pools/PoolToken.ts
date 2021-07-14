@@ -16,7 +16,6 @@ import { latest, duration } from 'test/helpers/Time';
 let poolToken: PoolToken;
 let reserveToken: TestERC20Token;
 
-let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
 let spender: SignerWithAddress;
 let nonOwner: SignerWithAddress;
@@ -26,9 +25,7 @@ const SYMBOL = 'POOL';
 
 describe('PoolToken', () => {
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [owner, nonOwner, spender] = accounts;
+        [owner, nonOwner, spender] = await ethers.getSigners();
     });
 
     beforeEach(async () => {

@@ -10,17 +10,15 @@ import { ZERO_ADDRESS } from 'test/helpers/Constants';
 import { shouldHaveGap } from 'test/helpers/Proxy';
 import { createSystem, createTokenHolder } from 'test/helpers/Factory';
 
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
+let newOwner: SignerWithAddress;
 let dummy: SignerWithAddress;
 
 describe('BancorNetwork', () => {
     shouldHaveGap('BancorNetwork', '_protectionWallet');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner, dummy] = accounts;
+        [, nonOwner, newOwner, dummy] = await ethers.getSigners();
     });
 
     describe('construction', async () => {
@@ -97,16 +95,12 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when a non-owner attempts to transfer the ownership of the protection wallet', async () => {
-            const newOwner = accounts[4];
-
             await expect(
                 network.connect(newOwner).transferProtectionWalletOwnership(newOwner.address)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should allow explicitly transferring the ownership', async () => {
-            const newOwner = accounts[4];
-
             await newProtectionWallet.transferOwnership(network.address);
             await network.setProtectionWallet(newProtectionWallet.address);
             expect(await newProtectionWallet.owner()).to.equal(network.address);

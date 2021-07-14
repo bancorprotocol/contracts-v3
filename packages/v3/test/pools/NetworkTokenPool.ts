@@ -7,16 +7,13 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { shouldHaveGap } from 'test/helpers/Proxy';
 import { createSystem } from 'test/helpers/Factory';
 
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
 
 describe('NetworkTokenPool', () => {
     shouldHaveGap('NetworkTokenPool', '_stakedBalance');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner] = accounts;
+        [, nonOwner] = await ethers.getSigners();
     });
 
     describe('construction', async () => {
