@@ -23,7 +23,7 @@ interface Logic {
     contract: BaseContract;
 }
 
-let logicCache: Record<string, Logic> = {};
+let logicContractsCache: Record<string, Logic> = {};
 
 let admin: ProxyAdmin;
 
@@ -37,33 +37,33 @@ export const proxyAdmin = async () => {
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
     // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
-    const cached = logicCache[factory.contractName];
+    const cached = logicContractsCache[factory.contractName];
     if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
         return cached.contract;
     }
 
-    const logic = await factory.deploy(...(ctorArgs || []));
-    logicCache[factory.contractName] = { ctorArgs, contract: logic };
+    const logicContract = await factory.deploy(...(ctorArgs || []));
+    logicContractsCache[factory.contractName] = { ctorArgs, contract: logicContract };
 
-    return logic;
+    return logicContract;
 };
 
 const createTransparentProxy = async (
-    logic: BaseContract,
+    logicContract: BaseContract,
     skipInitialization: boolean = false,
     initArgs: InitArgs = []
 ) => {
     const admin = await proxyAdmin();
-    const data = skipInitialization ? [] : logic.interface.encodeFunctionData('initialize', initArgs);
-    return Contracts.TransparentUpgradeableProxy.deploy(logic.address, admin.address, data);
+    const data = skipInitialization ? [] : logicContract.interface.encodeFunctionData('initialize', initArgs);
+    return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
 };
 
 const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
-    const logic = await createLogic(factory, args?.ctorArgs);
-    const proxy = await createTransparentProxy(logic, args?.skipInitialization, args?.initArgs);
+    const logicContract = await createLogic(factory, args?.ctorArgs);
+    const proxy = await createTransparentProxy(logicContract, args?.skipInitialization, args?.initArgs);
 
     return factory.attach(proxy.address);
 };

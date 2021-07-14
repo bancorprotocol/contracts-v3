@@ -14,12 +14,14 @@ const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
 let reserveToken: TestReserveToken;
 
-let accounts: SignerWithAddress[];
+let deployer: SignerWithAddress;
+let recipient: SignerWithAddress;
+let spender: SignerWithAddress;
 let sender: string;
 
 describe('ReserveToken', () => {
     before(async () => {
-        accounts = await ethers.getSigners();
+        [deployer, recipient, spender] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -29,15 +31,13 @@ describe('ReserveToken', () => {
 
     for (const hasETH of [true, false]) {
         let token: any;
-        let recipient: SignerWithAddress;
 
         context(`${hasETH ? 'ETH' : 'ERC20'} reserve token`, () => {
             beforeEach(async () => {
-                recipient = accounts[2];
                 if (hasETH) {
                     token = { address: NATIVE_TOKEN_ADDRESS };
 
-                    await accounts[9].sendTransaction({
+                    await deployer.sendTransaction({
                         to: reserveToken.address,
                         value: TOTAL_SUPPLY.div(BigNumber.from(2))
                     });
@@ -95,7 +95,6 @@ describe('ReserveToken', () => {
 
                     it('should setting the allowance', async () => {
                         const allowance = BigNumber.from(1000000);
-                        const spender = accounts[5];
 
                         await reserveToken.ensureApprove(token.address, spender.address, allowance);
 

@@ -14,16 +14,13 @@ const POOL_TYPE = BigNumber.from(1);
 const SYMBOL = 'TKN';
 const EMPTY_STRING = '';
 
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
 
 describe('LiquidityPoolCollection', () => {
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner] = accounts;
+        [, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {

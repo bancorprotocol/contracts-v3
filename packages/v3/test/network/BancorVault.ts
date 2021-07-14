@@ -15,7 +15,6 @@ import { createSystem, createNetworkToken } from 'test/helpers/Factory';
 
 const { BancorVault: BancorVaultRoles } = roles;
 
-let accounts: SignerWithAddress[];
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
 let target: SignerWithAddress;
@@ -27,9 +26,7 @@ describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [deployer, sender, target, admin] = accounts;
+        [deployer, sender, target, admin] = await ethers.getSigners();
     });
 
     beforeEach(async () => {

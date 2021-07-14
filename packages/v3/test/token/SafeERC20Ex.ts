@@ -13,15 +13,12 @@ const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 let safeERC20: TestSafeERC20Ex;
 let token: TestERC20Token;
 
-let accounts: SignerWithAddress[];
 let spender: SignerWithAddress;
 let sender: string;
 
 describe('SafeERC20Ex', () => {
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        spender = accounts[5];
+        [, spender] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
