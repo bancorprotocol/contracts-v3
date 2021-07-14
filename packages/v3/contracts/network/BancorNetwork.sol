@@ -222,16 +222,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      *
      * - the caller must be the owner of the contract
      */
-    function setProtectionWallet(ITokenHolder newProtectionWallet)
+    function setExternalProtectionWallet(ITokenHolder newExternalProtectionWallet)
         external
-        validAddress(address(newProtectionWallet))
+        validAddress(address(newExternalProtectionWallet))
         onlyOwner
     {
-        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newProtectionWallet);
+        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newExternalProtectionWallet);
 
-        newProtectionWallet.acceptOwnership();
+        newExternalProtectionWallet.acceptOwnership();
 
-        _externalProtectionWallet = newProtectionWallet;
+        _externalProtectionWallet = newExternalProtectionWallet;
     }
 
     /**
