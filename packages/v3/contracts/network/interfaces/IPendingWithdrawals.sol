@@ -27,7 +27,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function network() external view returns (IBancorNetwork);
 
     /**
-     * @dev returns the network pool token contract
+     * @dev returns the network token pool contract
      */
     function networkTokenPool() external view returns (INetworkTokenPool);
 
