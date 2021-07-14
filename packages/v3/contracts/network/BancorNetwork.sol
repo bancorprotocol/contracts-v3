@@ -162,8 +162,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize() external initializer {
-        __BancorNetwork_init();
+    function initialize(IPendingWithdrawals initPendingWithdrawals) external initializer {
+        __BancorNetwork_init(initPendingWithdrawals);
     }
 
     // solhint-disable func-name-mixedcase
@@ -171,17 +171,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init() internal initializer {
+    function __BancorNetwork_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained();
+        __BancorNetwork_init_unchained(initPendingWithdrawals);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained() internal initializer {}
+    function __BancorNetwork_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+        _pendingWithdrawals = initPendingWithdrawals;
+    }
 
     // solhint-enable func-name-mixedcase
 
@@ -204,24 +206,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
-    }
-
-    /**
-     * @dev initializes the address of the pending withdrawals contract
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     * - it's only possible to set the address of the contract once
-     */
-    function initializePendingWithdrawals(IPendingWithdrawals initPendingWithdrawals)
-        external
-        onlyOwner
-        validAddress(address(initPendingWithdrawals))
-    {
-        require(address(_pendingWithdrawals) == address(0x0), "ERR_ALREADY_INITIALIZED");
-
-        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     /**

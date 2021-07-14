@@ -13,6 +13,7 @@ type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
 
 interface ProxyArguments {
+    skipInitialization?: boolean;
     initArgs?: InitArgs;
     ctorArgs?: CtorArgs;
 }
@@ -47,13 +48,14 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
     return logic;
 };
 
-const createTransparentProxy = async (logic: BaseContract, initArgs: InitArgs = []) => {
+const createTransparentProxy = async (
+    logic: BaseContract,
+    skipInitialization: boolean = false,
+    initArgs: InitArgs = []
+) => {
     const admin = await proxyAdmin();
-    return Contracts.TransparentUpgradeableProxy.deploy(
-        logic.address,
-        admin.address,
-        logic.interface.encodeFunctionData('initialize', initArgs)
-    );
+    const data = skipInitialization ? [] : logic.interface.encodeFunctionData('initialize', initArgs);
+    return Contracts.TransparentUpgradeableProxy.deploy(logic.address, admin.address, data);
 };
 
 const createProxy = async <F extends ContractFactory>(
@@ -61,7 +63,7 @@ const createProxy = async <F extends ContractFactory>(
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
     const logic = await createLogic(factory, args?.ctorArgs);
-    const proxy = await createTransparentProxy(logic, args?.initArgs);
+    const proxy = await createTransparentProxy(logic, args?.skipInitialization, args?.initArgs);
 
     return factory.attach(proxy.address);
 };
@@ -77,7 +79,11 @@ export const createTokenHolder = async () => {
 
 export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);
-    const network = await createProxy(Contracts.BancorNetwork, { ctorArgs: [toAddress(networkSettings)] });
+    const network = await createProxy(Contracts.BancorNetwork, {
+        skipInitialization: true,
+        ctorArgs: [toAddress(networkSettings)]
+    });
+
     const networkToken = await createNetworkToken();
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [toAddress(networkToken)] });
     const networkTokenPool = await createProxy(Contracts.NetworkTokenPool, {
@@ -88,7 +94,7 @@ export const createSystem = async () => {
     });
     const collection = await Contracts.LiquidityPoolCollection.deploy(toAddress(network));
 
-    await network.initializePendingWithdrawals(pendingWithdrawals.address);
+    await network.initialize(pendingWithdrawals.address);
 
     return { networkSettings, network, networkToken, vault, networkTokenPool, pendingWithdrawals, collection };
 };
