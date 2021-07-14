@@ -242,7 +242,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      * - the new owner needs to accept the transfer
      */
-    function transferProtectionWalletOwnership(address newOwner) external onlyOwner {
+    function transferExternalProtectionWalletOwnership(address newOwner) external onlyOwner {
         _externalProtectionWallet.transferOwnership(newOwner);
     }
 

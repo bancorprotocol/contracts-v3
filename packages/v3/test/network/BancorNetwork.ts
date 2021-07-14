@@ -100,7 +100,7 @@ describe('BancorNetwork', () => {
             const newOwner = accounts[4];
 
             await expect(
-                network.connect(newOwner).transferProtectionWalletOwnership(newOwner.address)
+                network.connect(newOwner).transferExternalProtectionWalletOwnership(newOwner.address)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
@@ -111,7 +111,7 @@ describe('BancorNetwork', () => {
             await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
             expect(await newExternalProtectionWallet.owner()).to.equal(network.address);
 
-            await network.transferProtectionWalletOwnership(newOwner.address);
+            await network.transferExternalProtectionWalletOwnership(newOwner.address);
             await newExternalProtectionWallet.connect(newOwner).acceptOwnership();
             expect(await newExternalProtectionWallet.owner()).to.equal(newOwner.address);
         });
