@@ -4,50 +4,21 @@ import { BigNumber } from 'ethers';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { TestERC20Token, NetworkSettings, PendingWithdrawals, BancorNetwork, BancorVault } from 'typechain';
-
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import {
-    createNetworkToken,
-    createNetworkSettings,
-    createBancorVault,
-    createPendingWithdrawals,
-    createBancorNetwork,
-    createNetworkTokenPool
-} from 'test/helpers/Factory';
+import { createSystem } from 'test/helpers/Factory';
 
-const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
-const POOL_TYPE = BigNumber.from(1);
-
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
-
-let networkToken: TestERC20Token;
-let vault: BancorVault;
-let networkSettings: NetworkSettings;
-let pendingWithdrawals: PendingWithdrawals;
-let network: BancorNetwork;
 
 describe('NetworkTokenPool', () => {
     shouldHaveGap('NetworkTokenPool', '_stakedBalance');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner] = accounts;
-    });
-
-    beforeEach(async () => {
-        networkToken = await createNetworkToken();
-        vault = await createBancorVault(networkToken);
-        networkSettings = await createNetworkSettings();
-        pendingWithdrawals = await createPendingWithdrawals();
-        network = await createBancorNetwork(networkSettings, pendingWithdrawals);
+        [, nonOwner] = await ethers.getSigners();
     });
 
     describe('construction', async () => {
         it('should revert when attempting to reinitialize', async () => {
-            const networkTokenPool = await createNetworkTokenPool(network, vault);
+            const { networkTokenPool } = await createSystem();
 
             await expect(networkTokenPool.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
@@ -55,7 +26,7 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should be properly initialized', async () => {
-            const networkTokenPool = await createNetworkTokenPool(network, vault);
+            const { networkTokenPool, network, vault } = await createSystem();
 
             expect(await networkTokenPool.version()).to.equal(1);
 

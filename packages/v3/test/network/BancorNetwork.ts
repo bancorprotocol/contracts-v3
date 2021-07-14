@@ -3,46 +3,39 @@ import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { BancorNetwork, NetworkSettings, PendingWithdrawals, TokenHolderUpgradeable } from 'typechain';
+import Contracts from 'components/Contracts';
+import { BancorNetwork, TokenHolderUpgradeable } from 'typechain';
 
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import {
-    createTokenHolder,
-    createNetworkSettings,
-    createPendingWithdrawals,
-    createBancorNetwork
-} from 'test/helpers/Factory';
+import { createSystem, createTokenHolder } from 'test/helpers/Factory';
 
-let accounts: SignerWithAddress[];
 let nonOwner: SignerWithAddress;
-
-let networkSettings: NetworkSettings;
-let pendingWithdrawals: PendingWithdrawals;
+let newOwner: SignerWithAddress;
+let dummy: SignerWithAddress;
 
 describe('BancorNetwork', () => {
     shouldHaveGap('BancorNetwork', '_protectionWallet');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [, nonOwner] = accounts;
-    });
-
-    beforeEach(async () => {
-        networkSettings = await createNetworkSettings();
-        pendingWithdrawals = await createPendingWithdrawals();
+        [, nonOwner, newOwner, dummy] = await ethers.getSigners();
     });
 
     describe('construction', async () => {
         it('should revert when attempting to reinitialize', async () => {
-            const network = await createBancorNetwork(networkSettings, pendingWithdrawals);
+            const { network } = await createSystem();
 
-            await expect(network.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(network.initialize(dummy.address)).to.be.revertedWith(
+                'Initializable: contract is already initialized'
+            );
+        });
+
+        it('should revert when initialized with an invalid network settings contract', async () => {
+            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {
-            const network = await createBancorNetwork(networkSettings, pendingWithdrawals);
+            const { network, networkSettings, pendingWithdrawals } = await createSystem();
 
             expect(await network.version()).to.equal(1);
 
@@ -59,7 +52,7 @@ describe('BancorNetwork', () => {
         let network: BancorNetwork;
 
         beforeEach(async () => {
-            network = await createBancorNetwork(networkSettings, pendingWithdrawals);
+            ({ network } = await createSystem());
 
             newProtectionWallet = await createTokenHolder();
         });
@@ -102,16 +95,12 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when a non-owner attempts to transfer the ownership of the protection wallet', async () => {
-            const newOwner = accounts[4];
-
             await expect(
                 network.connect(newOwner).transferProtectionWalletOwnership(newOwner.address)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should allow explicitly transferring the ownership', async () => {
-            const newOwner = accounts[4];
-
             await newProtectionWallet.transferOwnership(network.address);
             await network.setProtectionWallet(newProtectionWallet.address);
             expect(await newProtectionWallet.owner()).to.equal(network.address);

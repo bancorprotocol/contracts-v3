@@ -11,46 +11,41 @@ import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
 import { expectRole, roles } from 'test/helpers/AccessControl';
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import { createNetworkToken, createBancorVault } from 'test/helpers/Factory';
+import { createSystem, createNetworkToken } from 'test/helpers/Factory';
 
 const { BancorVault: BancorVaultRoles } = roles;
 
-let accounts: SignerWithAddress[];
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
 let target: SignerWithAddress;
 let admin: SignerWithAddress;
 
-let networkToken: TestERC20Token;
 let reserveToken: TestERC20Token;
 
 describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [deployer, sender, target, admin] = accounts;
+        [deployer, sender, target, admin] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        networkToken = await createNetworkToken();
         reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
     });
 
     describe('construction', async () => {
         it('should revert when attempting to reinitialize', async () => {
-            const vault = await createBancorVault(networkToken);
+            const { vault } = await createSystem();
 
             await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should revert when initialized with an invalid network token', async () => {
-            await expect(createBancorVault(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(Contracts.BancorVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {
-            const vault = await createBancorVault(networkToken);
+            const { vault } = await createSystem();
 
             expect(await vault.version()).to.equal(1);
 
@@ -63,10 +58,11 @@ describe('BancorVault', () => {
     });
 
     describe('asset management', () => {
+        let networkToken: TestERC20Token;
         let vault: BancorVault;
 
         beforeEach(async () => {
-            vault = await createBancorVault(networkToken);
+            ({ vault, networkToken } = await createSystem());
         });
 
         it('should be able to receive ETH', async () => {
@@ -162,9 +158,8 @@ describe('BancorVault', () => {
                 let token: TokenWithAddress;
 
                 beforeEach(async () => {
-                    vault = await createBancorVault(networkToken);
-
                     token = getToken();
+
                     await transfer(deployer, token, vault.address, amount);
                 });
 
@@ -223,7 +218,7 @@ describe('BancorVault', () => {
         let vault: BancorVault;
 
         beforeEach(async () => {
-            vault = await createBancorVault(networkToken);
+            ({ vault } = await createSystem());
         });
 
         const testPause = () => {

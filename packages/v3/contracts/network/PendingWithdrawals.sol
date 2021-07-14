@@ -15,6 +15,12 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
+    // the network contract
+    IBancorNetwork private immutable _network;
+
+    // the network token pool contract
+    INetworkTokenPool private immutable _networkTokenPool;
+
     // a mapping between accounts and their pending positions
     mapping(address => Position[]) private _positions;
 
@@ -71,6 +77,17 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
     );
 
     /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkTokenPool))
+    {
+        _network = initNetwork;
+        _networkTokenPool = initNetworkTokenPool;
+    }
+
+    /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
@@ -103,6 +120,20 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      */
     function version() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function network() external view override returns (IBancorNetwork) {
+        return _network;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function networkTokenPool() external view override returns (INetworkTokenPool) {
+        return _networkTokenPool;
     }
 
     /**

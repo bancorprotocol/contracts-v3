@@ -11,18 +11,15 @@ import { shouldHaveGap } from 'test/helpers/Proxy';
 
 let contract: TestOwnedUpgradeable;
 
-let accounts: SignerWithAddress[];
 let owner: SignerWithAddress;
+let nonOwner: SignerWithAddress;
 let newOwner: SignerWithAddress;
 
 describe('OwnedUpgradeable', () => {
     shouldHaveGap('OwnedUpgradeable', '_owner');
 
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        owner = accounts[0];
-        newOwner = accounts[1];
+        [owner, nonOwner, newOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -31,7 +28,7 @@ describe('OwnedUpgradeable', () => {
     });
 
     it('verifies the owner after construction', async () => {
-        expect(await contract.owner()).to.equal(accounts[0].address);
+        expect(await contract.owner()).to.equal(owner.address);
     });
 
     it('verifies the new owner after ownership transfer', async () => {
@@ -62,8 +59,6 @@ describe('OwnedUpgradeable', () => {
     });
 
     it('verifies that only the owner can initiate ownership transfer', async () => {
-        const nonOwner = accounts[2];
-
         await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith(
             'ERR_ACCESS_DENIED'
         );

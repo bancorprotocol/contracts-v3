@@ -20,7 +20,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     INetworkSettings private immutable _settings;
 
     // the pending withdrawals contract
-    IPendingWithdrawals private immutable _pendingWithdrawals;
+    IPendingWithdrawals private _pendingWithdrawals;
 
     // the address of the protection wallet
     ITokenHolder private _protectionWallet;
@@ -155,19 +155,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(INetworkSettings initSettings, IPendingWithdrawals initPendingWithdrawals)
-        validAddress(address(initSettings))
-        validAddress(address(initPendingWithdrawals))
-    {
+    constructor(INetworkSettings initSettings) validAddress(address(initSettings)) {
         _settings = initSettings;
-        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize() external initializer {
-        __BancorNetwork_init();
+    function initialize(IPendingWithdrawals initPendingWithdrawals) external initializer {
+        __BancorNetwork_init(initPendingWithdrawals);
     }
 
     // solhint-disable func-name-mixedcase
@@ -175,17 +171,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init() internal initializer {
+    function __BancorNetwork_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained();
+        __BancorNetwork_init_unchained(initPendingWithdrawals);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained() internal initializer {}
+    function __BancorNetwork_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+        _pendingWithdrawals = initPendingWithdrawals;
+    }
 
     // solhint-enable func-name-mixedcase
 
