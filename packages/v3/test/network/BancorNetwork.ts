@@ -15,7 +15,7 @@ let newOwner: SignerWithAddress;
 let dummy: SignerWithAddress;
 
 describe('BancorNetwork', () => {
-    shouldHaveGap('BancorNetwork', '_protectionWallet');
+    shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
     before(async () => {
         [, nonOwner, newOwner, dummy] = await ethers.getSigners();
@@ -41,73 +41,73 @@ describe('BancorNetwork', () => {
 
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
-            expect(await network.protectionWallet()).to.equal(ZERO_ADDRESS);
+            expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
         });
     });
 
-    describe('protection wallet', async () => {
-        let newProtectionWallet: TokenHolderUpgradeable;
+    describe('external protection wallet', async () => {
+        let newExternalProtectionWallet: TokenHolderUpgradeable;
         let network: BancorNetwork;
 
         beforeEach(async () => {
             ({ network } = await createSystem());
 
-            newProtectionWallet = await createTokenHolder();
+            newExternalProtectionWallet = await createTokenHolder();
         });
 
-        it('should revert when a non-owner attempts to set the protection wallet', async () => {
-            await expect(network.connect(nonOwner).setProtectionWallet(newProtectionWallet.address)).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
-            );
+        it('should revert when a non-owner attempts to set the external protection wallet', async () => {
+            await expect(
+                network.connect(nonOwner).setExternalProtectionWallet(newExternalProtectionWallet.address)
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should revert when setting protection wallet to an invalid address', async () => {
-            await expect(network.setProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        it('should revert when setting external protection wallet to an invalid address', async () => {
+            await expect(network.setExternalProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should be to able to set and update the protection wallet', async () => {
-            await newProtectionWallet.transferOwnership(network.address);
+        it('should be to able to set and update the external protection wallet', async () => {
+            await newExternalProtectionWallet.transferOwnership(network.address);
 
-            const res = await network.setProtectionWallet(newProtectionWallet.address);
+            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
             await expect(res)
-                .to.emit(network, 'ProtectionWalletUpdated')
-                .withArgs(ZERO_ADDRESS, newProtectionWallet.address);
-            expect(await network.protectionWallet()).to.equal(newProtectionWallet.address);
-            expect(await newProtectionWallet.owner()).to.equal(network.address);
+                .to.emit(network, 'ExternalProtectionWalletUpdated')
+                .withArgs(ZERO_ADDRESS, newExternalProtectionWallet.address);
+            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet.address);
+            expect(await newExternalProtectionWallet.owner()).to.equal(network.address);
 
-            const newProtectionWallet2 = await createTokenHolder();
-            await newProtectionWallet2.transferOwnership(network.address);
+            const newExternalProtectionWallet2 = await createTokenHolder();
+            await newExternalProtectionWallet2.transferOwnership(network.address);
 
-            const res2 = await network.setProtectionWallet(newProtectionWallet2.address);
+            const res2 = await network.setExternalProtectionWallet(newExternalProtectionWallet2.address);
             await expect(res2)
-                .to.emit(network, 'ProtectionWalletUpdated')
-                .withArgs(newProtectionWallet.address, newProtectionWallet2.address);
-            expect(await network.protectionWallet()).to.equal(newProtectionWallet2.address);
-            expect(await newProtectionWallet2.owner()).to.equal(network.address);
+                .to.emit(network, 'ExternalProtectionWalletUpdated')
+                .withArgs(newExternalProtectionWallet.address, newExternalProtectionWallet2.address);
+            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet2.address);
+            expect(await newExternalProtectionWallet2.owner()).to.equal(network.address);
         });
 
-        it('should revert when attempting to set the protection wallet without transferring its ownership', async () => {
-            await expect(network.setProtectionWallet(newProtectionWallet.address)).to.be.revertedWith(
+        it('should revert when attempting to set the external protection wallet without transferring its ownership', async () => {
+            await expect(network.setExternalProtectionWallet(newExternalProtectionWallet.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
         });
 
         it('should revert when a non-owner attempts to transfer the ownership of the protection wallet', async () => {
             await expect(
-                network.connect(newOwner).transferProtectionWalletOwnership(newOwner.address)
+                network.connect(newOwner).transferExternalProtectionWalletOwnership(newOwner.address)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should allow explicitly transferring the ownership', async () => {
-            await newProtectionWallet.transferOwnership(network.address);
-            await network.setProtectionWallet(newProtectionWallet.address);
-            expect(await newProtectionWallet.owner()).to.equal(network.address);
+            await newExternalProtectionWallet.transferOwnership(network.address);
+            await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
+            expect(await newExternalProtectionWallet.owner()).to.equal(network.address);
 
-            await network.transferProtectionWalletOwnership(newOwner.address);
-            await newProtectionWallet.connect(newOwner).acceptOwnership();
-            expect(await newProtectionWallet.owner()).to.equal(newOwner.address);
+            await network.transferExternalProtectionWalletOwnership(newOwner.address);
+            await newExternalProtectionWallet.connect(newOwner).acceptOwnership();
+            expect(await newExternalProtectionWallet.owner()).to.equal(newOwner.address);
         });
     });
 });
