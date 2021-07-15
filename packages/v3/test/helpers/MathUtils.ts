@@ -32,6 +32,17 @@ const mulDivF = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor();
 
 const mulDivC = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil();
 
+const hMax = (b: Decimal, c: Decimal, d: Decimal, e: Decimal, n: Decimal) => {
+    n = n.div(1000000);
+    return b.mul(d).mul(e).mul(n).mul(b.add(c)).div(
+        b.pow(3)
+        .add(b.pow(2).mul(c.mul(3).sub(e.mul(2))))
+        .add(b.mul(e.pow(2).mul(n.add(1))))
+        .add(c.mul(c.mul(3).sub(e.mul(4))))
+        .add(c.mul(c.sub(e).pow(2)))
+    );
+};
+
 const decimalize = <C>(func: Function) => {
     return (...args: any[]): C => {
         const res = func(...args.map((x) => new Decimal(x.toString())));
@@ -54,5 +65,6 @@ export default {
     accurateRatio: decimalize<Decimal[]>(accurateRatio),
     roundDiv: decimalize<Decimal>(roundDiv),
     mulDivF: decimalize<Decimal>(mulDivF),
-    mulDivC: decimalize<Decimal>(mulDivC)
+    mulDivC: decimalize<Decimal>(mulDivC),
+    hMax: decimalize<Decimal>(hMax)
 };
