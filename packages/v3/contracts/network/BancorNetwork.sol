@@ -94,6 +94,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
+        uint256 externalProtectionBaseTokenAmount,
         uint256 networkTokenAmount
     );
 
