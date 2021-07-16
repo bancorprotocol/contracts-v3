@@ -18,6 +18,7 @@ library Formula {
      * by computing `den(b + c) / {b^2 + 3bc + 3c^2 + e^2(n + 1) + c(c^2 + e^2 - 2ce) / b - 2be - 4ce}`
      *
      * b = TKN pool balance
+     * c = TKN excess amount
      * d = BNTKN total supply
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
