@@ -12,7 +12,7 @@ const AMOUNTS = [
 
 const FEES = ['0', '0.05', '0.25', '0.5', '1'].map(x => new Decimal(x).mul(10000));
 
-describe.only('Formula', () => {
+describe('Formula', () => {
     let formulaContract: TestFormula;
 
     before(async () => {
@@ -31,7 +31,7 @@ describe.only('Formula', () => {
                             if (!actual.eq(expected)) {
                                 const absoluteError = actual.sub(expected).abs();
                                 const relativeError = actual.div(expected).sub(1).abs();
-                                expect(absoluteError.lte('1') || relativeError.lte('0.00000000000000000000001')).to.equal(
+                                expect(absoluteError.lte('1') || relativeError.lte('0.0000000000000000000000105')).to.equal(
                                     true,
                                     `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
                                 );
