@@ -37,8 +37,7 @@ const hMax = (b: Decimal, c: Decimal, d: Decimal, e: Decimal, n: Decimal) => {
     return b.mul(d).mul(e).mul(n).mul(b.add(c)).div(
         b.pow(3)
         .add(b.pow(2).mul(c.mul(3).sub(e.mul(2))))
-        .add(b.mul(e.pow(2).mul(n.add(1))))
-        .add(c.mul(c.mul(3).sub(e.mul(4))))
+        .add(b.mul(e.pow(2).mul(n.add(1)).add(c.mul(c.mul(3).sub(e.mul(4))))))
         .add(c.mul(c.sub(e).pow(2)))
     );
 };

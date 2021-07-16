@@ -15,6 +15,7 @@ library Formula {
 
     /**
      * @dev returns `bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2}`
+     * by computing `den(b + c) / {b^2 + 3bc + 3c^2 + e^2(n + 1) + c(c^2 + e^2 - 2ce) / b - 2be - 4ce}`
      */
     function hMax(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n) internal pure returns (uint256) {
         uint256 z = b.mul(b);
@@ -25,5 +26,6 @@ library Formula {
         z = z.sub(b.mul(e).mul(2));
         z = z.sub(c.mul(e).mul(4));
         return MathEx.mulDivF(d.mul(e), MathEx.mulDivF(b.add(c), n, PPM_RESOLUTION), z);
+        // TODO: Consider `MathEx.mulDivF(d.mul(e), b.add(c).mul(n), z.mul(PPM_RESOLUTION));`
     }
 }
