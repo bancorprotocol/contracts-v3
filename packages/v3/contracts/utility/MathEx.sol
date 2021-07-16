@@ -200,7 +200,7 @@ library MathEx {
     /**
      * @dev returns the value of `x * y` as a pair of 256-bit values
      */
-    function mul512(uint256 x, uint256 y) private pure returns (uint256, uint256) {
+    function mul512(uint256 x, uint256 y) internal pure returns (uint256, uint256) {
         uint256 p = mulModMax(x, y);
         uint256 q = unsafeMul(x, y);
         if (p >= q) {
