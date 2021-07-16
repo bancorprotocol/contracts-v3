@@ -25,7 +25,6 @@ library Formula {
         z = z.add(MathEx.mulDivC(c, c.mul(c).add(e.mul(e)).sub(c.mul(e).mul(2)), b));
         z = z.sub(b.mul(e).mul(2));
         z = z.sub(c.mul(e).mul(4));
-        return MathEx.mulDivF(d.mul(e), MathEx.mulDivF(b.add(c), n, PPM_RESOLUTION), z);
-        // TODO: Consider `MathEx.mulDivF(d.mul(e), b.add(c).mul(n), z.mul(PPM_RESOLUTION));`
+        return MathEx.mulDivF(d.mul(e), b.add(c).mul(n), z.mul(PPM_RESOLUTION));
     }
 }
