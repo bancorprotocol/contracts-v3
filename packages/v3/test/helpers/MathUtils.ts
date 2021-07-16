@@ -32,6 +32,7 @@ const mulDivF = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor();
 
 const mulDivC = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil();
 
+// bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2}
 const hMax = (b: Decimal, c: Decimal, d: Decimal, e: Decimal, n: Decimal) => {
     n = n.div(1000000);
     return b.mul(d).mul(e).mul(n).mul(b.add(c)).div(
