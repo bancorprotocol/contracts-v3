@@ -71,10 +71,24 @@ library Formula {
      */
     function hMaxLargerThanOrEqualTo(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n, uint256 x) internal pure returns (bool) {
         hMax memory parts = hMaxParts(b, c, d, e, n);
+        (uint256 max, uint256 min1, uint256 min2) = sort3(x, parts.r, parts.s);
 
         (uint256 hiN, uint256 loN) = MathEx.mul512(parts.p, parts.q);
-        (uint256 hiD, uint256 loD) = MathEx.mul512(parts.r, parts.s.mul(x)); // TODO: mul the smallest two values
+        (uint256 hiD, uint256 loD) = MathEx.mul512(max, min1.mul(min2));
 
         return (hiN > hiD || (hiN == hiD && loN >= loD));
+    }
+
+    /**
+     * @dev returns the highest input value followed by the remaining input values
+     */
+    function sort3(uint256 x, uint256 y, uint256 z) private pure returns (uint256, uint256, uint256) {
+        if (x > y && x > z) {
+            return (x, y, z);
+        }
+        if (y > z) {
+            return (y, z, x);
+        }
+        return (z, x, y);
     }
 }
