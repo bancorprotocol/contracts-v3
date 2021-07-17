@@ -29,7 +29,7 @@
         "coverage": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
         "flatten": "hardhat flatten",
         "lint": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
-        "format": "prettier --check --write contracts/**/*.sol test/**/*.js --config .prettierrc",
+        "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
         "snyk-protect": "snyk protect",
         "prepare": "yarn build && yarn snyk-protect",
         "clean": "rm -rf artifacts cache data coverage typechain"
