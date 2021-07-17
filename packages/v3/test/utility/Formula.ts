@@ -8,11 +8,15 @@ const { Decimal } = MathUtils;
 const PPMR = PPM_RESOLUTION.toNumber();
 
 const AMOUNTS = [
-    ...[12, 15, 18, 21, 24, 29].map(x => new Decimal(9).pow(x)),
-    ...[12, 15, 18, 21, 24, 29].map(x => new Decimal(10).pow(x)),
+    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x)),
+    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x)),
 ];
 
-const FEES = ['0', '0.05', '0.25', '0.5', '1'].map(x => new Decimal(x).mul(PPMR / 100));
+const FEES = ['0', '0.05', '0.25', '0.5', '1'].map((x) => new Decimal(x).mul(PPMR / 100));
+
+const MAX_AMOUNT_C_DIV_AMOUNT_B = new Decimal(10).pow(9);
+
+const MAX_ERROR = '0.00000000000000000000001';
 
 describe('Formula', () => {
     let formulaContract: TestFormula;
@@ -23,6 +27,7 @@ describe('Formula', () => {
 
     // bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2}
     const hMaxExpected = (b: any, c: any, d: any, e: any, n: any) => {
+        [b, c, d, e, n] = [b, c, d, e, n].map((x) => new Decimal(x));
         n = n.div(PPMR);
         return b.mul(d).mul(e).mul(n).mul(b.add(c)).div(
             b.pow(3)
@@ -42,18 +47,34 @@ describe('Formula', () => {
             for (const d of AMOUNTS) {
                 for (const e of AMOUNTS) {
                     for (const n of FEES) {
-                        it(`hMax(${[b, c, d, e, n].map(x => x.toFixed())})`, async () => {
-                            const expected = hMaxExpected(b, c, d, e, n);
-                            const actual = await hMaxActual(b, c, d, e, n);
-                            if (!actual.eq(expected)) {
-                                const absoluteError = actual.sub(expected).abs();
-                                const relativeError = actual.div(expected).sub(1).abs();
-                                expect(absoluteError.lte('1') || relativeError.lte('0.00000000000000000000001')).to.equal(
-                                    true,
-                                    `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
-                                );
-                            }
-                        });
+                        if (c.div(b).lte(MAX_AMOUNT_C_DIV_AMOUNT_B)) {
+                            it(`hMax(${[b, c, d, e, n].map((x) => x.toFixed())})`, async () => {
+                                const expected = hMaxExpected(b, c, d, e, n);
+                                const actual = await hMaxActual(b, c, d, e, n);
+                                if (!actual.eq(expected)) {
+                                    const error = actual.div(expected).sub(1).abs();
+                                    expect(error.lte('MAX_ERROR')).to.equal(true, `error = ${error.toFixed(25)}`);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (const b of [123456, 456789, 1000000, 88888888]) {
+        for (const c of [123456, 456789, 1000000, 88888888]) {
+            for (const d of [123456, 456789, 1000000, 88888888]) {
+                for (const e of [123456, 456789, 1000000, 88888888]) {
+                    for (const n of [2500, 25000]) {
+                        for (const x of [10, 100, 1000, 10000].map((y) => Math.floor(d / y))) {
+                            it(`hMaxLargerThanOrEqualTo(${[b, c, d, e, n, x]})`, async () => {
+                                const expected = hMaxExpected(b, c, d, e, n).gte(x);
+                                const actual = await formulaContract.hMaxLargerThanOrEqualTo(b, c, d, e, n, x);
+                                expect(actual).to.be.equal(expected);
+                            });
+                        }
                     }
                 }
             }
