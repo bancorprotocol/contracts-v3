@@ -80,4 +80,22 @@ describe('Formula', () => {
             }
         }
     }
+
+    for (const b of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
+        for (const c of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
+            for (const d of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
+                for (const e of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
+                    for (const n of [2500, 25000]) {
+                        for (const x of [1, 2, 3, 4].map((y) => d.slice(0, -y))) {
+                            it(`hMaxLargerThanOrEqualTo(${[b, c, d, e, n, x]})`, async () => {
+                                const expected = hMaxExpected(b, c, d, e, n).gte(x);
+                                const actual = await formulaContract.hMaxLargerThanOrEqualTo(b, c, d, e, n, x);
+                                expect(actual).to.be.equal(expected);
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
 });
