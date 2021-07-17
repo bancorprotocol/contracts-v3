@@ -24,7 +24,6 @@ interface Logic {
 }
 
 let logicContractsCache: Record<string, Logic> = {};
-
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {

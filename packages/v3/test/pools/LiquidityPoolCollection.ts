@@ -27,7 +27,7 @@ describe('LiquidityPoolCollection', () => {
         reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should be properly initialized', async () => {
             const { collection, network } = await createSystem();
 
@@ -67,7 +67,7 @@ describe('LiquidityPoolCollection', () => {
         });
     });
 
-    describe('default trading fee', async () => {
+    describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
         let collection: LiquidityPoolCollection;
 
