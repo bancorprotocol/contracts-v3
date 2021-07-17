@@ -53,7 +53,7 @@ describe('Formula', () => {
                                 const actual = await hMaxActual(b, c, d, e, n);
                                 if (!actual.eq(expected)) {
                                     const error = actual.div(expected).sub(1).abs();
-                                    expect(error.lte('MAX_ERROR')).to.equal(true, `error = ${error.toFixed(25)}`);
+                                    expect(error.lte(MAX_ERROR)).to.equal(true, `error = ${error.toFixed(25)}`);
                                 }
                             });
                         }
