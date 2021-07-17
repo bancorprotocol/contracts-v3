@@ -269,11 +269,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
+    function liquidityPools() external view override returns (IReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
-        ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
+        IReserveToken[] memory list = new IReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ILiquidityPoolCollection(_liquidityPools.at(i));
+            list[i] = IReserveToken(_liquidityPools.at(i));
         }
         return list;
     }
