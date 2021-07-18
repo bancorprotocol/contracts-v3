@@ -38,9 +38,9 @@ library Formula {
         uint256 x
     ) internal pure returns (bool) {
         hMax memory parts = hMaxParts(b, c, d, e, n);
-        (uint256 hiN, uint256 loN) = MathEx.mul512(parts.p, parts.q);
-        (uint256 hiD, uint256 loD) = mul512twice(parts.r, parts.s, x);
-        return (hiN > hiD || (hiN == hiD && loN >= loD));
+        (uint256 hi1, uint256 lo1) = MathEx.mul512(parts.p, parts.q);
+        (uint256 hi2, uint256 lo2) = mul512twice(parts.r, parts.s, x);
+        return hi1 > hi2 || (hi1 == hi2 && lo1 >= lo2);
     }
 
     /**
