@@ -43,10 +43,21 @@ interface ILiquidityPoolCollection {
     /**
      * @dev returns the pool data for a given reserve token
      */
-    function pool(IReserveToken reserveToken) external view returns (Pool memory);
+    function poolData(IReserveToken reserveToken) external view returns (Pool memory);
 
     /**
      * @dev returns the default trading fee (in units of PPM)
      */
     function defaultTradingFeePPM() external view returns (uint32);
+
+    /**
+     * @dev creates a new pool
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     * - the pool should have been whitelisted
+     * - the pool hasn't been listed already
+     */
+    function createPool(IReserveToken reserveToken) external;
 }

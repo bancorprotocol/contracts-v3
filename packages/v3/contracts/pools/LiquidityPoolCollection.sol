@@ -2,10 +2,15 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "../utility/OwnedUpgradeable.sol";
 import "../utility/Utils.sol";
 
 import "./interfaces/ILiquidityPoolCollection.sol";
+
+import "./PoolToken.sol";
 
 /**
  * @dev Liquidity Pool Collection contract
@@ -14,8 +19,12 @@ import "./interfaces/ILiquidityPoolCollection.sol";
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, Utils {
+contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
+
+    string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
+    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
+    string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -30,7 +39,12 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     uint32 private _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
 
     /**
-     * @dev triggered when the trading fee is updated
+     * @dev triggered when a pool is created
+     */
+    event PoolCreated(IPoolToken indexed poolToken, IReserveToken indexed reserveToken);
+
+    /**
+     * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
@@ -40,22 +54,54 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
-     * @dev triggered when trades in a specific pool are enabled/disabled
+     * @dev triggered when the trading fee is updated
      */
-    event TradesEnabled(IReserveToken indexed pool, bool status);
+    event TradingFeePPMUpdated(IReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev triggered when deposits to a specific pool are enabled/disabled
      */
-    event DepositsEnabled(IReserveToken indexed pool, bool status);
+    event DepositsEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
+
+    /**
+     * @dev triggered when a pool's deposit limit is updated
+     */
+    event DepositLimitUpdated(IReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
+
+    /**
+     * @dev triggered when trades in a specific pool are enabled/disabled
+     */
+    event TradesEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
         __Owned_init();
+        __ReentrancyGuard_init();
 
         _network = initNetwork;
+    }
+
+    // allows execution by the network only
+    modifier onlyNetwork() {
+        _onlyNetwork();
+
+        _;
+    }
+
+    function _onlyNetwork() private view {
+        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
+    }
+
+    modifier validRate(Fraction memory rate) {
+        _validRate(rate);
+
+        _;
+    }
+
+    function _validRate(Fraction memory rate) internal pure {
+        require(rate.d != 0, "ERR_INVALID_RATE");
     }
 
     /**
@@ -100,7 +146,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @inheritdoc ILiquidityPoolCollection
      */
-    function pool(IReserveToken reserveToken) external view override returns (Pool memory) {
+    function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
         return _pools[reserveToken];
     }
 
@@ -126,5 +172,116 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit DefaultTradingFeePPMUpdated(_defaultTradingFeePPM, newDefaultTradingFeePPM);
 
         _defaultTradingFeePPM = newDefaultTradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
+        require(_network.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
+        require(!_poolExists(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
+
+        (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
+        PoolToken poolToken = new PoolToken(name, symbol, reserveToken);
+
+        _pools[reserveToken] = Pool({
+            poolToken: poolToken,
+            tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
+            depositsEnabled: false,
+            tradingLiquidity: 0,
+            tradingLiquidityProduct: 0,
+            stakedBalance: 0,
+            initialRate: Fraction({ n: 0, d: 0 }),
+            depositLimit: 0
+        });
+
+        emit PoolCreated(poolToken, reserveToken);
+    }
+
+    /**
+     * @dev sets the initial rate of a given pool
+     */
+    function setInitialRate(IReserveToken pool, Fraction memory newInitialRate)
+        external
+        onlyOwner
+        validRate(newInitialRate)
+    {
+        Pool storage p = _poolStorage(pool);
+
+        emit InitialRateUpdated(pool, p.initialRate, newInitialRate);
+
+        p.initialRate = newInitialRate;
+    }
+
+    /**
+     * @dev sets the trading fee of a given pool
+     */
+    function setTradingFeePPM(IReserveToken pool, uint32 newTradingFeePPM)
+        external
+        onlyOwner
+        validFee(newTradingFeePPM)
+    {
+        Pool storage p = _poolStorage(pool);
+
+        emit TradingFeePPMUpdated(pool, p.tradingFeePPM, newTradingFeePPM);
+
+        p.tradingFeePPM = newTradingFeePPM;
+    }
+
+    /**
+     * @dev enables/disables deposits to a given pool
+     */
+    function enableDeposits(IReserveToken pool, bool status) external onlyOwner {
+        Pool storage p = _poolStorage(pool);
+
+        emit DepositsEnabled(pool, p.depositsEnabled, status);
+
+        p.depositsEnabled = status;
+    }
+
+    /**
+     * @dev sets the deposit limit of a given pool
+     */
+    function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
+        Pool storage p = _poolStorage(pool);
+
+        emit DepositLimitUpdated(pool, p.depositLimit, newDepositLimit);
+
+        p.depositLimit = newDepositLimit;
+    }
+
+    /**
+     * @dev returns the name and the symbol of the pool token suing either the custom token symbol override or by
+     * fetching it from the reserve token itself
+     */
+    function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
+        string memory customSymbol = _tokenSymbolOverrides[reserveToken];
+        string memory tokenSymbol = bytes(customSymbol).length != 0
+            ? customSymbol
+            : ERC20(address(reserveToken)).symbol();
+
+        string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
+        string memory name = string(
+            abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
+        );
+
+        return (name, symbol);
+    }
+
+    /**
+     * @dev returns a storage reference to pool data
+     */
+    function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
+        Pool storage p = _pools[pool];
+        require(_poolExists(p), "ERR_POOL_DOES_NOT_EXIST");
+
+        return p;
+    }
+
+    /**
+     * @dev returns whether a pool exists
+     */
+    function _poolExists(Pool memory pool) private pure returns (bool) {
+        return address(pool.poolToken) != address(0x0);
     }
 }

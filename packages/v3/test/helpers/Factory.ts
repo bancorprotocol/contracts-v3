@@ -78,7 +78,8 @@ export const createTokenHolder = async () => {
 
 export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);
-    const network = await createProxy(Contracts.BancorNetwork, {
+
+    const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
         ctorArgs: [toAddress(networkSettings)]
     });

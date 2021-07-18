@@ -285,4 +285,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
         return _collectionByPool[pool];
     }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function isTokenWhitelisted(IReserveToken pool) external view override returns (bool) {
+        return _settings.isTokenWhitelisted(pool);
+    }
 }

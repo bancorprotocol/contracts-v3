@@ -48,4 +48,9 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the respective liquidity pool collection for the provided pool
      */
     function collectionByPool(IReserveToken pool) external view returns (ILiquidityPoolCollection);
+
+    /**
+     * @dev checks whether a given token is whitelisted
+     */
+    function isTokenWhitelisted(IReserveToken pool) external view returns (bool);
 }
