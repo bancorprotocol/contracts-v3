@@ -145,12 +145,11 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should create a pool', async () => {
-                let pool = await collection.poolData(reserveToken.address);
-                expect(pool.poolToken).to.equal(ZERO_ADDRESS);
+                let poolTokenAddress = await collection.poolToken(reserveToken.address);
+                expect(poolTokenAddress).to.equal(ZERO_ADDRESS);
 
                 const res = await network.createPoolF(collection.address, reserveToken.address);
-                pool = await collection.poolData(reserveToken.address);
-                const { poolToken: poolTokenAddress } = pool;
+                poolTokenAddress = await collection.poolToken(reserveToken.address);
 
                 await expect(res).to.emit(collection, 'PoolCreated').withArgs(poolTokenAddress, reserveToken.address);
 
@@ -161,13 +160,16 @@ describe('LiquidityPoolCollection', () => {
                 expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
                 expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
 
-                expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
-                expect(pool.depositsEnabled).to.be.false;
-                expect(pool.tradingLiquidity).to.equal(BigNumber.from(0));
-                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(pool.stakedBalance).to.equal(BigNumber.from(0));
-                expect(pool.initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(0) });
-                expect(pool.depositLimit).to.equal(BigNumber.from(0));
+                expect(await collection.tradingFeePPM(reserveToken.address)).to.equal(DEFAULT_TRADING_FEE_PPM);
+                expect(await collection.depositsEnabled(reserveToken.address)).to.be.false;
+                expect(await collection.tradingLiquidity(reserveToken.address)).to.equal(BigNumber.from(0));
+                expect(await collection.tradingLiquidityProduct(reserveToken.address)).to.equal(BigNumber.from(0));
+                expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
+                expect(await collection.initialRate(reserveToken.address)).to.equal({
+                    n: BigNumber.from(0),
+                    d: BigNumber.from(0)
+                });
+                expect(await collection.depositLimit(reserveToken.address)).to.equal(BigNumber.from(0));
             });
 
             context('with token symbol override', () => {
@@ -180,10 +182,8 @@ describe('LiquidityPoolCollection', () => {
                 it('should create a pool', async () => {
                     await network.createPoolF(collection.address, reserveToken.address);
 
-                    const pool = await collection.poolData(reserveToken.address);
-                    const { poolToken: poolTokenAddress } = pool;
+                    const poolTokenAddress = await collection.poolToken(reserveToken.address);
                     const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
-                    const reserveTokenSymbol = await reserveToken.symbol();
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
                     expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
                     expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
@@ -233,25 +233,25 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should allow setting and updating the initial rate', async () => {
-                let pool = await collection.poolData(reserveToken.address);
-                expect(pool.initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(0) });
+                let initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(0) });
 
                 const res = await collection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)
                     .to.emit(collection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, pool.initialRate, newInitialRate);
+                    .withArgs(reserveToken.address, initialRate, newInitialRate);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.initialRate).to.equal(newInitialRate);
+                initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal(newInitialRate);
 
                 const newInitialRate2 = { n: BigNumber.from(100000), d: BigNumber.from(50) };
                 const res2 = await collection.setInitialRate(reserveToken.address, newInitialRate2);
                 await expect(res2)
                     .to.emit(collection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, pool.initialRate, newInitialRate2);
+                    .withArgs(reserveToken.address, initialRate, newInitialRate2);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.initialRate).to.equal(newInitialRate2);
+                initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal(newInitialRate2);
             });
         });
 
@@ -283,25 +283,25 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should allow setting and updating the trading fee', async () => {
-                let pool = await collection.poolData(reserveToken.address);
-                expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+                let tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
 
                 const res = await collection.setTradingFeePPM(reserveToken.address, newTradingFee);
                 await expect(res)
                     .to.emit(collection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, pool.tradingFeePPM, newTradingFee);
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.tradingFeePPM).to.equal(newTradingFee);
+                tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(newTradingFee);
 
                 const newTradingFee2 = BigNumber.from(0);
                 const res2 = await collection.setTradingFeePPM(reserveToken.address, newTradingFee2);
                 await expect(res2)
                     .to.emit(collection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, pool.tradingFeePPM, newTradingFee2);
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee2);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.tradingFeePPM).to.equal(newTradingFee2);
+                tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(newTradingFee2);
             });
         });
 
@@ -325,24 +325,24 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should allow enabling and disabling deposits', async () => {
-                let pool = await collection.poolData(reserveToken.address);
-                expect(pool.depositsEnabled).to.be.false;
+                let depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.false;
 
                 const res = await collection.enableDeposits(reserveToken.address, true);
                 await expect(res)
                     .to.emit(collection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, pool.depositsEnabled, true);
+                    .withArgs(reserveToken.address, depositsEnabled, true);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.depositsEnabled).to.be.true;
+                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.true;
 
                 const res2 = await collection.enableDeposits(reserveToken.address, false);
                 await expect(res2)
                     .to.emit(collection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, pool.depositsEnabled, false);
+                    .withArgs(reserveToken.address, depositsEnabled, false);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.depositsEnabled).to.be.false;
+                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.false;
             });
         });
 
@@ -368,25 +368,25 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should allow setting and updating the deposit limit', async () => {
-                let pool = await collection.poolData(reserveToken.address);
-                expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+                let depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(BigNumber.from(0));
 
                 const res = await collection.setDepositLimit(reserveToken.address, newDepositLimit);
                 await expect(res)
                     .to.emit(collection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, pool.depositLimit, newDepositLimit);
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.depositLimit).to.equal(newDepositLimit);
+                depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(newDepositLimit);
 
                 const newDepositLimit2 = BigNumber.from(1);
                 const res2 = await collection.setDepositLimit(reserveToken.address, newDepositLimit2);
                 await expect(res2)
                     .to.emit(collection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, pool.depositLimit, newDepositLimit2);
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit2);
 
-                pool = await collection.poolData(reserveToken.address);
-                expect(pool.depositLimit).to.equal(newDepositLimit2);
+                depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(newDepositLimit2);
             });
         });
     });

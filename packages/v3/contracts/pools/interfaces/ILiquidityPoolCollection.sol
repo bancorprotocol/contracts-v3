@@ -41,14 +41,49 @@ interface ILiquidityPoolCollection {
     function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
 
     /**
-     * @dev returns the pool data for a given reserve token
-     */
-    function poolData(IReserveToken reserveToken) external view returns (Pool memory);
-
-    /**
      * @dev returns the default trading fee (in units of PPM)
      */
     function defaultTradingFeePPM() external view returns (uint32);
+
+    /**
+     * @dev returns the pool token of a given pool
+     */
+    function poolToken(IReserveToken reserveToken) external view returns (IPoolToken);
+
+    /**
+     * @dev returns the trading fee of a given pool
+     */
+    function tradingFeePPM(IReserveToken reserveToken) external view returns (uint32);
+
+    /**
+     * @dev returns whether deposits to a given pool are enabled.
+     */
+    function depositsEnabled(IReserveToken reserveToken) external view returns (bool);
+
+    /**
+     * @dev returns the trading liquidity in a given pool
+     */
+    function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256);
+
+    /**
+     * @dev returns the trading liquidity product in a given pool
+     */
+    function tradingLiquidityProduct(IReserveToken reserveToken) external view returns (uint256);
+
+    /**
+     * @dev returns the staked balance in a given pool
+     */
+    function stakedBalance(IReserveToken reserveToken) external view returns (uint256);
+
+    /**
+     * @dev returns the initial rate of a given pool
+     */
+    function initialRate(IReserveToken reserveToken) external view returns (Fraction memory);
+
+    /**
+     * @dev returns the deposit limit of a given pool
+     */
+    function depositLimit(IReserveToken reserveToken) external view returns (uint256);
 
     /**
      * @dev creates a new pool

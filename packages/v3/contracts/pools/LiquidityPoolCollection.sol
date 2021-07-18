@@ -146,13 +146,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @inheritdoc ILiquidityPoolCollection
      */
-    function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
-        return _pools[reserveToken];
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
     function defaultTradingFeePPM() external view override returns (uint32) {
         return _defaultTradingFeePPM;
     }
@@ -182,10 +175,10 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         require(!_poolExists(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
-        PoolToken poolToken = new PoolToken(name, symbol, reserveToken);
+        PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         _pools[reserveToken] = Pool({
-            poolToken: poolToken,
+            poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
             depositsEnabled: false,
             tradingLiquidity: 0,
@@ -195,22 +188,21 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
             depositLimit: 0
         });
 
-        emit PoolCreated(poolToken, reserveToken);
+        emit PoolCreated(newPoolToken, reserveToken);
     }
 
     /**
-     * @dev sets the initial rate of a given pool
+     * @inheritdoc ILiquidityPoolCollection
      */
-    function setInitialRate(IReserveToken pool, Fraction memory newInitialRate)
-        external
-        onlyOwner
-        validRate(newInitialRate)
-    {
-        Pool storage p = _poolStorage(pool);
+    function poolToken(IReserveToken reserveToken) external view override returns (IPoolToken) {
+        return _pools[reserveToken].poolToken;
+    }
 
-        emit InitialRateUpdated(pool, p.initialRate, newInitialRate);
-
-        p.initialRate = newInitialRate;
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function tradingFeePPM(IReserveToken reserveToken) external view override returns (uint32) {
+        return _pools[reserveToken].tradingFeePPM;
     }
 
     /**
@@ -229,6 +221,13 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function depositsEnabled(IReserveToken reserveToken) external view override returns (bool) {
+        return _pools[reserveToken].depositsEnabled;
+    }
+
+    /**
      * @dev enables/disables deposits to a given pool
      */
     function enableDeposits(IReserveToken pool, bool status) external onlyOwner {
@@ -237,6 +236,56 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit DepositsEnabled(pool, p.depositsEnabled, status);
 
         p.depositsEnabled = status;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function tradingLiquidityProduct(IReserveToken reserveToken) external view override returns (uint256) {
+        return _pools[reserveToken].tradingLiquidityProduct;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function tradingLiquidity(IReserveToken reserveToken) external view override returns (uint256) {
+        return _pools[reserveToken].tradingLiquidity;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function stakedBalance(IReserveToken reserveToken) external view override returns (uint256) {
+        return _pools[reserveToken].stakedBalance;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function initialRate(IReserveToken reserveToken) external view override returns (Fraction memory) {
+        return _pools[reserveToken].initialRate;
+    }
+
+    /**
+     * @dev sets the initial rate of a given pool
+     */
+    function setInitialRate(IReserveToken pool, Fraction memory newInitialRate)
+        external
+        onlyOwner
+        validRate(newInitialRate)
+    {
+        Pool storage p = _poolStorage(pool);
+
+        emit InitialRateUpdated(pool, p.initialRate, newInitialRate);
+
+        p.initialRate = newInitialRate;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function depositLimit(IReserveToken reserveToken) external view override returns (uint256) {
+        return _pools[reserveToken].depositLimit;
     }
 
     /**
