@@ -76,7 +76,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsDeposited(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 depositAmount,
@@ -88,7 +88,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsWithdrawn(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 withdrawAmount,
@@ -104,7 +104,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsMigrated(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         uint256 amount,
         uint256 availableTokens
