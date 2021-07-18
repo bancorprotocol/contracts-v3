@@ -7,6 +7,14 @@ import "../utility/Formula.sol";
 contract TestFormula {
     using Formula for *;
 
+    function hMaxComputable(
+        uint256 b,
+        uint256 c,
+        uint256 e
+    ) external pure returns (bool) {
+        return Formula.hMaxComputable(b, c, e);
+    }
+
     function hMaxCondition(
         uint256 b,
         uint256 c,
