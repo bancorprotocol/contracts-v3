@@ -98,7 +98,7 @@ interface ILiquidityPoolCollection {
      *
      * - the caller must be the network contract
      * - the pool should have been whitelisted
-     * - the pool hasn't been listed already
+     * - the pool isn't already defined in the collection
      */
     function createPool(IReserveToken reserveToken) external;
 }
