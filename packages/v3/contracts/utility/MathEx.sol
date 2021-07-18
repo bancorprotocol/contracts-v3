@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
+import "./Constants.sol";
+
 /**
  * @dev this library provides a set of complex math operations
  */
 library MathEx {
-    uint256 private constant MAX_UINT256 = uint256(-1);
-
     /**
      * @dev returns the largest integer smaller than or equal to the square root of a positive integer
      */
