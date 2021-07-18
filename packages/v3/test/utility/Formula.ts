@@ -85,9 +85,9 @@ describe('Formula', () => {
                 for (const e of [123456, 456789, 1000000, 88888888]) {
                     for (const n of [2500, 25000]) {
                         for (const x of [10, 100, 1000, 10000].map((y) => Math.floor(d / y))) {
-                            it(`hMaxLargerThanOrEqualTo(${[b, c, d, e, n, x]})`, async () => {
+                            it(`hMaxCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = hMaxExpected(b, c, d, e, n).gte(x);
-                                const actual = await formulaContract.hMaxLargerThanOrEqualTo(b, c, d, e, n, x);
+                                const actual = await formulaContract.hMaxCondition(b, c, d, e, n, x);
                                 expect(actual).to.be.equal(expected);
                             });
                         }
@@ -103,9 +103,9 @@ describe('Formula', () => {
                 for (const e of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
                     for (const n of [2500, 25000]) {
                         for (const x of [1, 2, 3, 4].map((y) => d.slice(0, -y))) {
-                            it(`hMaxLargerThanOrEqualTo(${[b, c, d, e, n, x]})`, async () => {
+                            it(`hMaxCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = hMaxExpected(b, c, d, e, n).gte(x);
-                                const actual = await formulaContract.hMaxLargerThanOrEqualTo(b, c, d, e, n, x);
+                                const actual = await formulaContract.hMaxCondition(b, c, d, e, n, x);
                                 expect(actual).to.be.equal(expected);
                             });
                         }

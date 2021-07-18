@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./MathEx.sol";
-import "./Utils.sol";
 
 /**
  * @dev this library provides a set of functions supporting BNTKN withdrawal

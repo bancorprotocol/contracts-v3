@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-uint32 constant PPM_RESOLUTION = 1000000;
+import "./Constants.sol";
 
 /**
  * @dev common utilities
