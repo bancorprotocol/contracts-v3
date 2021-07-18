@@ -326,7 +326,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the name and the symbol of the pool token suing either the custom token symbol override or by
+     * @dev returns the name and the symbol of the pool token using either the custom token symbol override or by
      * fetching it from the reserve token itself
      */
     function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
