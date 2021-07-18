@@ -218,6 +218,10 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
 
     /**
      * @dev sets the trading fee of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function setTradingFeePPM(IReserveToken pool, uint32 newTradingFeePPM)
         external
@@ -240,6 +244,9 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
 
     /**
      * @dev enables/disables deposits to a given pool
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function enableDeposits(IReserveToken pool, bool status) external onlyOwner {
         Pool storage p = _poolStorage(pool);
@@ -279,6 +286,10 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
 
     /**
      * @dev sets the initial rate of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function setInitialRate(IReserveToken pool, Fraction memory newInitialRate)
         external
@@ -301,6 +312,10 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
 
     /**
      * @dev sets the deposit limit of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
         Pool storage p = _poolStorage(pool);
