@@ -21,23 +21,20 @@ library Formula {
     }
 
     /**
-     * @dev returns `b^2 + b(3c - 2e) + e^2(n + 1) + c(3c - 4e) + c(c - e)^2 / b`
+     * @dev returns `bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2} >= x`
      *
      * b = TKN pool balance
      * c = TKN excess amount
+     * d = BNTKN total supply
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
+     * x = BNTKN withdrawal amount
      */
-    function hMaxR(uint256 b, uint256 c, uint256 e, uint256 n) internal pure returns (uint256) {
-        uint256 f = c > e ? c - e : e - c;
-        uint256 r = b.mul(b);
-        r = r.add(b.mul(c).mul(3));
-        r = r.add(c.mul(c).mul(3));
-        r = r.add(MathEx.mulDivC(e.mul(e), n + PPM_RESOLUTION, PPM_RESOLUTION));
-        r = r.add(MathEx.mulDivC(c, f.mul(f), b));
-        r = r.sub(b.mul(e).mul(2));
-        r = r.sub(c.mul(e).mul(4));
-        return r;
+    function hMaxCondition(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n, uint256 x) internal pure returns (bool) {
+        hMax memory parts = hMaxParts(b, c, d, e, n);
+        (uint256 hiN, uint256 loN) = MathEx.mul512(parts.p, parts.q);
+        (uint256 hiD, uint256 loD) = mul512twice(parts.r, parts.s, x);
+        return (hiN > hiD || (hiN == hiD && loN >= loD));
     }
 
     /**
@@ -60,22 +57,23 @@ library Formula {
     }
 
     /**
-     * @dev returns `bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2} >= x`
+     * @dev returns `b^2 + b(3c - 2e) + e^2(n + 1) + c(3c - 4e) + c(c - e)^2 / b`
      *
      * b = TKN pool balance
      * c = TKN excess amount
-     * d = BNTKN total supply
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
-     * x = BNTKN withdrawal amount
      */
-    function hMaxLargerThanOrEqualTo(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n, uint256 x) internal pure returns (bool) {
-        hMax memory parts = hMaxParts(b, c, d, e, n);
-
-        (uint256 hiN, uint256 loN) = MathEx.mul512(parts.p, parts.q);
-        (uint256 hiD, uint256 loD) = mul512twice(parts.r, parts.s, x);
-
-        return (hiN > hiD || (hiN == hiD && loN >= loD));
+    function hMaxR(uint256 b, uint256 c, uint256 e, uint256 n) internal pure returns (uint256) {
+        uint256 f = c > e ? c - e : e - c;
+        uint256 r = b.mul(b);
+        r = r.add(b.mul(c).mul(3));
+        r = r.add(c.mul(c).mul(3));
+        r = r.add(MathEx.mulDivC(e.mul(e), n + PPM_RESOLUTION, PPM_RESOLUTION));
+        r = r.add(MathEx.mulDivC(c, f.mul(f), b));
+        r = r.sub(b.mul(e).mul(2));
+        r = r.sub(c.mul(e).mul(4));
+        return r;
     }
 
     /**
