@@ -196,6 +196,7 @@ describe('LiquidityPoolCollection', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let collection: LiquidityPoolCollection;
+        let newReserveToken: TestERC20Token;
 
         beforeEach(async () => {
             ({ network, networkSettings, collection } = await createSystem());
@@ -203,6 +204,8 @@ describe('LiquidityPoolCollection', () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
             await network.createPoolF(collection.address, reserveToken.address);
+
+            newReserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
         });
 
         describe('initial rate', () => {
@@ -221,12 +224,6 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should revert when setting the initial rate of a non-existing pool', async () => {
-                const newReserveToken = await Contracts.TestERC20Token.deploy(
-                    SYMBOL,
-                    SYMBOL,
-                    BigNumber.from(1_000_000)
-                );
-
                 await expect(collection.setInitialRate(newReserveToken.address, newInitialRate)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
@@ -271,12 +268,6 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should revert when setting the trading fee of a non-existing pool', async () => {
-                const newReserveToken = await Contracts.TestERC20Token.deploy(
-                    SYMBOL,
-                    SYMBOL,
-                    BigNumber.from(1_000_000)
-                );
-
                 await expect(collection.setTradingFeePPM(newReserveToken.address, newTradingFee)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
@@ -313,12 +304,6 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should revert when enabling deposits for a non-existing pool', async () => {
-                const newReserveToken = await Contracts.TestERC20Token.deploy(
-                    SYMBOL,
-                    SYMBOL,
-                    BigNumber.from(1_000_000)
-                );
-
                 await expect(collection.enableDeposits(newReserveToken.address, true)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
@@ -356,12 +341,6 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should revert when setting the deposit limit of a non-existing pool', async () => {
-                const newReserveToken = await Contracts.TestERC20Token.deploy(
-                    SYMBOL,
-                    SYMBOL,
-                    BigNumber.from(1_000_000)
-                );
-
                 await expect(collection.setDepositLimit(newReserveToken.address, newDepositLimit)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
