@@ -264,7 +264,7 @@ describe('LiquidityPoolCollection', () => {
                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
             });
 
-            it('should revert when setting an trading fee', async () => {
+            it('should revert when setting an invalid trading fee', async () => {
                 await expect(
                     collection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION.add(BigNumber.from(1)))
                 ).to.be.revertedWith('ERR_INVALID_FEE');
