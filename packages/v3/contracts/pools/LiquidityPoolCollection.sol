@@ -26,6 +26,9 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
+    // the network settings contract
+    INetworkSettings private immutable _settings;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -81,6 +84,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         __ReentrancyGuard_init();
 
         _network = initNetwork;
+        _settings = initNetwork.settings();
     }
 
     // allows execution by the network only
@@ -116,6 +120,13 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      */
     function poolType() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
+    function settings() external view override returns (INetworkSettings) {
+        return _settings;
     }
 
     /**
@@ -171,7 +182,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * @inheritdoc ILiquidityPoolCollection
      */
     function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
-        require(_network.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
+        require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
         require(!_poolExists(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);

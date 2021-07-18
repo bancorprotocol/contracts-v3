@@ -6,6 +6,7 @@ import "../../utility/Types.sol";
 
 import "../../token/interfaces/IReserveToken.sol";
 
+import "../../network/interfaces/INetworkSettings.sol";
 import "../../network/interfaces/IBancorNetwork.sol";
 
 import "./IPoolToken.sol";
@@ -29,6 +30,11 @@ interface ILiquidityPoolCollection {
      * @dev returns the type of the pool
      */
     function poolType() external pure returns (uint16);
+
+    /**
+     * @dev returns the network settings contract
+     */
+    function settings() external view returns (INetworkSettings);
 
     /**
      * @dev returns the network contract
