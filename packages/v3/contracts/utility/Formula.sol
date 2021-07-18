@@ -12,7 +12,7 @@ library Formula {
     using SafeMath for uint256;
     using MathEx for *;
 
-    struct hMax {
+    struct Hmax {
         uint256 p;
         uint256 q;
         uint256 r;
@@ -55,7 +55,7 @@ library Formula {
         uint256 n,
         uint256 x
     ) internal pure returns (bool) {
-        hMax memory parts = hMaxParts(b, c, d, e, n);
+        Hmax memory parts = hMaxParts(b, c, d, e, n);
         (uint256 hi1, uint256 lo1) = MathEx.mul512(parts.p, parts.q);
         (uint256 hi2, uint256 lo2) = mul512twice(parts.r, parts.s, x);
         return gte512(hi1, lo1, hi2, lo2);
@@ -77,8 +77,8 @@ library Formula {
         uint256 d,
         uint256 e,
         uint256 n
-    ) internal pure returns (hMax memory) {
-        return hMax({ p: d.mul(e), q: b.add(c).mul(n), r: hMaxR(b, c, e, n), s: PPM_RESOLUTION });
+    ) internal pure returns (Hmax memory) {
+        return Hmax({ p: d.mul(e), q: b.add(c).mul(n), r: hMaxR(b, c, e, n), s: PPM_RESOLUTION });
     }
 
     /**

@@ -32,7 +32,7 @@ contract TestFormula {
         uint256 d,
         uint256 e,
         uint256 n
-    ) external pure returns (Formula.hMax memory) {
+    ) external pure returns (Formula.Hmax memory) {
         return Formula.hMaxParts(b, c, d, e, n);
     }
 
