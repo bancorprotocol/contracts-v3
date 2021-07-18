@@ -9,7 +9,7 @@ const PPMR = PPM_RESOLUTION.toNumber();
 
 const AMOUNTS = [
     ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x)),
-    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x)),
+    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x))
 ];
 
 const FEES = ['0', '0.05', '0.25', '0.5', '1'].map((x) => new Decimal(x).mul(PPMR / 100));
@@ -29,17 +29,33 @@ describe('Formula', () => {
     const hMaxExpected = (b: any, c: any, d: any, e: any, n: any) => {
         [b, c, d, e, n] = [b, c, d, e, n].map((x) => new Decimal(x));
         n = n.div(PPMR);
-        return b.mul(d).mul(e).mul(n).mul(b.add(c)).div(
-            b.pow(3)
-            .add(b.pow(2).mul(c.mul(3).sub(e.mul(2))))
-            .add(b.mul(e.pow(2).mul(n.add(1)).add(c.mul(c.mul(3).sub(e.mul(4))))))
-            .add(c.mul(c.sub(e).pow(2)))
-        );
+        return b
+            .mul(d)
+            .mul(e)
+            .mul(n)
+            .mul(b.add(c))
+            .div(
+                b
+                    .pow(3)
+                    .add(b.pow(2).mul(c.mul(3).sub(e.mul(2))))
+                    .add(
+                        b.mul(
+                            e
+                                .pow(2)
+                                .mul(n.add(1))
+                                .add(c.mul(c.mul(3).sub(e.mul(4))))
+                        )
+                    )
+                    .add(c.mul(c.sub(e).pow(2)))
+            );
     };
 
     const hMaxActual = async (b: any, c: any, d: any, e: any, n: any) => {
         const actual = await formulaContract.hMaxParts(b.toFixed(), c.toFixed(), d.toFixed(), e.toFixed(), n.toFixed());
-        return new Decimal(actual.p.toString()).mul(actual.q.toString()).div(actual.r.toString()).div(actual.s.toString());
+        return new Decimal(actual.p.toString())
+            .mul(actual.q.toString())
+            .div(actual.r.toString())
+            .div(actual.s.toString());
     };
 
     for (const b of AMOUNTS) {

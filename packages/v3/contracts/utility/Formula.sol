@@ -30,7 +30,14 @@ library Formula {
      * n = withdrawal fee in ppm units
      * x = BNTKN withdrawal amount
      */
-    function hMaxCondition(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n, uint256 x) internal pure returns (bool) {
+    function hMaxCondition(
+        uint256 b,
+        uint256 c,
+        uint256 d,
+        uint256 e,
+        uint256 n,
+        uint256 x
+    ) internal pure returns (bool) {
         hMax memory parts = hMaxParts(b, c, d, e, n);
         (uint256 hiN, uint256 loN) = MathEx.mul512(parts.p, parts.q);
         (uint256 hiD, uint256 loD) = mul512twice(parts.r, parts.s, x);
@@ -47,13 +54,14 @@ library Formula {
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
      */
-    function hMaxParts(uint256 b, uint256 c, uint256 d, uint256 e, uint256 n) internal pure returns (hMax memory) {
-        return hMax({
-            p: d.mul(e),
-            q: b.add(c).mul(n),
-            r: hMaxR(b, c, e, n),
-            s: PPM_RESOLUTION
-        });
+    function hMaxParts(
+        uint256 b,
+        uint256 c,
+        uint256 d,
+        uint256 e,
+        uint256 n
+    ) internal pure returns (hMax memory) {
+        return hMax({ p: d.mul(e), q: b.add(c).mul(n), r: hMaxR(b, c, e, n), s: PPM_RESOLUTION });
     }
 
     /**
@@ -64,7 +72,12 @@ library Formula {
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
      */
-    function hMaxR(uint256 b, uint256 c, uint256 e, uint256 n) internal pure returns (uint256) {
+    function hMaxR(
+        uint256 b,
+        uint256 c,
+        uint256 e,
+        uint256 n
+    ) internal pure returns (uint256) {
         uint256 f = c > e ? c - e : e - c;
         uint256 r = b.mul(b);
         r = r.add(b.mul(c).mul(3));
@@ -79,7 +92,11 @@ library Formula {
     /**
      * @dev returns the value of `x * y * z` as a pair of 256-bit values
      */
-    function mul512twice(uint256 x, uint256 y, uint256 z) private pure returns (uint256, uint256) {
+    function mul512twice(
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (uint256, uint256) {
         (uint256 xyh, uint256 xyl) = MathEx.mul512(x, y);
         (uint256 xylzh, uint256 xylzl) = MathEx.mul512(xyl, z);
         return (xyh.mul(z).add(xylzh), xylzl);
