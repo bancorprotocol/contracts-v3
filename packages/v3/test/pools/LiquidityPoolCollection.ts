@@ -161,7 +161,7 @@ describe('LiquidityPoolCollection', () => {
                 expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
 
                 expect(await collection.tradingFeePPM(reserveToken.address)).to.equal(DEFAULT_TRADING_FEE_PPM);
-                expect(await collection.depositsEnabled(reserveToken.address)).to.be.false;
+                expect(await collection.depositsEnabled(reserveToken.address)).to.be.true;
                 expect(await collection.tradingLiquidity(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.tradingLiquidityProduct(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
@@ -326,23 +326,23 @@ describe('LiquidityPoolCollection', () => {
 
             it('should allow enabling and disabling deposits', async () => {
                 let depositsEnabled = await collection.depositsEnabled(reserveToken.address);
-                expect(depositsEnabled).to.be.false;
-
-                const res = await collection.enableDeposits(reserveToken.address, true);
-                await expect(res)
-                    .to.emit(collection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, depositsEnabled, true);
-
-                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
                 expect(depositsEnabled).to.be.true;
 
-                const res2 = await collection.enableDeposits(reserveToken.address, false);
-                await expect(res2)
+                const res = await collection.enableDeposits(reserveToken.address, false);
+                await expect(res)
                     .to.emit(collection, 'DepositsEnabled')
                     .withArgs(reserveToken.address, depositsEnabled, false);
 
                 depositsEnabled = await collection.depositsEnabled(reserveToken.address);
                 expect(depositsEnabled).to.be.false;
+
+                const res2 = await collection.enableDeposits(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(collection, 'DepositsEnabled')
+                    .withArgs(reserveToken.address, depositsEnabled, true);
+
+                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.true;
             });
         });
 

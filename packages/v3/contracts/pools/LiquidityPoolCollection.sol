@@ -191,7 +191,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         _pools[reserveToken] = Pool({
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
-            depositsEnabled: false,
+            depositsEnabled: true,
             tradingLiquidity: 0,
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
