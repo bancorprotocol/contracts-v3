@@ -183,7 +183,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      */
     function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
-        require(!_poolExists(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
+        require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
@@ -348,15 +348,15 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      */
     function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
         Pool storage p = _pools[pool];
-        require(_poolExists(p), "ERR_POOL_DOES_NOT_EXIST");
+        require(_validPool(p), "ERR_POOL_DOES_NOT_EXIST");
 
         return p;
     }
 
     /**
-     * @dev returns whether a pool exists
+     * @dev returns whether a pool is valid
      */
-    function _poolExists(Pool memory pool) private pure returns (bool) {
+    function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0x0);
     }
 }
