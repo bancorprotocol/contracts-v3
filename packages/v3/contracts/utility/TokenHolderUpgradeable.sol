@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "./interfaces/IVersioned.sol";
+import "../token/ReserveToken.sol";
+
 import "./interfaces/ITokenHolder.sol";
 
 import "./OwnedUpgradeable.sol";
 import "./Utils.sol";
 
-import "../token/ReserveToken.sol";
-
 /**
- * @dev This contract provides an owned token and ETH wallet.
+ * @dev this contract provides an owned token and ETH wallet
  */
-contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, Utils {
+contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
     using ReserveToken for IReserveToken;
 
     // upgrade forward-compatibility storage gap
@@ -50,11 +49,7 @@ contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, U
     }
 
     /**
-     * @dev withdraws funds held by the contract and sends them to an account
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
+     * @inheritdoc ITokenHolder
      */
     function withdrawTokens(
         IReserveToken reserveToken,
@@ -65,11 +60,7 @@ contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, U
     }
 
     /**
-     * @dev withdraws multiple funds held by the contract and sends them to an account
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
+     * @inheritdoc ITokenHolder
      */
     function withdrawTokensMultiple(
         IReserveToken[] calldata reserveTokens,
@@ -79,7 +70,7 @@ contract TokenHolderUpgradeable is IVersioned, ITokenHolder, OwnedUpgradeable, U
         uint256 length = reserveTokens.length;
         require(length == amounts.length, "ERR_INVALID_LENGTH");
 
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             reserveTokens[i].safeTransfer(to, amounts[i]);
         }
     }

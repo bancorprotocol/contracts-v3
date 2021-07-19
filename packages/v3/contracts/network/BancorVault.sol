@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "../utility/Utils.sol";
 import "../utility/Upgradeable.sol";
+import "../utility/Utils.sol";
 
 import "../token/ReserveToken.sol";
 
@@ -110,43 +110,28 @@ contract BancorVault is
     }
 
     /**
-     * @dev returns whether withdrawals are currently paused
+     * @inheritdoc IBancorVault
      */
     function isPaused() external view override returns (bool) {
         return paused();
     }
 
     /**
-     * @dev pauses withdrawals
-     *
-     * requirements:
-     *
-     * - the caller must have the ROLE_ADMIN privileges
+     * @inheritdoc IBancorVault
      */
     function pause() external override onlyAdmin {
         _pause();
     }
 
     /**
-     * @dev unpauses withdrawals
-     *
-     * requirements:
-     *
-     * - the caller must have the ROLE_ADMIN privileges
+     * @inheritdoc IBancorVault
      */
     function unpause() external override onlyAdmin {
         _unpause();
     }
 
     /**
-     * @dev withdraws funds held by the contract and sends them to an account
-     *
-     * requirements:
-     *
-     * - the contract shouldn't be paused
-     * - the caller must have the right privileges to withdraw this token:
-     *   - for the network token: the ROLE_NETWORK_TOKEN_MANAGER or the ROLE_ASSET_MANAGER role
-     *   - for any other reserve token or ETH: the ROLE_ASSET_MANAGER role
+     * @inheritdoc IBancorVault
      */
     function withdrawTokens(
         IReserveToken reserveToken,

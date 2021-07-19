@@ -13,13 +13,9 @@ let burnable: TestERC20Burnable;
 let owner: SignerWithAddress;
 let burner: SignerWithAddress;
 
-let accounts: SignerWithAddress[];
-
 describe('ERC20Burnable', () => {
     before(async () => {
-        accounts = await ethers.getSigners();
-
-        [owner, burner] = accounts;
+        [owner, burner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
