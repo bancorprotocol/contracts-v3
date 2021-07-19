@@ -57,7 +57,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
-     * @dev triggered when the trading fee is updated
+     * @dev triggered when a specific pool's trading fee is updated
      */
     event TradingFeePPMUpdated(IReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
