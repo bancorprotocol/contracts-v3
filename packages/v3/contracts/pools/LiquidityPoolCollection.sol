@@ -195,7 +195,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
             tradingLiquidity: 0,
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
-            initialRate: Fraction({ n: 0, d: 0 }),
+            initialRate: Fraction({ n: 0, d: 1 }),
             depositLimit: 0
         });
 

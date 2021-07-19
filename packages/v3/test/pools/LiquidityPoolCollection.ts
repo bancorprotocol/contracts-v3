@@ -167,7 +167,7 @@ describe('LiquidityPoolCollection', () => {
                 expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.initialRate(reserveToken.address)).to.equal({
                     n: BigNumber.from(0),
-                    d: BigNumber.from(0)
+                    d: BigNumber.from(1)
                 });
                 expect(await collection.depositLimit(reserveToken.address)).to.equal(BigNumber.from(0));
             });
@@ -231,7 +231,7 @@ describe('LiquidityPoolCollection', () => {
 
             it('should allow setting and updating the initial rate', async () => {
                 let initialRate = await collection.initialRate(reserveToken.address);
-                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(0) });
+                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(1) });
 
                 const res = await collection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)
