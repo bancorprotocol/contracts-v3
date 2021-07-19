@@ -18,7 +18,7 @@ function overwriteFractionFunction(readableName: string, _super: (...args: any[]
         const [actual] = args;
         const expected = chaiUtils.flag(this, 'object');
 
-        if (isFraction(expected) || isFraction(actual)) {
+        if (isFraction(expected) && isFraction(actual)) {
             const en = BigNumber.from(expected.n);
             const ed = BigNumber.from(expected.d);
             const an = BigNumber.from(actual.n);
