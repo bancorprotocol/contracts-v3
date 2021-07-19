@@ -44,4 +44,13 @@ contract TestFormula {
     ) external pure returns (uint256) {
         return Formula.hMaxR(b, c, e, n);
     }
+
+    function arbAmount(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 m
+    ) external pure returns (uint256) {
+        return Formula.arbAmount(a, b, c, m);
+    }
 }

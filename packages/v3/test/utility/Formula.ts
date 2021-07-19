@@ -63,6 +63,17 @@ describe('Formula', () => {
             .div(actual.s.toString());
     };
 
+    // ac[b(2 - m) + c] / [b(b + mc)]
+    const arbAmount = (a: any, b: any, c: any, m: any) => {
+        [a, b, c, m] = [a, b, c, m].map((x) => new Decimal(x));
+        m = m.div(PPMR);
+        return a
+            .mul(c)
+            .mul(b.mul(new Decimal(2).sub(m)).add(c))
+            .div(b.mul(b.add(m.mul(c))))
+            .floor();
+    };
+
     for (const b of AMOUNTS) {
         for (const c of AMOUNTS) {
             for (const e of AMOUNTS) {
@@ -130,6 +141,24 @@ describe('Formula', () => {
                             });
                         }
                     }
+                }
+            }
+        }
+    }
+
+    for (const a of AMOUNTS) {
+        for (const b of AMOUNTS) {
+            for (const c of AMOUNTS) {
+                for (const m of FEES) {
+                    it(`arbAmount(${[a, b, c, m]})`, async () => {
+                        const expected = arbAmount(a, b, c, m);
+                        if (expected.lte(MAX_VAL)) {
+                            const actual = await formula.arbAmount(a, b, c, m);
+                            expect(actual).to.be.equal(expected.toFixed());
+                        } else {
+                            await expect(formula.arbAmount(a, b, c, m)).to.be.revertedWith('ERR_OVERFLOW');
+                        }
+                    });
                 }
             }
         }

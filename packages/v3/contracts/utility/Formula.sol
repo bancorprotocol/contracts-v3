@@ -107,6 +107,26 @@ library Formula {
     }
 
     /**
+     * @dev returns `ac[b(2 - m) + c] / [b(b + mc)]`
+     *
+     * a = BNT pool balance
+     * b = TKN pool balance
+     * c = TKN target amount
+     * m = trade fee in ppm units
+     */
+    function arbAmount(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 m
+    ) internal pure returns (uint256) {
+        uint256 x = a.mul(c);
+        uint256 y = b.mul(2 * PPM_RESOLUTION - m).add(c.mul(PPM_RESOLUTION));
+        uint256 z = b.mul(b.mul(PPM_RESOLUTION).add(c.mul(m)));
+        return MathEx.mulDivF(x, y, z);
+    }
+
+    /**
      * @dev returns the value of `x * y * z` as a pair of 256-bit values
      */
     function mul512twice(
