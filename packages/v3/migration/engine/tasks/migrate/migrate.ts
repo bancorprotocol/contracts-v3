@@ -23,6 +23,9 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
         log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
+        // Save oldState
+        const oldState = currentNetworkState;
+
         const contracts = Contracts.connect(signer);
         try {
             currentNetworkState = await migration.up(signer, contracts, currentNetworkState, deployExecute);

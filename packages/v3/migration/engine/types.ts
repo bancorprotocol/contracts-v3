@@ -11,7 +11,6 @@ export type SystemState = {
 
 export type deployedContract = {
     address: string;
-    tx: string;
 };
 
 export interface Migration {

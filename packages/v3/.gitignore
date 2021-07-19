@@ -26,3 +26,4 @@ config.json
 
 migration/data/hardhat
 migration/data/localhost
+migration/data/fork*

@@ -20,6 +20,7 @@
     ],
     "scripts": {
         "hh": "hardhat",
+        "migrate": "hardhat migrate",
         "build": "hardhat compile",
         "test": "yarn build && NODE_OPTIONS='--max-old-space-size=6144' hardhat test",
         "testb": "BAIL=1 yarn test",

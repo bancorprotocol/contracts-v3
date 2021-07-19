@@ -19,15 +19,14 @@ import 'hardhat-gas-reporter';
 
 import './migration/engine/tasks';
 
-const configPath = path.join(__dirname, '/config.json');
+const configPath = path.join(__dirname, 'config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
-const loadAPIKey = (apiKeyName: string) => {
-    return configFile.apiKeys ? (configFile.apiKeys[apiKeyName] ? configFile.apiKeys[apiKeyName] : '') : '';
+const loadAPIKey = (keyName: string) => {
+    return configFile.keys ? (configFile.keys[keyName] ? configFile.keys[keyName] : undefined) : undefined;
 };
 
-// Casting to unknown assume the good type is provided
-const loadENVKey = <T>(envKeyName: string) => {
+const loadENV = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };
 
@@ -48,21 +47,25 @@ const config: HardhatUserConfig = {
     },
 
     solidity: {
-        version: '0.7.6',
-        settings: {
-            optimizer: {
-                enabled: true,
-                runs: 200
-            },
-            metadata: {
-                bytecodeHash: 'none'
-            },
-            outputSelection: {
-                '*': {
-                    '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
+        compilers: [
+            {
+                version: '0.7.6',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200
+                    },
+                    metadata: {
+                        bytecodeHash: 'none'
+                    },
+                    outputSelection: {
+                        '*': {
+                            '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
+                        }
+                    }
                 }
             }
-        }
+        ]
     },
 
     dependencyCompiler: {
@@ -86,13 +89,13 @@ const config: HardhatUserConfig = {
 
     gasReporter: {
         currency: 'USD',
-        enabled: loadENVKey('PROFILE')
+        enabled: loadENV('PROFILE')
     },
 
     mocha: {
         timeout: 600000,
         color: true,
-        bail: loadENVKey('BAIL')
+        bail: loadENV('BAIL')
     }
 };
 

@@ -5,5 +5,5 @@
     },
     "include": ["./test", "./tasks", "./components", "./migration"],
     "files": ["./hardhat.config.ts"],
-    "paths": {}
+    "references": [{ "path": "../v2" }]
 }
