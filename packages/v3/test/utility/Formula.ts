@@ -77,11 +77,17 @@ describe('Formula', () => {
                         if (Formula.maxArbComputable(b, c, e)) {
                             it(`maxArb(${[b, c, d, e, n]})`, async () => {
                                 const expected = Formula.maxArb(b, c, d, e, n);
-                                const {p, q, r, s} = await formula.maxArbParts(b, c, d, e, n);
-                                const actual = new Decimal(p.toString()).mul(q.toString()).div(r.toString()).div(s.toString());
+                                const { p, q, r, s } = await formula.maxArbParts(b, c, d, e, n);
+                                const actual = new Decimal(p.toString())
+                                    .mul(q.toString())
+                                    .div(r.toString())
+                                    .div(s.toString());
                                 if (!actual.eq(expected)) {
                                     const ratio = actual.div(expected);
-                                    expect(ratio.gte(MIN_RATIO) && ratio.lte(1)).to.equal(true, `ratio = ${ratio.toFixed(25)}`);
+                                    expect(ratio.gte(MIN_RATIO) && ratio.lte(1)).to.equal(
+                                        true,
+                                        `ratio = ${ratio.toFixed(25)}`
+                                    );
                                 }
                             });
                         }
