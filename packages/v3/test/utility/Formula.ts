@@ -21,6 +21,33 @@ describe('Formula', () => {
         formula = await Contracts.TestFormula.deploy();
     });
 
+    for (const a of [123456, 456789, 1000000, 88888888]) {
+        for (const b of [123456, 456789, 1000000, 88888888]) {
+            for (const c of [123456, 456789, 1000000, 88888888]) {
+                for (const d of [123456, 456789, 1000000, 88888888]) {
+                    for (const e of [123456, 456789, 1000000, 88888888]) {
+                        for (const m of [2500, 25000]) {
+                            for (const n of [2500, 25000]) {
+                                for (const x of [10, 100, 1000, 10000].map((y) => Math.floor(d / y))) {
+                                    it(`withdrawalAmounts(${[a, b, c, d, e, m, n, x]})`, async () => {
+                                        const expected = Formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
+                                        const actual = await formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
+                                        expect(actual.B).to.be.equal(expected.B.toString());
+                                        expect(actual.C).to.be.equal(expected.C.toString());
+                                        expect(actual.D).to.be.equal(expected.D.toString());
+                                        expect(actual.E).to.be.equal(expected.E.toString());
+                                        expect(actual.F).to.be.equal(expected.F.toString());
+                                        expect(actual.G).to.be.equal(expected.G.toString());
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     for (const b of [123456, 456789, 1000000, 88888888]) {
         for (const c of [123456, 456789, 1000000, 88888888]) {
             for (const d of [123456, 456789, 1000000, 88888888]) {
