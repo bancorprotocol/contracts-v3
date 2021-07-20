@@ -7,15 +7,28 @@ import "../utility/Formula.sol";
 contract TestFormula {
     using Formula for *;
 
-    function hMaxComputable(
+    function withdrawalAmounts(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 d,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) external pure returns (Formula.WithdrawalAmounts memory) {
+        return Formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
+    }
+
+    function maxArbComputable(
         uint256 b,
         uint256 c,
         uint256 e
     ) external pure returns (bool) {
-        return Formula.hMaxComputable(b, c, e);
+        return Formula.maxArbComputable(b, c, e);
     }
 
-    function hMaxCondition(
+    function maxArbCondition(
         uint256 b,
         uint256 c,
         uint256 d,
@@ -23,34 +36,34 @@ contract TestFormula {
         uint256 n,
         uint256 x
     ) external pure returns (bool) {
-        return Formula.hMaxCondition(b, c, d, e, n, x);
+        return Formula.maxArbCondition(b, c, d, e, n, x);
     }
 
-    function hMaxParts(
+    function maxArbParts(
         uint256 b,
         uint256 c,
         uint256 d,
         uint256 e,
         uint256 n
-    ) external pure returns (Formula.Hmax memory) {
-        return Formula.hMaxParts(b, c, d, e, n);
+    ) external pure returns (Formula.MaxArb memory) {
+        return Formula.maxArbParts(b, c, d, e, n);
     }
 
-    function hMaxR(
+    function maxArbR(
         uint256 b,
         uint256 c,
         uint256 e,
         uint256 n
     ) external pure returns (uint256) {
-        return Formula.hMaxR(b, c, e, n);
+        return Formula.maxArbR(b, c, e, n);
     }
 
-    function arbAmount(
+    function optArb(
         uint256 a,
         uint256 b,
-        uint256 c,
+        uint256 f,
         uint256 m
     ) external pure returns (uint256) {
-        return Formula.arbAmount(a, b, c, m);
+        return Formula.optArb(a, b, f, m);
     }
 }

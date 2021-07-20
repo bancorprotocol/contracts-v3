@@ -6,13 +6,22 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./MathEx.sol";
 
 /**
- * @dev this library provides a set of functions supporting BNTKN withdrawal
+ * @dev this library provides mathematical support for TKN withdrawal
  */
 library Formula {
     using SafeMath for uint256;
     using MathEx for *;
 
-    struct Hmax {
+    struct WithdrawalAmounts {
+        uint256 B;
+        uint256 C;
+        uint256 D;
+        uint256 E;
+        uint256 F;
+        uint256 G;
+    }
+
+    struct MaxArb {
         uint256 p;
         uint256 q;
         uint256 r;
@@ -20,13 +29,77 @@ library Formula {
     }
 
     /**
-     * @dev returns true if and only if `c(c - e)^2 / b <= 2^256 - 1`
+     * @dev returns the TKN withdrawal amounts, where each amount includes
+     * the withdrawl fee, which may need to be deducted (depending on usage)
      *
+     * input:
+     * a = BNT pool balance
+     * b = TKN pool balance
+     * c = TKN excess amount
+     * d = BNTKN total supply
+     * e = TKN staked amount
+     * m = trade fee in ppm units
+     * n = withdrawal fee in ppm units
+     * x = BNTKN withdrawal amount
+     *
+     * output:
+     * B = TKN amount to transfer to the user
+     * C = BNT amount to transfer to the user
+     * D = TKN amount to remove from the pool
+     * E = TKN amount to remove from the vault
+     * F = BNT amount to remove from the pool
+     * G = BNT amount to add to the pool
+     */
+    function withdrawalAmounts(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 d,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) internal pure returns (WithdrawalAmounts memory) {
+        WithdrawalAmounts memory amounts;
+        uint256 bPc = b.add(c);
+        if (bPc >= e) {
+            // TKN is in surplus
+            uint256 eMx = e.mul(x);
+            uint256 dMbPc = d.mul(bPc);
+            amounts.B = eMx / d;
+            amounts.D = MathEx.mulDivF(b, eMx, dMbPc);
+            amounts.E = MathEx.mulDivF(c, eMx, dMbPc);
+            amounts.F = MathEx.mulDivF(a, eMx, dMbPc);
+            if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
+                // the cost of the arbitrage method is less than the withdrawal fee
+                amounts.G = optArb(a, b, 0, m); // TODO: calculate `f` and pass it instead of 0
+            }
+        } else {
+            // TKN is in deficit
+            uint256 y = a.mul(e - bPc);
+            uint256 bMd = b.mul(d);
+            amounts.B = MathEx.mulDivF(bPc, x, d);
+            amounts.C = MathEx.mulDivF(y, x, bMd);
+            amounts.D = MathEx.mulDivF(b, x, d);
+            amounts.E = MathEx.mulDivF(c, x, d);
+            amounts.F = MathEx.mulDivF(a, x, d);
+        }
+        return amounts;
+    }
+
+    /**
+     * @dev returns true if and only if
+     * the cost of the arbitrage method can be computed without overflow
+     *
+     * input:
      * b = TKN pool balance
      * c = TKN excess amount
      * e = TKN staked amount
+     *
+     * output:
+     * c(c - e)^2 / b <= 2^256 - 1
      */
-    function hMaxComputable(
+    function maxArbComputable(
         uint256 b,
         uint256 c,
         uint256 e
@@ -38,16 +111,21 @@ library Formula {
     }
 
     /**
-     * @dev returns `bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2} >= x`
+     * @dev returns true if and only if
+     * the cost of the arbitrage method is less than the withdrawal fee
      *
+     * input:
      * b = TKN pool balance
      * c = TKN excess amount
      * d = BNTKN total supply
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
      * x = BNTKN withdrawal amount
+     *
+     * output (pretending `n` is normalized):
+     * bden(b + c) / (b^3 + b^2(3c - 2e) + b(e^2(n + 1) + c(3c - 4e)) + c(c - e)^2) >= x
      */
-    function hMaxCondition(
+    function maxArbCondition(
         uint256 b,
         uint256 c,
         uint256 d,
@@ -55,41 +133,48 @@ library Formula {
         uint256 n,
         uint256 x
     ) internal pure returns (bool) {
-        Hmax memory parts = hMaxParts(b, c, d, e, n);
+        MaxArb memory parts = maxArbParts(b, c, d, e, n);
         (uint256 hi1, uint256 lo1) = MathEx.mul512(parts.p, parts.q);
         (uint256 hi2, uint256 lo2) = mul512twice(parts.r, parts.s, x);
         return gte512(hi1, lo1, hi2, lo2);
     }
 
     /**
-     * @dev returns a tuple {p, q, r, s} such that:
-     * `pq / rs = bden(b + c) / {b^3 + b^2(3c - 2e) + b[e^2(n + 1) + c(3c - 4e)] + c(c - e)^2}`
+     * @dev returns the cost of the arbitrage method
      *
+     * input:
      * b = TKN pool balance
      * c = TKN excess amount
      * d = BNTKN total supply
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
+     *
+     * output (pretending `n` is normalized) - a tuple `{p, q, r, s}`, such that:
+     * pq / rs = bden(b + c) / (b^3 + b^2(3c - 2e) + b(e^2(n + 1) + c(3c - 4e)) + c(c - e)^2)
      */
-    function hMaxParts(
+    function maxArbParts(
         uint256 b,
         uint256 c,
         uint256 d,
         uint256 e,
         uint256 n
-    ) internal pure returns (Hmax memory) {
-        return Hmax({ p: d.mul(e), q: b.add(c).mul(n), r: hMaxR(b, c, e, n), s: PPM_RESOLUTION });
+    ) internal pure returns (MaxArb memory) {
+        return MaxArb({ p: d.mul(e), q: b.add(c).mul(n), r: maxArbR(b, c, e, n), s: PPM_RESOLUTION });
     }
 
     /**
-     * @dev returns `b^2 + b(3c - 2e) + e^2(n + 1) + c(3c - 4e) + c(c - e)^2 / b`
+     * @dev returns the value of `r` in `pq / rs` (the cost of the arbitrage method)
      *
+     * input:
      * b = TKN pool balance
      * c = TKN excess amount
      * e = TKN staked amount
      * n = withdrawal fee in ppm units
+     *
+     * output (pretending `n` is normalized):
+     * b^2 + b(3c - 2e) + e^2(n + 1) + c(3c - 4e) + c(c - e)^2 / b
      */
-    function hMaxR(
+    function maxArbR(
         uint256 b,
         uint256 c,
         uint256 e,
@@ -107,22 +192,27 @@ library Formula {
     }
 
     /**
-     * @dev returns `ac[b(2 - m) + c] / [b(b + mc)]`
+     * @dev returns the amount of BNT which should be added to
+     * the pool in order to create an optimal arbitrage incentive
      *
+     * input:
      * a = BNT pool balance
      * b = TKN pool balance
-     * c = TKN target amount
+     * f = TKN target amount
      * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * af(b(2 - m) + f) / (b(b + mf))
      */
-    function arbAmount(
+    function optArb(
         uint256 a,
         uint256 b,
-        uint256 c,
+        uint256 f,
         uint256 m
     ) internal pure returns (uint256) {
-        uint256 x = a.mul(c);
-        uint256 y = b.mul(2 * PPM_RESOLUTION - m).add(c.mul(PPM_RESOLUTION));
-        uint256 z = b.mul(b.mul(PPM_RESOLUTION).add(c.mul(m)));
+        uint256 x = a.mul(f);
+        uint256 y = b.mul(2 * PPM_RESOLUTION - m).add(f.mul(PPM_RESOLUTION));
+        uint256 z = b.mul(b.mul(PPM_RESOLUTION).add(f.mul(m)));
         return MathEx.mulDivF(x, y, z);
     }
 
