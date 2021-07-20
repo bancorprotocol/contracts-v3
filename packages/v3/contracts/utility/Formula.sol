@@ -72,7 +72,8 @@ library Formula {
             amounts.F = MathEx.mulDivF(a, eMx, dMbPc);
             if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
                 // the cost of the arbitrage method is less than the withdrawal fee
-                amounts.G = optArb(a, b, 0, m); // TODO: calculate `f` and pass it instead of 0
+                uint256 f = MathEx.mulDivF(bPc - e, x.mul(PPM_RESOLUTION - n), d.mul(n));
+                amounts.G = optArb(a - amounts.F, b - amounts.D, f, m);
             }
         } else {
             // TKN is in deficit

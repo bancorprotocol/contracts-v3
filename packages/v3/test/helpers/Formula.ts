@@ -24,7 +24,8 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
         F = a.mul(eMx).div(dMbPc).floor();
         if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
             // the cost of the arbitrage method is less than the withdrawal fee
-            G = optArb(a, b, new Decimal(0), m); // TODO: calculate `f` and pass it instead of 0
+            const f = bPc.sub(e).mul(x).mul(n.sub(PPMR).neg()).div(d.mul(n)).floor();
+            G = optArb(a.sub(F), b.sub(D), f, m);
         }
     } else {
         // TKN is in deficit
@@ -82,7 +83,7 @@ const optArb = (a: any, b: any, f: any, m: any) => {
     m = m.div(PPMR);
     return a
         .mul(f)
-        .mul(b.mul(new Decimal(2).sub(m)).add(f))
+        .mul(b.mul(m.sub(2).neg()).add(f))
         .div(b.mul(b.add(m.mul(f))))
         .floor();
 };
