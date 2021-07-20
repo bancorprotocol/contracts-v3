@@ -21,44 +21,26 @@ describe('Formula', () => {
         formula = await Contracts.TestFormula.deploy();
     });
 
-    for (const a of [123456, 456789, 1000000, 88888888]) {
-        for (const b of [123456, 456789, 1000000, 88888888]) {
-            for (const c of [123456, 456789, 1000000, 88888888]) {
-                for (const d of [123456, 456789, 1000000, 88888888]) {
-                    for (const e of [123456, 456789, 1000000, 88888888]) {
+    for (const a of [3, 5, 7, 9].map((z) => `${z}`.repeat(40 - 2 * z))) {
+        for (const b of [3, 5, 7, 9].map((z) => `${z}`.repeat(40 - 2 * z))) {
+            for (const c of [3, 5, 7, 9].map((z) => `${z}`.repeat(40 - 2 * z))) {
+                for (const d of [3, 5, 7, 9].map((z) => `${z}`.repeat(40 - 2 * z))) {
+                    for (const e of [3, 5, 7, 9].map((z) => `${z}`.repeat(40 - 2 * z))) {
                         for (const m of [2500, 25000]) {
                             for (const n of [2500, 25000]) {
-                                for (const x of [10, 100, 1000, 10000].map((z) => Math.floor(d / z))) {
+                                for (const x of [1, 2, 3, 4].map((z) => d.slice(0, -z))) {
                                     it(`withdrawalAmounts(${[a, b, c, d, e, m, n, x]})`, async () => {
                                         const expected = Formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
                                         const actual = await formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
-                                        expect(actual.B).to.be.equal(expected.B.toString());
-                                        expect(actual.C).to.be.equal(expected.C.toString());
-                                        expect(actual.D).to.be.equal(expected.D.toString());
-                                        expect(actual.E).to.be.equal(expected.E.toString());
-                                        expect(actual.F).to.be.equal(expected.F.toString());
-                                        expect(actual.G).to.be.equal(expected.G.toString());
+                                        expect(actual.B).to.be.equal(expected.B.toFixed());
+                                        expect(actual.C).to.be.equal(expected.C.toFixed());
+                                        expect(actual.D).to.be.equal(expected.D.toFixed());
+                                        expect(actual.E).to.be.equal(expected.E.toFixed());
+                                        expect(actual.F).to.be.equal(expected.F.toFixed());
+                                        expect(actual.G).to.be.equal(expected.G.toFixed());
                                     });
                                 }
                             }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    for (const b of [123456, 456789, 1000000, 88888888]) {
-        for (const c of [123456, 456789, 1000000, 88888888]) {
-            for (const d of [123456, 456789, 1000000, 88888888]) {
-                for (const e of [123456, 456789, 1000000, 88888888]) {
-                    for (const n of [2500, 25000]) {
-                        for (const x of [10, 100, 1000, 10000].map((z) => Math.floor(d / z))) {
-                            it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
-                                const expected = Formula.maxArbCondition(b, c, d, e, n, x);
-                                const actual = await formula.maxArbCondition(b, c, d, e, n, x);
-                                expect(actual).to.be.equal(expected);
-                            });
                         }
                     }
                 }
@@ -72,6 +54,24 @@ describe('Formula', () => {
                 for (const e of [3, 5, 7, 9].map((z) => `${z}`.repeat(34))) {
                     for (const n of [2500, 25000]) {
                         for (const x of [1, 2, 3, 4].map((z) => d.slice(0, -z))) {
+                            it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
+                                const expected = Formula.maxArbCondition(b, c, d, e, n, x);
+                                const actual = await formula.maxArbCondition(b, c, d, e, n, x);
+                                expect(actual).to.be.equal(expected);
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (const b of [123456, 456789, 1000000, 88888888]) {
+        for (const c of [123456, 456789, 1000000, 88888888]) {
+            for (const d of [123456, 456789, 1000000, 88888888]) {
+                for (const e of [123456, 456789, 1000000, 88888888]) {
+                    for (const n of [2500, 25000]) {
+                        for (const x of [10, 100, 1000, 10000].map((z) => Math.floor(d / z))) {
                             it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = Formula.maxArbCondition(b, c, d, e, n, x);
                                 const actual = await formula.maxArbCondition(b, c, d, e, n, x);
