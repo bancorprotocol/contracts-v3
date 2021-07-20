@@ -6,11 +6,11 @@ import Formula from 'test/helpers/Formula';
 const { Decimal } = Formula;
 
 const AMOUNTS = [
-    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed()),
-    ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed())
+    ...[12, 15, 18, 21, 25, 29, 34].map((z) => new Decimal(9).pow(z).toFixed()),
+    ...[12, 15, 18, 21, 25, 29, 34].map((z) => new Decimal(10).pow(z).toFixed())
 ];
 
-const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => (x * Formula.PPMR) / 100);
+const FEES = [0, 0.05, 0.25, 0.5, 1].map((z) => (z * Formula.PPMR) / 100);
 
 const MIN_RATIO = '0.99999999999999999999999';
 
@@ -28,7 +28,7 @@ describe('Formula', () => {
                     for (const e of [123456, 456789, 1000000, 88888888]) {
                         for (const m of [2500, 25000]) {
                             for (const n of [2500, 25000]) {
-                                for (const x of [10, 100, 1000, 10000].map((y) => Math.floor(d / y))) {
+                                for (const x of [10, 100, 1000, 10000].map((z) => Math.floor(d / z))) {
                                     it(`withdrawalAmounts(${[a, b, c, d, e, m, n, x]})`, async () => {
                                         const expected = Formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
                                         const actual = await formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
@@ -53,7 +53,7 @@ describe('Formula', () => {
             for (const d of [123456, 456789, 1000000, 88888888]) {
                 for (const e of [123456, 456789, 1000000, 88888888]) {
                     for (const n of [2500, 25000]) {
-                        for (const x of [10, 100, 1000, 10000].map((y) => Math.floor(d / y))) {
+                        for (const x of [10, 100, 1000, 10000].map((z) => Math.floor(d / z))) {
                             it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = Formula.maxArbCondition(b, c, d, e, n, x);
                                 const actual = await formula.maxArbCondition(b, c, d, e, n, x);
@@ -66,12 +66,12 @@ describe('Formula', () => {
         }
     }
 
-    for (const b of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
-        for (const c of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
-            for (const d of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
-                for (const e of [3, 5, 7, 9].map((y) => `${y}`.repeat(34))) {
+    for (const b of [3, 5, 7, 9].map((z) => `${z}`.repeat(34))) {
+        for (const c of [3, 5, 7, 9].map((z) => `${z}`.repeat(34))) {
+            for (const d of [3, 5, 7, 9].map((z) => `${z}`.repeat(34))) {
+                for (const e of [3, 5, 7, 9].map((z) => `${z}`.repeat(34))) {
                     for (const n of [2500, 25000]) {
-                        for (const x of [1, 2, 3, 4].map((y) => d.slice(0, -y))) {
+                        for (const x of [1, 2, 3, 4].map((z) => d.slice(0, -z))) {
                             it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = Formula.maxArbCondition(b, c, d, e, n, x);
                                 const actual = await formula.maxArbCondition(b, c, d, e, n, x);

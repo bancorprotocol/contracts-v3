@@ -6,7 +6,7 @@ const MAX_VAL = MAX_UINT256.toString();
 const PPMR = PPM_RESOLUTION.toNumber();
 
 const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: any, x: any) => {
-    [a, b, c, d, e, m, n, x] = [a, b, c, d, e, m, n, x].map((x) => new Decimal(x));
+    [a, b, c, d, e, m, n, x] = [a, b, c, d, e, m, n, x].map((z) => new Decimal(z));
     let B = new Decimal(0);
     let C = new Decimal(0);
     let D = new Decimal(0);
@@ -41,19 +41,19 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
 
 // c(c - e)^2 / b <= 2^256 - 1
 const maxArbComputable = (b: any, c: any, e: any) => {
-    [b, c, e] = [b, c, e].map((x) => new Decimal(x));
+    [b, c, e] = [b, c, e].map((z) => new Decimal(z));
     return c.mul(c.sub(e).pow(2)).div(b).lte(MAX_VAL);
 };
 
 // bden(b + c) / (b^3 + b^2(3c - 2e) + b(e^2(n + 1) + c(3c - 4e)) + c(c - e)^2) >= x
 const maxArbCondition = (b: any, c: any, d: any, e: any, n: any, x: any) => {
-    [b, c, d, e, n, x] = [b, c, d, e, n, x].map((x) => new Decimal(x));
+    [b, c, d, e, n, x] = [b, c, d, e, n, x].map((z) => new Decimal(z));
     return maxArb(b, c, d, e, n).gte(x);
 };
 
 // bden(b + c) / (b^3 + b^2(3c - 2e) + b(e^2(n + 1) + c(3c - 4e)) + c(c - e)^2)
 const maxArb = (b: any, c: any, d: any, e: any, n: any) => {
-    [b, c, d, e, n] = [b, c, d, e, n].map((x) => new Decimal(x));
+    [b, c, d, e, n] = [b, c, d, e, n].map((z) => new Decimal(z));
     n = n.div(PPMR);
     return b
         .mul(d)
@@ -78,7 +78,7 @@ const maxArb = (b: any, c: any, d: any, e: any, n: any) => {
 
 // af(b(2 - m) + f) / (b(b + mf))
 const optArb = (a: any, b: any, f: any, m: any) => {
-    [a, b, f, m] = [a, b, f, m].map((x) => new Decimal(x));
+    [a, b, f, m] = [a, b, f, m].map((z) => new Decimal(z));
     m = m.div(PPMR);
     return a
         .mul(f)
