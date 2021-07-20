@@ -1,8 +1,8 @@
-import { ExecutionError } from './errors';
-import { Contract } from 'components/Contracts';
+import { ExecutionError } from './errors/errors';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { log } from './logger';
-import { executeOverride, executionConfig } from './utils';
+import { log } from './logger/logger';
+import { executeOverride, executionConfig } from './task';
+import { Contract } from 'ethers';
 
 export type deployExecuteType = ReturnType<typeof initDeployExecute>;
 
@@ -14,7 +14,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
     ): Promise<ReturnType<T>> => {
         const contract = await func(...args, overrides);
 
-        log.executingTx(`Deploying contract ${name} (${contract.__contractName__})`);
+        log.executingTx(`Deploying contract ${name}`);
         log.normal(`Tx: `, contract.deployTransaction.hash);
 
         log.greyed(`Waiting to be mined...`);

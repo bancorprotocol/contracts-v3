@@ -1,25 +1,25 @@
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { MIGRATION_FOLDER } from 'migration/config';
+import { createMigrationParamTask } from 'migration/engine';
+import { log } from 'migration/engine/logger/logger';
 import path from 'path';
-import { log } from '../../logger';
-import { createMigrationParamTask } from '..';
-import { MIGRATION_FOLDER } from '../../utils';
 
 export default async (args: createMigrationParamTask, hre: HardhatRuntimeEnvironment) => {
-    const templateMigrationFile = `import { Migration, deployedContract } from 'migration/engine/types';
+    const templateMigrationFile = `import { deployedContract, Migration } from 'migration/engine/types';
 
+export type InitialState = {};
+    
 export type State = {
     BNT: deployedContract;
 };
     
 const migration: Migration = {
-    up: async (signer, contracts, _, { deploy, execute }): Promise<State> => {
+    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
         const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
+
         return {
-            BNT: {
-                address: BNT.address,
-                tx: BNT.deployTransaction.hash
-            }
+            BNT: BNT.address
         };
     },
 
@@ -27,6 +27,7 @@ const migration: Migration = {
         return true;
     }
 };
+
 export default migration;
 `;
 

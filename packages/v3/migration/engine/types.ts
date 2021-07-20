@@ -9,12 +9,15 @@ export type SystemState = {
     networkState: any;
 };
 
-export type deployedContract = {
-    address: string;
-};
+export type deployedContract = string;
 
 export interface Migration {
-    up: (signer: Signer, contracts: Contracts, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
+    up: (
+        signer: Signer,
+        contracts: Contracts,
+        initialState: any,
+        { deploy, execute }: deployExecuteType
+    ) => Promise<{}>;
     healthcheck: (
         signer: Signer,
         contracts: Contracts,

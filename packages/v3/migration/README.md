@@ -15,6 +15,9 @@ In each network folder there is a `state.json` file. It represents the migration
 }
 ```
 
+`latestMigration`: The timestamp of the latest ran migration.
+`networkState`: Data that is passed to the migration file as initial state.
+
 ## Migrations
 
 The `migration` folder is home for all migrations file.
@@ -23,7 +26,12 @@ A migration file is a typescript file that expose a particular object respecting
 
 ```ts
 export interface Migration {
-    up: (signer: Signer, contracts: Contracts, oldState: any, { deploy, execute }: deployExecuteType) => Promise<{}>;
+    up: (
+        signer: Signer,
+        contracts: Contracts,
+        initialState: any,
+        { deploy, execute }: deployExecuteType
+    ) => Promise<{}>;
     healthcheck: (
         signer: Signer,
         contracts: Contracts,
@@ -35,79 +43,35 @@ export interface Migration {
 
 ## Engine
 
-The engine expose one small task, and one main task `migrate`.
+The engine is the backbone of the migration system, containing its logic.
 
-### Migrate
+It also expose tasks and subtasks.
+
+### Tasks
+
+##### Migrate
 
 Migrate the system from point A to point B.
 
 `yarn hh migrate --help` for more info on params.
 
-Algorithm:
+### Subtasks
 
-##### Fetch `{ signer, migrationsData, initialState, writeState, deployExecute }`
-
-`signer`: Can either be a normal signer or a Ledger signer. This object is passed to the migration script.
-
-`migrationsData`: A list of migrationData to be executed (counting only the migration that haven't been already run - using the timestamp as reference). A migrationData is:
-
-```ts
-{
-    fullPath: string;
-    fileName: string;
-    migrationTimestamp: number;
-}
-```
-
-`initialState`: The state of the global system on a particular network. It's fetched from the `state.json` file mentionned above. The property `networkState` of this object is passed to the migration script.
-
-`writeState`: A function that will replace the current state of the network with the one provided.
-
-`deployExecute`: An object that have 2 functions, `deploy` and `execute`. This object is passed to the migration script.
-
-##### Running the migration
-
-1. If there is no migrationData in the list, exit.
-
-2. Run every migration in a loop as follow:
-   -> Importing the migration file.
-   -> Executing the `up` function of that migration file.
-   ---> If `up` throw, exit. // @TODO add call to `down` functionnality (this is going to be complicated here).
-   -> Executing the `healthcheck` function of that migration file.
-   ---> If healthcheck returns false, exit. // @TODO add call to `down` functionnality.
-   -> Update the latestMigration to the current migration's timestamp.
-   -> Update the networkState to the new networkState
-
-###### createMigration
+##### CreateMigration
 
 Create a migration file based from a template.
 
 `yarn hh create-migration --help` for more info on params.
 
-```ts
-import { Migration, deployedContract } from 'migration/engine/types';
+# Getting started
 
-export type State = {
-    BNT: deployedContract;
-};
+## How to run the migration on a fork ?
 
-const migration: Migration = {
-    up: async (signer, contracts, _, { deploy, execute }): Promise<State> => {
-        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
-        return {
-            BNT: {
-                address: BNT.address,
-                tx: BNT.deployTransaction.hash
-            }
-        };
-    },
+Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround. To do so you have to execute the command by specifying the network in which you want to run. like so:
 
-    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
-        return true;
-    }
-};
-export default migration;
-```
+`FORK=mainnet yarn hh migrate`
+
+In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the key brackets the url for the corresponding FORK value. It NEEDS to start with `url-`, like so: `url-mainnet`.
 
 ## How to create a migration file ?
 
@@ -115,8 +79,44 @@ export default migration;
 yarn hh create-migration migrationFileName
 ```
 
+If you don't use this CLI to generate your migration files, bear in mind that they have to start by a number splitted from the rest of the name by the character '\_', like so: "999_testfile.ts".
+
 ## How to execute a migration ?
 
 ```
-yarn hh migrate
+yarn hh migrate --network fork-mainnet
+```
+
+1. `Migrate` will look for the network data folder. If not it will create one.
+
+2. It will run every migration file from latestMigration timestamp to the latest in the migrations folder.
+
+3. Update the state on the go.
+
+## What does a basic migration file looks like
+
+```ts
+import { deployedContract, Migration } from 'migration/engine/types';
+
+export type InitialState = {};
+
+export type State = {
+    BNT: deployedContract;
+};
+
+const migration: Migration = {
+    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
+        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
+
+        return {
+            BNT: BNT.address
+        };
+    },
+
+    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
+        return true;
+    }
+};
+
+export default migration;
 ```

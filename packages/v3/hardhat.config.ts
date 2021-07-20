@@ -1,49 +1,52 @@
-import fs from 'fs';
-import path from 'path';
-
-import { HardhatUserConfig } from 'hardhat/config';
-
-import 'tsconfig-paths/register';
-
-import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
+import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+// Patch BigNumber to include a min and a max functions.
+import { BigNumber } from 'ethers';
+import fs from 'fs';
+import 'hardhat-abi-exporter';
+import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
-
-import 'solidity-coverage';
-import '@nomiclabs/hardhat-etherscan';
-import 'hardhat-contract-sizer';
-import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
-
-import './migration/engine/tasks';
+import { HardhatUserConfig } from 'hardhat/config';
+import path from 'path';
+import 'solidity-coverage';
+import 'tsconfig-paths/register';
+import './migration/engine';
 
 const configPath = path.join(__dirname, 'config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
-const loadAPIKey = (keyName: string) => {
+export const loadKey = (keyName: string) => {
     return configFile.keys ? (configFile.keys[keyName] ? configFile.keys[keyName] : undefined) : undefined;
 };
 
-const loadENV = <T>(envKeyName: string) => {
+export const loadENV = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };
 
-const configNetworks = configFile.networks || {};
+const hardhatDefaultConfig = {
+    gasPrice: 20000000000,
+    gas: 9500000,
+    accounts: {
+        count: 10,
+        accountsBalance: '10000000000000000000000000000'
+    }
+};
+
+const hardhatForkedConfig = loadENV('FORK')
+    ? {
+          forking: {
+              url: loadKey(`url-${loadENV('FORK')}`)
+          }
+      }
+    : undefined;
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: {
-            gasPrice: 20000000000,
-            gas: 9500000,
-            accounts: {
-                count: 10,
-                accountsBalance: '10000000000000000000000000000'
-            }
-        },
-
-        ...configNetworks
+        hardhat: hardhatForkedConfig || hardhatDefaultConfig
     },
 
     solidity: {
@@ -76,7 +79,7 @@ const config: HardhatUserConfig = {
     },
 
     etherscan: {
-        apiKey: loadAPIKey('etherscan')
+        apiKey: loadKey('etherscan')
     },
 
     contractSizer: {
@@ -103,9 +106,6 @@ const config: HardhatUserConfig = {
 };
 
 export default config;
-
-// Patch BigNumber to include a min and a max functions.
-import { BigNumber } from 'ethers';
 
 declare module 'ethers' {
     class BigNumber {

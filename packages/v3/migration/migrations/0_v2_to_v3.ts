@@ -1,9 +1,9 @@
 import { ContractRegistry__factory, TokenGovernance__factory } from '@bancor/contracts-v2/typechain';
-import { TestERC20Token__factory } from 'typechain';
-import { Migration, deployedContract } from 'migration/engine/types';
 import { fetchV2ContractState } from 'components/v2Helpers/v2';
+import { deployedContract, Migration } from 'migration/engine/types';
+import { TestERC20Token__factory } from 'typechain';
 
-export type OldState = {
+export type InitialState = {
     BNT: { token: deployedContract; governance: deployedContract };
     vBNT: { token: deployedContract; governance: deployedContract };
 
@@ -22,26 +22,24 @@ export type State = {
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, V2State: OldState, { deploy, execute }): Promise<State> => {
-        const ContractRegistry = ContractRegistry__factory.connect(V2State.ContractRegistry.address, signer);
+    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
+        const ContractRegistry = ContractRegistry__factory.connect(V2State.ContractRegistry, signer);
+        // Fetch basic info from config
+        const BNT = TestERC20Token__factory.connect(V2State.BNT.token, signer);
+        const vBNT = TestERC20Token__factory.connect(V2State.vBNT.token, signer);
+        const BNTGov = TokenGovernance__factory.connect(V2State.BNT.governance, signer);
+        const vBNTGov = TokenGovernance__factory.connect(V2State.vBNT.governance, signer);
 
-        const BNT = TestERC20Token__factory.connect(V2State.BNT.token.address, signer);
-        const vBNT = TestERC20Token__factory.connect(V2State.vBNT.token.address, signer);
-
-        const BNTGov = TokenGovernance__factory.connect(V2State.BNT.governance.address, signer);
-        const vBNTGov = TokenGovernance__factory.connect(V2State.vBNT.governance.address, signer);
-
-        // Fetch V2 contracts
+        // Fetch V2 contracts from basic info
         const V2ContractState = await fetchV2ContractState(ContractRegistry, signer);
 
+        // Deploy V3 contracts
         const BancorVault = await deploy('BancorVault', contracts.BancorVault.deploy, BNT.address);
 
         return {
             ...V2State,
 
-            BancorVault: {
-                address: BancorVault.address
-            }
+            BancorVault: BancorVault.address
         };
     },
 
