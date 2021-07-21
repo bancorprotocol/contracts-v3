@@ -12,6 +12,8 @@ library Formula {
     using SafeMath for uint256;
     using MathEx for *;
 
+    // solhint-disable var-name-mixedcase
+
     struct WithdrawalAmounts {
         uint256 B;
         uint256 C;
