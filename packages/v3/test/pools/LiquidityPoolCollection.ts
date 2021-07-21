@@ -5,14 +5,7 @@ import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import {
-    NetworkSettings,
-    PendingWithdrawals,
-    BancorNetwork,
-    LiquidityPoolCollection,
-    TestLiquidityPoolCollection,
-    TestERC20Token
-} from 'typechain';
+import {LiquidityPoolCollection, TestLiquidityPoolCollection, TestERC20Token} from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
 import { MAX_UINT256, PPM_RESOLUTION } from 'test/helpers/Constants';
 import MathUtils from 'test/helpers/MathUtils';
