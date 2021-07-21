@@ -1,14 +1,11 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
+import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { BancorNetwork, TokenHolderUpgradeable } from 'typechain';
-
+import { ethers } from 'hardhat';
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
-import { shouldHaveGap } from 'test/helpers/Proxy';
 import { createSystem, createTokenHolder } from 'test/helpers/Factory';
+import { shouldHaveGap } from 'test/helpers/Proxy';
+import { BancorNetwork, TokenHolderUpgradeable } from 'typechain';
 
 let nonOwner: SignerWithAddress;
 let newOwner: SignerWithAddress;

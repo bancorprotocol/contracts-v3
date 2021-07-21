@@ -1,13 +1,11 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
+import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { duration } from 'test/helpers/Time';
+import { ethers } from 'hardhat';
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
-import { shouldHaveGap } from 'test/helpers/Proxy';
 import { createSystem } from 'test/helpers/Factory';
+import { shouldHaveGap } from 'test/helpers/Proxy';
+import { duration } from 'test/helpers/Time';
 import { PendingWithdrawals } from 'typechain';
 
 const DEFAULT_LOCK_DURATION = duration.days(7);

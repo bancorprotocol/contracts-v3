@@ -2,14 +2,7 @@ import { ContractRegistry__factory, TokenGovernance__factory } from '@bancor/con
 import { fetchV2ContractState } from 'components/v2Helpers/v2';
 import { deployedContract, Migration } from 'migration/engine/types';
 import { TestERC20Token__factory } from 'typechain';
-
-export type InitialState = {
-    BNT: { token: deployedContract; governance: deployedContract };
-    vBNT: { token: deployedContract; governance: deployedContract };
-
-    ContractRegistry: deployedContract;
-    VortexBurner: deployedContract;
-};
+import { State as InitialState } from './0_deploy_proxyAdmin';
 
 export type State = {
     BNT: { token: deployedContract; governance: deployedContract };
@@ -22,13 +15,13 @@ export type State = {
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
-        const ContractRegistry = ContractRegistry__factory.connect(V2State.ContractRegistry, signer);
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
+        const ContractRegistry = ContractRegistry__factory.connect(initialState.ContractRegistry, signer);
         // Fetch basic info from config
-        const BNT = TestERC20Token__factory.connect(V2State.BNT.token, signer);
-        const vBNT = TestERC20Token__factory.connect(V2State.vBNT.token, signer);
-        const BNTGov = TokenGovernance__factory.connect(V2State.BNT.governance, signer);
-        const vBNTGov = TokenGovernance__factory.connect(V2State.vBNT.governance, signer);
+        const BNT = TestERC20Token__factory.connect(initialState.BNT.token, signer);
+        const vBNT = TestERC20Token__factory.connect(initialState.vBNT.token, signer);
+        const BNTGov = TokenGovernance__factory.connect(initialState.BNT.governance, signer);
+        const vBNTGov = TokenGovernance__factory.connect(initialState.vBNT.governance, signer);
 
         // Fetch V2 contracts from basic info
         const V2ContractState = await fetchV2ContractState(ContractRegistry, signer);
@@ -37,7 +30,7 @@ const migration: Migration = {
         const BancorVault = await deploy('BancorVault', contracts.BancorVault.deploy, BNT.address);
 
         return {
-            ...V2State,
+            ...initialState,
 
             BancorVault: BancorVault.address
         };

@@ -1,0 +1,17 @@
+{
+    "migrationState": {
+        "latestMigration": -1
+    },
+    "networkState": {
+        "BNT": {
+            "token": "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+            "governance": "0xa489C2b5b36835A327851Ab917A80562B5AFC244"
+        },
+        "vBNT": {
+            "token": "0x48Fb253446873234F2fEBbF9BdeAA72d9d387f94",
+            "governance": "0x0887ae1251E180d7D453aeDEBee26e1639f20113"
+        },
+        "ContractRegistry": "0x52Ae12ABe5D8BD778BD5397F99cA900624CfADD4",
+        "VortexBurner": "0x2f87b1fca1769BC3361700078e1985b2Dc0f1142"
+    }
+}

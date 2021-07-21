@@ -1,13 +1,11 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber } from 'ethers';
-
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
+import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { NetworkSettings, PendingWithdrawals, BancorNetwork, LiquidityPoolCollection, TestERC20Token } from 'typechain';
-import { createSystem } from 'test/helpers/Factory';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 import { PPM_RESOLUTION } from 'test/helpers/Constants';
+import { createSystem } from 'test/helpers/Factory';
+import { LiquidityPoolCollection, TestERC20Token } from 'typechain';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);

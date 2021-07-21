@@ -1,5 +1,6 @@
 import {
     BancorNetwork__factory,
+    ContractRegistry,
     ConverterFactory__factory,
     ConverterRegistryData__factory,
     ConverterRegistry__factory,
@@ -14,7 +15,6 @@ import {
     StakingRewards__factory,
     TokenHolder__factory
 } from '@bancor/contracts-v2/typechain';
-import { ContractRegistry } from '@bancor/contracts-v2/typechain';
 import { Signer } from 'ethers';
 import { formatBytes32String } from 'ethers/lib/utils';
 

@@ -6,7 +6,7 @@ import { getDefaultParams } from 'migration/engine/task';
 import { SystemState } from 'migration/engine/types';
 import path from 'path';
 import { migrateParamTask } from '..';
-import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME } from '../../config';
+import { FORK, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME } from '../../config';
 import { log } from '../logger/logger';
 import { Migration } from '../types';
 
@@ -40,6 +40,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
                 // @TODO revert the migration here
                 return;
             }
+            log.success('Healthcheck success ✨ ');
 
             // if healthcheck passed, update the state and write it to the system
             state = {
@@ -60,43 +61,50 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: migrateParamTask) => {
     const { signer, overrides, executionConfig, deployExecute } = await getDefaultParams(hre, args);
 
-    // If reset, delete all the files in the corresponding network folder
+    const pathToState = path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME);
+
     if (args.reset) {
+        // If reset, delete all the files in the corresponding network folder
         log.info(`Resetting ${NETWORK_NAME} migratation folder`);
-        fs.rmSync(path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME), {
-            recursive: true
+        fs.rmSync(pathToState, {
+            recursive: true,
+            force: true
         });
     }
 
-    // Deployment files
-    let pathToDeploymentFiles = path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME);
-    // If deployment folder doesn't exist, create it
-    if (!fs.existsSync(pathToDeploymentFiles)) {
-        fs.mkdirSync(pathToDeploymentFiles);
+    // If network folder doesn't exist, create it
+    if (!fs.existsSync(pathToState)) {
+        fs.mkdirSync(pathToState);
     }
 
     // Read all files into the folder and fetch any state file
-    const allDeploymentFiles = fs.readdirSync(pathToDeploymentFiles);
-    const deploymentFiles = allDeploymentFiles.find((fileName: string) => fileName === 'state.json');
+    const pathToStateFolder = fs.readdirSync(pathToState);
+    const stateFile = pathToStateFolder.find((fileName: string) => fileName === 'state.json');
 
-    const pathToState = path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME);
     const writeState = async (state: SystemState) => {
         fs.writeFileSync(path.join(pathToState, 'state.json'), JSON.stringify(state, null, 4));
     };
-    const fetchState = () => {
+    const fetchState = (pathToState: string) => {
         return JSON.parse(fs.readFileSync(path.join(pathToState, 'state.json'), 'utf-8')) as SystemState;
     };
 
-    // If there is no state file in the network's folder, create an empty one
-    if (!deploymentFiles) {
-        writeState({
-            migrationState: {
-                latestMigration: -1
-            },
-            networkState: {}
-        });
+    let state = {
+        migrationState: {
+            latestMigration: -1
+        },
+        networkState: {}
+    };
+
+    // If network is a fork fetch info from original network
+    if (FORK.isFork) {
+        state = fetchState(path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, FORK.originalNetwork));
     }
-    const initialState = fetchState();
+
+    // If there is no state file in the network's folder, create an empty one
+    if (!stateFile) {
+        writeState(state);
+    }
+    const initialState = fetchState(pathToState);
 
     // Migration files
     const pathToMigrationFiles = path.join(hre.config.paths.root, MIGRATION_FOLDER);

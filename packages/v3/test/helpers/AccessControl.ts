@@ -1,7 +1,5 @@
 import { expect } from 'chai';
-import { ethers } from 'ethers';
-import { BigNumber } from 'ethers';
-
+import { BigNumber, ethers } from 'ethers';
 import { AccessControlUpgradeable } from 'typechain';
 
 const {

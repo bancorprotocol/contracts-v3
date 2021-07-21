@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 const {
     constants: { AddressZero, MaxUint256 }

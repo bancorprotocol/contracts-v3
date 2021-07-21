@@ -1,8 +1,8 @@
-import { ExecutionError } from './errors/errors';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
+import { Contract } from 'ethers';
+import { ExecutionError } from './errors/errors';
 import { log } from './logger/logger';
 import { executeOverride, executionConfig } from './task';
-import { Contract } from 'ethers';
 
 export type deployExecuteType = ReturnType<typeof initDeployExecute>;
 

@@ -1,17 +1,14 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber, BigNumberish } from 'ethers';
-import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
+import Contracts from 'components/Contracts';
+import { signTypedMessage, TypedDataUtils } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
 import Wallet from 'ethereumjs-wallet';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
-import Contracts from 'components/Contracts';
+import { BigNumber, BigNumberish } from 'ethers';
+import { ethers } from 'hardhat';
+import { MAX_UINT256, ZERO_ADDRESS } from 'test/helpers/Constants';
+import { duration, latest } from 'test/helpers/Time';
 import { PoolToken, TestERC20Token } from 'typechain';
-
-import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
-import { latest, duration } from 'test/helpers/Time';
 
 let poolToken: PoolToken;
 let reserveToken: TestERC20Token;

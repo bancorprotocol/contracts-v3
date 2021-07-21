@@ -1,7 +1,6 @@
-import { ethers } from 'hardhat';
-import { ContractFactory } from '@ethersproject/contracts';
 import { Signer } from '@ethersproject/abstract-signer';
-
+import { ContractFactory } from '@ethersproject/contracts';
+import { ethers } from 'hardhat';
 import {
     BancorNetwork__factory,
     BancorVault__factory,
