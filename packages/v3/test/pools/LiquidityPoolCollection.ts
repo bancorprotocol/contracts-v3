@@ -161,7 +161,7 @@ describe('LiquidityPoolCollection', () => {
                         const expected = tknArbitrage(b, f, m);
                         if (expected.gte(0) && expected.lte(MAX_VAL)) {
                             const actual = await collection.tknArbitrageTest(b, f, m);
-                            expect(actual).to.be.equal(expected.toFixed());
+                            expect(actual.toString()).to.be.equal(expected.toFixed());
                         } else {
                             await expect(collection.tknArbitrageTest(b, f, m)).to.be.revertedWith('');
                         }
@@ -178,7 +178,7 @@ describe('LiquidityPoolCollection', () => {
                             const expected = bntArbitrage(a, b, f, m);
                             if (expected.gte(0) && expected.lte(MAX_VAL)) {
                                 const actual = await collection.bntArbitrageTest(a, b, f, m);
-                                expect(actual).to.be.equal(expected.toFixed());
+                                expect(actual.toString()).to.be.equal(expected.toFixed());
                             } else {
                                 await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.revertedWith('');
                             }
