@@ -6,7 +6,7 @@ import "../network/BancorNetwork.sol";
 contract TestBancorNetwork is BancorNetwork {
     constructor(INetworkSettings initSettings) BancorNetwork(initSettings) {}
 
-    function createPoolF(ILiquidityPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
+    function createPoolT(ILiquidityPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);
     }
 }

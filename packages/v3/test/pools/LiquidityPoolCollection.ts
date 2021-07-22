@@ -126,7 +126,7 @@ describe('LiquidityPoolCollection', () => {
         });
 
         it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
-            await expect(network.createPoolF(collection.address, reserveToken.address)).to.be.revertedWith(
+            await expect(network.createPoolT(collection.address, reserveToken.address)).to.be.revertedWith(
                 'ERR_POOL_NOT_WHITELISTED'
             );
         });
@@ -137,9 +137,9 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should not allow to create the same pool twice', async () => {
-                await network.createPoolF(collection.address, reserveToken.address);
+                await network.createPoolT(collection.address, reserveToken.address);
 
-                await expect(network.createPoolF(collection.address, reserveToken.address)).to.be.revertedWith(
+                await expect(network.createPoolT(collection.address, reserveToken.address)).to.be.revertedWith(
                     'ERR_POOL_ALREADY_EXISTS'
                 );
             });
@@ -148,7 +148,7 @@ describe('LiquidityPoolCollection', () => {
                 let poolTokenAddress = await collection.poolToken(reserveToken.address);
                 expect(poolTokenAddress).to.equal(ZERO_ADDRESS);
 
-                const res = await network.createPoolF(collection.address, reserveToken.address);
+                const res = await network.createPoolT(collection.address, reserveToken.address);
                 poolTokenAddress = await collection.poolToken(reserveToken.address);
 
                 await expect(res).to.emit(collection, 'PoolCreated').withArgs(poolTokenAddress, reserveToken.address);
@@ -183,7 +183,7 @@ describe('LiquidityPoolCollection', () => {
                 });
 
                 it('should create a pool', async () => {
-                    await network.createPoolF(collection.address, reserveToken.address);
+                    await network.createPoolT(collection.address, reserveToken.address);
 
                     const poolTokenAddress = await collection.poolToken(reserveToken.address);
                     const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
@@ -206,7 +206,7 @@ describe('LiquidityPoolCollection', () => {
 
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-            await network.createPoolF(collection.address, reserveToken.address);
+            await network.createPoolT(collection.address, reserveToken.address);
 
             newReserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
         });
