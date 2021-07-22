@@ -5,6 +5,7 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import "../utility/Constants.sol";
 import "../utility/OwnedUpgradeable.sol";
 import "../utility/Utils.sol";
 
@@ -266,8 +267,9 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @inheritdoc ILiquidityPoolCollection
      */
-    function tradingLiquidity(IReserveToken reserveToken) external view override returns (uint256) {
-        return _pools[reserveToken].tradingLiquidity;
+    function tradingLiquidity(IReserveToken reserveToken) external view override returns (uint256, uint256) {
+        uint256 rawTradingLiquidity = _pools[reserveToken].tradingLiquidity;
+        return (_decodeUint128(rawTradingLiquidity, 0), _decodeUint128(rawTradingLiquidity, 1));
     }
 
     /**
@@ -358,5 +360,13 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      */
     function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0x0);
+    }
+
+    /**
+     * @dev decodes the uint128 from a single uint256 variable and returns it as uint256
+     */
+    function _decodeUint128(uint256 data, uint256 index) private pure returns (uint256) {
+        assert(index <= 1);
+        return (data >> (index * 128)) & MAX_UINT128;
     }
 }

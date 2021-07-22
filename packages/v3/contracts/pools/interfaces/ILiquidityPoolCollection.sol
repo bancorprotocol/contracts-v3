@@ -69,7 +69,7 @@ interface ILiquidityPoolCollection {
     /**
      * @dev returns the trading liquidity in a given pool
      */
-    function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256);
+    function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256, uint256);
 
     /**
      * @dev returns the trading liquidity product in a given pool

@@ -162,7 +162,10 @@ describe('LiquidityPoolCollection', () => {
 
                 expect(await collection.tradingFeePPM(reserveToken.address)).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(await collection.depositsEnabled(reserveToken.address)).to.be.true;
-                expect(await collection.tradingLiquidity(reserveToken.address)).to.equal(BigNumber.from(0));
+                expect(await collection.tradingLiquidity(reserveToken.address)).to.deep.equal([
+                    BigNumber.from(0),
+                    BigNumber.from(0)
+                ]);
                 expect(await collection.tradingLiquidityProduct(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.initialRate(reserveToken.address)).to.equal({
