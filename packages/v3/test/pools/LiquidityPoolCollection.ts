@@ -5,7 +5,7 @@ import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import {LiquidityPoolCollection, TestLiquidityPoolCollection, TestERC20Token} from 'typechain';
+import { LiquidityPoolCollection, TestLiquidityPoolCollection, TestERC20Token } from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
 import { MAX_UINT256, PPM_RESOLUTION } from 'test/helpers/Constants';
 import MathUtils from 'test/helpers/MathUtils';
@@ -136,9 +136,9 @@ describe('LiquidityPoolCollection', () => {
             const f = new Decimal(_f);
             const m = new Decimal(_m).div(PPMR);
             return f
-                    .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
-                    .div(f.mul(m).add(b))
-                    .floor();
+                .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
+                .div(f.mul(m).add(b))
+                .floor();
         };
 
         // af(b(2 - m) + f) / (b(b + fm))
@@ -148,10 +148,10 @@ describe('LiquidityPoolCollection', () => {
             const f = new Decimal(_f);
             const m = new Decimal(_m).div(PPMR);
             return a
-                    .mul(f)
-                    .mul(b.mul(m.sub(2).neg()).add(f))
-                    .div(b.mul(b.add(f.mul(m))))
-                    .floor();
+                .mul(f)
+                .mul(b.mul(m.sub(2).neg()).add(f))
+                .div(b.mul(b.add(f.mul(m))))
+                .floor();
         };
 
         for (const b of AMOUNTS) {
