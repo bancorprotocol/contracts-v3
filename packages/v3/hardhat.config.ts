@@ -36,12 +36,17 @@ const hardhatDefaultConfig = {
     }
 };
 
-const hardhatForkedConfig = loadENV('FORK')
-    ? {
-          forking: {
-              url: loadKey(`url-${loadENV('FORK')}`)
+const FORK_NETWORK = loadENV('FORK');
+const FORK_NETWORK_URL = loadKey(`url-${FORK_NETWORK}`);
+
+const hardhatForkedConfig = FORK_NETWORK
+    ? FORK_NETWORK_URL
+        ? {
+              forking: {
+                  url: FORK_NETWORK_URL
+              }
           }
-      }
+        : undefined
     : undefined;
 
 const config: HardhatUserConfig = {

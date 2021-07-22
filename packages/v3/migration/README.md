@@ -67,11 +67,13 @@ Create a migration file based from a template.
 
 ## How to run the migration on a fork ?
 
-Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround. To do so you have to execute the command by specifying the network in which you want to run. like so:
+Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
 
-`FORK=mainnet yarn hh migrate`
+To do so you have to execute the command by specifying the network in which you want to fork as an ENV variable. You'll also need to have the original network `state.json` file. Meaning that if you want to test a migration on a fork of the `mainnet` network you'll need have provided the correct state to the `mainnet` network folder.
 
-In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the key brackets the url for the corresponding FORK value. It NEEDS to start with `url-`, like so: `url-mainnet`.
+Like so: `FORK=mainnet yarn hh migrate`
+
+In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the `keys` object the url for the corresponding FORK value. It NEEDS to start with `url-`, example: `url-mainnet`.
 
 ## How to create a migration file ?
 

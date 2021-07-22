@@ -6,7 +6,7 @@ import { getDefaultParams } from 'migration/engine/task';
 import { SystemState } from 'migration/engine/types';
 import path from 'path';
 import { migrateParamTask } from '..';
-import { FORK, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME } from '../../config';
+import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME, NETWORK_STATUS } from '../../config';
 import { log } from '../logger/logger';
 import { Migration } from '../types';
 
@@ -96,8 +96,16 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
     };
 
     // If network is a fork fetch info from original network
-    if (FORK.isFork) {
-        state = fetchState(path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, FORK.originalNetwork));
+    if (args.reset && NETWORK_STATUS.isFork) {
+        try {
+            log.info(`Fetching initial state from ${NETWORK_STATUS.originalNetwork}`);
+            state = fetchState(path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_STATUS.originalNetwork));
+        } catch (e) {
+            log.error(
+                `${NETWORK_STATUS.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
+            );
+            process.exit();
+        }
     }
 
     // If there is no state file in the network's folder, create an empty one

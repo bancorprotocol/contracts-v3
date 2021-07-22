@@ -13,19 +13,21 @@ type FORK_NETWORK_SUPPORTED = typeof MAINNET;
 
 const GET_NETWORK_NAME = () => {
     const networkForkName = loadENV<FORK_NETWORK_SUPPORTED>('FORK');
-    if (networkForkName) {
-        if (networkForkName !== MAINNET) {
-            log.error(`${networkForkName} is not supported, aborting.`);
-            process.exit(-1);
-        }
 
-        return FORK_PREFIX + networkForkName;
+    if (networkForkName) {
+        if (networkForkName === MAINNET) {
+            return FORK_PREFIX + networkForkName;
+        }
+        log.error(`${networkForkName} is not supported, aborting.`);
+        process.exit(-1);
     }
     return network.name;
 };
 
 export const NETWORK_NAME = GET_NETWORK_NAME();
-export const FORK = {
+
+export const NETWORK_STATUS = {
     isFork: NETWORK_NAME.startsWith(FORK_PREFIX),
-    originalNetwork: GET_NETWORK_NAME().substring(FORK_PREFIX.length)
+    originalNetwork: NETWORK_NAME.substring(FORK_PREFIX.length),
+    networkName: NETWORK_NAME
 };
