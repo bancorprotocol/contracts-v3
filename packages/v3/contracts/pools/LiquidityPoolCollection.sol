@@ -140,8 +140,31 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the TKN arbitrage amount, and the BNT amount which should
-     * be added to the pool in order to create an optimal arbitrage incentive
+     * @dev returns the TKN arbitrage amount
+     *
+     * input:
+     * b = TKN hypothetical pool balance
+     * f = TKN settlement amount
+     * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * f(f - bm - 2fm) / (fm + b)
+     */
+    function tknArbitrage(
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (uint256) {
+        uint256 bm = b.mul(m);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), fm.add(bM));
+    }
+
+    /**
+     * @dev returns the BNT amount which should be added to
+     * the pool in order to create an optimal arbitrage incentive
      *
      * input:
      * a = BNT hypothetical pool balance
@@ -150,22 +173,18 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
-     * TKN amount = f(f - bm - 2fm) / (fm + b)
-     * BNT amount = af(b(2 - m) + f) / (b(b + fm))
+     * af(b(2 - m) + f) / (b(b + fm))
      */
-    function arbitrageAmounts(
+    function bntArbitrage(
         uint256 a,
         uint256 b,
         uint256 f,
         uint256 m
-    ) internal pure returns (ArbitrageAmounts memory) {
-        ArbitrageAmounts memory result;
-        uint256 bm = b.mul(m);
+    ) internal pure returns (uint256) {
+        uint256 af = a.mul(f);
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        result.tkn = MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), fm.add(bM));
-        result.bnt = MathEx.mulDivF(a.mul(f), b.mul(2 * PPM_RESOLUTION - m).add(fM), b.mul(bM.add(fm)));
-        return result;
+        return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).add(fM), b.mul(bM.add(fm)));
     }
 }

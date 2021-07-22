@@ -130,42 +130,57 @@ describe('LiquidityPoolCollection', () => {
             );
         });
 
-        // tkn = f(f - bm - 2fm) / (fm + b)
-        // bnt = af(b(2 - m) + f) / (b(b + fm))
-        const arbitrageAmounts = (_a: string, _b: string, _f: string, _m: number) => {
+        // f(f - bm - 2fm) / (fm + b)
+        const tknArbitrage = (_b: string, _f: string, _m: number) => {
+            const b = new Decimal(_b);
+            const f = new Decimal(_f);
+            const m = new Decimal(_m).div(PPMR);
+            return f
+                    .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
+                    .div(f.mul(m).add(b))
+                    .floor();
+        };
+
+        // af(b(2 - m) + f) / (b(b + fm))
+        const bntArbitrage = (_a: string, _b: string, _f: string, _m: number) => {
             const a = new Decimal(_a);
             const b = new Decimal(_b);
             const f = new Decimal(_f);
             const m = new Decimal(_m).div(PPMR);
-            return {
-                tkn: f
-                    .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
-                    .div(f.mul(m).add(b))
-                    .floor(),
-                bnt: a
+            return a
                     .mul(f)
                     .mul(b.mul(m.sub(2).neg()).add(f))
                     .div(b.mul(b.add(f.mul(m))))
-                    .floor()
-            };
+                    .floor();
         };
 
-        const validUint256 = (x: any) => {
-            return x.gte(0) && x.lte(MAX_VAL);
-        };
+        for (const b of AMOUNTS) {
+            for (const f of AMOUNTS) {
+                for (const m of FEES) {
+                    it(`tknArbitrage(${[b, f, m]})`, async () => {
+                        const expected = tknArbitrage(b, f, m);
+                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                            const actual = await collection.tknArbitrageTest(b, f, m);
+                            expect(actual).to.be.equal(expected.toFixed());
+                        } else {
+                            await expect(collection.tknArbitrageTest(b, f, m)).to.be.revertedWith('');
+                        }
+                    });
+                }
+            }
+        }
 
         for (const a of AMOUNTS) {
             for (const b of AMOUNTS) {
                 for (const f of AMOUNTS) {
                     for (const m of FEES) {
-                        it(`arbitrageAmounts(${[a, b, f, m]})`, async () => {
-                            const expected = arbitrageAmounts(a, b, f, m);
-                            if (validUint256(expected.tkn) && validUint256(expected.bnt)) {
-                                const actual = await collection.arbitrageAmountsTest(a, b, f, m);
-                                expect(actual.tkn).to.be.equal(expected.tkn.toFixed());
-                                expect(actual.bnt).to.be.equal(expected.bnt.toFixed());
+                        it(`bntArbitrage(${[a, b, f, m]})`, async () => {
+                            const expected = bntArbitrage(a, b, f, m);
+                            if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                                const actual = await collection.bntArbitrageTest(a, b, f, m);
+                                expect(actual).to.be.equal(expected.toFixed());
                             } else {
-                                await expect(collection.arbitrageAmountsTest(a, b, f, m)).to.be.revertedWith('');
+                                await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.revertedWith('');
                             }
                         });
                     }

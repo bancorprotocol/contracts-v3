@@ -7,12 +7,20 @@ import "../pools/LiquidityPoolCollection.sol";
 contract TestLiquidityPoolCollection is LiquidityPoolCollection {
     constructor(IBancorNetwork initNetwork) LiquidityPoolCollection(initNetwork) {}
 
-    function arbitrageAmountsTest(
+    function tknArbitrageTest(
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) external pure returns (uint256) {
+        return super.tknArbitrage(b, f, m);
+    }
+
+    function bntArbitrageTest(
         uint256 a,
         uint256 b,
         uint256 f,
         uint256 m
-    ) external pure returns (ArbitrageAmounts memory) {
-        return super.arbitrageAmounts(a, b, f, m);
+    ) external pure returns (uint256) {
+        return super.bntArbitrage(a, b, f, m);
     }
 }
