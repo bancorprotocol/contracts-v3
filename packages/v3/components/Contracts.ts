@@ -33,14 +33,14 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
     contractName: string;
-    deploy(...args: Array<any>): Promise<Contract<F>>;
+    deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
     attach(address: string, passedSigner?: Signer): Promise<Contract<F>>;
 }
 
 const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer): ContractBuilder<F> => {
     return {
         contractName,
-        deploy: async (...args: Parameters<any>): Promise<Contract<F>> => {
+        deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
 
             return (await ethers.getContractFactory(contractName, defaultSigner)).deploy(

@@ -41,7 +41,7 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
         return cached.contract;
     }
 
-    const logicContract = await factory.deploy(...(ctorArgs || []));
+    const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
     logicContractsCache[factory.contractName] = { ctorArgs, contract: logicContract };
 
     return logicContract;
