@@ -112,6 +112,16 @@ describe('LiquidityPoolCollection', () => {
     });
 
     describe('stateless tests', () => {
+        const MAX_VAL: string = MAX_UINT256.toString();
+        const PPMR: number = PPM_RESOLUTION.toNumber();
+
+        const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => (x * PPMR) / 100);
+
+        const AMOUNTS = [
+            ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed()),
+            ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed())
+        ];
+
         let collection: TestLiquidityPoolCollection;
 
         before(async () => {
@@ -122,9 +132,11 @@ describe('LiquidityPoolCollection', () => {
 
         // tkn = f(f - bm - 2fm) / (fm + b)
         // bnt = af(b(2 - m) + f) / (b(b + fm))
-        const arbitrageAmounts = (a: any, b: any, f: any, m: any) => {
-            [a, b, f, m] = [a, b, f, m].map((x) => new Decimal(x));
-            m = m.div(PPM_RESOLUTION.toNumber());
+        const arbitrageAmounts = (_a: string, _b: string, _f: string, _m: number) => {
+            const a = new Decimal(_a);
+            const b = new Decimal(_b);
+            const f = new Decimal(_f);
+            const m = new Decimal(_m).div(PPMR);
             return {
                 tkn: f
                     .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
@@ -139,15 +151,8 @@ describe('LiquidityPoolCollection', () => {
         };
 
         const validUint256 = (x: any) => {
-            return x.gte(0) && x.lte(MAX_UINT256.toString());
+            return x.gte(0) && x.lte(MAX_VAL);
         };
-
-        const AMOUNTS = [
-            ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed()),
-            ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed())
-        ];
-
-        const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => (x * PPM_RESOLUTION.toNumber()) / 100);
 
         for (const a of AMOUNTS) {
             for (const b of AMOUNTS) {
