@@ -1,4 +1,3 @@
-import Contracts from 'components/Contracts';
 import { importCsjOrEsModule } from 'components/TaskUtils';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -11,7 +10,10 @@ import { log } from '../logger/logger';
 import { Migration } from '../types';
 
 export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {
-    const { signer, migrationsData, initialState, writeState, deployExecute } = await getMigrateParams(hre, args);
+    const { signer, contracts, migrationsData, initialState, writeState, executionTools } = await getMigrateParams(
+        hre,
+        args
+    );
 
     let state = initialState;
 
@@ -30,12 +32,11 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         // Save oldState
         const oldState = currentNetworkState;
 
-        const contracts = Contracts.connect(signer);
         try {
-            currentNetworkState = await migration.up(signer, contracts, currentNetworkState, deployExecute);
+            currentNetworkState = await migration.up(signer, contracts, currentNetworkState, executionTools);
 
             // if healthcheck doesn't pass
-            if (!(await migration.healthcheck(signer, contracts, currentNetworkState, deployExecute))) {
+            if (!(await migration.healthcheck(signer, contracts, currentNetworkState, executionTools))) {
                 log.error('Healthcheck failed');
                 // @TODO revert the migration here
                 return;
@@ -59,7 +60,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 };
 
 export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: migrateParamTask) => {
-    const { signer, overrides, executionConfig, deployExecute } = await getDefaultParams(hre, args);
+    const { signer, contracts, overrides, executionConfig, executionTools } = await getDefaultParams(hre, args);
 
     const pathToState = path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME);
 
@@ -142,8 +143,9 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
 
     return {
         signer,
+        contracts,
         initialState,
-        deployExecute,
+        executionTools,
         writeState,
         migrationsData,
         executionConfig,

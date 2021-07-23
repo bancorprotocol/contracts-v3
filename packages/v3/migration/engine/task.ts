@@ -1,9 +1,12 @@
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
+import Contracts from 'components/Contracts';
 import { BigNumberish } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { NETWORK_NAME } from 'migration/config';
 import { initDeployExecute } from './executions';
+import { initProxy } from './Proxy';
+import { executionTools } from './types';
 
 export type defaultParamTask = {
     ledger: boolean;
@@ -38,12 +41,21 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
         throw new Error("Transaction confirmation wasn't defined. Aborting");
     }
 
+    const contracts = Contracts.connect(signer);
+
     const deployExecute = initDeployExecute(executionConfig, overrides);
+    const proxy = initProxy(contracts);
+
+    const executionTools: executionTools = {
+        ...deployExecute,
+        ...proxy
+    };
 
     return {
         signer,
+        contracts,
         overrides,
         executionConfig,
-        deployExecute
+        executionTools
     };
 };

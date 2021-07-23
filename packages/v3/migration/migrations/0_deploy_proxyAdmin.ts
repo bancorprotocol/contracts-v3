@@ -8,18 +8,12 @@ export type InitialState = {
     VortexBurner: deployedContract;
 };
 
-export type State = {
-    BNT: { token: deployedContract; governance: deployedContract };
-    vBNT: { token: deployedContract; governance: deployedContract };
-
-    ContractRegistry: deployedContract;
-    VortexBurner: deployedContract;
-
+export type NextState = InitialState & {
     ProxyAdmin: deployedContract;
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<NextState> => {
         const ProxyAdmin = await deploy('ProxyAdmin', contracts.ProxyAdmin.deploy);
 
         return {
@@ -29,7 +23,7 @@ const migration: Migration = {
         };
     },
 
-    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
+    healthcheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
 
         if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
