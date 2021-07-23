@@ -1,12 +1,19 @@
 import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, ContractFactory } from 'ethers';
 import { ProxyAdmin, TransparentUpgradeableProxy } from 'typechain';
+import { deployExecuteType } from './executions';
 
 export type proxyType = ReturnType<typeof initProxy>;
 
-export const initProxy = (contracts: typeof Contracts) => {
+export const initProxy = (contracts: typeof Contracts, { deploy, execute }: deployExecuteType) => {
     const createTransparentProxy = async (admin: BaseContract, logicContract: BaseContract) => {
-        return contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, []);
+        return await deploy(
+            'Deploying Upgradeable Proxy',
+            contracts.TransparentUpgradeableProxy.deploy,
+            logicContract.address,
+            admin.address,
+            []
+        );
     };
 
     const createProxy = async <F extends ContractFactory>(
@@ -14,7 +21,11 @@ export const initProxy = (contracts: typeof Contracts) => {
         logicContractToDeploy: ContractBuilder<F>,
         ...ctorArgs: Parameters<F['deploy']>
     ): Promise<Contract<F> & { asProxy: TransparentUpgradeableProxy }> => {
-        const logicContract = await logicContractToDeploy.deploy(...ctorArgs);
+        const logicContract = await deploy(
+            'Deploying Logic contract',
+            logicContractToDeploy.deploy as any,
+            ...ctorArgs
+        );
         const proxy = await createTransparentProxy(admin, logicContract);
 
         return {

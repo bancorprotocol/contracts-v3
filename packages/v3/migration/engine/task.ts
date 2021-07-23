@@ -44,7 +44,7 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
     const contracts = Contracts.connect(signer);
 
     const deployExecute = initDeployExecute(executionConfig, overrides);
-    const proxy = initProxy(contracts);
+    const proxy = initProxy(contracts, deployExecute);
 
     const executionTools: executionTools = {
         ...deployExecute,
