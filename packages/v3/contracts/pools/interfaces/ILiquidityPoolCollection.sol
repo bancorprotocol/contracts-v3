@@ -67,7 +67,7 @@ interface ILiquidityPoolCollection {
     function depositsEnabled(IReserveToken reserveToken) external view returns (bool);
 
     /**
-     * @dev returns the trading liquidity in a given pool
+     * @dev returns the trading liquidity (reserve token liquidity, network token liquidity) in a given pool
      */
     function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256, uint256);
 
