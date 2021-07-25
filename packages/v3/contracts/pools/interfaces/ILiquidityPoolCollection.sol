@@ -72,11 +72,6 @@ interface ILiquidityPoolCollection {
     function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256, uint256);
 
     /**
-     * @dev returns the trading liquidity product in a given pool
-     */
-    function tradingLiquidityProduct(IReserveToken reserveToken) external view returns (uint256);
-
-    /**
      * @dev returns the staked balance in a given pool
      */
     function stakedBalance(IReserveToken reserveToken) external view returns (uint256);

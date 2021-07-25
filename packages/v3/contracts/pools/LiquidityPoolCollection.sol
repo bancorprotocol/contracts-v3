@@ -260,13 +260,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @inheritdoc ILiquidityPoolCollection
      */
-    function tradingLiquidityProduct(IReserveToken reserveToken) external view override returns (uint256) {
-        return _pools[reserveToken].tradingLiquidityProduct;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
     function tradingLiquidity(IReserveToken reserveToken) external view override returns (uint256, uint256) {
         uint256 rawTradingLiquidity = _pools[reserveToken].tradingLiquidity;
         return (_decodeUint128(rawTradingLiquidity, 0), _decodeUint128(rawTradingLiquidity, 1));

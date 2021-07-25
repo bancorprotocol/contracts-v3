@@ -166,7 +166,6 @@ describe('LiquidityPoolCollection', () => {
                     BigNumber.from(0),
                     BigNumber.from(0)
                 ]);
-                expect(await collection.tradingLiquidityProduct(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
                 expect(await collection.initialRate(reserveToken.address)).to.equal({
                     n: BigNumber.from(0),
