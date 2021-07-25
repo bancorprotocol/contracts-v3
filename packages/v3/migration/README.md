@@ -32,7 +32,7 @@ export interface Migration {
         initialState: any,
         { deploy, execute }: deployExecuteType
     ) => Promise<{}>;
-    healthcheck: (
+    healthCheck: (
         signer: Signer,
         contracts: Contracts,
         newState: any,
@@ -115,7 +115,7 @@ const migration: Migration = {
         };
     },
 
-    healthcheck: async (signer, contracts, state: State, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };

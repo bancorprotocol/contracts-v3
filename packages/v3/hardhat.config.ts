@@ -2,7 +2,6 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
-// Patch BigNumber to include a min and a max functions.
 import { BigNumber } from 'ethers';
 import fs from 'fs';
 import 'hardhat-abi-exporter';

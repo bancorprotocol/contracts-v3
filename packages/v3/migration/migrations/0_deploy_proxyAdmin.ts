@@ -3,9 +3,6 @@ import { deployedContract, Migration } from 'migration/engine/types';
 export type InitialState = {
     BNT: { token: deployedContract; governance: deployedContract };
     vBNT: { token: deployedContract; governance: deployedContract };
-
-    ContractRegistry: deployedContract;
-    VortexBurner: deployedContract;
 };
 
 export type NextState = InitialState & {
@@ -23,7 +20,7 @@ const migration: Migration = {
         };
     },
 
-    healthcheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
 
         if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;

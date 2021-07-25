@@ -12,7 +12,6 @@ export type NextState = InitialState & {
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, createProxy }): Promise<NextState> => {
-        //
         const admin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
 
         const networkSettings = await createProxy(admin, contracts.NetworkSettings);
@@ -46,39 +45,16 @@ const migration: Migration = {
         return {
             ...initialState,
 
-            networkSettings: {
-                proxy: networkSettings.address,
-                logic: await networkSettings.asProxy.connect(admin.address).callStatic.implementation()
-            },
-
-            bancorNetwork: {
-                proxy: bancorNetwork.address,
-                logic: await bancorNetwork.asProxy.connect(admin.address).callStatic.implementation()
-            },
-
-            vault: {
-                proxy: vault.address,
-                logic: await vault.asProxy.connect(admin.address).callStatic.implementation()
-            },
-
-            networkTokenPool: {
-                proxy: networkTokenPool.address,
-                logic: await networkTokenPool.asProxy.connect(admin.address).callStatic.implementation()
-            },
-
-            pendingWithdrawals: {
-                proxy: pendingWithdrawals.address,
-                logic: await pendingWithdrawals.asProxy.connect(admin.address).callStatic.implementation()
-            },
-
-            collection: {
-                proxy: collection.address,
-                logic: await collection.asProxy.connect(admin.address).callStatic.implementation()
-            }
+            networkSettings: networkSettings.address,
+            bancorNetwork: bancorNetwork.address,
+            vault: vault.address,
+            networkTokenPool: networkTokenPool.address,
+            pendingWithdrawals: pendingWithdrawals.address,
+            collection: collection.address
         };
     },
 
-    healthcheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         return true;
     }
 };

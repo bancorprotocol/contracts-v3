@@ -12,10 +12,7 @@ export type SystemState = {
 
 export type deployedContract = string;
 
-export type deployedProxy = {
-    proxy: deployedContract;
-    logic: deployedContract;
-};
+export type deployedProxy = deployedContract;
 
 export type executionTools = deployExecuteType & proxyType;
 
@@ -26,7 +23,7 @@ export interface Migration {
         initialState: any,
         { deploy, execute, createProxy }: executionTools
     ) => Promise<{}>;
-    healthcheck: (
+    healthCheck: (
         signer: Signer,
         contracts: Contracts,
         newState: any,
