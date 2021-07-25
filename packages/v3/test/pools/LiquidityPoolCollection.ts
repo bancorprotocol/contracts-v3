@@ -21,6 +21,78 @@ let nonOwner: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
 
+const testFormula = (amounts: string[], fees: number[]) => {
+    const MAX_VAL: string = MAX_UINT256.toString();
+    const PPMR: number = PPM_RESOLUTION.toNumber();
+
+    fees = fees.map((x) => (x * PPMR) / 100);
+
+    let collection: TestLiquidityPoolCollection;
+
+    before(async () => {
+        const reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, 0);
+        collection = await Contracts.TestLiquidityPoolCollection.deploy(reserveToken.address);
+    });
+
+    // f(f - bm - 2fm) / (fm + b)
+    const tknArbitrage = (_b: string, _f: string, _m: number) => {
+        const b = new Decimal(_b);
+        const f = new Decimal(_f);
+        const m = new Decimal(_m).div(PPMR);
+        return f
+            .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
+            .div(f.mul(m).add(b))
+            .floor();
+    };
+
+    // af(b(2 - m) + f) / (b(b + fm))
+    const bntArbitrage = (_a: string, _b: string, _f: string, _m: number) => {
+        const a = new Decimal(_a);
+        const b = new Decimal(_b);
+        const f = new Decimal(_f);
+        const m = new Decimal(_m).div(PPMR);
+        return a
+            .mul(f)
+            .mul(b.mul(m.sub(2).neg()).add(f))
+            .div(b.mul(b.add(f.mul(m))))
+            .floor();
+    };
+
+    for (const b of amounts) {
+        for (const f of amounts) {
+            for (const m of fees) {
+                it(`tknArbitrage(${[b, f, m]})`, async () => {
+                    const expected = tknArbitrage(b, f, m);
+                    if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                        const actual = await collection.tknArbitrageTest(b, f, m);
+                        expect(actual.toString()).to.be.equal(expected.toFixed());
+                    } else {
+                        await expect(collection.tknArbitrageTest(b, f, m)).to.be.revertedWith('');
+                    }
+                });
+            }
+        }
+    }
+
+    for (const a of amounts) {
+        for (const b of amounts) {
+            for (const f of amounts) {
+                for (const m of fees) {
+                    it(`bntArbitrage(${[a, b, f, m]})`, async () => {
+                        const expected = bntArbitrage(a, b, f, m);
+                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                            const actual = await collection.bntArbitrageTest(a, b, f, m);
+                            expect(actual.toString()).to.be.equal(expected.toFixed());
+                        } else {
+                            await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.revertedWith('');
+                        }
+                    });
+                }
+            }
+        }
+    }
+};
+
 describe('LiquidityPoolCollection', () => {
     before(async () => {
         [, nonOwner] = await ethers.getSigners();
@@ -108,81 +180,17 @@ describe('LiquidityPoolCollection', () => {
             expect(await collection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
     });
+
+    describe('formula sanity tests', () => {
+        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x).toFixed());
+        const FEES = [0.25, 0.5, 1];
+        testFormula(AMOUNTS, FEES);
+    });
 });
 
-describe('LiquidityPoolCollection Stress Tests', () => {
-    const MAX_VAL: string = MAX_UINT256.toString();
-    const PPMR: number = PPM_RESOLUTION.toNumber();
-
-    const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => (x * PPMR) / 100);
-
-    const AMOUNTS = [
-        ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed()),
-        ...[12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed())
-    ];
-
-    let collection: TestLiquidityPoolCollection;
-
-    before(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
-        collection = await Contracts.TestLiquidityPoolCollection.deploy(reserveToken.address);
-    });
-
-    // f(f - bm - 2fm) / (fm + b)
-    const tknArbitrage = (_b: string, _f: string, _m: number) => {
-        const b = new Decimal(_b);
-        const f = new Decimal(_f);
-        const m = new Decimal(_m).div(PPMR);
-        return f
-            .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
-            .div(f.mul(m).add(b))
-            .floor();
-    };
-
-    // af(b(2 - m) + f) / (b(b + fm))
-    const bntArbitrage = (_a: string, _b: string, _f: string, _m: number) => {
-        const a = new Decimal(_a);
-        const b = new Decimal(_b);
-        const f = new Decimal(_f);
-        const m = new Decimal(_m).div(PPMR);
-        return a
-            .mul(f)
-            .mul(b.mul(m.sub(2).neg()).add(f))
-            .div(b.mul(b.add(f.mul(m))))
-            .floor();
-    };
-
-    for (const b of AMOUNTS) {
-        for (const f of AMOUNTS) {
-            for (const m of FEES) {
-                it(`tknArbitrage(${[b, f, m]})`, async () => {
-                    const expected = tknArbitrage(b, f, m);
-                    if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await collection.tknArbitrageTest(b, f, m);
-                        expect(actual.toString()).to.be.equal(expected.toFixed());
-                    } else {
-                        await expect(collection.tknArbitrageTest(b, f, m)).to.be.revertedWith('');
-                    }
-                });
-            }
-        }
-    }
-
-    for (const a of AMOUNTS) {
-        for (const b of AMOUNTS) {
-            for (const f of AMOUNTS) {
-                for (const m of FEES) {
-                    it(`bntArbitrage(${[a, b, f, m]})`, async () => {
-                        const expected = bntArbitrage(a, b, f, m);
-                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await collection.bntArbitrageTest(a, b, f, m);
-                            expect(actual.toString()).to.be.equal(expected.toFixed());
-                        } else {
-                            await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.revertedWith('');
-                        }
-                    });
-                }
-            }
-        }
-    }
+describe('@stress LiquidityPoolCollection', () => {
+    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed());
+    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed());
+    const FEES = [0, 0.05, 0.25, 0.5, 1];
+    testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
 });
