@@ -67,7 +67,7 @@ interface ILiquidityPoolCollection {
     function depositsEnabled(IReserveToken reserveToken) external view returns (bool);
 
     /**
-     * @dev returns the trading liquidity (reserve token liquidity, network token liquidity) in a given pool
+     * @dev returns the trading liquidity (base token liquidity, network token liquidity) in a given pool
      */
     function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256, uint256);
 
@@ -77,7 +77,7 @@ interface ILiquidityPoolCollection {
     function stakedBalance(IReserveToken reserveToken) external view returns (uint256);
 
     /**
-     * @dev returns the initial rate of one reserve token in network token units in a given pool
+     * @dev returns the initial rate of one base token in network token units in a given pool
      */
     function initialRate(IReserveToken reserveToken) external view returns (Fraction memory);
 
