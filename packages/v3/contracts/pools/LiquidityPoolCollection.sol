@@ -140,7 +140,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the TKN arbitrage amount
+     * @dev returns the TKN arbitrage value
      *
      * input:
      * b = TKN hypothetical pool balance
