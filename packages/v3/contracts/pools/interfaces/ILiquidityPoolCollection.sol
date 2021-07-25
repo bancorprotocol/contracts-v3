@@ -77,7 +77,7 @@ interface ILiquidityPoolCollection {
     function stakedBalance(IReserveToken reserveToken) external view returns (uint256);
 
     /**
-     * @dev returns the initial rate of between the reserve token and the network token in a given pool
+     * @dev returns the initial rate of one reserve token in network token units in a given pool
      */
     function initialRate(IReserveToken reserveToken) external view returns (Fraction memory);
 
