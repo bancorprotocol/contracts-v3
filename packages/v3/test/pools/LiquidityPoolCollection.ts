@@ -87,9 +87,9 @@ describe('LiquidityPoolCollection', () => {
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(
-                collection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith('ERR_INVALID_FEE');
+            await expect(collection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
+                'ERR_INVALID_FEE'
+            );
         });
 
         it('should be to able to set and update the default trading fee', async () => {
