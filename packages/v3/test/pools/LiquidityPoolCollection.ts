@@ -125,9 +125,8 @@ describe('LiquidityPoolCollection', () => {
         let collection: TestLiquidityPoolCollection;
 
         before(async () => {
-            collection = await Contracts.TestLiquidityPoolCollection.deploy(
-                '0x1111111111111111111111111111111111111111'
-            );
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+            collection = await Contracts.TestLiquidityPoolCollection.deploy(reserveToken.address);
         });
 
         // f(f - bm - 2fm) / (fm + b)
