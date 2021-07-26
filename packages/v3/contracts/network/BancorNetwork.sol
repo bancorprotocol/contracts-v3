@@ -373,7 +373,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev verifies if a pool collection exists
+     * @dev verifies that a pool collection exists
      */
     function _verifyPoolCollection(ILiquidityPoolCollection poolCollection) private view {
         require(_poolCollections.contains(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
