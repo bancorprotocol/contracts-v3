@@ -1,18 +1,19 @@
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
+import Decimal from 'decimal.js';
 
 import Contracts from 'components/Contracts';
 import { TestMathEx } from 'typechain';
 
 import MathUtils from 'test/helpers/MathUtils';
 
-const { Decimal, floorSqrt, ceilSqrt, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
+const { floorSqrt, ceilSqrt, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 
 const MAX_UINT128 = new Decimal(2).pow(128).sub(1);
 const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
 const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128);
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
-const PR_MAX_ERROR = '0.00000000000000000000000000000000000001';
+const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 
 describe('MathEx', () => {
     let mathContract: TestMathEx;
@@ -51,7 +52,10 @@ describe('MathEx', () => {
                     it(`productRatio(${an}, ${bn}, ${ad}, ${bd})`, async () => {
                         const expected = MathUtils.productRatio(an, bn, ad, bd);
                         const actual = await mathContract.productRatioTest(an, bn, ad, bd);
-                        expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: PR_MAX_ERROR });
+                        expectAlmostEqual(actual, expected, {
+                            maxAbsoluteError: new Decimal(0),
+                            maxRelativeError: PR_MAX_ERROR
+                        });
                     });
                 }
             }
@@ -64,7 +68,10 @@ describe('MathEx', () => {
                 it(`reducedRatio(${a}, ${b}, ${scale.toFixed()})`, async () => {
                     const expected = reducedRatio(a, b, scale);
                     const actual = await mathContract.reducedRatioTest(a, b, scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0)
+                    });
                 });
             }
         }
@@ -78,7 +85,10 @@ describe('MathEx', () => {
                 it(`reducedRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = reducedRatio(a, b, scale);
                     const actual = await mathContract.reducedRatioTest(a.toFixed(), b.toFixed(), scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0.135' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0.135)
+                    });
                 });
             }
         }
@@ -90,7 +100,10 @@ describe('MathEx', () => {
                 it(`normalizedRatio(${a}, ${b}, ${scale.toFixed()})`, async () => {
                     const expected = normalizedRatio(a, b, scale);
                     const actual = await mathContract.normalizedRatioTest(a, b, scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0.00000241' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0.00000241)
+                    });
                 });
             }
         }
@@ -104,7 +117,10 @@ describe('MathEx', () => {
                 it(`normalizedRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = normalizedRatio(a, b, scale);
                     const actual = await mathContract.normalizedRatioTest(a.toFixed(), b.toFixed(), scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0.135' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0.135)
+                    });
                 });
             }
         }
@@ -116,7 +132,10 @@ describe('MathEx', () => {
                 it(`accurateRatio(${a}, ${b}, ${scale.toFixed()})`, async () => {
                     const expected = accurateRatio(a, b, scale);
                     const actual = await mathContract.accurateRatioTest(a, b, scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0.0000024' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0.0000024)
+                    });
                 });
             }
         }
@@ -130,7 +149,10 @@ describe('MathEx', () => {
                 it(`accurateRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = accurateRatio(a, b, scale);
                     const actual = await mathContract.accurateRatioTest(a.toFixed(), b.toFixed(), scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '0', maxRelativeError: '0.135' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(0),
+                        maxRelativeError: new Decimal(0.135)
+                    });
                 });
             }
         }
@@ -153,7 +175,10 @@ describe('MathEx', () => {
                 it(`accurateRatio(${a.toFixed()}, ${b.toFixed()}, ${scale.toFixed()})`, async () => {
                     const expected = accurateRatio(a, b, scale);
                     const actual = await mathContract.accurateRatioTest(a.toFixed(), b.toFixed(), scale.toFixed());
-                    expectAlmostEqual(actual, expected, { maxAbsoluteError: '1.6', maxRelativeError: '0' });
+                    expectAlmostEqual(actual, expected, {
+                        maxAbsoluteError: new Decimal(1.6),
+                        maxRelativeError: new Decimal(0)
+                    });
                 });
             }
         }
@@ -202,6 +227,21 @@ describe('MathEx', () => {
         }
     }
 
+    type MulDivFunction = 'mulDivC' | 'mulDivF';
+    const testMulDiv = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
+        it(`${methodName}(${x}, ${y}, ${z})`, async () => {
+            const expected = MathUtils[methodName](x, y, z);
+            if (expected.lte(MAX_UINT256)) {
+                const actual = await mathContract[methodName](x.toFixed(), y.toFixed(), z.toFixed());
+                expect(actual).to.equal(BigNumber.from(expected.toFixed()));
+            } else {
+                await expect(mathContract[methodName](x.toFixed(), y.toFixed(), z.toFixed())).to.be.revertedWith(
+                    'ERR_OVERFLOW'
+                );
+            }
+        });
+    };
+
     for (const methodName of ['mulDivF', 'mulDivC']) {
         for (const px of [0, 64, 128, 192, 255, 256]) {
             for (const py of [0, 64, 128, 192, 255, 256]) {
@@ -212,7 +252,7 @@ describe('MathEx', () => {
                                 const x = new Decimal(2).pow(px).add(ax);
                                 const y = new Decimal(2).pow(py).add(ay);
                                 const z = new Decimal(2).pow(pz).add(az);
-                                testMulDiv(methodName, x, y, z);
+                                testMulDiv(methodName as MulDivFunction, x, y, z);
                             }
                         }
                     }
@@ -231,7 +271,7 @@ describe('MathEx', () => {
                                 const x = new Decimal(2).pow(px).sub(ax);
                                 const y = new Decimal(2).pow(py).sub(ay);
                                 const z = new Decimal(2).pow(pz).sub(az);
-                                testMulDiv(methodName, x, y, z);
+                                testMulDiv(methodName as MulDivFunction, x, y, z);
                             }
                         }
                     }
@@ -250,7 +290,7 @@ describe('MathEx', () => {
                                 const x = new Decimal(2).pow(px).divToInt(ax);
                                 const y = new Decimal(2).pow(py).divToInt(ay);
                                 const z = new Decimal(2).pow(pz).divToInt(az);
-                                testMulDiv(methodName, x, y, z);
+                                testMulDiv(methodName as MulDivFunction, x, y, z);
                             }
                         }
                     }
@@ -259,7 +299,11 @@ describe('MathEx', () => {
         }
     }
 
-    function expectAlmostEqual(actual: any, expected: any, range: any) {
+    const expectAlmostEqual = (
+        actual: [BigNumber, BigNumber],
+        expected: Decimal[],
+        range: { maxAbsoluteError: Decimal; maxRelativeError: Decimal }
+    ) => {
         const x = expected[0].mul(actual[1].toString());
         const y = expected[1].mul(actual[0].toString());
         if (!x.eq(y)) {
@@ -270,19 +314,5 @@ describe('MathEx', () => {
                 `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
             );
         }
-    }
-
-    function testMulDiv(methodName: any, x: any, y: any, z: any) {
-        it(`${methodName}(${x}, ${y}, ${z})`, async () => {
-            const expected = (MathUtils as any)[methodName](x, y, z);
-            if (expected.lte(MAX_UINT256)) {
-                const actual = await (mathContract as any)[methodName](x.toFixed(), y.toFixed(), z.toFixed());
-                expect(actual).to.equal(BigNumber.from(expected.toFixed()));
-            } else {
-                await expect(
-                    (mathContract as any)[methodName](x.toFixed(), y.toFixed(), z.toFixed())
-                ).to.be.revertedWith('ERR_OVERFLOW');
-            }
-        });
-    }
+    };
 });
