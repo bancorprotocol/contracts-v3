@@ -1,24 +1,20 @@
-import fs from 'fs';
-import path from 'path';
-
-import { HardhatUserConfig } from 'hardhat/config';
-
-import 'tsconfig-paths/register';
-
-import '@nomiclabs/hardhat-waffle';
+import { customChai } from './test/matchers';
 import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
+import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import chai from 'chai';
+import { BigNumber } from 'ethers';
+import fs from 'fs';
+import 'hardhat-abi-exporter';
+import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
-
-import 'solidity-coverage';
-import '@nomiclabs/hardhat-etherscan';
-import 'hardhat-contract-sizer';
-import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
-
-import chai from 'chai';
-import { customChai } from 'test/matchers';
+import { HardhatUserConfig } from 'hardhat/config';
+import path from 'path';
+import 'solidity-coverage';
+import 'tsconfig-paths/register';
 
 chai.use(customChai);
 
@@ -29,7 +25,7 @@ const loadAPIKey = (apiKeyName: string) => {
     return configFile.apiKeys ? (configFile.apiKeys[apiKeyName] ? configFile.apiKeys[apiKeyName] : '') : '';
 };
 
-// Casting to unknown assume the good type is provided
+// casting to unknown assume the good type is provided
 const loadENVKey = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };
@@ -39,7 +35,8 @@ const configNetworks = configFile.networks || {};
 const config: HardhatUserConfig = {
     networks: {
         hardhat: {
-            gasPrice: 20000000000,
+            hardfork: 'london',
+            gasPrice: 'auto',
             gas: 9500000,
             accounts: {
                 count: 10,
@@ -104,9 +101,7 @@ const config: HardhatUserConfig = {
 
 export default config;
 
-// Patch BigNumber to include a min and a max functions.
-import { BigNumber } from 'ethers';
-
+// patch BigNumber to include a min and a max functions
 declare module 'ethers' {
     class BigNumber {
         static min(a: any, b: any): boolean;
