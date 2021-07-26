@@ -103,7 +103,7 @@ describe('LiquidityPoolCollection', () => {
         });
     });
 
-    describe.only('create pool', () => {
+    describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let collection: LiquidityPoolCollection;
