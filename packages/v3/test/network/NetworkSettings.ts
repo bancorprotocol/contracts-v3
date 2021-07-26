@@ -129,7 +129,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('pool minting limits', async () => {
+    describe('pool minting limits', () => {
         const poolMintingLimit = BigNumber.from(12345).mul(BigNumber.from(10).pow(18));
         let networkSettings: NetworkSettings;
 
@@ -168,7 +168,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('network fee params', async () => {
+    describe('network fee params', () => {
         let newNetworkFeeWallet: TokenHolderUpgradeable;
         const newNetworkFee = BigNumber.from(100000);
         let networkSettings: NetworkSettings;
@@ -240,7 +240,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('withdrawal fee', async () => {
+    describe('withdrawal fee', () => {
         const newWithdrawalFee = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 
@@ -279,7 +279,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('flash-loan fee', async () => {
+    describe('flash-loan fee', () => {
         const newFlashLoanFee = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 
@@ -318,7 +318,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('maximum deviation', async () => {
+    describe('maximum deviation', () => {
         const newMaxDeviation = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 

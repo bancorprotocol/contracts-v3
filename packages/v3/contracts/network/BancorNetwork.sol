@@ -76,7 +76,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsDeposited(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 depositAmount,
@@ -88,13 +88,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsWithdrawn(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         ILiquidityPoolCollection collection,
         uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
-        uint256 networkTokenAmount
+        uint256 externalProtectionBaseTokenAmount,
+        uint256 networkTokenAmount,
+        uint256 withdrawalFee
     );
 
     /**
@@ -102,7 +104,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     event FundsMigrated(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         address indexed provider,
         uint256 amount,
         uint256 availableTokens
@@ -268,11 +270,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function liquidityPools() external view override returns (ILiquidityPoolCollection[] memory) {
+    function liquidityPools() external view override returns (IReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
-        ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
+        IReserveToken[] memory list = new IReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ILiquidityPoolCollection(_liquidityPools.at(i));
+            list[i] = IReserveToken(_liquidityPools.at(i));
         }
         return list;
     }

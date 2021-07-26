@@ -41,7 +41,7 @@ describe('TokenHolderUpgradeable', () => {
         await token2.transfer(holder.address, BigNumber.from(1000));
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             await expect(holder.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });

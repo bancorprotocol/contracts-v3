@@ -24,7 +24,7 @@ describe('PendingWithdrawals', () => {
         [, nonOwner, dummy] = await ethers.getSigners();
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             const { pendingWithdrawals } = await createSystem();
 
@@ -57,7 +57,7 @@ describe('PendingWithdrawals', () => {
         });
     });
 
-    describe('lock duration', async () => {
+    describe('lock duration', () => {
         const newLockDuration = duration.days(1);
         let pendingWithdrawals: PendingWithdrawals;
 
@@ -90,7 +90,7 @@ describe('PendingWithdrawals', () => {
         });
     });
 
-    describe('withdrawal window duration', async () => {
+    describe('withdrawal window duration', () => {
         const newWithdrawalWindowDuration = duration.weeks(2);
         let pendingWithdrawals: PendingWithdrawals;
 

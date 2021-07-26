@@ -16,7 +16,7 @@ describe('NetworkTokenPool', () => {
         [, nonOwner] = await ethers.getSigners();
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             const { networkTokenPool } = await createSystem();
 
