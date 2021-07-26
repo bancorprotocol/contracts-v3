@@ -56,6 +56,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
 
     /**
+     * @dev triggered when the latest pool collection, for a specific type, is set
+     */
+    event LatestPoolCollectionSet(
+        ILiquidityPoolCollection indexed prevCollection,
+        ILiquidityPoolCollection indexed newCollection,
+        uint16 indexed poolType
+    );
+
+    /**
      * @dev triggered when a new pool is added
      */
     event PoolAdded(IReserveToken indexed pool, ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
@@ -249,6 +258,68 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
+     * @dev adds new pool collection to the pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function addPoolCollection(ILiquidityPoolCollection poolCollection)
+        external
+        validAddress(address(poolCollection))
+        onlyOwner
+    {
+        require(_poolCollections.add(address(poolCollection)), "ERR_COLLECTION_ALREADY_EXISTS");
+
+        uint16 poolType = poolCollection.poolType();
+        _setLatestPoolCollection(poolCollection, poolType);
+
+        emit PoolCollectionAdded(poolCollection, poolType);
+    }
+
+    /**
+     * @dev removes an existing pool collection from the pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function removePoolCollection(
+        ILiquidityPoolCollection poolCollection,
+        ILiquidityPoolCollection newLatestPoolCollection
+    ) external onlyOwner {
+        _verifyPoolCollection(newLatestPoolCollection);
+        _verifyEmptyPoolCollection(poolCollection);
+
+        require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
+
+        uint16 poolType = poolCollection.poolType();
+        uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
+        require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
+
+        _setLatestPoolCollection(newLatestPoolCollection, newLatestPoolCollectionType);
+
+        emit PoolCollectionRemoved(poolCollection, poolType);
+    }
+
+    /**
+     * @dev sets the new latest pool collection for the given type
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function setLatestPoolCollection(ILiquidityPoolCollection poolCollection)
+        external
+        validAddress(address(poolCollection))
+        onlyOwner
+    {
+        _verifyPoolCollection(poolCollection);
+
+        _setLatestPoolCollection(poolCollection, poolCollection.poolType());
+    }
+
+    /**
      * @inheritdoc IBancorNetwork
      */
     function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
@@ -284,5 +355,45 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
         return _collectionByPool[pool];
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function isValidPool(IReserveToken pool) external view override returns (bool) {
+        return address(_collectionByPool[pool]) != address(0);
+    }
+
+    /**
+     * @dev sets the new latest pool collection for the given type
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function _setLatestPoolCollection(ILiquidityPoolCollection poolCollection, uint16 poolType) private {
+        emit LatestPoolCollectionSet(_latestPoolCollections[poolType], poolCollection, poolType);
+
+        _latestPoolCollections[poolType] = poolCollection;
+    }
+
+    /**
+     * @dev verifies if a pool collection exists
+     */
+    function _verifyPoolCollection(ILiquidityPoolCollection poolCollection) private view {
+        require(_poolCollections.contains(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
+    }
+
+    /**
+     * @dev verifies that no pools are associated with the specified collection
+     */
+    function _verifyEmptyPoolCollection(ILiquidityPoolCollection poolCollection) private view {
+        uint256 length = _liquidityPools.length();
+        for (uint256 i = 0; i < length; i++) {
+            require(
+                _collectionByPool[IReserveToken(_liquidityPools.at(i))] != poolCollection,
+                "ERR_COLLECTION_IS_NOT_EMPTY"
+            );
+        }
     }
 }
