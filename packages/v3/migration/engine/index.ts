@@ -1,7 +1,7 @@
-import { lazyAction } from 'components/TaskUtils';
+import { lazyAction } from '../../components/TaskUtils';
+import { defaultParamTask } from './task';
 import { task, types } from 'hardhat/config';
 import path from 'path';
-import { defaultParamTask } from './task';
 
 export const PATH_TO_ENGINE_TASKS_FOLDER = 'migration/engine/tasks';
 export const PATH_TO_ENGINE_SUBTASKS_FOLDER = 'migration/engine/tasks/subtasks';

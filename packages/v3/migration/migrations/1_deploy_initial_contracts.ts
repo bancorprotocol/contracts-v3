@@ -1,5 +1,5 @@
-import { deployedProxy, Migration } from 'migration/engine/types';
 import { NextState as InitialState } from './0_deploy_proxyAdmin';
+import { deployedProxy, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
     networkSettings: deployedProxy;

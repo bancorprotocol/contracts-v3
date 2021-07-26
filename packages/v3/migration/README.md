@@ -65,16 +65,6 @@ Create a migration file based from a template.
 
 # Getting started
 
-## How to run the migration on a fork ?
-
-Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
-
-To do so you have to execute the command by specifying the network in which you want to fork as an ENV variable. You'll also need to have the original network `state.json` file. Meaning that if you want to test a migration on a fork of the `mainnet` network you'll need have provided the correct state to the `mainnet` network folder.
-
-Like so: `FORK=mainnet yarn hh migrate`
-
-In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the `keys` object the url for the corresponding FORK value. It NEEDS to start with `url-`, example: `url-mainnet`.
-
 ## How to create a migration file ?
 
 ```
@@ -83,10 +73,10 @@ yarn hh create-migration migrationFileName
 
 If you don't use this CLI to generate your migration files, bear in mind that they have to start by a number splitted from the rest of the name by the character '\_', like so: "999_testfile.ts".
 
-## How to execute a migration ?
+## How to execute a migration on a network?
 
 ```
-yarn hh migrate --network fork-mainnet
+yarn hh migrate --network mainnet
 ```
 
 1. `Migrate` will look for the network data folder. If not it will create one.
@@ -95,30 +85,38 @@ yarn hh migrate --network fork-mainnet
 
 3. Update the state on the go.
 
+## How to run the migration on a fork ?
+
+Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
+
+To do so you have to execute the command by specifying the network in which you want to fork as an ENV variable. You'll also need to have the original network `state.json` file. Meaning that if you want to test a migration on a fork of the `mainnet` network you'll need to provide the correct state to the `mainnet` network folder.
+
+In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the `urls` object the url for the corresponding FORK value. Example: `"mainnet": "https://eth-mainnet.alchemyapi.io/v2/supersecretcode"` if you are forking mainnet, i.e: `FORK=mainnet yarn hh migrate`.
+
 ## What does a basic migration file looks like
 
 ```ts
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type InitialState = {};
-
-export type State = {
-    BNT: deployedContract;
+export type NextState = InitialState & {
+    ProxyAdmin: deployedContract;
 };
-
 const migration: Migration = {
-    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
-        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
-
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<NextState> => {
+        const ProxyAdmin = await deploy('ProxyAdmin', contracts.ProxyAdmin.deploy);
         return {
-            BNT: BNT.address
+            ...initialState,
+
+            ProxyAdmin: ProxyAdmin.address
         };
     },
 
-    healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
+        const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
+        if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
         return true;
     }
 };
-
 export default migration;
 ```

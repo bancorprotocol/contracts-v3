@@ -1,13 +1,13 @@
+import { migrateParamTask } from '..';
+import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME, MIGRATION_CONFIG } from '../../config';
+import { log } from '../logger/logger';
+import { Migration } from '../types';
 import { importCsjOrEsModule } from 'components/TaskUtils';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { getDefaultParams } from 'migration/engine/task';
 import { SystemState } from 'migration/engine/types';
 import path from 'path';
-import { migrateParamTask } from '..';
-import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME, NETWORK_STATUS } from '../../config';
-import { log } from '../logger/logger';
-import { Migration } from '../types';
 
 export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {
     const { signer, contracts, migrationsData, initialState, writeState, executionTools } = await getMigrateParams(
@@ -97,13 +97,15 @@ export const getMigrateParams = async (hre: HardhatRuntimeEnvironment, args: mig
     };
 
     // If network is a fork fetch info from original network
-    if (args.reset && NETWORK_STATUS.isFork) {
+    if (args.reset && MIGRATION_CONFIG.isFork) {
         try {
-            log.info(`Fetching initial state from ${NETWORK_STATUS.originalNetwork}`);
-            state = fetchState(path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_STATUS.originalNetwork));
+            log.info(`Fetching initial state from ${MIGRATION_CONFIG.originalNetwork}`);
+            state = fetchState(
+                path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, MIGRATION_CONFIG.originalNetwork)
+            );
         } catch (e) {
             log.error(
-                `${NETWORK_STATUS.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
+                `${MIGRATION_CONFIG.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
             );
             process.exit();
         }

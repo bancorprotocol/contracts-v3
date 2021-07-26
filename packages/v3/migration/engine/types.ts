@@ -1,7 +1,7 @@
+import { proxyType } from './Proxy';
+import { deployExecuteType } from './executions';
 import { Contracts } from 'components/Contracts';
 import { Signer } from 'ethers';
-import { deployExecuteType } from './executions';
-import { proxyType } from './Proxy';
 
 export type SystemState = {
     migrationState: {

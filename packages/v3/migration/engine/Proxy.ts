@@ -1,7 +1,7 @@
+import { deployExecuteType } from './executions';
 import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, ContractFactory } from 'ethers';
 import { ProxyAdmin, TransparentUpgradeableProxy } from 'typechain';
-import { deployExecuteType } from './executions';
 
 export type proxyType = ReturnType<typeof initProxy>;
 
