@@ -151,10 +151,13 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * f(f - bm - 2fm) / (fm + b)
      */
     function tknArbitrage(
-        uint256 b,
-        uint256 f,
-        uint256 m
+        uint256 tknBalance,
+        uint256 tknAmount,
+        uint256 tradeFee
     ) internal pure returns (uint256) {
+        uint256 b = tknBalance;
+        uint256 f = tknAmount;
+        uint256 m = tradeFee;
         uint256 bm = b.mul(m);
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
@@ -176,11 +179,15 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * af(b(2 - m) + f) / (b(b + fm))
      */
     function bntArbitrage(
-        uint256 a,
-        uint256 b,
-        uint256 f,
-        uint256 m
+        uint256 bntBalance,
+        uint256 tknBalance,
+        uint256 tknAmount,
+        uint256 tradeFee
     ) internal pure returns (uint256) {
+        uint256 a = bntBalance;
+        uint256 b = tknBalance;
+        uint256 f = tknAmount;
+        uint256 m = tradeFee;
         uint256 af = a.mul(f);
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);

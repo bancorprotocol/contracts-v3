@@ -35,10 +35,10 @@ const testFormula = (amounts: string[], fees: number[]) => {
     });
 
     // f(f - bm - 2fm) / (fm + b)
-    const tknArbitrage = (_b: string, _f: string, _m: number) => {
-        const b = new Decimal(_b);
-        const f = new Decimal(_f);
-        const m = new Decimal(_m).div(PPMR);
+    const tknArbitrage = (tknBalance: string, tknAmount: string, tradeFee: number) => {
+        const b = new Decimal(tknBalance);
+        const f = new Decimal(tknAmount);
+        const m = new Decimal(tradeFee).div(PPMR);
         return f
             .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
             .div(f.mul(m).add(b))
@@ -46,11 +46,11 @@ const testFormula = (amounts: string[], fees: number[]) => {
     };
 
     // af(b(2 - m) + f) / (b(b + fm))
-    const bntArbitrage = (_a: string, _b: string, _f: string, _m: number) => {
-        const a = new Decimal(_a);
-        const b = new Decimal(_b);
-        const f = new Decimal(_f);
-        const m = new Decimal(_m).div(PPMR);
+    const bntArbitrage = (bntBalance: string, tknBalance: string, tknAmount: string, tradeFee: number) => {
+        const a = new Decimal(bntBalance);
+        const b = new Decimal(tknBalance);
+        const f = new Decimal(tknAmount);
+        const m = new Decimal(tradeFee).div(PPMR);
         return a
             .mul(f)
             .mul(b.mul(m.sub(2).neg()).add(f))
