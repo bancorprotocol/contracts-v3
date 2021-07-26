@@ -5,9 +5,9 @@ import { BigNumber } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { NetworkSettings, PendingWithdrawals, BancorNetwork, LiquidityPoolCollection, TestERC20Token } from 'typechain';
+import { LiquidityPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
-import { PPM_RESOLUTION } from 'test/helpers/Constants';
+import { PPM_RESOLUTION, ZERO_ADDRESS } from 'test/helpers/Constants';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);
@@ -27,7 +27,7 @@ describe('LiquidityPoolCollection', () => {
         reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should be properly initialized', async () => {
             const { collection, network } = await createSystem();
 
@@ -67,7 +67,7 @@ describe('LiquidityPoolCollection', () => {
         });
     });
 
-    describe('default trading fee', async () => {
+    describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
         let collection: LiquidityPoolCollection;
 
@@ -103,6 +103,272 @@ describe('LiquidityPoolCollection', () => {
                 .withArgs(newDefaultTradingFree, DEFAULT_TRADING_FEE_PPM);
 
             expect(await collection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+        });
+    });
+
+    describe('create pool', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let collection: LiquidityPoolCollection;
+
+        const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
+        const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, collection } = await createSystem());
+        });
+
+        it('should revert when attempting to create a pool from a non-network', async () => {
+            let nonNetwork = nonOwner;
+            await expect(collection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
+                'ERR_ACCESS_DENIED'
+            );
+        });
+
+        it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
+            await expect(network.createPoolT(collection.address, reserveToken.address)).to.be.revertedWith(
+                'ERR_POOL_NOT_WHITELISTED'
+            );
+        });
+
+        context('whitelisted token', () => {
+            beforeEach(async () => {
+                await networkSettings.addTokenToWhitelist(reserveToken.address);
+            });
+
+            it('should not allow to create the same pool twice', async () => {
+                await network.createPoolT(collection.address, reserveToken.address);
+
+                await expect(network.createPoolT(collection.address, reserveToken.address)).to.be.revertedWith(
+                    'ERR_POOL_ALREADY_EXISTS'
+                );
+            });
+
+            it('should create a pool', async () => {
+                let poolTokenAddress = await collection.poolToken(reserveToken.address);
+                expect(poolTokenAddress).to.equal(ZERO_ADDRESS);
+
+                const res = await network.createPoolT(collection.address, reserveToken.address);
+                poolTokenAddress = await collection.poolToken(reserveToken.address);
+
+                await expect(res).to.emit(collection, 'PoolCreated').withArgs(poolTokenAddress, reserveToken.address);
+
+                const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
+                expect(poolToken).not.to.equal(ZERO_ADDRESS);
+                const reserveTokenSymbol = await reserveToken.symbol();
+                expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
+                expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
+
+                expect(await collection.tradingFeePPM(reserveToken.address)).to.equal(DEFAULT_TRADING_FEE_PPM);
+                expect(await collection.depositsEnabled(reserveToken.address)).to.be.true;
+                expect(await collection.tradingLiquidity(reserveToken.address)).to.deep.equal([
+                    BigNumber.from(0),
+                    BigNumber.from(0)
+                ]);
+                expect(await collection.stakedBalance(reserveToken.address)).to.equal(BigNumber.from(0));
+                expect(await collection.initialRate(reserveToken.address)).to.equal({
+                    n: BigNumber.from(0),
+                    d: BigNumber.from(1)
+                });
+                expect(await collection.depositLimit(reserveToken.address)).to.equal(BigNumber.from(0));
+            });
+
+            context('with token symbol override', () => {
+                const newSymbol = 'TKN2';
+
+                beforeEach(async () => {
+                    await collection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                });
+
+                it('should create a pool', async () => {
+                    await network.createPoolT(collection.address, reserveToken.address);
+
+                    const poolTokenAddress = await collection.poolToken(reserveToken.address);
+                    const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
+                    expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
+                    expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                });
+            });
+        });
+    });
+
+    describe('pool settings', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let collection: LiquidityPoolCollection;
+        let newReserveToken: TestERC20Token;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, collection } = await createSystem());
+
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+            await network.createPoolT(collection.address, reserveToken.address);
+
+            newReserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+        });
+
+        describe('initial rate', () => {
+            const newInitialRate = { n: BigNumber.from(1000), d: BigNumber.from(5000) };
+
+            it('should revert when a non-owner attempts to set the initial rate', async () => {
+                await expect(
+                    collection.connect(nonOwner).setInitialRate(reserveToken.address, newInitialRate)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when setting an invalid rate', async () => {
+                await expect(
+                    collection.setInitialRate(reserveToken.address, { n: BigNumber.from(1000), d: BigNumber.from(0) })
+                ).to.be.revertedWith('ERR_INVALID_RATE');
+            });
+
+            it('should revert when setting the initial rate of a non-existing pool', async () => {
+                await expect(collection.setInitialRate(newReserveToken.address, newInitialRate)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow setting and updating the initial rate', async () => {
+                let initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(1) });
+
+                const res = await collection.setInitialRate(reserveToken.address, newInitialRate);
+                await expect(res)
+                    .to.emit(collection, 'InitialRateUpdated')
+                    .withArgs(reserveToken.address, initialRate, newInitialRate);
+
+                initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal(newInitialRate);
+
+                const newInitialRate2 = { n: BigNumber.from(100000), d: BigNumber.from(50) };
+                const res2 = await collection.setInitialRate(reserveToken.address, newInitialRate2);
+                await expect(res2)
+                    .to.emit(collection, 'InitialRateUpdated')
+                    .withArgs(reserveToken.address, initialRate, newInitialRate2);
+
+                initialRate = await collection.initialRate(reserveToken.address);
+                expect(initialRate).to.equal(newInitialRate2);
+            });
+        });
+
+        describe('trading fee', () => {
+            const newTradingFee = BigNumber.from(50555);
+
+            it('should revert when a non-owner attempts to set the trading fee', async () => {
+                await expect(
+                    collection.connect(nonOwner).setTradingFeePPM(reserveToken.address, newTradingFee)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when setting an invalid trading fee', async () => {
+                await expect(
+                    collection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION.add(BigNumber.from(1)))
+                ).to.be.revertedWith('ERR_INVALID_FEE');
+            });
+
+            it('should revert when setting the trading fee of a non-existing pool', async () => {
+                await expect(collection.setTradingFeePPM(newReserveToken.address, newTradingFee)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow setting and updating the trading fee', async () => {
+                let tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+
+                const res = await collection.setTradingFeePPM(reserveToken.address, newTradingFee);
+                await expect(res)
+                    .to.emit(collection, 'TradingFeePPMUpdated')
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee);
+
+                tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(newTradingFee);
+
+                const newTradingFee2 = BigNumber.from(0);
+                const res2 = await collection.setTradingFeePPM(reserveToken.address, newTradingFee2);
+                await expect(res2)
+                    .to.emit(collection, 'TradingFeePPMUpdated')
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee2);
+
+                tradingFeePPM = await collection.tradingFeePPM(reserveToken.address);
+                expect(tradingFeePPM).to.equal(newTradingFee2);
+            });
+        });
+
+        describe('enable deposits', () => {
+            it('should revert when a non-owner attempts to enable deposits', async () => {
+                await expect(
+                    collection.connect(nonOwner).enableDeposits(reserveToken.address, true)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when enabling deposits for a non-existing pool', async () => {
+                await expect(collection.enableDeposits(newReserveToken.address, true)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow enabling and disabling deposits', async () => {
+                let depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.true;
+
+                const res = await collection.enableDeposits(reserveToken.address, false);
+                await expect(res)
+                    .to.emit(collection, 'DepositsEnabled')
+                    .withArgs(reserveToken.address, depositsEnabled, false);
+
+                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.false;
+
+                const res2 = await collection.enableDeposits(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(collection, 'DepositsEnabled')
+                    .withArgs(reserveToken.address, depositsEnabled, true);
+
+                depositsEnabled = await collection.depositsEnabled(reserveToken.address);
+                expect(depositsEnabled).to.be.true;
+            });
+        });
+
+        describe('deposit limit', () => {
+            const newDepositLimit = BigNumber.from(99999);
+
+            it('should revert when a non-owner attempts to set the deposit limit', async () => {
+                await expect(
+                    collection.connect(nonOwner).setDepositLimit(reserveToken.address, newDepositLimit)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when setting the deposit limit of a non-existing pool', async () => {
+                await expect(collection.setDepositLimit(newReserveToken.address, newDepositLimit)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow setting and updating the deposit limit', async () => {
+                let depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(BigNumber.from(0));
+
+                const res = await collection.setDepositLimit(reserveToken.address, newDepositLimit);
+                await expect(res)
+                    .to.emit(collection, 'DepositLimitUpdated')
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit);
+
+                depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(newDepositLimit);
+
+                const newDepositLimit2 = BigNumber.from(1);
+                const res2 = await collection.setDepositLimit(reserveToken.address, newDepositLimit2);
+                await expect(res2)
+                    .to.emit(collection, 'DepositLimitUpdated')
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit2);
+
+                depositLimit = await collection.depositLimit(reserveToken.address);
+                expect(depositLimit).to.equal(newDepositLimit2);
+            });
         });
     });
 });

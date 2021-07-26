@@ -17,6 +17,11 @@ import 'hardhat-contract-sizer';
 import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 
+import chai from 'chai';
+import { customChai } from 'test/matchers';
+
+chai.use(customChai);
+
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
