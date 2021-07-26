@@ -120,7 +120,7 @@ describe('BancorNetwork', () => {
         });
 
         describe('adding new pool collection', () => {
-            it('should revert when a non-owner attempts to add new pool collection', async () => {
+            it('should revert when a non-owner attempts to add a new pool collection', async () => {
                 await expect(network.connect(nonOwner).addPoolCollection(collection.address)).to.be.revertedWith(
                     'ERR_ACCESS_DENIED'
                 );
