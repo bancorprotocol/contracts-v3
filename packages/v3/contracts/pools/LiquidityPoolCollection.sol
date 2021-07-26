@@ -21,11 +21,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     using SafeMath for uint256;
     using MathEx for *;
 
-    struct ArbitrageAmounts {
-        uint256 tkn;
-        uint256 bnt;
-    }
-
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
     // the network contract
@@ -140,23 +135,23 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the TKN arbitrage value
+     * @dev returns the base arbitrage value
      *
      * input:
-     * b = TKN hypothetical pool balance
-     * f = TKN settlement amount
+     * b = base hypothetical pool balance
+     * f = base settlement amount
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
      * f(f - bm - 2fm) / (fm + b)
      */
-    function tknArbitrage(
-        uint256 tknBalance,
-        uint256 tknAmount,
+    function baseArbitrage(
+        uint256 baseBalance,
+        uint256 baseAmount,
         uint256 tradeFee
     ) internal pure returns (uint256) {
-        uint256 b = tknBalance;
-        uint256 f = tknAmount;
+        uint256 b = baseBalance;
+        uint256 f = baseAmount;
         uint256 m = tradeFee;
         uint256 bm = b.mul(m);
         uint256 fm = f.mul(m);
@@ -166,27 +161,27 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the BNT amount which should be added to
+     * @dev returns the network amount which should be added to
      * the pool in order to create an optimal arbitrage incentive
      *
      * input:
-     * a = BNT hypothetical pool balance
-     * b = TKN hypothetical pool balance
-     * f = TKN settlement amount
+     * a = network hypothetical pool balance
+     * b = base hypothetical pool balance
+     * f = base settlement amount
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
      * af(b(2 - m) + f) / (b(b + fm))
      */
-    function bntArbitrage(
-        uint256 bntBalance,
-        uint256 tknBalance,
-        uint256 tknAmount,
+    function networkArbitrage(
+        uint256 networkBalance,
+        uint256 baseBalance,
+        uint256 baseAmount,
         uint256 tradeFee
     ) internal pure returns (uint256) {
-        uint256 a = bntBalance;
-        uint256 b = tknBalance;
-        uint256 f = tknAmount;
+        uint256 a = networkBalance;
+        uint256 b = baseBalance;
+        uint256 f = baseAmount;
         uint256 m = tradeFee;
         uint256 af = a.mul(f);
         uint256 fm = f.mul(m);

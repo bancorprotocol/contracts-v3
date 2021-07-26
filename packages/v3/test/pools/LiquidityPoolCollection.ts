@@ -35,9 +35,9 @@ const testFormula = (amounts: string[], fees: number[]) => {
     });
 
     // f(f - bm - 2fm) / (fm + b)
-    const tknArbitrage = (tknBalance: string, tknAmount: string, tradeFee: number) => {
-        const b = new Decimal(tknBalance);
-        const f = new Decimal(tknAmount);
+    const baseArbitrage = (baseBalance: string, baseAmount: string, tradeFee: number) => {
+        const b = new Decimal(baseBalance);
+        const f = new Decimal(baseAmount);
         const m = new Decimal(tradeFee).div(PPMR);
         return f
             .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
@@ -46,10 +46,10 @@ const testFormula = (amounts: string[], fees: number[]) => {
     };
 
     // af(b(2 - m) + f) / (b(b + fm))
-    const bntArbitrage = (bntBalance: string, tknBalance: string, tknAmount: string, tradeFee: number) => {
-        const a = new Decimal(bntBalance);
-        const b = new Decimal(tknBalance);
-        const f = new Decimal(tknAmount);
+    const networkArbitrage = (networkBalance: string, baseBalance: string, baseAmount: string, tradeFee: number) => {
+        const a = new Decimal(networkBalance);
+        const b = new Decimal(baseBalance);
+        const f = new Decimal(baseAmount);
         const m = new Decimal(tradeFee).div(PPMR);
         return a
             .mul(f)
@@ -61,13 +61,13 @@ const testFormula = (amounts: string[], fees: number[]) => {
     for (const b of amounts) {
         for (const f of amounts) {
             for (const m of fees) {
-                it(`tknArbitrage(${[b, f, m]})`, async () => {
-                    const expected = tknArbitrage(b, f, m);
+                it(`baseArbitrage(${[b, f, m]})`, async () => {
+                    const expected = baseArbitrage(b, f, m);
                     if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await collection.tknArbitrageTest(b, f, m);
+                        const actual = await collection.baseArbitrageTest(b, f, m);
                         expect(actual.toString()).to.equal(expected.toFixed());
                     } else {
-                        await expect(collection.tknArbitrageTest(b, f, m)).to.be.reverted;
+                        await expect(collection.baseArbitrageTest(b, f, m)).to.be.reverted;
                     }
                 });
             }
@@ -78,13 +78,13 @@ const testFormula = (amounts: string[], fees: number[]) => {
         for (const b of amounts) {
             for (const f of amounts) {
                 for (const m of fees) {
-                    it(`bntArbitrage(${[a, b, f, m]})`, async () => {
-                        const expected = bntArbitrage(a, b, f, m);
+                    it(`networkArbitrage(${[a, b, f, m]})`, async () => {
+                        const expected = networkArbitrage(a, b, f, m);
                         if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await collection.bntArbitrageTest(a, b, f, m);
+                            const actual = await collection.networkArbitrageTest(a, b, f, m);
                             expect(actual.toString()).to.equal(expected.toFixed());
                         } else {
-                            await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.reverted;
+                            await expect(collection.networkArbitrageTest(a, b, f, m)).to.be.reverted;
                         }
                     });
                 }
