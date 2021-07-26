@@ -358,13 +358,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @inheritdoc IBancorNetwork
-     */
-    function isValidPool(IReserveToken pool) external view override returns (bool) {
-        return address(_collectionByPool[pool]) != address(0);
-    }
-
-    /**
      * @dev sets the new latest pool collection for the given type
      *
      * requirements:
