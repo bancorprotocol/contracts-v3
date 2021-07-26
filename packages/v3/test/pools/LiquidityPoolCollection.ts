@@ -30,8 +30,8 @@ const testFormula = (amounts: string[], fees: number[]) => {
     let collection: TestLiquidityPoolCollection;
 
     before(async () => {
-        const reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, 0);
-        collection = await Contracts.TestLiquidityPoolCollection.deploy(reserveToken.address);
+        const { network } = await createSystem();
+        collection = await Contracts.TestLiquidityPoolCollection.deploy(network.address);
     });
 
     // f(f - bm - 2fm) / (fm + b)
