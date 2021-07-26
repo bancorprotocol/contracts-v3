@@ -1,24 +1,21 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber } from 'ethers';
-
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
+import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { LiquidityPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
-import { createSystem } from 'test/helpers/Factory';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 import { PPM_RESOLUTION, ZERO_ADDRESS } from 'test/helpers/Constants';
-
-const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
-const POOL_TYPE = BigNumber.from(1);
-const SYMBOL = 'TKN';
-const EMPTY_STRING = '';
-
-let nonOwner: SignerWithAddress;
-
-let reserveToken: TestERC20Token;
+import { createSystem } from 'test/helpers/Factory';
+import { LiquidityPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 
 describe('LiquidityPoolCollection', () => {
+    const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
+    const POOL_TYPE = BigNumber.from(1);
+    const SYMBOL = 'TKN';
+    const EMPTY_STRING = '';
+
+    let nonOwner: SignerWithAddress;
+    let reserveToken: TestERC20Token;
+
     before(async () => {
         [, nonOwner] = await ethers.getSigners();
     });
@@ -106,7 +103,7 @@ describe('LiquidityPoolCollection', () => {
         });
     });
 
-    describe('create pool', () => {
+    describe.only('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let collection: LiquidityPoolCollection;
@@ -131,7 +128,7 @@ describe('LiquidityPoolCollection', () => {
             );
         });
 
-        context('whitelisted token', () => {
+        context('with a whitelisted token', () => {
             beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
             });
@@ -145,14 +142,14 @@ describe('LiquidityPoolCollection', () => {
             });
 
             it('should create a pool', async () => {
-                let poolTokenAddress = await collection.poolToken(reserveToken.address);
-                expect(poolTokenAddress).to.equal(ZERO_ADDRESS);
+                expect(await collection.isPoolValid(reserveToken.address)).to.be.false;
 
                 const res = await network.createPoolT(collection.address, reserveToken.address);
-                poolTokenAddress = await collection.poolToken(reserveToken.address);
+                const poolTokenAddress = await collection.poolToken(reserveToken.address);
 
                 await expect(res).to.emit(collection, 'PoolCreated').withArgs(poolTokenAddress, reserveToken.address);
 
+                expect(await collection.isPoolValid(reserveToken.address)).to.be.true;
                 const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
                 expect(poolToken).not.to.equal(ZERO_ADDRESS);
                 const reserveTokenSymbol = await reserveToken.symbol();
@@ -174,7 +171,7 @@ describe('LiquidityPoolCollection', () => {
                 expect(await collection.depositLimit(reserveToken.address)).to.equal(BigNumber.from(0));
             });
 
-            context('with token symbol override', () => {
+            context('with a token symbol override', () => {
                 const newSymbol = 'TKN2';
 
                 beforeEach(async () => {
