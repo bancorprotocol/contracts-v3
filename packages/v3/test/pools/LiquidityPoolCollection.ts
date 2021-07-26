@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
+import Decimal from 'decimal.js';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -8,9 +9,6 @@ import Contracts from 'components/Contracts';
 import { LiquidityPoolCollection, TestLiquidityPoolCollection, TestERC20Token } from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
 import { MAX_UINT256, PPM_RESOLUTION } from 'test/helpers/Constants';
-import MathUtils from 'test/helpers/MathUtils';
-
-const { Decimal } = MathUtils;
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);
