@@ -15,22 +15,17 @@ import {
 } from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
 import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
-import MathUtils from 'test/helpers/MathUtils';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);
 const SYMBOL = 'TKN';
 const EMPTY_STRING = '';
 
-let nonOwner: SignerWithAddress;
+const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
+    const MAX_VAL = new Decimal(MAX_UINT256.toString());
+    const PPMR = new Decimal(PPM_RESOLUTION.toString());
 
-let reserveToken: TestERC20Token;
-
-const testFormula = (amounts: string[], fees: number[]) => {
-    const MAX_VAL: string = MAX_UINT256.toString();
-    const PPMR: number = PPM_RESOLUTION.toNumber();
-
-    fees = fees.map((x) => (x * PPMR) / 100);
+    const fees = testFees.map((x) => x.mul(PPMR).div(100));
 
     let collection: TestLiquidityPoolCollection;
 
@@ -40,10 +35,10 @@ const testFormula = (amounts: string[], fees: number[]) => {
     });
 
     // f(f - bm - 2fm) / (fm + b)
-    const baseArbitrage = (baseBalance: string, baseAmount: string, tradeFee: number) => {
-        const b = new Decimal(baseBalance);
-        const f = new Decimal(baseAmount);
-        const m = new Decimal(tradeFee).div(PPMR);
+    const baseArbitrage = (baseBalance: Decimal, baseAmount: Decimal, tradeFee: Decimal) => {
+        const b = baseBalance;
+        const f = baseAmount;
+        const m = tradeFee.div(PPMR);
         return f
             .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
             .div(f.mul(m).add(b))
@@ -51,11 +46,16 @@ const testFormula = (amounts: string[], fees: number[]) => {
     };
 
     // af(b(2 - m) + f) / (b(b + fm))
-    const networkArbitrage = (networkBalance: string, baseBalance: string, baseAmount: string, tradeFee: number) => {
-        const a = new Decimal(networkBalance);
-        const b = new Decimal(baseBalance);
-        const f = new Decimal(baseAmount);
-        const m = new Decimal(tradeFee).div(PPMR);
+    const networkArbitrage = (
+        networkBalance: Decimal,
+        baseBalance: Decimal,
+        baseAmount: Decimal,
+        tradeFee: Decimal
+    ) => {
+        const a = networkBalance;
+        const b = baseBalance;
+        const f = baseAmount;
+        const m = tradeFee.div(PPMR);
         return a
             .mul(f)
             .mul(b.mul(m.sub(2).neg()).add(f))
@@ -69,10 +69,11 @@ const testFormula = (amounts: string[], fees: number[]) => {
                 it(`baseArbitrage(${[b, f, m]})`, async () => {
                     const expected = baseArbitrage(b, f, m);
                     if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await collection.baseArbitrageTest(b, f, m);
+                        const actual = await collection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
                         expect(actual.toString()).to.equal(expected.toFixed());
                     } else {
-                        await expect(collection.baseArbitrageTest(b, f, m)).to.be.reverted;
+                        await expect(collection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
+                            .reverted;
                     }
                 });
             }
@@ -86,10 +87,17 @@ const testFormula = (amounts: string[], fees: number[]) => {
                     it(`networkArbitrage(${[a, b, f, m]})`, async () => {
                         const expected = networkArbitrage(a, b, f, m);
                         if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await collection.networkArbitrageTest(a, b, f, m);
+                            const actual = await collection.networkArbitrageTest(
+                                a.toString(),
+                                b.toString(),
+                                f.toString(),
+                                m.toString()
+                            );
                             expect(actual.toString()).to.equal(expected.toFixed());
                         } else {
-                            await expect(collection.networkArbitrageTest(a, b, f, m)).to.be.reverted;
+                            await expect(
+                                collection.networkArbitrageTest(a.toString(), b.toString(), f.toString(), m.toString())
+                            ).to.be.reverted;
                         }
                     });
                 }
@@ -99,6 +107,10 @@ const testFormula = (amounts: string[], fees: number[]) => {
 };
 
 describe('LiquidityPoolCollection', () => {
+    let nonOwner: SignerWithAddress;
+
+    let reserveToken: TestERC20Token;
+
     before(async () => {
         [, nonOwner] = await ethers.getSigners();
     });
@@ -453,15 +465,15 @@ describe('LiquidityPoolCollection', () => {
     });
 
     describe('formula sanity tests', () => {
-        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x).toFixed());
-        const FEES = [0.25, 0.5, 1];
+        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
+        const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
         testFormula(AMOUNTS, FEES);
     });
 });
 
 describe('@stress LiquidityPoolCollection', () => {
-    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x).toFixed());
-    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x).toFixed());
-    const FEES = [0, 0.05, 0.25, 0.5, 1];
+    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
+    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
+    const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
     testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
 });
