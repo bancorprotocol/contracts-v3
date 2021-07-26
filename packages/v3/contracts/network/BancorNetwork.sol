@@ -267,6 +267,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function addPoolCollection(ILiquidityPoolCollection poolCollection)
         external
         validAddress(address(poolCollection))
+        nonReentrant
         onlyOwner
     {
         require(_poolCollections.add(address(poolCollection)), "ERR_COLLECTION_ALREADY_EXISTS");
@@ -287,7 +288,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function removePoolCollection(
         ILiquidityPoolCollection poolCollection,
         ILiquidityPoolCollection newLatestPoolCollection
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         _verifyPoolCollection(newLatestPoolCollection);
         _verifyEmptyPoolCollection(poolCollection);
 
@@ -311,6 +312,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function setLatestPoolCollection(ILiquidityPoolCollection poolCollection)
         external
+        nonReentrant
         validAddress(address(poolCollection))
         onlyOwner
     {
