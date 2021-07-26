@@ -24,7 +24,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
     string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
-    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor Network";
+    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
     // the network settings contract
