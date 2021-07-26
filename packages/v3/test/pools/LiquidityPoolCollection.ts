@@ -67,7 +67,7 @@ const testFormula = (amounts: string[], fees: number[]) => {
                         const actual = await collection.tknArbitrageTest(b, f, m);
                         expect(actual.toString()).to.equal(expected.toFixed());
                     } else {
-                        await expect(collection.tknArbitrageTest(b, f, m)).to.be.revertedWith('');
+                        await expect(collection.tknArbitrageTest(b, f, m)).to.be.reverted;
                     }
                 });
             }
@@ -84,7 +84,7 @@ const testFormula = (amounts: string[], fees: number[]) => {
                             const actual = await collection.bntArbitrageTest(a, b, f, m);
                             expect(actual.toString()).to.equal(expected.toFixed());
                         } else {
-                            await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.revertedWith('');
+                            await expect(collection.bntArbitrageTest(a, b, f, m)).to.be.reverted;
                         }
                     });
                 }
