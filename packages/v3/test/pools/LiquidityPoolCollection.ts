@@ -112,7 +112,7 @@ describe('LiquidityPoolCollection', () => {
         let collection: LiquidityPoolCollection;
 
         const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
-        const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
+        const poolTokenName = (symbol: string) => `Bancor Network ${symbol} Pool Token`;
 
         beforeEach(async () => {
             ({ network, networkSettings, collection } = await createSystem());
