@@ -135,11 +135,11 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the base arbitrage value
+     * @dev returns the arbitrage value in units of the base token
      *
      * input:
-     * b = base hypothetical pool balance
-     * f = base settlement amount
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
@@ -161,13 +161,13 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the network amount which should be added to
-     * the pool in order to create an optimal arbitrage incentive
+     * @dev returns the amount of network tokens which should be added
+     * to the pool in order to create an optimal arbitrage incentive
      *
      * input:
-     * a = network hypothetical pool balance
-     * b = base hypothetical pool balance
-     * f = base settlement amount
+     * b = the hypothetical balance of the pool in the network token
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
