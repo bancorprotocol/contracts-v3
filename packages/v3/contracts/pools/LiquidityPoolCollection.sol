@@ -358,7 +358,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns whether a pool is valid
+     * @dev returns whether or not a pool is valid
      */
     function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0x0);
