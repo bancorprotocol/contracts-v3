@@ -367,12 +367,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev creates a new pool
-     *
-     * requirements:
-     *
-     * - the pool doesn't exist
-     * - the pool should have been whitelisted
+     * @inheritdoc IBancorNetwork
      */
     function createPool(uint16 poolType, IReserveToken reserveToken)
         external
