@@ -4,10 +4,12 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "../utility/Constants.sol";
 import "../utility/OwnedUpgradeable.sol";
 import "../utility/Utils.sol";
+import "../utility/MathEx.sol";
 
 import "./interfaces/ILiquidityPoolCollection.sol";
 
@@ -21,6 +23,9 @@ import "./PoolToken.sol";
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+    using SafeMath for uint256;
+    using MathEx for *;
+
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
     string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
@@ -318,6 +323,62 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit DepositLimitUpdated(pool, p.depositLimit, newDepositLimit);
 
         p.depositLimit = newDepositLimit;
+    }
+
+    /**
+     * @dev returns the arbitrage value in units of the base token
+     *
+     * input:
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
+     * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * f(f - bm - 2fm) / (fm + b)
+     */
+    function baseArbitrage(
+        uint256 baseBalance,
+        uint256 baseAmount,
+        uint256 tradeFee
+    ) internal pure returns (uint256) {
+        uint256 b = baseBalance;
+        uint256 f = baseAmount;
+        uint256 m = tradeFee;
+        uint256 bm = b.mul(m);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), fm.add(bM));
+    }
+
+    /**
+     * @dev returns the amount of network tokens which should be added
+     * to the pool in order to create an optimal arbitrage incentive
+     *
+     * input:
+     * a = the hypothetical balance of the pool in the network token
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
+     * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * af(b(2 - m) + f) / (b(b + fm))
+     */
+    function networkArbitrage(
+        uint256 networkBalance,
+        uint256 baseBalance,
+        uint256 baseAmount,
+        uint256 tradeFee
+    ) internal pure returns (uint256) {
+        uint256 a = networkBalance;
+        uint256 b = baseBalance;
+        uint256 f = baseAmount;
+        uint256 m = tradeFee;
+        uint256 af = a.mul(f);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).add(fM), b.mul(bM.add(fm)));
     }
 
     /**

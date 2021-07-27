@@ -32,8 +32,12 @@ const mulDivF = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor();
 
 const mulDivC = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil();
 
+interface ToString {
+    toString: () => string;
+}
+
 const decimalize = <C>(func: Function) => {
-    return (...args: any[]): C => {
+    return (...args: ToString[]): C => {
         const res = func(...args.map((x) => new Decimal(x.toString())));
         if (Array.isArray(res)) {
             return res.map((x) => new Decimal(x.toString())) as unknown as C;
@@ -44,8 +48,6 @@ const decimalize = <C>(func: Function) => {
 };
 
 export default {
-    Decimal,
-
     floorSqrt: decimalize<Decimal>(floorSqrt),
     ceilSqrt: decimalize<Decimal>(ceilSqrt),
     productRatio: decimalize<Decimal[]>(productRatio),

@@ -1,24 +1,116 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { BigNumber } from 'ethers';
+import Decimal from 'decimal.js';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import Contracts from 'components/Contracts';
-import { LiquidityPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
+import {
+    LiquidityPoolCollection,
+    TestLiquidityPoolCollection,
+    TestERC20Token,
+    TestBancorNetwork,
+    NetworkSettings
+} from 'typechain';
 import { createSystem } from 'test/helpers/Factory';
-import { PPM_RESOLUTION, ZERO_ADDRESS } from 'test/helpers/Constants';
+import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);
 const SYMBOL = 'TKN';
 const EMPTY_STRING = '';
 
-let nonOwner: SignerWithAddress;
+const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
+    const MAX_VAL = new Decimal(MAX_UINT256.toString());
+    const PPMR = new Decimal(PPM_RESOLUTION.toString());
 
-let reserveToken: TestERC20Token;
+    const fees = testFees.map((x) => x.mul(PPMR).div(100));
+
+    let collection: TestLiquidityPoolCollection;
+
+    before(async () => {
+        const { network } = await createSystem();
+        collection = await Contracts.TestLiquidityPoolCollection.deploy(network.address);
+    });
+
+    // f(f - bm - 2fm) / (fm + b)
+    const baseArbitrage = (baseBalance: Decimal, baseAmount: Decimal, tradeFee: Decimal) => {
+        const b = baseBalance;
+        const f = baseAmount;
+        const m = tradeFee.div(PPMR);
+        return f
+            .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
+            .div(f.mul(m).add(b))
+            .floor();
+    };
+
+    // af(b(2 - m) + f) / (b(b + fm))
+    const networkArbitrage = (
+        networkBalance: Decimal,
+        baseBalance: Decimal,
+        baseAmount: Decimal,
+        tradeFee: Decimal
+    ) => {
+        const a = networkBalance;
+        const b = baseBalance;
+        const f = baseAmount;
+        const m = tradeFee.div(PPMR);
+        return a
+            .mul(f)
+            .mul(b.mul(m.sub(2).neg()).add(f))
+            .div(b.mul(b.add(f.mul(m))))
+            .floor();
+    };
+
+    for (const b of amounts) {
+        for (const f of amounts) {
+            for (const m of fees) {
+                it(`baseArbitrage(${[b, f, m]})`, async () => {
+                    const expected = baseArbitrage(b, f, m);
+                    if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                        const actual = await collection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
+                        expect(actual.toString()).to.equal(expected.toFixed());
+                    } else {
+                        await expect(collection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
+                            .reverted;
+                    }
+                });
+            }
+        }
+    }
+
+    for (const a of amounts) {
+        for (const b of amounts) {
+            for (const f of amounts) {
+                for (const m of fees) {
+                    it(`networkArbitrage(${[a, b, f, m]})`, async () => {
+                        const expected = networkArbitrage(a, b, f, m);
+                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
+                            const actual = await collection.networkArbitrageTest(
+                                a.toString(),
+                                b.toString(),
+                                f.toString(),
+                                m.toString()
+                            );
+                            expect(actual.toString()).to.equal(expected.toFixed());
+                        } else {
+                            await expect(
+                                collection.networkArbitrageTest(a.toString(), b.toString(), f.toString(), m.toString())
+                            ).to.be.reverted;
+                        }
+                    });
+                }
+            }
+        }
+    }
+};
 
 describe('LiquidityPoolCollection', () => {
+    let nonOwner: SignerWithAddress;
+
+    let reserveToken: TestERC20Token;
+
     before(async () => {
         [, nonOwner] = await ethers.getSigners();
     });
@@ -371,4 +463,17 @@ describe('LiquidityPoolCollection', () => {
             });
         });
     });
+
+    describe('formula sanity tests', () => {
+        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
+        const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
+        testFormula(AMOUNTS, FEES);
+    });
+});
+
+describe('@stress LiquidityPoolCollection', () => {
+    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
+    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
+    const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
+    testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
 });
