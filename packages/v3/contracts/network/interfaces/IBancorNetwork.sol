@@ -60,7 +60,7 @@ interface IBancorNetwork is IUpgradeable {
      * requirements:
      *
      * - the pool doesn't exist
-     * - the pool should have been whitelisted
+     * - the token should have been whitelisted
      */
     function createPool(uint16 poolType, IReserveToken reserveToken) external;
 }
