@@ -15,29 +15,32 @@ export type State = {
 };
     
 const migration: Migration = {
-    up: async (signer, contracts, V2State: InitialState, { deploy, execute }): Promise<State> => {
-        const BNT = await deploy('BNTContract', contracts.TestERC20Token.deploy, 'BNT', 'BNT', 1000000);
-
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
+        const BNT = await deploy(contracts.TestERC20Token, 'BNT', 'BNT', 1000000);
+    
         return {
+            ...initialState,
+    
             BNT: BNT.address
         };
     },
-
+    
     healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };
-
+    
 export default migration;
+    
 `;
 
     if (args.migrationName === '') {
         throw new Error('File name cannot be empty');
     }
 
-    const migrationId = Date.now();
+    const migrationTimestamp = Date.now();
 
-    const fileName = `${migrationId}_${args.migrationName}.ts`;
+    const fileName = `${migrationTimestamp}_${args.migrationName}.ts`;
 
     const pathToNewMigrationFile = path.join(hre.config.paths.root, MIGRATION_FOLDER, fileName);
     fs.writeFileSync(pathToNewMigrationFile, templateMigrationFile);

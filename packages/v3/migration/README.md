@@ -99,22 +99,20 @@ In order for this to work you need to have in your `config.json` at the root of 
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type InitialState = {};
-export type NextState = InitialState & {
-    ProxyAdmin: deployedContract;
+export type State = {
+    BNT: deployedContract;
 };
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<NextState> => {
-        const ProxyAdmin = await deploy('ProxyAdmin', contracts.ProxyAdmin.deploy);
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
+        const BNT = await deploy(contracts.TestERC20Token, 'BNT', 'BNT', 1000000);
         return {
             ...initialState,
 
-            ProxyAdmin: ProxyAdmin.address
+            BNT: BNT.address
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
-        if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
+    healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {
         return true;
     }
 };
