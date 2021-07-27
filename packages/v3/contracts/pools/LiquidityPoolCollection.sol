@@ -356,7 +356,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * to the pool in order to create an optimal arbitrage incentive
      *
      * input:
-     * b = the hypothetical balance of the pool in the network token
+     * a = the hypothetical balance of the pool in the network token
      * b = the hypothetical balance of the pool in the base token
      * f = the amount of base tokens required for arbitrage settlement
      * m = trade fee in ppm units
