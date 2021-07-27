@@ -4,6 +4,5 @@
         "baseUrl": "./"
     },
     "include": ["./test", "./tasks", "./components", "./migration"],
-    "files": ["./hardhat.config.ts"],
-    "references": [{ "path": "../v2" }]
+    "files": ["./hardhat.config.ts"]
 }
