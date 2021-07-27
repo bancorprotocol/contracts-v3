@@ -53,7 +53,7 @@ It also expose tasks and subtasks.
 
 Migrate the system from point A to point B.
 
-`yarn hh migrate --help` for more info on params.
+`yarn migrate --help` for more info on params.
 
 ### Subtasks
 
@@ -61,7 +61,7 @@ Migrate the system from point A to point B.
 
 Create a migration file based from a template.
 
-`yarn hh create-migration --help` for more info on params.
+`yarn create-migration --help` for more info on params.
 
 # Getting started
 
@@ -93,7 +93,7 @@ To do so you have to execute the command by specifying the network in which you 
 
 In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the `urls` object the url for the corresponding FORK value. Example: `"mainnet": "https://eth-mainnet.alchemyapi.io/v2/supersecretcode"` if you are forking mainnet, i.e: `FORK=mainnet yarn hh migrate`.
 
-## What does a basic migration file looks like
+## What does a basic migration file looks like ?
 
 ```ts
 import { deployedContract, Migration } from 'migration/engine/types';

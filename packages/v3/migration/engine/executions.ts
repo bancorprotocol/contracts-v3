@@ -14,7 +14,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
     ): Promise<ReturnType<T>> => {
         const contract = await factory.deploy(...([...args, overrides] as any));
 
-        log.executingTx(`Deploying contract \${${factory.contractName}}`);
+        log.executingTx(`Deploying contract \${${factory.contractName}}. Params: ${args}`);
         log.normal(`Tx: `, contract.deployTransaction.hash);
 
         log.greyed(`Waiting to be mined...`);

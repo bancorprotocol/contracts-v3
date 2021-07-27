@@ -7,7 +7,7 @@ import Contracts from 'components/Contracts';
 import { BigNumberish, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { NETWORK_NAME } from 'migration/config';
+import { MIGRATION_CONFIG } from 'migration/config';
 
 export type defaultParamTask = {
     ledger: boolean;
@@ -28,8 +28,8 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
     // Overrides check
     const overrides: executeOverride = {};
 
-    if (!args.gasPrice && NETWORK_NAME === 'mainnet') {
-        throw new Error("Gas Price shouldn't be equal to 0 for mainnet use. Aborting");
+    if (!args.gasPrice && !MIGRATION_CONFIG.isFork) {
+        throw new Error(`Gas Price shouldn't be equal to 0 for ${MIGRATION_CONFIG.networkName} use. Aborting`);
     }
     overrides.gasPrice = args.gasPrice === 0 ? undefined : parseUnits(args.gasPrice.toString(), 'gwei');
 
@@ -38,8 +38,10 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
         confirmationToWait: args.confirmationToWait
     };
 
-    if (executionConfig.confirmationToWait <= 1 && NETWORK_NAME === 'mainnet') {
-        throw new Error("Transaction confirmation wasn't defined. Aborting");
+    if (executionConfig.confirmationToWait <= 1 && !MIGRATION_CONFIG.isFork) {
+        throw new Error(
+            `Transaction confirmation should be defined or higher than 1 for ${MIGRATION_CONFIG.networkName} use. Aborting`
+        );
     }
 
     const contracts = Contracts.connect(signer);

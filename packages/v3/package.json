@@ -20,7 +20,8 @@
     ],
     "scripts": {
         "hh": "hardhat",
-        "migrate": "hardhat migrate",
+        "migrate": "hh migrate",
+        "create-migration": "hh create-migration",
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
         "test": "hardhat test",
