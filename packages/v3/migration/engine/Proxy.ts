@@ -5,33 +5,31 @@ import { ProxyAdmin, TransparentUpgradeableProxy } from 'typechain';
 
 export type proxyType = ReturnType<typeof initProxy>;
 
-export const initProxy = (contracts: typeof Contracts, { deploy, execute }: deployExecuteType) => {
-    const createTransparentProxy = async (admin: BaseContract, logicContract: BaseContract) => {
-        return await deploy(
-            'Deploying Upgradeable Proxy',
-            contracts.TransparentUpgradeableProxy.deploy,
-            logicContract.address,
-            admin.address,
-            []
-        );
+export type initializeArgs = Parameters<any> | 'skipInit';
+
+export const initProxy = (contracts: typeof Contracts, { deploy }: deployExecuteType) => {
+    const createTransparentProxy = async (
+        admin: BaseContract,
+        logicContract: BaseContract,
+        initializeArgs: initializeArgs = []
+    ) => {
+        const data =
+            initializeArgs === 'skipInit'
+                ? []
+                : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
+
+        return await deploy(contracts.TransparentUpgradeableProxy, logicContract.address, admin.address, data);
     };
 
     const createProxy = async <F extends ContractFactory>(
         admin: ProxyAdmin,
         logicContractToDeploy: ContractBuilder<F>,
+        initializeArgs: initializeArgs,
         ...ctorArgs: Parameters<F['deploy']>
-    ): Promise<Contract<F> & { asProxy: TransparentUpgradeableProxy }> => {
-        const logicContract = await deploy(
-            'Deploying Logic contract',
-            logicContractToDeploy.deploy as any,
-            ...ctorArgs
-        );
-        const proxy = await createTransparentProxy(admin, logicContract);
-
-        return {
-            ...(await logicContractToDeploy.attach(proxy.address)),
-            asProxy: await contracts.TransparentUpgradeableProxy.attach(proxy.address)
-        };
+    ): Promise<Contract<F>> => {
+        const logicContract = await deploy(logicContractToDeploy, ...ctorArgs);
+        const proxy = await createTransparentProxy(admin, logicContract, initializeArgs);
+        return await logicContractToDeploy.attach(proxy.address);
     };
 
     return { createProxy };

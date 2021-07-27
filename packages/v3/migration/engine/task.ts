@@ -1,9 +1,10 @@
-import { initProxy } from './Proxy';
 import { initDeployExecute } from './executions';
+import { log } from './logger/logger';
+import { initProxy } from './proxy';
 import { executionTools } from './types';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import Contracts from 'components/Contracts';
-import { BigNumberish } from 'ethers';
+import { BigNumberish, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { NETWORK_NAME } from 'migration/config';
@@ -46,11 +47,9 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
     const deployExecute = initDeployExecute(executionConfig, overrides);
     const proxy = initProxy(contracts, deployExecute);
 
-    const executionTools: executionTools = {
-        ...deployExecute,
-        ...proxy
-    };
+    const executionTools: executionTools = { ...deployExecute, ...proxy };
 
+    log.defaultParams(await signer.getAddress(), overrides, executionConfig);
     return {
         signer,
         contracts,

@@ -2,19 +2,19 @@ import { ExecutionError } from './errors/errors';
 import { log } from './logger/logger';
 import { executeOverride, executionConfig } from './task';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { Contract } from 'ethers';
+import { ContractBuilder, Contract } from 'components/Contracts';
+import { ContractFactory } from 'ethers';
 
 export type deployExecuteType = ReturnType<typeof initDeployExecute>;
 
 export const initDeployExecute = (executionConfig: executionConfig, overrides: executeOverride) => {
-    const deploy = async <C extends Contract, T extends (...args: any[]) => Promise<C>>(
-        name: string,
-        func: T,
-        ...args: Parameters<T>
+    const deploy = async <F extends ContractFactory, T extends (...args: any[]) => Promise<Contract<F>>>(
+        factory: ContractBuilder<F>,
+        ...args: Parameters<ContractBuilder<F>['deploy']>
     ): Promise<ReturnType<T>> => {
-        const contract = await func(...args, overrides);
+        const contract = await factory.deploy(...([...args, overrides] as any));
 
-        log.executingTx(`Deploying contract ${name}`);
+        log.executingTx(`Deploying contract \${${factory.contractName}}`);
         log.normal(`Tx: `, contract.deployTransaction.hash);
 
         log.greyed(`Waiting to be mined...`);
@@ -25,7 +25,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
             throw new ExecutionError(contract.deployTransaction, receipt);
         }
 
-        log.success(`Deployed ${name} at ${contract.address} 🚀 !`);
+        log.success(`Deployed \${${factory.contractName}} at ${contract.address} 🚀 !`);
         return contract;
     };
 

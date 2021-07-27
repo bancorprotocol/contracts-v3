@@ -1,5 +1,5 @@
-import { proxyType } from './Proxy';
 import { deployExecuteType } from './executions';
+import { proxyType } from './proxy';
 import { Contracts } from 'components/Contracts';
 import { Signer } from 'ethers';
 

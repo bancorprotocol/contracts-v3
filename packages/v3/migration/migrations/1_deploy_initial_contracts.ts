@@ -14,33 +14,36 @@ const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, createProxy }): Promise<NextState> => {
         const admin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
 
-        const networkSettings = await createProxy(admin, contracts.NetworkSettings);
-        await execute('Initialize NetworkSettings proxy', networkSettings.initialize);
+        const networkSettings = await createProxy(admin, contracts.NetworkSettings, []);
 
-        const bancorNetwork = await createProxy(admin, contracts.BancorNetwork, networkSettings.address);
+        const bancorNetwork = await createProxy(admin, contracts.BancorNetwork, 'skipInit', networkSettings.address);
 
-        const vault = await createProxy(admin, contracts.BancorVault, initialState.BNT.token);
-        await execute('Initialize Vault proxy', vault.initialize);
+        const vault = await createProxy(admin, contracts.BancorVault, [], initialState.BNT.token);
 
         const networkTokenPool = await createProxy(
             admin,
             contracts.NetworkTokenPool,
+            [],
             networkSettings.address,
             vault.address
         );
-        await execute('Initialize NetworkTokenPool proxy', networkTokenPool.initialize);
 
         const pendingWithdrawals = await createProxy(
             admin,
             contracts.PendingWithdrawals,
+            [],
             networkSettings.address,
             networkTokenPool.address
         );
-        await execute('Initialize PendingWithdrawals proxy', pendingWithdrawals.initialize);
 
-        const collection = await createProxy(admin, contracts.LiquidityPoolCollection, networkSettings.address);
+        const collection = await createProxy(
+            admin,
+            contracts.LiquidityPoolCollection,
+            'skipInit',
+            networkSettings.address
+        );
 
-        await execute('Initialize Network proxy', bancorNetwork.initialize, pendingWithdrawals.address);
+        await execute('Initialize BancorNetwork', bancorNetwork.initialize, pendingWithdrawals.address);
 
         return {
             ...initialState,
