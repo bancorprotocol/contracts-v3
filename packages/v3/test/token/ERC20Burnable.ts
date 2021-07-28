@@ -4,10 +4,10 @@ import { BigNumber, ContractTransaction } from 'ethers';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
-import { TestERC20Burnable } from 'typechain';
+import Contracts from '../../components/Contracts';
+import { TestERC20Burnable } from '../../typechain';
 
-import { ZERO_ADDRESS } from 'test/helpers/Constants';
+import { ZERO_ADDRESS } from '../helpers/Constants';
 
 let burnable: TestERC20Burnable;
 let owner: SignerWithAddress;

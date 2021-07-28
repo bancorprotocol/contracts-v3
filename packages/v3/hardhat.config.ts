@@ -3,8 +3,6 @@ import path from 'path';
 
 import { HardhatUserConfig } from 'hardhat/config';
 
-import 'tsconfig-paths/register';
-
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
@@ -18,7 +16,7 @@ import 'hardhat-abi-exporter';
 import 'hardhat-gas-reporter';
 
 import chai from 'chai';
-import { customChai } from 'test/matchers';
+import { customChai } from './test/matchers';
 
 chai.use(customChai);
 

@@ -1,11 +1,11 @@
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
 
-import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
+import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
 
-import { ProxyAdmin } from 'typechain';
+import { ProxyAdmin } from '../../typechain';
 
-import { toAddress } from 'test/helpers/Utils';
+import { toAddress } from '../helpers/Utils';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 

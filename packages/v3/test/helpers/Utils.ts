@@ -3,8 +3,8 @@ import { BigNumber, BigNumberish, ContractTransaction, BaseContract } from 'ethe
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
-import { TestERC20Token } from 'typechain';
+import Contracts from '../../components/Contracts';
+import { TestERC20Token } from '../../typechain';
 
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 

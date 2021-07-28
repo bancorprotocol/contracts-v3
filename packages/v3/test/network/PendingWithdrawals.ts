@@ -3,12 +3,12 @@ import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
-import { duration } from 'test/helpers/Time';
-import { ZERO_ADDRESS } from 'test/helpers/Constants';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { createSystem } from 'test/helpers/Factory';
-import { PendingWithdrawals } from 'typechain';
+import Contracts from '../../components/Contracts';
+import { duration } from '../helpers/Time';
+import { ZERO_ADDRESS } from '../helpers/Constants';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { createSystem } from '../helpers/Factory';
+import { PendingWithdrawals } from '../../typechain';
 
 const DEFAULT_LOCK_DURATION = duration.days(7);
 const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);

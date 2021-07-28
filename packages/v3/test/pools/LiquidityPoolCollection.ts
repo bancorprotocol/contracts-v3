@@ -5,16 +5,16 @@ import Decimal from 'decimal.js';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
+import Contracts from '../../components/Contracts';
 import {
     LiquidityPoolCollection,
     TestLiquidityPoolCollection,
     TestERC20Token,
     TestBancorNetwork,
     NetworkSettings
-} from 'typechain';
-import { createSystem } from 'test/helpers/Factory';
-import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
+} from '../../typechain';
+import { createSystem } from '../helpers/Factory';
+import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
 
 const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
 const POOL_TYPE = BigNumber.from(1);

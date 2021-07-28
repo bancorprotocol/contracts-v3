@@ -4,11 +4,11 @@ import { BigNumber } from 'ethers';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
-import { NetworkSettings, TokenHolderUpgradeable, TestERC20Token } from 'typechain';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { createTokenHolder, createSystem } from 'test/helpers/Factory';
+import Contracts from '../../components/Contracts';
+import { NetworkSettings, TokenHolderUpgradeable, TestERC20Token } from '../../typechain';
+import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { createTokenHolder, createSystem } from '../helpers/Factory';
 
 let networkFeeWallet: TokenHolderUpgradeable;
 

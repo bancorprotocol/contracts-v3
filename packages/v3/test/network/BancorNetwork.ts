@@ -3,12 +3,12 @@ import { ethers } from 'hardhat';
 
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import Contracts from 'components/Contracts';
-import { BancorNetwork, TokenHolderUpgradeable } from 'typechain';
+import Contracts from '../../components/Contracts';
+import { BancorNetwork, TokenHolderUpgradeable } from '../../typechain';
 
-import { ZERO_ADDRESS } from 'test/helpers/Constants';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { createSystem, createTokenHolder } from 'test/helpers/Factory';
+import { ZERO_ADDRESS } from '../helpers/Constants';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { createSystem, createTokenHolder } from '../helpers/Factory';
 
 let nonOwner: SignerWithAddress;
 let newOwner: SignerWithAddress;
