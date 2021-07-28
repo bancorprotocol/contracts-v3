@@ -9,19 +9,19 @@ const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, createProxy }): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
 
-        const vault = await createProxy(proxyAdmin, contracts.BancorVault, [], initialState.BNT.token);
+        const bancorVault = await createProxy(proxyAdmin, contracts.BancorVault, [], initialState.BNT.token);
 
         return {
             ...initialState,
 
-            Vault: vault.address
+            Vault: bancorVault.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
+        const bancorVault = await contracts.BancorVault.attach(state.Vault);
 
-        if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
+        if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress()))) return false;
 
         return true;
     }

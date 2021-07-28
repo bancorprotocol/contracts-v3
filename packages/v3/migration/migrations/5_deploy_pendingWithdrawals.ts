@@ -24,9 +24,9 @@ const migration: Migration = {
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
+        const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.PendingWithdrawals);
 
-        if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
+        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) return false;
 
         return true;
     }

@@ -21,9 +21,9 @@ const migration: Migration = {
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const ProxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
+        const proxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
 
-        if ((await ProxyAdmin.owner()) !== (await signer.getAddress())) return false;
+        if ((await proxyAdmin.owner()) !== (await signer.getAddress())) return false;
 
         return true;
     }
