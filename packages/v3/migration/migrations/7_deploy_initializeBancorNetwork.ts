@@ -1,4 +1,4 @@
-import { NextState as InitialState } from './6_deploy_liquidityPoolCollection copy';
+import { NextState as InitialState } from './6_deploy_liquidityPoolCollection';
 import { Migration } from 'migration/engine/types';
 
 export type NextState = InitialState;
