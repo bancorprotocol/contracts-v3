@@ -2,6 +2,5 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {},
     "include": ["./test", "./tasks", "./components"],
-    "files": ["./hardhat.config.ts"],
-    "paths": {}
+    "files": ["./hardhat.config.ts"]
 }
