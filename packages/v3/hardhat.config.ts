@@ -1,9 +1,11 @@
 import './migration/engine';
 import { log } from './migration/engine/logger/logger';
+import { customChai } from './test/matchers';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import chai from 'chai';
 import { BigNumber } from 'ethers';
 import fs from 'fs';
 import 'hardhat-abi-exporter';
@@ -16,7 +18,9 @@ import path from 'path';
 import 'solidity-coverage';
 import 'tsconfig-paths/register';
 
-const configPath = path.join(__dirname, 'config.json');
+chai.use(customChai);
+
+const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 
 // Utilities

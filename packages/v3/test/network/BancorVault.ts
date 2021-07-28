@@ -30,7 +30,7 @@ describe('BancorVault', () => {
         reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             const { vault } = await createSystem();
 

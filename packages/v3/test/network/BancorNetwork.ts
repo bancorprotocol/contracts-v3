@@ -18,7 +18,7 @@ describe('BancorNetwork', () => {
         [, nonOwner, newOwner, dummy] = await ethers.getSigners();
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             const { network } = await createSystem();
 
@@ -44,7 +44,7 @@ describe('BancorNetwork', () => {
         });
     });
 
-    describe('external protection wallet', async () => {
+    describe('external protection wallet', () => {
         let newExternalProtectionWallet: TokenHolderUpgradeable;
         let network: BancorNetwork;
 
