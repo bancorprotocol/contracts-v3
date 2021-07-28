@@ -23,4 +23,12 @@ contract TestLiquidityPoolCollection is LiquidityPoolCollection {
     ) external pure returns (uint256) {
         return super.networkArbitrage(a, b, f, m);
     }
+
+    function mint(
+        address recipient,
+        IPoolToken poolToken,
+        uint256 amount
+    ) external {
+        poolToken.mint(recipient, amount);
+    }
 }

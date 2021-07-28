@@ -2,16 +2,29 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+
 import "../utility/OwnedUpgradeable.sol";
 import "../utility/Upgradeable.sol";
 import "../utility/Utils.sol";
+import "../utility/Time.sol";
 
 import "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
  */
-contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeable, Utils {
+contract PendingWithdrawals is
+    IPendingWithdrawals,
+    Upgradeable,
+    OwnedUpgradeable,
+    ReentrancyGuardUpgradeable,
+    Time,
+    Utils
+{
+    using SafeERC20 for IPoolToken;
+
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
@@ -100,6 +113,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
      * @dev initializes the contract and its parents
      */
     function __PendingWithdrawals_init() internal initializer {
+        __ReentrancyGuard_init();
         __Owned_init();
 
         __PendingWithdrawals_init_unchained();
@@ -189,5 +203,58 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, OwnedUpgradeabl
         emit WithdrawalWindowDurationUpdated(_withdrawalWindowDuration, newWithdrawalWindowDuration);
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
+        external
+        override
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        nonReentrant
+    {
+        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function initWithdrawalDelegated(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        address provider,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
+        poolToken.permit(provider, address(this), poolTokenAmount, deadline, v, r, s);
+
+        _initWithdrawal(provider, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @dev initiates liquidity withdrawal
+     */
+    function _initWithdrawal(
+        address provider,
+        IPoolToken poolToken,
+        uint256 poolTokenAmount
+    ) private {
+        // make sure that the pool is valid
+        IReserveToken pool = poolToken.reserveToken();
+        require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
+
+        // record the current withdrawal request alongside previous pending withdrawal requests
+        Position[] storage providerPositions = _positions[provider];
+        providerPositions.push(Position({ poolToken: poolToken, amount: poolTokenAmount, createdAt: _time() }));
+
+        // transfer the pool tokens from the provider. Please keep in mind, that the provide should have either previously
+        // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
+        poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
+
+        emit WithdrawalInitiated(pool, provider, providerPositions.length - 1, poolTokenAmount);
     }
 }

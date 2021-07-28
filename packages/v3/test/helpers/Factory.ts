@@ -2,7 +2,7 @@ import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
 import { toAddress } from 'test/helpers/Utils';
-import { ProxyAdmin } from 'typechain';
+import { BancorNetwork, NetworkSettings, ProxyAdmin } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -74,7 +74,7 @@ export const createTokenHolder = async () => {
 };
 
 export const createLiquidityPoolCollection = async (network: string | BaseContract) =>
-    Contracts.LiquidityPoolCollection.deploy(toAddress(network));
+    Contracts.TestLiquidityPoolCollection.deploy(toAddress(network));
 
 export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);

@@ -5,12 +5,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 
+import "../../token/interfaces/IReserveToken.sol";
 import "../../token/interfaces/IERC20Burnable.sol";
 
 /**
  * @dev Pool Token interface
  */
 interface IPoolToken is IERC20, IERC20Permit, IERC20Burnable {
+    /**
+     * @dev returns the address of the reserve token
+     */
+    function reserveToken() external view returns (IReserveToken);
+
     /**
      * @dev increases the token supply and sends the new tokens to the given account
      *

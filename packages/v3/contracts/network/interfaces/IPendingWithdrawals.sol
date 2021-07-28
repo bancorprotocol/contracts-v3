@@ -9,6 +9,7 @@ import "../../token/interfaces/IReserveToken.sol";
 
 import "../../utility/interfaces/IUpgradeable.sol";
 
+import "./INetworkSettings.sol";
 import "./IBancorNetwork.sol";
 
 /**
@@ -45,4 +46,30 @@ interface IPendingWithdrawals is IUpgradeable {
      * @dev returns withdrawal window duration
      */
     function withdrawalWindowDuration() external view returns (uint256);
+
+    /**
+     * @dev initiates liquidity withdrawal
+     *
+     * requirements:
+     *
+     * - the caller must have approved the contract to transfer the pool token amount on its behalf
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external;
+
+    /**
+     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+    function initWithdrawalDelegated(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        address provider,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }

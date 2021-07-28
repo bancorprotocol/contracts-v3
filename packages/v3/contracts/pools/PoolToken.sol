@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/drafts/ERC20Permit.sol";
 
-import "../token/interfaces/IReserveToken.sol";
 import "../token/ERC20Burnable.sol";
 
 import "../utility/OwnedUpgradeable.sol";
@@ -40,9 +39,9 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the address of the reserve token
+     * @inheritdoc IPoolToken
      */
-    function reserveToken() external view returns (IReserveToken) {
+    function reserveToken() external view override returns (IReserveToken) {
         return _reserveToken;
     }
 
