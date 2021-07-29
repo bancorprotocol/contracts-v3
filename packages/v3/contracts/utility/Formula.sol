@@ -76,10 +76,10 @@ library Formula {
         uint256 bPcMd = bPc.mul(d);
         if (bPc >= e) {
             // TKN is not in deficit
-            amounts.B = eMx / d;
-            amounts.D = MathEx.mulDivF(b, eMx, bPcMd);
-            amounts.E = MathEx.mulDivF(c, eMx, bPcMd);
-            amounts.F = MathEx.mulDivF(a, eMx, bPcMd);
+            amounts.B = eMx / d; // [x <= d] --> [B <= e]
+            amounts.D = MathEx.mulDivF(b, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [D <= b]
+            amounts.E = MathEx.mulDivF(c, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [E <= c]
+            amounts.F = MathEx.mulDivF(a, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [F <= a]
             if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
                 // the cost of the arbitrage method is not larger than the withdrawal fee
                 uint256 f = MathEx.mulDivF(bPc - e, x.mul(PPM_RESOLUTION - n), d.mul(n));
@@ -88,10 +88,10 @@ library Formula {
             }
         } else if (bPcMd >= eMx) {
             // TKN is in deficit, and the withdrawal is not larger than the total TKN in the vault
-            amounts.B = eMx / d;
-            amounts.D = MathEx.mulDivF(b, eMx, bPcMd);
-            amounts.E = MathEx.mulDivF(c, eMx, bPcMd);
-            amounts.F = MathEx.mulDivF(a, eMx, bPcMd);
+            amounts.B = eMx / d; // [x <= d] --> [B <= e]
+            amounts.D = MathEx.mulDivF(b, eMx, bPcMd); // [e*x <= (b+c)*d] --> [D <= b]
+            amounts.E = MathEx.mulDivF(c, eMx, bPcMd); // [e*x <= (b+c)*d] --> [E <= c]
+            amounts.F = MathEx.mulDivF(a, eMx, bPcMd); // [e*x <= (b+c)*d] --> [F <= a]
             if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
                 // the cost of the arbitrage method is not larger than the withdrawal fee
                 uint256 f = MathEx.mulDivF(e - bPc, x.mul(PPM_RESOLUTION - n), d.mul(n));
@@ -103,11 +103,11 @@ library Formula {
             // TKN is in deficit, and the withdrawal is larger than the total TKN in the vault
             uint256 y = a.mul(e - bPc);
             uint256 bMd = b.mul(d);
-            amounts.B = MathEx.mulDivF(bPc, x, d);
-            amounts.C = MathEx.mulDivF(y, x, bMd);
-            amounts.D = MathEx.mulDivF(b, x, d);
-            amounts.E = MathEx.mulDivF(c, x, d);
-            amounts.F = MathEx.mulDivF(a, x, d);
+            amounts.B = MathEx.mulDivF(bPc, x, d); // [x <= d] --> [B <= b+c < e]
+            amounts.C = MathEx.mulDivF(y, x, bMd); // [x <= d] --> [x <= b*d] --> [C <= a*(e-(b+c))]
+            amounts.D = MathEx.mulDivF(b, x, d); // [x <= d] --> [D <= b]
+            amounts.E = MathEx.mulDivF(c, x, d); // [x <= d] --> [E <= c]
+            amounts.F = MathEx.mulDivF(a, x, d); // [x <= d] --> [F <= a]
         }
         return amounts;
     }
