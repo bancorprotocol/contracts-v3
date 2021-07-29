@@ -8,10 +8,10 @@ import { ContractFactory } from 'ethers';
 export type deployExecuteType = ReturnType<typeof initDeployExecute>;
 
 export const initDeployExecute = (executionConfig: executionConfig, overrides: executeOverride) => {
-    const deploy = async <F extends ContractFactory, T extends (...args: any[]) => Promise<Contract<F>>>(
+    const deploy = async <F extends ContractFactory>(
         factory: ContractBuilder<F>,
         ...args: Parameters<ContractBuilder<F>['deploy']>
-    ): Promise<ReturnType<T>> => {
+    ): Promise<ReturnType<ContractBuilder<F>['deploy']>> => {
         const contract = await factory.deploy(...([...args, overrides] as any));
 
         log.executingTx(`Deploying contract \${${factory.contractName}}`);
