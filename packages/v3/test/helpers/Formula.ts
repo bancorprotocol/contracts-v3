@@ -30,7 +30,11 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
         F = a.mul(eMx).div(bPcMd).floor();
         if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
             // the cost of the arbitrage method is not larger than the withdrawal fee
-            const f = bPc.sub(e).mul(x.mul(n.sub(PPMR).neg())).div(d.mul(n)).floor();
+            const f = bPc
+                .sub(e)
+                .mul(x.mul(n.sub(PPMR).neg()))
+                .div(d.mul(n))
+                .floor();
             G = optArb(a.sub(F), b.sub(D), f, m);
             H = Action.burn;
         }
@@ -42,12 +46,15 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
         F = a.mul(eMx).div(bPcMd).floor();
         if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
             // the cost of the arbitrage method is not larger than the withdrawal fee
-            const f = e.sub(bPc).mul(x.mul(n.sub(PPMR).neg())).div(d.mul(n)).floor();
+            const f = e
+                .sub(bPc)
+                .mul(x.mul(n.sub(PPMR).neg()))
+                .div(d.mul(n))
+                .floor();
             G = optArb(a.sub(F), b.sub(D), f, m);
             H = Action.mint;
         }
-    }
-    else {
+    } else {
         // TKN is in deficit, and the withdrawal is larger than the total TKN in the vault
         const y = a.mul(e.sub(bPc));
         const bMd = b.mul(d);

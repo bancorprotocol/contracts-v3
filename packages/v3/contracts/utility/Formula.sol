@@ -98,8 +98,7 @@ library Formula {
                 amounts.G = optArb(a - amounts.F, b - amounts.D, f, m);
                 amounts.H = Action.mint;
             }
-        }
-        else {
+        } else {
             // TKN is in deficit, and the withdrawal is larger than the total TKN in the vault
             uint256 y = a.mul(e - bPc);
             uint256 bMd = b.mul(d);
