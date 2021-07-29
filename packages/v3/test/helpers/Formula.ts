@@ -5,6 +5,12 @@ const { Decimal } = MathUtils;
 const MAX_VAL = MAX_UINT256.toString();
 const PPMR = PPM_RESOLUTION.toNumber();
 
+const Action = {
+    none: 0,
+    burn: 1,
+    mint: 2
+};
+
 const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: any, x: any) => {
     [a, b, c, d, e, m, n, x] = [a, b, c, d, e, m, n, x].map((z) => new Decimal(z));
     let B = new Decimal(0);
@@ -13,22 +19,37 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
     let E = new Decimal(0);
     let F = new Decimal(0);
     let G = new Decimal(0);
+    let H = Action.none;
     const bPc = b.add(c);
+    const eMx = e.mul(x);
+    const bPcMd = bPc.mul(d);
     if (bPc.gte(e)) {
-        // TKN is in surplus
-        const eMx = e.mul(x);
-        const dMbPc = d.mul(bPc);
+        // TKN is not in deficit
         B = eMx.div(d).floor();
-        D = b.mul(eMx).div(dMbPc).floor();
-        E = c.mul(eMx).div(dMbPc).floor();
-        F = a.mul(eMx).div(dMbPc).floor();
+        D = b.mul(eMx).div(bPcMd).floor();
+        E = c.mul(eMx).div(bPcMd).floor();
+        F = a.mul(eMx).div(bPcMd).floor();
         if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
-            // the cost of the arbitrage method is less than the withdrawal fee
-            const f = bPc.sub(e).mul(x).mul(n.sub(PPMR).neg()).div(d.mul(n)).floor();
+            // the cost of the arbitrage method is not larger than the withdrawal fee
+            const f = bPc.sub(e).mul(x.mul(n.sub(PPMR).neg())).div(d.mul(n)).floor();
             G = optArb(a.sub(F), b.sub(D), f, m);
+            H = Action.burn;
         }
-    } else {
-        // TKN is in deficit
+    } else if (bPcMd.gte(eMx)) {
+        // TKN is in deficit, and the withdrawal is not larger than the total TKN in the vault
+        B = eMx.div(d).floor();
+        D = b.mul(eMx).div(bPcMd).floor();
+        E = c.mul(eMx).div(bPcMd).floor();
+        F = a.mul(eMx).div(bPcMd).floor();
+        if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
+            // the cost of the arbitrage method is not larger than the withdrawal fee
+            const f = e.sub(bPc).mul(x.mul(n.sub(PPMR).neg())).div(d.mul(n)).floor();
+            G = optArb(a.sub(F), b.sub(D), f, m);
+            H = Action.mint;
+        }
+    }
+    else {
+        // TKN is in deficit, and the withdrawal is larger than the total TKN in the vault
         const y = a.mul(e.sub(bPc));
         const bMd = b.mul(d);
         B = bPc.mul(x).div(d).floor();
@@ -37,7 +58,7 @@ const withdrawalAmounts = (a: any, b: any, c: any, d: any, e: any, m: any, n: an
         E = c.mul(x).div(d).floor();
         F = a.mul(x).div(d).floor();
     }
-    return { B, C, D, E, F, G };
+    return { B, C, D, E, F, G, H };
 };
 
 // c(c - e)^2 / b <= 2^256 - 1

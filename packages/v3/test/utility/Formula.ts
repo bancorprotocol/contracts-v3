@@ -32,12 +32,13 @@ describe('Formula', () => {
                                     it(`withdrawalAmounts(${[a, b, c, d, e, m, n, x]})`, async () => {
                                         const expected = Formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
                                         const actual = await formula.withdrawalAmounts(a, b, c, d, e, m, n, x);
-                                        expect(actual.B).to.be.equal(expected.B.toFixed());
-                                        expect(actual.C).to.be.equal(expected.C.toFixed());
-                                        expect(actual.D).to.be.equal(expected.D.toFixed());
-                                        expect(actual.E).to.be.equal(expected.E.toFixed());
-                                        expect(actual.F).to.be.equal(expected.F.toFixed());
-                                        expect(actual.G).to.be.equal(expected.G.toFixed());
+                                        expect(actual.B).to.equal(expected.B.toFixed());
+                                        expect(actual.C).to.equal(expected.C.toFixed());
+                                        expect(actual.D).to.equal(expected.D.toFixed());
+                                        expect(actual.E).to.equal(expected.E.toFixed());
+                                        expect(actual.F).to.equal(expected.F.toFixed());
+                                        expect(actual.G).to.equal(expected.G.toFixed());
+                                        expect(actual.H).to.equal(expected.H);
                                     });
                                 }
                             }
@@ -57,7 +58,7 @@ describe('Formula', () => {
                             it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = Formula.maxArbCondition(b, c, d, e, n, x);
                                 const actual = await formula.maxArbCondition(b, c, d, e, n, x);
-                                expect(actual).to.be.equal(expected);
+                                expect(actual).to.equal(expected);
                             });
                         }
                     }
@@ -75,7 +76,7 @@ describe('Formula', () => {
                             it(`maxArbCondition(${[b, c, d, e, n, x]})`, async () => {
                                 const expected = Formula.maxArbCondition(b, c, d, e, n, x);
                                 const actual = await formula.maxArbCondition(b, c, d, e, n, x);
-                                expect(actual).to.be.equal(expected);
+                                expect(actual).to.equal(expected);
                             });
                         }
                     }
@@ -90,7 +91,7 @@ describe('Formula', () => {
                 it(`maxArbComputable(${[b, c, e]})`, async () => {
                     const expected = Formula.maxArbComputable(b, c, e);
                     const actual = await formula.maxArbComputable(b, c, e);
-                    expect(actual).to.be.equal(expected);
+                    expect(actual).to.equal(expected);
                 });
             }
         }
@@ -132,9 +133,9 @@ describe('Formula', () => {
                         const expected = Formula.optArb(a, b, f, m);
                         if (expected.lte(Formula.MAX_VAL)) {
                             const actual = await formula.optArb(a, b, f, m);
-                            expect(actual).to.be.equal(expected.toFixed());
+                            expect(actual).to.equal(expected.toFixed());
                         } else {
-                            await expect(formula.optArb(a, b, f, m)).to.be.revertedWith('ERR_OVERFLOW');
+                            await expect(formula.optArb(a, b, f, m)).to.revertedWith('ERR_OVERFLOW');
                         }
                     });
                 }

@@ -14,6 +14,12 @@ library Formula {
 
     // solhint-disable var-name-mixedcase
 
+    enum Action {
+        none,
+        burn,
+        mint
+    }
+
     struct WithdrawalAmounts {
         uint256 B;
         uint256 C;
@@ -21,6 +27,7 @@ library Formula {
         uint256 E;
         uint256 F;
         uint256 G;
+        Action H;
     }
 
     struct MaxArb {
@@ -50,7 +57,8 @@ library Formula {
      * D = TKN amount to remove from the pool
      * E = TKN amount to remove from the vault
      * F = BNT amount to remove from the pool
-     * G = BNT amount to add to the pool
+     * G = BNT amount to burn or mint in the pool
+     * H = BNT action - burn or mint or neither
      */
     function withdrawalAmounts(
         uint256 a,
@@ -64,21 +72,35 @@ library Formula {
     ) internal pure returns (WithdrawalAmounts memory) {
         WithdrawalAmounts memory amounts;
         uint256 bPc = b.add(c);
+        uint256 eMx = e.mul(x);
+        uint256 bPcMd = bPc.mul(d);
         if (bPc >= e) {
-            // TKN is in surplus
-            uint256 eMx = e.mul(x);
-            uint256 dMbPc = d.mul(bPc);
+            // TKN is not in deficit
             amounts.B = eMx / d;
-            amounts.D = MathEx.mulDivF(b, eMx, dMbPc);
-            amounts.E = MathEx.mulDivF(c, eMx, dMbPc);
-            amounts.F = MathEx.mulDivF(a, eMx, dMbPc);
+            amounts.D = MathEx.mulDivF(b, eMx, bPcMd);
+            amounts.E = MathEx.mulDivF(c, eMx, bPcMd);
+            amounts.F = MathEx.mulDivF(a, eMx, bPcMd);
             if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
-                // the cost of the arbitrage method is less than the withdrawal fee
+                // the cost of the arbitrage method is not larger than the withdrawal fee
                 uint256 f = MathEx.mulDivF(bPc - e, x.mul(PPM_RESOLUTION - n), d.mul(n));
                 amounts.G = optArb(a - amounts.F, b - amounts.D, f, m);
+                amounts.H = Action.burn;
             }
-        } else {
-            // TKN is in deficit
+        } else if (bPcMd >= eMx) {
+            // TKN is in deficit, and the withdrawal is not larger than the total TKN in the vault
+            amounts.B = eMx / d;
+            amounts.D = MathEx.mulDivF(b, eMx, bPcMd);
+            amounts.E = MathEx.mulDivF(c, eMx, bPcMd);
+            amounts.F = MathEx.mulDivF(a, eMx, bPcMd);
+            if (maxArbComputable(b, c, e) && maxArbCondition(b, c, d, e, n, x)) {
+                // the cost of the arbitrage method is not larger than the withdrawal fee
+                uint256 f = MathEx.mulDivF(e - bPc, x.mul(PPM_RESOLUTION - n), d.mul(n));
+                amounts.G = optArb(a - amounts.F, b - amounts.D, f, m);
+                amounts.H = Action.mint;
+            }
+        }
+        else {
+            // TKN is in deficit, and the withdrawal is larger than the total TKN in the vault
             uint256 y = a.mul(e - bPc);
             uint256 bMd = b.mul(d);
             amounts.B = MathEx.mulDivF(bPc, x, d);
