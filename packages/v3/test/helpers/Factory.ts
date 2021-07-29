@@ -2,7 +2,7 @@ import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
 import { toAddress } from 'test/helpers/Utils';
-import { BancorNetwork, NetworkSettings, ProxyAdmin } from 'typechain';
+import { BancorNetwork, LiquidityPoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -97,4 +97,18 @@ export const createSystem = async () => {
     await network.initialize(pendingWithdrawals.address);
 
     return { networkSettings, network, networkToken, vault, networkTokenPool, pendingWithdrawals, collection };
+};
+
+export const createPool = async (
+    reserveToken: TestERC20Token,
+    network: BancorNetwork,
+    networkSettings: NetworkSettings,
+    collection: LiquidityPoolCollection
+) => {
+    await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+    await network.addPoolCollection(collection.address);
+    await network.createPool(await collection.poolType(), reserveToken.address);
+
+    return Contracts.PoolToken.attach(await collection.poolToken(reserveToken.address));
 };

@@ -23,6 +23,7 @@ contract PendingWithdrawals is
     Time,
     Utils
 {
+    using SafeMath for uint256;
     using SafeERC20 for IPoolToken;
 
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
@@ -34,14 +35,16 @@ contract PendingWithdrawals is
     // the network token pool contract
     INetworkTokenPool private immutable _networkTokenPool;
 
-    // a mapping between accounts and their pending positions
-    mapping(address => Position[]) private _positions;
-
     // the lock duration
     uint256 private _lockDuration;
 
     // the withdrawal window duration
     uint256 private _withdrawalWindowDuration;
+
+    // a mapping between accounts and their pending withdrawal requests
+    uint256 private _nextWithdrawalRequestId;
+    mapping(address => uint256[]) private _withdrawalRequestIdsByProvider;
+    mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 3] private __gap;
@@ -62,7 +65,7 @@ contract PendingWithdrawals is
     event WithdrawalInitiated(
         IReserveToken indexed pool,
         address indexed provider,
-        uint256 indexed positionIndex,
+        uint256 indexed positionId,
         uint256 poolTokenAmount
     );
 
@@ -72,7 +75,7 @@ contract PendingWithdrawals is
     event WithdrawalCancelled(
         IReserveToken indexed pool,
         address indexed provider,
-        uint256 indexed positionIndex,
+        uint256 indexed positionId,
         uint256 poolTokenAmount,
         uint32 timeElapsed
     );
@@ -153,13 +156,6 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function positions(address account) external view override returns (Position[] memory) {
-        return _positions[account];
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
     function lockDuration() external view override returns (uint256) {
         return _lockDuration;
     }
@@ -208,6 +204,27 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
+    function withdrawalRequestCount(address provider) external view override returns (uint256) {
+        return _withdrawalRequestIdsByProvider[provider].length;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function withdrawalRequestIds(address provider) external view override returns (uint256[] memory) {
+        return _withdrawalRequestIdsByProvider[provider];
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function withdrawalRequest(uint256 id) external view override returns (WithdrawalRequest memory) {
+        return _withdrawalRequests[id];
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
     function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
         external
         override
@@ -236,6 +253,39 @@ contract PendingWithdrawals is
     }
 
     /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function cancelWithdrawal(uint256 id) external override nonReentrant {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+        address provider = request.provider;
+        require(provider == msg.sender, "ERR_ACCESS_DENIED");
+
+        delete _withdrawalRequests[id];
+
+        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
+        uint256 length = ids.length;
+        uint256 lastIndex = length - 1;
+        if (request.index < lastIndex) {
+            uint256 lastId = ids[lastIndex];
+            ids[request.index] = lastId;
+            _withdrawalRequests[lastId].index = request.index;
+        }
+
+        ids.pop();
+
+        // transfer the locked pool tokens back to the provider
+        request.poolToken.safeTransfer(msg.sender, request.amount);
+
+        emit WithdrawalCancelled(
+            request.poolToken.reserveToken(),
+            msg.sender,
+            id,
+            request.amount,
+            uint32(_time().sub(request.createdAt))
+        );
+    }
+
+    /**
      * @dev initiates liquidity withdrawal
      */
     function _initWithdrawal(
@@ -248,13 +298,23 @@ contract PendingWithdrawals is
         require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        Position[] storage providerPositions = _positions[provider];
-        providerPositions.push(Position({ poolToken: poolToken, amount: poolTokenAmount, createdAt: _time() }));
+        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
+        uint256 id = _nextWithdrawalRequestId++;
+
+        _withdrawalRequests[id] = WithdrawalRequest({
+            provider: provider,
+            poolToken: poolToken,
+            index: ids.length,
+            amount: poolTokenAmount,
+            createdAt: _time()
+        });
+
+        ids.push(id);
 
         // transfer the pool tokens from the provider. Please keep in mind, that the provide should have either previously
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
-        emit WithdrawalInitiated(pool, provider, providerPositions.length - 1, poolTokenAmount);
+        emit WithdrawalInitiated(pool, provider, id, poolTokenAmount);
     }
 }
