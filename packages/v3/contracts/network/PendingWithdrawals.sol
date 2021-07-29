@@ -47,7 +47,7 @@ contract PendingWithdrawals is
     mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint256[MAX_GAP - 5] private __gap;
 
     /**
      * @dev triggered when the lock duration is updated
@@ -73,6 +73,17 @@ contract PendingWithdrawals is
      * @dev triggered when a provider cancels a liquidity withdrawal request
      */
     event WithdrawalCancelled(
+        IReserveToken indexed pool,
+        address indexed provider,
+        uint256 indexed withdrawalId,
+        uint256 poolTokenAmount,
+        uint32 timeElapsed
+    );
+
+    /**
+     * @dev triggered when a provider requests to reinitiate a liquidity withdrawal
+     */
+    event WithdrawalReinitiated(
         IReserveToken indexed pool,
         address indexed provider,
         uint256 indexed withdrawalId,
@@ -260,30 +271,37 @@ contract PendingWithdrawals is
         address provider = request.provider;
         require(provider == msg.sender, "ERR_ACCESS_DENIED");
 
-        delete _withdrawalRequests[id];
+        _cancelWithdrawal(request, id);
+    }
 
-        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
-        uint256 length = ids.length;
-        uint256 lastIndex = length - 1;
-        if (request.index < lastIndex) {
-            uint256 lastId = ids[lastIndex];
-            ids[request.index] = lastId;
-            _withdrawalRequests[lastId].index = request.index;
-        }
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function reinitWithdrawal(uint256 id) external override nonReentrant {
+        WithdrawalRequest storage request = _withdrawalRequests[id];
+        address provider = request.provider;
+        require(provider == msg.sender, "ERR_ACCESS_DENIED");
 
-        ids.pop();
+        uint256 currentTime = _time();
 
-        // transfer the locked pool tokens back to the provider
-        request.poolToken.safeTransfer(msg.sender, request.amount);
-
-        emit WithdrawalCancelled(
+        emit WithdrawalReinitiated(
             request.poolToken.reserveToken(),
-            msg.sender,
+            provider,
             id,
             request.amount,
-            uint32(_time().sub(request.createdAt))
+            uint32(currentTime.sub(request.createdAt))
         );
+
+        request.createdAt = currentTime;
     }
+
+    //     reinitWithdrawal(id)
+    // external
+    // verify that the id is valid for the caller account
+    // get the pool token address/amount from the given position
+    // call (internal) cancelWithdrawal
+    // call internal) initWithdrawal
+    // the assumption is that the above does everything including triggers the events
 
     /**
      * @dev initiates liquidity withdrawal
@@ -316,5 +334,35 @@ contract PendingWithdrawals is
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
         emit WithdrawalInitiated(pool, provider, id, poolTokenAmount);
+    }
+
+    /**
+     * @dev cancels a specific liquidity withdrawal request
+     */
+    function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private {
+        delete _withdrawalRequests[id];
+
+        address provider = request.provider;
+        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
+        uint256 length = ids.length;
+        uint256 lastIndex = length - 1;
+        if (request.index < lastIndex) {
+            uint256 lastId = ids[lastIndex];
+            ids[request.index] = lastId;
+            _withdrawalRequests[lastId].index = request.index;
+        }
+
+        ids.pop();
+
+        // transfer the locked pool tokens back to the provider
+        request.poolToken.safeTransfer(provider, request.amount);
+
+        emit WithdrawalCancelled(
+            request.poolToken.reserveToken(),
+            provider,
+            id,
+            request.amount,
+            uint32(_time().sub(request.createdAt))
+        );
     }
 }

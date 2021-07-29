@@ -24,7 +24,7 @@ describe('PendingWithdrawals', () => {
     let nonOwner: SignerWithAddress;
     let dummy: SignerWithAddress;
 
-    shouldHaveGap('PendingWithdrawals', '_positions');
+    shouldHaveGap('PendingWithdrawals', '_lockDuration');
 
     before(async () => {
         [, nonOwner, dummy] = await ethers.getSigners();
@@ -400,6 +400,95 @@ describe('PendingWithdrawals', () => {
                 it('should cancel withdrawal requests', async () => {
                     await testCancelWithdrawal(provider1, id1);
                     await testCancelWithdrawal(provider1, id2);
+                });
+            });
+        });
+
+        describe('reinitiation', () => {
+            let provider1: SignerWithAddress;
+            let provider2: SignerWithAddress;
+            let poolToken: PoolToken;
+            const amount = BigNumber.from(9999999);
+
+            beforeEach(async () => {
+                [, provider1, provider2] = await ethers.getSigners();
+
+                poolToken = await createPool(reserveToken, network, networkSettings, collection);
+
+                await collection.mint(provider1.address, poolToken.address, amount);
+                await collection.mint(provider2.address, poolToken.address, amount);
+            });
+
+            it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
+                await expect(pendingWithdrawals.reinitWithdrawal(BigNumber.from(1))).to.be.revertedWith(
+                    'ERR_ACCESS_DENIED'
+                );
+            });
+
+            context('with initiated withdrawal requests', () => {
+                const testReinitWithdrawal = async (provider: SignerWithAddress, id: BigNumber) => {
+                    const providerBalance = await poolToken.balanceOf(provider.address);
+                    const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
+                    const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(provider.address);
+                    const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+
+                    const res = await pendingWithdrawals.connect(provider).reinitWithdrawal(id);
+                    await expect(res)
+                        .to.emit(pendingWithdrawals, 'WithdrawalReinitiated')
+                        .withArgs(
+                            reserveToken.address,
+                            provider.address,
+                            id,
+                            withdrawalRequest.amount,
+                            (await latest()).sub(withdrawalRequest.createdAt)
+                        );
+
+                    expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
+                    expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(pendingWithdrawalsBalance);
+                    expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
+                        withdrawalRequestCount
+                    );
+
+                    const withdrawalRequest2 = await pendingWithdrawals.withdrawalRequest(id);
+                    expect(withdrawalRequest2.provider).to.equal(withdrawalRequest.provider);
+                    expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
+                    expect(withdrawalRequest2.index).to.equal(withdrawalRequest.index);
+                    expect(withdrawalRequest2.amount).to.equal(withdrawalRequest.amount);
+                    expect(withdrawalRequest2.createdAt).to.gte(await latest());
+                    expect(withdrawalRequest2.createdAt).not.to.equal(withdrawalRequest.createdAt);
+                };
+
+                let id1: BigNumber;
+                let id2: BigNumber;
+
+                beforeEach(async () => {
+                    await poolToken.connect(provider1).approve(pendingWithdrawals.address, amount);
+
+                    const withdrawalAmount1 = BigNumber.from(1111);
+                    await pendingWithdrawals.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount1);
+                    const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
+                    id1 = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+
+                    const withdrawalAmount2 = amount.sub(withdrawalAmount1);
+                    await pendingWithdrawals.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount2);
+                    const withdrawalRequestIds2 = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
+                    id2 = withdrawalRequestIds2[withdrawalRequestIds2.length - 1];
+                });
+
+                it("should revert when attempting to reinitiate another provider's request", async () => {
+                    await poolToken.connect(provider2).approve(pendingWithdrawals.address, amount);
+                    await pendingWithdrawals.connect(provider2).initWithdrawal(poolToken.address, amount);
+                    const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider2.address);
+                    const provider2Id = withdrawalRequestIds[0];
+
+                    await expect(
+                        pendingWithdrawals.connect(provider1).reinitWithdrawal(provider2Id)
+                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                });
+
+                it('should reinitiate withdrawal requests', async () => {
+                    await testReinitWithdrawal(provider1, id1);
+                    await testReinitWithdrawal(provider1, id2);
                 });
             });
         });

@@ -98,4 +98,13 @@ interface IPendingWithdrawals is IUpgradeable {
      * - the caller must have already initiated a withdrawal and received the specified id
      */
     function cancelWithdrawal(uint256 id) external;
+
+    /**
+     * @dev reinitiates a specific liquidity withdrawal request and restarts its cooldown durations
+     *
+     * requirements:
+     *
+     * - the caller must have already initiated a withdrawal and received the specified id
+     */
+    function reinitWithdrawal(uint256 id) external;
 }
