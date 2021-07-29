@@ -311,7 +311,7 @@ describe('PendingWithdrawals', () => {
             }
         });
 
-        describe.only('cancellation', () => {
+        describe('cancellation', () => {
             let provider1: SignerWithAddress;
             let provider2: SignerWithAddress;
             let poolToken: PoolToken;

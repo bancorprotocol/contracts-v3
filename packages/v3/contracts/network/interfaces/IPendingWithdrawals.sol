@@ -91,7 +91,7 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external;
 
     /**
-     * @dev cancel a specific iquidity withdrawal request
+     * @dev cancels a specific liquidity withdrawal request
      *
      * requirements:
      *

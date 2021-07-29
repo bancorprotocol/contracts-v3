@@ -65,7 +65,7 @@ contract PendingWithdrawals is
     event WithdrawalInitiated(
         IReserveToken indexed pool,
         address indexed provider,
-        uint256 indexed positionId,
+        uint256 indexed withdrawalId,
         uint256 poolTokenAmount
     );
 
@@ -75,7 +75,7 @@ contract PendingWithdrawals is
     event WithdrawalCancelled(
         IReserveToken indexed pool,
         address indexed provider,
-        uint256 indexed positionId,
+        uint256 indexed withdrawalId,
         uint256 poolTokenAmount,
         uint32 timeElapsed
     );
@@ -87,7 +87,7 @@ contract PendingWithdrawals is
         bytes32 indexed contextId,
         IReserveToken indexed pool,
         address indexed provider,
-        uint256 positionIndex,
+        uint256 withdrawalId,
         uint256 poolTokenAmount,
         uint32 timeElapsed
     );
