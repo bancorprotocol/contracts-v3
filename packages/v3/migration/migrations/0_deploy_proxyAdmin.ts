@@ -1,3 +1,4 @@
+import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type InitialState = {
@@ -23,9 +24,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
 
-        if ((await proxyAdmin.owner()) !== (await signer.getAddress())) return false;
-
-        return true;
+        if ((await proxyAdmin.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     }
 };
 export default migration;

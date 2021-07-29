@@ -19,13 +19,18 @@ export const log = {
     error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
 
     // Specific logging
-    defaultParams: (signerAddress: string, overrides: executeOverride, executionConfig: executionConfig) => {
-        palette.yellow(`********************`);
-        palette.yellow(`** Default Params **`);
-        palette.yellow(`********************`);
+    migrationConfig: (
+        signerAddress: string,
+        isLedger: boolean,
+        overrides: executeOverride,
+        executionConfig: executionConfig
+    ) => {
+        palette.yellow(`**********************`);
+        palette.yellow(`** Migration Config **`);
+        palette.yellow(`**********************`);
 
         palette.yellow(`Basic info`);
-        palette.white(`        Signer: ${signerAddress}`);
+        palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
         palette.yellow(`Overrides:`);
         palette.white(`        GasPrice: ${overrides.gasPrice} (gwei)`);
         palette.yellow(`Execution Config:`);

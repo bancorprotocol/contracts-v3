@@ -28,5 +28,5 @@ export interface Migration {
         contracts: Contracts,
         newState: any,
         { deploy, execute, createProxy }: executionTools
-    ) => Promise<boolean>;
+    ) => Promise<any>;
 }

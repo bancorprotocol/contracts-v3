@@ -1,4 +1,5 @@
 import { NextState as InitialState } from './3_deploy_vault';
+import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
@@ -23,8 +24,6 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        return true;
-    }
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {}
 };
 export default migration;

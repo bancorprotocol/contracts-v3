@@ -37,7 +37,7 @@ export interface Migration {
         contracts: Contracts,
         newState: any,
         { deploy, execute }: deployExecuteType
-    ) => Promise<boolean>;
+    ) => Promise<any>;
 }
 ```
 
@@ -112,9 +112,7 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {
-        return true;
-    }
+    healthCheck: async (signer, contracts, state: State, { deploy, execute }) => {}
 };
 export default migration;
 ```

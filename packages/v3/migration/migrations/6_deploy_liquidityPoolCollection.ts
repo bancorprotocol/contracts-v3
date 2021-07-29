@@ -1,4 +1,5 @@
 import { NextState as InitialState } from './5_deploy_pendingWithdrawals';
+import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
@@ -18,9 +19,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const liquidityPoolCollection = await contracts.LiquidityPoolCollection.attach(state.LiquidityPoolCollection);
 
-        if ((await liquidityPoolCollection.owner()) !== (await signer.getAddress())) return false;
-
-        return true;
+        if ((await liquidityPoolCollection.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     }
 };
 export default migration;

@@ -1,4 +1,5 @@
 import { NextState as InitialState } from './4_deploy_networkTokenPool';
+import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
@@ -26,9 +27,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.PendingWithdrawals);
 
-        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) return false;
-
-        return true;
+        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     }
 };
 export default migration;

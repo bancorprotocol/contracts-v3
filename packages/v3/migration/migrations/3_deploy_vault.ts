@@ -1,4 +1,5 @@
 import { NextState as InitialState } from './2_deploy_network';
+import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
@@ -21,9 +22,8 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const bancorVault = await contracts.BancorVault.attach(state.Vault);
 
-        if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress()))) return false;
-
-        return true;
+        if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
+            throw new OwnerNotSetOrCorrect();
     }
 };
 export default migration;

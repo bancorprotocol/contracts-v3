@@ -23,8 +23,6 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        return true;
-    }
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {}
 };
 export default migration;

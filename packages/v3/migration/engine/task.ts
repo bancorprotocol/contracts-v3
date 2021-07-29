@@ -20,12 +20,10 @@ export type executeOverride = { gasPrice?: BigNumberish };
 export type executionConfig = { confirmationToWait: number };
 
 export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: defaultParamTask) => {
-    // Signer check
     const signer = args.ledger
         ? new LedgerSigner(hre.ethers.provider, 'hid', args.ledgerPath)
         : (await hre.ethers.getSigners())[0];
 
-    // Overrides check
     const overrides: executeOverride = {};
 
     if (!args.gasPrice && !MIGRATION_CONFIG.isFork) {
@@ -33,7 +31,6 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
     }
     overrides.gasPrice = args.gasPrice === 0 ? undefined : parseUnits(args.gasPrice.toString(), 'gwei');
 
-    // Execution config
     let executionConfig: executionConfig = {
         confirmationToWait: args.confirmationToWait
     };
@@ -51,7 +48,7 @@ export const getDefaultParams = async (hre: HardhatRuntimeEnvironment, args: def
 
     const executionTools: executionTools = { ...deployExecute, ...proxy };
 
-    log.defaultParams(await signer.getAddress(), overrides, executionConfig);
+    log.migrationConfig(await signer.getAddress(), args.ledger, overrides, executionConfig);
     return {
         signer,
         contracts,

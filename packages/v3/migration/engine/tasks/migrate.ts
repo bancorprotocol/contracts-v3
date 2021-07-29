@@ -35,13 +35,14 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         try {
             currentNetworkState = await migration.up(signer, contracts, currentNetworkState, executionTools);
 
-            // if health check doesn't pass
-            if (!(await migration.healthCheck(signer, contracts, currentNetworkState, executionTools))) {
-                log.error('Health check failed');
+            try {
+                await migration.healthCheck(signer, contracts, currentNetworkState, executionTools);
+                log.success('Health check success ✨ ');
+            } catch (e) {
+                log.error('Health check failed: ' + e);
                 // @TODO revert the migration here
                 return;
             }
-            log.success('Health check success ✨ ');
 
             // if health check passed, update the state and write it to the system
             state = {

@@ -10,3 +10,15 @@ export class ExecutionError extends Error {
         this.tx = tx;
     }
 }
+
+export class MigrationError extends Error {
+    constructor(msg: string) {
+        super('Migration Error: ' + msg);
+    }
+}
+
+export class OwnerNotSetOrCorrect extends MigrationError {
+    constructor() {
+        super('Owner not set or correct');
+    }
+}
