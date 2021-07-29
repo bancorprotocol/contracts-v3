@@ -14,22 +14,25 @@ library Formula {
 
     // solhint-disable var-name-mixedcase
 
+    // BNT actions upon TKN withdrawal
     enum Action {
         none,
         burn,
         mint
     }
 
+    // TKN withdrawal output amounts
     struct WithdrawalAmounts {
-        uint256 B;
-        uint256 C;
-        uint256 D;
-        uint256 E;
-        uint256 F;
-        uint256 G;
-        Action H;
+        uint256 B; // TKN amount to transfer to the user
+        uint256 C; // BNT amount to transfer to the user
+        uint256 D; // TKN amount to remove from the pool
+        uint256 E; // TKN amount to remove from the vault
+        uint256 F; // BNT amount to remove from the pool
+        uint256 G; // BNT amount to burn or mint in the pool
+        Action H; // BNT action - burn or mint or neither
     }
 
+    // BNTKN maximum arbitrage (given by `pq / rs`)
     struct MaxArb {
         uint256 p;
         uint256 q;
@@ -220,9 +223,9 @@ library Formula {
      * the pool in order to create an optimal arbitrage incentive
      *
      * input:
-     * a = BNT pool balance
-     * b = TKN pool balance
-     * f = TKN target amount
+     * a = BNT hypothetical pool balance
+     * b = TKN hypothetical pool balance
+     * f = TKN arbitrage value
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
