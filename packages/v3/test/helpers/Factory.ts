@@ -24,7 +24,6 @@ interface Logic {
 }
 
 let logicContractsCache: Record<string, Logic> = {};
-
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -42,7 +41,7 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
         return cached.contract;
     }
 
-    const logicContract = await factory.deploy(...(ctorArgs || []));
+    const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
     logicContractsCache[factory.contractName] = { ctorArgs, contract: logicContract };
 
     return logicContract;
@@ -79,7 +78,8 @@ export const createTokenHolder = async () => {
 
 export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);
-    const network = await createProxy(Contracts.BancorNetwork, {
+
+    const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
         ctorArgs: [toAddress(networkSettings)]
     });

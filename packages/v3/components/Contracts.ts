@@ -12,9 +12,11 @@ import {
     PendingWithdrawals__factory,
     PoolToken__factory,
     ProxyAdmin__factory,
+    TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
     TestFormula__factory,
+    TestLiquidityPoolCollection__factory,
     TestMathEx__factory,
     TestOwnedUpgradeable__factory,
     TestReserveToken__factory,
@@ -33,14 +35,14 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
     contractName: string;
-    deploy(...args: Array<any>): Promise<Contract<F>>;
+    deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
     attach(address: string, passedSigner?: Signer): Promise<Contract<F>>;
 }
 
 const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer): ContractBuilder<F> => {
     return {
         contractName,
-        deploy: async (...args: Parameters<any>): Promise<Contract<F>> => {
+        deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
 
             return (await ethers.getContractFactory(contractName, defaultSigner)).deploy(
@@ -72,9 +74,11 @@ const getContracts = (signer?: Signer) => ({
     PendingWithdrawals: deployOrAttach<PendingWithdrawals__factory>('PendingWithdrawals', signer),
     PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
     ProxyAdmin: deployOrAttach<ProxyAdmin__factory>('ProxyAdmin', signer),
+    TestBancorNetwork: deployOrAttach<TestBancorNetwork__factory>('TestBancorNetwork', signer),
     TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
     TestFormula: deployOrAttach<TestFormula__factory>('TestFormula', signer),
+    TestLiquidityPoolCollection: deployOrAttach<TestLiquidityPoolCollection__factory>('TestLiquidityPoolCollection', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
     TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
     TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),

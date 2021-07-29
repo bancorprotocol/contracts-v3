@@ -1,7 +1,6 @@
-import MathUtils from './MathUtils';
+import Decimal from 'decimal.js';
 import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
 
-const { Decimal } = MathUtils;
 const MAX_VAL = MAX_UINT256.toString();
 const PPMR = PPM_RESOLUTION.toNumber();
 

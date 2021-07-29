@@ -42,7 +42,7 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the set of all liquidity pools
      */
-    function liquidityPools() external view returns (ILiquidityPoolCollection[] memory);
+    function liquidityPools() external view returns (IReserveToken[] memory);
 
     /**
      * @dev returns the respective liquidity pool collection for the provided pool
