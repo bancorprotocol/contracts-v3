@@ -2,6 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Contracts from 'components/Contracts';
 import { BigNumber, Wallet, Signer } from 'ethers';
+import { formatBytes32String } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
 import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
 import { createSystem, createPool } from 'test/helpers/Factory';
@@ -9,11 +10,12 @@ import { permitSignature } from 'test/helpers/Permit';
 import { shouldHaveGap } from 'test/helpers/Proxy';
 import { duration, latest } from 'test/helpers/Time';
 import {
-    PendingWithdrawals,
+    TestPendingWithdrawals,
     NetworkSettings,
     TestERC20Token,
     TestBancorNetwork,
     TestLiquidityPoolCollection,
+    TestNetworkTokenPool,
     PoolToken
 } from 'typechain';
 
@@ -65,7 +67,7 @@ describe('PendingWithdrawals', () => {
 
     describe('lock duration', () => {
         const newLockDuration = duration.days(1);
-        let pendingWithdrawals: PendingWithdrawals;
+        let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
             ({ pendingWithdrawals } = await createSystem());
@@ -98,7 +100,7 @@ describe('PendingWithdrawals', () => {
 
     describe('withdrawal window duration', () => {
         const newWithdrawalWindowDuration = duration.weeks(2);
-        let pendingWithdrawals: PendingWithdrawals;
+        let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
             ({ pendingWithdrawals } = await createSystem());
@@ -133,17 +135,20 @@ describe('PendingWithdrawals', () => {
         let reserveToken: TestERC20Token;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let pendingWithdrawals: PendingWithdrawals;
+        let networkTokenPool: TestNetworkTokenPool;
+        let pendingWithdrawals: TestPendingWithdrawals;
         let collection: TestLiquidityPoolCollection;
 
         beforeEach(async () => {
-            ({ network, networkSettings, pendingWithdrawals, collection } = await createSystem());
+            ({ network, networkSettings, networkTokenPool, pendingWithdrawals, collection } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+            await pendingWithdrawals.setTime(await latest());
         });
 
         describe('initiation', () => {
-            const testInit = (delegated: boolean = false) => {
+            const test = (delegated: boolean = false) => {
                 let provider: Signer | Wallet;
                 let providerAddress: string;
                 let providerNonce: BigNumber;
@@ -211,7 +216,7 @@ describe('PendingWithdrawals', () => {
                     expect(withdrawalRequest.poolToken).to.equal(poolToken.address);
                     expect(withdrawalRequest.index).to.equal(index);
                     expect(withdrawalRequest.amount).to.equal(amount);
-                    expect(withdrawalRequest.createdAt).to.equal(await latest());
+                    expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
                 };
 
                 it('should revert when attempting to withdraw from an invalid pool', async () => {
@@ -306,7 +311,7 @@ describe('PendingWithdrawals', () => {
 
             for (const delegated of [false, true]) {
                 context(delegated ? 'delegated' : 'direct', async () => {
-                    testInit(delegated);
+                    test(delegated);
                 });
             }
         });
@@ -347,7 +352,7 @@ describe('PendingWithdrawals', () => {
                             provider.address,
                             id,
                             withdrawalRequest.amount,
-                            (await latest()).sub(withdrawalRequest.createdAt)
+                            (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
                         );
 
                     expect(await poolToken.balanceOf(provider.address)).to.equal(
@@ -432,6 +437,8 @@ describe('PendingWithdrawals', () => {
                     const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(provider.address);
                     const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
+                    await pendingWithdrawals.setTime(withdrawalRequest.createdAt.add(duration.days(1)));
+
                     const res = await pendingWithdrawals.connect(provider).reinitWithdrawal(id);
                     await expect(res)
                         .to.emit(pendingWithdrawals, 'WithdrawalReinitiated')
@@ -440,7 +447,7 @@ describe('PendingWithdrawals', () => {
                             provider.address,
                             id,
                             withdrawalRequest.amount,
-                            (await latest()).sub(withdrawalRequest.createdAt)
+                            (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
                         );
 
                     expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
@@ -454,7 +461,7 @@ describe('PendingWithdrawals', () => {
                     expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
                     expect(withdrawalRequest2.index).to.equal(withdrawalRequest.index);
                     expect(withdrawalRequest2.amount).to.equal(withdrawalRequest.amount);
-                    expect(withdrawalRequest2.createdAt).to.gte(await latest());
+                    expect(withdrawalRequest2.createdAt).to.gte(await pendingWithdrawals.currentTime());
                     expect(withdrawalRequest2.createdAt).not.to.equal(withdrawalRequest.createdAt);
                 };
 
@@ -491,6 +498,164 @@ describe('PendingWithdrawals', () => {
                     await testReinitWithdrawal(provider1, id2);
                 });
             });
+        });
+
+        describe('completion', () => {
+            let provider: SignerWithAddress;
+
+            const test = async (networkToken: boolean) => {
+                let poolToken: PoolToken;
+                const poolTokenAmount = BigNumber.from(9889898923324);
+                const contextId = formatBytes32String('CTX');
+
+                beforeEach(async () => {
+                    [, provider] = await ethers.getSigners();
+
+                    if (networkToken) {
+                        poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
+
+                        await networkTokenPool.mint(provider.address, poolTokenAmount);
+                    } else {
+                        poolToken = await createPool(reserveToken, network, networkSettings, collection);
+
+                        await collection.mint(provider.address, poolToken.address, poolTokenAmount);
+                    }
+                });
+
+                it('should revert when attempting to complete a non-existing withdrawal request', async () => {
+                    await expect(
+                        pendingWithdrawals.completeWithdrawal(contextId, provider.address, BigNumber.from(100))
+                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                });
+
+                context('with initiated withdrawal requests', () => {
+                    let id: BigNumber;
+                    let creationTime: BigNumber;
+
+                    const testCompleteWithdrawal = async () => {
+                        const caller = networkToken ? networkTokenPool : collection;
+                        const providerBalance = await poolToken.balanceOf(provider.address);
+                        const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
+                        const callerBalance = await poolToken.balanceOf(caller.address);
+                        const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(
+                            provider.address
+                        );
+                        const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+
+                        const retPoolTokenAmount = await caller.callStatic.completeWithdrawalT(
+                            pendingWithdrawals.address,
+                            contextId,
+                            provider.address,
+
+                            id
+                        );
+                        expect(retPoolTokenAmount).to.equal(withdrawalRequest.amount);
+
+                        const res = await caller.completeWithdrawalT(
+                            pendingWithdrawals.address,
+                            contextId,
+                            provider.address,
+                            id
+                        );
+
+                        await expect(res)
+                            .to.emit(pendingWithdrawals, 'WithdrawalCompleted')
+                            .withArgs(
+                                contextId,
+                                networkToken ? await network.networkToken() : reserveToken.address,
+                                provider.address,
+                                id,
+                                withdrawalRequest.amount,
+                                (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
+                            );
+
+                        expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
+                        expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
+                            pendingWithdrawalsBalance.sub(withdrawalRequest.amount)
+                        );
+                        expect(await poolToken.balanceOf(caller.address)).to.equal(
+                            callerBalance.add(withdrawalRequest.amount)
+                        );
+                        expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
+                            withdrawalRequestCount.sub(BigNumber.from(1))
+                        );
+                        expect(await pendingWithdrawals.withdrawalRequestIds(provider.address)).not.to.have.members([
+                            id
+                        ]);
+                    };
+
+                    beforeEach(async () => {
+                        await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
+                        await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+
+                        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                        id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                        const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                        creationTime = withdrawalRequest.createdAt;
+                    });
+
+                    it('should revert when attempting to complete a withdrawal request from an incorrect caller', async () => {
+                        await expect(
+                            pendingWithdrawals.connect(provider).completeWithdrawal(contextId, provider.address, id)
+                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+
+                        await expect(
+                            (networkToken ? collection : networkTokenPool).completeWithdrawalT(
+                                pendingWithdrawals.address,
+                                contextId,
+                                provider.address,
+                                id
+                            )
+                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    });
+
+                    context('during the lock duration', () => {
+                        beforeEach(async () => {
+                            await pendingWithdrawals.setTime(creationTime.add(duration.hours(1)));
+                        });
+
+                        it('should revert when attempting to complete a withdrawal request', async () => {
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('ERR_WITHDRAWAL_NOT_ALLOWED');
+                        });
+                    });
+
+                    context('after the withdrawal window duration', () => {
+                        beforeEach(async () => {
+                            const withdrawalDuration = (await pendingWithdrawals.lockDuration()).add(
+                                await pendingWithdrawals.withdrawalWindowDuration()
+                            );
+                            await pendingWithdrawals.setTime(
+                                creationTime.add(withdrawalDuration.add(duration.seconds(1)))
+                            );
+                        });
+
+                        it('should revert when attempting to complete a withdrawal request', async () => {
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('ERR_WITHDRAWAL_NOT_ALLOWED');
+                        });
+                    });
+
+                    context('during the withdrawal window duration', () => {
+                        beforeEach(async () => {
+                            const withdrawalDuration = (await pendingWithdrawals.lockDuration()).add(
+                                await pendingWithdrawals.withdrawalWindowDuration()
+                            );
+                            await pendingWithdrawals.setTime(
+                                creationTime.add(withdrawalDuration.sub(duration.seconds(1)))
+                            );
+                        });
+
+                        it('should complete a withdrawal request', async () => {
+                            await testCompleteWithdrawal();
+                        });
+                    });
+                });
+            };
+
+            for (const networkToken of [false, true]) {
+                context(networkToken ? 'network token pool' : 'base token pool', async () => {
+                    test(networkToken);
+                });
+            }
         });
     });
 });

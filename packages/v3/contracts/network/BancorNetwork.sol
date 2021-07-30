@@ -16,6 +16,9 @@ import "./interfaces/IBancorNetwork.sol";
 contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    // the address of the network token
+    IERC20 private immutable _networkToken;
+
     // the network settings contract
     INetworkSettings private immutable _settings;
 
@@ -166,7 +169,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(INetworkSettings initSettings) validAddress(address(initSettings)) {
+    constructor(IERC20 initNetworkToken, INetworkSettings initSettings)
+        validAddress(address(initNetworkToken))
+        validAddress(address(initSettings))
+    {
+        _networkToken = initNetworkToken;
         _settings = initSettings;
     }
 
@@ -203,6 +210,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function version() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function networkToken() external view override returns (IERC20) {
+        return _networkToken;
     }
 
     /**
@@ -363,7 +377,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @inheritdoc IBancorNetwork
      */
     function isPoolValid(IReserveToken pool) external view override returns (bool) {
-        return _liquidityPools.contains(address(pool));
+        return address(pool) == address(_networkToken) || _liquidityPools.contains(address(pool));
     }
 
     /**

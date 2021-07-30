@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "../network/interfaces/IPendingWithdrawals.sol";
+
 import "../pools/LiquidityPoolCollection.sol";
 
 contract TestLiquidityPoolCollection is LiquidityPoolCollection {
@@ -30,5 +32,14 @@ contract TestLiquidityPoolCollection is LiquidityPoolCollection {
         uint256 amount
     ) external {
         poolToken.mint(recipient, amount);
+    }
+
+    function completeWithdrawalT(
+        IPendingWithdrawals pendingWithdrawals,
+        bytes32 contextId,
+        address provider,
+        uint256 id
+    ) external returns (uint256) {
+        return pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 }

@@ -1,7 +1,6 @@
-import { ethers } from 'hardhat';
-import { ContractFactory } from '@ethersproject/contracts';
 import { Signer } from '@ethersproject/abstract-signer';
-
+import { ContractFactory } from '@ethersproject/contracts';
+import { ethers } from 'hardhat';
 import {
     BancorNetwork__factory,
     BancorVault__factory,
@@ -16,8 +15,10 @@ import {
     TestERC20Burnable__factory,
     TestERC20Token__factory,
     TestLiquidityPoolCollection__factory,
+    TestNetworkTokenPool__factory,
     TestMathEx__factory,
     TestOwnedUpgradeable__factory,
+    TestPendingWithdrawals__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TokenHolderUpgradeable__factory,
@@ -76,9 +77,14 @@ const getContracts = (signer?: Signer) => ({
     TestBancorNetwork: deployOrAttach<TestBancorNetwork__factory>('TestBancorNetwork', signer),
     TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
-    TestLiquidityPoolCollection: deployOrAttach<TestLiquidityPoolCollection__factory>('TestLiquidityPoolCollection', signer),
+    TestLiquidityPoolCollection: deployOrAttach<TestLiquidityPoolCollection__factory>(
+        'TestLiquidityPoolCollection',
+        signer
+    ),
+    TestNetworkTokenPool: deployOrAttach<TestNetworkTokenPool__factory>('TestNetworkTokenPool', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
     TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
+    TestPendingWithdrawals: deployOrAttach<TestPendingWithdrawals__factory>('TestPendingWithdrawals', signer),
     TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
     TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
     TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),

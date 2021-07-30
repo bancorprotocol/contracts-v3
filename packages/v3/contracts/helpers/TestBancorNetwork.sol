@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import "../network/BancorNetwork.sol";
 
 contract TestBancorNetwork is BancorNetwork {
-    constructor(INetworkSettings initSettings) BancorNetwork(initSettings) {}
+    constructor(IERC20 initNetworkToken, INetworkSettings initSettings) BancorNetwork(initNetworkToken, initSettings) {}
 
     function createPoolT(ILiquidityPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);

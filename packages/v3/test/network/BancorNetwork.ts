@@ -34,20 +34,30 @@ describe('BancorNetwork', () => {
             );
         });
 
+        it('should revert when initialized with an invalid network token contract', async () => {
+            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
         it('should revert when initialized with an invalid network settings contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
         });
 
         it('should be properly initialized', async () => {
-            const { network, networkSettings, pendingWithdrawals } = await createSystem();
+            const { network, networkToken, networkSettings, pendingWithdrawals } = await createSystem();
 
             expect(await network.version()).to.equal(1);
 
+            expect(await network.networkToken()).to.equal(networkToken.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
+            expect(await network.isPoolValid(networkToken.address)).to.be.true;
         });
     });
 

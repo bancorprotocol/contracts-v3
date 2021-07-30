@@ -8,10 +8,12 @@ import "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 import "../../token/interfaces/IReserveToken.sol";
 import "../../token/interfaces/IERC20Burnable.sol";
 
+import "../../utility/interfaces/IOwned.sol";
+
 /**
  * @dev Pool Token interface
  */
-interface IPoolToken is IERC20, IERC20Permit, IERC20Burnable {
+interface IPoolToken is IOwned, IERC20, IERC20Permit, IERC20Burnable {
     /**
      * @dev returns the address of the reserve token
      */

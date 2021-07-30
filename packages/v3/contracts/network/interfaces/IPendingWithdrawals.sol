@@ -107,4 +107,19 @@ interface IPendingWithdrawals is IUpgradeable {
      * - the caller must have already initiated a withdrawal and received the specified id
      */
     function reinitWithdrawal(uint256 id) external;
+
+    /**
+     * @dev completes a specific liquidity withdrawal request and return the amount of pool tokens transferred
+     *
+     * requirements:
+     *
+     * - the provider must have already initiated a withdrawal and received the specified id
+     * - in order to complete a BNT withdrawal, the caller must be the network token pool
+     * - in order to complete a base token withdrawal, the caller must be the liquidity collection pool that manages the pool
+     */
+    function completeWithdrawal(
+        bytes32 contextId,
+        address provider,
+        uint256 id
+    ) external returns (uint256);
 }

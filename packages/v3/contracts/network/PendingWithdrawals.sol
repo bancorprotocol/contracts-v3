@@ -29,6 +29,9 @@ contract PendingWithdrawals is
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
+    // the network token contract
+    IERC20 private immutable _networkToken;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -110,6 +113,7 @@ contract PendingWithdrawals is
         validAddress(address(initNetwork))
         validAddress(address(initNetworkTokenPool))
     {
+        _networkToken = initNetwork.networkToken();
         _network = initNetwork;
         _networkTokenPool = initNetworkTokenPool;
     }
@@ -296,6 +300,51 @@ contract PendingWithdrawals is
     }
 
     /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function completeWithdrawal(
+        bytes32 contextId,
+        address provider,
+        uint256 id
+    ) external override returns (uint256) {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+        require(provider == request.provider, "ERR_ACCESS_DENIED");
+
+        // verify the caller:
+        // - in order to complete a BNT withdrawal, the caller must be the network token pool
+        // - in order to complete a base token withdrawal, the caller must be the liquidity collection pool that manages the pool
+        IReserveToken reserveToken = request.poolToken.reserveToken();
+        if (address(reserveToken) == address(_networkToken)) {
+            require(msg.sender == address(_networkTokenPool), "ERR_ACCESS_DENIED");
+        } else {
+            require(msg.sender == address(_network.collectionByPool(reserveToken)), "ERR_ACCESS_DENIED");
+        }
+
+        // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
+        uint256 currentTime = _time();
+        uint256 withdrawalStartTime = request.createdAt.add(_lockDuration);
+        uint256 withdrawalEndTime = withdrawalStartTime.add(_withdrawalWindowDuration);
+        require(currentTime >= withdrawalStartTime && currentTime <= withdrawalEndTime, "ERR_WITHDRAWAL_NOT_ALLOWED");
+
+        // remove the withdrawal request and its id from the storage
+        _removeWithdrawalRequest(request, id);
+
+        // transfer the locked pool tokens back to the caller
+        request.poolToken.safeTransfer(msg.sender, request.amount);
+
+        emit WithdrawalCompleted(
+            contextId,
+            reserveToken,
+            provider,
+            id,
+            request.amount,
+            uint32(currentTime.sub(request.createdAt))
+        );
+
+        return request.amount;
+    }
+
+    /**
      * @dev initiates liquidity withdrawal
      */
     function _initWithdrawal(
@@ -332,10 +381,28 @@ contract PendingWithdrawals is
      * @dev cancels a specific liquidity withdrawal request
      */
     function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private {
+        // remove the withdrawal request and its id from the storage
+        _removeWithdrawalRequest(request, id);
+
+        // transfer the locked pool tokens back to the provider
+        request.poolToken.safeTransfer(request.provider, request.amount);
+
+        emit WithdrawalCancelled(
+            request.poolToken.reserveToken(),
+            request.provider,
+            id,
+            request.amount,
+            uint32(_time().sub(request.createdAt))
+        );
+    }
+
+    /**
+     * @dev removes withdrawal request
+     */
+    function _removeWithdrawalRequest(WithdrawalRequest memory request, uint256 id) private {
         delete _withdrawalRequests[id];
 
-        address provider = request.provider;
-        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
+        uint256[] storage ids = _withdrawalRequestIdsByProvider[request.provider];
         uint256 length = ids.length;
         uint256 lastIndex = length - 1;
         if (request.index < lastIndex) {
@@ -345,16 +412,5 @@ contract PendingWithdrawals is
         }
 
         ids.pop();
-
-        // transfer the locked pool tokens back to the provider
-        request.poolToken.safeTransfer(provider, request.amount);
-
-        emit WithdrawalCancelled(
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.amount,
-            uint32(_time().sub(request.createdAt))
-        );
     }
 }
