@@ -295,14 +295,6 @@ contract PendingWithdrawals is
         request.createdAt = currentTime;
     }
 
-    //     reinitWithdrawal(id)
-    // external
-    // verify that the id is valid for the caller account
-    // get the pool token address/amount from the given position
-    // call (internal) cancelWithdrawal
-    // call internal) initWithdrawal
-    // the assumption is that the above does everything including triggers the events
-
     /**
      * @dev initiates liquidity withdrawal
      */
