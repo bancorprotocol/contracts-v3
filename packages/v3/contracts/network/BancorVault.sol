@@ -90,7 +90,7 @@ contract BancorVault is
 
     // solhint-enable func-name-mixedcase
 
-    modifier onlyAdmin {
+    modifier onlyAdmin() {
         _hasRole(ROLE_ADMIN, msg.sender);
 
         _;

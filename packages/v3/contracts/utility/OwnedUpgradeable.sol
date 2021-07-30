@@ -39,7 +39,7 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     // solhint-enable func-name-mixedcase
 
     // allows execution by the owner only
-    modifier onlyOwner {
+    modifier onlyOwner() {
         _onlyOwner();
 
         _;
