@@ -30,13 +30,13 @@ export interface Migration {
         signer: Signer,
         contracts: Contracts,
         initialState: any,
-        { deploy, execute }: deployExecuteType
+        { deploy, execute, deployProxy }: executionFunctions
     ) => Promise<{}>;
     healthCheck: (
         signer: Signer,
         contracts: Contracts,
         newState: any,
-        { deploy, execute }: deployExecuteType
+        { deploy, execute, deployProxy }: executionFunctions
     ) => Promise<any>;
 }
 ```

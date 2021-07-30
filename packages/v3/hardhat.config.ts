@@ -1,4 +1,4 @@
-import './migration/engine';
+import './migration';
 import { log } from './migration/engine/logger/logger';
 import { customChai } from './test/matchers';
 import '@nomiclabs/hardhat-ethers';

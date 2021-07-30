@@ -1,13 +1,16 @@
 import { ExecutionError } from './errors/errors';
+import { executionSettings } from './initialization';
 import { log } from './logger/logger';
-import { executeOverride, executionConfig } from './task';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { ContractBuilder, Contract } from 'components/Contracts';
-import { ContractFactory } from 'ethers';
+import Contracts, { ContractBuilder, Contract } from 'components/Contracts';
+import { BaseContract, ContractFactory, Overrides } from 'ethers';
+import { ProxyAdmin } from 'typechain';
 
-export type deployExecuteType = ReturnType<typeof initDeployExecute>;
+export const initExecutionFunctions = (contracts: typeof Contracts, executionSettings: executionSettings) => {
+    const overrides: Overrides = {
+        gasPrice: executionSettings.gasPrice
+    };
 
-export const initDeployExecute = (executionConfig: executionConfig, overrides: executeOverride) => {
     const deploy = async <F extends ContractFactory>(
         factory: ContractBuilder<F>,
         ...args: Parameters<ContractBuilder<F>['deploy']>
@@ -19,7 +22,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         log.normal(`Tx: `, contract.deployTransaction.hash);
 
         log.greyed(`Waiting to be mined...`);
-        const receipt = await contract.deployTransaction.wait(executionConfig.confirmationToWait);
+        const receipt = await contract.deployTransaction.wait(executionSettings.confirmationToWait);
 
         if (receipt.status !== 1) {
             log.error(`Error while executing`);
@@ -39,7 +42,7 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         log.normal(executionInstruction);
         log.normal(`Executing tx: `, tx.hash);
 
-        const receipt = await tx.wait(executionConfig.confirmationToWait);
+        const receipt = await tx.wait(executionSettings.confirmationToWait);
         if (receipt.status !== 1) {
             log.error(`Error while executing`);
             throw new ExecutionError(tx, receipt);
@@ -49,8 +52,34 @@ export const initDeployExecute = (executionConfig: executionConfig, overrides: e
         return receipt;
     };
 
+    type initializeArgs = Parameters<any> | 'skipInit';
+    const deployProxy = async <F extends ContractFactory>(
+        admin: ProxyAdmin,
+        logicContractToDeploy: ContractBuilder<F>,
+        initializeArgs: initializeArgs,
+        ...ctorArgs: Parameters<F['deploy']>
+    ): Promise<Contract<F>> => {
+        const createTransparentProxy = async (
+            admin: BaseContract,
+            logicContract: BaseContract,
+            initializeArgs: initializeArgs = []
+        ) => {
+            const data =
+                initializeArgs === 'skipInit'
+                    ? []
+                    : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
+
+            return await deploy(contracts.TransparentUpgradeableProxy, logicContract.address, admin.address, data);
+        };
+
+        const logicContract = await deploy(logicContractToDeploy, ...ctorArgs);
+        const proxy = await createTransparentProxy(admin, logicContract, initializeArgs);
+        return await logicContractToDeploy.attach(proxy.address);
+    };
+
     return {
         deploy,
-        execute
+        execute,
+        deployProxy
     };
 };

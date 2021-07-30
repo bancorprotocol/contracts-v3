@@ -2,63 +2,10 @@ import { migrateParamTask } from '../..';
 import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME, MIGRATION_CONFIG } from '../config';
 import { initMigration } from '../initialization';
 import { log } from '../logger/logger';
-import { Migration } from '../types';
-import { importCsjOrEsModule } from 'components/TaskUtils';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { SystemState } from 'migration/engine/types';
 import path from 'path';
-
-export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {
-    const { signer, contracts, migrationsData, initialState, writeState, executionFunctions } = await initMigrate(
-        hre,
-        args
-    );
-
-    let state = initialState;
-
-    // if there is no migration to run, exit
-    if (migrationsData.length === 0) {
-        log.done(`Nothing to migrate ⚡️`);
-        return;
-    }
-
-    let currentNetworkState: any = state.networkState;
-    for (const migrationData of migrationsData) {
-        const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
-
-        log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
-
-        // Save oldState
-        const oldState = currentNetworkState;
-
-        try {
-            currentNetworkState = await migration.up(signer, contracts, currentNetworkState, executionFunctions);
-
-            try {
-                await migration.healthCheck(signer, contracts, currentNetworkState, executionFunctions);
-                log.success('Health check success ✨ ');
-            } catch (e) {
-                log.error('Health check failed: ' + e);
-                // @TODO revert the migration here
-                return;
-            }
-
-            // if health check passed, update the state and write it to the system
-            state = {
-                migrationState: { latestMigration: migrationData.migrationTimestamp },
-                networkState: currentNetworkState
-            };
-            writeState(state);
-        } catch (e) {
-            log.error('Migration execution failed');
-            log.error(e);
-            // @TODO revert the migration here
-            return;
-        }
-    }
-    log.done(`Migration(s) complete ⚡️`);
-};
 
 export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateParamTask) => {
     const { signer, contracts, executionSettings, executionFunctions } = await initMigration(args);

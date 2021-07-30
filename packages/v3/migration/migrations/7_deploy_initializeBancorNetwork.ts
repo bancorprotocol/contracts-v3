@@ -5,7 +5,7 @@ import { Migration } from 'migration/engine/types';
 export type NextState = InitialState;
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, createProxy }): Promise<NextState> => {
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
         const bancorNetwork = await contracts.BancorNetwork.attach(initialState.BancorNetwork);
 
         await execute('Initialize BancorNetwork', bancorNetwork.initialize, initialState.PendingWithdrawals);

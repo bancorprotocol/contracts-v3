@@ -1,4 +1,4 @@
-import { executeOverride, executionConfig } from '../task';
+import { executionSettings } from '../initialization';
 import chalk from 'chalk';
 
 export const palette = {
@@ -19,12 +19,7 @@ export const log = {
     error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
 
     // Specific logging
-    migrationConfig: (
-        signerAddress: string,
-        isLedger: boolean,
-        overrides: executeOverride,
-        executionConfig: executionConfig
-    ) => {
+    migrationConfig: (signerAddress: string, isLedger: boolean, executionSettings: executionSettings) => {
         palette.yellow(`**********************`);
         palette.yellow(`** Migration Config **`);
         palette.yellow(`**********************`);
@@ -32,9 +27,9 @@ export const log = {
         palette.yellow(`Basic info`);
         palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
         palette.yellow(`Overrides:`);
-        palette.white(`        GasPrice: ${overrides.gasPrice} (gwei)`);
+        palette.white(`        GasPrice: ${executionSettings.gasPrice} (gwei)`);
         palette.yellow(`Execution Config:`);
-        palette.white(`        Confirmation to wait: ${executionConfig.confirmationToWait}`);
+        palette.white(`        Confirmation to wait: ${executionSettings.confirmationToWait}`);
         palette.yellow(`********************`);
     }
 };

@@ -7,10 +7,10 @@ export type NextState = InitialState & {
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, createProxy }): Promise<NextState> => {
+    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
 
-        const networkSettings = await createProxy(proxyAdmin, contracts.NetworkSettings, []);
+        const networkSettings = await deployProxy(proxyAdmin, contracts.NetworkSettings, []);
 
         return {
             ...initialState,
