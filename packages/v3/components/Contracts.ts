@@ -75,7 +75,10 @@ const getContracts = (signer?: Signer) => ({
     TestBancorNetwork: deployOrAttach<TestBancorNetwork__factory>('TestBancorNetwork', signer),
     TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
-    TestLiquidityPoolCollection: deployOrAttach<TestLiquidityPoolCollection__factory>('TestLiquidityPoolCollection', signer),
+    TestLiquidityPoolCollection: deployOrAttach<TestLiquidityPoolCollection__factory>(
+        'TestLiquidityPoolCollection',
+        signer
+    ),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
     TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
     TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),

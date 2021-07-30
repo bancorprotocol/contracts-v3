@@ -20,7 +20,7 @@ In each network folder there is a `state.json` file. It represents the migration
 
 ## Migrations
 
-The `migration` folder is home for all migrations file.
+The `migrations` folder is home for all migrations file.
 
 A migration file is a typescript file that expose a particular object respecting a strict interface:
 
