@@ -15,7 +15,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         args
     );
 
-    let state = initialState;
+    let currentState = initialState;
 
     // if there is no migration to run, exit
     if (migrationsData.length === 0) {
@@ -23,43 +23,53 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         return;
     }
 
-    let currentNetworkState: any = state.networkState;
-    for (const migrationData of migrationsData) {
+    for (let index = 0; index < migrationsData.length; index++) {
+        const migrationData = migrationsData[index];
+
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
         log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         // Save oldState
-        const oldState = currentNetworkState;
-
+        const oldState = currentState;
         try {
-            currentNetworkState = await migration.up(signer, contracts, currentNetworkState, executionFunctions);
+            currentState.networkState = await migration.up(
+                signer,
+                contracts,
+                currentState.networkState,
+                executionFunctions
+            );
 
             try {
-                await migration.healthCheck(signer, contracts, currentNetworkState, executionFunctions);
+                await migration.healthCheck(signer, contracts, currentState.networkState, executionFunctions);
                 log.success('Health check success ✨ ');
             } catch (e) {
                 log.error('Health check failed: ' + e);
-                // @TODO revert the migration here
+                // @TODO revert process here
                 return;
             }
 
             // if health check passed, update the state and write it to the system
-            state = {
+            currentState = {
                 migrationState: { latestMigration: migrationData.migrationTimestamp },
-                networkState: currentNetworkState
+                networkState: currentState.networkState
             };
-            writeState(state);
+            writeState(currentState);
         } catch (e) {
-            log.error('Migration execution failed');
-            log.error(e);
-            // @TODO revert the migration here
+            log.error('Migration execution failed: ' + e);
+            log.error('Aborting ...');
             return;
         }
     }
+
     log.done(`Migration(s) complete ⚡️`);
 };
 
+type migrationData = {
+    fullPath: string;
+    fileName: string;
+    migrationTimestamp: number;
+};
 export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateParamTask) => {
     const { signer, contracts, executionSettings, executionFunctions } = await initMigration(args);
 
@@ -123,11 +133,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
     const allMigrationFiles = fs.readdirSync(pathToMigrationFiles);
     const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
     const migrationFilesPath = migrationFiles.map((fileName: string) => path.join(pathToMigrationFiles, fileName));
-    const migrationsData: {
-        fullPath: string;
-        fileName: string;
-        migrationTimestamp: number;
-    }[] = [];
+    const migrationsData: migrationData[] = [];
     for (const migrationFilePath of migrationFilesPath) {
         const fileName = path.basename(migrationFilePath);
         const migrationId = Number(fileName.split('_')[0]);
