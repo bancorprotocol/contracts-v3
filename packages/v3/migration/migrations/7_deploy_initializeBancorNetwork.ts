@@ -17,6 +17,16 @@ const migration: Migration = {
         const bancorNetwork = await contracts.BancorNetwork.attach(state.BancorNetwork);
 
         if ((await bancorNetwork.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;

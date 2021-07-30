@@ -24,6 +24,16 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {}
+    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {},
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
+    }
 };
 export default migration;

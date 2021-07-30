@@ -25,6 +25,16 @@ const migration: Migration = {
         const proxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
 
         if ((await proxyAdmin.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;

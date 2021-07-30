@@ -24,6 +24,16 @@ const migration: Migration = {
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
             throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;

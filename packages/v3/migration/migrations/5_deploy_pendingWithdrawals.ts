@@ -28,6 +28,16 @@ const migration: Migration = {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.PendingWithdrawals);
 
         if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;

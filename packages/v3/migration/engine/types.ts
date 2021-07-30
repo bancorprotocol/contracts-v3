@@ -27,4 +27,11 @@ export interface Migration {
         newState: any,
         { deploy, execute, deployProxy }: executionFunctions
     ) => Promise<any>;
+    down: (
+        signer: Signer,
+        contracts: Contracts,
+        initialState: any,
+        newState: any,
+        { deploy, execute, deployProxy }: executionFunctions
+    ) => Promise<{}>;
 }

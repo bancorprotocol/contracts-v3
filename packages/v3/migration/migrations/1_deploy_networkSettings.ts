@@ -23,6 +23,16 @@ const migration: Migration = {
         const networkSettings = await contracts.NetworkSettings.attach(state.NetworkSettings);
 
         if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;

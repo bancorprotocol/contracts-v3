@@ -20,6 +20,16 @@ const migration: Migration = {
         const liquidityPoolCollection = await contracts.LiquidityPoolCollection.attach(state.LiquidityPoolCollection);
 
         if ((await liquidityPoolCollection.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+    },
+
+    down: async (
+        signer,
+        contracts,
+        initialState: InitialState,
+        newState: NextState,
+        { deploy, execute }
+    ): Promise<InitialState> => {
+        return initialState;
     }
 };
 export default migration;
