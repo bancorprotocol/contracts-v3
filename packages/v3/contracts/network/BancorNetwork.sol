@@ -59,9 +59,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
 
     /**
-     * @dev triggered when the latest pool collection, for a specific type, is set
+     * @dev triggered when the latest pool collection, for a specific type, is replaced
      */
-    event LatestPoolCollectionSet(
+    event LatestPoolCollectionReplaced(
         ILiquidityPoolCollection indexed prevCollection,
         ILiquidityPoolCollection indexed newCollection,
         uint16 indexed poolType
@@ -413,7 +413,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      */
     function _setLatestPoolCollection(ILiquidityPoolCollection poolCollection, uint16 poolType) private {
-        emit LatestPoolCollectionSet(_latestPoolCollections[poolType], poolCollection, poolType);
+        emit LatestPoolCollectionReplaced(_latestPoolCollections[poolType], poolCollection, poolType);
 
         _latestPoolCollections[poolType] = poolCollection;
     }

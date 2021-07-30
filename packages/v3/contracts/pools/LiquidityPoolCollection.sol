@@ -212,9 +212,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
      * @inheritdoc ILiquidityPoolCollection
      */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
-        Pool memory pool = _pools[reserveToken];
-
-        return _validPool(pool);
+        return _validPool(_pools[reserveToken]);
     }
 
     /**
