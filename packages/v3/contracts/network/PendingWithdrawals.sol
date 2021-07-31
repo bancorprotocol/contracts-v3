@@ -312,7 +312,7 @@ contract PendingWithdrawals is
 
         // verify the caller:
         // - in order to complete a BNT withdrawal, the caller must be the network token pool
-        // - in order to complete a base token withdrawal, the caller must be the liquidity collection pool that manages the pool
+        // - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
         IReserveToken reserveToken = request.poolToken.reserveToken();
         if (address(reserveToken) == address(_networkToken)) {
             require(msg.sender == address(_networkTokenPool), "ERR_ACCESS_DENIED");
