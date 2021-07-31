@@ -311,7 +311,7 @@ contract PendingWithdrawals is
         require(provider == request.provider, "ERR_ACCESS_DENIED");
 
         // verify the caller:
-        // - in order to complete a BNT withdrawal, the caller must be the network token pool
+        // - in order to complete a network token withdrawal, the caller must be the network token pool
         // - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
         IReserveToken reserveToken = request.poolToken.reserveToken();
         if (address(reserveToken) == address(_networkToken)) {

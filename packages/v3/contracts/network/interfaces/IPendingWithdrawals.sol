@@ -114,7 +114,7 @@ interface IPendingWithdrawals is IUpgradeable {
      * requirements:
      *
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - in order to complete a BNT withdrawal, the caller must be the network token pool
+     * - in order to complete a network token withdrawal, the caller must be the network token pool
      * - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
      */
     function completeWithdrawal(
