@@ -5,7 +5,7 @@ import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { expectRole, roles } from 'test/helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
-import { createSystem, createNetworkToken } from 'test/helpers/Factory';
+import { createSystem } from 'test/helpers/Factory';
 import { shouldHaveGap } from 'test/helpers/Proxy';
 import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
 import { BancorVault, TestERC20Token } from 'typechain';
