@@ -370,7 +370,7 @@ contract PendingWithdrawals is
 
         ids.push(id);
 
-        // transfer the pool tokens from the provider. Please keep in mind, that the provide should have either previously
+        // transfer the pool tokens from the provider. Note, that the provider should have either previously
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
