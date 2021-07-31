@@ -292,13 +292,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _verifyPoolCollection(newLatestPoolCollection);
         _verifyEmptyPoolCollection(poolCollection);
 
-        require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
-
         uint16 poolType = poolCollection.poolType();
         uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
         require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
 
         _setLatestPoolCollection(newLatestPoolCollection, newLatestPoolCollectionType);
+
+        require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
 
         emit PoolCollectionRemoved(poolCollection, poolType);
     }
