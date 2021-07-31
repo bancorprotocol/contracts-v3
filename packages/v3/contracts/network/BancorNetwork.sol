@@ -258,7 +258,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev adds new pool collection to the pool
+     * @dev adds new pool collection to the network
      *
      * requirements:
      *
