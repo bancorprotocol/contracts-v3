@@ -298,6 +298,10 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
+                await expect(network.connect(nonOwner).setLatestPoolCollection(ZERO_ADDRESS)).to.be.revertedWith(
+                    'ERR_INVALID_ADDRESS'
+                );
+
                 const newCollection2 = await createLiquidityPoolCollection(network);
                 await expect(network.setLatestPoolCollection(newCollection2.address)).to.be.revertedWith(
                     'ERR_COLLECTION_DOES_NOT_EXIST'
@@ -320,13 +324,6 @@ describe('BancorNetwork', () => {
                     .withArgs(poolType, newCollection.address, collection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
-
-                const res3 = await network.setLatestPoolCollection(ZERO_ADDRESS);
-                await expect(res3)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, collection.address, ZERO_ADDRESS);
-
-                expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
             });
         });
     });
