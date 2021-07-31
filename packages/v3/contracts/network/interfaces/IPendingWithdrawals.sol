@@ -91,7 +91,7 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external;
 
     /**
-     * @dev cancels a specific liquidity withdrawal request
+     * @dev cancels a withdrawal request
      *
      * requirements:
      *
@@ -100,7 +100,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function cancelWithdrawal(uint256 id) external;
 
     /**
-     * @dev reinitiates a specific liquidity withdrawal request and restarts its cooldown durations
+     * @dev reinitiates a withdrawal request and restarts its cooldown durations
      *
      * requirements:
      *
@@ -109,7 +109,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function reinitWithdrawal(uint256 id) external;
 
     /**
-     * @dev completes a specific liquidity withdrawal request and return the amount of pool tokens transferred
+     * @dev completes a withdrawal request and return the amount of pool tokens transferred
      *
      * requirements:
      *

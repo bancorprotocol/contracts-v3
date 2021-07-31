@@ -378,7 +378,7 @@ contract PendingWithdrawals is
     }
 
     /**
-     * @dev cancels a specific liquidity withdrawal request
+     * @dev cancels a withdrawal request
      */
     function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private {
         // remove the withdrawal request and its id from the storage
