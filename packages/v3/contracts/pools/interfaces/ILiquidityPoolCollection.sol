@@ -52,7 +52,7 @@ interface ILiquidityPoolCollection {
     function defaultTradingFeePPM() external view returns (uint32);
 
     /**
-     * @dev returns whether or not a pool is valid
+     * @dev eturns whether a pool is valid
      */
     function isPoolValid(IReserveToken reserveToken) external view returns (bool);
 
