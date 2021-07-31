@@ -198,10 +198,6 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                await expect(network.removePoolCollection(collection.address, ZERO_ADDRESS)).to.be.revertedWith(
-                    'ERR_COLLECTION_DOES_NOT_EXIST'
-                );
-
                 const newCollection = await createLiquidityPoolCollection(network);
                 await expect(
                     network.removePoolCollection(collection.address, newCollection.address)
@@ -267,6 +263,17 @@ describe('BancorNetwork', () => {
 
                     expect(await network.poolCollections()).to.have.members([lastCollection.address]);
                     expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
+
+                    const res3 = await network.removePoolCollection(lastCollection.address, ZERO_ADDRESS);
+                    await expect(res3)
+                        .to.emit(network, 'PoolCollectionRemoved')
+                        .withArgs(lastCollection.address, poolType);
+                    await expect(res3)
+                        .to.emit(network, 'LatestPoolCollectionReplaced')
+                        .withArgs(poolType, lastCollection.address, ZERO_ADDRESS);
+
+                    expect(await network.poolCollections()).to.be.empty;
+                    expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
                 });
 
                 it.skip('should revert when attempting to remove a pool collection with associated pools', async () => {});
@@ -291,10 +298,6 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
-                await expect(network.connect(nonOwner).setLatestPoolCollection(ZERO_ADDRESS)).to.be.revertedWith(
-                    'ERR_INVALID_ADDRESS'
-                );
-
                 const newCollection2 = await createLiquidityPoolCollection(network);
                 await expect(network.setLatestPoolCollection(newCollection2.address)).to.be.revertedWith(
                     'ERR_COLLECTION_DOES_NOT_EXIST'
@@ -317,6 +320,13 @@ describe('BancorNetwork', () => {
                     .withArgs(poolType, newCollection.address, collection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
+
+                const res3 = await network.setLatestPoolCollection(ZERO_ADDRESS);
+                await expect(res3)
+                    .to.emit(network, 'LatestPoolCollectionReplaced')
+                    .withArgs(poolType, collection.address, ZERO_ADDRESS);
+
+                expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
             });
         });
     });
