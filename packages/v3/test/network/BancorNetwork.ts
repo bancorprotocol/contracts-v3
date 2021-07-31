@@ -140,7 +140,7 @@ describe('BancorNetwork', () => {
                 await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(collection.address, poolType);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(ZERO_ADDRESS, collection.address, poolType);
+                    .withArgs(poolType, ZERO_ADDRESS, collection.address);
 
                 expect(await network.poolCollections()).to.have.members([collection.address]);
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
@@ -167,7 +167,7 @@ describe('BancorNetwork', () => {
                     await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(collection.address, newCollection.address, poolType);
+                        .withArgs(poolType, collection.address, newCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([
                         collection.address,
@@ -192,7 +192,7 @@ describe('BancorNetwork', () => {
                 await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(collection.address, newCollection.address, poolType);
+                    .withArgs(poolType, collection.address, newCollection.address);
 
                 expect(await network.poolCollections()).to.have.members([collection.address, newCollection.address]);
             });
@@ -249,7 +249,7 @@ describe('BancorNetwork', () => {
                     await expect(res).to.emit(network, 'PoolCollectionRemoved').withArgs(collection.address, poolType);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(lastCollection.address, newCollection.address, poolType);
+                        .withArgs(poolType, lastCollection.address, newCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([
                         newCollection.address,
@@ -263,7 +263,7 @@ describe('BancorNetwork', () => {
                         .withArgs(newCollection.address, poolType);
                     await expect(res2)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(newCollection.address, lastCollection.address, poolType);
+                        .withArgs(poolType, newCollection.address, lastCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([lastCollection.address]);
                     expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
@@ -307,14 +307,14 @@ describe('BancorNetwork', () => {
                 const res = await network.setLatestPoolCollection(newCollection.address);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(collection.address, newCollection.address, poolType);
+                    .withArgs(poolType, collection.address, newCollection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(newCollection.address);
 
                 const res2 = await network.setLatestPoolCollection(collection.address);
                 await expect(res2)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(newCollection.address, collection.address, poolType);
+                    .withArgs(poolType, newCollection.address, collection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
             });
