@@ -59,9 +59,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @dev triggered when the latest pool collection, for a specific type, is replaced
      */
     event LatestPoolCollectionReplaced(
+        uint16 indexed poolType,
         ILiquidityPoolCollection indexed prevCollection,
-        ILiquidityPoolCollection indexed newCollection,
-        uint16 indexed poolType
+        ILiquidityPoolCollection indexed newCollection
     );
 
     /**
@@ -258,7 +258,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev adds new pool collection to the pool
+     * @dev adds new pool collection to the network
      *
      * requirements:
      *
@@ -289,16 +289,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         ILiquidityPoolCollection poolCollection,
         ILiquidityPoolCollection newLatestPoolCollection
     ) external onlyOwner nonReentrant {
-        _verifyPoolCollection(newLatestPoolCollection);
+        _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
         _verifyEmptyPoolCollection(poolCollection);
 
         require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
 
         uint16 poolType = poolCollection.poolType();
-        uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
-        require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
+        if (address(newLatestPoolCollection) != address(0)) {
+            uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
+            require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
+        }
 
-        _setLatestPoolCollection(newLatestPoolCollection, newLatestPoolCollectionType);
+        _setLatestPoolCollection(newLatestPoolCollection, poolType);
 
         emit PoolCollectionRemoved(poolCollection, poolType);
     }
@@ -316,7 +318,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(poolCollection))
         onlyOwner
     {
-        _verifyPoolCollection(poolCollection);
+        _verifyLatestPoolCollectionCandidate(poolCollection);
 
         _setLatestPoolCollection(poolCollection, poolCollection.poolType());
     }
@@ -399,16 +401,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      */
     function _setLatestPoolCollection(ILiquidityPoolCollection poolCollection, uint16 poolType) private {
-        emit LatestPoolCollectionReplaced(_latestPoolCollections[poolType], poolCollection, poolType);
+        emit LatestPoolCollectionReplaced(poolType, _latestPoolCollections[poolType], poolCollection);
 
         _latestPoolCollections[poolType] = poolCollection;
     }
 
     /**
-     * @dev verifies that a pool collection exists
+     * @dev verifies that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
      */
-    function _verifyPoolCollection(ILiquidityPoolCollection poolCollection) private view {
-        require(_poolCollections.contains(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
+    function _verifyLatestPoolCollectionCandidate(ILiquidityPoolCollection poolCollection) private view {
+        require(
+            address(poolCollection) == address(0) || _poolCollections.contains(address(poolCollection)),
+            "ERR_COLLECTION_DOES_NOT_EXIST"
+        );
     }
 
     /**
