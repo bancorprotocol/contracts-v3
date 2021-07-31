@@ -379,7 +379,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     {
         require(_liquidityPools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
 
-        // get the latest pool collection, corresponding to the request type of the new pool, and use it to create the
+        // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
         // pool
         ILiquidityPoolCollection poolCollection = _latestPoolCollections[poolType];
         require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TYPE");
