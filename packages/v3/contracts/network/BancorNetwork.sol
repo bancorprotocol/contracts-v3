@@ -312,12 +312,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      *
      * - the caller must be the owner of the contract
      */
-    function setLatestPoolCollection(ILiquidityPoolCollection poolCollection)
-        external
-        nonReentrant
-        validAddress(address(poolCollection))
-        onlyOwner
-    {
+    function setLatestPoolCollection(ILiquidityPoolCollection poolCollection) external nonReentrant onlyOwner {
         _verifyLatestPoolCollectionCandidate(poolCollection);
 
         _setLatestPoolCollection(poolCollection, poolCollection.poolType());
