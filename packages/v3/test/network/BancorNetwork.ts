@@ -157,7 +157,7 @@ describe('BancorNetwork', () => {
                 await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(collection.address, poolType);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(ZERO_ADDRESS, collection.address, poolType);
+                    .withArgs(poolType, ZERO_ADDRESS, collection.address);
 
                 expect(await network.poolCollections()).to.have.members([collection.address]);
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
@@ -184,7 +184,7 @@ describe('BancorNetwork', () => {
                     await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(collection.address, newCollection.address, poolType);
+                        .withArgs(poolType, collection.address, newCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([
                         collection.address,
@@ -209,16 +209,12 @@ describe('BancorNetwork', () => {
                 await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(collection.address, newCollection.address, poolType);
+                    .withArgs(poolType, collection.address, newCollection.address);
 
                 expect(await network.poolCollections()).to.have.members([collection.address, newCollection.address]);
             });
 
             it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                await expect(network.removePoolCollection(collection.address, ZERO_ADDRESS)).to.be.revertedWith(
-                    'ERR_COLLECTION_DOES_NOT_EXIST'
-                );
-
                 const newCollection = await createLiquidityPoolCollection(network);
                 await expect(
                     network.removePoolCollection(collection.address, newCollection.address)
@@ -266,7 +262,7 @@ describe('BancorNetwork', () => {
                     await expect(res).to.emit(network, 'PoolCollectionRemoved').withArgs(collection.address, poolType);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(lastCollection.address, newCollection.address, poolType);
+                        .withArgs(poolType, lastCollection.address, newCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([
                         newCollection.address,
@@ -280,10 +276,21 @@ describe('BancorNetwork', () => {
                         .withArgs(newCollection.address, poolType);
                     await expect(res2)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(newCollection.address, lastCollection.address, poolType);
+                        .withArgs(poolType, newCollection.address, lastCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([lastCollection.address]);
                     expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
+
+                    const res3 = await network.removePoolCollection(lastCollection.address, ZERO_ADDRESS);
+                    await expect(res3)
+                        .to.emit(network, 'PoolCollectionRemoved')
+                        .withArgs(lastCollection.address, poolType);
+                    await expect(res3)
+                        .to.emit(network, 'LatestPoolCollectionReplaced')
+                        .withArgs(poolType, lastCollection.address, ZERO_ADDRESS);
+
+                    expect(await network.poolCollections()).to.be.empty;
+                    expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
                 });
 
                 it.skip('should revert when attempting to remove a pool collection with associated pools', async () => {});
@@ -324,14 +331,14 @@ describe('BancorNetwork', () => {
                 const res = await network.setLatestPoolCollection(newCollection.address);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(collection.address, newCollection.address, poolType);
+                    .withArgs(poolType, collection.address, newCollection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(newCollection.address);
 
                 const res2 = await network.setLatestPoolCollection(collection.address);
                 await expect(res2)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(newCollection.address, collection.address, poolType);
+                    .withArgs(poolType, newCollection.address, collection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
             });
