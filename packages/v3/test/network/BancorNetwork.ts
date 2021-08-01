@@ -339,7 +339,7 @@ describe('BancorNetwork', () => {
                     const res = await network.createPool(poolType, reserveToken.address);
                     await expect(res)
                         .to.emit(network, 'PoolAdded')
-                        .withArgs(reserveToken.address, collection.address, poolType);
+                        .withArgs(poolType, reserveToken.address, collection.address);
 
                     expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(collection.address);
