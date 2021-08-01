@@ -376,7 +376,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // add the pool to the reverse pool collection lookup
         _collectionByPool[reserveToken] = poolCollection;
 
-        emit PoolAdded(reserveToken, poolCollection, poolType);
+        emit PoolAdded(poolType, reserveToken, poolCollection);
     }
 
     /**
