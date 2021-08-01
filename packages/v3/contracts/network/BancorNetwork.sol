@@ -290,7 +290,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         ILiquidityPoolCollection poolCollection,
         ILiquidityPoolCollection newLatestPoolCollection
     ) external onlyOwner nonReentrant {
+        // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
+
+        // verify that no pools are associated with the specified collection
         _verifyEmptyPoolCollection(poolCollection);
 
         require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
@@ -304,24 +307,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _setLatestPoolCollection(poolType, newLatestPoolCollection);
 
         emit PoolCollectionRemoved(poolType, poolCollection);
-    }
-
-    /**
-     * @dev sets the new latest pool collection for the given type
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setLatestPoolCollection(ILiquidityPoolCollection poolCollection)
-        external
-        nonReentrant
-        validAddress(address(poolCollection))
-        onlyOwner
-    {
-        _verifyLatestPoolCollectionCandidate(poolCollection);
-
-        _setLatestPoolCollection(poolCollection.poolType(), poolCollection);
     }
 
     /**
