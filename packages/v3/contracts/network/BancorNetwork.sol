@@ -48,12 +48,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when a new liquidity pool collection is added
      */
-    event PoolCollectionAdded(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolCollectionAdded(uint16 indexed poolType, ILiquidityPoolCollection indexed collection);
 
     /**
      * @dev triggered when an existing liquidity pool collection is removed
      */
-    event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolCollectionRemoved(uint16 indexed poolType, ILiquidityPoolCollection indexed collection);
 
     /**
      * @dev triggered when the latest pool collection, for a specific type, is replaced
@@ -67,12 +67,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when a new pool is added
      */
-    event PoolAdded(IReserveToken indexed pool, ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolAdded(uint16 indexed poolType, IReserveToken indexed pool, ILiquidityPoolCollection indexed collection);
 
     /**
      * @dev triggered when an existing pool is upgraded
      */
     event PoolUpgraded(
+        uint16 indexed poolType,
         IReserveToken indexed pool,
         ILiquidityPoolCollection prevCollection,
         ILiquidityPoolCollection newCollection,
@@ -273,9 +274,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         require(_poolCollections.add(address(poolCollection)), "ERR_COLLECTION_ALREADY_EXISTS");
 
         uint16 poolType = poolCollection.poolType();
-        _setLatestPoolCollection(poolCollection, poolType);
+        _setLatestPoolCollection(poolType, poolCollection);
 
-        emit PoolCollectionAdded(poolCollection, poolType);
+        emit PoolCollectionAdded(poolType, poolCollection);
     }
 
     /**
@@ -300,9 +301,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
         }
 
-        _setLatestPoolCollection(newLatestPoolCollection, poolType);
+        _setLatestPoolCollection(poolType, newLatestPoolCollection);
 
-        emit PoolCollectionRemoved(poolCollection, poolType);
+        emit PoolCollectionRemoved(poolType, poolCollection);
     }
 
     /**
@@ -320,7 +321,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     {
         _verifyLatestPoolCollectionCandidate(poolCollection);
 
-        _setLatestPoolCollection(poolCollection, poolCollection.poolType());
+        _setLatestPoolCollection(poolCollection.poolType(), poolCollection);
     }
 
     /**
@@ -368,7 +369,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      *
      * - the caller must be the owner of the contract
      */
-    function _setLatestPoolCollection(ILiquidityPoolCollection poolCollection, uint16 poolType) private {
+    function _setLatestPoolCollection(uint16 poolType, ILiquidityPoolCollection poolCollection) private {
         emit LatestPoolCollectionReplaced(poolType, _latestPoolCollections[poolType], poolCollection);
 
         _latestPoolCollections[poolType] = poolCollection;
