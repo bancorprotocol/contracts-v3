@@ -15,10 +15,7 @@ const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
 const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 
-const expectEqual = (
-    actual: BigNumber,
-    expected: Decimal
-) => {
+const expectEqual = (actual: BigNumber, expected: Decimal) => {
     expect(actual.toString()).to.equal(expected.toFixed());
 };
 
@@ -55,7 +52,7 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
+
     const ceilSqrtTest = (n: number, k: number) => {
         const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toHexString();
         it(`ceilSqrt(${x})`, async () => {
@@ -64,8 +61,15 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
-    const productRatioTest = (xn: Decimal, yn: Decimal, xd: Decimal, yd: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+
+    const productRatioTest = (
+        xn: Decimal,
+        yn: Decimal,
+        xd: Decimal,
+        yd: Decimal,
+        maxAbsoluteError: Decimal,
+        maxRelativeError: Decimal
+    ) => {
         const [an, bn, ad, bd] = [xn, yn, xd, yd].map((val) => val.toHex());
         it(`productRatio(${[an, bn, ad, bd]})`, async () => {
             const expected = productRatio(an, bn, ad, bd);
@@ -73,8 +77,14 @@ describe.only('MathEx', () => {
             expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
         });
     };
-    
-    const reducedRatioTest = (x: Decimal, y: Decimal, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+
+    const reducedRatioTest = (
+        x: Decimal,
+        y: Decimal,
+        scale: Decimal,
+        maxAbsoluteError: Decimal,
+        maxRelativeError: Decimal
+    ) => {
         const [a, b, max] = [x, y, scale].map((val) => val.toHex());
         it(`reducedRatio(${[a, b, max]})`, async () => {
             const expected = reducedRatio(a, b, max);
@@ -82,8 +92,14 @@ describe.only('MathEx', () => {
             expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
         });
     };
-    
-    const normalizedRatioTest = (x: Decimal, y: Decimal, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+
+    const normalizedRatioTest = (
+        x: Decimal,
+        y: Decimal,
+        scale: Decimal,
+        maxAbsoluteError: Decimal,
+        maxRelativeError: Decimal
+    ) => {
         const [a, b, max] = [x, y, scale].map((val) => val.toHex());
         it(`normalizedRatio(${[a, b, max]})`, async () => {
             const expected = normalizedRatio(a, b, max);
@@ -91,8 +107,14 @@ describe.only('MathEx', () => {
             expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
         });
     };
-    
-    const accurateRatioTest = (x: Decimal, y: Decimal, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+
+    const accurateRatioTest = (
+        x: Decimal,
+        y: Decimal,
+        scale: Decimal,
+        maxAbsoluteError: Decimal,
+        maxRelativeError: Decimal
+    ) => {
         const [a, b, max] = [x, y, scale].map((val) => val.toHex());
         it(`accurateRatio(${[a, b, max]})`, async () => {
             const expected = accurateRatio(a, b, max);
@@ -100,7 +122,7 @@ describe.only('MathEx', () => {
             expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
         });
     };
-    
+
     const roundDivTest = (x: Decimal, y: Decimal) => {
         const [n, d] = [x, y].map((val) => val.toFixed());
         it(`roundDiv(${n}, ${d})`, async () => {
@@ -109,7 +131,7 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
+
     const geometricMeanTest = (xs: Decimal[]) => {
         const values = xs.map((val) => val.toFixed());
         it(`geometricMean([${values}])`, async () => {
@@ -118,7 +140,7 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
+
     const decimalLengthTest = (n: number, k: number) => {
         const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toString();
         it(`decimalLength(${x})`, async () => {
@@ -127,7 +149,7 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
+
     const roundDivUnsafeTest = (x: Decimal, y: Decimal) => {
         const [n, d] = [x, y].map((val) => val.toFixed());
         it(`roundDivUnsafe(${[n, d]})`, async () => {
@@ -136,7 +158,7 @@ describe.only('MathEx', () => {
             expectEqual(actual, expected);
         });
     };
-    
+
     type MulDivFunction = 'mulDivC' | 'mulDivF';
     const mulDivTest = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
         const [a, b, c] = [x, y, z].map((val) => val.toHex());
@@ -150,7 +172,7 @@ describe.only('MathEx', () => {
             }
         });
     };
-        
+
     context('quick tests', () => {
         for (const n of [1, 64, 128, 192, 256]) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
@@ -185,7 +207,13 @@ describe.only('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = 1; b <= 5; b++) {
-                    normalizedRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal('0.00000241'));
+                    normalizedRatioTest(
+                        new Decimal(a),
+                        new Decimal(b),
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.00000241')
+                    );
                 }
             }
         }
@@ -242,7 +270,7 @@ describe.only('MathEx', () => {
             }
         }
     });
-        
+
     context('@stress tests', () => {
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
@@ -287,7 +315,13 @@ describe.only('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 10; a++) {
                 for (let b = 1; b <= 10; b++) {
-                    normalizedRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal('0.00000241'));
+                    normalizedRatioTest(
+                        new Decimal(a),
+                        new Decimal(b),
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.00000241')
+                    );
                 }
             }
         }
