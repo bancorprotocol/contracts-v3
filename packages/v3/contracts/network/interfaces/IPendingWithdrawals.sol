@@ -21,8 +21,6 @@ interface IPendingWithdrawals is IUpgradeable {
         address provider;
         // the address of the locked pool token
         IPoolToken poolToken;
-        // the index of the withdrawal request in the provider's requests ids array
-        uint256 index;
         // the locked pool token amount
         uint256 amount;
         // the time when the request was created (Unix timestamp))

@@ -197,7 +197,6 @@ describe('PendingWithdrawals', () => {
                     const res = await initWithdrawal(poolToken, amount);
                     const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(providerAddress);
                     const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-                    const index = withdrawalRequestCount;
 
                     await expect(res)
                         .to.emit(pendingWithdrawals, 'WithdrawalInitiated')
@@ -208,13 +207,12 @@ describe('PendingWithdrawals', () => {
                         pendingWithdrawalsBalance.add(amount)
                     );
                     expect(await pendingWithdrawals.withdrawalRequestCount(providerAddress)).to.equal(
-                        index.add(BigNumber.from(1))
+                        withdrawalRequestCount.add(BigNumber.from(1))
                     );
 
                     const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
                     expect(withdrawalRequest.provider).to.equal(providerAddress);
                     expect(withdrawalRequest.poolToken).to.equal(poolToken.address);
-                    expect(withdrawalRequest.index).to.equal(index);
                     expect(withdrawalRequest.amount).to.equal(amount);
                     expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
                 };
@@ -459,7 +457,6 @@ describe('PendingWithdrawals', () => {
                     const withdrawalRequest2 = await pendingWithdrawals.withdrawalRequest(id);
                     expect(withdrawalRequest2.provider).to.equal(withdrawalRequest.provider);
                     expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
-                    expect(withdrawalRequest2.index).to.equal(withdrawalRequest.index);
                     expect(withdrawalRequest2.amount).to.equal(withdrawalRequest.amount);
                     expect(withdrawalRequest2.createdAt).to.gte(await pendingWithdrawals.currentTime());
                     expect(withdrawalRequest2.createdAt).not.to.equal(withdrawalRequest.createdAt);

@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../utility/OwnedUpgradeable.sol";
@@ -25,6 +26,7 @@ contract PendingWithdrawals is
 {
     using SafeMath for uint256;
     using SafeERC20 for IPoolToken;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
@@ -46,7 +48,7 @@ contract PendingWithdrawals is
 
     // a mapping between accounts and their pending withdrawal requests
     uint256 private _nextWithdrawalRequestId;
-    mapping(address => uint256[]) private _withdrawalRequestIdsByProvider;
+    mapping(address => EnumerableSetUpgradeable.UintSet) private _withdrawalRequestIdsByProvider;
     mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
     // upgrade forward-compatibility storage gap
@@ -220,14 +222,20 @@ contract PendingWithdrawals is
      * @inheritdoc IPendingWithdrawals
      */
     function withdrawalRequestCount(address provider) external view override returns (uint256) {
-        return _withdrawalRequestIdsByProvider[provider].length;
+        return _withdrawalRequestIdsByProvider[provider].length();
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
     function withdrawalRequestIds(address provider) external view override returns (uint256[] memory) {
-        return _withdrawalRequestIdsByProvider[provider];
+        EnumerableSetUpgradeable.UintSet storage providerRequests = _withdrawalRequestIdsByProvider[provider];
+        uint256 length = providerRequests.length();
+        uint256[] memory list = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = providerRequests.at(i);
+        }
+        return list;
     }
 
     /**
@@ -357,18 +365,16 @@ contract PendingWithdrawals is
         require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        uint256[] storage ids = _withdrawalRequestIdsByProvider[provider];
         uint256 id = _nextWithdrawalRequestId++;
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
-            index: ids.length,
             amount: poolTokenAmount,
             createdAt: _time()
         });
 
-        ids.push(id);
+        require(_withdrawalRequestIdsByProvider[provider].add(id), "ERR_WITHDRAWAL_ALREADY_EXISTS");
 
         // transfer the pool tokens from the provider. Note, that the provider should have either previously
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
@@ -402,15 +408,6 @@ contract PendingWithdrawals is
     function _removeWithdrawalRequest(WithdrawalRequest memory request, uint256 id) private {
         delete _withdrawalRequests[id];
 
-        uint256[] storage ids = _withdrawalRequestIdsByProvider[request.provider];
-        uint256 length = ids.length;
-        uint256 lastIndex = length - 1;
-        if (request.index < lastIndex) {
-            uint256 lastId = ids[lastIndex];
-            ids[request.index] = lastId;
-            _withdrawalRequests[lastId].index = request.index;
-        }
-
-        ids.pop();
+        require(_withdrawalRequestIdsByProvider[request.provider].remove(id), "ERR_WITHDRAWAL_DOES_NOT_EXIST");
     }
 }
