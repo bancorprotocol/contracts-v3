@@ -2,15 +2,15 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../pools/interfaces/IPoolToken.sol";
-import "../../pools/interfaces/INetworkTokenPool.sol";
+import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
+import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
-import "../../token/interfaces/IReserveToken.sol";
+import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import "../../utility/interfaces/IUpgradeable.sol";
+import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
-import "./INetworkSettings.sol";
-import "./IBancorNetwork.sol";
+import { INetworkSettings } from "./INetworkSettings.sol";
+import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
  * @dev Pending Withdrawals interface

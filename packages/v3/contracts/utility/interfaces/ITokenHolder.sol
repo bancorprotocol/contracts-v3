@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../../token/interfaces/IReserveToken.sol";
+import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import "./IOwned.sol";
+import { IOwned } from "./IOwned.sol";
 
 /**
  * @dev Token Holder interface

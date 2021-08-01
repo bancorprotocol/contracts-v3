@@ -2,14 +2,14 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../../utility/Types.sol";
+import { Fraction } from "../../utility/Types.sol";
 
-import "../../token/interfaces/IReserveToken.sol";
+import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import "../../network/interfaces/INetworkSettings.sol";
-import "../../network/interfaces/IBancorNetwork.sol";
+import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
+import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 
-import "./IPoolToken.sol";
+import { IPoolToken } from "./IPoolToken.sol";
 
 /**
  * @dev Liquidity Pool Collection interface

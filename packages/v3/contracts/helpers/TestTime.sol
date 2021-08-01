@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../utility/Time.sol";
+import { Time } from "../utility/Time.sol";
 
 contract TestTime is Time {
     uint256 private _currentTime = 1;

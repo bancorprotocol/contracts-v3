@@ -2,9 +2,11 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../network/interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import "../pools/LiquidityPoolCollection.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { LiquidityPoolCollection } from "../pools/LiquidityPoolCollection.sol";
 
 contract TestLiquidityPoolCollection is LiquidityPoolCollection {
     constructor(IBancorNetwork initNetwork) LiquidityPoolCollection(initNetwork) {}

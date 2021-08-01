@@ -2,18 +2,26 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "../utility/Constants.sol";
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Utils.sol";
-import "../utility/MathEx.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import "./interfaces/ILiquidityPoolCollection.sol";
+import { Fraction } from "../utility/Types.sol";
+import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
-import "./PoolToken.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+
+import { ILiquidityPoolCollection } from "./interfaces/ILiquidityPoolCollection.sol";
+
+import { PoolToken } from "./PoolToken.sol";
 
 /**
  * @dev Liquidity Pool Collection contract

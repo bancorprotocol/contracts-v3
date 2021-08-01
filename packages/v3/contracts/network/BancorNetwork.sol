@@ -1,14 +1,22 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Upgradeable.sol";
-import "../utility/Utils.sol";
+import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 
-import "./interfaces/IBancorNetwork.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+
+import { ILiquidityPoolCollection } from "../pools/interfaces/ILiquidityPoolCollection.sol";
+
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 
 /**
  * @dev Bancor Network contract

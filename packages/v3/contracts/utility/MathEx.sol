@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "./Constants.sol";
+import { MAX_UINT256 } from "./Constants.sol";
 
 /**
  * @dev this library provides a set of complex math operations

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "./interfaces/IOwned.sol";
+import { IOwned } from "./interfaces/IOwned.sol";
 
-import "./Upgradeable.sol";
+import { Upgradeable } from "./Upgradeable.sol";
 
 /**
  * @dev this contract provides support and utilities for contract ownership

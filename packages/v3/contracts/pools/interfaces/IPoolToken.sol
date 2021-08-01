@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 
-import "@openzeppelin/contracts/drafts/IERC20Permit.sol";
+import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { IERC20Burnable } from "../../token/interfaces/IERC20Burnable.sol";
 
-import "../../token/interfaces/IReserveToken.sol";
-import "../../token/interfaces/IERC20Burnable.sol";
-
-import "../../utility/interfaces/IOwned.sol";
+import { IOwned } from "../../utility/interfaces/IOwned.sol";
 
 /**
  * @dev Pool Token interface
