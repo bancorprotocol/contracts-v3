@@ -154,7 +154,7 @@ describe('BancorNetwork', () => {
                 expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
 
                 const res = await network.addPoolCollection(collection.address);
-                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(collection.address, poolType);
+                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(poolType, collection.address);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
                     .withArgs(poolType, ZERO_ADDRESS, collection.address);
@@ -181,7 +181,7 @@ describe('BancorNetwork', () => {
                     const poolType = await newCollection.poolType();
 
                     const res = await network.addPoolCollection(newCollection.address);
-                    await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
+                    await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(poolType, newCollection.address);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
                         .withArgs(poolType, collection.address, newCollection.address);
@@ -206,7 +206,7 @@ describe('BancorNetwork', () => {
                 const poolType = await newCollection.poolType();
 
                 const res = await network.addPoolCollection(newCollection.address);
-                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(newCollection.address, poolType);
+                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(poolType, newCollection.address);
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
                     .withArgs(poolType, collection.address, newCollection.address);
@@ -259,7 +259,7 @@ describe('BancorNetwork', () => {
                     expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
 
                     const res = await network.removePoolCollection(collection.address, newCollection.address);
-                    await expect(res).to.emit(network, 'PoolCollectionRemoved').withArgs(collection.address, poolType);
+                    await expect(res).to.emit(network, 'PoolCollectionRemoved').withArgs(poolType, collection.address);
                     await expect(res)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
                         .withArgs(poolType, lastCollection.address, newCollection.address);
@@ -273,7 +273,7 @@ describe('BancorNetwork', () => {
                     const res2 = await network.removePoolCollection(newCollection.address, lastCollection.address);
                     await expect(res2)
                         .to.emit(network, 'PoolCollectionRemoved')
-                        .withArgs(newCollection.address, poolType);
+                        .withArgs(poolType, newCollection.address);
                     await expect(res2)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
                         .withArgs(poolType, newCollection.address, lastCollection.address);
@@ -284,7 +284,7 @@ describe('BancorNetwork', () => {
                     const res3 = await network.removePoolCollection(lastCollection.address, ZERO_ADDRESS);
                     await expect(res3)
                         .to.emit(network, 'PoolCollectionRemoved')
-                        .withArgs(lastCollection.address, poolType);
+                        .withArgs(poolType, lastCollection.address);
                     await expect(res3)
                         .to.emit(network, 'LatestPoolCollectionReplaced')
                         .withArgs(poolType, lastCollection.address, ZERO_ADDRESS);
@@ -295,52 +295,6 @@ describe('BancorNetwork', () => {
 
                 it.skip('should revert when attempting to remove a pool collection with associated pools', async () => {});
                 it.skip('should revert when attempting to remove a pool collection with an alternative with a different type', async () => {});
-            });
-        });
-
-        describe('setting the latest pool collections', () => {
-            let newCollection: LiquidityPoolCollection;
-
-            beforeEach(async () => {
-                newCollection = await createLiquidityPoolCollection(network);
-
-                await network.addPoolCollection(newCollection.address);
-                await network.addPoolCollection(collection.address);
-            });
-
-            it('should revert when a non-owner attempts to set the latest pool collection', async () => {
-                await expect(network.connect(nonOwner).setLatestPoolCollection(collection.address)).to.be.revertedWith(
-                    'ERR_ACCESS_DENIED'
-                );
-            });
-
-            it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
-                await expect(network.connect(nonOwner).setLatestPoolCollection(ZERO_ADDRESS)).to.be.revertedWith(
-                    'ERR_INVALID_ADDRESS'
-                );
-
-                const newCollection2 = await createLiquidityPoolCollection(network);
-                await expect(network.setLatestPoolCollection(newCollection2.address)).to.be.revertedWith(
-                    'ERR_COLLECTION_DOES_NOT_EXIST'
-                );
-            });
-
-            it('should set the latest pool collections', async () => {
-                expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
-
-                const res = await network.setLatestPoolCollection(newCollection.address);
-                await expect(res)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, collection.address, newCollection.address);
-
-                expect(await network.latestPoolCollection(poolType)).to.equal(newCollection.address);
-
-                const res2 = await network.setLatestPoolCollection(collection.address);
-                await expect(res2)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, newCollection.address, collection.address);
-
-                expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
             });
         });
     });
@@ -395,7 +349,7 @@ describe('BancorNetwork', () => {
                     const res = await network.createPool(poolType, reserveToken.address);
                     await expect(res)
                         .to.emit(network, 'PoolAdded')
-                        .withArgs(reserveToken.address, collection.address, poolType);
+                        .withArgs(poolType, reserveToken.address, collection.address);
 
                     expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(collection.address);
