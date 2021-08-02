@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../utility/Upgradeable.sol";
-import "../utility/Utils.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import "./interfaces/INetworkTokenPool.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 
-import "./PoolToken.sol";
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+
+import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
+import { IPoolToken } from "./interfaces/IPoolToken.sol";
+
+import { PoolToken } from "./PoolToken.sol";
 
 /**
  * @dev Network Token Pool contract

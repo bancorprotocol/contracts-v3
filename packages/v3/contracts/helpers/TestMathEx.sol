@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 contract TestMathEx {
     using MathEx for *;

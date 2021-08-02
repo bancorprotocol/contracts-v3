@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../network/interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 
-import "../pools/NetworkTokenPool.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { NetworkTokenPool } from "../pools/NetworkTokenPool.sol";
 
 contract TestNetworkTokenPool is NetworkTokenPool {
     constructor(

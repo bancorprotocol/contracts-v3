@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../../utility/interfaces/IUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../../token/interfaces/IReserveToken.sol";
+import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
+import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 
-import "../../pools/interfaces/ILiquidityPoolCollection.sol";
+import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import "./INetworkSettings.sol";
-import "./IPendingWithdrawals.sol";
+import { ILiquidityPoolCollection } from "../../pools/interfaces/ILiquidityPoolCollection.sol";
+
+import { INetworkSettings } from "./INetworkSettings.sol";
+import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
  * @dev Bancor Network interface

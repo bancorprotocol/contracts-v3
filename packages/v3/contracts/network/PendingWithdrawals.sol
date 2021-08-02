@@ -2,16 +2,24 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Upgradeable.sol";
-import "../utility/Utils.sol";
-import "../utility/Time.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import "./interfaces/IPendingWithdrawals.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
+import { Time } from "../utility/Time.sol";
+
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+
+import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
+import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
