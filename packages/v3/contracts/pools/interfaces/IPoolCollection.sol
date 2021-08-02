@@ -24,9 +24,11 @@ interface IPoolCollection {
         uint32 tradingFeePPM;
         // whether deposits are enabled
         bool depositsEnabled;
-        // the trading liquidity (base token liquidity, network token liquidity)
-        uint256 tradingLiquidity;
-        // the product of the trading liquidity (used for fee calculations)
+        // the base token trading liquidity
+        uint128 baseTokenTradingLiquidity;
+        // the network token trading liquidity
+        uint128 networkTokenTradingLiquidity;
+        // the product of the base token and network token trading liquidities (used for fee calculations)
         uint256 tradingLiquidityProduct;
         // the staked balance
         uint256 stakedBalance;
@@ -70,11 +72,6 @@ interface IPoolCollection {
      * @dev returns the pool data for a given reserve token
      */
     function poolData(IReserveToken reserveToken) external view returns (Pool memory);
-
-    /**
-     * @dev returns the decoded trading liquidity (base token liquidity, network token liquidity) in a given pool
-     */
-    function tradingLiquidity(Pool memory pool) external pure returns (uint256, uint256);
 
     /**
      * @dev creates a new pool

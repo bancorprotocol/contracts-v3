@@ -37,8 +37,8 @@ contract PendingWithdrawals is
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
-    uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
-    uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
+    uint32 private constant DEFAULT_LOCK_DURATION = 7 days;
+    uint32 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
     // the network token contract
     IERC20 private immutable _networkToken;
@@ -50,10 +50,10 @@ contract PendingWithdrawals is
     INetworkTokenPool private immutable _networkTokenPool;
 
     // the lock duration
-    uint256 private _lockDuration;
+    uint32 private _lockDuration;
 
     // the withdrawal window duration
-    uint256 private _withdrawalWindowDuration;
+    uint32 private _withdrawalWindowDuration;
 
     // a mapping between accounts and their pending withdrawal requests
     uint256 private _nextWithdrawalRequestId;
@@ -61,17 +61,17 @@ contract PendingWithdrawals is
     mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 5] private __gap;
+    uint256[MAX_GAP - 4] private __gap;
 
     /**
      * @dev triggered when the lock duration is updated
      */
-    event LockDurationUpdated(uint256 prevLockDuration, uint256 newLockDuration);
+    event LockDurationUpdated(uint32 prevLockDuration, uint32 newLockDuration);
 
     /**
      * @dev triggered when withdrawal window duration
      */
-    event WithdrawalWindowDurationUpdated(uint256 prevWithdrawalWindowDuration, uint256 newWithdrawalWindowDuration);
+    event WithdrawalWindowDurationUpdated(uint32 prevWithdrawalWindowDuration, uint32 newWithdrawalWindowDuration);
 
     /**
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
@@ -182,7 +182,7 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function lockDuration() external view override returns (uint256) {
+    function lockDuration() external view override returns (uint32) {
         return _lockDuration;
     }
 
@@ -197,7 +197,7 @@ contract PendingWithdrawals is
      *
      * - the caller must be the owner of the contract
      */
-    function setLockDuration(uint256 newLockDuration) external onlyOwner {
+    function setLockDuration(uint32 newLockDuration) external onlyOwner {
         emit LockDurationUpdated(_lockDuration, newLockDuration);
 
         _lockDuration = newLockDuration;
@@ -206,7 +206,7 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function withdrawalWindowDuration() external view override returns (uint256) {
+    function withdrawalWindowDuration() external view override returns (uint32) {
         return _withdrawalWindowDuration;
     }
 
@@ -221,7 +221,7 @@ contract PendingWithdrawals is
      *
      * - the caller must be the owner of the contract
      */
-    function setWithdrawalWindowDuration(uint256 newWithdrawalWindowDuration) external onlyOwner {
+    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
         emit WithdrawalWindowDurationUpdated(_withdrawalWindowDuration, newWithdrawalWindowDuration);
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;

@@ -21,8 +21,8 @@ import {
 
 describe('PendingWithdrawals', () => {
     const WITHDRAWAL_REQUEST_DATA_VERSION = BigNumber.from(1);
-    const DEFAULT_LOCK_DURATION = duration.days(7);
-    const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
+    const DEFAULT_LOCK_DURATION = duration.days(7).toNumber();
+    const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3).toNumber();
 
     let nonOwner: SignerWithAddress;
     let dummy: SignerWithAddress;
@@ -352,7 +352,7 @@ describe('PendingWithdrawals', () => {
                             provider.address,
                             id,
                             withdrawalRequest.amount,
-                            (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
+                            (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                         );
 
                     expect(await poolToken.balanceOf(provider.address)).to.equal(
@@ -437,7 +437,7 @@ describe('PendingWithdrawals', () => {
                     const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(provider.address);
                     const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
-                    await pendingWithdrawals.setTime(withdrawalRequest.createdAt.add(duration.days(1)));
+                    await pendingWithdrawals.setTime(withdrawalRequest.createdAt + 1);
 
                     const res = await pendingWithdrawals.connect(provider).reinitWithdrawal(id);
                     await expect(res)
@@ -447,7 +447,7 @@ describe('PendingWithdrawals', () => {
                             provider.address,
                             id,
                             withdrawalRequest.amount,
-                            (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
+                            (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                         );
 
                     expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
@@ -530,7 +530,7 @@ describe('PendingWithdrawals', () => {
 
                 context('with initiated withdrawal requests', () => {
                     let id: BigNumber;
-                    let creationTime: BigNumber;
+                    let creationTime: number;
 
                     const testCompleteWithdrawal = async () => {
                         const caller = networkToken ? networkTokenPool : collection;
@@ -566,7 +566,7 @@ describe('PendingWithdrawals', () => {
                                 provider.address,
                                 id,
                                 withdrawalRequest.amount,
-                                (await pendingWithdrawals.currentTime()).sub(withdrawalRequest.createdAt)
+                                (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
                         expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
@@ -611,7 +611,7 @@ describe('PendingWithdrawals', () => {
 
                     context('during the lock duration', () => {
                         beforeEach(async () => {
-                            await pendingWithdrawals.setTime(creationTime.add(duration.hours(1)));
+                            await pendingWithdrawals.setTime(creationTime + 1000);
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
@@ -621,12 +621,11 @@ describe('PendingWithdrawals', () => {
 
                     context('after the withdrawal window duration', () => {
                         beforeEach(async () => {
-                            const withdrawalDuration = (await pendingWithdrawals.lockDuration()).add(
-                                await pendingWithdrawals.withdrawalWindowDuration()
-                            );
-                            await pendingWithdrawals.setTime(
-                                creationTime.add(withdrawalDuration.add(duration.seconds(1)))
-                            );
+                            const withdrawalDuration =
+                                (await pendingWithdrawals.lockDuration()) +
+                                (await pendingWithdrawals.withdrawalWindowDuration());
+
+                            await pendingWithdrawals.setTime(creationTime + withdrawalDuration + 1);
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
@@ -636,12 +635,10 @@ describe('PendingWithdrawals', () => {
 
                     context('during the withdrawal window duration', () => {
                         beforeEach(async () => {
-                            const withdrawalDuration = (await pendingWithdrawals.lockDuration()).add(
-                                await pendingWithdrawals.withdrawalWindowDuration()
-                            );
-                            await pendingWithdrawals.setTime(
-                                creationTime.add(withdrawalDuration.sub(duration.seconds(1)))
-                            );
+                            const withdrawalDuration =
+                                (await pendingWithdrawals.lockDuration()) +
+                                (await pendingWithdrawals.withdrawalWindowDuration());
+                            await pendingWithdrawals.setTime(creationTime + withdrawalDuration - 1);
                         });
 
                         it('should complete a withdrawal request', async () => {

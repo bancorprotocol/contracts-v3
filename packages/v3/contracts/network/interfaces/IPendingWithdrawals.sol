@@ -42,12 +42,12 @@ interface IPendingWithdrawals is IUpgradeable {
     /**
      * @dev returns the lock duration
      */
-    function lockDuration() external view returns (uint256);
+    function lockDuration() external view returns (uint32);
 
     /**
      * @dev returns withdrawal window duration
      */
-    function withdrawalWindowDuration() external view returns (uint256);
+    function withdrawalWindowDuration() external view returns (uint32);
 
     /**
      * @dev returns the pending withdrawal requests count for a specific provider
