@@ -6,6 +6,8 @@ import "../utility/Utils.sol";
 
 import "./interfaces/INetworkTokenPool.sol";
 
+import "./PoolToken.sol";
+
 /**
  * @dev Network Token Pool contract
  */
@@ -15,6 +17,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
 
     // the vault contract
     IBancorVault private immutable _vault;
+
+    // the network token pool token
+    IPoolToken internal immutable _poolToken;
 
     // the total staked network token balance in the network
     uint256 private _stakedBalance;
@@ -49,12 +54,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, IBancorVault initVault)
-        validAddress(address(initNetwork))
-        validAddress(address(initVault))
-    {
+    constructor(
+        IBancorNetwork initNetwork,
+        IBancorVault initVault,
+        IPoolToken initPoolToken
+    ) validAddress(address(initNetwork)) validAddress(address(initVault)) validAddress(address(initPoolToken)) {
         _network = initNetwork;
         _vault = initVault;
+        _poolToken = initPoolToken;
     }
 
     /**
@@ -76,7 +83,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkTokenPool_init_unchained() internal initializer {}
+    function __NetworkTokenPool_init_unchained() internal initializer {
+        _poolToken.acceptOwnership();
+    }
 
     // solhint-enable func-name-mixedcase
 
@@ -99,6 +108,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
      */
     function vault() external view override returns (IBancorVault) {
         return _vault;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function poolToken() external view override returns (IPoolToken) {
+        return _poolToken;
     }
 
     /**

@@ -1,8 +1,9 @@
+import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
 import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
 import { toAddress } from 'test/helpers/Utils';
-import { ProxyAdmin } from 'typechain';
+import { BancorNetwork, LiquidityPoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -74,27 +75,60 @@ export const createTokenHolder = async () => {
 };
 
 export const createLiquidityPoolCollection = async (network: string | BaseContract) =>
-    Contracts.LiquidityPoolCollection.deploy(toAddress(network));
+    Contracts.TestLiquidityPoolCollection.deploy(toAddress(network));
 
 export const createSystem = async () => {
+    const networkToken = await createNetworkToken();
+
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
-        ctorArgs: [toAddress(networkSettings)]
+        ctorArgs: [networkToken.address, networkSettings.address]
     });
 
-    const networkToken = await createNetworkToken();
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [toAddress(networkToken)] });
-    const networkTokenPool = await createProxy(Contracts.NetworkTokenPool, {
-        ctorArgs: [toAddress(network), toAddress(vault)]
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+    const networkTokenPoolToken = await Contracts.PoolToken.deploy(
+        NETWORK_TOKEN_POOL_TOKEN_NAME,
+        NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
+        networkToken.address
+    );
+    const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
+        skipInitialization: true,
+        ctorArgs: [network.address, vault.address, networkTokenPoolToken.address]
     });
-    const pendingWithdrawals = await createProxy(Contracts.PendingWithdrawals, {
-        ctorArgs: [toAddress(network), toAddress(networkTokenPool)]
+    await networkTokenPoolToken.transferOwnership(networkTokenPool.address);
+    await networkTokenPool.initialize();
+
+    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
+        ctorArgs: [network.address, networkTokenPool.address]
     });
     const collection = await createLiquidityPoolCollection(network);
 
     await network.initialize(pendingWithdrawals.address);
 
-    return { networkSettings, network, networkToken, vault, networkTokenPool, pendingWithdrawals, collection };
+    return {
+        networkSettings,
+        network,
+        networkToken,
+        networkTokenPoolToken,
+        vault,
+        networkTokenPool,
+        pendingWithdrawals,
+        collection
+    };
+};
+
+export const createPool = async (
+    reserveToken: TestERC20Token,
+    network: BancorNetwork,
+    networkSettings: NetworkSettings,
+    collection: LiquidityPoolCollection
+) => {
+    await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+    await network.addPoolCollection(collection.address);
+    await network.createPool(await collection.poolType(), reserveToken.address);
+
+    return Contracts.PoolToken.attach(await collection.poolToken(reserveToken.address));
 };

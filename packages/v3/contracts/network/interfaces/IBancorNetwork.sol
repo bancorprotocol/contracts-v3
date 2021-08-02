@@ -15,6 +15,11 @@ import "./IPendingWithdrawals.sol";
  */
 interface IBancorNetwork is IUpgradeable {
     /**
+     * @dev returns the network token contract
+     */
+    function networkToken() external view returns (IERC20);
+
+    /**
      * @dev returns the network settings contract
      */
     function settings() external view returns (INetworkSettings);

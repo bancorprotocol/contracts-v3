@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
+import "./IPoolToken.sol";
+
 import "../../utility/interfaces/IUpgradeable.sol";
 
 import "../../network/interfaces/IBancorNetwork.sol";
@@ -19,6 +21,11 @@ interface INetworkTokenPool is IUpgradeable {
      * @dev returns the vault contract
      */
     function vault() external view returns (IBancorVault);
+
+    /**
+     * @dev returns the network token pool token contract
+     */
+    function poolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the total staked network token balance in the network
