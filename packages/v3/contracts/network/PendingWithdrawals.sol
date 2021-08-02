@@ -36,7 +36,6 @@ contract PendingWithdrawals is
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
-    uint16 private constant WITHDRAWAL_REQUEST_DATA_VERSION = 1;
     uint256 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint256 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
@@ -377,7 +376,7 @@ contract PendingWithdrawals is
         uint256 id = _nextWithdrawalRequestId++;
 
         _withdrawalRequests[id] = WithdrawalRequest({
-            version: WITHDRAWAL_REQUEST_DATA_VERSION,
+            version: 1,
             provider: provider,
             poolToken: poolToken,
             amount: poolTokenAmount,
