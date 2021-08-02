@@ -36,6 +36,8 @@ const loadENVKey = <T>(envKeyName: string) => {
 
 const configNetworks = configFile.networks || {};
 
+const ci = loadENVKey<boolean>('CI');
+
 const config: HardhatUserConfig = {
     networks: {
         hardhat: {
@@ -98,7 +100,9 @@ const config: HardhatUserConfig = {
     mocha: {
         timeout: 600000,
         color: true,
-        bail: loadENVKey('BAIL')
+        bail: loadENVKey('BAIL'),
+        grep: ci ? '' : '@stress',
+        invert: ci ? false : true
     }
 };
 

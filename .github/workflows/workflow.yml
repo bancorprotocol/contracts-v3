@@ -34,4 +34,4 @@ jobs:
         run: yarn lint
 
       - name: Test
-        run: yarn test
+        run: CI=1 yarn test

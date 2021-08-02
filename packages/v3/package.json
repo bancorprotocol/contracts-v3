@@ -48,7 +48,7 @@
         "@typechain/ethers-v5": "^7.0.1",
         "@typechain/hardhat": "^2.1.2",
         "@types/chai": "^4.2.21",
-        "@types/mocha": "^8.2.3",
+        "@types/mocha": "^9.0.0",
         "@types/node": "^16.3.3",
         "chai": "^4.3.4",
         "chai-arrays": "^2.2.0",
