@@ -48,4 +48,18 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the respective liquidity pool collection for the provided pool
      */
     function collectionByPool(IReserveToken pool) external view returns (ILiquidityPoolCollection);
+
+    /**
+     * @dev returns whether the pool is valid
+     */
+    function isPoolValid(IReserveToken pool) external view returns (bool);
+
+    /**
+     * @dev creates a new pool
+     *
+     * requirements:
+     *
+     * - the pool doesn't exist
+     */
+    function createPool(uint16 poolType, IReserveToken reserveToken) external;
 }

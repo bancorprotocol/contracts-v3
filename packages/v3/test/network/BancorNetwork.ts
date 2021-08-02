@@ -1,11 +1,18 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Contracts from 'components/Contracts';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { ZERO_ADDRESS } from 'test/helpers/Constants';
 import { createSystem, createTokenHolder, createLiquidityPoolCollection } from 'test/helpers/Factory';
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import { BancorNetwork, TokenHolderUpgradeable, LiquidityPoolCollection } from 'typechain';
+import {
+    BancorNetwork,
+    TokenHolderUpgradeable,
+    LiquidityPoolCollection,
+    TestERC20Token,
+    NetworkSettings
+} from 'typechain';
 
 describe('BancorNetwork', () => {
     let nonOwner: SignerWithAddress;
@@ -324,6 +331,74 @@ describe('BancorNetwork', () => {
                     .withArgs(poolType, newCollection.address, collection.address);
 
                 expect(await network.latestPoolCollection(poolType)).to.equal(collection.address);
+            });
+        });
+    });
+
+    describe('create pool', () => {
+        let reserveToken: TestERC20Token;
+        let networkSettings: NetworkSettings;
+        let network: BancorNetwork;
+        let collection: LiquidityPoolCollection;
+        let poolType: number;
+
+        beforeEach(async () => {
+            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+            ({ network, networkSettings, collection } = await createSystem());
+
+            poolType = await collection.poolType();
+        });
+
+        it('should revert when attempting to create a pool for an invalid reserve token', async () => {
+            await expect(network.createPool(poolType, ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when attempting to create a pool for an unsupported type', async () => {
+            await expect(network.createPool(BigNumber.from(12345), reserveToken.address)).to.be.revertedWith(
+                'ERR_UNSUPPORTED_TYPE'
+            );
+        });
+
+        context('with an associated pool collection', () => {
+            beforeEach(async () => {
+                await network.addPoolCollection(collection.address);
+            });
+
+            it('should revert when attempting to create a pool for a non-whitelisted reserve token', async () => {
+                await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
+                    'ERR_POOL_NOT_WHITELISTED'
+                );
+            });
+
+            context('with a whitelisted token', () => {
+                beforeEach(async () => {
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                });
+
+                it('should create a pool', async () => {
+                    expect(await network.isPoolValid(reserveToken.address)).to.be.false;
+                    expect(await network.collectionByPool(reserveToken.address)).to.equal(ZERO_ADDRESS);
+                    expect(await network.liquidityPools()).to.be.empty;
+                    expect(await collection.isPoolValid(reserveToken.address)).to.be.false;
+
+                    const res = await network.createPool(poolType, reserveToken.address);
+                    await expect(res)
+                        .to.emit(network, 'PoolAdded')
+                        .withArgs(poolType, reserveToken.address, collection.address);
+
+                    expect(await network.isPoolValid(reserveToken.address)).to.be.true;
+                    expect(await network.collectionByPool(reserveToken.address)).to.equal(collection.address);
+                    expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
+                    expect(await collection.isPoolValid(reserveToken.address)).to.be.true;
+                });
+
+                it('should revert when attempting to create a pool for the same reserve token twice', async () => {
+                    await network.createPool(poolType, reserveToken.address);
+                    await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
+                        'ERR_POOL_ALREADY_EXISTS'
+                    );
+                });
             });
         });
     });

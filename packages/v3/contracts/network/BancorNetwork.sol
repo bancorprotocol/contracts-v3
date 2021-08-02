@@ -366,6 +366,38 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
+     * @inheritdoc IBancorNetwork
+     */
+    function isPoolValid(IReserveToken pool) external view override returns (bool) {
+        return _liquidityPools.contains(address(pool));
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function createPool(uint16 poolType, IReserveToken reserveToken)
+        external
+        override
+        nonReentrant
+        validAddress(address(reserveToken))
+    {
+        require(_liquidityPools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
+
+        // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
+        // pool
+        ILiquidityPoolCollection poolCollection = _latestPoolCollections[poolType];
+        require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TYPE");
+
+        // this is where the magic happens...
+        poolCollection.createPool(reserveToken);
+
+        // add the pool to the reverse pool collection lookup
+        _collectionByPool[reserveToken] = poolCollection;
+
+        emit PoolAdded(poolType, reserveToken, poolCollection);
+    }
+
+    /**
      * @dev sets the new latest pool collection for the given type
      *
      * requirements:
