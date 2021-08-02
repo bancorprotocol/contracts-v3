@@ -8,7 +8,7 @@ import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import { ILiquidityPoolCollection } from "../../pools/interfaces/ILiquidityPoolCollection.sol";
+import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
@@ -38,14 +38,14 @@ interface IBancorNetwork is IUpgradeable {
     function externalProtectionWallet() external view returns (ITokenHolder);
 
     /**
-     * @dev returns the set of all valid liquidity pool collections
+     * @dev returns the set of all valid pool collections
      */
-    function poolCollections() external view returns (ILiquidityPoolCollection[] memory);
+    function poolCollections() external view returns (IPoolCollection[] memory);
 
     /**
-     * @dev returns the most recent collection that was added to the liquidity pool collections set for a specific type
+     * @dev returns the most recent collection that was added to the pool collections set for a specific type
      */
-    function latestPoolCollection(uint16 poolType) external view returns (ILiquidityPoolCollection);
+    function latestPoolCollection(uint16 poolType) external view returns (IPoolCollection);
 
     /**
      * @dev returns the set of all liquidity pools
@@ -53,9 +53,9 @@ interface IBancorNetwork is IUpgradeable {
     function liquidityPools() external view returns (IReserveToken[] memory);
 
     /**
-     * @dev returns the respective liquidity pool collection for the provided pool
+     * @dev returns the respective pool collection for the provided pool
      */
-    function collectionByPool(IReserveToken pool) external view returns (ILiquidityPoolCollection);
+    function collectionByPool(IReserveToken pool) external view returns (IPoolCollection);
 
     /**
      * @dev returns whether the pool is valid

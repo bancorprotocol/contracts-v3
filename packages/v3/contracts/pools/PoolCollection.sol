@@ -19,7 +19,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { ILiquidityPoolCollection } from "./interfaces/ILiquidityPoolCollection.sol";
+import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 
@@ -30,7 +30,7 @@ import { PoolToken } from "./PoolToken.sol";
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
     using MathEx for *;
 
@@ -131,28 +131,28 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function poolType() external pure override returns (uint16) {
         return 1;
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function tokenSymbolOverride(IReserveToken reserveToken) external view override returns (string memory) {
         return _tokenSymbolOverrides[reserveToken];
@@ -170,7 +170,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function defaultTradingFeePPM() external view override returns (uint32) {
         return _defaultTradingFeePPM;
@@ -194,7 +194,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
@@ -219,14 +219,14 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
         return _pools[reserveToken];
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_pools[reserveToken]);
@@ -266,7 +266,7 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
+     * @inheritdoc IPoolCollection
      */
     function tradingLiquidity(Pool memory pool) external pure override returns (uint256, uint256) {
         uint256 rawTradingLiquidity = pool.tradingLiquidity;

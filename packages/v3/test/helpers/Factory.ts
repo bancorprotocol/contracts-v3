@@ -3,7 +3,7 @@ import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
 import { toAddress } from 'test/helpers/Utils';
-import { BancorNetwork, LiquidityPoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
+import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -74,8 +74,8 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createLiquidityPoolCollection = async (network: string | BaseContract) =>
-    Contracts.TestLiquidityPoolCollection.deploy(toAddress(network));
+export const createPoolCollection = async (network: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network));
 
 export const createSystem = async () => {
     const networkToken = await createNetworkToken();
@@ -103,7 +103,7 @@ export const createSystem = async () => {
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address, networkTokenPool.address]
     });
-    const collection = await createLiquidityPoolCollection(network);
+    const collection = await createPoolCollection(network);
 
     await network.initialize(pendingWithdrawals.address);
 
@@ -123,7 +123,7 @@ export const createPool = async (
     reserveToken: TestERC20Token,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
-    collection: LiquidityPoolCollection
+    collection: PoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 

@@ -6,10 +6,10 @@ import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.s
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { LiquidityPoolCollection } from "../pools/LiquidityPoolCollection.sol";
+import { PoolCollection } from "../pools/PoolCollection.sol";
 
-contract TestLiquidityPoolCollection is LiquidityPoolCollection {
-    constructor(IBancorNetwork initNetwork) LiquidityPoolCollection(initNetwork) {}
+contract TestPoolCollection is PoolCollection {
+    constructor(IBancorNetwork initNetwork) PoolCollection(initNetwork) {}
 
     function baseArbitrageTest(
         uint256 b,
