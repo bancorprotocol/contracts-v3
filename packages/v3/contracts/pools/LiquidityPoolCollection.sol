@@ -203,10 +203,12 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         _pools[reserveToken] = Pool({
+            version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
             depositsEnabled: true,
-            tradingLiquidity: 0,
+            baseTokenTradingLiquidity: 0,
+            networkTokenTradingLiquidity: 0,
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
@@ -219,22 +221,15 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     /**
      * @inheritdoc ILiquidityPoolCollection
      */
+    function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
+        return _pools[reserveToken];
+    }
+
+    /**
+     * @inheritdoc ILiquidityPoolCollection
+     */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_pools[reserveToken]);
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function poolToken(IReserveToken reserveToken) external view override returns (IPoolToken) {
-        return _pools[reserveToken].poolToken;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function tradingFeePPM(IReserveToken reserveToken) external view override returns (uint32) {
-        return _pools[reserveToken].tradingFeePPM;
     }
 
     /**
@@ -257,13 +252,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
     }
 
     /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function depositsEnabled(IReserveToken reserveToken) external view override returns (bool) {
-        return _pools[reserveToken].depositsEnabled;
-    }
-
-    /**
      * @dev enables/disables deposits to a given pool
      * requirements:
      *
@@ -275,28 +263,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit DepositsEnabled(pool, p.depositsEnabled, status);
 
         p.depositsEnabled = status;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function tradingLiquidity(IReserveToken reserveToken) external view override returns (uint256, uint256) {
-        uint256 rawTradingLiquidity = _pools[reserveToken].tradingLiquidity;
-        return (_decodeUint128(rawTradingLiquidity, 0), _decodeUint128(rawTradingLiquidity, 1));
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function stakedBalance(IReserveToken reserveToken) external view override returns (uint256) {
-        return _pools[reserveToken].stakedBalance;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function initialRate(IReserveToken reserveToken) external view override returns (Fraction memory) {
-        return _pools[reserveToken].initialRate;
     }
 
     /**
@@ -316,13 +282,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit InitialRateUpdated(pool, p.initialRate, newInitialRate);
 
         p.initialRate = newInitialRate;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function depositLimit(IReserveToken reserveToken) external view override returns (uint256) {
-        return _pools[reserveToken].depositLimit;
     }
 
     /**

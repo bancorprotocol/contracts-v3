@@ -16,13 +16,25 @@ import { IPoolToken } from "./IPoolToken.sol";
  */
 interface ILiquidityPoolCollection {
     struct Pool {
+        // the version of the struct
+        uint16 version;
+        // the pool token of a given pool
         IPoolToken poolToken;
+        // the trading fee (in units of PPM)
         uint32 tradingFeePPM;
+        // whether deposits are enabled
         bool depositsEnabled;
-        uint256 tradingLiquidity;
+        // the base token trading liquidity
+        uint128 baseTokenTradingLiquidity;
+        // the network token trading liquidity
+        uint128 networkTokenTradingLiquidity;
+        // the product of the base token and network token trading liquidities (used for fee calculations)
         uint256 tradingLiquidityProduct;
+        // the staked balance
         uint256 stakedBalance;
+        // the initial rate of one base token in network token units in a given pool
         Fraction initialRate;
+        // the deposit limit
         uint256 depositLimit;
     }
 
@@ -57,39 +69,9 @@ interface ILiquidityPoolCollection {
     function isPoolValid(IReserveToken reserveToken) external view returns (bool);
 
     /**
-     * @dev returns the pool token of a given pool
+     * @dev returns the pool data for a given reserve token
      */
-    function poolToken(IReserveToken reserveToken) external view returns (IPoolToken);
-
-    /**
-     * @dev returns the trading fee of a given pool
-     */
-    function tradingFeePPM(IReserveToken reserveToken) external view returns (uint32);
-
-    /**
-     * @dev returns whether deposits to a given pool are enabled.
-     */
-    function depositsEnabled(IReserveToken reserveToken) external view returns (bool);
-
-    /**
-     * @dev returns the trading liquidity (base token liquidity, network token liquidity) in a given pool
-     */
-    function tradingLiquidity(IReserveToken reserveToken) external view returns (uint256, uint256);
-
-    /**
-     * @dev returns the staked balance in a given pool
-     */
-    function stakedBalance(IReserveToken reserveToken) external view returns (uint256);
-
-    /**
-     * @dev returns the initial rate of one base token in network token units in a given pool
-     */
-    function initialRate(IReserveToken reserveToken) external view returns (Fraction memory);
-
-    /**
-     * @dev returns the deposit limit of a given pool
-     */
-    function depositLimit(IReserveToken reserveToken) external view returns (uint256);
+    function poolData(IReserveToken reserveToken) external view returns (Pool memory);
 
     /**
      * @dev creates a new pool

@@ -17,14 +17,16 @@ import { IBancorNetwork } from "./IBancorNetwork.sol";
  */
 interface IPendingWithdrawals is IUpgradeable {
     struct WithdrawalRequest {
+        // the version of the struct
+        uint16 version;
         // the liquidity provider
         address provider;
         // the address of the locked pool token
         IPoolToken poolToken;
+        // the time when the request was created (Unix timestamp))
+        uint32 createdAt;
         // the locked pool token amount
         uint256 amount;
-        // the time when the request was created (Unix timestamp))
-        uint256 createdAt;
     }
 
     /**
@@ -40,12 +42,12 @@ interface IPendingWithdrawals is IUpgradeable {
     /**
      * @dev returns the lock duration
      */
-    function lockDuration() external view returns (uint256);
+    function lockDuration() external view returns (uint32);
 
     /**
      * @dev returns withdrawal window duration
      */
-    function withdrawalWindowDuration() external view returns (uint256);
+    function withdrawalWindowDuration() external view returns (uint32);
 
     /**
      * @dev returns the pending withdrawal requests count for a specific provider
