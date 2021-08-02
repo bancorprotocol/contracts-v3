@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../token/SafeERC20Ex.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { SafeERC20Ex } from "../token/SafeERC20Ex.sol";
 
 contract TestSafeERC20Ex {
     using SafeERC20Ex for IERC20;

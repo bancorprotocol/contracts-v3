@@ -1,15 +1,15 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber } from 'ethers';
-
+import Contracts from '../../components/Contracts';
+import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../../test/helpers/Constants';
+import { createSystem } from '../../test/helpers/Factory';
+import { shouldHaveGap } from '../../test/helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
-import { shouldHaveGap } from '../helpers/Proxy';
-import { createSystem } from '../helpers/Factory';
-
-let nonOwner: SignerWithAddress;
+import { expect } from 'chai';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 
 describe('NetworkTokenPool', () => {
+    let nonOwner: SignerWithAddress;
+
     shouldHaveGap('NetworkTokenPool', '_stakedBalance');
 
     before(async () => {
@@ -26,13 +26,18 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { networkTokenPool, network, vault } = await createSystem();
+            const { networkTokenPool, network, networkToken, vault } = await createSystem();
 
             expect(await networkTokenPool.version()).to.equal(1);
-
             expect(await networkTokenPool.network()).to.equal(network.address);
             expect(await networkTokenPool.vault()).to.equal(vault.address);
             expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
+
+            const poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
+            expect(await poolToken.owner()).to.equal(networkTokenPool.address);
+            expect(await poolToken.reserveToken()).to.equal(networkToken.address);
+            expect(await poolToken.name()).to.equal(NETWORK_TOKEN_POOL_TOKEN_NAME);
+            expect(await poolToken.symbol()).to.equal(NETWORK_TOKEN_POOL_TOKEN_SYMBOL);
         });
     });
 });

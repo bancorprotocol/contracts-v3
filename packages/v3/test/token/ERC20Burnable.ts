@@ -1,13 +1,10 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber, ContractTransaction } from 'ethers';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
 import Contracts from '../../components/Contracts';
+import { ZERO_ADDRESS } from '../../test/helpers/Constants';
 import { TestERC20Burnable } from '../../typechain';
-
-import { ZERO_ADDRESS } from '../helpers/Constants';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber, ContractTransaction } from 'ethers';
+import { ethers } from 'hardhat';
 
 let burnable: TestERC20Burnable;
 let owner: SignerWithAddress;

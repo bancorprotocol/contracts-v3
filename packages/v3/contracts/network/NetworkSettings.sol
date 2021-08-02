@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Utils.sol";
+import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 
-import "./interfaces/INetworkSettings.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract

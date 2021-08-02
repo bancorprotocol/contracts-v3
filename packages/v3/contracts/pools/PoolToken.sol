@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Permit } from "@openzeppelin/contracts/drafts/ERC20Permit.sol";
 
-import "@openzeppelin/contracts/drafts/ERC20Permit.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ERC20Burnable } from "../token/ERC20Burnable.sol";
 
-import "../token/interfaces/IReserveToken.sol";
-import "../token/ERC20Burnable.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Utils.sol";
-
-import "./interfaces/IPoolToken.sol";
+import { IPoolToken } from "./interfaces/IPoolToken.sol";
 
 /**
  * @dev Pool Token contract
@@ -40,9 +39,9 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     }
 
     /**
-     * @dev returns the address of the reserve token
+     * @inheritdoc IPoolToken
      */
-    function reserveToken() external view returns (IReserveToken) {
+    function reserveToken() external view override returns (IReserveToken) {
         return _reserveToken;
     }
 

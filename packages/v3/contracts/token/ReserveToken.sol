@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IReserveToken.sol";
+import { IReserveToken } from "./interfaces/IReserveToken.sol";
 
-import "./SafeERC20Ex.sol";
+import { SafeERC20Ex } from "./SafeERC20Ex.sol";
 
 /**
  * @dev This library implements ERC20 and SafeERC20 utilities for reserve tokens, which can be either ERC20 tokens or ETH

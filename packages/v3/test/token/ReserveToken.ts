@@ -1,14 +1,11 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber } from 'ethers';
-
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
 import Contracts from '../../components/Contracts';
+import { NATIVE_TOKEN_ADDRESS } from '../../test/helpers/Constants';
+import { getBalance } from '../../test/helpers/Utils';
 import { TestReserveToken } from '../../typechain';
-
-import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
-import { getBalance } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
