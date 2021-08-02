@@ -14,7 +14,7 @@ import {
     NetworkSettings,
     TestERC20Token,
     TestBancorNetwork,
-    TestLiquidityPoolCollection,
+    TestPoolCollection,
     TestNetworkTokenPool,
     PoolToken
 } from 'typechain';
@@ -138,7 +138,7 @@ describe('PendingWithdrawals', () => {
         let network: TestBancorNetwork;
         let networkTokenPool: TestNetworkTokenPool;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let collection: TestLiquidityPoolCollection;
+        let collection: TestPoolCollection;
 
         beforeEach(async () => {
             ({ network, networkSettings, networkTokenPool, pendingWithdrawals, collection } = await createSystem());

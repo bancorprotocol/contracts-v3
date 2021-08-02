@@ -6,7 +6,7 @@ import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 import { createSystem } from 'test/helpers/Factory';
-import { TestLiquidityPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
+import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 
 const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
     const MAX_VAL = new Decimal(MAX_UINT256.toString());
@@ -14,11 +14,11 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
 
     const fees = testFees.map((x) => x.mul(PPMR).div(100));
 
-    let collection: TestLiquidityPoolCollection;
+    let collection: TestPoolCollection;
 
     before(async () => {
         const { network } = await createSystem();
-        collection = await Contracts.TestLiquidityPoolCollection.deploy(network.address);
+        collection = await Contracts.TestPoolCollection.deploy(network.address);
     });
 
     // f(f - bm - 2fm) / (fm + b)
@@ -93,7 +93,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
     }
 };
 
-describe('LiquidityPoolCollection', () => {
+describe('PoolCollection', () => {
     const POOL_DATA_VERSION = BigNumber.from(1);
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
@@ -126,7 +126,7 @@ describe('LiquidityPoolCollection', () => {
 
     describe('token symbol overrides', async () => {
         const newSymbol = 'TKN2';
-        let collection: TestLiquidityPoolCollection;
+        let collection: TestPoolCollection;
 
         beforeEach(async () => {
             ({ collection } = await createSystem());
@@ -154,7 +154,7 @@ describe('LiquidityPoolCollection', () => {
 
     describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
-        let collection: TestLiquidityPoolCollection;
+        let collection: TestPoolCollection;
 
         beforeEach(async () => {
             ({ collection } = await createSystem());
@@ -194,7 +194,7 @@ describe('LiquidityPoolCollection', () => {
     describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let collection: TestLiquidityPoolCollection;
+        let collection: TestPoolCollection;
 
         const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
@@ -282,7 +282,7 @@ describe('LiquidityPoolCollection', () => {
     describe('pool settings', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let collection: TestLiquidityPoolCollection;
+        let collection: TestPoolCollection;
         let newReserveToken: TestERC20Token;
 
         beforeEach(async () => {
@@ -476,7 +476,7 @@ describe('LiquidityPoolCollection', () => {
     });
 });
 
-describe('@stress LiquidityPoolCollection', () => {
+describe('@stress PoolCollection', () => {
     const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
     const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
     const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));

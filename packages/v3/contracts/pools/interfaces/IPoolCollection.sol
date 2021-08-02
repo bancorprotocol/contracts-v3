@@ -14,7 +14,7 @@ import { IPoolToken } from "./IPoolToken.sol";
 /**
  * @dev Liquidity Pool Collection interface
  */
-interface ILiquidityPoolCollection {
+interface IPoolCollection {
     struct Pool {
         // the version of the struct
         uint16 version;
