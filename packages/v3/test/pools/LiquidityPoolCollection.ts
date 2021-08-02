@@ -248,15 +248,14 @@ describe('LiquidityPoolCollection', () => {
                 expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.depositsEnabled).to.be.true;
-                expect(pool.tradingLiquidity).to.equal(BigNumber.from(0));
+                expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal({
                     n: BigNumber.from(0),
                     d: BigNumber.from(1)
                 });
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
-
-                expect(await collection.tradingLiquidity(pool)).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
             });
 
             context('with a token symbol override', () => {

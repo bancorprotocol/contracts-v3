@@ -207,7 +207,8 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
             depositsEnabled: true,
-            tradingLiquidity: 0,
+            baseTokenTradingLiquidity: 0,
+            networkTokenTradingLiquidity: 0,
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
@@ -262,14 +263,6 @@ contract LiquidityPoolCollection is ILiquidityPoolCollection, OwnedUpgradeable, 
         emit DepositsEnabled(pool, p.depositsEnabled, status);
 
         p.depositsEnabled = status;
-    }
-
-    /**
-     * @inheritdoc ILiquidityPoolCollection
-     */
-    function tradingLiquidity(Pool memory pool) external pure override returns (uint256, uint256) {
-        uint256 rawTradingLiquidity = pool.tradingLiquidity;
-        return (_decodeUint128(rawTradingLiquidity, 0), _decodeUint128(rawTradingLiquidity, 1));
     }
 
     /**
