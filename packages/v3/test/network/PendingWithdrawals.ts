@@ -138,10 +138,10 @@ describe('PendingWithdrawals', () => {
         let network: TestBancorNetwork;
         let networkTokenPool: TestNetworkTokenPool;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let collection: TestPoolCollection;
+        let poolCollection: TestPoolCollection;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkTokenPool, pendingWithdrawals, collection } = await createSystem());
+            ({ network, networkSettings, networkTokenPool, pendingWithdrawals, poolCollection } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
 
@@ -272,7 +272,7 @@ describe('PendingWithdrawals', () => {
                     let poolToken: PoolToken;
 
                     beforeEach(async () => {
-                        poolToken = await createPool(reserveToken, network, networkSettings, collection);
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
                     });
 
                     it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
@@ -284,9 +284,10 @@ describe('PendingWithdrawals', () => {
 
                     context('with a pool token balance', () => {
                         const amount = BigNumber.from(12345);
+                        1;
 
                         beforeEach(async () => {
-                            await collection.mint(providerAddress, poolToken.address, amount);
+                            await poolCollection.mint(providerAddress, poolToken.address, amount);
                         });
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
@@ -325,10 +326,10 @@ describe('PendingWithdrawals', () => {
             beforeEach(async () => {
                 [, provider1, provider2] = await ethers.getSigners();
 
-                poolToken = await createPool(reserveToken, network, networkSettings, collection);
+                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                await collection.mint(provider1.address, poolToken.address, amount);
-                await collection.mint(provider2.address, poolToken.address, amount);
+                await poolCollection.mint(provider1.address, poolToken.address, amount);
+                await poolCollection.mint(provider2.address, poolToken.address, amount);
             });
 
             it('should revert when cancelling a non-existing withdrawal request', async () => {
@@ -418,10 +419,10 @@ describe('PendingWithdrawals', () => {
             beforeEach(async () => {
                 [, provider1, provider2] = await ethers.getSigners();
 
-                poolToken = await createPool(reserveToken, network, networkSettings, collection);
+                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                await collection.mint(provider1.address, poolToken.address, amount);
-                await collection.mint(provider2.address, poolToken.address, amount);
+                await poolCollection.mint(provider1.address, poolToken.address, amount);
+                await poolCollection.mint(provider2.address, poolToken.address, amount);
             });
 
             it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
@@ -516,9 +517,9 @@ describe('PendingWithdrawals', () => {
 
                         await networkTokenPool.mint(provider.address, poolTokenAmount);
                     } else {
-                        poolToken = await createPool(reserveToken, network, networkSettings, collection);
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                        await collection.mint(provider.address, poolToken.address, poolTokenAmount);
+                        await poolCollection.mint(provider.address, poolToken.address, poolTokenAmount);
                     }
                 });
 
@@ -533,7 +534,7 @@ describe('PendingWithdrawals', () => {
                     let creationTime: number;
 
                     const testCompleteWithdrawal = async () => {
-                        const caller = networkToken ? networkTokenPool : collection;
+                        const caller = networkToken ? networkTokenPool : poolCollection;
                         const providerBalance = await poolToken.balanceOf(provider.address);
                         const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
                         const callerBalance = await poolToken.balanceOf(caller.address);
@@ -600,7 +601,7 @@ describe('PendingWithdrawals', () => {
                         ).to.be.revertedWith('ERR_ACCESS_DENIED');
 
                         await expect(
-                            (networkToken ? collection : networkTokenPool).completeWithdrawalT(
+                            (networkToken ? poolCollection : networkTokenPool).completeWithdrawalT(
                                 pendingWithdrawals.address,
                                 contextId,
                                 provider.address,
