@@ -37,7 +37,7 @@ const expectAlmostEqual = (
     }
 };
 
-describe.only('MathEx', () => {
+describe('MathEx', () => {
     let mathContract: TestMathEx;
 
     before(async () => {
