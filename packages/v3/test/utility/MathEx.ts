@@ -173,7 +173,7 @@ describe('MathEx', () => {
         });
     };
 
-    context('quick tests', () => {
+    describe('quick tests', () => {
         for (const n of [1, 64, 128, 192, 256]) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 floorSqrtTest(n, k);
@@ -271,7 +271,7 @@ describe('MathEx', () => {
         }
     });
 
-    context('@stress tests', () => {
+    describe('@stress tests', () => {
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 floorSqrtTest(n, k);
