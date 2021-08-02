@@ -20,6 +20,7 @@ import {
 } from 'typechain';
 
 describe('PendingWithdrawals', () => {
+    const WITHDRAWAL_REQUEST_DATA_VERSION = BigNumber.from(1);
     const DEFAULT_LOCK_DURATION = duration.days(7);
     const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 
@@ -211,6 +212,7 @@ describe('PendingWithdrawals', () => {
                     );
 
                     const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                    expect(withdrawalRequest.version).to.equal(WITHDRAWAL_REQUEST_DATA_VERSION);
                     expect(withdrawalRequest.provider).to.equal(providerAddress);
                     expect(withdrawalRequest.poolToken).to.equal(poolToken.address);
                     expect(withdrawalRequest.amount).to.equal(amount);
@@ -455,6 +457,7 @@ describe('PendingWithdrawals', () => {
                     );
 
                     const withdrawalRequest2 = await pendingWithdrawals.withdrawalRequest(id);
+                    expect(withdrawalRequest2.version).to.equal(withdrawalRequest.version);
                     expect(withdrawalRequest2.provider).to.equal(withdrawalRequest.provider);
                     expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
                     expect(withdrawalRequest2.amount).to.equal(withdrawalRequest.amount);
