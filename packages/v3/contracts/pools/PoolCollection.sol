@@ -34,7 +34,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     using SafeMath for uint256;
     using MathEx for *;
 
-    uint16 private constant POOL_DATA_VERSION = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
     string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
@@ -204,7 +203,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         _pools[reserveToken] = Pool({
-            version: POOL_DATA_VERSION,
+            version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
             depositsEnabled: true,

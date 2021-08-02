@@ -16,7 +16,7 @@ contract TestPendingWithdrawals is PendingWithdrawals, TestTime {
         PendingWithdrawals(initNetwork, initNetworkTokenPool)
     {}
 
-    function _time() internal view virtual override(Time, TestTime) returns (uint256) {
+    function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }
 }
