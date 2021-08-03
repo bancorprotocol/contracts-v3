@@ -81,9 +81,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     event TradingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
 
     /**
-     * @dev triggered when deposits to a specific pool are enabled/disabled
+     * @dev triggered when depositing to a specific pool are enabled/disabled
      */
-    event DepositsEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
+    event DepositingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
@@ -212,7 +212,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
             tradingEnabled: true,
-            depositsEnabled: true,
+            depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
             tradingLiquidityProduct: 0,
@@ -273,17 +273,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev enables/disables deposits to a given pool
+     * @dev enables/disables depositing to a given pool
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function enableDeposits(IReserveToken pool, bool status) external onlyOwner {
+    function enableDepositing(IReserveToken pool, bool status) external onlyOwner {
         Pool storage p = _poolStorage(pool);
 
-        emit DepositsEnabled(pool, p.depositsEnabled, status);
+        emit DepositingEnabled(pool, p.depositingEnabled, status);
 
-        p.depositsEnabled = status;
+        p.depositingEnabled = status;
     }
 
     /**

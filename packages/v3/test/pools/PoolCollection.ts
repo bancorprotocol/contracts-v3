@@ -253,7 +253,7 @@ describe('PoolCollection', () => {
                 expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
-                expect(pool.depositsEnabled).to.be.true;
+                expect(pool.depositingEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
@@ -437,40 +437,40 @@ describe('PoolCollection', () => {
         });
 
         describe('enable depositing', () => {
-            it('should revert when a non-owner attempts to enable deposits', async () => {
+            it('should revert when a non-owner attempts to enable depositing', async () => {
                 await expect(
-                    poolCollection.connect(nonOwner).enableDeposits(reserveToken.address, true)
+                    poolCollection.connect(nonOwner).enableDepositing(reserveToken.address, true)
                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
             });
 
-            it('should revert when enabling deposits for a non-existing pool', async () => {
-                await expect(poolCollection.enableDeposits(newReserveToken.address, true)).to.be.revertedWith(
+            it('should revert when enabling depositing for a non-existing pool', async () => {
+                await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
             });
 
-            it('should allow enabling and disabling deposits', async () => {
+            it('should allow enabling and disabling depositing', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
-                let { depositsEnabled } = pool;
-                expect(depositsEnabled).to.be.true;
+                let { depositingEnabled } = pool;
+                expect(depositingEnabled).to.be.true;
 
-                const res = await poolCollection.enableDeposits(reserveToken.address, false);
+                const res = await poolCollection.enableDepositing(reserveToken.address, false);
                 await expect(res)
                     .to.emit(poolCollection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, depositsEnabled, false);
+                    .withArgs(reserveToken.address, depositingEnabled, false);
 
                 pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositsEnabled } = pool);
-                expect(depositsEnabled).to.be.false;
+                ({ depositingEnabled } = pool);
+                expect(depositingEnabled).to.be.false;
 
-                const res2 = await poolCollection.enableDeposits(reserveToken.address, true);
+                const res2 = await poolCollection.enableDepositing(reserveToken.address, true);
                 await expect(res2)
                     .to.emit(poolCollection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, depositsEnabled, true);
+                    .withArgs(reserveToken.address, depositingEnabled, true);
 
                 pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositsEnabled } = pool);
-                expect(depositsEnabled).to.be.true;
+                ({ depositingEnabled } = pool);
+                expect(depositingEnabled).to.be.true;
             });
         });
 

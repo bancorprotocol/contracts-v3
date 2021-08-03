@@ -24,8 +24,8 @@ interface IPoolCollection {
         uint32 tradingFeePPM;
         // whether trading is enabled
         bool tradingEnabled;
-        // whether deposits are enabled
-        bool depositsEnabled;
+        // whether depositing is enabled
+        bool depositingEnabled;
         // the base token trading liquidity
         uint128 baseTokenTradingLiquidity;
         // the network token trading liquidity
