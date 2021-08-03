@@ -516,7 +516,7 @@ describe('PoolCollection', () => {
                 ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
             });
 
-            it('should ignore updating to the deposit limit', async () => {
+            it('should ignore updating to the same deposit limit', async () => {
                 await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
 
                 const res = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
