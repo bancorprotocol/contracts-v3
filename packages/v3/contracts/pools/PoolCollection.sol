@@ -76,6 +76,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     event TradingFeePPMUpdated(IReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
+     * @dev triggered when trading in a specific pool is enabled/disabled
+     */
+    event TradingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
+
+    /**
      * @dev triggered when deposits to a specific pool are enabled/disabled
      */
     event DepositsEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
@@ -206,6 +211,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
+            tradingEnabled: true,
             depositsEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
@@ -249,6 +255,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         emit TradingFeePPMUpdated(pool, p.tradingFeePPM, newTradingFeePPM);
 
         p.tradingFeePPM = newTradingFeePPM;
+    }
+
+    /**
+     * @dev enables/disables trading in a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableTrading(IReserveToken pool, bool status) external onlyOwner {
+        Pool storage p = _poolStorage(pool);
+
+        emit TradingEnabled(pool, p.tradingEnabled, status);
+
+        p.tradingEnabled = status;
     }
 
     /**

@@ -252,6 +252,7 @@ describe('PoolCollection', () => {
 
                 expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+                expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositsEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
@@ -397,7 +398,45 @@ describe('PoolCollection', () => {
             });
         });
 
-        describe('enable deposits', () => {
+        describe('enable trading', () => {
+            it('should revert when a non-owner attempts to enable trading', async () => {
+                await expect(
+                    poolCollection.connect(nonOwner).enableTrading(reserveToken.address, true)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when enabling trading for a non-existing pool', async () => {
+                await expect(poolCollection.enableTrading(newReserveToken.address, true)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow enabling and disabling trading', async () => {
+                let pool = await poolCollection.poolData(reserveToken.address);
+                let { tradingEnabled } = pool;
+                expect(tradingEnabled).to.be.true;
+
+                const res = await poolCollection.enableTrading(reserveToken.address, false);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, tradingEnabled, false);
+
+                pool = await poolCollection.poolData(reserveToken.address);
+                ({ tradingEnabled } = pool);
+                expect(tradingEnabled).to.be.false;
+
+                const res2 = await poolCollection.enableTrading(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, tradingEnabled, true);
+
+                pool = await poolCollection.poolData(reserveToken.address);
+                ({ tradingEnabled } = pool);
+                expect(tradingEnabled).to.be.true;
+            });
+        });
+
+        describe('enable depositing', () => {
             it('should revert when a non-owner attempts to enable deposits', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableDeposits(reserveToken.address, true)
