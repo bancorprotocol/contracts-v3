@@ -1,7 +1,5 @@
 import Decimal from 'decimal.js';
 
-Decimal.set({ precision: 155, rounding: Decimal.ROUND_DOWN, toExpPos: 40 });
-
 const floorSqrt = (n: Decimal) => n.sqrt().floor();
 
 const ceilSqrt = (n: Decimal) => n.sqrt().ceil();
