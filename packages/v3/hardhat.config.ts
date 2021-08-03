@@ -1,10 +1,8 @@
-import { customChai } from './test/matchers';
+import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
-import chai from 'chai';
-import { BigNumber } from 'ethers';
 import fs from 'fs';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
@@ -15,8 +13,6 @@ import { HardhatUserConfig } from 'hardhat/config';
 import path from 'path';
 import 'solidity-coverage';
 import 'tsconfig-paths/register';
-
-chai.use(customChai);
 
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
@@ -100,14 +96,3 @@ const config: HardhatUserConfig = {
 };
 
 export default config;
-
-// patch BigNumber to include a min and a max functions
-declare module 'ethers' {
-    class BigNumber {
-        static min(a: any, b: any): boolean;
-        static max(a: any, b: any): boolean;
-    }
-}
-
-BigNumber.min = (a: any, b: any) => (BigNumber.from(a).gt(b) ? b : a);
-BigNumber.max = (a: any, b: any) => (BigNumber.from(a).gt(b) ? a : b);
