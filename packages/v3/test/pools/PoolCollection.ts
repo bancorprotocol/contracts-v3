@@ -456,7 +456,7 @@ describe('PoolCollection', () => {
 
                 const res = await poolCollection.enableDepositing(reserveToken.address, false);
                 await expect(res)
-                    .to.emit(poolCollection, 'DepositsEnabled')
+                    .to.emit(poolCollection, 'DepositingEnabled')
                     .withArgs(reserveToken.address, depositingEnabled, false);
 
                 pool = await poolCollection.poolData(reserveToken.address);
@@ -465,7 +465,7 @@ describe('PoolCollection', () => {
 
                 const res2 = await poolCollection.enableDepositing(reserveToken.address, true);
                 await expect(res2)
-                    .to.emit(poolCollection, 'DepositsEnabled')
+                    .to.emit(poolCollection, 'DepositingEnabled')
                     .withArgs(reserveToken.address, depositingEnabled, true);
 
                 pool = await poolCollection.poolData(reserveToken.address);
