@@ -66,12 +66,12 @@ contract PendingWithdrawals is
     /**
      * @dev triggered when the lock duration is updated
      */
-    event LockDurationUpdated(uint32 newLockDuration);
+    event LockDurationUpdated(uint32 prevLockDuration, uint32 newLockDuration);
 
     /**
      * @dev triggered when withdrawal window duration
      */
-    event WithdrawalWindowDurationUpdated(uint32 newWithdrawalWindowDuration);
+    event WithdrawalWindowDurationUpdated(uint32 prevWithdrawalWindowDuration, uint32 newWithdrawalWindowDuration);
 
     /**
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
@@ -198,13 +198,14 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setLockDuration(uint32 newLockDuration) external onlyOwner {
-        if (_lockDuration == newLockDuration) {
+        uint32 prevLockDuration = _lockDuration;
+        if (prevLockDuration == newLockDuration) {
             return;
         }
 
         _lockDuration = newLockDuration;
 
-        emit LockDurationUpdated(newLockDuration);
+        emit LockDurationUpdated(prevLockDuration, newLockDuration);
     }
 
     /**
@@ -226,13 +227,14 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
-        if (_withdrawalWindowDuration == newWithdrawalWindowDuration) {
+        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
+        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
             return;
         }
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
 
-        emit WithdrawalWindowDurationUpdated(newWithdrawalWindowDuration);
+        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
     }
 
     /**

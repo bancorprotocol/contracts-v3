@@ -54,7 +54,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when the external protection wallet is updated
      */
-    event ExternalProtectionWalletUpdated(ITokenHolder indexed newWallet);
+    event ExternalProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
      * @dev triggered when a new pool collection is added
@@ -69,7 +69,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when the latest pool collection, for a specific type, is replaced
      */
-    event LatestPoolCollectionReplaced(uint16 indexed poolType, IPoolCollection indexed newPoolCollection);
+    event LatestPoolCollectionReplaced(
+        uint16 indexed poolType,
+        IPoolCollection indexed prevPoolCollection,
+        IPoolCollection indexed newPoolCollection
+    );
 
     /**
      * @dev triggered when a new pool is added
@@ -257,7 +261,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(newExternalProtectionWallet))
         onlyOwner
     {
-        if (newExternalProtectionWallet == _externalProtectionWallet) {
+        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
+        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
             return;
         }
 
@@ -265,7 +270,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         _externalProtectionWallet = newExternalProtectionWallet;
 
-        emit ExternalProtectionWalletUpdated(newExternalProtectionWallet);
+        emit ExternalProtectionWalletUpdated(prevExternalProtectionWallet, newExternalProtectionWallet);
     }
 
     /**
@@ -428,13 +433,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      */
     function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
-        if (_latestPoolCollections[poolType] == poolCollection) {
+        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
+        if (prevLatestPoolCollection == poolCollection) {
             return;
         }
 
         _latestPoolCollections[poolType] = poolCollection;
 
-        emit LatestPoolCollectionReplaced(poolType, poolCollection);
+        emit LatestPoolCollectionReplaced(poolType, prevLatestPoolCollection, poolCollection);
     }
 
     /**

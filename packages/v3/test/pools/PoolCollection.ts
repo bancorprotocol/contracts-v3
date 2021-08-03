@@ -188,12 +188,16 @@ describe('PoolCollection', () => {
 
         it('should be to able to set and update the default trading fee', async () => {
             const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
-            await expect(res).to.emit(poolCollection, 'DefaultTradingFeePPMUpdated').withArgs(newDefaultTradingFree);
+            await expect(res)
+                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
+                .withArgs(DEFAULT_TRADING_FEE_PPM, newDefaultTradingFree);
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(newDefaultTradingFree);
 
             const res2 = await poolCollection.setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
-            await expect(res2).to.emit(poolCollection, 'DefaultTradingFeePPMUpdated').withArgs(DEFAULT_TRADING_FEE_PPM);
+            await expect(res2)
+                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
+                .withArgs(newDefaultTradingFree, DEFAULT_TRADING_FEE_PPM);
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
@@ -343,7 +347,7 @@ describe('PoolCollection', () => {
                 const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)
                     .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, newInitialRate);
+                    .withArgs(reserveToken.address, initialRate, newInitialRate);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ initialRate } = pool);
@@ -353,7 +357,7 @@ describe('PoolCollection', () => {
                 const res2 = await poolCollection.setInitialRate(reserveToken.address, newInitialRate2);
                 await expect(res2)
                     .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, newInitialRate2);
+                    .withArgs(reserveToken.address, initialRate, newInitialRate2);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ initialRate } = pool);
@@ -397,7 +401,7 @@ describe('PoolCollection', () => {
                 const res = await poolCollection.setTradingFeePPM(reserveToken.address, newTradingFee);
                 await expect(res)
                     .to.emit(poolCollection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, newTradingFee);
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingFeePPM } = pool);
@@ -407,7 +411,7 @@ describe('PoolCollection', () => {
                 const res2 = await poolCollection.setTradingFeePPM(reserveToken.address, newTradingFee2);
                 await expect(res2)
                     .to.emit(poolCollection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, newTradingFee2);
+                    .withArgs(reserveToken.address, tradingFeePPM, newTradingFee2);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingFeePPM } = pool);
@@ -527,7 +531,7 @@ describe('PoolCollection', () => {
                 const res = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
                 await expect(res)
                     .to.emit(poolCollection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, newDepositLimit);
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ depositLimit } = pool);
@@ -537,7 +541,7 @@ describe('PoolCollection', () => {
                 const res2 = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit2);
                 await expect(res2)
                     .to.emit(poolCollection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, newDepositLimit2);
+                    .withArgs(reserveToken.address, depositLimit, newDepositLimit2);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ depositLimit } = pool);

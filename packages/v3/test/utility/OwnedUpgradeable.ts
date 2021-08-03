@@ -38,7 +38,7 @@ describe('OwnedUpgradeable', () => {
         await contract.transferOwnership(newOwner.address);
         await expect(await contract.connect(newOwner).acceptOwnership())
             .to.emit(contract, 'OwnerUpdate')
-            .withArgs(newOwner.address);
+            .withArgs(owner.address, newOwner.address);
     });
 
     it('verifies that newOwner is cleared after ownership transfer', async () => {

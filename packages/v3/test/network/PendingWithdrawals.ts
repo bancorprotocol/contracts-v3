@@ -91,12 +91,16 @@ describe('PendingWithdrawals', () => {
 
         it('should be to able to set and update the lock duration', async () => {
             const res = await pendingWithdrawals.setLockDuration(newLockDuration);
-            await expect(res).to.emit(pendingWithdrawals, 'LockDurationUpdated').withArgs(newLockDuration);
+            await expect(res)
+                .to.emit(pendingWithdrawals, 'LockDurationUpdated')
+                .withArgs(DEFAULT_LOCK_DURATION, newLockDuration);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(newLockDuration);
 
             const res2 = await pendingWithdrawals.setLockDuration(DEFAULT_LOCK_DURATION);
-            await expect(res2).to.emit(pendingWithdrawals, 'LockDurationUpdated').withArgs(DEFAULT_LOCK_DURATION);
+            await expect(res2)
+                .to.emit(pendingWithdrawals, 'LockDurationUpdated')
+                .withArgs(newLockDuration, DEFAULT_LOCK_DURATION);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
         });
@@ -129,14 +133,14 @@ describe('PendingWithdrawals', () => {
             const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(newWithdrawalWindowDuration);
+                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION, newWithdrawalWindowDuration);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
 
             const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
             await expect(res2)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
+                .withArgs(newWithdrawalWindowDuration, DEFAULT_WITHDRAWAL_WINDOW_DURATION);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });

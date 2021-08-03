@@ -160,14 +160,14 @@ describe('NetworkSettings', () => {
             const res = await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
             await expect(res)
                 .to.emit(networkSettings, 'PoolMintingLimitUpdated')
-                .withArgs(reserveToken.address, poolMintingLimit);
+                .withArgs(reserveToken.address, BigNumber.from(0), poolMintingLimit);
 
             expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(poolMintingLimit);
 
             const res2 = await networkSettings.setPoolMintingLimit(reserveToken.address, BigNumber.from(0));
             await expect(res2)
                 .to.emit(networkSettings, 'PoolMintingLimitUpdated')
-                .withArgs(reserveToken.address, BigNumber.from(0));
+                .withArgs(reserveToken.address, poolMintingLimit, BigNumber.from(0));
 
             expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(BigNumber.from(0));
         });
@@ -227,22 +227,30 @@ describe('NetworkSettings', () => {
 
         it('should be to able to set and update network wallet params', async () => {
             const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
-            await expect(res).to.emit(networkSettings, 'NetworkFeeWalletUpdated').withArgs(newNetworkFeeWallet.address);
+            await expect(res)
+                .to.emit(networkSettings, 'NetworkFeeWalletUpdated')
+                .withArgs(ZERO_ADDRESS, newNetworkFeeWallet.address);
 
             await expectNetworkFeeParams(newNetworkFeeWallet, BigNumber.from(0));
 
             const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
-            await expect(res2).to.emit(networkSettings, 'NetworkFeePPMUpdated').withArgs(newNetworkFee);
+            await expect(res2)
+                .to.emit(networkSettings, 'NetworkFeePPMUpdated')
+                .withArgs(BigNumber.from(0), newNetworkFee);
 
             await expectNetworkFeeParams(newNetworkFeeWallet, newNetworkFee);
 
             const res3 = await networkSettings.setNetworkFeeWallet(networkFeeWallet.address);
-            await expect(res3).to.emit(networkSettings, 'NetworkFeeWalletUpdated').withArgs(networkFeeWallet.address);
+            await expect(res3)
+                .to.emit(networkSettings, 'NetworkFeeWalletUpdated')
+                .withArgs(newNetworkFeeWallet.address, networkFeeWallet.address);
 
             await expectNetworkFeeParams(networkFeeWallet, newNetworkFee);
 
             const res4 = await networkSettings.setNetworkFeePPM(BigNumber.from(0));
-            await expect(res4).to.emit(networkSettings, 'NetworkFeePPMUpdated').withArgs(BigNumber.from(0));
+            await expect(res4)
+                .to.emit(networkSettings, 'NetworkFeePPMUpdated')
+                .withArgs(newNetworkFee, BigNumber.from(0));
 
             await expectNetworkFeeParams(networkFeeWallet, BigNumber.from(0));
         });
@@ -279,12 +287,16 @@ describe('NetworkSettings', () => {
 
         it('should be to able to set and update the withdrawal fee', async () => {
             const res = await networkSettings.setWithdrawalFeePPM(newWithdrawalFee);
-            await expect(res).to.emit(networkSettings, 'WithdrawalFeePPMUpdated').withArgs(newWithdrawalFee);
+            await expect(res)
+                .to.emit(networkSettings, 'WithdrawalFeePPMUpdated')
+                .withArgs(BigNumber.from(0), newWithdrawalFee);
 
             expect(await networkSettings.withdrawalFeePPM()).to.equal(newWithdrawalFee);
 
             const res2 = await networkSettings.setWithdrawalFeePPM(BigNumber.from(0));
-            await expect(res2).to.emit(networkSettings, 'WithdrawalFeePPMUpdated').withArgs(BigNumber.from(0));
+            await expect(res2)
+                .to.emit(networkSettings, 'WithdrawalFeePPMUpdated')
+                .withArgs(newWithdrawalFee, BigNumber.from(0));
 
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
         });
@@ -321,12 +333,16 @@ describe('NetworkSettings', () => {
 
         it('should be to able to set and update the flash-loan fee', async () => {
             const res = await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
-            await expect(res).to.emit(networkSettings, 'FlashLoanFeePPMUpdated').withArgs(newFlashLoanFee);
+            await expect(res)
+                .to.emit(networkSettings, 'FlashLoanFeePPMUpdated')
+                .withArgs(BigNumber.from(0), newFlashLoanFee);
 
             expect(await networkSettings.flashLoanFeePPM()).to.equal(newFlashLoanFee);
 
             const res2 = await networkSettings.setFlashLoanFeePPM(BigNumber.from(0));
-            await expect(res2).to.emit(networkSettings, 'FlashLoanFeePPMUpdated').withArgs(BigNumber.from(0));
+            await expect(res2)
+                .to.emit(networkSettings, 'FlashLoanFeePPMUpdated')
+                .withArgs(newFlashLoanFee, BigNumber.from(0));
 
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
         });
@@ -367,13 +383,17 @@ describe('NetworkSettings', () => {
 
         it('should be to able to set and update the maximum deviation', async () => {
             const res = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
-            await expect(res).to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated').withArgs(newMaxDeviation);
+            await expect(res)
+                .to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated')
+                .withArgs(BigNumber.from(0), newMaxDeviation);
 
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation);
 
             const newMaxDeviation2 = BigNumber.from(5000);
             const res2 = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation2);
-            await expect(res2).to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated').withArgs(newMaxDeviation2);
+            await expect(res2)
+                .to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated')
+                .withArgs(newMaxDeviation, newMaxDeviation2);
 
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation2);
         });
