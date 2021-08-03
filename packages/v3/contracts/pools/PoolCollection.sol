@@ -81,7 +81,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     event TradingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
 
     /**
-     * @dev triggered when depositing to a specific pool are enabled/disabled
+     * @dev triggered when depositing to a specific pool is enabled/disabled
      */
     event DepositingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
 
