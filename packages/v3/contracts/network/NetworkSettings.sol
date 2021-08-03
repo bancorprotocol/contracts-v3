@@ -56,32 +56,32 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev triggered when a per-pool minting limit is updated
      */
-    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 newLimit);
 
     /**
      * @dev triggered when the network fee is updated
      */
-    event NetworkFeeWalletUpdated(ITokenHolder prevWallet, ITokenHolder newWallet);
+    event NetworkFeeWalletUpdated(ITokenHolder newWallet);
 
     /**
      * @dev triggered when the network fee is updated
      */
-    event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+    event NetworkFeePPMUpdated(uint32 newFeePPM);
 
     /**
      * @dev triggered when the withdrawal fee is updated
      */
-    event WithdrawalFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+    event WithdrawalFeePPMUpdated(uint32 newFeePPM);
 
     /**
      * @dev triggered when the flash-loan fee is updated
      */
-    event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+    event FlashLoanFeePPMUpdated(uint32 newFeePPM);
 
     /**
      * @dev triggered when the maximum deviation of the average rate from the spot rate  is updated
      */
-    event AverageRateMaxDeviationPPMUpdated(uint32 prevDeviationPPM, uint32 newDeviationPPM);
+    event AverageRateMaxDeviationPPMUpdated(uint32 newDeviationPPM);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -175,9 +175,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
-        emit PoolMintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
+        if (_poolMintingLimits[pool] == amount) {
+            return;
+        }
 
         _poolMintingLimits[pool] = amount;
+
+        emit PoolMintingLimitUpdated(pool, amount);
     }
 
     /**
@@ -213,9 +217,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         onlyOwner
         validAddress(address(newNetworkFeeWallet))
     {
-        emit NetworkFeeWalletUpdated(_networkFeeWallet, newNetworkFeeWallet);
+        if (_networkFeeWallet == newNetworkFeeWallet) {
+            return;
+        }
 
         _networkFeeWallet = newNetworkFeeWallet;
+
+        emit NetworkFeeWalletUpdated(newNetworkFeeWallet);
     }
 
     /**
@@ -226,9 +234,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
-        emit NetworkFeePPMUpdated(_networkFeePPM, newNetworkFeePPM);
+        if (_networkFeePPM == newNetworkFeePPM) {
+            return;
+        }
 
         _networkFeePPM = newNetworkFeePPM;
+
+        emit NetworkFeePPMUpdated(newNetworkFeePPM);
     }
 
     /**
@@ -246,9 +258,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyOwner validFee(newWithdrawalFeePPM) {
-        emit WithdrawalFeePPMUpdated(_withdrawalFeePPM, newWithdrawalFeePPM);
+        if (_withdrawalFeePPM == newWithdrawalFeePPM) {
+            return;
+        }
 
         _withdrawalFeePPM = newWithdrawalFeePPM;
+
+        emit WithdrawalFeePPMUpdated(newWithdrawalFeePPM);
     }
 
     /**
@@ -266,9 +282,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyOwner validFee(newFlashLoanFeePPM) {
-        emit FlashLoanFeePPMUpdated(_flashLoanFeePPM, newFlashLoanFeePPM);
+        if (_flashLoanFeePPM == newFlashLoanFeePPM) {
+            return;
+        }
 
         _flashLoanFeePPM = newFlashLoanFeePPM;
+
+        emit FlashLoanFeePPMUpdated(newFlashLoanFeePPM);
     }
 
     /**
@@ -290,8 +310,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         onlyOwner
         validPortion(newAverageRateMaxDeviationPPM)
     {
-        emit AverageRateMaxDeviationPPMUpdated(_averageRateMaxDeviationPPM, newAverageRateMaxDeviationPPM);
+        if (_averageRateMaxDeviationPPM == newAverageRateMaxDeviationPPM) {
+            return;
+        }
 
         _averageRateMaxDeviationPPM = newAverageRateMaxDeviationPPM;
+
+        emit AverageRateMaxDeviationPPMUpdated(newAverageRateMaxDeviationPPM);
     }
 }

@@ -82,18 +82,21 @@ describe('PendingWithdrawals', () => {
             );
         });
 
+        it('should ignore updating to the same lock duration', async () => {
+            await pendingWithdrawals.setLockDuration(newLockDuration);
+
+            const res = await pendingWithdrawals.setLockDuration(newLockDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'LockDurationUpdated');
+        });
+
         it('should be to able to set and update the lock duration', async () => {
             const res = await pendingWithdrawals.setLockDuration(newLockDuration);
-            await expect(res)
-                .to.emit(pendingWithdrawals, 'LockDurationUpdated')
-                .withArgs(DEFAULT_LOCK_DURATION, newLockDuration);
+            await expect(res).to.emit(pendingWithdrawals, 'LockDurationUpdated').withArgs(newLockDuration);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(newLockDuration);
 
             const res2 = await pendingWithdrawals.setLockDuration(DEFAULT_LOCK_DURATION);
-            await expect(res2)
-                .to.emit(pendingWithdrawals, 'LockDurationUpdated')
-                .withArgs(newLockDuration, DEFAULT_LOCK_DURATION);
+            await expect(res2).to.emit(pendingWithdrawals, 'LockDurationUpdated').withArgs(DEFAULT_LOCK_DURATION);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
         });
@@ -115,18 +118,25 @@ describe('PendingWithdrawals', () => {
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
+        it('should ignore updating to the same withdrawal window duration', async () => {
+            await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+
+            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated');
+        });
+
         it('should be to able to set and update the withdrawal window duration', async () => {
             const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION, newWithdrawalWindowDuration);
+                .withArgs(newWithdrawalWindowDuration);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
 
             const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
             await expect(res2)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(newWithdrawalWindowDuration, DEFAULT_WITHDRAWAL_WINDOW_DURATION);
+                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
