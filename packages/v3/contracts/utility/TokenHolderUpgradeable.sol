@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../token/ReserveToken.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
-import "./interfaces/ITokenHolder.sol";
+import { ITokenHolder } from "./interfaces/ITokenHolder.sol";
 
-import "./OwnedUpgradeable.sol";
-import "./Utils.sol";
+import { OwnedUpgradeable } from "./OwnedUpgradeable.sol";
+import { Utils } from "./Utils.sol";
 
 /**
  * @dev this contract provides an owned token and ETH wallet

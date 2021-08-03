@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/IERC20Burnable.sol";
+import { IERC20Burnable } from "./interfaces/IERC20Burnable.sol";
 
 /**
  * @dev This is a clone of the OZ's ERC20Burnable extension which is unfortunately required so that it can be explicitly

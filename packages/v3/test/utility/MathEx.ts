@@ -1,11 +1,9 @@
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
-import Decimal from 'decimal.js';
-
 import Contracts from 'components/Contracts';
-import { TestMathEx } from 'typechain';
-
+import Decimal from 'decimal.js';
+import { BigNumber } from 'ethers';
 import MathUtils from 'test/helpers/MathUtils';
+import { TestMathEx } from 'typechain';
 
 const { floorSqrt, ceilSqrt, productRatio, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 
