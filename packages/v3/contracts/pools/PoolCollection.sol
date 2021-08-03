@@ -383,7 +383,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         if (bPc >= e) {
             // base token is not in deficit
-            uint256 f = MathEx.mulDivF(bPc - e, x, d);
+            uint256 f = MathEx.mulDivF(bPc - e, x, d); // TODO: we may need to take the withdrawal fee into account here
 
             amounts.B = eMx / d; // [x <= d] --> [B <= e]
             amounts.D = MathEx.mulDivF(b, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [D <= b]
@@ -397,7 +397,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             }
         } else {
             // base token is in deficit
-            uint256 f = MathEx.mulDivF(e - bPc, x, d);
+            uint256 f = MathEx.mulDivF(e - bPc, x, d); // TODO: we may need to take the withdrawal fee into account here
 
             if (f <= w) {
                 // the protection wallet holds a sufficient amount of base tokens
