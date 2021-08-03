@@ -103,7 +103,7 @@ export const createSystem = async () => {
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address, networkTokenPool.address]
     });
-    const collection = await createPoolCollection(network);
+    const poolCollection = await createPoolCollection(network);
 
     await network.initialize(pendingWithdrawals.address);
 
@@ -115,7 +115,7 @@ export const createSystem = async () => {
         vault,
         networkTokenPool,
         pendingWithdrawals,
-        collection
+        poolCollection
     };
 };
 
@@ -123,13 +123,13 @@ export const createPool = async (
     reserveToken: TestERC20Token,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
-    collection: PoolCollection
+    poolCollection: PoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-    await network.addPoolCollection(collection.address);
-    await network.createPool(await collection.poolType(), reserveToken.address);
+    await network.addPoolCollection(poolCollection.address);
+    await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
-    const pool = await collection.poolData(reserveToken.address);
+    const pool = await poolCollection.poolData(reserveToken.address);
     return Contracts.PoolToken.attach(pool.poolToken);
 };
