@@ -252,7 +252,8 @@ describe('PoolCollection', () => {
 
                 expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
-                expect(pool.depositsEnabled).to.be.true;
+                expect(pool.tradingEnabled).to.be.true;
+                expect(pool.depositingEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
@@ -397,41 +398,79 @@ describe('PoolCollection', () => {
             });
         });
 
-        describe('enable deposits', () => {
-            it('should revert when a non-owner attempts to enable deposits', async () => {
+        describe('enable trading', () => {
+            it('should revert when a non-owner attempts to enable trading', async () => {
                 await expect(
-                    poolCollection.connect(nonOwner).enableDeposits(reserveToken.address, true)
+                    poolCollection.connect(nonOwner).enableTrading(reserveToken.address, true)
                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
             });
 
-            it('should revert when enabling deposits for a non-existing pool', async () => {
-                await expect(poolCollection.enableDeposits(newReserveToken.address, true)).to.be.revertedWith(
+            it('should revert when enabling trading for a non-existing pool', async () => {
+                await expect(poolCollection.enableTrading(newReserveToken.address, true)).to.be.revertedWith(
                     'ERR_POOL_DOES_NOT_EXIST'
                 );
             });
 
-            it('should allow enabling and disabling deposits', async () => {
+            it('should allow enabling and disabling trading', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
-                let { depositsEnabled } = pool;
-                expect(depositsEnabled).to.be.true;
+                let { tradingEnabled } = pool;
+                expect(tradingEnabled).to.be.true;
 
-                const res = await poolCollection.enableDeposits(reserveToken.address, false);
+                const res = await poolCollection.enableTrading(reserveToken.address, false);
                 await expect(res)
-                    .to.emit(poolCollection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, depositsEnabled, false);
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, tradingEnabled, false);
 
                 pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositsEnabled } = pool);
-                expect(depositsEnabled).to.be.false;
+                ({ tradingEnabled } = pool);
+                expect(tradingEnabled).to.be.false;
 
-                const res2 = await poolCollection.enableDeposits(reserveToken.address, true);
+                const res2 = await poolCollection.enableTrading(reserveToken.address, true);
                 await expect(res2)
-                    .to.emit(poolCollection, 'DepositsEnabled')
-                    .withArgs(reserveToken.address, depositsEnabled, true);
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, tradingEnabled, true);
 
                 pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositsEnabled } = pool);
-                expect(depositsEnabled).to.be.true;
+                ({ tradingEnabled } = pool);
+                expect(tradingEnabled).to.be.true;
+            });
+        });
+
+        describe('enable depositing', () => {
+            it('should revert when a non-owner attempts to enable depositing', async () => {
+                await expect(
+                    poolCollection.connect(nonOwner).enableDepositing(reserveToken.address, true)
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when enabling depositing for a non-existing pool', async () => {
+                await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWith(
+                    'ERR_POOL_DOES_NOT_EXIST'
+                );
+            });
+
+            it('should allow enabling and disabling depositing', async () => {
+                let pool = await poolCollection.poolData(reserveToken.address);
+                let { depositingEnabled } = pool;
+                expect(depositingEnabled).to.be.true;
+
+                const res = await poolCollection.enableDepositing(reserveToken.address, false);
+                await expect(res)
+                    .to.emit(poolCollection, 'DepositingEnabled')
+                    .withArgs(reserveToken.address, depositingEnabled, false);
+
+                pool = await poolCollection.poolData(reserveToken.address);
+                ({ depositingEnabled } = pool);
+                expect(depositingEnabled).to.be.false;
+
+                const res2 = await poolCollection.enableDepositing(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(poolCollection, 'DepositingEnabled')
+                    .withArgs(reserveToken.address, depositingEnabled, true);
+
+                pool = await poolCollection.poolData(reserveToken.address);
+                ({ depositingEnabled } = pool);
+                expect(depositingEnabled).to.be.true;
             });
         });
 
@@ -480,6 +519,7 @@ describe('PoolCollection', () => {
     describe('formula sanity tests', () => {
         const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
         const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
+
         testFormula(AMOUNTS, FEES);
     });
 });
@@ -488,5 +528,6 @@ describe('@stress PoolCollection', () => {
     const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
     const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
     const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
+
     testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
 });
