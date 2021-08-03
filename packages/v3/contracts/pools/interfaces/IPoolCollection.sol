@@ -22,8 +22,10 @@ interface IPoolCollection {
         IPoolToken poolToken;
         // the trading fee (in units of PPM)
         uint32 tradingFeePPM;
-        // whether deposits are enabled
-        bool depositsEnabled;
+        // whether trading is enabled
+        bool tradingEnabled;
+        // whether depositing is enabled
+        bool depositingEnabled;
         // the base token trading liquidity
         uint128 baseTokenTradingLiquidity;
         // the network token trading liquidity

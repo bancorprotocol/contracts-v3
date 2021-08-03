@@ -1971,9 +1971,9 @@
     "@types/graphlib" "^2"
 
 "@snyk/cloud-config-parser@^1.9.2":
-  version "1.9.3"
-  resolved "https://registry.yarnpkg.com/@snyk/cloud-config-parser/-/cloud-config-parser-1.9.3.tgz#25b3a4bf1cd7310fe268cfe31fd536cbf9f35a3a"
-  integrity sha512-qv9NsIESPtyC2vKkqA7wEFePNuklksnQWJTWX8Cy3CQoCpZk80XwH50OVpDIU2szgnkWUm1XNSahG/IwVMSbOw==
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@snyk/cloud-config-parser/-/cloud-config-parser-1.10.1.tgz#982dcc4689efb25d2b9fd9b5bef1927b1f6d5247"
+  integrity sha512-boqO3H4zkGo+Q2C7qyG2l/sQX80ZRSOlPCiRtgN9Xa7u9fM+qFGOaFOgNWfZZtU0wLBy2yDs5ipzdfqvp0ZEjg==
   dependencies:
     esprima "^4.0.1"
     tslib "^1.10.0"
@@ -2543,7 +2543,7 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
-"@types/node@*", "@types/node@^16.4.3":
+"@types/node@*", "@types/node@^16.4.10", "@types/node@^16.4.3":
   version "16.4.10"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.4.10.tgz#e57e2a54fc6da58da94b3571b1cb456d39f88597"
   integrity sha512-TmVHsm43br64js9BqHWqiDZA+xMtbUpI1MBIA0EyiBmoV9pcEYFOSdj5fr6enZNfh4fChh+AGOLIzGwJnkshyQ==
@@ -6488,7 +6488,7 @@ ethers@^4.0.32, ethers@^4.0.40:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^5.0.0, ethers@^5.0.1, ethers@^5.0.2, ethers@^5.4.0, ethers@^5.4.2:
+ethers@^5.0.0, ethers@^5.0.1, ethers@^5.0.2, ethers@^5.4.0, ethers@^5.4.2, ethers@^5.4.3:
   version "5.4.3"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.4.3.tgz#9469e7f353285caac4114467eb2618f755a3f7d0"
   integrity sha512-esWqdrFZObpyZyhH6VLHCz5vRA/YJrEmQO77sALWSWFjFtJr5ITIRwJ448N+mxIrvnqjZGQ2Jx2zC3xt5lc64g==
@@ -13171,7 +13171,7 @@ snyk-try-require@^2.0.0:
     lodash.clonedeep "^4.3.0"
     lru-cache "^5.1.1"
 
-snyk@^1.658.0, snyk@^1.667.0:
+snyk@^1.658.0, snyk@^1.675.0:
   version "1.675.0"
   resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.675.0.tgz#fb89421fbd5d3d25f813589ad4bd4396a2a04484"
   integrity sha512-J5ZvEiaAIRdyFrIjS1OnfQs5vKLG0SNPJmeg/GuTA9z8L/gqtTXUsnCrnmpQ8Y2y7L3LRyjh9VXx7G0QC9rlWA==

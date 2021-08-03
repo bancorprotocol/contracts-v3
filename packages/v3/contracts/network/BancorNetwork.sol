@@ -39,7 +39,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
 
-    // a mapping between the last collection that was added to the pool collections set and its type
+    // a mapping between the last pool collection that was added to the pool collections set and its type
     mapping(uint16 => IPoolCollection) private _latestPoolCollections;
 
     // the set of all pools
@@ -59,26 +59,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev triggered when a new pool collection is added
      */
-    event PoolCollectionAdded(uint16 indexed poolType, IPoolCollection indexed collection);
+    event PoolCollectionAdded(uint16 indexed poolType, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when an existing pool collection is removed
      */
-    event PoolCollectionRemoved(uint16 indexed poolType, IPoolCollection indexed collection);
+    event PoolCollectionRemoved(uint16 indexed poolType, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when the latest pool collection, for a specific type, is replaced
      */
     event LatestPoolCollectionReplaced(
         uint16 indexed poolType,
-        IPoolCollection indexed prevCollection,
-        IPoolCollection indexed newCollection
+        IPoolCollection indexed prevPoolCollection,
+        IPoolCollection indexed newPoolCollection
     );
 
     /**
      * @dev triggered when a new pool is added
      */
-    event PoolAdded(uint16 indexed poolType, IReserveToken indexed pool, IPoolCollection indexed collection);
+    event PoolAdded(uint16 indexed poolType, IReserveToken indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when an existing pool is upgraded
@@ -86,8 +86,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event PoolUpgraded(
         uint16 indexed poolType,
         IReserveToken indexed pool,
-        IPoolCollection prevCollection,
-        IPoolCollection newCollection,
+        IPoolCollection prevPoolCollection,
+        IPoolCollection newPoolCollection,
         uint16 prevVersion,
         uint16 newVersion
     );
@@ -99,7 +99,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
-        IPoolCollection collection,
+        IPoolCollection poolCollection,
         uint256 depositAmount,
         uint256 poolTokenAmount
     );
@@ -111,7 +111,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
-        IPoolCollection collection,
+        IPoolCollection poolCollection,
         uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
@@ -316,7 +316,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
 
-        // verify that no pools are associated with the specified collection
+        // verify that no pools are associated with the specified pool collection
         _verifyEmptyPoolCollection(poolCollection);
 
         require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
@@ -444,7 +444,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
-     * @dev verifies that no pools are associated with the specified collection
+     * @dev verifies that no pools are associated with the specified pool collection
      */
     function _verifyEmptyPoolCollection(IPoolCollection poolCollection) private view {
         uint256 length = _liquidityPools.length();
