@@ -519,6 +519,7 @@ describe('PoolCollection', () => {
     describe('formula sanity tests', () => {
         const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
         const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
+
         testFormula(AMOUNTS, FEES);
     });
 });
@@ -527,5 +528,6 @@ describe('@stress PoolCollection', () => {
     const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
     const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
     const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
+
     testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
 });
