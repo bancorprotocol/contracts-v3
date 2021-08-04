@@ -442,7 +442,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
     }
 
-    function deductFee(uint256 x, uint256 y, uint256 z, uint256 fee) internal pure returns (uint256) {
+    function deductFee(
+        uint256 x,
+        uint256 y,
+        uint256 z,
+        uint256 fee
+    ) internal pure returns (uint256) {
         return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - fee), z.mul(PPM_RESOLUTION));
     }
 
