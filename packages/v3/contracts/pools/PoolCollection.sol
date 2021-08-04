@@ -434,7 +434,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = a.mul(x);
                 uint256 bMd = b.mul(d);
-                amounts.C = deductFee(bPc - e, aMx, bMd, n);
+                amounts.C = deductFee(e - bPc, aMx, bMd, n);
                 amounts.B = deductFee(bPc, x, d, n);
                 amounts.D = deductFee(b, x, d, n);
                 amounts.F = deductFee(a, x, d, 0);
