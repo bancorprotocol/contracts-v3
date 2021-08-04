@@ -78,12 +78,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
+    event TradingEnabled(IReserveToken indexed pool, bool newStatus);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
      */
-    event DepositingEnabled(IReserveToken indexed pool, bool prevStatus, bool newStatus);
+    event DepositingEnabled(IReserveToken indexed pool, bool newStatus);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
@@ -192,9 +192,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validFee(newDefaultTradingFeePPM)
     {
-        emit DefaultTradingFeePPMUpdated(_defaultTradingFeePPM, newDefaultTradingFeePPM);
+        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
+        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
+            return;
+        }
 
         _defaultTradingFeePPM = newDefaultTradingFeePPM;
+
+        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
     }
 
     /**
@@ -252,9 +257,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     {
         Pool storage p = _poolStorage(pool);
 
-        emit TradingFeePPMUpdated(pool, p.tradingFeePPM, newTradingFeePPM);
+        uint32 prevTradingFeePPM = p.tradingFeePPM;
+        if (prevTradingFeePPM == newTradingFeePPM) {
+            return;
+        }
 
         p.tradingFeePPM = newTradingFeePPM;
+
+        emit TradingFeePPMUpdated(pool, prevTradingFeePPM, newTradingFeePPM);
     }
 
     /**
@@ -267,9 +277,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function enableTrading(IReserveToken pool, bool status) external onlyOwner {
         Pool storage p = _poolStorage(pool);
 
-        emit TradingEnabled(pool, p.tradingEnabled, status);
+        if (p.tradingEnabled == status) {
+            return;
+        }
 
         p.tradingEnabled = status;
+
+        emit TradingEnabled(pool, status);
     }
 
     /**
@@ -281,9 +295,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function enableDepositing(IReserveToken pool, bool status) external onlyOwner {
         Pool storage p = _poolStorage(pool);
 
-        emit DepositingEnabled(pool, p.depositingEnabled, status);
+        if (p.depositingEnabled == status) {
+            return;
+        }
 
         p.depositingEnabled = status;
+
+        emit DepositingEnabled(pool, status);
     }
 
     /**
@@ -300,9 +318,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     {
         Pool storage p = _poolStorage(pool);
 
-        emit InitialRateUpdated(pool, p.initialRate, newInitialRate);
+        Fraction memory prevInitialRate = p.initialRate;
+        if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
+            return;
+        }
 
         p.initialRate = newInitialRate;
+
+        emit InitialRateUpdated(pool, prevInitialRate, newInitialRate);
     }
 
     /**
@@ -315,9 +338,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
         Pool storage p = _poolStorage(pool);
 
-        emit DepositLimitUpdated(pool, p.depositLimit, newDepositLimit);
+        uint256 prevDepositLimit = p.depositLimit;
+        if (prevDepositLimit == newDepositLimit) {
+            return;
+        }
 
         p.depositLimit = newDepositLimit;
+
+        emit DepositLimitUpdated(pool, prevDepositLimit, newDepositLimit);
     }
 
     /**

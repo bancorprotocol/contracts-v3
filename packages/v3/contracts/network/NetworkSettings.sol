@@ -175,9 +175,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
-        emit PoolMintingLimitUpdated(pool, _poolMintingLimits[pool], amount);
+        uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
+        if (prevPoolMintingLimit == amount) {
+            return;
+        }
 
         _poolMintingLimits[pool] = amount;
+
+        emit PoolMintingLimitUpdated(pool, prevPoolMintingLimit, amount);
     }
 
     /**
@@ -213,9 +218,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         onlyOwner
         validAddress(address(newNetworkFeeWallet))
     {
-        emit NetworkFeeWalletUpdated(_networkFeeWallet, newNetworkFeeWallet);
+        ITokenHolder prevNetworkFeeWallet = _networkFeeWallet;
+        if (prevNetworkFeeWallet == newNetworkFeeWallet) {
+            return;
+        }
 
         _networkFeeWallet = newNetworkFeeWallet;
+
+        emit NetworkFeeWalletUpdated(prevNetworkFeeWallet, newNetworkFeeWallet);
     }
 
     /**
@@ -226,9 +236,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
-        emit NetworkFeePPMUpdated(_networkFeePPM, newNetworkFeePPM);
+        uint32 prevNetworkFeePPM = _networkFeePPM;
+        if (prevNetworkFeePPM == newNetworkFeePPM) {
+            return;
+        }
 
         _networkFeePPM = newNetworkFeePPM;
+
+        emit NetworkFeePPMUpdated(prevNetworkFeePPM, newNetworkFeePPM);
     }
 
     /**
@@ -246,9 +261,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyOwner validFee(newWithdrawalFeePPM) {
-        emit WithdrawalFeePPMUpdated(_withdrawalFeePPM, newWithdrawalFeePPM);
+        uint32 prevWithdrawalFeePPM = _withdrawalFeePPM;
+        if (prevWithdrawalFeePPM == newWithdrawalFeePPM) {
+            return;
+        }
 
         _withdrawalFeePPM = newWithdrawalFeePPM;
+
+        emit WithdrawalFeePPMUpdated(prevWithdrawalFeePPM, newWithdrawalFeePPM);
     }
 
     /**
@@ -266,9 +286,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * - the caller must be the owner of the contract
      */
     function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyOwner validFee(newFlashLoanFeePPM) {
-        emit FlashLoanFeePPMUpdated(_flashLoanFeePPM, newFlashLoanFeePPM);
+        uint32 prevFlashLoanFeePPM = _flashLoanFeePPM;
+        if (prevFlashLoanFeePPM == newFlashLoanFeePPM) {
+            return;
+        }
 
         _flashLoanFeePPM = newFlashLoanFeePPM;
+
+        emit FlashLoanFeePPMUpdated(prevFlashLoanFeePPM, newFlashLoanFeePPM);
     }
 
     /**
@@ -290,8 +315,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         onlyOwner
         validPortion(newAverageRateMaxDeviationPPM)
     {
-        emit AverageRateMaxDeviationPPMUpdated(_averageRateMaxDeviationPPM, newAverageRateMaxDeviationPPM);
+        uint32 prevAverageRateMaxDeviationPPM = _averageRateMaxDeviationPPM;
+        if (prevAverageRateMaxDeviationPPM == newAverageRateMaxDeviationPPM) {
+            return;
+        }
 
         _averageRateMaxDeviationPPM = newAverageRateMaxDeviationPPM;
+
+        emit AverageRateMaxDeviationPPMUpdated(prevAverageRateMaxDeviationPPM, newAverageRateMaxDeviationPPM);
     }
 }

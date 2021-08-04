@@ -179,6 +179,13 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('ERR_INVALID_FEE');
         });
 
+        it('should ignore updating to the same default trading fee', async () => {
+            await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
+
+            const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
+            await expect(res).not.to.emit(poolCollection, 'DefaultTradingFeePPMUpdated');
+        });
+
         it('should be to able to set and update the default trading fee', async () => {
             const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
             await expect(res)
@@ -325,6 +332,13 @@ describe('PoolCollection', () => {
                 );
             });
 
+            it('should ignore updating to the same initial rate', async () => {
+                await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
+
+                const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
+                await expect(res).not.to.emit(poolCollection, 'InitialRateUpdated');
+            });
+
             it('should allow setting and updating the initial rate', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { initialRate } = pool;
@@ -372,6 +386,13 @@ describe('PoolCollection', () => {
                 ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
             });
 
+            it('should ignore updating to the same trading fee', async () => {
+                await poolCollection.setTradingFeePPM(reserveToken.address, newTradingFee);
+
+                const res = await poolCollection.setTradingFeePPM(reserveToken.address, newTradingFee);
+                await expect(res).not.to.emit(poolCollection, 'TradingFeePPMUpdated');
+            });
+
             it('should allow setting and updating the trading fee', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { tradingFeePPM } = pool;
@@ -411,24 +432,27 @@ describe('PoolCollection', () => {
                 );
             });
 
+            it('should ignore updating to the same status', async () => {
+                await poolCollection.enableTrading(reserveToken.address, false);
+
+                const res = await poolCollection.enableTrading(reserveToken.address, false);
+                await expect(res).not.to.emit(poolCollection, 'TradingEnabled');
+            });
+
             it('should allow enabling and disabling trading', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { tradingEnabled } = pool;
                 expect(tradingEnabled).to.be.true;
 
                 const res = await poolCollection.enableTrading(reserveToken.address, false);
-                await expect(res)
-                    .to.emit(poolCollection, 'TradingEnabled')
-                    .withArgs(reserveToken.address, tradingEnabled, false);
+                await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
                 expect(tradingEnabled).to.be.false;
 
                 const res2 = await poolCollection.enableTrading(reserveToken.address, true);
-                await expect(res2)
-                    .to.emit(poolCollection, 'TradingEnabled')
-                    .withArgs(reserveToken.address, tradingEnabled, true);
+                await expect(res2).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, true);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
@@ -449,24 +473,27 @@ describe('PoolCollection', () => {
                 );
             });
 
+            it('should ignore updating to the same status', async () => {
+                await poolCollection.enableDepositing(reserveToken.address, false);
+
+                const res = await poolCollection.enableDepositing(reserveToken.address, false);
+                await expect(res).not.to.emit(poolCollection, 'DepositingEnabled');
+            });
+
             it('should allow enabling and disabling depositing', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { depositingEnabled } = pool;
                 expect(depositingEnabled).to.be.true;
 
                 const res = await poolCollection.enableDepositing(reserveToken.address, false);
-                await expect(res)
-                    .to.emit(poolCollection, 'DepositingEnabled')
-                    .withArgs(reserveToken.address, depositingEnabled, false);
+                await expect(res).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, false);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ depositingEnabled } = pool);
                 expect(depositingEnabled).to.be.false;
 
                 const res2 = await poolCollection.enableDepositing(reserveToken.address, true);
-                await expect(res2)
-                    .to.emit(poolCollection, 'DepositingEnabled')
-                    .withArgs(reserveToken.address, depositingEnabled, true);
+                await expect(res2).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ depositingEnabled } = pool);
@@ -487,6 +514,13 @@ describe('PoolCollection', () => {
                 await expect(
                     poolCollection.setDepositLimit(newReserveToken.address, newDepositLimit)
                 ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+            });
+
+            it('should ignore updating to the same deposit limit', async () => {
+                await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
+
+                const res = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
+                await expect(res).not.to.emit(poolCollection, 'DepositLimitUpdated');
             });
 
             it('should allow setting and updating the deposit limit', async () => {

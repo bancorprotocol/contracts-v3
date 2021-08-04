@@ -86,9 +86,11 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
      * @dev sets the new owner internally
      */
     function _setOwner(address ownerCandidate) private {
-        emit OwnerUpdate(_owner, ownerCandidate);
+        address prevOwner = _owner;
 
         _owner = ownerCandidate;
         _newOwner = address(0);
+
+        emit OwnerUpdate(prevOwner, ownerCandidate);
     }
 }

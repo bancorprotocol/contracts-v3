@@ -82,6 +82,13 @@ describe('PendingWithdrawals', () => {
             );
         });
 
+        it('should ignore updating to the same lock duration', async () => {
+            await pendingWithdrawals.setLockDuration(newLockDuration);
+
+            const res = await pendingWithdrawals.setLockDuration(newLockDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'LockDurationUpdated');
+        });
+
         it('should be to able to set and update the lock duration', async () => {
             const res = await pendingWithdrawals.setLockDuration(newLockDuration);
             await expect(res)
@@ -113,6 +120,13 @@ describe('PendingWithdrawals', () => {
             await expect(
                 pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should ignore updating to the same withdrawal window duration', async () => {
+            await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+
+            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated');
         });
 
         it('should be to able to set and update the withdrawal window duration', async () => {

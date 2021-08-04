@@ -261,11 +261,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(newExternalProtectionWallet))
         onlyOwner
     {
-        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newExternalProtectionWallet);
+        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
+        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
+            return;
+        }
 
         newExternalProtectionWallet.acceptOwnership();
 
         _externalProtectionWallet = newExternalProtectionWallet;
+
+        emit ExternalProtectionWalletUpdated(prevExternalProtectionWallet, newExternalProtectionWallet);
     }
 
     /**
@@ -428,9 +433,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      */
     function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
-        emit LatestPoolCollectionReplaced(poolType, _latestPoolCollections[poolType], poolCollection);
+        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
+        if (prevLatestPoolCollection == poolCollection) {
+            return;
+        }
 
         _latestPoolCollections[poolType] = poolCollection;
+
+        emit LatestPoolCollectionReplaced(poolType, prevLatestPoolCollection, poolCollection);
     }
 
     /**

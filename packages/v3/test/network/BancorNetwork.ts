@@ -75,6 +75,14 @@ describe('BancorNetwork', () => {
             await expect(network.setExternalProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
+        it('should ignore updates to the same external protection wallet', async () => {
+            await newExternalProtectionWallet.transferOwnership(network.address);
+            await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
+
+            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
+            await expect(res).not.to.emit(network, 'ExternalProtectionWalletUpdated');
+        });
+
         it('should be to able to set and update the external protection wallet', async () => {
             await newExternalProtectionWallet.transferOwnership(network.address);
 
@@ -328,7 +336,14 @@ describe('BancorNetwork', () => {
                 );
             });
 
-            it('should set the latest pool collections', async () => {
+            it('should ignore setting to the same latest pool collection', async () => {
+                await network.setLatestPoolCollection(newPoolCollection.address);
+
+                const res = await network.setLatestPoolCollection(newPoolCollection.address);
+                await expect(res).not.to.emit(network, 'LatestPoolCollectionReplaced');
+            });
+
+            it('should set the latest pool collection', async () => {
                 expect(await network.latestPoolCollection(poolType)).to.equal(poolCollection.address);
 
                 const res = await network.setLatestPoolCollection(newPoolCollection.address);
