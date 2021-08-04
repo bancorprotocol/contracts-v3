@@ -36,23 +36,22 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // solhint-disable var-name-mixedcase
 
-    // network token actions upon base token withdrawal
+    // arbitrage actions upon base token withdrawal
     enum Action {
-        none,
-        burn,
-        mint
+        noArbitrage,
+        burnNetworkTokens,
+        mintNetworkTokens
     }
 
     // base token withdrawal output amounts
     struct WithdrawalAmounts {
-        uint256 A; // base token amount to transfer to the user from the external protection wallet
-        uint256 B; // base token amount to transfer to the user
-        uint256 C; // network token amount to transfer to the user
-        uint256 D; // base token amount to remove from the pool
-        uint256 E; // base token amount to remove from the vault
-        uint256 F; // network token amount to remove from the pool
-        uint256 G; // network token amount to burn or mint in the pool
-        Action H; // network token action - burn or mint or neither
+        uint256 B; // base token amount to transfer from the vault to the user
+        uint256 C; // network token amount to mint directly for the user
+        uint256 D; // base token amount to deduct from the pool's trading-liquidity
+        uint256 E; // base token amount to transfer from the protection wallet to the user
+        uint256 F; // network token amount to deduct from the pool's trading-liquidity and burn in the vault
+        uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+        Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
     }
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
@@ -341,6 +340,35 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         p.depositLimit = newDepositLimit;
     }
 
+    function withdraw(
+        address provider,
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenExcessAmount,
+        address protectionWallet
+    ) internal returns (WithdrawalAmounts memory) {
+        Pool storage pool = _pools[baseToken];
+
+        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
+
+        WithdrawalAmounts memory amounts = withdrawalAmounts(
+            pool.networkTokenTradingLiquidity,
+            pool.baseTokenTradingLiquidity,
+            baseTokenExcessAmount,
+            pool.poolToken.totalSupply(),
+            pool.stakedBalance,
+            ERC20(address(baseToken)).balanceOf(protectionWallet),
+            pool.tradingFeePPM,
+            _settings.withdrawalFeePPM(),
+            basePoolTokenAmount
+        );
+
+        pool.baseTokenTradingLiquidity = uint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
+        pool.baseTokenTradingLiquidity = uint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
+
+        return amounts;
+    }
+
     /**
      * @dev returns all amounts related to base token withdrawal, where each amount
      * includes the withdrawal fee, which may need to be deducted (depending on usage)
@@ -353,17 +381,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * e = base token staked amount
      * w = base token protection wallet balance
      * m = trade fee in ppm units
+     * n = withdrawal fee in ppm units
      * x = base pool token withdrawal amount
      *
      * output:
-     * A = base token amount to transfer to the user from the protection wallet
-     * B = base token amount to transfer to the user
-     * C = network token amount to transfer to the user
-     * D = base token amount to remove from the pool
-     * E = base token amount to remove from the vault
-     * F = network token amount to remove from the pool
-     * G = network token amount to burn or mint in the pool (for arbitrage)
-     * H = network token action - burn or mint or neither (for arbitrage)
+     * B = base token amount to transfer from the vault to the user
+     * C = network token amount to mint directly for the user
+     * D = base token amount to deduct from the pool's trading-liquidity
+     * E = base token amount to transfer from the protection wallet to the user
+     * F = network token amount to deduct from the pool's trading-liquidity and burn in the vault
+     * G = network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+     * H = arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
     function withdrawalAmounts(
         uint256 a,
@@ -373,63 +401,65 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 e,
         uint256 w,
         uint256 m,
+        uint256 n,
         uint256 x
-    ) internal pure returns (WithdrawalAmounts memory) {
-        WithdrawalAmounts memory amounts;
-
+    ) internal pure returns (WithdrawalAmounts memory amounts) {
         uint256 bPc = b.add(c);
         uint256 eMx = e.mul(x);
         uint256 bPcMd = bPc.mul(d);
 
+        amounts.B = deductFee(1, eMx, d, n);
+        amounts.D = deductFee(b, eMx, bPcMd, n);
+        amounts.F = deductFee(a, eMx, bPcMd, 0);
+
         if (bPc >= e) {
-            // base token is not in deficit
-            uint256 f = MathEx.mulDivF(bPc - e, x, d); // TODO: we may need to take the withdrawal fee into account here
-
-            amounts.B = eMx / d; // [x <= d] --> [B <= e]
-            amounts.D = MathEx.mulDivF(b, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [D <= b]
-            amounts.E = MathEx.mulDivF(c, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [E <= c]
-            amounts.F = MathEx.mulDivF(a, eMx, bPcMd); // [e <= b+c] and [x <= d] --> [e*x <= (b+c)*d] --> [F <= a]
-
-            if (baseArbitrage(b - amounts.D, f, m) <= amounts.B) {
-                // the cost of the arbitrage method is not larger than the withdrawal fee
-                amounts.G = networkArbitrage(a - amounts.F, b - amounts.D, f, m);
-                amounts.H = Action.burn;
+            // the pool is not in a base-token deficit
+            uint256 f = deductFee(bPc - e, x, d, n);
+            amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+            if (amounts.G < uint256(-1)) {
+                amounts.H = Action.burnNetworkTokens;
             }
         } else {
-            // base token is in deficit
-            uint256 f = MathEx.mulDivF(e - bPc, x, d); // TODO: we may need to take the withdrawal fee into account here
-
-            if (f <= w) {
-                // the protection wallet holds a sufficient amount of base tokens
-                amounts.A = f;
-                amounts.B = MathEx.mulDivF(bPc, x, d); // [x <= d] --> [B <= b+c <= e]
-            } else {
-                // the protection wallet holds an insufficient amount of base tokens
-                amounts.A = w;
-                amounts.B = eMx.sub(w.mul(d)) / d; // [x <= d] --> [B <= e]
+            // the pool is in a base-token deficit
+            uint256 f = deductFee(e - bPc, x, d, n);
+            amounts.E = f < w ? f : w;
+            amounts.B = amounts.B.sub(amounts.E);
+            if (amounts.B <= bPc) {
+                amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+                if (amounts.G < uint256(-1)) {
+                    amounts.H = Action.mintNetworkTokens;
+                }
             }
-
-            amounts.D = MathEx.mulDivF(b, eMx, bPcMd); // [e*x <= (b+c)*d] --> [D <= b]
-            amounts.E = MathEx.mulDivF(c, eMx, bPcMd); // [e*x <= (b+c)*d] --> [E <= c]
-            amounts.F = MathEx.mulDivF(a, eMx, bPcMd); // [e*x <= (b+c)*d] --> [F <= a]
-
-            if (baseArbitrage(b - amounts.D, f, m) <= amounts.B && amounts.B <= bPc) {
-                // the cost of the arbitrage method is not larger than the withdrawal fee
-                amounts.G = networkArbitrage(a - amounts.F, b - amounts.D, f, m);
-                amounts.H = Action.mint;
-            } else {
-                // the withdrawal amount is larger than the total amount of base tokens in the vault
-                uint256 y = a.mul(e - bPc);
+            if (amounts.H == Action.noArbitrage) {
+                // the withdrawal amount is larger than the vault's balance
+                uint256 aMx = a.mul(x);
                 uint256 bMd = b.mul(d);
-                amounts.B = MathEx.mulDivF(bPc, x, d); // [x <= d] --> [B <= b+c < e]
-                amounts.C = MathEx.mulDivF(y, x, bMd); // [x <= d] --> [x <= b*d] --> [C <= a*(e-(b+c))]
-                amounts.D = MathEx.mulDivF(b, x, d); // [x <= d] --> [D <= b]
-                amounts.E = MathEx.mulDivF(c, x, d); // [x <= d] --> [E <= c]
-                amounts.F = MathEx.mulDivF(a, x, d); // [x <= d] --> [F <= a]
+                amounts.C = deductFee(bPc - e, aMx, bMd, n);
+                amounts.B = deductFee(bPc, x, d, n);
+                amounts.D = deductFee(b, x, d, n);
+                amounts.F = deductFee(a, x, d, 0);
             }
         }
+    }
 
-        return amounts;
+    function deductFee(uint256 x, uint256 y, uint256 z, uint256 fee) internal pure returns (uint256) {
+        return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - fee), z.mul(PPM_RESOLUTION));
+    }
+
+    function arbitrage(
+        uint256 a,
+        uint256 b,
+        uint256 d,
+        uint256 f,
+        uint256 m,
+        uint256 n,
+        uint256 eMx
+    ) internal pure returns (uint256) {
+        uint256 K = MathEx.mulDivF(eMx, n, d.mul(PPM_RESOLUTION));
+        if (baseArbitrage(b, f, m) < K) {
+            return networkArbitrage(a, b, f, m);
+        }
+        return uint256(-1);
     }
 
     /**
