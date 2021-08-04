@@ -47,9 +47,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     struct WithdrawalAmounts {
         uint256 B; // base token amount to transfer from the vault to the user
         uint256 C; // network token amount to mint directly for the user
-        uint256 D; // base token amount to deduct from the pool's trading-liquidity
+        uint256 D; // base token amount to deduct from the trading liquidity
         uint256 E; // base token amount to transfer from the protection wallet to the user
-        uint256 F; // network token amount to deduct from the pool's trading-liquidity and burn in the vault
+        uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
         uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
         Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
     }
@@ -374,8 +374,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * includes the withdrawal fee, which may need to be deducted (depending on usage)
      *
      * input:
-     * a = network token pool balance
-     * b = base token pool balance
+     * a = network token trading liquidity
+     * b = base token trading liquidity
      * c = base token excess amount
      * d = base pool token total supply
      * e = base token staked amount
@@ -387,9 +387,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * output:
      * B = base token amount to transfer from the vault to the user
      * C = network token amount to mint directly for the user
-     * D = base token amount to deduct from the pool's trading-liquidity
+     * D = base token amount to deduct from the trading liquidity
      * E = base token amount to transfer from the protection wallet to the user
-     * F = network token amount to deduct from the pool's trading-liquidity and burn in the vault
+     * F = network token amount to deduct from the trading liquidity and burn in the vault
      * G = network token amount to burn or mint in the pool, in order to create an arbitrage incentive
      * H = arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
@@ -479,13 +479,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * f(f - bm - 2fm) / (fm + b)
      */
     function baseArbitrage(
-        uint256 baseBalance,
-        uint256 baseAmount,
-        uint256 tradeFee
+        uint256 b,
+        uint256 f,
+        uint256 m
     ) internal pure returns (uint256) {
-        uint256 b = baseBalance;
-        uint256 f = baseAmount;
-        uint256 m = tradeFee;
         uint256 bm = b.mul(m);
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
@@ -507,15 +504,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * af(b(2 - m) + f) / (b(b + fm))
      */
     function networkArbitrage(
-        uint256 networkBalance,
-        uint256 baseBalance,
-        uint256 baseAmount,
-        uint256 tradeFee
+        uint256 a,
+        uint256 b,
+        uint256 f,
+        uint256 m
     ) internal pure returns (uint256) {
-        uint256 a = networkBalance;
-        uint256 b = baseBalance;
-        uint256 f = baseAmount;
-        uint256 m = tradeFee;
         uint256 af = a.mul(f);
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
