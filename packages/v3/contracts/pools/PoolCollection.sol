@@ -425,17 +425,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         uint256 eMx = e.mul(x);
-        uint256 bPcMd = bPc.mul(d);
 
         amounts.B = deductFee(1, eMx, d, n).sub(amounts.E);
-        amounts.D = deductFee(b, eMx, bPcMd, n);
-        amounts.F = deductFee(a, eMx, bPcMd, 0);
+        amounts.D = deductFee(b, eMx, d.mul(bPc), n);
+        amounts.F = deductFee(a, eMx, d.mul(bPc), 0);
 
         if (bPc >= e) {
             // the pool is not in a base-token deficit
             uint256 f = deductFee(bPc - e, x, d, n);
             amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
-            if (amounts.G < uint256(-1)) {
+            if (amounts.G > 0) {
                 amounts.H = Action.burnNetworkTokens;
             }
         } else {
@@ -443,7 +442,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             if (amounts.B <= bPc) {
                 uint256 f = deductFee(e - bPc, x, d, n);
                 amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
-                if (amounts.G < uint256(-1)) {
+                if (amounts.G > 0) {
                     amounts.H = Action.mintNetworkTokens;
                 }
             }
@@ -493,7 +492,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         if (baseArbitrage(b, f, m) < K) {
             return networkArbitrage(a, b, f, m);
         }
-        return uint256(-1);
+        return 0;
     }
 
     /**

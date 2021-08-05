@@ -8,6 +8,63 @@ import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constant
 import { createSystem } from 'test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 
+const withdrawalAmountsTest = (
+    as: string[],
+    bs: string[],
+    cs: string[],
+    ds: string[],
+    es: string[],
+    ws: string[],
+    ms: string[],
+    ns: string[],
+    xs: string[],
+    Bs: string[],
+    Cs: string[],
+    Ds: string[],
+    Es: string[],
+    Fs: string[],
+    Gs: string[],
+    Hs: string[]
+) => {
+    let poolCollection: TestPoolCollection;
+
+    before(async () => {
+        const { network } = await createSystem();
+        poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
+    });
+
+    let index = 0;
+    for (const a of as) {
+        for (const b of bs) {
+            for (const c of cs) {
+                for (const d of ds) {
+                    for (const e of es) {
+                        for (const w of ws) {
+                            for (const m of ms) {
+                                for (const n of ns) {
+                                    for (const x of xs) {
+                                        it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
+                                            const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
+                                            expect(actual.B.toString()).to.equal(Bs[index]);
+                                            expect(actual.C.toString()).to.equal(Cs[index]);
+                                            expect(actual.D.toString()).to.equal(Ds[index]);
+                                            expect(actual.E.toString()).to.equal(Es[index]);
+                                            expect(actual.F.toString()).to.equal(Fs[index]);
+                                            expect(actual.G.toString()).to.equal(Gs[index]);
+                                            expect(actual.H.toString()).to.equal(Hs[index]);
+                                            index++;
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
 const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
     const MAX_VAL = new Decimal(MAX_UINT256.toString());
     const PPMR = new Decimal(PPM_RESOLUTION.toString());
@@ -521,6 +578,27 @@ describe('PoolCollection', () => {
         const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
 
         testFormula(AMOUNTS, FEES);
+    });
+
+    describe.only('withdrawal sanity tests', () => {
+        withdrawalAmountsTest(
+            ['1000'],
+            ['450'],
+            ['450'],
+            ['1000'],
+            ['1000'],
+            ['0', '1000'],
+            ['2000'],
+            ['2500'],
+            ['100', '200'],
+            ['89', '179', '82', '165'],
+            ['22', '44', '18', '33'],
+            ['44', '89', '41', '82'],
+            ['0', '0', '9', '19'],
+            ['100', '200', '91', '184'],
+            ['0', '0', '0', '0'],
+            ['0', '0', '0', '0'],
+        );
     });
 });
 

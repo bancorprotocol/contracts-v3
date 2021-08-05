@@ -11,6 +11,20 @@ import { PoolCollection } from "../pools/PoolCollection.sol";
 contract TestPoolCollection is PoolCollection {
     constructor(IBancorNetwork initNetwork) PoolCollection(initNetwork) {}
 
+    function withdrawalAmountsTest(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 d,
+        uint256 e,
+        uint256 w,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) external pure returns (WithdrawalAmounts memory) {
+        return super.withdrawalAmounts(a, b, c, d, e, w, m, n, x);
+    }
+
     function baseArbitrageTest(
         uint256 b,
         uint256 f,
