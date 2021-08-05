@@ -8,24 +8,26 @@ import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constant
 import { createSystem } from 'test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 
-const withdrawalAmountsTest = (
-    as: string[],
-    bs: string[],
-    cs: string[],
-    ds: string[],
-    es: string[],
-    ws: string[],
-    ms: string[],
-    ns: string[],
-    xs: string[],
-    Bs: string[],
-    Cs: string[],
-    Ds: string[],
-    Es: string[],
-    Fs: string[],
-    Gs: string[],
-    Hs: string[]
-) => {
+interface WithdrawalAmountData {
+    a: number | string;
+    b: number | string;
+    c: number | string;
+    d: number | string;
+    e: number | string;
+    w: number | string;
+    m: number | string;
+    n: number | string;
+    x: number | string;
+    B: number | string;
+    C: number | string;
+    D: number | string;
+    E: number | string;
+    F: number | string;
+    G: number | string;
+    H: number | string;
+}
+
+const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     let poolCollection: TestPoolCollection;
 
     before(async () => {
@@ -33,35 +35,17 @@ const withdrawalAmountsTest = (
         poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
     });
 
-    let index = 0;
-    for (const a of as) {
-        for (const b of bs) {
-            for (const c of cs) {
-                for (const d of ds) {
-                    for (const e of es) {
-                        for (const w of ws) {
-                            for (const m of ms) {
-                                for (const n of ns) {
-                                    for (const x of xs) {
-                                        it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
-                                            const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-                                            expect(actual.B.toString()).to.equal(Bs[index]);
-                                            expect(actual.C.toString()).to.equal(Cs[index]);
-                                            expect(actual.D.toString()).to.equal(Ds[index]);
-                                            expect(actual.E.toString()).to.equal(Es[index]);
-                                            expect(actual.F.toString()).to.equal(Fs[index]);
-                                            expect(actual.G.toString()).to.equal(Gs[index]);
-                                            expect(actual.H.toString()).to.equal(Hs[index]);
-                                            index++;
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
+        it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
+            const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
+            expect(actual.B.toString()).to.equal(B.toString());
+            expect(actual.C.toString()).to.equal(C.toString());
+            expect(actual.D.toString()).to.equal(D.toString());
+            expect(actual.E.toString()).to.equal(E.toString());
+            expect(actual.F.toString()).to.equal(F.toString());
+            expect(actual.G.toString()).to.equal(G.toString());
+            expect(actual.H.toString()).to.equal(H.toString());
+        });
     }
 };
 
@@ -581,24 +565,14 @@ describe('PoolCollection', () => {
     });
 
     describe('withdrawal sanity tests', () => {
-        withdrawalAmountsTest(
-            ['1000'],
-            ['450'],
-            ['450'],
-            ['1000'],
-            ['1000'],
-            ['0', '1000'],
-            ['2000'],
-            ['2500'],
-            ['100', '200'],
-            ['89', '179', '82', '165'],
-            ['22', '44', '18', '33'],
-            ['44', '89', '41', '82'],
-            ['0', '0', '9', '19'],
-            ['100', '200', '91', '184'],
-            ['0', '0', '0', '0'],
-            ['0', '0', '0', '0'],
-        );
+        const TABLE: WithdrawalAmountData[] = [
+            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  89, C: 22, D: 44, E:  0, F: 100, G: 0, H: 0 },
+            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 179, C: 44, D: 89, E:  0, F: 200, G: 0, H: 0 },
+            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  82, C: 18, D: 41, E:  9, F:  91, G: 0, H: 0 },
+            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 165, C: 33, D: 82, E: 19, F: 184, G: 0, H: 0 },
+        ];
+
+        withdrawalAmountsTest(TABLE);
     });
 });
 
