@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import Contracts from 'components/Contracts';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { TestERC20Token, TestSafeERC20Ex } from 'typechain';
+import { TestSafeERC20Ex, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 

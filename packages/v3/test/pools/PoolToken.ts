@@ -1,26 +1,24 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { signTypedMessage, TypedDataUtils } from 'eth-sig-util';
-import { fromRpcSig } from 'ethereumjs-util';
-import Wallet from 'ethereumjs-wallet';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
-import { MAX_UINT256, ZERO_ADDRESS } from 'test/helpers/Constants';
-import { duration, latest } from 'test/helpers/Time';
+import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
+import { domainSeparator, permitSignature } from 'test/helpers/Permit';
+import { latest, duration } from 'test/helpers/Time';
 import { PoolToken, TestERC20Token } from 'typechain';
 
-let poolToken: PoolToken;
-let reserveToken: TestERC20Token;
-
-let owner: SignerWithAddress;
-let spender: SignerWithAddress;
-let nonOwner: SignerWithAddress;
-
-const NAME = 'Pool Token';
-const SYMBOL = 'POOL';
-
 describe('PoolToken', () => {
+    const NAME = 'Pool Token';
+    const SYMBOL = 'POOL';
+
+    let poolToken: PoolToken;
+    let reserveToken: TestERC20Token;
+
+    let owner: SignerWithAddress;
+    let spender: SignerWithAddress;
+    let nonOwner: SignerWithAddress;
+
     before(async () => {
         [owner, nonOwner, spender] = await ethers.getSigners();
     });
@@ -70,83 +68,32 @@ describe('PoolToken', () => {
     });
 
     describe('permitting', () => {
-        const VERSION = '1';
-        const HARDHAT_CHAIN_ID = 31337;
-        const PERMIT_TYPE: 'EIP712Domain' | 'Permit' = 'Permit';
-
-        const EIP712_DOMAIN = [
-            { name: 'name', type: 'string' },
-            { name: 'version', type: 'string' },
-            { name: 'chainId', type: 'uint256' },
-            { name: 'verifyingContract', type: 'address' }
-        ];
-
-        const PERMIT = [
-            { name: 'owner', type: 'address' },
-            { name: 'spender', type: 'address' },
-            { name: 'value', type: 'uint256' },
-            { name: 'nonce', type: 'uint256' },
-            { name: 'deadline', type: 'uint256' }
-        ];
-
-        const wallet = Wallet.generate();
-        const sender = wallet.getAddressString();
-
-        const domainSeparator = (name: string, version: string, chainId: number, verifyingContract: string) => {
-            return (
-                '0x' +
-                TypedDataUtils.hashStruct(
-                    'EIP712Domain',
-                    { name, version, chainId, verifyingContract },
-                    { EIP712Domain: EIP712_DOMAIN }
-                ).toString('hex')
-            );
-        };
-
-        const buildData = (
-            name: string,
-            version: string,
-            chainId: number,
-            verifyingContract: string,
-            owner: string,
-            spender: string,
-            amount: BigNumberish,
-            nonce: BigNumberish,
-            deadline: BigNumberish = MAX_UINT256.toString()
-        ) => ({
-            primaryType: PERMIT_TYPE,
-            types: { EIP712Domain: EIP712_DOMAIN, Permit: PERMIT },
-            domain: { name, version, chainId, verifyingContract },
-            message: { owner, spender, value: amount, nonce, deadline }
-        });
+        const wallet = Wallet.createRandom();
+        let sender: string;
 
         beforeEach(async () => {
+            sender = await wallet.getAddress();
+
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
 
             await poolToken.mint(sender, BigNumber.from(10000));
         });
 
         it('should have the correct domain separator', async () => {
-            expect(await poolToken.DOMAIN_SEPARATOR()).to.equal(
-                await domainSeparator(NAME, VERSION, HARDHAT_CHAIN_ID, poolToken.address)
-            );
+            expect(await poolToken.DOMAIN_SEPARATOR()).to.equal(await domainSeparator(NAME, poolToken.address));
         });
 
-        it('should permit', async function () {
+        it('should permit', async () => {
             const amount = BigNumber.from(1000);
-
-            const data = buildData(
+            const { v, r, s } = await permitSignature(
+                wallet,
                 NAME,
-                VERSION,
-                HARDHAT_CHAIN_ID,
                 poolToken.address,
-                sender,
                 spender.address,
-                amount.toNumber(),
-                0
+                amount,
+                BigNumber.from(0),
+                MAX_UINT256
             );
-            const signature = signTypedMessage(wallet.getPrivateKey(), { data });
-            const { v, r, s } = fromRpcSig(signature);
 
             await poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s);
 
@@ -154,21 +101,17 @@ describe('PoolToken', () => {
             expect(await poolToken.allowance(sender, spender.address)).to.equal(amount);
         });
 
-        it('should reject a reused signature', async function () {
+        it('should reject a reused signature', async () => {
             const amount = BigNumber.from(100);
-
-            const data = buildData(
+            const { v, r, s } = await permitSignature(
+                wallet,
                 NAME,
-                VERSION,
-                HARDHAT_CHAIN_ID,
                 poolToken.address,
-                sender,
                 spender.address,
-                amount.toNumber(),
-                0
+                amount,
+                BigNumber.from(0),
+                MAX_UINT256
             );
-            const signature = signTypedMessage(wallet.getPrivateKey(), { data });
-            const { v, r, s } = fromRpcSig(signature);
 
             await poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s);
 
@@ -177,45 +120,36 @@ describe('PoolToken', () => {
             );
         });
 
-        it('should reject an invalid signature', async function () {
+        it('should reject an invalid signature', async () => {
             const amount = BigNumber.from(222);
-
-            const otherWallet = Wallet.generate();
-            const data = buildData(
+            const otherWallet = Wallet.createRandom();
+            const { v, r, s } = await permitSignature(
+                otherWallet,
                 NAME,
-                VERSION,
-                HARDHAT_CHAIN_ID,
                 poolToken.address,
-                sender,
                 spender.address,
-                amount.toNumber(),
-                0
+                amount,
+                BigNumber.from(0),
+                MAX_UINT256
             );
-            const signature = signTypedMessage(otherWallet.getPrivateKey(), { data });
-            const { v, r, s } = fromRpcSig(signature);
 
             await expect(poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s)).to.be.revertedWith(
                 'ERC20Permit: invalid signature'
             );
         });
 
-        it('should reject an expired permit', async function () {
+        it('should reject an expired permit', async () => {
             const amount = BigNumber.from(500);
             const deadline = (await latest()).sub(duration.weeks(1));
-
-            const data = buildData(
+            const { v, r, s } = await permitSignature(
+                wallet,
                 NAME,
-                VERSION,
-                HARDHAT_CHAIN_ID,
                 poolToken.address,
-                sender,
                 spender.address,
-                amount.toNumber(),
-                0,
-                deadline.toNumber()
+                amount,
+                BigNumber.from(0),
+                deadline
             );
-            const signature = signTypedMessage(wallet.getPrivateKey(), { data });
-            const { v, r, s } = fromRpcSig(signature);
 
             await expect(poolToken.permit(sender, spender.address, amount, deadline, v, r, s)).to.be.revertedWith(
                 'ERC20Permit: expired deadline'

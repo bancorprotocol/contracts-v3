@@ -1,16 +1,13 @@
-import { expect } from 'chai';
-import { ethers } from 'hardhat';
-import { BigNumber } from 'ethers';
-
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-
+import { expect } from 'chai';
 import Contracts from 'components/Contracts';
-import { TestERC20Token, TokenHolderUpgradeable } from 'typechain';
-
+import { BigNumber } from 'ethers';
+import { ethers } from 'hardhat';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
-import { getBalance, getBalances, TokenWithAddress } from 'test/helpers/Utils';
-import { shouldHaveGap } from 'test/helpers/Proxy';
 import { createTokenHolder } from 'test/helpers/Factory';
+import { shouldHaveGap } from 'test/helpers/Proxy';
+import { getBalance, getBalances, TokenWithAddress } from 'test/helpers/Utils';
+import { TestERC20Token, TokenHolderUpgradeable } from 'typechain';
 
 let holder: TokenHolderUpgradeable;
 let token1: TestERC20Token;

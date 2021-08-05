@@ -1,12 +1,10 @@
 import './migration';
 import { log } from './migration/engine/logger/logger';
-import { customChai } from './test/matchers';
+import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
-import chai from 'chai';
-import { BigNumber } from 'ethers';
 import fs from 'fs';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
@@ -17,8 +15,6 @@ import { HardhatUserConfig } from 'hardhat/config';
 import path from 'path';
 import 'solidity-coverage';
 import 'tsconfig-paths/register';
-
-chai.use(customChai);
 
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
@@ -75,7 +71,8 @@ export const FORK_CONFIG = (() => {
 })();
 
 const hardhatDefaultConfig = {
-    gasPrice: 20000000000,
+    hardfork: 'london',
+    gasPrice: 'auto',
     gas: 9500000,
     accounts: {
         count: 10,
@@ -90,6 +87,8 @@ const hardhatForkedConfig = FORK_CONFIG
           }
       }
     : undefined;
+
+const ci = loadENV<boolean>('CI');
 
 const config: HardhatUserConfig = {
     networks: {
@@ -150,18 +149,10 @@ const config: HardhatUserConfig = {
     mocha: {
         timeout: 600000,
         color: true,
-        bail: loadENV('BAIL')
+        bail: loadENV('BAIL'),
+        grep: ci ? '' : '@stress',
+        invert: ci ? false : true
     }
 };
 
 export default config;
-
-declare module 'ethers' {
-    class BigNumber {
-        static min(a: any, b: any): boolean;
-        static max(a: any, b: any): boolean;
-    }
-}
-
-BigNumber.min = (a: any, b: any) => (BigNumber.from(a).gt(b) ? b : a);
-BigNumber.max = (a: any, b: any) => (BigNumber.from(a).gt(b) ? a : b);

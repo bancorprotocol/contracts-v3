@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../utility/Time.sol";
+import { Time } from "../utility/Time.sol";
 
 contract TestTime is Time {
-    uint256 private _currentTime = 1;
+    uint32 private _currentTime = 1;
 
-    function _time() internal view virtual override returns (uint256) {
+    function _time() internal view virtual override returns (uint32) {
         return _currentTime;
     }
 
-    function setTime(uint256 newCurrentTime) public {
+    function setTime(uint32 newCurrentTime) public {
         _currentTime = newCurrentTime;
     }
 
-    function currentTime() external view returns (uint256) {
+    function currentTime() external view returns (uint32) {
         return _currentTime;
     }
 }

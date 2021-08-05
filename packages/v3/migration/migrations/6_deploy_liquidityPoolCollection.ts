@@ -3,23 +3,23 @@ import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
-    LiquidityPoolCollection: deployedContract;
+    poolCollection: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
-        const liquidityPoolCollection = await deploy(contracts.LiquidityPoolCollection, initialState.BancorNetwork);
+        const poolCollection = await deploy(contracts.TestPoolCollection, initialState.bancorNetwork);
         return {
             ...initialState,
 
-            LiquidityPoolCollection: liquidityPoolCollection.address
+            poolCollection: poolCollection.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const liquidityPoolCollection = await contracts.LiquidityPoolCollection.attach(state.LiquidityPoolCollection);
+        const poolCollection = await contracts.PoolCollection.attach(state.poolCollection);
 
-        if ((await liquidityPoolCollection.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+        if ((await poolCollection.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     },
 
     down: async (

@@ -1,20 +1,31 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
-import "../utility/OwnedUpgradeable.sol";
-import "../utility/Upgradeable.sol";
-import "../utility/Utils.sol";
+import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 
-import "./interfaces/IBancorNetwork.sol";
+import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+
+import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 
 /**
  * @dev Bancor Network contract
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+
+    // the address of the network token
+    IERC20 private immutable _networkToken;
 
     // the network settings contract
     INetworkSettings private immutable _settings;
@@ -25,17 +36,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the address of the external protection wallet
     ITokenHolder private _externalProtectionWallet;
 
-    // the set of all valid liquidity pool collections
+    // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
 
-    // a mapping between the last collection that was added to the liquidity pool collections set and its type
-    mapping(uint16 => ILiquidityPoolCollection) private _latestPoolCollections;
+    // a mapping between the last pool collection that was added to the pool collections set and its type
+    mapping(uint16 => IPoolCollection) private _latestPoolCollections;
 
-    // the set of all liquidity pools
+    // the set of all pools
     EnumerableSetUpgradeable.AddressSet private _liquidityPools;
 
-    // a mapping between pools and their respective liquidity pool collections
-    mapping(IReserveToken => ILiquidityPoolCollection) private _collectionByPool;
+    // a mapping between pools and their respective pool collections
+    mapping(IReserveToken => IPoolCollection) private _collectionByPool;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 7] private __gap;
@@ -46,27 +57,37 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     event ExternalProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
 
     /**
-     * @dev triggered when a new liquidity pool collection is added
+     * @dev triggered when a new pool collection is added
      */
-    event PoolCollectionAdded(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolCollectionAdded(uint16 indexed poolType, IPoolCollection indexed poolCollection);
 
     /**
-     * @dev triggered when an existing liquidity pool collection is removed
+     * @dev triggered when an existing pool collection is removed
      */
-    event PoolCollectionRemoved(ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolCollectionRemoved(uint16 indexed poolType, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when the latest pool collection, for a specific type, is replaced
+     */
+    event LatestPoolCollectionReplaced(
+        uint16 indexed poolType,
+        IPoolCollection indexed prevPoolCollection,
+        IPoolCollection indexed newPoolCollection
+    );
 
     /**
      * @dev triggered when a new pool is added
      */
-    event PoolAdded(IReserveToken indexed pool, ILiquidityPoolCollection indexed collection, uint16 indexed poolType);
+    event PoolAdded(uint16 indexed poolType, IReserveToken indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when an existing pool is upgraded
      */
     event PoolUpgraded(
+        uint16 indexed poolType,
         IReserveToken indexed pool,
-        ILiquidityPoolCollection prevCollection,
-        ILiquidityPoolCollection newCollection,
+        IPoolCollection prevPoolCollection,
+        IPoolCollection newPoolCollection,
         uint16 prevVersion,
         uint16 newVersion
     );
@@ -78,7 +99,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
-        ILiquidityPoolCollection collection,
+        IPoolCollection poolCollection,
         uint256 depositAmount,
         uint256 poolTokenAmount
     );
@@ -90,7 +111,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
-        ILiquidityPoolCollection collection,
+        IPoolCollection poolCollection,
         uint256 withdrawAmount,
         uint256 poolTokenAmount,
         uint256 baseTokenAmount,
@@ -157,7 +178,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(INetworkSettings initSettings) validAddress(address(initSettings)) {
+    constructor(IERC20 initNetworkToken, INetworkSettings initSettings)
+        validAddress(address(initNetworkToken))
+        validAddress(address(initSettings))
+    {
+        _networkToken = initNetworkToken;
         _settings = initSettings;
     }
 
@@ -199,6 +224,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
+    function networkToken() external view override returns (IERC20) {
+        return _networkToken;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
@@ -229,11 +261,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(newExternalProtectionWallet))
         onlyOwner
     {
-        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newExternalProtectionWallet);
+        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
+        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
+            return;
+        }
 
         newExternalProtectionWallet.acceptOwnership();
 
         _externalProtectionWallet = newExternalProtectionWallet;
+
+        emit ExternalProtectionWalletUpdated(prevExternalProtectionWallet, newExternalProtectionWallet);
     }
 
     /**
@@ -249,13 +286,83 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
+     * @dev adds new pool collection to the network
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function addPoolCollection(IPoolCollection poolCollection)
+        external
+        validAddress(address(poolCollection))
+        nonReentrant
+        onlyOwner
+    {
+        require(_poolCollections.add(address(poolCollection)), "ERR_COLLECTION_ALREADY_EXISTS");
+
+        uint16 poolType = poolCollection.poolType();
+        _setLatestPoolCollection(poolType, poolCollection);
+
+        emit PoolCollectionAdded(poolType, poolCollection);
+    }
+
+    /**
+     * @dev removes an existing pool collection from the pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function removePoolCollection(IPoolCollection poolCollection, IPoolCollection newLatestPoolCollection)
+        external
+        onlyOwner
+        nonReentrant
+    {
+        // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
+        _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
+
+        // verify that no pools are associated with the specified pool collection
+        _verifyEmptyPoolCollection(poolCollection);
+
+        require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
+
+        uint16 poolType = poolCollection.poolType();
+        if (address(newLatestPoolCollection) != address(0)) {
+            uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
+            require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
+        }
+
+        _setLatestPoolCollection(poolType, newLatestPoolCollection);
+
+        emit PoolCollectionRemoved(poolType, poolCollection);
+    }
+
+    /**
+     * @dev sets the new latest pool collection for the given type
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function setLatestPoolCollection(IPoolCollection poolCollection)
+        external
+        nonReentrant
+        validAddress(address(poolCollection))
+        onlyOwner
+    {
+        _verifyLatestPoolCollectionCandidate(poolCollection);
+
+        _setLatestPoolCollection(poolCollection.poolType(), poolCollection);
+    }
+
+    /**
      * @inheritdoc IBancorNetwork
      */
-    function poolCollections() external view override returns (ILiquidityPoolCollection[] memory) {
+    function poolCollections() external view override returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
-        ILiquidityPoolCollection[] memory list = new ILiquidityPoolCollection[](length);
+        IPoolCollection[] memory list = new IPoolCollection[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ILiquidityPoolCollection(_poolCollections.at(i));
+            list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
     }
@@ -263,7 +370,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function latestPoolCollection(uint16 poolType) external view override returns (ILiquidityPoolCollection) {
+    function latestPoolCollection(uint16 poolType) external view override returns (IPoolCollection) {
         return _latestPoolCollections[poolType];
     }
 
@@ -282,7 +389,80 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function collectionByPool(IReserveToken pool) external view override returns (ILiquidityPoolCollection) {
+    function collectionByPool(IReserveToken pool) external view override returns (IPoolCollection) {
         return _collectionByPool[pool];
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function isPoolValid(IReserveToken pool) external view override returns (bool) {
+        return address(pool) == address(_networkToken) || _liquidityPools.contains(address(pool));
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function createPool(uint16 poolType, IReserveToken reserveToken)
+        external
+        override
+        nonReentrant
+        validAddress(address(reserveToken))
+    {
+        require(_liquidityPools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
+
+        // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
+        // pool
+        IPoolCollection poolCollection = _latestPoolCollections[poolType];
+        require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TYPE");
+
+        // this is where the magic happens...
+        poolCollection.createPool(reserveToken);
+
+        // add the pool to the reverse pool collection lookup
+        _collectionByPool[reserveToken] = poolCollection;
+
+        emit PoolAdded(poolType, reserveToken, poolCollection);
+    }
+
+    /**
+     * @dev sets the new latest pool collection for the given type
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
+        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
+        if (prevLatestPoolCollection == poolCollection) {
+            return;
+        }
+
+        _latestPoolCollections[poolType] = poolCollection;
+
+        emit LatestPoolCollectionReplaced(poolType, prevLatestPoolCollection, poolCollection);
+    }
+
+    /**
+     * @dev verifies that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
+     */
+    function _verifyLatestPoolCollectionCandidate(IPoolCollection poolCollection) private view {
+        require(
+            address(poolCollection) == address(0) || _poolCollections.contains(address(poolCollection)),
+            "ERR_COLLECTION_DOES_NOT_EXIST"
+        );
+    }
+
+    /**
+     * @dev verifies that no pools are associated with the specified pool collection
+     */
+    function _verifyEmptyPoolCollection(IPoolCollection poolCollection) private view {
+        uint256 length = _liquidityPools.length();
+        for (uint256 i = 0; i < length; i++) {
+            require(
+                _collectionByPool[IReserveToken(_liquidityPools.at(i))] != poolCollection,
+                "ERR_COLLECTION_IS_NOT_EMPTY"
+            );
+        }
     }
 }

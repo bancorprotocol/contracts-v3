@@ -3,10 +3,10 @@ import { expect } from 'chai';
 import Contracts from 'components/Contracts';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { PPM_RESOLUTION, ZERO_ADDRESS } from 'test/helpers/Constants';
-import { createSystem, createTokenHolder } from 'test/helpers/Factory';
+import { ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
+import { createTokenHolder, createSystem } from 'test/helpers/Factory';
 import { shouldHaveGap } from 'test/helpers/Proxy';
-import { NetworkSettings, TestERC20Token, TokenHolderUpgradeable } from 'typechain';
+import { NetworkSettings, TokenHolderUpgradeable, TestERC20Token } from 'typechain';
 
 let networkFeeWallet: TokenHolderUpgradeable;
 
@@ -147,6 +147,13 @@ describe('NetworkSettings', () => {
             );
         });
 
+        it('should ignore setting to the same pool minting limit', async () => {
+            await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
+
+            const res = await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
+            await expect(res).not.to.emit(networkSettings, 'PoolMintingLimitUpdated');
+        });
+
         it('should be to able to set and update pool minting limit of a token', async () => {
             expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(BigNumber.from(0));
 
@@ -207,6 +214,17 @@ describe('NetworkSettings', () => {
             );
         });
 
+        it('should ignore updating to the same network wallet params', async () => {
+            await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
+
+            const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
+            await expect(res).not.to.emit(networkSettings, 'NetworkFeeWalletUpdated');
+
+            await networkSettings.setNetworkFeePPM(newNetworkFee);
+            const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
+            await expect(res2).not.to.emit(networkSettings, 'NetworkFeePPMUpdated');
+        });
+
         it('should be to able to set and update network wallet params', async () => {
             const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
             await expect(res)
@@ -260,6 +278,13 @@ describe('NetworkSettings', () => {
             );
         });
 
+        it('should ignore updating to the same withdrawal fee', async () => {
+            await networkSettings.setWithdrawalFeePPM(newWithdrawalFee);
+
+            const res = await networkSettings.setWithdrawalFeePPM(newWithdrawalFee);
+            await expect(res).not.to.emit(networkSettings, 'WithdrawalFeePPMUpdated');
+        });
+
         it('should be to able to set and update the withdrawal fee', async () => {
             const res = await networkSettings.setWithdrawalFeePPM(newWithdrawalFee);
             await expect(res)
@@ -297,6 +322,13 @@ describe('NetworkSettings', () => {
             await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
                 'ERR_INVALID_FEE'
             );
+        });
+
+        it('should ignore updating to the same flash-loan fee', async () => {
+            await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
+
+            const res = await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
+            await expect(res).not.to.emit(networkSettings, 'FlashLoanFeePPMUpdated');
         });
 
         it('should be to able to set and update the flash-loan fee', async () => {
@@ -340,6 +372,13 @@ describe('NetworkSettings', () => {
             await expect(
                 networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION.add(BigNumber.from(1)))
             ).to.be.revertedWith('ERR_INVALID_PORTION');
+        });
+
+        it('should ignore updating to the same maximum deviation', async () => {
+            await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
+
+            const res = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
+            await expect(res).not.to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated');
         });
 
         it('should be to able to set and update the maximum deviation', async () => {

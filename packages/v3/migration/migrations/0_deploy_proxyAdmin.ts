@@ -7,7 +7,7 @@ export type InitialState = {
 };
 
 export type NextState = InitialState & {
-    ProxyAdmin: deployedContract;
+    proxyAdmin: deployedContract;
 };
 
 const migration: Migration = {
@@ -17,12 +17,12 @@ const migration: Migration = {
         return {
             ...initialState,
 
-            ProxyAdmin: proxyAdmin.address
+            proxyAdmin: proxyAdmin.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const proxyAdmin = await contracts.ProxyAdmin.attach(state.ProxyAdmin);
+        const proxyAdmin = await contracts.ProxyAdmin.attach(state.proxyAdmin);
 
         if ((await proxyAdmin.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     },

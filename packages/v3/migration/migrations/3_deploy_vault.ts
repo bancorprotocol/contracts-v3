@@ -3,24 +3,24 @@ import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
-    Vault: deployedContract;
+    vault: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
-        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
+        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
         const bancorVault = await deployProxy(proxyAdmin, contracts.BancorVault, [], initialState.BNT.token);
 
         return {
             ...initialState,
 
-            Vault: bancorVault.address
+            vault: bancorVault.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const bancorVault = await contracts.BancorVault.attach(state.Vault);
+        const bancorVault = await contracts.BancorVault.attach(state.vault);
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
             throw new OwnerNotSetOrCorrect();

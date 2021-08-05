@@ -3,29 +3,29 @@ import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
 
 export type NextState = InitialState & {
-    PendingWithdrawals: deployedContract;
+    pendingWithdrawals: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
-        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
+        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
         const pendingWithdrawals = await deployProxy(
             proxyAdmin,
-            contracts.PendingWithdrawals,
+            contracts.TestPendingWithdrawals,
             [],
-            initialState.NetworkSettings,
-            initialState.NetworkTokenPool
+            initialState.bancorNetwork,
+            initialState.networkTokenPool
         );
         return {
             ...initialState,
 
-            PendingWithdrawals: pendingWithdrawals.address
+            pendingWithdrawals: pendingWithdrawals.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.PendingWithdrawals);
+        const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals);
 
         if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     },

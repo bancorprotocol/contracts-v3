@@ -1,26 +1,43 @@
 import { NextState as InitialState } from './3_deploy_vault';
-import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
 import { deployedContract, Migration } from 'migration/engine/types';
+import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from 'test/helpers/Constants';
 
 export type NextState = InitialState & {
-    NetworkTokenPool: deployedContract;
+    networkTokenPool: deployedContract;
+    networkTokenPoolToken: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
-        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.ProxyAdmin);
+        const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
+
+        const networkTokenPoolToken = await contracts.PoolToken.deploy(
+            NETWORK_TOKEN_POOL_TOKEN_NAME,
+            NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
+            initialState.BNT.token
+        );
 
         const networkTokenPool = await deployProxy(
             proxyAdmin,
-            contracts.NetworkTokenPool,
-            [],
-            initialState.NetworkSettings,
-            initialState.Vault
+            contracts.TestNetworkTokenPool,
+            'skipInit',
+            initialState.networkSettings,
+            initialState.vault,
+            networkTokenPoolToken.address
         );
+
+        await execute(
+            'Transfer token ownership to NetworkTokenPool',
+            networkTokenPoolToken.transferOwnership,
+            networkTokenPool.address
+        );
+        await execute('Initialize NetworkTokenPool', networkTokenPool.initialize);
+
         return {
             ...initialState,
 
-            NetworkTokenPool: networkTokenPool.address
+            networkTokenPool: networkTokenPool.address,
+            networkTokenPoolToken: networkTokenPoolToken.address
         };
     },
 
