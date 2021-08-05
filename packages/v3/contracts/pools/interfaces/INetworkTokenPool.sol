@@ -38,4 +38,8 @@ interface INetworkTokenPool is IUpgradeable {
      * @dev returns the total minted amount for a given pool
      */
     function mintedAmounts(IReserveToken pool) external view returns (uint256);
+
+    function requestLiquidity(bytes32 contextId, IReserveToken pool, uint256 amount) external;
+
+    function renounceLiquidity(bytes32 contextId, IReserveToken pool, uint256 amount) external;
 }

@@ -20,6 +20,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 
@@ -341,11 +342,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     function withdraw(
+        bytes32 contextId,
         address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenExcessAmount,
-        address protectionWallet
+        address protectionWallet,
+        INetworkTokenPool networkTokenPool
     ) internal returns (WithdrawalAmounts memory) {
         Pool storage pool = _pools[baseToken];
 
@@ -365,6 +368,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         pool.baseTokenTradingLiquidity = uint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
         pool.baseTokenTradingLiquidity = uint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
+
+        if (amounts.G > 0) {
+            if (amounts.H == Action.mintNetworkTokens) {
+                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
+            }
+            else if (amounts.H == Action.burnNetworkTokens) {
+                networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
+            }
+        }
 
         return amounts;
     }
