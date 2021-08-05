@@ -580,7 +580,7 @@ describe('PoolCollection', () => {
         testFormula(AMOUNTS, FEES);
     });
 
-    describe.only('withdrawal sanity tests', () => {
+    describe('withdrawal sanity tests', () => {
         withdrawalAmountsTest(
             ['1000'],
             ['450'],
