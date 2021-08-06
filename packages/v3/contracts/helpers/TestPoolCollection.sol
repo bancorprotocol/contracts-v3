@@ -25,23 +25,6 @@ contract TestPoolCollection is PoolCollection {
         return super.withdrawalAmounts(a, b, c, d, e, w, m, n, x);
     }
 
-    function baseArbitrageTest(
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) external pure returns (uint256) {
-        return super.baseArbitrage(b, f, m);
-    }
-
-    function networkArbitrageTest(
-        uint256 a,
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) external pure returns (uint256) {
-        return super.networkArbitrage(a, b, f, m);
-    }
-
     function mint(
         address recipient,
         IPoolToken poolToken,

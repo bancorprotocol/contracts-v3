@@ -426,22 +426,22 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         uint256 eMx = e.mul(x);
 
-        amounts.B = deductFee(1, eMx, d, n).sub(amounts.E);
+        amounts.B = deductFee(1, eMx, d, n);
         amounts.D = deductFee(b, eMx, d.mul(bPc), n);
         amounts.F = deductFee(a, eMx, d.mul(bPc), 0);
 
         if (bPc >= e) {
             // the pool is not in a base-token deficit
             uint256 f = deductFee(bPc - e, x, d, n);
-            amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+            amounts.G = posArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
             if (amounts.G > 0) {
                 amounts.H = Action.burnNetworkTokens;
             }
         } else {
             // the pool is in a base-token deficit
-            if (amounts.B <= bPc) {
+            if (amounts.B.sub(amounts.E) <= bPc) {
                 uint256 f = deductFee(e - bPc, x, d, n);
-                amounts.G = arbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+                amounts.G = negArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
                     amounts.H = Action.mintNetworkTokens;
                 }
@@ -479,7 +479,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return (x.sub(h), d.sub(h), e.sub(g));
     }
 
-    function arbitrage(
+    function posArbitrage(
         uint256 a,
         uint256 b,
         uint256 d,
@@ -489,8 +489,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 eMx
     ) internal pure returns (uint256) {
         uint256 K = MathEx.mulDivF(eMx, n, d.mul(PPM_RESOLUTION));
-        if (baseArbitrage(b, f, m) < K) {
-            return networkArbitrage(a, b, f, m);
+        if (basePosArbitrage(b, f, m) < K) {
+            return networkPosArbitrage(a, b, f, m);
+        }
+        return 0;
+    }
+
+    function negArbitrage(
+        uint256 a,
+        uint256 b,
+        uint256 d,
+        uint256 f,
+        uint256 m,
+        uint256 n,
+        uint256 eMx
+    ) internal pure returns (uint256) {
+        uint256 K = MathEx.mulDivF(eMx, n, d.mul(PPM_RESOLUTION));
+        if (baseNegArbitrage(b, f, m) < K) {
+            return networkNegArbitrage(a, b, f, m);
         }
         return 0;
     }
@@ -504,9 +520,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * m = trade fee in ppm units
      *
      * output (pretending `m` is normalized):
-     * f(f - bm - 2fm) / (fm + b)
+     * f(f + bm - 2fm) / (b - fm)
      */
-    function baseArbitrage(
+    function basePosArbitrage(
         uint256 b,
         uint256 f,
         uint256 m
@@ -515,7 +531,56 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        return MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), fm.add(bM));
+        return MathEx.mulDivF(f, fM.add(bm).sub(fm.mul(2)), bM.sub(fm));
+    }
+
+    /**
+     * @dev returns the arbitrage value in units of the base token
+     *
+     * input:
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
+     * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * f(f - bm - 2fm) / (b + fm)
+     */
+    function baseNegArbitrage(
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (uint256) {
+        uint256 bm = b.mul(m);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), bM.add(fm));
+    }
+
+    /**
+     * @dev returns the amount of network tokens which should be added
+     * to the pool in order to create an optimal arbitrage incentive
+     *
+     * input:
+     * a = the hypothetical balance of the pool in the network token
+     * b = the hypothetical balance of the pool in the base token
+     * f = the amount of base tokens required for arbitrage settlement
+     * m = trade fee in ppm units
+     *
+     * output (pretending `m` is normalized):
+     * af(b(2 - m) - f) / (b(b - fm))
+     */
+    function networkPosArbitrage(
+        uint256 a,
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (uint256) {
+        uint256 af = a.mul(f);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).sub(fM), b.mul(bM.sub(fm)));
     }
 
     /**
@@ -531,7 +596,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * output (pretending `m` is normalized):
      * af(b(2 - m) + f) / (b(b + fm))
      */
-    function networkArbitrage(
+    function networkNegArbitrage(
         uint256 a,
         uint256 b,
         uint256 f,

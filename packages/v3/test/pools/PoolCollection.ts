@@ -27,6 +27,17 @@ interface WithdrawalAmountData {
     H: number | string;
 }
 
+const TABLE: WithdrawalAmountData[] = [
+    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  89, C: 22, D: 44, E:  0, F: 100, G: 0, H: 0 },
+    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 179, C: 44, D: 89, E:  0, F: 200, G: 0, H: 0 },
+    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  82, C: 18, D: 41, E:  9, F:  91, G: 0, H: 0 },
+    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 165, C: 33, D: 82, E: 19, F: 184, G: 0, H: 0 },
+    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  99, C:  0, D: 49, E:  0, F:  90, G: 0, H: 0 },
+    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 199, C:  0, D: 99, E:  0, F: 181, G: 0, H: 0 },
+    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  99, C:  0, D: 49, E:  0, F:  90, G: 0, H: 0 },
+    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 199, C:  0, D: 99, E:  0, F: 181, G: 0, H: 0 },
+];
+
 const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     let poolCollection: TestPoolCollection;
 
@@ -46,96 +57,6 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
             expect(actual.G.toString()).to.equal(G.toString());
             expect(actual.H.toString()).to.equal(H.toString());
         });
-    }
-};
-
-const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
-    const MAX_VAL = new Decimal(MAX_UINT256.toString());
-    const PPMR = new Decimal(PPM_RESOLUTION.toString());
-
-    const fees = testFees.map((x) => x.mul(PPMR).div(100));
-
-    let poolCollection: TestPoolCollection;
-
-    before(async () => {
-        const { network } = await createSystem();
-        poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
-    });
-
-    // f(f - bm - 2fm) / (fm + b)
-    const baseArbitrage = (baseBalance: Decimal, baseAmount: Decimal, tradeFee: Decimal) => {
-        const b = baseBalance;
-        const f = baseAmount;
-        const m = tradeFee.div(PPMR);
-        return f
-            .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
-            .div(f.mul(m).add(b))
-            .floor();
-    };
-
-    // af(b(2 - m) + f) / (b(b + fm))
-    const networkArbitrage = (
-        networkBalance: Decimal,
-        baseBalance: Decimal,
-        baseAmount: Decimal,
-        tradeFee: Decimal
-    ) => {
-        const a = networkBalance;
-        const b = baseBalance;
-        const f = baseAmount;
-        const m = tradeFee.div(PPMR);
-        return a
-            .mul(f)
-            .mul(b.mul(m.sub(2).neg()).add(f))
-            .div(b.mul(b.add(f.mul(m))))
-            .floor();
-    };
-
-    for (const b of amounts) {
-        for (const f of amounts) {
-            for (const m of fees) {
-                it(`baseArbitrage(${[b, f, m]})`, async () => {
-                    const expected = baseArbitrage(b, f, m);
-                    if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
-                        expect(actual.toString()).to.equal(expected.toFixed());
-                    } else {
-                        await expect(poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
-                            .reverted;
-                    }
-                });
-            }
-        }
-    }
-
-    for (const a of amounts) {
-        for (const b of amounts) {
-            for (const f of amounts) {
-                for (const m of fees) {
-                    it(`networkArbitrage(${[a, b, f, m]})`, async () => {
-                        const expected = networkArbitrage(a, b, f, m);
-                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await poolCollection.networkArbitrageTest(
-                                a.toString(),
-                                b.toString(),
-                                f.toString(),
-                                m.toString()
-                            );
-                            expect(actual.toString()).to.equal(expected.toFixed());
-                        } else {
-                            await expect(
-                                poolCollection.networkArbitrageTest(
-                                    a.toString(),
-                                    b.toString(),
-                                    f.toString(),
-                                    m.toString()
-                                )
-                            ).to.be.reverted;
-                        }
-                    });
-                }
-            }
-        }
     }
 };
 
@@ -557,29 +478,11 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('formula sanity tests', () => {
-        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
-        const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
-
-        testFormula(AMOUNTS, FEES);
-    });
-
     describe('withdrawal sanity tests', () => {
-        const TABLE: WithdrawalAmountData[] = [
-            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  89, C: 22, D: 44, E:  0, F: 100, G: 0, H: 0 },
-            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 179, C: 44, D: 89, E:  0, F: 200, G: 0, H: 0 },
-            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  82, C: 18, D: 41, E:  9, F:  91, G: 0, H: 0 },
-            { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 165, C: 33, D: 82, E: 19, F: 184, G: 0, H: 0 },
-        ];
-
-        withdrawalAmountsTest(TABLE);
+        withdrawalAmountsTest(TABLE.slice(0, 8));
     });
 });
 
 describe('@stress PoolCollection', () => {
-    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
-    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
-    const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
-
-    testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
+    withdrawalAmountsTest(TABLE);
 });
