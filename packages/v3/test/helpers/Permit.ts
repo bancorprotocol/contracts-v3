@@ -1,7 +1,7 @@
 import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
 import { BigNumber, Wallet } from 'ethers';
-import { MAX_UINT256 } from 'test/helpers/Constants';
+import { MAX_UINT256 } from './Constants';
 
 const VERSION = '1';
 const HARDHAT_CHAIN_ID = 31337;

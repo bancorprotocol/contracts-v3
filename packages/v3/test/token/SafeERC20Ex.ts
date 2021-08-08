@@ -1,9 +1,9 @@
+import Contracts from '../../components/Contracts';
+import { TestSafeERC20Ex, TestERC20Token } from '../../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Contracts from 'components/Contracts';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { TestSafeERC20Ex, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 

@@ -1,12 +1,12 @@
+import Contracts from '../../components/Contracts';
+import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from '../../test/helpers/Constants';
+import { createSystem } from '../../test/helpers/Factory';
+import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Contracts from 'components/Contracts';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
-import { createSystem } from 'test/helpers/Factory';
-import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
 
 const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
     const MAX_VAL = new Decimal(MAX_UINT256.toString());
