@@ -14,7 +14,6 @@ import 'hardhat-gas-reporter';
 import { HardhatUserConfig } from 'hardhat/config';
 import path from 'path';
 import 'solidity-coverage';
-import 'tsconfig-paths/register';
 
 const configPath = path.join(__dirname, '/config.json');
 const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};

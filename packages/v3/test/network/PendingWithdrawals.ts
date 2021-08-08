@@ -1,14 +1,9 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
-import Contracts from 'components/Contracts';
-import { BigNumber, Wallet, Signer } from 'ethers';
-import { formatBytes32String } from 'ethers/lib/utils';
-import { ethers } from 'hardhat';
-import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
-import { createSystem, createPool } from 'test/helpers/Factory';
-import { permitSignature } from 'test/helpers/Permit';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { duration, latest } from 'test/helpers/Time';
+import Contracts from '../../components/Contracts';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../../test/helpers/Constants';
+import { createSystem, createPool } from '../../test/helpers/Factory';
+import { permitSignature } from '../../test/helpers/Permit';
+import { shouldHaveGap } from '../../test/helpers/Proxy';
+import { duration, latest } from '../../test/helpers/Time';
 import {
     TestPendingWithdrawals,
     NetworkSettings,
@@ -17,7 +12,12 @@ import {
     TestPoolCollection,
     TestNetworkTokenPool,
     PoolToken
-} from 'typechain';
+} from '../../typechain';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber, Wallet, Signer } from 'ethers';
+import { formatBytes32String } from 'ethers/lib/utils';
+import { ethers } from 'hardhat';
 
 describe('PendingWithdrawals', () => {
     const WITHDRAWAL_REQUEST_DATA_VERSION = BigNumber.from(1);

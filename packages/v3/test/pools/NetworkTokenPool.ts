@@ -1,11 +1,11 @@
+import Contracts from '../../components/Contracts';
+import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../../test/helpers/Constants';
+import { createSystem } from '../../test/helpers/Factory';
+import { shouldHaveGap } from '../../test/helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Contracts from 'components/Contracts';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from 'test/helpers/Constants';
-import { createSystem } from 'test/helpers/Factory';
-import { shouldHaveGap } from 'test/helpers/Proxy';
 
 describe('NetworkTokenPool', () => {
     let nonOwner: SignerWithAddress;
