@@ -15,7 +15,8 @@ export const roles = {
     },
 
     TokenGovernance: {
-        ROLE_GOVERNOR: id('ROLE_GOVERNOR')
+        ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
+        ROLE_MINTER: id('ROLE_MINTER')
     }
 };
 

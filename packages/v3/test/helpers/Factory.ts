@@ -5,14 +5,7 @@ import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
 import { roles } from 'test/helpers/AccessControl';
 import { toAddress } from 'test/helpers/Utils';
-import {
-    BancorNetwork,
-    PoolCollection,
-    NetworkSettings,
-    ProxyAdmin,
-    TestERC20Token,
-    TestTokenGovernance
-} from 'typechain';
+import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
 
 const { TokenGovernance: TokenGovernanceRoles } = roles;
 
@@ -79,9 +72,12 @@ const createProxy = async <F extends ContractFactory>(
 const createSystemToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
     const deployer = (await ethers.getSigners())[0];
 
-    const token = await Contracts.TestERC20Token.deploy(name, symbol, totalSupply);
+    const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
     const tokenGovernance = await Contracts.TestTokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
+    await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+    await token.transferOwnership(tokenGovernance.address);
+    await tokenGovernance.acceptTokenOwnership();
 
     return { token, tokenGovernance };
 };
@@ -118,7 +114,7 @@ export const createSystem = async () => {
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
-        ctorArgs: [networkToken.address, networkSettings.address]
+        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address]
     });
 
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });

@@ -254,15 +254,15 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
+"@bancor/token-governance/0.7.6@bancorprotocol/token-governance#solc-0.7.6":
+  version "0.2.0"
+  resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/7ca235b5b6f65fde8207fd8a5c001f2d52fd9b5f"
+
 "@bancor/token-governance@bancorprotocol/token-governance":
   version "0.1.0"
   resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/72c40f70149cbd4b294556ee253bb0afd9620098"
   dependencies:
     "@openzeppelin/contracts" "3.2.0"
-
-"@bancor/token-governance@bancorprotocol/token-governance#solc-0.7.6":
-  version "0.2.0"
-  resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/7ca235b5b6f65fde8207fd8a5c001f2d52fd9b5f"
 
 "@deepcode/dcignore@^1.0.2":
   version "1.0.2"
