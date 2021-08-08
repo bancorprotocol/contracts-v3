@@ -137,11 +137,19 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
         return _mintedAmounts[pool];
     }
 
-    function requestLiquidity(bytes32 contextId, IReserveToken pool, uint256 amount) external override {
+    function requestLiquidity(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 amount
+    ) external override {
         emit LiquidityRequested(contextId, pool, amount, 0, 0);
     }
 
-    function renounceLiquidity(bytes32 contextId, IReserveToken pool, uint256 amount) external override {
+    function renounceLiquidity(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 amount
+    ) external override {
         emit LiquidityRenounced(contextId, pool, amount, 0);
     }
 }

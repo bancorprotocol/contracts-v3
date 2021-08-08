@@ -372,8 +372,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
                 networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
-            }
-            else if (amounts.H == Action.burnNetworkTokens) {
+            } else if (amounts.H == Action.burnNetworkTokens) {
                 networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
@@ -473,7 +472,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 d,
         uint256 e,
         uint256 fee
-    ) internal pure returns (uint256, uint256, uint256) {
+    )
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         uint256 g = MathEx.mulDivF(E, PPM_RESOLUTION, PPM_RESOLUTION - fee);
         uint256 h = MathEx.mulDivF(g, d, e);
         return (x.sub(h), d.sub(h), e.sub(g));

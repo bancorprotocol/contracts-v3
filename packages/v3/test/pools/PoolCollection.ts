@@ -3,20 +3,15 @@ import { expect } from 'chai';
 import Contracts from 'components/Contracts';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
+import fs from 'fs';
 import { ethers } from 'hardhat';
+import os from 'os';
+import path from 'path';
 import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 import { createSystem } from 'test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
 
-const expectAlmostEqual = (
-    actual: BigNumber,
-    expected: string,
-    maxAbsoluteError: string,
-    maxRelativeError: string
-) => {
+const expectAlmostEqual = (actual: BigNumber, expected: string, maxAbsoluteError: string, maxRelativeError: string) => {
     const x = new Decimal(actual.toString());
     const y = new Decimal(expected);
     if (!x.eq(y)) {
@@ -24,13 +19,13 @@ const expectAlmostEqual = (
         const relativeError = x.div(y).sub(1).abs();
         expect(absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError)).to.equal(
             true,
-            os.EOL + [
-                `expected value = ${expected}`,
-                `actual value   = ${actual.toString()}`,
-                `absolute error = ${absoluteError.toFixed()}`,
-                `relative error = ${relativeError.toFixed(25)}`
-            ]
-            .join(os.EOL)
+            os.EOL +
+                [
+                    `expected value = ${expected}`,
+                    `actual value   = ${actual.toString()}`,
+                    `absolute error = ${absoluteError.toFixed()}`,
+                    `relative error = ${relativeError.toFixed(25)}`
+                ].join(os.EOL)
         );
     }
 };
@@ -57,14 +52,11 @@ interface WithdrawalAmountData {
 const ACTIONS: Record<string, number> = {
     'no arbitrage': 0,
     'burn tokens': 1,
-    'mint tokens': 2,
+    'mint tokens': 2
 };
 
 const TABLE: WithdrawalAmountData[] = JSON.parse(
-    fs.readFileSync(
-        path.join(__dirname, '../helpers/WithdrawalAmounts.json'),
-        { encoding: 'utf8' }
-    )
+    fs.readFileSync(path.join(__dirname, '../helpers/WithdrawalAmounts.json'), { encoding: 'utf8' })
 );
 
 const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
@@ -78,12 +70,12 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
         it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
             const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expectAlmostEqual(actual.B, B, "1", "0.0000000000000001");
-            expectAlmostEqual(actual.C, C, "1", "0.0000000000000001");
-            expectAlmostEqual(actual.D, D, "1", "0.0000000000000001");
-            expectAlmostEqual(actual.E, E, "1", "0.0000000000000001");
-            expectAlmostEqual(actual.F, F, "1", "0.0000000000000001");
-            expectAlmostEqual(actual.G, G, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.B, B, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.C, C, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.D, D, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.E, E, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.F, F, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.G, G, '1', '0.0000000000000001');
             expect(actual.H).to.equal(ACTIONS[H]);
         });
     }
