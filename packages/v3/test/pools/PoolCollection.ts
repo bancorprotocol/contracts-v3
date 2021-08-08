@@ -7,6 +7,7 @@ import { ethers } from 'hardhat';
 import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 import { createSystem } from 'test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
+import os from 'os';
 import fs from 'fs';
 import path from 'path';
 
@@ -23,7 +24,13 @@ const expectAlmostEqual = (
         const relativeError = x.div(y).sub(1).abs();
         expect(absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError)).to.equal(
             true,
-            `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
+            os.EOL + [
+                `expected value = ${expected}`,
+                `actual value   = ${actual.toString()}`,
+                `absolute error = ${absoluteError.toFixed()}`,
+                `relative error = ${relativeError.toFixed(25)}`
+            ]
+            .join(os.EOL)
         );
     }
 };
