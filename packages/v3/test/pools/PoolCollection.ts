@@ -54,6 +54,12 @@ interface WithdrawalAmountData {
     H: string;
 }
 
+const ACTIONS: Record<string, number> = {
+    'no arbitrage': 0,
+    'burn tokens': 1,
+    'mint tokens': 2,
+};
+
 const TABLE: WithdrawalAmountData[] = JSON.parse(
     fs.readFileSync(
         path.join(__dirname, '../helpers/WithdrawalAmounts.json'),
@@ -78,7 +84,7 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
             expectAlmostEqual(actual.E, E, "1", "0.0000000000000001");
             expectAlmostEqual(actual.F, F, "1", "0.0000000000000001");
             expectAlmostEqual(actual.G, G, "1", "0.0000000000000001");
-            expect(actual.H.toString()).to.equal(H);
+            expect(actual.H).to.equal(ACTIONS[H]);
         });
     }
 };
