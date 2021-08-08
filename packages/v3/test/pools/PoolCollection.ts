@@ -7,36 +7,52 @@ import { ethers } from 'hardhat';
 import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from 'test/helpers/Constants';
 import { createSystem } from 'test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from 'typechain';
+import fs from 'fs';
+import path from 'path';
+
+const expectAlmostEqual = (
+    actual: BigNumber,
+    expected: string,
+    maxAbsoluteError: string,
+    maxRelativeError: string
+) => {
+    const x = new Decimal(actual.toString());
+    const y = new Decimal(expected);
+    if (!x.eq(y)) {
+        const absoluteError = x.sub(y).abs();
+        const relativeError = x.div(y).sub(1).abs();
+        expect(absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError)).to.equal(
+            true,
+            `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
+        );
+    }
+};
 
 interface WithdrawalAmountData {
-    a: number | string;
-    b: number | string;
-    c: number | string;
-    d: number | string;
-    e: number | string;
-    w: number | string;
-    m: number | string;
-    n: number | string;
-    x: number | string;
-    B: number | string;
-    C: number | string;
-    D: number | string;
-    E: number | string;
-    F: number | string;
-    G: number | string;
-    H: number | string;
+    a: string;
+    b: string;
+    c: string;
+    d: string;
+    e: string;
+    w: string;
+    m: string;
+    n: string;
+    x: string;
+    B: string;
+    C: string;
+    D: string;
+    E: string;
+    F: string;
+    G: string;
+    H: string;
 }
 
-const TABLE: WithdrawalAmountData[] = [
-    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  89, C: 22, D: 44, E:  0, F: 100, G: 0, H: 0 },
-    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 179, C: 44, D: 89, E:  0, F: 200, G: 0, H: 0 },
-    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  82, C: 18, D: 41, E:  9, F:  91, G: 0, H: 0 },
-    { a: 1000, b: 450, c: 450, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 165, C: 33, D: 82, E: 19, F: 184, G: 0, H: 0 },
-    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 100, B:  99, C:  0, D: 49, E:  0, F:  90, G: 0, H: 0 },
-    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w:    0, m: 2000, n: 2500, x: 200, B: 199, C:  0, D: 99, E:  0, F: 181, G: 0, H: 0 },
-    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 100, B:  99, C:  0, D: 49, E:  0, F:  90, G: 0, H: 0 },
-    { a: 1000, b: 550, c: 550, d: 1000, e: 1000, w: 1000, m: 2000, n: 2500, x: 200, B: 199, C:  0, D: 99, E:  0, F: 181, G: 0, H: 0 },
-];
+const TABLE: WithdrawalAmountData[] = JSON.parse(
+    fs.readFileSync(
+        path.join(__dirname, '../helpers/WithdrawalAmounts.json'),
+        { encoding: 'utf8' }
+    )
+);
 
 const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     let poolCollection: TestPoolCollection;
@@ -49,13 +65,13 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
         it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
             const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expect(actual.B.toString()).to.equal(B.toString());
-            expect(actual.C.toString()).to.equal(C.toString());
-            expect(actual.D.toString()).to.equal(D.toString());
-            expect(actual.E.toString()).to.equal(E.toString());
-            expect(actual.F.toString()).to.equal(F.toString());
-            expect(actual.G.toString()).to.equal(G.toString());
-            expect(actual.H.toString()).to.equal(H.toString());
+            expectAlmostEqual(actual.B, B, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.C, C, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.D, D, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.E, E, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.F, F, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.G, G, "1", "0.00000000000000001");
+            expect(actual.H.toString()).to.equal(H);
         });
     }
 };

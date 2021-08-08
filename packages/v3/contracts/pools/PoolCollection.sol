@@ -554,7 +554,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        return MathEx.mulDivF(f, fM.sub(bm).sub(fm.mul(2)), bM.add(fm));
+        uint256 max = bm.add(fm.mul(2));
+        return fM > max ? MathEx.mulDivF(f, fM - max, bM.add(fm)) : 0;
     }
 
     /**
