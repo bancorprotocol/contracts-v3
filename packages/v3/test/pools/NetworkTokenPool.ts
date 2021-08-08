@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../../test/helpers/Constants';
-import { createSystem } from '../../test/helpers/Factory';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
+import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../helpers/Constants';
+import { createSystem } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';

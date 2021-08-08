@@ -1,11 +1,11 @@
 import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
-import { toAddress } from '../../test/helpers/Utils';
 import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from '../../typechain';
+import { roles } from './AccessControl';
 import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
+import { toAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
-import { roles } from 'test/helpers/AccessControl';
 
 const { TokenGovernance: TokenGovernanceRoles } = roles;
 

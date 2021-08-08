@@ -1,7 +1,4 @@
 import Contracts from '../../components/Contracts';
-import { ZERO_ADDRESS } from '../../test/helpers/Constants';
-import { createSystem, createTokenHolder, createPoolCollection } from '../../test/helpers/Factory';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
 import {
     BancorNetwork,
     TokenHolderUpgradeable,
@@ -9,6 +6,9 @@ import {
     TestERC20Token,
     NetworkSettings
 } from '../../typechain';
+import { ZERO_ADDRESS } from '../helpers/Constants';
+import { createSystem, createTokenHolder, createPoolCollection } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';

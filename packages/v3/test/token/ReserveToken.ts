@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
-import { NATIVE_TOKEN_ADDRESS } from '../../test/helpers/Constants';
-import { getBalance } from '../../test/helpers/Utils';
 import { TestReserveToken } from '../../typechain';
+import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';

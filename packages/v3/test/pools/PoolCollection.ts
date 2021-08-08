@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
-import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from '../../test/helpers/Constants';
-import { createSystem } from '../../test/helpers/Factory';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
+import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { createSystem } from '../helpers/Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

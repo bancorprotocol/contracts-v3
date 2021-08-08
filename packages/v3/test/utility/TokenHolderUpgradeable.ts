@@ -1,9 +1,9 @@
 import Contracts from '../../components/Contracts';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../../test/helpers/Constants';
-import { createTokenHolder } from '../../test/helpers/Factory';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
-import { getBalance, getBalances, TokenWithAddress } from '../../test/helpers/Utils';
 import { TestERC20Token, TokenHolderUpgradeable } from '../../typechain';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+import { createTokenHolder } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { getBalance, getBalances, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
