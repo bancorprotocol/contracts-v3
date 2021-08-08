@@ -2356,6 +2356,13 @@
   resolved "https://registry.yarnpkg.com/@typechain/ethers-v5/-/ethers-v5-7.0.1.tgz#f9ae60ae5bd9e8ea8a996f66244147e8e74034ae"
   integrity sha512-mXEJ7LG0pOYO+MRPkHtbf30Ey9X2KAsU0wkeoVvjQIn7iAY6tB3k3s+82bbmJAUMyENbQ04RDOZit36CgSG6Gg==
 
+"@typechain/hardhat@2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@typechain/hardhat/-/hardhat-2.3.0.tgz#dc7f29281637b38b77c7c046ae82700703395d0f"
+  integrity sha512-zERrtNol86L4DX60ktnXxP7Cq8rSZHPaQvsChyiQQVuvVs2FTLm24Yi+MYnfsIdbUBIXZG7SxDWhtCF5I0tJNQ==
+  dependencies:
+    fs-extra "^9.1.0"
+
 "@typechain/hardhat@^2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@typechain/hardhat/-/hardhat-2.2.0.tgz#a3e99b49c215c364c375c554bdce626bb21ecc47"
