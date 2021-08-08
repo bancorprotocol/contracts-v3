@@ -1,9 +1,20 @@
 import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
 import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
+import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
+import { roles } from 'test/helpers/AccessControl';
 import { toAddress } from 'test/helpers/Utils';
-import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
+import {
+    BancorNetwork,
+    PoolCollection,
+    NetworkSettings,
+    ProxyAdmin,
+    TestERC20Token,
+    TestTokenGovernance
+} from 'typechain';
+
+const { TokenGovernance: TokenGovernanceRoles } = roles;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -65,7 +76,30 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-export const createNetworkToken = async () => Contracts.TestERC20Token.deploy('BNT', 'BNT', TOTAL_SUPPLY);
+const createSystemToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+    const deployer = (await ethers.getSigners())[0];
+
+    const token = await Contracts.TestERC20Token.deploy(name, symbol, totalSupply);
+    const tokenGovernance = await Contracts.TestTokenGovernance.deploy(token.address);
+    await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
+
+    return { token, tokenGovernance };
+};
+
+export const createSystemTokens = async () => {
+    const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createSystemToken(
+        'BNT',
+        'BNT',
+        TOTAL_SUPPLY
+    );
+    const { token: govToken, tokenGovernance: govTokenGovernance } = await createSystemToken(
+        'vBNT',
+        'vBNT',
+        TOTAL_SUPPLY
+    );
+
+    return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
+};
 
 export const createTokenHolder = async () => {
     const tokenHolder = await Contracts.TokenHolderUpgradeable.deploy();
@@ -78,7 +112,7 @@ export const createPoolCollection = async (network: string | BaseContract) =>
     Contracts.TestPoolCollection.deploy(toAddress(network));
 
 export const createSystem = async () => {
-    const networkToken = await createNetworkToken();
+    const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createSystemTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
@@ -111,6 +145,9 @@ export const createSystem = async () => {
         networkSettings,
         network,
         networkToken,
+        networkTokenGovernance,
+        govToken,
+        govTokenGovernance,
         networkTokenPoolToken,
         vault,
         networkTokenPool,
