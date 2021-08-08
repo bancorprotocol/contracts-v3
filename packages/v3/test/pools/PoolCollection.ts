@@ -65,12 +65,12 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
         it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
             const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expectAlmostEqual(actual.B, B, "1", "0.00000000000000001");
-            expectAlmostEqual(actual.C, C, "1", "0.00000000000000001");
-            expectAlmostEqual(actual.D, D, "1", "0.00000000000000001");
-            expectAlmostEqual(actual.E, E, "1", "0.00000000000000001");
-            expectAlmostEqual(actual.F, F, "1", "0.00000000000000001");
-            expectAlmostEqual(actual.G, G, "1", "0.00000000000000001");
+            expectAlmostEqual(actual.B, B, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.C, C, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.D, D, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.E, E, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.F, F, "1", "0.0000000000000001");
+            expectAlmostEqual(actual.G, G, "1", "0.0000000000000001");
             expect(actual.H.toString()).to.equal(H);
         });
     }
