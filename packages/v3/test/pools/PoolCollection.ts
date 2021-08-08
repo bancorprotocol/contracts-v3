@@ -56,7 +56,7 @@ const ACTIONS: Record<string, number> = {
 };
 
 const TABLE: WithdrawalAmountData[] = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../helpers/WithdrawalAmounts.json'), { encoding: 'utf8' })
+    fs.readFileSync(path.join(__dirname, '../data/WithdrawalAmounts.json'), { encoding: 'utf8' })
 );
 
 const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
