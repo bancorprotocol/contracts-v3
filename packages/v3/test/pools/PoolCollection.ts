@@ -505,5 +505,7 @@ describe('PoolCollection', () => {
 });
 
 describe('@stress PoolCollection', () => {
-    withdrawalAmountsTest(TABLE);
+    describe('withdrawal tests', () => {
+        withdrawalAmountsTest(TABLE);
+    });
 });
