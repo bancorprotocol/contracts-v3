@@ -1,9 +1,9 @@
+import Contracts from '../../components/Contracts';
+import { shouldHaveGap } from '../../test/helpers/Proxy';
+import { TestOwnedUpgradeable } from '../../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Contracts from 'components/Contracts';
 import { ethers } from 'hardhat';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { TestOwnedUpgradeable } from 'typechain';
 
 let contract: TestOwnedUpgradeable;
 

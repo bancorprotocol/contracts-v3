@@ -1,9 +1,9 @@
+import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
+import { toAddress } from '../../test/helpers/Utils';
+import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from '../../typechain';
 import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
-import Contracts, { Contract, ContractBuilder } from 'components/Contracts';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { isEqual } from 'lodash';
-import { toAddress } from 'test/helpers/Utils';
-import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from 'typechain';
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 

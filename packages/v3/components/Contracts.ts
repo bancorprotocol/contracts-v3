@@ -23,7 +23,7 @@ import {
     TestSafeERC20Ex__factory,
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
-} from 'typechain';
+} from '../typechain';
 
 type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U

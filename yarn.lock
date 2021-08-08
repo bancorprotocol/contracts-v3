@@ -14233,7 +14233,7 @@ ts-node@^10.1.0:
     source-map-support "^0.5.17"
     yn "3.1.1"
 
-tsconfig-paths@^3.10.1, tsconfig-paths@^3.9.0:
+tsconfig-paths@^3.9.0:
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/tsconfig-paths/-/tsconfig-paths-3.10.1.tgz#79ae67a68c15289fdf5c51cb74f397522d795ed7"
   integrity sha512-rETidPDgCpltxF7MjBZlAFPUHv5aHH2MymyPvh+vEyWAED4Eb/WeMbsnD/JDr4OKPOA1TssDHgIcpTN5Kh0p6Q==
