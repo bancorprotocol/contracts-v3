@@ -445,6 +445,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             IReserveToken baseToken; // TODO: how do we get this?
             IPoolCollection poolCollection = _collectionByPool[baseToken];
             IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
+            IBancorVault vault = networkTokenPool.vault();
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
             IPoolCollection.WithdrawalAmounts memory amounts = poolCollection.withdraw(
@@ -455,8 +456,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet)),
                 networkTokenPool
             );
-
-            IBancorVault vault = networkTokenPool.vault();
 
             if (amounts.B > 0) {
                 // base token amount to transfer from the vault to the user
