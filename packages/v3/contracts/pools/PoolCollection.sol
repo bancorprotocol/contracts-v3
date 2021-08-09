@@ -484,8 +484,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the amount of BNT which should be removed from
-     * the pool in order to create an optimal arbitrage incentive
+     * @dev returns the amount of network tokens which should be removed
+     * from the pool in order to create an optimal arbitrage incentive
      */
     function posArbitrage(
         uint256 a,
@@ -504,8 +504,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the amount of BNT which should be added to
-     * the pool in order to create an optimal arbitrage incentive
+     * @dev returns the amount of network tokens which should be added
+     * to the pool in order to create an optimal arbitrage incentive
      */
     function negArbitrage(
         uint256 a,
