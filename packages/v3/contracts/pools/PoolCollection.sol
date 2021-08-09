@@ -457,6 +457,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
     }
 
+    /**
+     * @dev returns `xy(1-n) / z` (pretending `n` is normalized)
+     */
     function deductFee(
         uint256 x,
         uint256 y,
@@ -466,6 +469,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - n), z.mul(PPM_RESOLUTION));
     }
 
+    /**
+     * @dev recalculates the values of `x`, `d` and `e`
+     *
+     * input:
+     * E = base token amount to transfer from the protection wallet to the user
+     * x = base pool token withdrawal amount
+     * d = base pool token total supply
+     * e = base token staked amount
+     * n = withdrawal fee in ppm units
+     *
+     * output (pretending `n` is normalized):
+     * x - E / (1 - n) * d / e
+     * d - E / (1 - n) * d / e
+     * e - E / (1 - n)
+     */
     function reviseInput(
         uint256 E,
         uint256 x,
