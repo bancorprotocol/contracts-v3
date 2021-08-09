@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
@@ -22,6 +23,8 @@ import { PoolToken } from "./PoolToken.sol";
  * @dev Network Token Pool contract
  */
 contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
+    using SafeMath for uint256;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -88,6 +91,17 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
         _govTokenGovernance = initNetwork.govTokenGovernance();
         _vault = initVault;
         _poolToken = initPoolToken;
+    }
+
+    // allows execution by the network only
+    modifier onlyNetwork() {
+        _onlyNetwork();
+
+        _;
+    }
+
+    function _onlyNetwork() private view {
+        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
     }
 
     /**
@@ -183,5 +197,23 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
      */
     function mintedAmounts(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function onFeesCollected(
+        IReserveToken pool,
+        uint256 amount,
+        uint8 feeType
+    ) external override onlyNetwork validAddress(address(pool)) greaterThanZero(amount) {
+        // increase the staked balance by the given amount
+        _stakedBalance = _stakedBalance.add(amount);
+
+        // type 0: trading fee
+        if (feeType == 0) {
+            // increase the minted amount for the specified pool by the given amount
+            _mintedAmounts[pool] = _mintedAmounts[pool].add(amount);
+        }
     }
 }

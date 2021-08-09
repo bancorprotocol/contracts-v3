@@ -9,6 +9,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -21,5 +22,14 @@ contract TestBancorNetwork is BancorNetwork {
 
     function createPoolT(IPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);
+    }
+
+    function onNetworkTokenFeesCollectedT(
+        INetworkTokenPool networkTokenPool,
+        IReserveToken pool,
+        uint256 amount,
+        uint8 feeType
+    ) external {
+        networkTokenPool.onFeesCollected(pool, amount, feeType);
     }
 }

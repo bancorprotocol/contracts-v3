@@ -62,4 +62,13 @@ interface INetworkTokenPool is IUpgradeable {
      * @dev returns the total minted amount for a given pool
      */
     function mintedAmounts(IReserveToken pool) external view returns (uint256);
+
+    /**
+     * @dev updates the staked balance (and the minting amount for trading fees) due to fee collection
+     */
+    function onFeesCollected(
+        IReserveToken pool,
+        uint256 amount,
+        uint8 feeType
+    ) external;
 }
