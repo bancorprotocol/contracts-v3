@@ -8,6 +8,7 @@ import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
+import { INetworkTokenPool } from "../interfaces/INetworkTokenPool.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 
@@ -38,6 +39,26 @@ interface IPoolCollection {
         Fraction initialRate;
         // the deposit limit
         uint256 depositLimit;
+    }
+
+    // solhint-disable var-name-mixedcase
+
+    // arbitrage actions upon base token withdrawal
+    enum Action {
+        noArbitrage,
+        burnNetworkTokens,
+        mintNetworkTokens
+    }
+
+    // base token withdrawal output amounts
+    struct WithdrawalAmounts {
+        uint256 B; // base token amount to transfer from the vault to the user
+        uint256 C; // network token amount to mint directly for the user
+        uint256 D; // base token amount to deduct from the trading liquidity
+        uint256 E; // base token amount to transfer from the protection wallet to the user
+        uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
+        uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+        Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
     }
 
     /**
@@ -85,4 +106,13 @@ interface IPoolCollection {
      * - the pool isn't already defined in the collection
      */
     function createPool(IReserveToken reserveToken) external;
+
+    function withdraw(
+        bytes32 contextId,
+        address provider,
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 protectionWalletBalance,
+        INetworkTokenPool networkTokenPool
+    ) external returns (WithdrawalAmounts memory);
 }

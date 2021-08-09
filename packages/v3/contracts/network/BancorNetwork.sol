@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -13,10 +14,12 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
+import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
 /**
  * @dev Bancor Network contract
@@ -418,6 +421,65 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _collectionByPool[reserveToken] = poolCollection;
 
         emit PoolAdded(poolType, reserveToken, poolCollection);
+    }
+
+    function withdraw(uint256 id)
+        external
+        override
+        nonReentrant
+    {
+        IPendingWithdrawals.WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
+        INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
+
+        // verify that the provider is the withdrawal position owner
+        require(msg.sender == request.provider, "ERR_ILLEGAL_ID");
+
+        // generated using sender, blocktime, and all args
+        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, block.timestamp, id));
+
+        if (request.poolToken == networkTokenPool.poolToken()) {
+            // BNT
+            // requires approval for vBNT
+            // transfer vBNT from the caller to the BNT pool
+            // call withdraw on the BNT pool
+        } else {
+            // TKN
+            IReserveToken baseToken; // TODO: how do we get this?
+
+            // call withdraw on the TKN pool - returns the amounts/breakdown
+            IPoolCollection.WithdrawalAmounts memory amounts = _collectionByPool[baseToken].withdraw(
+                contextId,
+                request.provider,
+                baseToken,
+                request.amount,
+                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet)),
+                networkTokenPool
+            );
+
+            IBancorVault vault = networkTokenPool.vault();
+
+            if (amounts.B > 0) {
+                // base token amount to transfer from the vault to the user
+                vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
+            }
+
+            if (amounts.F > 0) {
+                // TODO: network token amount to burn in the vault
+            }
+
+            if (amounts.C > 0) {
+                // network token amount to mint directly for the user
+                // TODO: _networkToken.mint(request.provider, amounts.C);
+            }
+
+            if (amounts.E > 0) {
+                // base token amount to transfer from the protection wallet to the user
+                _externalProtectionWallet.withdrawTokens(baseToken, payable(request.provider), amounts.E);
+            }
+        }
+
+        // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
+        // emit the TotalLiquidityUpdated event
     }
 
     /**

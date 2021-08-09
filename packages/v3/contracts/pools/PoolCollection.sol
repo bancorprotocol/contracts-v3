@@ -5,6 +5,7 @@ pragma abicoder v2;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Math } from "@openzeppelin/contracts/math/Math.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -14,11 +15,10 @@ import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
-import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
+import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
 import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
@@ -34,26 +34,6 @@ import { PoolToken } from "./PoolToken.sol";
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
     using MathEx for *;
-
-    // solhint-disable var-name-mixedcase
-
-    // arbitrage actions upon base token withdrawal
-    enum Action {
-        noArbitrage,
-        burnNetworkTokens,
-        mintNetworkTokens
-    }
-
-    // base token withdrawal output amounts
-    struct WithdrawalAmounts {
-        uint256 B; // base token amount to transfer from the vault to the user
-        uint256 C; // network token amount to mint directly for the user
-        uint256 D; // base token amount to deduct from the trading liquidity
-        uint256 E; // base token amount to transfer from the protection wallet to the user
-        uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
-        uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-        Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
-    }
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -346,10 +326,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
-        uint256 baseTokenExcessAmount,
-        address protectionWallet,
+        uint256 protectionWalletBalance,
         INetworkTokenPool networkTokenPool
-    ) internal returns (WithdrawalAmounts memory) {
+    ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
         Pool storage pool = _pools[baseToken];
 
         pool.poolToken.burnFrom(provider, basePoolTokenAmount);
@@ -357,10 +336,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         WithdrawalAmounts memory amounts = withdrawalAmounts(
             pool.networkTokenTradingLiquidity,
             pool.baseTokenTradingLiquidity,
-            baseTokenExcessAmount,
+            pool.stakedBalance > pool.depositLimit ? pool.stakedBalance - pool.depositLimit : 0,
             pool.poolToken.totalSupply(),
-            pool.stakedBalance,
-            ERC20(address(baseToken)).balanceOf(protectionWallet),
+            Math.min(pool.stakedBalance, pool.depositLimit),
+            protectionWalletBalance,
             pool.tradingFeePPM,
             _settings.withdrawalFeePPM(),
             basePoolTokenAmount

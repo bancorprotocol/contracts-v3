@@ -70,4 +70,6 @@ interface IBancorNetwork is IUpgradeable {
      * - the pool doesn't exist
      */
     function createPool(uint16 poolType, IReserveToken reserveToken) external;
+
+    function withdraw(uint256 id) external;
 }
