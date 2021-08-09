@@ -460,7 +460,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             }
 
             if (amounts.F > 0) {
-                // TODO: network token amount to burn in the vault
+                // network token amount to burn in the vault
+                // TODO: _networkToken.burn(address(vault), amounts.F);
             }
 
             if (amounts.C > 0) {
