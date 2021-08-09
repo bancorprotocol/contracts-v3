@@ -65,8 +65,7 @@ const withdrawalAmountsTest = (
 
     const table: WithdrawalAmountData[] = JSON.parse(
         fs.readFileSync(path.join(__dirname, '../data', fileName + '.json'), { encoding: 'utf8' })
-    )
-    .slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
+    ).slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
 
     before(async () => {
         const { network } = await createSystem();
