@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
