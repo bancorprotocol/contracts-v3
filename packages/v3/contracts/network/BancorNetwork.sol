@@ -438,12 +438,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool
             // call withdraw on the BNT pool
+            // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
+            // emit the TotalLiquidityUpdated event
         } else {
             // TKN
             IReserveToken baseToken; // TODO: how do we get this?
+            IPoolCollection poolCollection = _collectionByPool[baseToken];
+            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
-            IPoolCollection.WithdrawalAmounts memory amounts = _collectionByPool[baseToken].withdraw(
+            IPoolCollection.WithdrawalAmounts memory amounts = poolCollection.withdraw(
                 contextId,
                 request.provider,
                 baseToken,
@@ -473,10 +477,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 // base token amount to transfer from the protection wallet to the user
                 _externalProtectionWallet.withdrawTokens(baseToken, payable(request.provider), amounts.E);
             }
-        }
 
-        // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
-        // emit the TotalLiquidityUpdated event
+            emit FundsWithdrawn(
+                contextId,
+                baseToken,
+                request.provider,
+                poolCollection,
+                request.amount,
+                request.amount,
+                amounts.B,
+                amounts.E,
+                amounts.C,
+                0 // TODO: withdrawalFee
+            );
+
+            emit TotalLiquidityUpdated(
+                contextId,
+                baseToken,
+                request.poolToken.totalSupply(),
+                pool.stakedBalance,
+                pool.baseTokenTradingLiquidity
+            );
+        }
     }
 
     /**
