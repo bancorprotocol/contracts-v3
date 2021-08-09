@@ -514,7 +514,7 @@ describe('PoolCollection', () => {
     });
 });
 
-describe('stress PoolCollection', () => {
+describe('@stress PoolCollection', () => {
     describe('withdrawal regular tests', () => {
         withdrawalAmountsTest('WithdrawalAmounts', '1', '0.0000000000000001');
     });
