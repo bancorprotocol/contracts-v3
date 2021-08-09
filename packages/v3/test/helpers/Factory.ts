@@ -69,7 +69,7 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-const createSystemToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+const createGovernedToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
     const deployer = (await ethers.getSigners())[0];
 
     const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
@@ -82,13 +82,13 @@ const createSystemToken = async (name: string, symbol: string, totalSupply: BigN
     return { token, tokenGovernance };
 };
 
-export const createSystemTokens = async () => {
-    const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createSystemToken(
+export const createGovernedTokens = async () => {
+    const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         'BNT',
         'BNT',
         TOTAL_SUPPLY
     );
-    const { token: govToken, tokenGovernance: govTokenGovernance } = await createSystemToken(
+    const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         'vBNT',
         'vBNT',
         TOTAL_SUPPLY
@@ -108,7 +108,7 @@ export const createPoolCollection = async (network: string | BaseContract) =>
     Contracts.TestPoolCollection.deploy(toAddress(network));
 
 export const createSystem = async () => {
-    const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createSystemTokens();
+    const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
