@@ -55,12 +55,18 @@ const ACTIONS: Record<string, number> = {
     'mint tokens': 2
 };
 
-const TABLE: WithdrawalAmountData[] = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '../data/WithdrawalAmounts.json'), { encoding: 'utf8' })
-);
-
-const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
+const withdrawalAmountsTest = (
+    fileName: string,
+    maxAbsoluteError: string,
+    maxRelativeError: string,
+    maxNumberOfTests?: number
+) => {
     let poolCollection: TestPoolCollection;
+
+    const table: WithdrawalAmountData[] = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../data', fileName + '.json'), { encoding: 'utf8' })
+    )
+    .slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
 
     before(async () => {
         const { network } = await createSystem();
@@ -70,12 +76,12 @@ const withdrawalAmountsTest = (table: WithdrawalAmountData[]) => {
     for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
         it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
             const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expectAlmostEqual(actual.B, B, '1', '0.0000000000000001');
-            expectAlmostEqual(actual.C, C, '1', '0.0000000000000001');
-            expectAlmostEqual(actual.D, D, '1', '0.0000000000000001');
-            expectAlmostEqual(actual.E, E, '1', '0.0000000000000001');
-            expectAlmostEqual(actual.F, F, '1', '0.0000000000000001');
-            expectAlmostEqual(actual.G, G, '1', '0.0000000000000001');
+            expectAlmostEqual(actual.B, B, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.C, C, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.D, D, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.E, E, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.F, F, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.G, G, maxAbsoluteError, maxRelativeError);
             expect(actual.H).to.equal(ACTIONS[H]);
         });
     }
@@ -499,13 +505,21 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('withdrawal sanity tests', () => {
-        withdrawalAmountsTest(TABLE.slice(0, 8));
+    describe('withdrawal regular tests', () => {
+        withdrawalAmountsTest('WithdrawalAmounts', '1', '0.0000000000000001', 10);
+    });
+
+    describe('withdrawal edge-case tests', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases', '1', '0.00000001', 10);
     });
 });
 
-describe('@stress PoolCollection', () => {
-    describe('withdrawal tests', () => {
-        withdrawalAmountsTest(TABLE);
+describe('stress PoolCollection', () => {
+    describe('withdrawal regular tests', () => {
+        withdrawalAmountsTest('WithdrawalAmounts', '1', '0.0000000000000001');
+    });
+
+    describe('withdrawal edge-case tests', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases', '1', '0.00000001');
     });
 });
