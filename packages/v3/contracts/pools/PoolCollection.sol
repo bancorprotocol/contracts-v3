@@ -461,9 +461,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 x,
         uint256 y,
         uint256 z,
-        uint256 fee
+        uint256 n
     ) internal pure returns (uint256) {
-        return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - fee), z.mul(PPM_RESOLUTION));
+        return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - n), z.mul(PPM_RESOLUTION));
     }
 
     function reviseInput(
@@ -471,7 +471,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 x,
         uint256 d,
         uint256 e,
-        uint256 fee
+        uint256 n
     )
         internal
         pure
@@ -481,7 +481,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256
         )
     {
-        uint256 g = MathEx.mulDivF(E, PPM_RESOLUTION, PPM_RESOLUTION - fee);
+        uint256 g = MathEx.mulDivF(E, PPM_RESOLUTION, PPM_RESOLUTION - n);
         uint256 h = MathEx.mulDivF(g, d, e);
         return (x.sub(h), d.sub(h), e.sub(g));
     }
