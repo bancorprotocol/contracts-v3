@@ -1,9 +1,4 @@
 import Contracts from '../../components/Contracts';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../../test/helpers/Constants';
-import { createSystem, createPool } from '../../test/helpers/Factory';
-import { permitSignature } from '../../test/helpers/Permit';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
-import { duration, latest } from '../../test/helpers/Time';
 import {
     TestPendingWithdrawals,
     NetworkSettings,
@@ -13,6 +8,11 @@ import {
     TestNetworkTokenPool,
     PoolToken
 } from '../../typechain';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
+import { createSystem, createPool } from '../helpers/Factory';
+import { permitSignature } from '../helpers/Permit';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet, Signer } from 'ethers';

@@ -1,7 +1,4 @@
 import Contracts from '../../components/Contracts';
-import { ZERO_ADDRESS } from '../../test/helpers/Constants';
-import { createSystem, createTokenHolder, createPoolCollection } from '../../test/helpers/Factory';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
 import {
     BancorNetwork,
     TokenHolderUpgradeable,
@@ -9,6 +6,9 @@ import {
     TestERC20Token,
     NetworkSettings
 } from '../../typechain';
+import { ZERO_ADDRESS } from '../helpers/Constants';
+import { createSystem, createTokenHolder, createPoolCollection } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -34,24 +34,41 @@ describe('BancorNetwork', () => {
             );
         });
 
-        it('should revert when initialized with an invalid network token contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
+        it('should revert when initialized with an invalid network token governance contract', async () => {
+            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS, dummy.address, dummy.address)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
+        it('should revert when initialized with an invalid governance token governance contract', async () => {
+            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
                 'ERR_INVALID_ADDRESS'
             );
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.BancorNetwork.deploy(dummy.address, dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'ERR_INVALID_ADDRESS'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { network, networkToken, networkSettings, pendingWithdrawals } = await createSystem();
+            const {
+                network,
+                networkToken,
+                networkTokenGovernance,
+                govToken,
+                govTokenGovernance,
+                networkSettings,
+                pendingWithdrawals
+            } = await createSystem();
 
             expect(await network.version()).to.equal(1);
 
             expect(await network.networkToken()).to.equal(networkToken.address);
+            expect(await network.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
+            expect(await network.govToken()).to.equal(govToken.address);
+            expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);

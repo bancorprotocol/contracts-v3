@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../../test/helpers/Constants';
-import { domainSeparator, permitSignature } from '../../test/helpers/Permit';
-import { latest, duration } from '../../test/helpers/Time';
 import { PoolToken, TestERC20Token } from '../../typechain';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
+import { domainSeparator, permitSignature } from '../helpers/Permit';
+import { latest, duration } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet } from 'ethers';

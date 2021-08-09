@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../../test/helpers/Constants';
-import { createSystem } from '../../test/helpers/Factory';
-import { shouldHaveGap } from '../../test/helpers/Proxy';
+import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from '../helpers/Constants';
+import { createSystem } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -26,10 +26,23 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { networkTokenPool, network, networkToken, vault } = await createSystem();
+            const {
+                networkTokenPool,
+                network,
+                networkToken,
+                networkTokenGovernance,
+                govToken,
+                govTokenGovernance,
+                vault
+            } = await createSystem();
 
             expect(await networkTokenPool.version()).to.equal(1);
+
             expect(await networkTokenPool.network()).to.equal(network.address);
+            expect(await networkTokenPool.networkToken()).to.equal(networkToken.address);
+            expect(await networkTokenPool.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
+            expect(await networkTokenPool.govToken()).to.equal(govToken.address);
+            expect(await networkTokenPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await networkTokenPool.vault()).to.equal(vault.address);
             expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
 
