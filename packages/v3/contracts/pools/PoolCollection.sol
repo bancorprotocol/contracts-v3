@@ -417,7 +417,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             }
         } else {
             // the pool is in a base-token deficit
-            if (amounts.B.sub(amounts.E) <= bPc) {
+            if (amounts.B <= bPc) {
                 uint256 f = deductFee(e - bPc, x, d, n);
                 amounts.G = negArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
