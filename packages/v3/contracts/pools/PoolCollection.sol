@@ -24,7 +24,7 @@ import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
 import { PoolToken } from "./PoolToken.sol";
 
 /**
- * @dev Liquidity Pool Collection contract
+ * @dev Pool Collection contract
  *
  * notes:
  *

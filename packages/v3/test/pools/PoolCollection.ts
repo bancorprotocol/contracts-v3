@@ -217,6 +217,7 @@ describe('PoolCollection', () => {
 
         it('should revert when attempting to create a pool from a non-network', async () => {
             let nonNetwork = nonOwner;
+
             await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
