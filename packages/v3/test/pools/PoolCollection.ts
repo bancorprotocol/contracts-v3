@@ -57,7 +57,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                     const expected = baseArbitrage(b, f, m);
                     if (expected.gte(0) && expected.lte(MAX_VAL)) {
                         const actual = await poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
-                        expect(actual.toString()).to.equal(expected.toFixed());
+                        expect(actual).to.equal(expected);
                     } else {
                         await expect(poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
                             .reverted;
@@ -80,7 +80,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                                 f.toString(),
                                 m.toString()
                             );
-                            expect(actual.toString()).to.equal(expected.toFixed());
+                            expect(actual).to.equal(expected);
                         } else {
                             await expect(
                                 poolCollection.networkArbitrageTest(

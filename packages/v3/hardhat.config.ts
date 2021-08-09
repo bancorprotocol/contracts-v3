@@ -1,7 +1,6 @@
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import fs from 'fs';
 import 'hardhat-abi-exporter';
