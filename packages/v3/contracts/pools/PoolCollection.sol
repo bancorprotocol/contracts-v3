@@ -413,6 +413,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256 f = deductFee(bPc - e, x, d, n);
             amounts.G = posArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
             if (amounts.G > 0) {
+                amounts.G = Math.min(amounts.G, a);
                 amounts.H = Action.burnNetworkTokens;
             }
         } else {
@@ -421,6 +422,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 uint256 f = deductFee(e - bPc, x, d, n);
                 amounts.G = negArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
+                    amounts.G = Math.min(amounts.G, a);
                     amounts.H = Action.mintNetworkTokens;
                 }
             }
