@@ -1,14 +1,14 @@
+import Contracts from '../../components/Contracts';
+import { BancorVault, TestERC20Token } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+import { createSystem } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { TokenWithAddress, getBalance, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Contracts from 'components/Contracts';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { expectRole, roles } from 'test/helpers/AccessControl';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from 'test/helpers/Constants';
-import { createSystem } from 'test/helpers/Factory';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { TokenWithAddress, getBalance, transfer } from 'test/helpers/Utils';
-import { BancorVault, TestERC20Token } from 'typechain';
 
 const { BancorVault: BancorVaultRoles } = roles;
 

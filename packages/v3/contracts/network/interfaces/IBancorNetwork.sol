@@ -3,6 +3,8 @@ pragma solidity 0.7.6;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 
@@ -21,6 +23,21 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the network token contract
      */
     function networkToken() external view returns (IERC20);
+
+    /**
+     * @dev returns the network token governance contract
+     */
+    function networkTokenGovernance() external view returns (ITokenGovernance);
+
+    /**
+     * @dev returns the governance token contract
+     */
+    function govToken() external view returns (IERC20);
+
+    /**
+     * @dev returns the governance token governance contract
+     */
+    function govTokenGovernance() external view returns (ITokenGovernance);
 
     /**
      * @dev returns the network settings contract

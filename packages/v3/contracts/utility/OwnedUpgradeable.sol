@@ -53,14 +53,14 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     /**
      * @inheritdoc IOwned
      */
-    function owner() public view override returns (address) {
+    function owner() public view virtual override returns (address) {
         return _owner;
     }
 
     /**
      * @inheritdoc IOwned
      */
-    function transferOwnership(address ownerCandidate) public override onlyOwner {
+    function transferOwnership(address ownerCandidate) public virtual override onlyOwner {
         require(ownerCandidate != _owner, "ERR_SAME_OWNER");
 
         _newOwner = ownerCandidate;
@@ -69,7 +69,7 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     /**
      * @inheritdoc IOwned
      */
-    function acceptOwnership() public override {
+    function acceptOwnership() public virtual override {
         require(msg.sender == _newOwner, "ERR_ACCESS_DENIED");
 
         _setOwner(_newOwner);
@@ -86,9 +86,11 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
      * @dev sets the new owner internally
      */
     function _setOwner(address ownerCandidate) private {
-        emit OwnerUpdate(_owner, ownerCandidate);
+        address prevOwner = _owner;
 
         _owner = ownerCandidate;
         _newOwner = address(0);
+
+        emit OwnerUpdate(prevOwner, ownerCandidate);
     }
 }

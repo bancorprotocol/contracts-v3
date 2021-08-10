@@ -1,14 +1,4 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
-import Contracts from 'components/Contracts';
-import { BigNumber, Wallet, Signer } from 'ethers';
-import { formatBytes32String } from 'ethers/lib/utils';
-import { ethers } from 'hardhat';
-import { ZERO_ADDRESS, MAX_UINT256 } from 'test/helpers/Constants';
-import { createSystem, createPool } from 'test/helpers/Factory';
-import { permitSignature } from 'test/helpers/Permit';
-import { shouldHaveGap } from 'test/helpers/Proxy';
-import { duration, latest } from 'test/helpers/Time';
+import Contracts from '../../components/Contracts';
 import {
     TestPendingWithdrawals,
     NetworkSettings,
@@ -17,7 +7,17 @@ import {
     TestPoolCollection,
     TestNetworkTokenPool,
     PoolToken
-} from 'typechain';
+} from '../../typechain';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
+import { createSystem, createPool } from '../helpers/Factory';
+import { permitSignature } from '../helpers/Permit';
+import { shouldHaveGap } from '../helpers/Proxy';
+import { duration, latest } from '../helpers/Time';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber, Wallet, Signer } from 'ethers';
+import { formatBytes32String } from 'ethers/lib/utils';
+import { ethers } from 'hardhat';
 
 describe('PendingWithdrawals', () => {
     const WITHDRAWAL_REQUEST_DATA_VERSION = BigNumber.from(1);
@@ -82,6 +82,13 @@ describe('PendingWithdrawals', () => {
             );
         });
 
+        it('should ignore updating to the same lock duration', async () => {
+            await pendingWithdrawals.setLockDuration(newLockDuration);
+
+            const res = await pendingWithdrawals.setLockDuration(newLockDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'LockDurationUpdated');
+        });
+
         it('should be to able to set and update the lock duration', async () => {
             const res = await pendingWithdrawals.setLockDuration(newLockDuration);
             await expect(res)
@@ -113,6 +120,13 @@ describe('PendingWithdrawals', () => {
             await expect(
                 pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should ignore updating to the same withdrawal window duration', async () => {
+            await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+
+            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
+            await expect(res).not.to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated');
         });
 
         it('should be to able to set and update the withdrawal window duration', async () => {

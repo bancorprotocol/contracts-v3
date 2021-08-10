@@ -254,9 +254,15 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
+"@bancor/token-governance/0.7.6@bancorprotocol/token-governance#solc-0.7.6":
+  version "0.2.0"
+  resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/7ca235b5b6f65fde8207fd8a5c001f2d52fd9b5f"
+
 "@bancor/token-governance@bancorprotocol/token-governance":
   version "0.1.0"
   resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/72c40f70149cbd4b294556ee253bb0afd9620098"
+  dependencies:
+    "@openzeppelin/contracts" "3.2.0"
 
 "@deepcode/dcignore@^1.0.2":
   version "1.0.2"
@@ -1807,6 +1813,11 @@
   version "3.4.1-solc-0.7-2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-3.4.1-solc-0.7-2.tgz#8d46f2310560d3756bd5235e20f4e50caa947e92"
   integrity sha512-hGbNTTlkcsRhMdJ+IMAWKn5uI1IK9yvJamZpQou1aOjgr+VOFo7eqdiqs+Dwv8fGzN7L/Wdg4XqiW3vGqTHk3g==
+
+"@openzeppelin/contracts@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.2.0.tgz#3e6b3a7662d8ed64271ade96ef42655db983fd9d"
+  integrity sha512-bUOmkSoPkjnUyMiKo6RYnb0VHBk5D9KKDAgNLzF41aqAM3TeE0yGdFF5dVRcV60pZdJLlyFT/jjXIZCWyyEzAQ==
 
 "@openzeppelin/contracts@3.4.0":
   version "3.4.0"
@@ -14233,7 +14244,7 @@ ts-node@^10.1.0:
     source-map-support "^0.5.17"
     yn "3.1.1"
 
-tsconfig-paths@^3.10.1, tsconfig-paths@^3.9.0:
+tsconfig-paths@^3.9.0:
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/tsconfig-paths/-/tsconfig-paths-3.10.1.tgz#79ae67a68c15289fdf5c51cb74f397522d795ed7"
   integrity sha512-rETidPDgCpltxF7MjBZlAFPUHv5aHH2MymyPvh+vEyWAED4Eb/WeMbsnD/JDr4OKPOA1TssDHgIcpTN5Kh0p6Q==

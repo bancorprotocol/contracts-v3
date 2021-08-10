@@ -6,6 +6,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
+import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -29,6 +31,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
     // the address of the network token
     IERC20 private immutable _networkToken;
+
+    // the address of the network token governance
+    ITokenGovernance private immutable _networkTokenGovernance;
+
+    // the address of the governance token
+    IERC20 private immutable _govToken;
+
+    // the address of the governance token governance
+    ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
     INetworkSettings private immutable _settings;
@@ -181,11 +192,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IERC20 initNetworkToken, INetworkSettings initSettings)
-        validAddress(address(initNetworkToken))
+    constructor(
+        ITokenGovernance initNetworkTokenGovernance,
+        ITokenGovernance initGovTokenGovernance,
+        INetworkSettings initSettings
+    )
+        validAddress(address(initNetworkTokenGovernance))
+        validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
     {
-        _networkToken = initNetworkToken;
+        _networkTokenGovernance = initNetworkTokenGovernance;
+        _networkToken = initNetworkTokenGovernance.token();
+        _govTokenGovernance = initGovTokenGovernance;
+        _govToken = initGovTokenGovernance.token();
+
         _settings = initSettings;
     }
 
@@ -234,6 +254,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
+    function networkTokenGovernance() external view override returns (ITokenGovernance) {
+        return _networkTokenGovernance;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function govToken() external view override returns (IERC20) {
+        return _govToken;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function govTokenGovernance() external view override returns (ITokenGovernance) {
+        return _govTokenGovernance;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
@@ -264,11 +305,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         validAddress(address(newExternalProtectionWallet))
         onlyOwner
     {
-        emit ExternalProtectionWalletUpdated(_externalProtectionWallet, newExternalProtectionWallet);
+        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
+        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
+            return;
+        }
 
         newExternalProtectionWallet.acceptOwnership();
 
         _externalProtectionWallet = newExternalProtectionWallet;
+
+        emit ExternalProtectionWalletUpdated(prevExternalProtectionWallet, newExternalProtectionWallet);
     }
 
     /**
@@ -508,9 +554,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * - the caller must be the owner of the contract
      */
     function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
-        emit LatestPoolCollectionReplaced(poolType, _latestPoolCollections[poolType], poolCollection);
+        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
+        if (prevLatestPoolCollection == poolCollection) {
+            return;
+        }
 
         _latestPoolCollections[poolType] = poolCollection;
+
+        emit LatestPoolCollectionReplaced(poolType, prevLatestPoolCollection, poolCollection);
     }
 
     /**

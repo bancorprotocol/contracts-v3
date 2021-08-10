@@ -198,9 +198,14 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setLockDuration(uint32 newLockDuration) external onlyOwner {
-        emit LockDurationUpdated(_lockDuration, newLockDuration);
+        uint32 prevLockDuration = _lockDuration;
+        if (prevLockDuration == newLockDuration) {
+            return;
+        }
 
         _lockDuration = newLockDuration;
+
+        emit LockDurationUpdated(prevLockDuration, newLockDuration);
     }
 
     /**
@@ -222,9 +227,14 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
-        emit WithdrawalWindowDurationUpdated(_withdrawalWindowDuration, newWithdrawalWindowDuration);
+        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
+        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
+            return;
+        }
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
+
+        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
     }
 
     /**

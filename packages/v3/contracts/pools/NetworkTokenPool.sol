@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -20,6 +24,18 @@ import { PoolToken } from "./PoolToken.sol";
 contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
     // the network contract
     IBancorNetwork private immutable _network;
+
+    // the address of the network token
+    IERC20 private immutable _networkToken;
+
+    // the address of the network token governance
+    ITokenGovernance private immutable _networkTokenGovernance;
+
+    // the address of the governance token
+    IERC20 private immutable _govToken;
+
+    // the address of the governance token governance
+    ITokenGovernance private immutable _govTokenGovernance;
 
     // the vault contract
     IBancorVault private immutable _vault;
@@ -66,6 +82,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
         IPoolToken initPoolToken
     ) validAddress(address(initNetwork)) validAddress(address(initVault)) validAddress(address(initPoolToken)) {
         _network = initNetwork;
+        _networkToken = initNetwork.networkToken();
+        _networkTokenGovernance = initNetwork.networkTokenGovernance();
+        _govToken = initNetwork.govToken();
+        _govTokenGovernance = initNetwork.govTokenGovernance();
         _vault = initVault;
         _poolToken = initPoolToken;
     }
@@ -107,6 +127,34 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, Utils {
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function networkToken() external view override returns (IERC20) {
+        return _networkToken;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function networkTokenGovernance() external view override returns (ITokenGovernance) {
+        return _networkTokenGovernance;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function govToken() external view override returns (IERC20) {
+        return _govToken;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function govTokenGovernance() external view override returns (ITokenGovernance) {
+        return _govTokenGovernance;
     }
 
     /**

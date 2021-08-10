@@ -1,7 +1,7 @@
+import { AccessControlUpgradeable } from '../../typechain';
 import { expect } from 'chai';
 import { ethers } from 'ethers';
 import { BigNumber } from 'ethers';
-import { AccessControlUpgradeable } from 'typechain';
 
 const {
     utils: { id }
@@ -12,6 +12,11 @@ export const roles = {
         ROLE_ADMIN: id('ROLE_ADMIN'),
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
+    },
+
+    TokenGovernance: {
+        ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
+        ROLE_MINTER: id('ROLE_MINTER')
     }
 };
 
