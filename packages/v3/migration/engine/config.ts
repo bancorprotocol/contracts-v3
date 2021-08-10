@@ -1,5 +1,5 @@
+import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.config';
 import { network } from 'hardhat';
-import { FORK_CONFIG, FORK_PREFIX } from 'hardhat.config';
 
 export const MIGRATION_FOLDER = 'migration/migrations';
 export const MIGRATION_DATA_FOLDER = 'migration/data';

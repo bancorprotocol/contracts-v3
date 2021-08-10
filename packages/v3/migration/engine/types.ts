@@ -1,5 +1,5 @@
+import { Contracts } from '../../components/Contracts';
 import { initExecutionFunctions } from './executions';
-import { Contracts } from 'components/Contracts';
 import { Signer } from 'ethers';
 
 export type SystemState = {

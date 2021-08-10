@@ -1,29 +1,28 @@
-import { NextState as InitialState } from './2_deploy_network';
-import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
-import { deployedContract, Migration } from 'migration/engine/types';
+import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { deployedContract, Migration } from '../engine/types';
+import { NextState as InitialState } from './1_deploy_proxyAdmin';
 
 export type NextState = InitialState & {
-    vault: deployedContract;
+    networkSettings: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
-        const bancorVault = await deployProxy(proxyAdmin, contracts.BancorVault, [], initialState.BNT.token);
+        const networkSettings = await deployProxy(proxyAdmin, contracts.NetworkSettings, []);
 
         return {
             ...initialState,
 
-            vault: bancorVault.address
+            networkSettings: networkSettings.address
         };
     },
 
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
-        const bancorVault = await contracts.BancorVault.attach(state.vault);
+        const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings);
 
-        if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
-            throw new OwnerNotSetOrCorrect();
+        if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
     },
 
     down: async (

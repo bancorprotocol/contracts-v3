@@ -1,6 +1,6 @@
-import { NextState as InitialState } from './4_deploy_networkTokenPool';
-import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
-import { deployedContract, Migration } from 'migration/engine/types';
+import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { deployedContract, Migration } from '../engine/types';
+import { NextState as InitialState } from './5_deploy_networkTokenPool';
 
 export type NextState = InitialState & {
     pendingWithdrawals: deployedContract;

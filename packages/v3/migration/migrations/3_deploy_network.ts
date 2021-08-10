@@ -1,5 +1,5 @@
-import { NextState as InitialState } from './1_deploy_networkSettings';
-import { deployedContract, Migration } from 'migration/engine/types';
+import { deployedContract, Migration } from '../engine/types';
+import { NextState as InitialState } from './2_deploy_networkSettings';
 
 export type NextState = InitialState & {
     bancorNetwork: deployedContract;

@@ -1,8 +1,8 @@
+import { createMigrationParamTask } from '../../migration';
+import { MIGRATION_FOLDER } from '../../migration/engine/config';
+import { log } from '../../migration/engine/logger/logger';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { createMigrationParamTask } from 'migration';
-import { MIGRATION_FOLDER } from 'migration/engine/config';
-import { log } from 'migration/engine/logger/logger';
 import path from 'path';
 
 export default async (args: createMigrationParamTask, hre: HardhatRuntimeEnvironment) => {

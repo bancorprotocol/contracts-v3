@@ -1,10 +1,6 @@
-import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
-import { deployedContract, Migration } from 'migration/engine/types';
-
-export type InitialState = {
-    BNT: { token: deployedContract; governance: deployedContract };
-    vBNT: { token: deployedContract; governance: deployedContract };
-};
+import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { deployedContract, Migration } from '../engine/types';
+import { NextState as InitialState } from './0_deploy_basics';
 
 export type NextState = InitialState & {
     proxyAdmin: deployedContract;

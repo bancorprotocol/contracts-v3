@@ -1,10 +1,10 @@
+import Contracts, { ContractBuilder, Contract } from '../../components/Contracts';
+import { ProxyAdmin } from '../../typechain';
 import { ExecutionError } from './errors/errors';
 import { executionSettings } from './initialization';
 import { log } from './logger/logger';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import Contracts, { ContractBuilder, Contract } from 'components/Contracts';
 import { BaseContract, ContractFactory, Overrides } from 'ethers';
-import { ProxyAdmin } from 'typechain';
 
 export const initExecutionFunctions = (contracts: typeof Contracts, executionSettings: executionSettings) => {
     const overrides: Overrides = {

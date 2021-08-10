@@ -1,6 +1,3 @@
-import { Signer } from '@ethersproject/abstract-signer';
-import { ContractFactory } from '@ethersproject/contracts';
-import { ethers } from 'hardhat';
 import {
     BancorNetwork__factory,
     BancorVault__factory,
@@ -24,6 +21,10 @@ import {
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
+import { TokenGovernance__factory } from '@bancor/token-governance/typechain';
+import { Signer } from '@ethersproject/abstract-signer';
+import { ContractFactory } from '@ethersproject/contracts';
+import { ethers } from 'hardhat';
 
 type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
@@ -49,7 +50,7 @@ const deployOrAttach = <F extends ContractFactory>(contractName: string, passedS
                 ...(args || [])
             ) as Contract<F>;
         },
-        attach: attachOnly<F>(contractName).attach
+        attach: attachOnly<F>(contractName, passedSigner).attach
     };
 };
 
@@ -58,6 +59,37 @@ const attachOnly = <F extends ContractFactory>(contractName: string, passedSigne
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
             let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
             return ethers.getContractAt(contractName, address, signer || defaultSigner) as Contract<F>;
+        }
+    };
+};
+
+const deployOrAttachExternal = <F extends ContractFactory>(
+    contractName: string,
+    // @TODO: needs to replace with correctly typed params but it doesn't work properly for some reason https://github.com/microsoft/TypeScript/issues/31278
+    factoryConstructor: { new (signer?: Signer): F },
+    passedSigner?: Signer
+): ContractBuilder<F> => {
+    // const factory = new factoryConstructor(passedSigner);
+
+    return {
+        contractName,
+        deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
+            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+
+            return new factoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
+        },
+        attach: attachOnlyExternal<F>(factoryConstructor, passedSigner).attach
+    };
+};
+
+const attachOnlyExternal = <F extends ContractFactory>(
+    factoryConstructor: { new (signer?: Signer): F },
+    passedSigner?: Signer
+) => {
+    return {
+        attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
+            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            return new factoryConstructor(signer || defaultSigner).attach(address) as Contract<F>;
         }
     };
 };
@@ -88,7 +120,10 @@ const getContracts = (signer?: Signer) => ({
     TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
         'TransparentUpgradeableProxy',
         signer
-    )
+    ),
+
+    // external contracts
+    TokenGovernance: deployOrAttachExternal('TokenGovernance', TokenGovernance__factory, signer)
 });
 
 export type Contracts = ReturnType<typeof getContracts>;

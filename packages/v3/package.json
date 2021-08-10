@@ -41,7 +41,7 @@
         "hardhat": "2.5.0"
     },
     "devDependencies": {
-        "@bancor/token-governance": "bancorprotocol/token-governance",
+        "@bancor/token-governance": "^0.1.1",
         "@ethersproject/hardware-wallets": "^5.4.0",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-etherscan": "^2.1.4",
@@ -60,7 +60,7 @@
         "eth-sig-util": "^3.0.1",
         "ethereum-waffle": "^3.4.0",
         "ethereumjs-util": "^7.1.0",
-        "ethers": "^5.4.3",
+        "ethers": "^5.4.4",
         "hardhat-abi-exporter": "^2.2.1",
         "hardhat-contract-sizer": "^2.0.3",
         "hardhat-dependency-compiler": "^1.1.1",

@@ -1,12 +1,12 @@
 import { migrateParamTask } from '..';
+import { importCsjOrEsModule } from '../../components/TaskUtils';
+import { SystemState } from '../../migration/engine/types';
 import { MIGRATION_DATA_FOLDER, MIGRATION_FOLDER, NETWORK_NAME, MIGRATION_CONFIG } from '../engine/config';
 import { initMigration } from '../engine/initialization';
 import { log } from '../engine/logger/logger';
 import { Migration } from '../engine/types';
-import { importCsjOrEsModule } from 'components/TaskUtils';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { SystemState } from 'migration/engine/types';
 import path from 'path';
 
 export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) => {

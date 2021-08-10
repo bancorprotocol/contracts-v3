@@ -1,11 +1,11 @@
+import Contracts from '../../components/Contracts';
+import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.config';
 import { initExecutionFunctions } from './executions';
 import { log } from './logger/logger';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
-import Contracts from 'components/Contracts';
 import { BigNumberish } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { ethers, network } from 'hardhat';
-import { FORK_CONFIG, FORK_PREFIX } from 'hardhat.config';
 
 export type defaultMigrationArgs = {
     ledger: boolean;
@@ -35,13 +35,16 @@ export const initMigration = async (args: defaultMigrationArgs) => {
         confirmationToWait: args.confirmationToWait
     };
 
-    if (executionSettings.confirmationToWait <= 1 && !migrationNetworkConfig.isFork) {
+    if (
+        executionSettings.confirmationToWait <= 1 &&
+        !(migrationNetworkConfig.isFork || migrationNetworkConfig.networkName === 'hardhat')
+    ) {
         throw new Error(
             `Transaction confirmation should be defined or higher than 1 for ${migrationNetworkConfig.networkName} use. Aborting`
         );
     }
 
-    if (!args.gasPrice && !migrationNetworkConfig.isFork) {
+    if (!args.gasPrice && !(migrationNetworkConfig.isFork || migrationNetworkConfig.networkName === 'hardhat')) {
         throw new Error(`Gas Price shouldn't be equal to 0 for ${migrationNetworkConfig.networkName} use. Aborting`);
     }
     executionSettings.gasPrice = args.gasPrice === 0 ? undefined : parseUnits(args.gasPrice.toString(), 'gwei');

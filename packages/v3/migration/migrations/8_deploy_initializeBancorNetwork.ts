@@ -1,6 +1,6 @@
-import { NextState as InitialState } from './6_deploy_liquidityPoolCollection';
-import { OwnerNotSetOrCorrect } from 'migration/engine/errors/errors';
-import { Migration } from 'migration/engine/types';
+import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { Migration } from '../engine/types';
+import { NextState as InitialState } from './7_deploy_liquidityPoolCollection';
 
 export type NextState = InitialState;
 

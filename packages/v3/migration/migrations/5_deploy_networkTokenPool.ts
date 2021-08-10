@@ -1,6 +1,6 @@
-import { NextState as InitialState } from './3_deploy_vault';
-import { deployedContract, Migration } from 'migration/engine/types';
-import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from 'test/helpers/Constants';
+import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from '../../test/helpers/Constants';
+import { deployedContract, Migration } from '../engine/types';
+import { NextState as InitialState } from './4_deploy_vault';
 
 export type NextState = InitialState & {
     networkTokenPool: deployedContract;
