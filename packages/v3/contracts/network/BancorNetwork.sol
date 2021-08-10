@@ -480,15 +480,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, block.timestamp, id));
 
         if (request.poolToken == networkTokenPool.poolToken()) {
-            // BNT
+            // TODO:
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool
             // call withdraw on the BNT pool
             // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
             // emit the TotalLiquidityUpdated event
         } else {
-            // TKN
-            IReserveToken baseToken; // TODO: how do we get this?
+            IReserveToken baseToken = request.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
             IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
             IBancorVault vault = networkTokenPool.vault();
