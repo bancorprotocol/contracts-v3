@@ -22,8 +22,8 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
 
             this.assert(
                 BigNumber.from(expectedBN).eq(actualBN),
-                `Expected "${expectedBN}" to be ${readableName} ${actualBN}`,
-                `Expected "${expectedBN}" NOT to be ${readableName} ${actualBN}`,
+                `Expected ${expectedBN} to be ${readableName} ${actualBN}`,
+                `Expected ${expectedBN} NOT to be ${readableName} ${actualBN}`,
                 expectedBN,
                 actualBN
             );
