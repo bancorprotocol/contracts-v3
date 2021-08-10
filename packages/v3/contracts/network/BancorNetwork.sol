@@ -509,13 +509,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             }
 
             if (amounts.F > 0) {
-                // network token amount to burn in the vault
-                // TODO: _networkToken.burn(address(vault), amounts.F);
+                // network token amount to transfer from the vault and then burn
+                vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+                _networkTokenGovernance.burn(amounts.F);
             }
 
             if (amounts.C > 0) {
                 // network token amount to mint directly for the user
-                // TODO: _networkToken.mint(request.provider, amounts.C);
+                _networkTokenGovernance.mint(request.provider, amounts.C);
             }
 
             if (amounts.E > 0) {
