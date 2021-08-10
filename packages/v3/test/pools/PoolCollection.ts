@@ -6,8 +6,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-import { ethers } from 'hardhat';
 import fs from 'fs';
+import { ethers } from 'hardhat';
 import os from 'os';
 import path from 'path';
 
