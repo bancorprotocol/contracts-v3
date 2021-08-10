@@ -159,10 +159,12 @@ describe('PoolCollection', () => {
 
     describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
 
         beforeEach(async () => {
-            ({ poolCollection } = await createSystem());
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
@@ -194,12 +196,25 @@ describe('PoolCollection', () => {
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(newDefaultTradingFree);
 
+            // ensure that the new default trading fee is used during the creation of newer pools
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await network.createPoolT(poolCollection.address, reserveToken.address);
+            const pool = await poolCollection.poolData(reserveToken.address);
+            expect(pool.tradingFeePPM).to.equal(newDefaultTradingFree);
+
             const res2 = await poolCollection.setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
             await expect(res2)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(newDefaultTradingFree, DEFAULT_TRADING_FEE_PPM);
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+
+            // ensure that the new default trading fee is used during the creation of newer pools
+            const newReserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+            await networkSettings.addTokenToWhitelist(newReserveToken.address);
+            await network.createPoolT(poolCollection.address, newReserveToken.address);
+            const pool2 = await poolCollection.poolData(newReserveToken.address);
+            expect(pool2.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
     });
 

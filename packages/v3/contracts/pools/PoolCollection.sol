@@ -215,7 +215,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         _pools[reserveToken] = Pool({
             version: 1,
             poolToken: newPoolToken,
-            tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
+            tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
