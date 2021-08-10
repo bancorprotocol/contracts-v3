@@ -13,19 +13,19 @@ function override(name: string, utils: Chai.ChaiUtils) {
 
 function overwriteBigNumberFunction(readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
-        const [actual] = args;
-        const expected = chaiUtils.flag(this, 'object');
+        const [expected] = args;
+        const obj = chaiUtils.flag(this, 'object');
 
-        if (BigNumber.isBigNumber(expected) || BigNumber.isBigNumber(actual)) {
+        if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
+            let objBN = BigNumber.from(Decimal.isDecimal(obj) ? obj.toFixed() : obj);
             let expectedBN = BigNumber.from(Decimal.isDecimal(expected) ? expected.toFixed() : expected);
-            let actualBN = BigNumber.from(Decimal.isDecimal(actual) ? actual.toFixed() : actual);
 
             this.assert(
-                BigNumber.from(expectedBN).eq(actualBN),
-                `Expected ${expectedBN} to be ${readableName} ${actualBN}`,
-                `Expected ${expectedBN} NOT to be ${readableName} ${actualBN}`,
-                expectedBN,
-                actualBN
+                BigNumber.from(objBN).eq(expectedBN),
+                `Expected ${objBN} to be ${readableName} ${expectedBN}`,
+                `Expected ${objBN} NOT to be ${readableName} ${expectedBN}`,
+                objBN,
+                expectedBN
             );
         } else {
             _super.apply(this, args);
