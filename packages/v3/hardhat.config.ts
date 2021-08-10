@@ -31,9 +31,6 @@ const ci = loadENVKey<boolean>('CI');
 const config: HardhatUserConfig = {
     networks: {
         hardhat: {
-            hardfork: 'london',
-            gasPrice: 'auto',
-            gas: 9500000,
             accounts: {
                 count: 10,
                 accountsBalance: '10000000000000000000000000000'
