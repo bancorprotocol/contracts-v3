@@ -441,7 +441,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256 f = deductFee(bPc - e, x, d, n);
             amounts.G = posArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
             if (amounts.G > 0) {
-                amounts.G = Math.min(amounts.G, a);
+                amounts.G = Math.min(amounts.G, a / 2);
                 amounts.H = Action.burnNetworkTokens;
             }
         } else {
