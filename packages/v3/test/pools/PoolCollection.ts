@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
-import { MAX_UINT256, ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { MAX_UINT256, ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -104,6 +104,10 @@ describe('PoolCollection', () => {
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
     const EMPTY_STRING = '';
+    const INITIAL_RATE = {
+        n: BigNumber.from(0),
+        d: BigNumber.from(1)
+    };
 
     let nonOwner: SignerWithAddress;
 
@@ -126,6 +130,14 @@ describe('PoolCollection', () => {
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
             expect(await poolCollection.network()).to.equal(network.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+        });
+
+        it('should emit events on initialization', async () => {
+            const { poolCollection } = await createSystem();
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
+                .withArgs(BigNumber.from(0), DEFAULT_TRADING_FEE_PPM);
         });
     });
 
@@ -263,6 +275,21 @@ describe('PoolCollection', () => {
                 const pool = await poolCollection.poolData(reserveToken.address);
 
                 await expect(res).to.emit(poolCollection, 'PoolCreated').withArgs(pool.poolToken, reserveToken.address);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingFeePPMUpdated')
+                    .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, pool.tradingEnabled);
+                await expect(res)
+                    .to.emit(poolCollection, 'DepositingEnabled')
+                    .withArgs(reserveToken.address, pool.depositingEnabled);
+                await expect(res)
+                    .to.emit(poolCollection, 'InitialRateUpdated')
+                    .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
+                await expect(res)
+                    .to.emit(poolCollection, 'DepositLimitUpdated')
+                    .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
 
                 expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                 const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
@@ -279,10 +306,7 @@ describe('PoolCollection', () => {
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
-                expect(pool.initialRate).to.equal({
-                    n: BigNumber.from(0),
-                    d: BigNumber.from(1)
-                });
+                expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
             });
 
@@ -357,7 +381,7 @@ describe('PoolCollection', () => {
             it('should allow setting and updating the initial rate', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { initialRate } = pool;
-                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(1) });
+                expect(initialRate).to.equal(INITIAL_RATE);
 
                 const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)
