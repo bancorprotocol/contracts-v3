@@ -8,7 +8,7 @@ export const palette = {
 };
 
 export const log = {
-    // Basic logging
+    // basic logging
     normal: (...str: string[]) => console.log(...str),
     info: (...str: string[]) => console.log(chalk.cyanBright(`⚠️  ${str}`)),
     done: (...str: string[]) => console.log(chalk.yellowBright(`${str}`)),
@@ -18,7 +18,7 @@ export const log = {
     success: (...str: string[]) => console.log(chalk.greenBright(`${str}`)),
     error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
 
-    // Specific logging
+    // specific logging
     migrationConfig: (signerAddress: string, isLedger: boolean, executionSettings: executionSettings) => {
         palette.yellow(`**********************`);
         palette.yellow(`** Migration Config **`);

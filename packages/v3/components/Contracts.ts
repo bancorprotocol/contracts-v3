@@ -69,8 +69,6 @@ const deployOrAttachExternal = <F extends ContractFactory>(
     factoryConstructor: { new (signer?: Signer): F },
     passedSigner?: Signer
 ): ContractBuilder<F> => {
-    // const factory = new factoryConstructor(passedSigner);
-
     return {
         contractName,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {

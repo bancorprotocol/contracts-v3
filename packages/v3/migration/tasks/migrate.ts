@@ -30,7 +30,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
         log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
-        // Save oldState
+        // save oldState
         const oldState = currentState;
         try {
             currentState.networkState = await migration.up(
@@ -75,7 +75,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
 
     const pathToState = path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, NETWORK_NAME);
 
-    // If reset, delete all the files in the corresponding network folder
+    // if reset, delete all the files in the corresponding network folder
     if (args.reset) {
         log.info(`Resetting ${NETWORK_NAME} migratation folder`);
         fs.rmSync(pathToState, {
@@ -84,12 +84,12 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
         });
     }
 
-    // If network folder doesn't exist, create it
+    // if network folder doesn't exist, create it
     if (!fs.existsSync(pathToState)) {
         fs.mkdirSync(pathToState);
     }
 
-    // Read all files into the folder and fetch any state file
+    // read all files into the folder and fetch any state file
     const pathToStateFolder = fs.readdirSync(pathToState);
     const stateFile = pathToStateFolder.find((fileName: string) => fileName === 'state.json');
 
@@ -107,7 +107,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
         networkState: {}
     };
 
-    // If network is a fork fetch info from original network
+    // if network is a fork fetch info from original network
     if (args.reset && MIGRATION_CONFIG.isFork) {
         try {
             log.info(`Fetching initial state from ${MIGRATION_CONFIG.originalNetwork}`);
@@ -122,13 +122,13 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
         }
     }
 
-    // If there is no state file in the network's folder, create an empty one
+    // if there is no state file in the network's folder, create an empty one
     if (!stateFile) {
         writeState(state);
     }
     const initialState = fetchState(pathToState);
 
-    // Generate migration files
+    // generate migration files
     const pathToMigrationFiles = path.join(hre.config.paths.root, MIGRATION_FOLDER);
     const allMigrationFiles = fs.readdirSync(pathToMigrationFiles);
     const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
@@ -146,7 +146,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
         }
     }
 
-    // Even if migrations should be automatically sorted by the dir fetching, sort again just in case
+    // even if migrations should be automatically sorted by the dir fetching, sort again just in case
     migrationsData.sort((a, b) =>
         a.migrationTimestamp > b.migrationTimestamp ? 1 : b.migrationTimestamp > a.migrationTimestamp ? -1 : 0
     );
