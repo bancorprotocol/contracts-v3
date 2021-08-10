@@ -573,7 +573,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        return MathEx.mulDivF(f, fM.add(bm).sub(fm.mul(2)), bM.sub(fm));
+        (uint256 y, uint256 z) = quotient(fM.add(bm), fm.mul(2), bM, fm);
+        return MathEx.mulDivF(f, y, z);
     }
 
     /**
@@ -596,8 +597,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        uint256 max = bm.add(fm.mul(2));
-        return fM > max ? MathEx.mulDivF(f, fM - max, bM.add(fm)) : 0;
+        (uint256 y, uint256 z) = quotient(fM, bm.add(fm.mul(2)), bM.add(fm), 0);
+        return MathEx.mulDivF(f, y, z);
     }
 
     /**
@@ -623,7 +624,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).sub(fM), b.mul(bM.sub(fm)));
+        (uint256 y, uint256 z) = quotient(b.mul(2 * PPM_RESOLUTION - m), fM, bM, fm);
+        return MathEx.mulDivF(af, y, b.mul(z));
     }
 
     /**
@@ -649,7 +651,29 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).add(fM), b.mul(bM.add(fm)));
+        (uint256 y, uint256 z) = quotient(b.mul(2 * PPM_RESOLUTION - m).add(fM), 0, bM.add(fm), 0);
+        return MathEx.mulDivF(af, y, b.mul(z));
+    }
+
+    /**
+     * @dev returns the maximum of `(n1 - n2) / (d1 - d2)` and 0
+     */
+    function quotient(
+        uint256 n1,
+        uint256 n2,
+        uint256 d1,
+        uint256 d2
+    ) internal pure returns (uint256, uint256) {
+        if (n1 > n2 && d1 > d2) {
+            // the quotient is positive
+            return (n1 - n2, d1 - d2);
+        }
+        if (n2 > n1 && d2 > d1) {
+            // the quotient is positive
+            return (n2 - n1, d2 - d1);
+        }
+        // the quotient is not positive
+        return (0, d1 == d2 ? 0 : 1);
     }
 
     /**
