@@ -13,28 +13,6 @@ const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
 const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 
-const expectEqual = (actual: BigNumber, expected: Decimal) => {
-    expect(actual.toString()).to.equal(expected.toFixed());
-};
-
-const expectAlmostEqual = (
-    actual: [BigNumber, BigNumber],
-    expected: Decimal[],
-    maxAbsoluteError: Decimal,
-    maxRelativeError: Decimal
-) => {
-    const x = expected[0].mul(actual[1].toString());
-    const y = expected[1].mul(actual[0].toString());
-    if (!x.eq(y)) {
-        const absoluteError = x.sub(y).abs();
-        const relativeError = x.div(y).sub(1).abs();
-        expect(absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError)).to.equal(
-            true,
-            `\nabsoluteError = ${absoluteError.toFixed()}\nrelativeError = ${relativeError.toFixed(25)}`
-        );
-    }
-};
-
 describe('MathEx', () => {
     let mathContract: TestMathEx;
 
@@ -47,7 +25,7 @@ describe('MathEx', () => {
         it(`floorSqrt(${x})`, async () => {
             const expected = floorSqrt(x);
             const actual = await mathContract.floorSqrtTest(x);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -56,7 +34,7 @@ describe('MathEx', () => {
         it(`ceilSqrt(${x})`, async () => {
             const expected = ceilSqrt(x);
             const actual = await mathContract.ceilSqrtTest(x);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -72,7 +50,7 @@ describe('MathEx', () => {
         it(`productRatio(${[an, bn, ad, bd]})`, async () => {
             const expected = productRatio(an, bn, ad, bd);
             const actual = await mathContract.productRatioTest(an, bn, ad, bd);
-            expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -87,7 +65,7 @@ describe('MathEx', () => {
         it(`reducedRatio(${[a, b, max]})`, async () => {
             const expected = reducedRatio(a, b, max);
             const actual = await mathContract.reducedRatioTest(a, b, max);
-            expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -102,7 +80,7 @@ describe('MathEx', () => {
         it(`normalizedRatio(${[a, b, max]})`, async () => {
             const expected = normalizedRatio(a, b, max);
             const actual = await mathContract.normalizedRatioTest(a, b, max);
-            expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -117,7 +95,7 @@ describe('MathEx', () => {
         it(`accurateRatio(${[a, b, max]})`, async () => {
             const expected = accurateRatio(a, b, max);
             const actual = await mathContract.accurateRatioTest(a, b, max);
-            expectAlmostEqual(actual, expected, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -126,7 +104,7 @@ describe('MathEx', () => {
         it(`roundDiv(${n}, ${d})`, async () => {
             const expected = roundDiv(n, d);
             const actual = await mathContract.roundDivTest(n, d);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -135,7 +113,7 @@ describe('MathEx', () => {
         it(`geometricMean([${values}])`, async () => {
             const expected = new Decimal(10).pow(Math.round(values.join('').length / values.length) - 1);
             const actual = await mathContract.geometricMeanTest(values);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -144,7 +122,7 @@ describe('MathEx', () => {
         it(`decimalLength(${x})`, async () => {
             const expected = new Decimal(x.length);
             const actual = await mathContract.decimalLengthTest(x);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -153,7 +131,7 @@ describe('MathEx', () => {
         it(`roundDivUnsafe(${[n, d]})`, async () => {
             const expected = roundDiv(n, d);
             const actual = await mathContract.roundDivUnsafeTest(n, d);
-            expectEqual(actual, expected);
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -164,7 +142,7 @@ describe('MathEx', () => {
             const expected = MathUtils[methodName](a, b, c);
             if (expected.lte(MAX_UINT256)) {
                 const actual = await mathContract[methodName](a, b, c);
-                expectEqual(actual, expected);
+                expect(actual).to.equal(expected);
             } else {
                 await expect(mathContract[methodName](a, b, c)).to.be.revertedWith('ERR_OVERFLOW');
             }
