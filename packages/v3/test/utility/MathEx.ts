@@ -50,7 +50,7 @@ describe('MathEx', () => {
         it(`productRatio(${[an, bn, ad, bd]})`, async () => {
             const expected = productRatio(an, bn, ad, bd);
             const actual = await mathContract.productRatioTest(an, bn, ad, bd);
-            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -65,7 +65,7 @@ describe('MathEx', () => {
         it(`reducedRatio(${[a, b, max]})`, async () => {
             const expected = reducedRatio(a, b, max);
             const actual = await mathContract.reducedRatioTest(a, b, max);
-            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -80,7 +80,7 @@ describe('MathEx', () => {
         it(`normalizedRatio(${[a, b, max]})`, async () => {
             const expected = normalizedRatio(a, b, max);
             const actual = await mathContract.normalizedRatioTest(a, b, max);
-            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -95,7 +95,7 @@ describe('MathEx', () => {
         it(`accurateRatio(${[a, b, max]})`, async () => {
             const expected = accurateRatio(a, b, max);
             const actual = await mathContract.accurateRatioTest(a, b, max);
-            expect(expected).to.be.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
         });
     };
 
