@@ -44,7 +44,6 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
         const vBNTGovernance = await contracts.TokenGovernance.attach(state.vBNT.governance);
-
         if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
             throw new OwnerNotSetOrCorrect();
         if (!(await vBNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))

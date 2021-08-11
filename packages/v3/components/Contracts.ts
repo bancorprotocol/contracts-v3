@@ -21,7 +21,7 @@ import {
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
-import { TokenGovernance__factory } from '@bancor/token-governance/typechain';
+import { TokenGovernance__factory } from '@bancor/token-governance';
 import { Signer } from '@ethersproject/abstract-signer';
 import { ContractFactory } from '@ethersproject/contracts';
 import { ethers } from 'hardhat';
