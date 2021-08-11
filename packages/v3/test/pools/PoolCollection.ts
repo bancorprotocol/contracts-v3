@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -92,6 +92,10 @@ describe('PoolCollection', () => {
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
     const EMPTY_STRING = '';
+    const INITIAL_RATE = {
+        n: BigNumber.from(0),
+        d: BigNumber.from(1)
+    };
 
     let nonOwner: SignerWithAddress;
 
@@ -114,6 +118,14 @@ describe('PoolCollection', () => {
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
             expect(await poolCollection.network()).to.equal(network.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+        });
+
+        it('should emit events on initialization', async () => {
+            const { poolCollection } = await createSystem();
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
+                .withArgs(BigNumber.from(0), DEFAULT_TRADING_FEE_PPM);
         });
     });
 
@@ -147,10 +159,12 @@ describe('PoolCollection', () => {
 
     describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
 
         beforeEach(async () => {
-            ({ poolCollection } = await createSystem());
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
@@ -182,12 +196,25 @@ describe('PoolCollection', () => {
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(newDefaultTradingFree);
 
+            // ensure that the new default trading fee is used during the creation of newer pools
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await network.createPoolT(poolCollection.address, reserveToken.address);
+            const pool = await poolCollection.poolData(reserveToken.address);
+            expect(pool.tradingFeePPM).to.equal(newDefaultTradingFree);
+
             const res2 = await poolCollection.setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
             await expect(res2)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(newDefaultTradingFree, DEFAULT_TRADING_FEE_PPM);
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+
+            // ensure that the new default trading fee is used during the creation of newer pools
+            const newReserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+            await networkSettings.addTokenToWhitelist(newReserveToken.address);
+            await network.createPoolT(poolCollection.address, newReserveToken.address);
+            const pool2 = await poolCollection.poolData(newReserveToken.address);
+            expect(pool2.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
     });
 
@@ -236,6 +263,21 @@ describe('PoolCollection', () => {
                 const pool = await poolCollection.poolData(reserveToken.address);
 
                 await expect(res).to.emit(poolCollection, 'PoolCreated').withArgs(pool.poolToken, reserveToken.address);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingFeePPMUpdated')
+                    .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, pool.tradingEnabled);
+                await expect(res)
+                    .to.emit(poolCollection, 'DepositingEnabled')
+                    .withArgs(reserveToken.address, pool.depositingEnabled);
+                await expect(res)
+                    .to.emit(poolCollection, 'InitialRateUpdated')
+                    .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
+                await expect(res)
+                    .to.emit(poolCollection, 'DepositLimitUpdated')
+                    .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
 
                 expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                 const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
@@ -252,10 +294,7 @@ describe('PoolCollection', () => {
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
-                expect(pool.initialRate).to.equal({
-                    n: BigNumber.from(0),
-                    d: BigNumber.from(1)
-                });
+                expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
             });
 
@@ -330,7 +369,7 @@ describe('PoolCollection', () => {
             it('should allow setting and updating the initial rate', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { initialRate } = pool;
-                expect(initialRate).to.equal({ n: BigNumber.from(0), d: BigNumber.from(1) });
+                expect(initialRate).to.equal(INITIAL_RATE);
 
                 const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)

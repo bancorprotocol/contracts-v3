@@ -54,7 +54,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
     // the default trading fee (in units of PPM)
-    uint32 private _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
+    uint32 private _defaultTradingFeePPM;
 
     /**
      * @dev triggered when a pool is created
@@ -65,11 +65,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
-
-    /**
-     * @dev triggered when a pool's initial rate is updated
-     */
-    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
      * @dev triggered when a specific pool's trading fee is updated
@@ -87,14 +82,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     event DepositingEnabled(IReserveToken indexed pool, bool newStatus);
 
     /**
+     * @dev triggered when a pool's initial rate is updated
+     */
+    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
+
+    /**
      * @dev triggered when a pool's deposit limit is updated
      */
     event DepositLimitUpdated(IReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
-
-    /**
-     * @dev triggered when trades in a specific pool are enabled/disabled
-     */
-    event TradesEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -105,6 +100,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _network = initNetwork;
         _settings = initNetwork.settings();
+
+        _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
     // allows execution by the network only
@@ -193,14 +190,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validFee(newDefaultTradingFeePPM)
     {
-        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
-        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
-            return;
-        }
-
-        _defaultTradingFeePPM = newDefaultTradingFeePPM;
-
-        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
+        _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
     }
 
     /**
@@ -213,10 +203,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
-        _pools[reserveToken] = Pool({
+        Pool memory newPool = Pool({
             version: 1,
             poolToken: newPoolToken,
-            tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
+            tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
@@ -227,7 +217,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             depositLimit: 0
         });
 
+        _pools[reserveToken] = newPool;
+
         emit PoolCreated(newPoolToken, reserveToken);
+
+        emit TradingFeePPMUpdated(reserveToken, 0, newPool.tradingFeePPM);
+        emit TradingEnabled(reserveToken, newPool.tradingEnabled);
+        emit DepositingEnabled(reserveToken, newPool.depositingEnabled);
+        emit InitialRateUpdated(reserveToken, Fraction({ n: 0, d: 0 }), newPool.initialRate);
+        emit DepositLimitUpdated(reserveToken, 0, newPool.depositLimit);
     }
 
     /**
@@ -679,6 +677,20 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
         // the quotient is not positive
         return (0, d1 == d2 ? 0 : 1);
+    }
+
+    /**
+     * @dev sets the default trading fee (in units of PPM)
+     */
+    function _setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM) private {
+        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
+        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
+            return;
+        }
+
+        _defaultTradingFeePPM = newDefaultTradingFeePPM;
+
+        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
     }
 
     /**
