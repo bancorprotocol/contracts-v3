@@ -439,18 +439,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         if (bPc >= e) {
             // the pool is not in a base-token deficit
             uint256 f = deductFee(bPc - e, x, d, n);
-            amounts.G = posArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+            amounts.G = posArbitrage(cap(a, amounts.F), cap(b, amounts.D), d, f, m, n, eMx);
             if (amounts.G > 0) {
-                amounts.G = Math.min(amounts.G, a / 2);
                 amounts.H = Action.burnNetworkTokens;
             }
         } else {
             // the pool is in a base-token deficit
             if (amounts.B <= bPc) {
                 uint256 f = deductFee(e - bPc, x, d, n);
-                amounts.G = negArbitrage(a.sub(amounts.F), b.sub(amounts.D), d, f, m, n, eMx);
+                amounts.G = negArbitrage(cap(a, amounts.F), cap(b, amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
-                    amounts.G = Math.min(amounts.G, a);
                     amounts.H = Action.mintNetworkTokens;
                 }
             }
@@ -573,7 +571,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = quotient(fM.add(bm), fm.mul(2), bM, fm);
+        (uint256 y, uint256 z) = cap(fM.add(bm), fm.mul(2), bM, fm);
         return MathEx.mulDivF(f, y, z);
     }
 
@@ -597,7 +595,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = quotient(fM, bm.add(fm.mul(2)), bM.add(fm), 0);
+        (uint256 y, uint256 z) = cap(fM, bm.add(fm.mul(2)), bM.add(fm), 0);
         return MathEx.mulDivF(f, y, z);
     }
 
@@ -624,7 +622,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = quotient(b.mul(2 * PPM_RESOLUTION - m), fM, bM, fm);
+        (uint256 y, uint256 z) = cap(b.mul(2 * PPM_RESOLUTION - m), fM, bM, fm);
         return MathEx.mulDivF(af, y, b.mul(z));
     }
 
@@ -651,14 +649,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 fm = f.mul(m);
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = quotient(b.mul(2 * PPM_RESOLUTION - m).add(fM), 0, bM.add(fm), 0);
+        (uint256 y, uint256 z) = cap(b.mul(2 * PPM_RESOLUTION - m).add(fM), 0, bM.add(fm), 0);
         return MathEx.mulDivF(af, y, b.mul(z));
+    }
+
+    /**
+     * @dev returns the maximum of `n1 - n2` and 0
+     */
+    function cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
+        return n1 > n2 ? n1 - n2 : 0;
     }
 
     /**
      * @dev returns the maximum of `(n1 - n2) / (d1 - d2)` and 0
      */
-    function quotient(
+    function cap(
         uint256 n1,
         uint256 n2,
         uint256 d1,
