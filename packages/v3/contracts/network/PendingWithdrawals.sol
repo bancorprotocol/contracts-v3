@@ -152,8 +152,8 @@ contract PendingWithdrawals is
      * @dev performs contract-specific initialization
      */
     function __PendingWithdrawals_init_unchained() internal initializer {
-        _lockDuration = DEFAULT_LOCK_DURATION;
-        _withdrawalWindowDuration = DEFAULT_WITHDRAWAL_WINDOW_DURATION;
+        _setLockDuration(DEFAULT_LOCK_DURATION);
+        _setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
     }
 
     // solhint-enable func-name-mixedcase
@@ -187,7 +187,7 @@ contract PendingWithdrawals is
     }
 
     /**
-     * @dev sets the lock duration.
+     * @dev sets the lock duration
      *
      * notes:
      *
@@ -198,14 +198,7 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setLockDuration(uint32 newLockDuration) external onlyOwner {
-        uint32 prevLockDuration = _lockDuration;
-        if (prevLockDuration == newLockDuration) {
-            return;
-        }
-
-        _lockDuration = newLockDuration;
-
-        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+        _setLockDuration(newLockDuration);
     }
 
     /**
@@ -216,7 +209,7 @@ contract PendingWithdrawals is
     }
 
     /**
-     * @dev sets withdrawal window duration.
+     * @dev sets withdrawal window duration
      *
      * notes:
      *
@@ -227,14 +220,7 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
-        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
-        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
-            return;
-        }
-
-        _withdrawalWindowDuration = newWithdrawalWindowDuration;
-
-        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
+        _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
     /**
@@ -369,6 +355,43 @@ contract PendingWithdrawals is
         );
 
         return request.amount;
+    }
+
+    /**
+     * @dev sets the lock duration
+     *
+     * notes:
+     *
+     * - updating it will affect existing locked positions retroactively
+     *
+     */
+    function _setLockDuration(uint32 newLockDuration) private {
+        uint32 prevLockDuration = _lockDuration;
+        if (prevLockDuration == newLockDuration) {
+            return;
+        }
+
+        _lockDuration = newLockDuration;
+
+        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+    }
+
+    /**
+     * @dev sets withdrawal window duration
+     *
+     * notes:
+     *
+     * - updating it will affect existing locked positions retroactively
+     */
+    function _setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) private {
+        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
+        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
+            return;
+        }
+
+        _withdrawalWindowDuration = newWithdrawalWindowDuration;
+
+        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
     }
 
     /**

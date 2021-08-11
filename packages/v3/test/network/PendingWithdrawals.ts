@@ -64,6 +64,21 @@ describe('PendingWithdrawals', () => {
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
+
+        it('should emit events on initialization', async () => {
+            const { network, networkTokenPool } = await createSystem();
+            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
+                network.address,
+                networkTokenPool.address
+            );
+            const res = await pendingWithdrawals.initialize();
+            await expect(res)
+                .to.emit(pendingWithdrawals, 'LockDurationUpdated')
+                .withArgs(BigNumber.from(0), DEFAULT_LOCK_DURATION);
+            await expect(res)
+                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
+                .withArgs(BigNumber.from(0), DEFAULT_WITHDRAWAL_WINDOW_DURATION);
+        });
     });
 
     describe('lock duration', () => {

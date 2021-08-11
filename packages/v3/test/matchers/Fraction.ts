@@ -3,19 +3,11 @@ import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 import { isArray } from 'lodash';
 
-declare global {
-    export namespace Chai {
-        interface Assertion {
-            almostEqual(expected: any, maxAbsoluteError: Decimal, maxRelativeError: Decimal): void;
-        }
-    }
-}
-
 const supportFraction = (Assertion: Chai.AssertionStatic, utils: Chai.ChaiUtils) => {
     Assertion.overwriteMethod('equals', override('equal', utils));
     Assertion.overwriteMethod('equal', override('equal', utils));
     Assertion.overwriteMethod('eq', override('equal', utils));
-    Assertion.addMethod('almostEqual', almostEqual(utils));
+    Assertion.overwriteMethod('almostEqual', overrideAlmostEqual(utils));
 };
 
 const isFraction = (fraction: any) => fraction.hasOwnProperty('n') && fraction.hasOwnProperty('d');
@@ -74,7 +66,11 @@ function overwriteFractionFunction(readableName: string, _super: (...args: any[]
     };
 }
 
-function almostEqual(chaiUtils: Chai.ChaiUtils) {
+function overrideAlmostEqual(utils: Chai.ChaiUtils) {
+    return (_super: (...args: any[]) => any) => overwriteFractionAlmostEqual(_super, utils);
+}
+
+function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected, maxAbsoluteError, maxRelativeError] = args;
         const obj = chaiUtils.flag(this, 'object');
@@ -82,8 +78,15 @@ function almostEqual(chaiUtils: Chai.ChaiUtils) {
         expect(maxAbsoluteError).to.be.instanceOf(Decimal);
         expect(maxRelativeError).to.be.instanceOf(Decimal);
 
-        const objFraction = toDecimalFraction(obj);
-        const expectedFraction = toDecimalFraction(expected);
+        let objFraction;
+        let expectedFraction;
+
+        try {
+            objFraction = toDecimalFraction(obj);
+            expectedFraction = toDecimalFraction(expected);
+        } catch {
+            return _super.apply(this, args);
+        }
 
         const x = objFraction.n.mul(expectedFraction.d.toString());
         const y = objFraction.d.mul(expectedFraction.n.toString());
