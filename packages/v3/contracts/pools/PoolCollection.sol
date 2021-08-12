@@ -379,8 +379,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             basePoolTokenAmount
         );
 
-        pool.baseTokenTradingLiquidity = uint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
-        pool.baseTokenTradingLiquidity = uint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
+        pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
+        pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
@@ -715,5 +715,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function _decodeUint128(uint256 data, uint256 index) private pure returns (uint256) {
         assert(index <= 1);
         return (data >> (index * 128)) & MAX_UINT128;
+    }
+
+    function _safeUint128(uint256 x) private pure returns (uint128) {
+        require(x <= MAX_UINT128, "ERR_TOO_LARGE");
+        return uint128(x);
     }
 }
