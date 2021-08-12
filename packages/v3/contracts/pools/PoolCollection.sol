@@ -41,6 +41,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
+    // represents `(n1 - n2) / (d1 - d2)`
+    struct Quotient {
+        uint256 n1;
+        uint256 n2;
+        uint256 d1;
+        uint256 d2;
+    }
+
     // the network settings contract
     INetworkSettings private immutable _settings;
 
@@ -512,6 +520,20 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the amount of network tokens which should be removed
      * from the pool in order to create an optimal arbitrage incentive
+     *
+     * input:
+     * a = network token hypothetical trading liquidity
+     * b = base token hypothetical trading liquidity
+     * d = base pool token total supply
+     * e = base token staked amount
+     * f = base token redundant amount
+     * m = trade fee in ppm units
+     * n = withdrawal fee in ppm units
+     * x = base pool token withdrawal amount
+     *
+     * output, pretending `m` and `n` are normalized:
+     * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
+     * if `f(f + bm - 2fm) / (b - fm) >= exn / d` return `0`
      */
     function posArbitrage(
         uint256 a,
@@ -520,18 +542,28 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 f,
         uint256 m,
         uint256 n,
-        uint256 eMx
+        uint256 ex
     ) internal pure returns (uint256) {
-        uint256 K = MathEx.mulDivF(eMx, n, d.mul(PPM_RESOLUTION));
-        if (basePosArbitrage(b, f, m) < K) {
-            return networkPosArbitrage(a, b, f, m);
-        }
-        return 0;
+        return calcArbitrage(a, b, d, f, n, ex, posArbitrage(b, f, m));
     }
 
     /**
      * @dev returns the amount of network tokens which should be added
      * to the pool in order to create an optimal arbitrage incentive
+     *
+     * input:
+     * a = network token hypothetical trading liquidity
+     * b = base token hypothetical trading liquidity
+     * d = base pool token total supply
+     * e = base token staked amount
+     * f = base token required amount
+     * m = trade fee in ppm units
+     * n = withdrawal fee in ppm units
+     * x = base pool token withdrawal amount
+     *
+     * output, pretending `m` and `n` are normalized:
+     * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
+     * if `f(f - bm - 2fm) / (b + fm) >= exn / d` return `0`
      */
     function negArbitrage(
         uint256 a,
@@ -540,115 +572,69 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 f,
         uint256 m,
         uint256 n,
-        uint256 eMx
+        uint256 ex
     ) internal pure returns (uint256) {
-        uint256 K = MathEx.mulDivF(eMx, n, d.mul(PPM_RESOLUTION));
-        if (baseNegArbitrage(b, f, m) < K) {
-            return networkNegArbitrage(a, b, f, m);
+        return calcArbitrage(a, b, d, f, n, ex, negArbitrage(b, f, m));
+    }
+
+    /**
+     * @dev returns the following quotients, pretending `m` is normalized:
+     * 1. `(f + bm - 2fm) / (b - fm)`
+     * 2. `(2b - bm - f) / (b - fm)`
+     */
+    function posArbitrage(
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (Quotient[2] memory) {
+        uint256 bm = b.mul(m);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return [
+            Quotient({ n1: fM.add(bm), n2: fm.mul(2), d1: bM, d2: fm }),
+            Quotient({ n1: b.mul(2 * PPM_RESOLUTION - m), n2: fM, d1: bM, d2: fm })
+        ];
+    }
+
+    /**
+     * @dev returns the following quotients, pretending `m` is normalized:
+     * 1. `(f - bm - 2fm) / (b + fm)`
+     * 2. `(2b - bm + f) / (b + fm)`
+     */
+    function negArbitrage(
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (Quotient[2] memory) {
+        uint256 bm = b.mul(m);
+        uint256 fm = f.mul(m);
+        uint256 bM = b.mul(PPM_RESOLUTION);
+        uint256 fM = f.mul(PPM_RESOLUTION);
+        return [
+            Quotient({ n1: fM, n2: bm.add(fm.mul(2)), d1: bM.add(fm), d2: 0 }),
+            Quotient({ n1: b.mul(2 * PPM_RESOLUTION - m).add(fM), n2: 0, d1: bM.add(fm), d2: 0 })
+        ];
+    }
+
+    /**
+     * @dev returns the arbitrage if it is smaller than the fee paid, and 0 otherwise
+     */
+    function calcArbitrage(
+        uint256 a,
+        uint256 b,
+        uint256 d,
+        uint256 f,
+        uint256 n,
+        uint256 ex,
+        Quotient[2] memory quotients
+    ) internal pure returns (uint256) {
+        Fraction memory y = cap(quotients[0]);
+        if (MathEx.mulDivF(f, y.n, y.d) < MathEx.mulDivF(ex, n, d.mul(PPM_RESOLUTION))) {
+            Fraction memory z = cap(quotients[1]);
+            return MathEx.mulDivF(a.mul(f), z.n, b.mul(z.d));
         }
         return 0;
-    }
-
-    /**
-     * @dev returns the arbitrage value in units of the base token
-     *
-     * input:
-     * b = the hypothetical balance of the pool in the base token
-     * f = the amount of base tokens required for arbitrage settlement
-     * m = trade fee in ppm units
-     *
-     * output (pretending `m` is normalized):
-     * f(f + bm - 2fm) / (b - fm)
-     */
-    function basePosArbitrage(
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
-        uint256 bm = b.mul(m);
-        uint256 fm = f.mul(m);
-        uint256 bM = b.mul(PPM_RESOLUTION);
-        uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = cap(fM.add(bm), fm.mul(2), bM, fm);
-        return MathEx.mulDivF(f, y, z);
-    }
-
-    /**
-     * @dev returns the arbitrage value in units of the base token
-     *
-     * input:
-     * b = the hypothetical balance of the pool in the base token
-     * f = the amount of base tokens required for arbitrage settlement
-     * m = trade fee in ppm units
-     *
-     * output (pretending `m` is normalized):
-     * f(f - bm - 2fm) / (b + fm)
-     */
-    function baseNegArbitrage(
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
-        uint256 bm = b.mul(m);
-        uint256 fm = f.mul(m);
-        uint256 bM = b.mul(PPM_RESOLUTION);
-        uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = cap(fM, bm.add(fm.mul(2)), bM.add(fm), 0);
-        return MathEx.mulDivF(f, y, z);
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be added
-     * to the pool in order to create an optimal arbitrage incentive
-     *
-     * input:
-     * a = the hypothetical balance of the pool in the network token
-     * b = the hypothetical balance of the pool in the base token
-     * f = the amount of base tokens required for arbitrage settlement
-     * m = trade fee in ppm units
-     *
-     * output (pretending `m` is normalized):
-     * af(b(2 - m) - f) / (b(b - fm))
-     */
-    function networkPosArbitrage(
-        uint256 a,
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
-        uint256 af = a.mul(f);
-        uint256 fm = f.mul(m);
-        uint256 bM = b.mul(PPM_RESOLUTION);
-        uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = cap(b.mul(2 * PPM_RESOLUTION - m), fM, bM, fm);
-        return MathEx.mulDivF(af, y, b.mul(z));
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be added
-     * to the pool in order to create an optimal arbitrage incentive
-     *
-     * input:
-     * a = the hypothetical balance of the pool in the network token
-     * b = the hypothetical balance of the pool in the base token
-     * f = the amount of base tokens required for arbitrage settlement
-     * m = trade fee in ppm units
-     *
-     * output (pretending `m` is normalized):
-     * af(b(2 - m) + f) / (b(b + fm))
-     */
-    function networkNegArbitrage(
-        uint256 a,
-        uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
-        uint256 af = a.mul(f);
-        uint256 fm = f.mul(m);
-        uint256 bM = b.mul(PPM_RESOLUTION);
-        uint256 fM = f.mul(PPM_RESOLUTION);
-        (uint256 y, uint256 z) = cap(b.mul(2 * PPM_RESOLUTION - m).add(fM), 0, bM.add(fm), 0);
-        return MathEx.mulDivF(af, y, b.mul(z));
     }
 
     /**
@@ -659,24 +645,19 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the maximum of `(n1 - n2) / (d1 - d2)` and 0
+     * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
      */
-    function cap(
-        uint256 n1,
-        uint256 n2,
-        uint256 d1,
-        uint256 d2
-    ) internal pure returns (uint256, uint256) {
-        if (n1 > n2 && d1 > d2) {
+    function cap(Quotient memory q) internal pure returns (Fraction memory) {
+        if (q.n1 > q.n2 && q.d1 > q.d2) {
             // the quotient is positive
-            return (n1 - n2, d1 - d2);
+            return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
         }
-        if (n2 > n1 && d2 > d1) {
+        if (q.n2 > q.n1 && q.d2 > q.d1) {
             // the quotient is positive
-            return (n2 - n1, d2 - d1);
+            return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
         }
         // the quotient is not positive
-        return (0, d1 == d2 ? 0 : 1);
+        return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
     }
 
     /**
