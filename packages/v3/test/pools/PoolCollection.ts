@@ -581,12 +581,12 @@ describe('PoolCollection', () => {
         withdrawalAmountsTest('WithdrawalAmountsRegularCases', '1', '0.0000000000000001', 10);
     });
 
-    describe('withdrawal edge cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases', '1', '0.00000001', 10);
+    describe('withdrawal edge cases 1', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', '1', '0.00000001', 10);
     });
 
-    describe('withdrawal extreme cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsExtremeCases', '1', '0.001', 10);
+    describe('withdrawal edge cases 2', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', '1', '0.001', 10);
     });
 });
 
@@ -595,11 +595,11 @@ describe('@stress PoolCollection', () => {
         withdrawalAmountsTest('WithdrawalAmountsRegularCases', '1', '0.0000000000000001');
     });
 
-    describe('withdrawal edge cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases', '1', '0.00000001');
+    describe('withdrawal edge cases 1', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', '1', '0.00000001');
     });
 
-    describe('withdrawal extreme cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsExtremeCases', '1', '0.001');
+    describe('withdrawal edge cases 2', () => {
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', '1', '0.001');
     });
 });
