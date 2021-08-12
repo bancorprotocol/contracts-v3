@@ -16,13 +16,13 @@ In each network folder there is a `state.json` file. It represents the migration
 ```
 
 `latestMigration`: The timestamp of the latest ran migration.
-`networkState`: Data that is passed to the migration file as initial state.
+`networkState`: Initial migration state.
 
 ## Migrations
 
-The `migrations` folder is home for all migrations file.
+The `migrations` folder is home to all migration files.
 
-A migration file is a typescript file that expose a particular object respecting a strict interface:
+A migration file is a typescript file that exposes a particular object respecting a strict interface:
 
 ```ts
 export interface Migration {
@@ -45,21 +45,21 @@ export interface Migration {
 
 The engine is the backbone of the migration system, containing its logic.
 
-It also expose tasks and subtasks.
+It also exposes tasks (task is a hardhat concept for CLI scripts).
 
 ### Tasks
 
 ##### Migrate
 
-Migrate the system from point A to point B.
+Migrates the system between different states.
 
-`yarn migrate --help` for more info on params.
+Call `yarn migrate --help` for more info on params.
 
 ### Subtasks
 
 ##### CreateMigration
 
-Create a migration file based from a template.
+Creates a migration file based on a template.
 
 `yarn create-migration --help` for more info on params.
 
@@ -71,7 +71,7 @@ Create a migration file based from a template.
 yarn hh create-migration migrationFileName
 ```
 
-If you don't use this CLI to generate your migration files, bear in mind that they have to start by a number splitted from the rest of the name by the character '\_', like so: "999_testfile.ts".
+If you don't use this CLI to generate your migration files, bear in mind that the format is as follow: "X_testfile.ts" with X representing the timestamp of the migration (i.e its order).
 
 ## How to execute a migration on a network?
 
@@ -79,9 +79,9 @@ If you don't use this CLI to generate your migration files, bear in mind that th
 yarn hh migrate --network mainnet
 ```
 
-1. `Migrate` will look for the network data folder. If not it will create one.
+1. `Migrate` will look for the network data folder or create one if it doesn't exist.
 
-2. It will run every migration file from latestMigration timestamp to the latest in the migrations folder.
+2. Run every migration file in the migrations folder by order of execution starting from the latestMigration timestamp OR the lowest number found.
 
 3. Update the state on the go.
 

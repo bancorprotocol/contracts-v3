@@ -22,7 +22,7 @@ const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(config
 const loadKey = (keyName: string) => {
     return configFile.keys ? (configFile.keys[keyName] ? configFile.keys[keyName] : undefined) : undefined;
 };
-const loadNetworkUrl = (networkName: string) => {
+const getNetworkUrl = (networkName: string) => {
     return configFile.networks
         ? configFile.networks[networkName]
             ? configFile.networks[networkName].url
@@ -31,7 +31,7 @@ const loadNetworkUrl = (networkName: string) => {
             : undefined
         : undefined;
 };
-const loadENV = <T>(envKeyName: string) => {
+const getEnvKey = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };
 
@@ -43,16 +43,16 @@ const MAINNET = 'mainnet';
 type FORK_NETWORK_SUPPORTED = typeof MAINNET;
 
 export const FORK_CONFIG = (() => {
-    const networkToFork: string = loadENV<FORK_NETWORK_SUPPORTED>('FORK');
-    const urlNetworkToFork: string = loadNetworkUrl(networkToFork);
+    const networkToFork: string = getEnvKey<FORK_NETWORK_SUPPORTED>('FORK');
+    const urlNetworkToFork: string = getNetworkUrl(networkToFork);
+
+    if (!networkToFork) {
+        return undefined;
+    }
 
     if (networkToFork && !urlNetworkToFork) {
         log.error(`${networkToFork} config is not present in the config.json file, aborting.`);
         process.exit(-1);
-    }
-
-    if (!networkToFork && !urlNetworkToFork) {
-        return undefined;
     }
 
     let FORKED_NETWORK_NAME: string = '';
@@ -87,7 +87,7 @@ const hardhatForkedConfig = FORK_CONFIG
       }
     : undefined;
 
-const ci = loadENV<boolean>('CI');
+const ci = getEnvKey<boolean>('CI');
 
 const config: HardhatUserConfig = {
     networks: {
@@ -142,13 +142,13 @@ const config: HardhatUserConfig = {
 
     gasReporter: {
         currency: 'USD',
-        enabled: loadENV('PROFILE')
+        enabled: getEnvKey('PROFILE')
     },
 
     mocha: {
         timeout: 600000,
         color: true,
-        bail: loadENV('BAIL'),
+        bail: getEnvKey('BAIL'),
         grep: ci ? '' : '@stress',
         invert: ci ? false : true
     }
