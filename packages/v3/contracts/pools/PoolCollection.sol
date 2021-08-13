@@ -365,8 +365,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
         Pool storage pool = _pools[baseToken];
 
-        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
-
         WithdrawalAmounts memory amounts = withdrawalAmounts(
             pool.networkTokenTradingLiquidity,
             pool.baseTokenTradingLiquidity,
@@ -378,6 +376,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             _settings.withdrawalFeePPM(),
             basePoolTokenAmount
         );
+
+        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
 
         pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
         pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
