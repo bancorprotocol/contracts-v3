@@ -19,7 +19,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract

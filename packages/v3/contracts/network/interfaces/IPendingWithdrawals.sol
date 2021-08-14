@@ -13,22 +13,25 @@ import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
+ * @dev The data struct representing a pending withdrawal request
+ */
+struct WithdrawalRequest {
+    // the version of the struct
+    uint16 version;
+    // the liquidity provider
+    address provider;
+    // the address of the locked pool token
+    IPoolToken poolToken;
+    // the time when the request was created (Unix timestamp))
+    uint32 createdAt;
+    // the locked pool token amount
+    uint256 amount;
+}
+
+/**
  * @dev Pending Withdrawals interface
  */
 interface IPendingWithdrawals is IUpgradeable {
-    struct WithdrawalRequest {
-        // the version of the struct
-        uint16 version;
-        // the liquidity provider
-        address provider;
-        // the address of the locked pool token
-        IPoolToken poolToken;
-        // the time when the request was created (Unix timestamp))
-        uint32 createdAt;
-        // the locked pool token amount
-        uint256 amount;
-    }
-
     /**
      * @dev returns the network contract
      */
