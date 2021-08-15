@@ -16,8 +16,6 @@ import { IBancorNetwork } from "./IBancorNetwork.sol";
  * @dev The data struct representing a pending withdrawal request
  */
 struct WithdrawalRequest {
-    // the version of the struct
-    uint16 version;
     // the liquidity provider
     address provider;
     // the address of the locked pool token

@@ -410,7 +410,6 @@ contract PendingWithdrawals is
         uint256 id = _nextWithdrawalRequestId++;
 
         _withdrawalRequests[id] = WithdrawalRequest({
-            version: 1,
             provider: provider,
             poolToken: poolToken,
             amount: poolTokenAmount,

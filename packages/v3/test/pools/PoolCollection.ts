@@ -99,7 +99,6 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
 };
 
 describe('PoolCollection', () => {
-    const POOL_DATA_VERSION = BigNumber.from(1);
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
@@ -300,12 +299,14 @@ describe('PoolCollection', () => {
                 expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
                 expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
 
-                expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositingEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
+                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
