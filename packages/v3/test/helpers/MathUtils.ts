@@ -1,28 +1,34 @@
+import { Fraction, toDecimal } from './Utils';
 import Decimal from 'decimal.js';
 
 const floorSqrt = (n: Decimal) => n.sqrt().floor();
 
 const ceilSqrt = (n: Decimal) => n.sqrt().ceil();
 
-const productRatio = (an: Decimal, bn: Decimal, ad: Decimal, bd: Decimal) => [an.mul(bn), ad.mul(bd)];
+const productRatio = (a: Fraction, b: Fraction) => [a.n.mul(b.n), a.d.mul(b.d)];
 
-const reducedRatio = (a: Decimal, b: Decimal, max: Decimal) => {
-    if (a.gt(max) || b.gt(max)) {
-        return normalizedRatio(a, b, max);
+const reducedRatio = (r: Fraction, max: Decimal) => {
+    if (r.n.gt(max) || r.d.gt(max)) {
+        return normalizedRatio(r, max);
     }
 
-    return [a, b];
+    return r;
 };
 
-const normalizedRatio = (a: Decimal, b: Decimal, scale: Decimal) => {
-    if (a.lte(b)) {
-        return accurateRatio(a, b, scale);
+const normalizedRatio = (r: Fraction, scale: Decimal) => {
+    if (r.n.lte(r.d)) {
+        return accurateRatio(r, scale);
     }
 
-    return accurateRatio(b, a, scale).slice().reverse();
+    const invR = { n: r.d, d: r.n };
+    const res = accurateRatio(invR, scale);
+    return { n: res.d, d: res.n };
 };
 
-const accurateRatio = (a: Decimal, b: Decimal, scale: Decimal) => [a, b].map((x) => x.div(a.add(b)).mul(scale));
+const accurateRatio = (r: Fraction, scale: Decimal) => ({
+    n: r.n.div(r.n.add(r.d)).mul(scale),
+    d: r.d.div(r.n.add(r.d)).mul(scale)
+});
 
 const roundDiv = (a: Decimal, b: Decimal) => new Decimal(a.div(b).toFixed(0, Decimal.ROUND_HALF_UP));
 
@@ -30,18 +36,9 @@ const mulDivF = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor();
 
 const mulDivC = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil();
 
-interface ToString {
-    toString: () => string;
-}
-
 const decimalize = <C>(func: Function) => {
-    return (...args: ToString[]): C => {
-        const res = func(...args.map((x) => new Decimal(x.toString())));
-        if (Array.isArray(res)) {
-            return res.map((x) => new Decimal(x.toString())) as unknown as C;
-        }
-
-        return new Decimal(res.toString()) as unknown as C;
+    return (...args: any[]): C => {
+        return func(...args.map((x) => toDecimal(x)));
     };
 };
 

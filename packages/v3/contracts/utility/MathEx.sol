@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 
 import { MAX_UINT256 } from "./Constants.sol";
+import { Fraction } from "./Types.sol";
 
 /**
  * @dev this library provides a set of complex math operations
@@ -31,83 +32,81 @@ library MathEx {
     /**
      * @dev computes the product of two given ratios
      */
-    function productRatio(
-        uint256 xn,
-        uint256 yn,
-        uint256 xd,
-        uint256 yd
-    ) internal pure returns (uint256, uint256) {
-        uint256 n = mulDivC(xn, yn, MAX_UINT256);
-        uint256 d = mulDivC(xd, yd, MAX_UINT256);
+    function productRatio(Fraction memory x, Fraction memory y) internal pure returns (Fraction memory) {
+        uint256 n = mulDivC(x.n, y.n, MAX_UINT256);
+        uint256 d = mulDivC(x.d, y.d, MAX_UINT256);
         uint256 z = n > d ? n : d;
         if (z > 1) {
-            return (mulDivC(xn, yn, z), mulDivC(xd, yd, z));
+            return Fraction({ n: mulDivC(x.n, y.n, z), d: mulDivC(x.d, y.d, z) });
         }
-        return (xn * yn, xd * yd);
+        return Fraction({ n: x.n * y.n, d: x.d * y.d });
     }
 
     /**
      * @dev computes a reduced-scalar ratio
      */
-    function reducedRatio(
-        uint256 n,
-        uint256 d,
-        uint256 max
-    ) internal pure returns (uint256, uint256) {
-        (uint256 newN, uint256 newD) = (n, d);
-        if (newN > max || newD > max) {
-            (newN, newD) = normalizedRatio(newN, newD, max);
+    function reducedRatio(Fraction memory r, uint256 max) internal pure returns (Fraction memory) {
+        Fraction memory newR = r;
+        if (newR.n > max || newR.d > max) {
+            newR = normalizedRatio(newR, max);
         }
-        if (newN != newD) {
-            return (newN, newD);
+
+        if (newR.n != newR.d) {
+            return newR;
         }
-        return (1, 1);
+
+        return Fraction({ n: 1, d: 1 });
     }
 
     /**
-     * @dev computes "scale * a / (a + b)" and "scale * b / (a + b)".
+     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)".
      */
-    function normalizedRatio(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) internal pure returns (uint256, uint256) {
-        if (a <= b) {
-            return accurateRatio(a, b, scale);
+    function normalizedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
+        if (r.n <= r.d) {
+            return accurateRatio(r, scale);
         }
-        (uint256 y, uint256 x) = accurateRatio(b, a, scale);
-        return (x, y);
+
+        return _inv(accurateRatio(_inv(r), scale));
     }
 
     /**
-     * @dev computes "scale * a / (a + b)" and "scale * b / (a + b)", assuming that "a <= b".
+     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)", assuming that "r.n <= r.d".
      */
-    function accurateRatio(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) internal pure returns (uint256, uint256) {
+    function accurateRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
         uint256 maxVal = MAX_UINT256 / scale;
-        if (a > maxVal) {
-            uint256 c = a / (maxVal + 1) + 1;
-            a /= c; // we can now safely compute `a * scale`
-            b /= c;
+        Fraction memory ratio = r;
+        if (r.n > maxVal) {
+            uint256 c = r.n / (maxVal + 1) + 1;
+
+            // we can now safely compute `r.n * scale`
+            ratio.n /= c;
+            ratio.d /= c;
         }
-        if (a != b) {
-            uint256 newN = a * scale;
-            uint256 newD = unsafeAdd(a, b); // can overflow
-            if (newD >= a) {
-                // no overflow in `a + b`
-                uint256 x = roundDiv(newN, newD); // we can now safely compute `scale - x`
+
+        if (ratio.n != ratio.d) {
+            Fraction memory newR = Fraction({ n: ratio.n * scale, d: unsafeAdd(ratio.n, ratio.d) });
+
+            if (newR.d >= ratio.n) {
+                // no overflow in `ratio.n + ratio.d`
+                uint256 x = roundDiv(newR.n, newR.d);
+
+                // we can now safely compute `scale - x`
                 uint256 y = scale - x;
-                return (x, y);
+
+                return Fraction({ n: x, d: y });
             }
-            if (newN < b - (b - a) / 2) {
-                return (0, scale); // `a * scale < (a + b) / 2 < MAX_UINT256 < a + b`
+
+            if (newR.d < ratio.d - (ratio.d - ratio.n) / 2) {
+                // `ratio.n * scale < (ratio.n + ratio.d) / 2 < MAX_UINT256 < ratio.n + ratio.d`
+                return Fraction({ n: 0, d: scale });
             }
-            return (1, scale - 1); // `(a + b) / 2 < a * scale < MAX_UINT256 < a + b`
+
+            // `(ratio.n + ratio.d) / 2 < ratio.n * scale < MAX_UINT256 < ratio.n + ratio.d`
+            return Fraction({ n: 1, d: scale - 1 });
         }
-        return (scale / 2, scale / 2); // allow reduction to `(1, 1)` in the calling function
+
+        // allow reduction to `(1, 1)` in the calling function
+        return Fraction({ n: scale / 2, d: scale / 2 });
     }
 
     /**
@@ -284,5 +283,12 @@ library MathEx {
         uint256 z
     ) private pure returns (uint256) {
         return mulmod(x, y, z);
+    }
+
+    /**
+     * @dev returns the inverse of a given fraction
+     */
+    function _inv(Fraction memory r) private pure returns (Fraction memory) {
+        return Fraction({ n: r.d, d: r.n });
     }
 }
