@@ -84,11 +84,11 @@ library MathEx {
         }
 
         if (ratio.n != ratio.d) {
-            Fraction memory newR = Fraction({ n: ratio.n * scale, d: unsafeAdd(ratio.n, ratio.d) });
+            Fraction memory newRatio = Fraction({ n: ratio.n * scale, d: unsafeAdd(ratio.n, ratio.d) });
 
-            if (newR.d >= ratio.n) {
+            if (newRatio.d >= ratio.n) {
                 // no overflow in `ratio.n + ratio.d`
-                uint256 x = roundDiv(newR.n, newR.d);
+                uint256 x = roundDiv(newRatio.n, newRatio.d);
 
                 // we can now safely compute `scale - x`
                 uint256 y = scale - x;
@@ -96,7 +96,7 @@ library MathEx {
                 return Fraction({ n: x, d: y });
             }
 
-            if (newR.d < ratio.d - (ratio.d - ratio.n) / 2) {
+            if (newRatio.n < ratio.d - (ratio.d - ratio.n) / 2) {
                 // `ratio.n * scale < (ratio.n + ratio.d) / 2 < MAX_UINT256 < ratio.n + ratio.d`
                 return Fraction({ n: 0, d: scale });
             }
