@@ -32,7 +32,6 @@ import { PoolToken } from "./PoolToken.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
-    using MathEx for *;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
