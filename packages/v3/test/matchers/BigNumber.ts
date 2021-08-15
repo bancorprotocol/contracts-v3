@@ -1,3 +1,4 @@
+import { toBigNumber } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -8,8 +9,6 @@ const supportBigNumber = (Assertion: Chai.AssertionStatic, utils: Chai.ChaiUtils
     Assertion.overwriteMethod('eq', override('equal', utils));
     Assertion.overwriteMethod('almostEqual', overrideAlmostEqual(utils));
 };
-
-const toBigNumber = (value: any) => BigNumber.from(Decimal.isDecimal(value) ? value.toFixed() : value);
 
 function override(name: string, utils: Chai.ChaiUtils) {
     return (_super: (...args: any[]) => any) => overwriteBigNumberFunction(name, _super, utils);

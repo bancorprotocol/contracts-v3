@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
 import MathUtils from '../helpers/MathUtils';
-import { Fraction, toBigNumber, toString } from '../helpers/Utils';
+import { Fraction, toBigNumber, toString } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -14,7 +14,7 @@ const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
 const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 
-describe.only('MathEx', () => {
+describe('MathEx', () => {
     let mathContract: TestMathEx;
 
     before(async () => {
@@ -43,7 +43,7 @@ describe.only('MathEx', () => {
         it(`productRatio(${toString(x)}, ${toString(y)}`, async () => {
             const expected = productRatio(x, y);
             const actual = await mathContract.productRatio(toBigNumber(x), toBigNumber(y));
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -51,7 +51,7 @@ describe.only('MathEx', () => {
         it(`reducedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = reducedRatio(r, scale);
             const actual = await mathContract.reducedRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -59,7 +59,7 @@ describe.only('MathEx', () => {
         it(`normalizedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = normalizedRatio(r, scale);
             const actual = await mathContract.normalizedRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
@@ -67,7 +67,7 @@ describe.only('MathEx', () => {
         it(`accurateRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = accurateRatio(r, scale);
             const actual = await mathContract.accurateRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 

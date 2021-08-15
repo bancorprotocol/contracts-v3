@@ -1,13 +1,13 @@
-import { Fraction, toDecimal } from './Utils';
+import { Fraction, toDecimal } from './Types';
 import Decimal from 'decimal.js';
 
 const floorSqrt = (n: Decimal) => n.sqrt().floor();
 
 const ceilSqrt = (n: Decimal) => n.sqrt().ceil();
 
-const productRatio = (a: Fraction, b: Fraction) => [a.n.mul(b.n), a.d.mul(b.d)];
+const productRatio = (a: Fraction, b: Fraction): Fraction => ({ n: a.n.mul(b.n), d: a.d.mul(b.d) });
 
-const reducedRatio = (r: Fraction, max: Decimal) => {
+const reducedRatio = (r: Fraction, max: Decimal): Fraction => {
     if (r.n.gt(max) || r.d.gt(max)) {
         return normalizedRatio(r, max);
     }
@@ -15,7 +15,7 @@ const reducedRatio = (r: Fraction, max: Decimal) => {
     return r;
 };
 
-const normalizedRatio = (r: Fraction, scale: Decimal) => {
+const normalizedRatio = (r: Fraction, scale: Decimal): Fraction => {
     if (r.n.lte(r.d)) {
         return accurateRatio(r, scale);
     }
@@ -25,7 +25,7 @@ const normalizedRatio = (r: Fraction, scale: Decimal) => {
     return { n: res.d, d: res.n };
 };
 
-const accurateRatio = (r: Fraction, scale: Decimal) => ({
+const accurateRatio = (r: Fraction, scale: Decimal): Fraction => ({
     n: r.n.div(r.n.add(r.d)).mul(scale),
     d: r.d.div(r.n.add(r.d)).mul(scale)
 });

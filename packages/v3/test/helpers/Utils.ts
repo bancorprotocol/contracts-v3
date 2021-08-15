@@ -2,71 +2,10 @@ import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish, ContractTransaction, BaseContract } from 'ethers';
 import { ethers } from 'hardhat';
 
 export type TokenWithAddress = TestERC20Token | { address: string };
-
-export interface Fraction<T = Decimal> {
-    n: T;
-    d: T;
-}
-
-export interface BigNumberFraction {
-    n: BigNumber;
-    d: BigNumber;
-}
-
-type DecimalType = Fraction<Decimal> | Decimal | number;
-type ToBigNumberReturn<T> = T extends Fraction<Decimal>
-    ? Fraction<BigNumber>
-    : T extends Decimal
-    ? BigNumber
-    : T extends number
-    ? BigNumber
-    : never;
-
-type BigNumberType = Fraction<BigNumber> | BigNumber | number;
-type ToDecimalReturn<T> = T extends Fraction<BigNumber>
-    ? Fraction<Decimal>
-    : T extends BigNumber
-    ? Decimal
-    : T extends number
-    ? Decimal
-    : never;
-
-export const toBigNumber = <T extends DecimalType>(v: T): ToBigNumberReturn<T> => {
-    if (v.hasOwnProperty('n') && v.hasOwnProperty('d')) {
-        return {
-            n: BigNumber.from((v as Fraction<Decimal>).n.toFixed()),
-            d: BigNumber.from((v as Fraction<Decimal>).d.toFixed())
-        } as ToBigNumberReturn<T>;
-    }
-
-    if (Decimal.isDecimal(v)) {
-        return BigNumber.from((v as Decimal).toFixed()) as ToBigNumberReturn<T>;
-    }
-
-    return BigNumber.from(v) as ToBigNumberReturn<T>;
-};
-
-export const toDecimal = <T extends BigNumberType>(v: T): ToDecimalReturn<T> => {
-    if (v.hasOwnProperty('n') && v.hasOwnProperty('d')) {
-        return {
-            n: new Decimal((v as Fraction<BigNumber>).n.toString()),
-            d: new Decimal((v as Fraction<BigNumber>).d.toString())
-        } as ToDecimalReturn<T>;
-    }
-
-    if (BigNumber.isBigNumber(v)) {
-        return new Decimal(v.toString()) as ToDecimalReturn<T>;
-    }
-
-    return new Decimal(v.toString()) as ToDecimalReturn<T>;
-};
-
-export const toString = (fraction: Fraction) => `{n: ${fraction.n.toFixed()}, d: ${fraction.d.toFixed()}}`;
 
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
