@@ -11,25 +11,6 @@ import { ethers } from 'hardhat';
 import os from 'os';
 import path from 'path';
 
-const expectAlmostEqual = (actual: BigNumber, expected: string, maxAbsoluteError: string, maxRelativeError: string) => {
-    const x = new Decimal(actual.toString());
-    const y = new Decimal(expected);
-    if (!x.eq(y)) {
-        const absoluteError = x.sub(y).abs();
-        const relativeError = x.div(y).sub(1).abs();
-        expect(absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError)).to.equal(
-            true,
-            os.EOL +
-                [
-                    `expected value = ${expected}`,
-                    `actual value   = ${actual.toString()}`,
-                    `absolute error = ${absoluteError.toFixed()}`,
-                    `relative error = ${relativeError.toFixed(25)}`
-                ].join(os.EOL)
-        );
-    }
-};
-
 interface WithdrawalAmountData {
     a: string;
     b: string;
@@ -49,18 +30,46 @@ interface WithdrawalAmountData {
     H: string;
 }
 
+interface MaxError {
+    absolute: string;
+    relative: string;
+}
+
+interface MaxErrors {
+    B: MaxError;
+    C: MaxError;
+    D: MaxError;
+    E: MaxError;
+    F: MaxError;
+    G: MaxError;
+}
+
 const ACTIONS: Record<string, number> = {
     'no arbitrage': 0,
     'burn tokens': 1,
     'mint tokens': 2
 };
 
-const withdrawalAmountsTest = (
-    fileName: string,
-    maxAbsoluteError: string,
-    maxRelativeError: string,
-    maxNumberOfTests?: number
-) => {
+const expectAlmostEqual = (actual: BigNumber, expected: string, maxError: MaxError) => {
+    const x = new Decimal(actual.toString());
+    const y = new Decimal(expected);
+    if (!x.eq(y)) {
+        const absoluteError = x.sub(y).abs();
+        const relativeError = x.div(y).sub(1).abs();
+        expect(absoluteError.lte(maxError.absolute) || relativeError.lte(maxError.relative)).to.equal(
+            true,
+            os.EOL +
+                [
+                    `expected value = ${expected}`,
+                    `actual value   = ${actual.toString()}`,
+                    `absolute error = ${absoluteError.toFixed()}`,
+                    `relative error = ${relativeError.toFixed(25)}`
+                ].join(os.EOL)
+        );
+    }
+};
+
+const withdrawalAmountsTest = (fileName: string, maxErrors: MaxErrors, maxNumberOfTests?: number) => {
     let poolCollection: TestPoolCollection;
 
     const table: WithdrawalAmountData[] = JSON.parse(
@@ -75,15 +84,53 @@ const withdrawalAmountsTest = (
     for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
         it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
             const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expectAlmostEqual(actual.B, B, maxAbsoluteError, maxRelativeError);
-            expectAlmostEqual(actual.C, C, maxAbsoluteError, maxRelativeError);
-            expectAlmostEqual(actual.D, D, maxAbsoluteError, maxRelativeError);
-            expectAlmostEqual(actual.E, E, maxAbsoluteError, maxRelativeError);
-            expectAlmostEqual(actual.F, F, maxAbsoluteError, maxRelativeError);
-            expectAlmostEqual(actual.G, G, maxAbsoluteError, maxRelativeError);
+            expectAlmostEqual(actual.B, B, maxErrors.B);
+            expectAlmostEqual(actual.C, C, maxErrors.C);
+            expectAlmostEqual(actual.D, D, maxErrors.D);
+            expectAlmostEqual(actual.E, E, maxErrors.E);
+            expectAlmostEqual(actual.F, F, maxErrors.F);
+            expectAlmostEqual(actual.G, G, maxErrors.G);
             expect(actual.H).to.equal(ACTIONS[H]);
         });
     }
+};
+
+const withdrawalAmountsTests = (maxNumberOfTests?: number) => {
+    describe('regular cases', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.0000000000000000002'},
+            C: {absolute: '1', relative: '0.0000000000000000003'},
+            D: {absolute: '1', relative: '0.0000000000000000002'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.0000000000000000003'},
+            G: {absolute: '1', relative: '0.00000000000000002'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsRegularCases', maxErrors, maxNumberOfTests);
+    });
+
+    describe('edge cases 1', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.000000003'},
+            C: {absolute: '1', relative: '0.0000000003'},
+            D: {absolute: '1', relative: '0.00000000002'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.0000000001'},
+            G: {absolute: '1', relative: '0.000000002'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', maxErrors, maxNumberOfTests);
+    });
+
+    describe('edge cases 2', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.0000004'},
+            C: {absolute: '1', relative: '0.00009'},
+            D: {absolute: '1', relative: '0.000002'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.00002'},
+            G: {absolute: '1', relative: '0.0007'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', maxErrors, maxNumberOfTests);
+    });
 };
 
 describe('PoolCollection', () => {
@@ -577,29 +624,11 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('withdrawal regular cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsRegularCases', '1', '0.0000000000000001', 10);
-    });
-
-    describe('withdrawal edge cases 1', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', '1', '0.00000001', 10);
-    });
-
-    describe('withdrawal edge cases 2', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', '1', '0.001', 10);
+    describe('withdrawal', () => {
+        withdrawalAmountsTests(10);
     });
 });
 
-describe('@stress PoolCollection', () => {
-    describe('withdrawal regular cases', () => {
-        withdrawalAmountsTest('WithdrawalAmountsRegularCases', '1', '0.0000000000000001');
-    });
-
-    describe('withdrawal edge cases 1', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', '1', '0.00000001');
-    });
-
-    describe('withdrawal edge cases 2', () => {
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', '1', '0.001');
-    });
+describe('@stress PoolCollection withdrawal', () => {
+    withdrawalAmountsTests();
 });
