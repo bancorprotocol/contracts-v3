@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";

@@ -34,12 +34,14 @@ describe('NetworkTokenPool', () => {
         it('should be properly initialized', async () => {
             const {
                 networkTokenPool,
+                networkSettings,
                 network,
                 networkToken,
                 networkTokenGovernance,
                 govToken,
                 govTokenGovernance,
-                vault
+                vault,
+                pendingWithdrawals
             } = await createSystem();
 
             expect(await networkTokenPool.version()).to.equal(1);
@@ -49,7 +51,10 @@ describe('NetworkTokenPool', () => {
             expect(await networkTokenPool.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
             expect(await networkTokenPool.govToken()).to.equal(govToken.address);
             expect(await networkTokenPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
+            expect(await networkTokenPool.settings()).to.equal(networkSettings.address);
             expect(await networkTokenPool.vault()).to.equal(vault.address);
+            expect(await networkTokenPool.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+
             expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
 
             const poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());

@@ -19,9 +19,10 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+import { AverageRate } from "./PoolAverageRate.sol";
 
 /**
  * @dev Pool Collection contract
@@ -208,6 +209,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
+            averageRate: AverageRate({ time: 0, rate: Fraction({ n: 0, d: 1 }) }),
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
