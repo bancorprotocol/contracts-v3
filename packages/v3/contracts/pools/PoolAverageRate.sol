@@ -27,11 +27,11 @@ library PoolAverageRate {
     /**
      * @dev records and returns an updated average rate
      */
-    function calcRecentAverageRate(
-        Fraction calldata spotRate,
-        AverageRate calldata averageRate,
+    function calcAverageRate(
+        Fraction memory spotRate,
+        AverageRate memory averageRate,
         uint32 currentTime
-    ) external pure returns (AverageRate memory) {
+    ) internal pure returns (AverageRate memory) {
         // get the elapsed time since the previous average rate was calculated
         uint256 timeElapsed = currentTime - averageRate.time;
 
@@ -66,11 +66,11 @@ library PoolAverageRate {
      *
      * for example, if the maximum permitted deviation is 5%, then verify `95/100 <= average/spot <= 100/95`
      */
-    function verifyAverageRateDeviation(
-        Fraction calldata spotRate,
-        AverageRate calldata averageRate,
+    function verifyAverageRate(
+        Fraction memory spotRate,
+        AverageRate memory averageRate,
         uint256 maxDeviation
-    ) external pure {
+    ) internal pure {
         uint256 ppmDelta = PPM_RESOLUTION - maxDeviation;
         uint256 min = spotRate.n.mul(averageRate.rate.d).mul(ppmDelta).mul(ppmDelta);
         uint256 mid = spotRate.d.mul(averageRate.rate.n).mul(ppmDelta).mul(PPM_RESOLUTION);

@@ -139,7 +139,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         // verify that the average rate of the pool isn't deviated too much from its spot rate
         Pool memory poolData = poolCollection.poolData(pool);
-        PoolAverageRate.verifyAverageRateDeviation(
+        PoolAverageRate.verifyAverageRate(
             Fraction({ n: poolData.baseTokenTradingLiquidity, d: poolData.networkTokenTradingLiquidity }),
             poolData.averageRate,
             _settings.averageRateMaxDeviationPPM()
