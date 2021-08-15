@@ -131,6 +131,54 @@ const withdrawalAmountsTests = (maxNumberOfTests?: number) => {
         };
         withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', maxErrors, maxNumberOfTests);
     });
+
+    describe('coverage 1', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.0002'},
+            C: {absolute: '1', relative: '0.0000002'},
+            D: {absolute: '1', relative: '0.0002'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.0002'},
+            G: {absolute: '1', relative: '0.0002'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsCoverage1', maxErrors, maxNumberOfTests);
+    });
+
+    describe('coverage 2', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.000000003'},
+            C: {absolute: '1', relative: '0.000000003'},
+            D: {absolute: '1', relative: '0.000000003'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.000000003'},
+            G: {absolute: '1', relative: '0.000000003'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsCoverage2', maxErrors, maxNumberOfTests);
+    });
+
+    describe('coverage 3', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.008'},
+            C: {absolute: '1', relative: '0.000002'},
+            D: {absolute: '1', relative: '0.008'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.008'},
+            G: {absolute: '1', relative: '0.008'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsCoverage3', maxErrors, maxNumberOfTests);
+    });
+
+    describe('coverage 4', () => {
+        const maxErrors = {
+            B: {absolute: '1', relative: '0.0000009'},
+            C: {absolute: '1', relative: '0.0000000002'},
+            D: {absolute: '1', relative: '0.0000009'},
+            E: {absolute: '1', relative: '0'},
+            F: {absolute: '1', relative: '0.0000009'},
+            G: {absolute: '1', relative: '0.0000009'},
+        };
+        withdrawalAmountsTest('WithdrawalAmountsCoverage4', maxErrors, maxNumberOfTests);
+    });
 };
 
 describe('PoolCollection', () => {
