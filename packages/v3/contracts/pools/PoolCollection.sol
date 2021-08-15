@@ -380,7 +380,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         pool.poolToken.burnFrom(provider, basePoolTokenAmount);
 
         pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
-        pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
+        pool.networkTokenTradingLiquidity = _safeUint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
