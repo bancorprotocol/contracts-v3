@@ -203,7 +203,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         Pool memory newPool = Pool({
-            version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
