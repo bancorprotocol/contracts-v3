@@ -209,7 +209,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals) external initializer {
+    function initialize(IPendingWithdrawals initPendingWithdrawals)
+        external
+        validAddress(address(initPendingWithdrawals))
+        initializer
+    {
         __BancorNetwork_init(initPendingWithdrawals);
     }
 
