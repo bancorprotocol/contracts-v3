@@ -128,11 +128,13 @@ export const createSystem = async () => {
         ctorArgs: [network.address, vault.address, networkTokenPoolToken.address]
     });
     await networkTokenPoolToken.transferOwnership(networkTokenPool.address);
-    await networkTokenPool.initialize();
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address, networkTokenPool.address]
     });
+
+    await networkTokenPool.initialize(pendingWithdrawals.address);
+
     const poolCollection = await createPoolCollection(network);
 
     await network.initialize(pendingWithdrawals.address);

@@ -59,7 +59,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     IPoolToken internal immutable _poolToken;
 
     // the pending withdrawals contract
-    IPendingWithdrawals private immutable _pendingWithdrawals;
+    IPendingWithdrawals private _pendingWithdrawals;
 
     // the total staked network token balance in the network
     uint256 private _stakedBalance;
@@ -107,7 +107,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _settings = initNetwork.settings();
         _vault = initVault;
         _poolToken = initPoolToken;
-        _pendingWithdrawals = initNetwork.pendingWithdrawals();
     }
 
     // allows execution by the network only
@@ -149,8 +148,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize() external initializer {
-        __NetworkTokenPool_init();
+    function initialize(IPendingWithdrawals initPendingWithdrawals)
+        external
+        initializer
+        validAddress(address(initPendingWithdrawals))
+    {
+        __NetworkTokenPool_init(initPendingWithdrawals);
     }
 
     // solhint-disable func-name-mixedcase
@@ -158,16 +161,18 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkTokenPool_init() internal initializer {
+    function __NetworkTokenPool_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
         __ReentrancyGuard_init();
 
-        __NetworkTokenPool_init_unchained();
+        __NetworkTokenPool_init_unchained(initPendingWithdrawals);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkTokenPool_init_unchained() internal initializer {
+    function __NetworkTokenPool_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+        _pendingWithdrawals = initPendingWithdrawals;
+
         _poolToken.acceptOwnership();
     }
 

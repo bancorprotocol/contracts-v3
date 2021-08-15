@@ -23,10 +23,22 @@ describe('NetworkTokenPool', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { networkTokenPool } = await createSystem();
+        it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
+            const { networkTokenPoolToken, network, vault } = await createSystem();
 
-            await expect(networkTokenPool.initialize()).to.be.revertedWith(
+            const networkTokenPool = await Contracts.NetworkTokenPool.deploy(
+                network.address,
+                vault.address,
+                networkTokenPoolToken.address
+            );
+
+            await expect(networkTokenPool.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
+            const { networkTokenPool, pendingWithdrawals } = await createSystem();
+
+            await expect(networkTokenPool.initialize(pendingWithdrawals.address)).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
