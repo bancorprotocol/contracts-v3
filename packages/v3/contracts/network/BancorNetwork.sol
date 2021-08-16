@@ -492,7 +492,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         } else {
             IReserveToken baseToken = request.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
-            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
             IBancorVault vault = networkTokenPool.vault();
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
@@ -538,6 +537,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 amounts.C,
                 0 // TODO: withdrawalFee
             );
+
+            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
 
             emit TotalLiquidityUpdated(
                 contextId,
