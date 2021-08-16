@@ -16,7 +16,7 @@ import { ethers } from 'hardhat';
 describe('NetworkTokenPool', () => {
     let nonOwner: SignerWithAddress;
 
-    shouldHaveGap('NetworkTokenPool', '_stakedBalance');
+    shouldHaveGap('NetworkTokenPool', '_pendingWithdrawals');
 
     before(async () => {
         [, nonOwner] = await ethers.getSigners();

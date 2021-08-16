@@ -68,7 +68,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     mapping(IReserveToken => uint256) private _mintedAmounts;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 2] private __gap;
+    uint256[MAX_GAP - 3] private __gap;
 
     /**
      * @dev triggered when liquidity pools have requested liquidity
