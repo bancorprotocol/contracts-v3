@@ -21,11 +21,24 @@ struct AverageRate {
 library PoolAverageRate {
     using SafeMath for uint256;
 
-    // the average rate (SMA) window length
+    // the average rate (TWA) window length
     uint256 private constant AVERAGE_RATE_PERIOD = 10 minutes;
 
     /**
      * @dev records and returns an updated average rate
+     *
+     * the average rate is updated according to the following formula:
+     *
+     * t = the elapsed time since the previous average rate was calculated
+     * T = the average rate (TWA) window length
+     * P = the previous/current average rate
+     * S = the current spot price
+     *
+     *      if t == 0, return P
+     *      if t >- T, return S
+     *      else, return:             T - t         t
+     *                           P * ------- + S * ---
+     *                                  T           T
      */
     function calcAverageRate(
         Fraction memory spotRate,
@@ -64,17 +77,21 @@ library PoolAverageRate {
     /**
      * @dev verifies that the deviation of the average rate from the spot rate is within the permitted range
      *
-     * for example, if the maximum permitted deviation is 5%, then verify `95/100 <= average/spot <= 100/95`
+     * for example, if the maximum permitted deviation is 5%, then verify `95% <= average/spot <= 105%`
+     *
+     * requirements:
+     *
+     * - maxDeviation must be lesser or equalt to PPM_RESOLUTION
      */
     function verifyAverageRate(
         Fraction memory spotRate,
         AverageRate memory averageRate,
-        uint256 maxDeviation
+        uint32 maxDeviation
     ) internal pure {
-        uint256 ppmDelta = PPM_RESOLUTION - maxDeviation;
-        uint256 min = spotRate.n.mul(averageRate.rate.d).mul(ppmDelta).mul(ppmDelta);
-        uint256 mid = spotRate.d.mul(averageRate.rate.n).mul(ppmDelta).mul(PPM_RESOLUTION);
-        uint256 max = spotRate.n.mul(averageRate.rate.d).mul(PPM_RESOLUTION).mul(PPM_RESOLUTION);
+        uint256 d = averageRate.rate.d.mul(spotRate.n);
+        uint256 min = MathEx.mulDivC(d, PPM_RESOLUTION - maxDeviation, PPM_RESOLUTION);
+        uint256 mid = averageRate.rate.n.mul(spotRate.d);
+        uint256 max = MathEx.mulDivF(d, PPM_RESOLUTION + maxDeviation, PPM_RESOLUTION);
 
         require(min <= mid && mid <= max, "ERR_INVALID_RATE");
     }

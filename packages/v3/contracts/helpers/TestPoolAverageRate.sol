@@ -17,7 +17,7 @@ contract TestPoolAverageRate {
     function verifyAverageRate(
         Fraction calldata spotRate,
         AverageRate calldata averageRate,
-        uint256 maxDeviation
+        uint32 maxDeviation
     ) external pure {
         return PoolAverageRate.verifyAverageRate(spotRate, averageRate, maxDeviation);
     }

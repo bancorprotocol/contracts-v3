@@ -1,6 +1,3 @@
-import { Signer } from '@ethersproject/abstract-signer';
-import { ContractFactory } from '@ethersproject/contracts';
-import { ethers } from 'hardhat';
 import {
     BancorNetwork__factory,
     BancorVault__factory,
@@ -18,6 +15,7 @@ import {
     TestNetworkTokenPool__factory,
     TestOwnedUpgradeable__factory,
     TestPendingWithdrawals__factory,
+    TestPoolAverageRate__factory,
     TestPoolCollection__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
@@ -26,6 +24,9 @@ import {
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
+import { Signer } from '@ethersproject/abstract-signer';
+import { ContractFactory } from '@ethersproject/contracts';
+import { ethers } from 'hardhat';
 
 type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
@@ -79,6 +80,7 @@ const getContracts = (signer?: Signer) => ({
     TestBancorNetwork: deployOrAttach<TestBancorNetwork__factory>('TestBancorNetwork', signer),
     TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
+    TestPoolAverageRate: deployOrAttach<TestPoolAverageRate__factory>('TestPoolAverageRate', signer),
     TestPoolCollection: deployOrAttach<TestPoolCollection__factory>('TestPoolCollection', signer),
     TestNetworkTokenPool: deployOrAttach<TestNetworkTokenPool__factory>('TestNetworkTokenPool', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),

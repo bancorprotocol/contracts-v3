@@ -73,4 +73,15 @@ export const toDecimal = <T extends ToDecimalInput>(v: T): ToDecimalReturn<T> =>
     return new Decimal(v.toString()) as Decimal as ToDecimalReturn<T>;
 };
 
-export const toString = (fraction: Fraction) => `{n: ${fraction.n.toFixed()}, d: ${fraction.d.toFixed()}}`;
+export const toString = <T extends BigNumber | Decimal>(fraction: Fraction<T>) => {
+    if (Decimal.isDecimal(fraction.n)) {
+        return `{n: ${(fraction as Fraction<Decimal>).n.toFixed()}, d: ${(fraction as Fraction<Decimal>).d.toFixed()}}`;
+    }
+
+    return `{n: ${fraction.n.toString()}, d: ${fraction.d.toString()}}`;
+};
+
+export interface AverageRate<T> {
+    rate: Fraction<T>;
+    time: T;
+}
