@@ -479,6 +479,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // generated using sender, blocktime, and all args
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, block.timestamp, id));
 
+        // claim the pool tokens
+        _pendingWithdrawals.completeWithdrawal(contextId, msg.sender, id);
+
         if (request.poolToken == networkTokenPool.poolToken()) {
             // TODO:
             // requires approval for vBNT
