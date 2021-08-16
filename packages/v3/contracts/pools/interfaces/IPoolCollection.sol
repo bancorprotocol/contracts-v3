@@ -112,7 +112,7 @@ interface IPoolCollection {
         address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
-        uint256 protectionWalletBalance,
-        INetworkTokenPool networkTokenPool
+        uint256 baseTokenVaultBalance,
+        uint256 protectionWalletBalance
     ) external returns (WithdrawalAmounts memory);
 }

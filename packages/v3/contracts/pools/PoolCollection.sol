@@ -55,6 +55,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     // the network contract
     IBancorNetwork private immutable _network;
 
+    // the network token pool contract
+    INetworkTokenPool private immutable _networkTokenPool;
+
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) private _pools;
 
@@ -360,17 +363,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
-        uint256 protectionWalletBalance,
-        INetworkTokenPool networkTokenPool
+        uint256 baseTokenVaultBalance,
+        uint256 protectionWalletBalance
     ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
         Pool storage pool = _pools[baseToken];
 
         WithdrawalAmounts memory amounts = withdrawalAmounts(
             pool.networkTokenTradingLiquidity,
             pool.baseTokenTradingLiquidity,
-            pool.stakedBalance > pool.depositLimit ? pool.stakedBalance - pool.depositLimit : 0,
+            cap(baseTokenVaultBalance, pool.baseTokenTradingLiquidity),
             pool.poolToken.totalSupply(),
-            Math.min(pool.stakedBalance, pool.depositLimit),
+            pool.stakedBalance,
             protectionWalletBalance,
             pool.tradingFeePPM,
             _settings.withdrawalFeePPM(),
@@ -384,9 +387,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
-                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
+                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
             } else if (amounts.H == Action.burnNetworkTokens) {
-                networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
+                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
 
