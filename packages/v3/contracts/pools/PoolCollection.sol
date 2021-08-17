@@ -412,9 +412,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         if (pool.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
-            bool currDisabled = networkTokenCurrTradingLiquidity < minLiquidityForTrading;
+            bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
             bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
-            if (currDisabled != nextEnabled) {
+            if (nextEnabled != currEnabled) {
                 emit TradingEnabled(baseToken, nextEnabled);
             }
         }
