@@ -109,7 +109,6 @@ interface IPoolCollection {
 
     function withdraw(
         bytes32 contextId,
-        address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,

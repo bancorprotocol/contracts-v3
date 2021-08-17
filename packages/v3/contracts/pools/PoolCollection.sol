@@ -357,7 +357,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     function withdraw(
         bytes32 contextId,
-        address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
@@ -378,7 +377,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             basePoolTokenAmount
         );
 
-        withdrawUpdatePool(provider, baseToken, basePoolTokenAmount, amounts.D, amounts.F);
+        withdrawUpdatePool(baseToken, basePoolTokenAmount, amounts.D, amounts.F);
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
@@ -392,7 +391,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     function withdrawUpdatePool(
-        address provider,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
@@ -403,7 +401,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenTradingLiquidity = pool.baseTokenTradingLiquidity;
         uint256 networkTokenTradingLiquidity = pool.networkTokenTradingLiquidity;
 
-        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
+        pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
         pool.baseTokenTradingLiquidity = _safeUint128(baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta));
         pool.networkTokenTradingLiquidity = _safeUint128(networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta));

@@ -494,10 +494,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             IPoolCollection poolCollection = _collectionByPool[baseToken];
             IBancorVault vault = networkTokenPool.vault();
 
+            request.poolToken.transferFrom(request.provider, address(this), request.amount);
+            request.poolToken.approve(address(poolCollection), request.amount);
+
             // call withdraw on the TKN pool - returns the amounts/breakdown
             IPoolCollection.WithdrawalAmounts memory amounts = poolCollection.withdraw(
                 contextId,
-                request.provider,
                 baseToken,
                 request.amount,
                 IERC20(address(baseToken)).balanceOf(address(vault)),
