@@ -399,21 +399,23 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Pool storage pool = _pools[baseToken];
         uint256 totalSupply = pool.poolToken.totalSupply();
 
-        uint256 baseTokenTradingLiquidity = pool.baseTokenTradingLiquidity;
-        uint256 networkTokenTradingLiquidity = pool.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta);
+        uint256 baseTokenCurrTradingLiquidity = pool.baseTokenTradingLiquidity;
+        uint256 networkTokenCurrTradingLiquidity = pool.networkTokenTradingLiquidity;
+        uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
+        uint256 networkTokenNextTradingLiquidity = networkTokenCurrTradingLiquidity.sub(networkTokenTradingLiquidityDelta);
 
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
-        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenNewTradingLiquidity);
-        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenNewTradingLiquidity);
-        pool.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenNextTradingLiquidity);
+        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenNextTradingLiquidity);
+        pool.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
 
         if (pool.tradingEnabled) {
-            uint256 minLiquidityForTrading = 1; // _settings.minLiquidityForTrading();
-            if (networkTokenTradingLiquidity >= minLiquidityForTrading && networkTokenNewTradingLiquidity < minLiquidityForTrading) {
-                emit TradingEnabled(baseToken, false);
+            uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+            bool currDisabled = networkTokenCurrTradingLiquidity < minLiquidityForTrading;
+            bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
+            if (currDisabled != nextEnabled) {
+                emit TradingEnabled(baseToken, nextEnabled);
             }
         }
     }
