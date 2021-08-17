@@ -498,7 +498,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns `xy(1-n) / z` (pretending `n` is normalized)
+     * @dev returns `xy(1-n) / z`, pretending `n` is normalized
      */
     function deductFee(
         uint256 x,
@@ -519,7 +519,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * e = base token staked amount
      * n = withdrawal fee in ppm units
      *
-     * output (pretending `n` is normalized):
+     * output, pretending `n` is normalized:
      * x - E / (1 - n) * d / e
      * d - E / (1 - n) * d / e
      * e - E / (1 - n)
