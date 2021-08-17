@@ -528,6 +528,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 _externalProtectionWallet.withdrawTokens(baseToken, payable(request.provider), amounts.E);
             }
 
+            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
+
             emit FundsWithdrawn(
                 contextId,
                 baseToken,
@@ -540,8 +542,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 amounts.C,
                 0 // TODO: withdrawalFee
             );
-
-            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
 
             emit TotalLiquidityUpdated(
                 contextId,
