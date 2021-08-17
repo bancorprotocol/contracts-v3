@@ -154,7 +154,7 @@ describe('NetworkSettings', () => {
             await expect(res).not.to.emit(networkSettings, 'PoolMintingLimitUpdated');
         });
 
-        it('should be to able to set and update pool minting limit of a token', async () => {
+        it('should be able to set and update pool minting limit of a token', async () => {
             expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(BigNumber.from(0));
 
             const res = await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
@@ -194,7 +194,7 @@ describe('NetworkSettings', () => {
             await expect(res).not.to.emit(networkSettings, 'MinLiquidityForTradingUpdated');
         });
 
-        it('should be to able to set and update the minimum liquidity for trading', async () => {
+        it('should be able to set and update the minimum liquidity for trading', async () => {
             expect(await networkSettings.minLiquidityForTrading()).to.equal(BigNumber.from(0));
 
             const res = await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
@@ -266,7 +266,7 @@ describe('NetworkSettings', () => {
             await expect(res2).not.to.emit(networkSettings, 'NetworkFeePPMUpdated');
         });
 
-        it('should be to able to set and update network wallet params', async () => {
+        it('should be able to set and update network wallet params', async () => {
             const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
             await expect(res)
                 .to.emit(networkSettings, 'NetworkFeeWalletUpdated')
@@ -326,7 +326,7 @@ describe('NetworkSettings', () => {
             await expect(res).not.to.emit(networkSettings, 'WithdrawalFeePPMUpdated');
         });
 
-        it('should be to able to set and update the withdrawal fee', async () => {
+        it('should be able to set and update the withdrawal fee', async () => {
             const res = await networkSettings.setWithdrawalFeePPM(newWithdrawalFee);
             await expect(res)
                 .to.emit(networkSettings, 'WithdrawalFeePPMUpdated')
@@ -372,7 +372,7 @@ describe('NetworkSettings', () => {
             await expect(res).not.to.emit(networkSettings, 'FlashLoanFeePPMUpdated');
         });
 
-        it('should be to able to set and update the flash-loan fee', async () => {
+        it('should be able to set and update the flash-loan fee', async () => {
             const res = await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
             await expect(res)
                 .to.emit(networkSettings, 'FlashLoanFeePPMUpdated')
@@ -422,7 +422,7 @@ describe('NetworkSettings', () => {
             await expect(res).not.to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated');
         });
 
-        it('should be to able to set and update the maximum deviation', async () => {
+        it('should be able to set and update the maximum deviation', async () => {
             const res = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
             await expect(res)
                 .to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated')

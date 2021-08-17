@@ -59,7 +59,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
-     * @dev triggered when the monimum liquidity for trading amount is updated
+     * @dev triggered when the minimum liquidity for trading amount is updated
      */
     event MinLiquidityForTradingUpdated(uint256 prevAmount, uint256 newAmount);
 
@@ -198,7 +198,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     }
 
     /**
-     * @dev updates the amount of network tokens that the system can mint into a specific pool
+     * @dev updates the minimum liquidity for trading amount
      *
      * requirements:
      *

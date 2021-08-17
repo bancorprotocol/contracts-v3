@@ -26,7 +26,7 @@ interface INetworkSettings is IUpgradeable {
     function poolMintingLimit(IReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns the minimum network token liquidity for trading
+     * @dev returns the minimum network token liquidity required before the system enables trading in the relevant pool
      */
     function minLiquidityForTrading() external view returns (uint256);
 
