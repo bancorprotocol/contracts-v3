@@ -104,7 +104,7 @@ describe('PendingWithdrawals', () => {
             await expect(res).not.to.emit(pendingWithdrawals, 'LockDurationUpdated');
         });
 
-        it('should be to able to set and update the lock duration', async () => {
+        it('should be able to set and update the lock duration', async () => {
             const res = await pendingWithdrawals.setLockDuration(newLockDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'LockDurationUpdated')
@@ -144,7 +144,7 @@ describe('PendingWithdrawals', () => {
             await expect(res).not.to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated');
         });
 
-        it('should be to able to set and update the withdrawal window duration', async () => {
+        it('should be able to set and update the withdrawal window duration', async () => {
             const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
             await expect(res)
                 .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
