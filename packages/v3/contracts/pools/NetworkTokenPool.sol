@@ -343,7 +343,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         if (!skipLimitCheck) {
             uint256 mintingLimit = _settings.poolMintingLimit(pool);
 
-            if (mintingLimit <= mintedAmount) {
+            if (mintedAmount > mintingLimit) {
                 networkTokenAmount = 0;
             } else {
                 networkTokenAmount = Math.min(mintingLimit - mintedAmount, networkTokenAmount);
@@ -392,21 +392,24 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) {
+        uint256 mintedAmount = _mintedAmounts[pool];
+        require(networkTokenAmount <= mintedAmount, "ERR_AMOUNT_TOO_HIGH");
+
         // calculate the pool token amount to burn
         uint256 poolTokenAmount = networkTokenAmount.mul(_poolToken.totalSupply()).div(_stakedBalance);
-        require(poolTokenAmount > 0, "ERR_INSUFFICIENT_LIQUIDITY");
 
         // update the staked balance
         _stakedBalance = _stakedBalance.sub(networkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = _mintedAmounts[pool].sub(networkTokenAmount);
+        _mintedAmounts[pool] = mintedAmount.sub(networkTokenAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // with network tokens from the vault
-        _vault.withdrawTokens(pool, payable(address(this)), networkTokenAmount);
+        // with network tokens from the vault and burn them
+        _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced(contextId, pool, networkTokenAmount, poolTokenAmount);
     }

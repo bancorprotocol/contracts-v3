@@ -73,4 +73,13 @@ contract TestPoolCollection is PoolCollection {
     ) external returns (uint256) {
         return networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount, skipLimitCheck);
     }
+
+    function renounceLiquidityT(
+        INetworkTokenPool networkTokenPool,
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 networkTokenAmount
+    ) external {
+        networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
+    }
 }

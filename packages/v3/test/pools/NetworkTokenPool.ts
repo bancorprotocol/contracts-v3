@@ -157,7 +157,6 @@ describe('NetworkTokenPool', () => {
         it('should revert when attempting to request liquidity for a pool with an unknown collection managing it', async () => {
             const unknownPoolCollection = await createPoolCollection(network, 1000);
             const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
-
             await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
 
             await expect(
@@ -171,14 +170,12 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
         });
 
-        context('with whitelisted and registered pool', () => {
-            let poolToken: PoolToken;
-
+        context('with a whitelisted and registered pool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT: BigNumber = toWei(BigNumber.from(10_000_000));
 
             beforeEach(async () => {
-                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
                 await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
@@ -408,6 +405,213 @@ describe('NetworkTokenPool', () => {
                             await testRequest(amount, amount, true);
                         }
                     });
+                });
+            });
+        });
+    });
+
+    describe('renounce liquidity', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: TestERC20Token;
+        let networkTokenPool: TestNetworkTokenPool;
+        let networkTokenPoolToken: PoolToken;
+        let vault: BancorVault;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        const contextId = formatBytes32String('CTX');
+
+        beforeEach(async () => {
+            ({
+                networkSettings,
+                network,
+                networkToken,
+                networkTokenPool,
+                networkTokenPoolToken,
+                vault,
+                poolCollection
+            } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        });
+
+        it('should revert when attempting to renounce liquidity for a non-whitelisted pool', async () => {
+            await expect(
+                poolCollection.renounceLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken.address,
+                    BigNumber.from(1)
+                )
+            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+        });
+
+        it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
+            await expect(
+                poolCollection.renounceLiquidityT(networkTokenPool.address, contextId, ZERO_ADDRESS, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+        });
+
+        it('should revert when attempting to renounce liquidity for a pool with no collection managing it', async () => {
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+            // we expect the call to revert with no message when attempting to call a function of a zero contract
+            await expect(
+                poolCollection.renounceLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken.address,
+                    BigNumber.from(1)
+                )
+            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
+        });
+
+        it('should revert when attempting to renounce liquidity for a pool with an unknown collection managing it', async () => {
+            const unknownPoolCollection = await createPoolCollection(network, 1000);
+            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
+
+            await expect(
+                poolCollection.renounceLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken2.address,
+                    BigNumber.from(1)
+                )
+            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
+        });
+
+        context('with a whitelisted and registered pool', () => {
+            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MINTING_LIMIT: BigNumber = toWei(BigNumber.from(10_000_000));
+
+            beforeEach(async () => {
+                await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
+                await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
+            });
+
+            it('should revert when attempting to renounce liquidity for a pool from a different collection than the one managing it', async () => {
+                const poolCollection2 = await createPoolCollection(network);
+                await expect(
+                    poolCollection2.renounceLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        BigNumber.from(1)
+                    )
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when attempting to renounce a zero liquidity amount', async () => {
+                await expect(
+                    poolCollection.renounceLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        BigNumber.from(0)
+                    )
+                ).to.be.revertedWith('ERR_ZERO_VALUE');
+            });
+
+            it('should revert when attempting to renounce liquidity when no liquidity was ever requested', async () => {
+                await expect(
+                    poolCollection.renounceLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        BigNumber.from(1)
+                    )
+                ).to.be.revertedWith('ERR_AMOUNT_TOO_HIGH');
+            });
+
+            context('with requested liquidity', () => {
+                const requestedAmount = toWei(BigNumber.from(1_000_000));
+
+                beforeEach(async () => {
+                    await poolCollection.requestLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        requestedAmount,
+                        false
+                    );
+                });
+
+                const testRenounce = async (amount: BigNumber) => {
+                    const prevStakedBalance = await networkTokenPool.stakedBalance();
+                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+
+                    const prevNetworkTokenPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
+                    const prevNetworkTokenPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(
+                        networkTokenPool.address
+                    );
+                    const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
+
+                    const prevNetworkTokenPoolNetworkTokenAmount = await networkToken.balanceOf(
+                        networkTokenPool.address
+                    );
+                    const prevVaultNetworkTokenAmount = await networkToken.balanceOf(vault.address);
+
+                    let expectedPoolTokenAmount = amount
+                        .mul(prevNetworkTokenPoolTokenTotalSupply)
+                        .div(prevStakedBalance);
+
+                    const res = await poolCollection.renounceLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        amount
+                    );
+
+                    await expect(res)
+                        .to.emit(networkTokenPool, 'LiquidityRenounced')
+                        .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
+
+                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(amount));
+                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                        prevMintedAmount.sub(amount)
+                    );
+
+                    expect(await networkTokenPoolToken.totalSupply()).to.equal(
+                        prevNetworkTokenPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
+                    );
+                    expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevNetworkTokenPoolPoolTokenAmount.sub(expectedPoolTokenAmount)
+                    );
+                    expect(await networkTokenPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevNetworkTokenPoolNetworkTokenAmount
+                    );
+                    expect(await networkToken.balanceOf(vault.address)).to.equal(
+                        prevVaultNetworkTokenAmount.sub(amount)
+                    );
+                };
+
+                it('should revert when attempting to renounce more liquidity than requested', async () => {
+                    await expect(
+                        poolCollection.renounceLiquidityT(
+                            networkTokenPool.address,
+                            contextId,
+                            reserveToken.address,
+                            requestedAmount.add(BigNumber.from(1))
+                        )
+                    ).to.be.revertedWith('ERR_AMOUNT_TOO_HIGH');
+                });
+
+                it('should allow renouncing liquidity', async () => {
+                    for (const amount of [
+                        BigNumber.from(1),
+                        BigNumber.from(10_000),
+                        toWei(BigNumber.from(200_000)),
+                        toWei(BigNumber.from(300_000))
+                    ]) {
+                        await testRenounce(amount);
+                    }
                 });
             });
         });
