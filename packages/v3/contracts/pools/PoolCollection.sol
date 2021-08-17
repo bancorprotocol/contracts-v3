@@ -404,7 +404,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
         pool.baseTokenTradingLiquidity = _safeUint128(baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta));
-        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta));
+        pool.networkTokenTradingLiquidity = _safeUint128(
+            networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta)
+        );
     }
 
     /**

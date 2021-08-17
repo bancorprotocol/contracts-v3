@@ -551,12 +551,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 IERC20(address(baseToken)).balanceOf(address(vault))
             );
 
-            emit TradingLiquidityUpdated(
-                contextId,
-                baseToken,
-                baseToken,
-                pool.baseTokenTradingLiquidity
-            );
+            emit TradingLiquidityUpdated(contextId, baseToken, baseToken, pool.baseTokenTradingLiquidity);
         }
     }
 
