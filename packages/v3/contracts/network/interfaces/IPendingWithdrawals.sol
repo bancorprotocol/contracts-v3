@@ -114,10 +114,9 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
+     * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
      * - the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
-     * - in order to complete a network token withdrawal, the caller must be the network token pool
-     * - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
      */
     function completeWithdrawal(
         bytes32 contextId,

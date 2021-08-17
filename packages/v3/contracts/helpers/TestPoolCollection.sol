@@ -2,7 +2,6 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -53,15 +52,6 @@ contract TestPoolCollection is PoolCollection {
         uint256 m
     ) external pure returns (uint256) {
         return super.networkArbitrage(a, b, f, m);
-    }
-
-    function completeWithdrawalT(
-        IPendingWithdrawals pendingWithdrawals,
-        bytes32 contextId,
-        address provider,
-        uint256 id
-    ) external returns (uint256) {
-        return pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
     function requestLiquidityT(

@@ -158,6 +158,17 @@ contract PendingWithdrawals is
 
     // solhint-enable func-name-mixedcase
 
+    // allows execution by the network only
+    modifier onlyNetwork() {
+        _onlyNetwork();
+
+        _;
+    }
+
+    function _onlyNetwork() private view {
+        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
+    }
+
     /**
      * @dev returns the current version of the contract
      */
@@ -319,19 +330,9 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override returns (uint256) {
+    ) external override onlyNetwork returns (uint256) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
-
-        // verify the caller:
-        // - in order to complete a network token withdrawal, the caller must be the network token pool
-        // - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
-        IReserveToken reserveToken = request.poolToken.reserveToken();
-        if (address(reserveToken) == address(_networkToken)) {
-            require(msg.sender == address(_networkTokenPool), "ERR_ACCESS_DENIED");
-        } else {
-            require(msg.sender == address(_network.collectionByPool(reserveToken)), "ERR_ACCESS_DENIED");
-        }
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
@@ -347,7 +348,7 @@ contract PendingWithdrawals is
 
         emit WithdrawalCompleted(
             contextId,
-            reserveToken,
+            request.poolToken.reserveToken(),
             provider,
             id,
             request.amount,

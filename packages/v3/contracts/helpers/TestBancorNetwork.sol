@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
@@ -23,6 +24,15 @@ contract TestBancorNetwork is BancorNetwork {
 
     function createPoolT(IPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);
+    }
+
+    function completeWithdrawalT(
+        IPendingWithdrawals pendingWithdrawals,
+        bytes32 contextId,
+        address provider,
+        uint256 id
+    ) external returns (uint256) {
+        return pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
     function depositForT(

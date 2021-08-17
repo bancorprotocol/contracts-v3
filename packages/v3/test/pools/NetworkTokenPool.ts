@@ -650,7 +650,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to deposit from a non-network', async () => {
             const amount = BigNumber.from(1);
-            let nonNetwork = nonOwner;
+            const nonNetwork = nonOwner;
 
             await expect(
                 networkTokenPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
@@ -856,7 +856,7 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should revert when attempting to collect fees from a non-network', async () => {
-            let nonNetwork = nonOwner;
+            const nonNetwork = nonOwner;
 
             await expect(
                 networkTokenPool
