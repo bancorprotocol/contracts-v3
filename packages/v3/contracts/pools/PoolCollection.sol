@@ -364,7 +364,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 protectionWalletBalance,
         INetworkTokenPool networkTokenPool
     ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
-        Pool storage pool = _pools[baseToken];
+        Pool memory pool = _pools[baseToken];
 
         WithdrawalAmounts memory amounts = withdrawalAmounts(
             pool.networkTokenTradingLiquidity,
@@ -378,10 +378,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             basePoolTokenAmount
         );
 
-        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
-
-        pool.baseTokenTradingLiquidity = _safeUint128(uint256(pool.baseTokenTradingLiquidity).sub(amounts.D));
-        pool.networkTokenTradingLiquidity = _safeUint128(uint256(pool.networkTokenTradingLiquidity).sub(amounts.F));
+        withdrawUpdatePool(provider, baseToken, basePoolTokenAmount, amounts.D, amounts.F);
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
@@ -392,6 +389,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         return amounts;
+    }
+
+    function withdrawUpdatePool(
+        address provider,
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenTradingLiquidityDelta,
+        uint256 networkTokenTradingLiquidityDelta
+    ) private {
+        Pool storage pool = _pools[baseToken];
+        uint256 totalSupply = pool.poolToken.totalSupply();
+        uint256 baseTokenTradingLiquidity = pool.baseTokenTradingLiquidity;
+        uint256 networkTokenTradingLiquidity = pool.networkTokenTradingLiquidity;
+
+        pool.poolToken.burnFrom(provider, basePoolTokenAmount);
+        pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
+        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta));
+        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta));
     }
 
     /**
