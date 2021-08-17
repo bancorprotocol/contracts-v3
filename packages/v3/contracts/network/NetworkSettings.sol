@@ -59,6 +59,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
+     * @dev triggered when the monimum liquidity for trading amount is updated
+     */
+    event MinLiquidityForTradingUpdated(uint256 prevAmount, uint256 newAmount);
+
+    /**
      * @dev triggered when the network fee is updated
      */
     event NetworkFeeWalletUpdated(ITokenHolder prevWallet, ITokenHolder newWallet);
@@ -183,6 +188,31 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
         _poolMintingLimits[pool] = amount;
 
         emit PoolMintingLimitUpdated(pool, prevPoolMintingLimit, amount);
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function minLiquidityForTrading() external view override returns (uint256) {
+        return _minLiquidityForTrading;
+    }
+
+    /**
+     * @dev updates the amount of network tokens that the system can mint into a specific pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function setMinLiquidityForTrading(uint256 amount) external onlyOwner {
+        uint256 prevMinLiquidityForTrading = _minLiquidityForTrading;
+        if (_minLiquidityForTrading == amount) {
+            return;
+        }
+
+        _minLiquidityForTrading = amount;
+
+        emit MinLiquidityForTradingUpdated(prevMinLiquidityForTrading, amount);
     }
 
     /**

@@ -8,15 +8,15 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-let networkFeeWallet: TokenHolderUpgradeable;
-
-let nonOwner: SignerWithAddress;
-
-let reserveToken: TestERC20Token;
-
-const TOTAL_SUPPLY = BigNumber.from(1_000_000);
-
 describe('NetworkSettings', () => {
+    let networkFeeWallet: TokenHolderUpgradeable;
+
+    let nonOwner: SignerWithAddress;
+
+    let reserveToken: TestERC20Token;
+
+    const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+
     shouldHaveGap('NetworkSettings', '_protectedTokenWhitelist');
 
     before(async () => {
@@ -170,6 +170,47 @@ describe('NetworkSettings', () => {
                 .withArgs(reserveToken.address, poolMintingLimit, BigNumber.from(0));
 
             expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(BigNumber.from(0));
+        });
+    });
+
+    describe('min liquidity for trading', () => {
+        const minLiquidityForTrading = BigNumber.from(1000).mul(BigNumber.from(10).pow(18));
+        let networkSettings: NetworkSettings;
+
+        beforeEach(async () => {
+            ({ networkSettings } = await createSystem());
+        });
+
+        it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).setMinLiquidityForTrading(minLiquidityForTrading)
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should ignore setting to the same minimum liquidity for trading', async () => {
+            await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
+
+            const res = await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
+            await expect(res).not.to.emit(networkSettings, 'MinLiquidityForTradingUpdated');
+        });
+
+        it('should be to able to set and update the minimum liquidity for trading', async () => {
+            expect(await networkSettings.minLiquidityForTrading()).to.equal(BigNumber.from(0));
+
+            const res = await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
+            await expect(res)
+                .to.emit(networkSettings, 'MinLiquidityForTradingUpdated')
+                .withArgs(BigNumber.from(0), minLiquidityForTrading);
+
+            expect(await networkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
+
+            const newMinLiquidityForTrading = BigNumber.from(1);
+            const res2 = await networkSettings.setMinLiquidityForTrading(newMinLiquidityForTrading);
+            await expect(res2)
+                .to.emit(networkSettings, 'MinLiquidityForTradingUpdated')
+                .withArgs(minLiquidityForTrading, newMinLiquidityForTrading);
+
+            expect(await networkSettings.minLiquidityForTrading()).to.equal(newMinLiquidityForTrading);
         });
     });
 
