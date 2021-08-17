@@ -111,6 +111,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _network = initNetwork;
         _settings = initNetwork.settings();
+        _networkTokenPool = INetworkTokenPool(address(0));
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }

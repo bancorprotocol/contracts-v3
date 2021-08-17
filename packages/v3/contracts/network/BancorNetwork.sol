@@ -210,6 +210,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken = initGovTokenGovernance.token();
 
         _settings = initSettings;
+        _networkTokenPool = INetworkTokenPool(address(0));
     }
 
     /**
