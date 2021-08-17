@@ -47,7 +47,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     IBancorNetwork private immutable _network;
 
     // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) private _pools;
+    mapping(IReserveToken => Pool) internal _pools;
 
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
@@ -127,7 +127,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure virtual override returns (uint16) {
         return 1;
     }
 

@@ -17,6 +17,7 @@ import {
     TestPendingWithdrawals__factory,
     TestPoolAverageRate__factory,
     TestPoolCollection__factory,
+    TestPoolCollectionUnknownVersion__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestSystemToken__factory,
@@ -82,6 +83,10 @@ const getContracts = (signer?: Signer) => ({
     TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
     TestPoolAverageRate: deployOrAttach<TestPoolAverageRate__factory>('TestPoolAverageRate', signer),
     TestPoolCollection: deployOrAttach<TestPoolCollection__factory>('TestPoolCollection', signer),
+    TestPoolCollectionUnknownVersion: deployOrAttach<TestPoolCollectionUnknownVersion__factory>(
+        'TestPoolCollectionUnknownVersion',
+        signer
+    ),
     TestNetworkTokenPool: deployOrAttach<TestNetworkTokenPool__factory>('TestNetworkTokenPool', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
     TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),

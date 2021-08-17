@@ -11,8 +11,8 @@ Decimal.set({ precision: 155, rounding: Decimal.ROUND_DOWN, toExpPos: 40 });
 // patch BigNumber to include a min and a max functions
 declare module 'ethers' {
     class BigNumber {
-        static min(a: any, b: any): boolean;
-        static max(a: any, b: any): boolean;
+        static min(a: any, b: any): BigNumber;
+        static max(a: any, b: any): BigNumber;
     }
 }
 

@@ -81,6 +81,17 @@ export const toString = <T extends BigNumber | Decimal>(fraction: Fraction<T>) =
     return `{n: ${fraction.n.toString()}, d: ${fraction.d.toString()}}`;
 };
 
+type ToWeiInput = Decimal | BigNumber;
+type ToWeiReturn<T> = T extends BigNumber ? BigNumber : T extends Decimal ? Decimal : never;
+
+export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
+    if (Decimal.isDecimal(v)) {
+        return v.mul(10 ** 18) as ToWeiReturn<T>;
+    }
+
+    return (v as BigNumber).mul(BigNumber.from(10).pow(BigNumber.from(18))) as ToWeiReturn<T>;
+};
+
 export interface AverageRate<T> {
     rate: Fraction<T>;
     time: T;

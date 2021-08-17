@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain';
 import { PPM_RESOLUTION } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
-import { toString, Fraction, AverageRate } from '../helpers/Types';
+import { toString, toWei, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -154,7 +154,7 @@ describe('PoolAverageRate', () => {
             testCalcAverageRate({
                 name: 'multiple updates',
                 initSpotRate: {
-                    n: BigNumber.from(1000).mul(BigNumber.from(10).pow(BigNumber.from(18))),
+                    n: toWei(BigNumber.from(1000)),
                     d: BigNumber.from(200000)
                 },
                 steps: [
@@ -234,7 +234,7 @@ describe('PoolAverageRate', () => {
             testCalcAverageRate({
                 name: 'decreasing rate',
                 initSpotRate: {
-                    n: BigNumber.from(1000).mul(BigNumber.from(10).pow(BigNumber.from(18))),
+                    n: toWei(BigNumber.from(1000)),
                     d: BigNumber.from(2)
                 },
                 steps: [
@@ -272,7 +272,7 @@ describe('PoolAverageRate', () => {
             testCalcAverageRate({
                 name: 'increasing and decreasing rate',
                 initSpotRate: {
-                    n: BigNumber.from(1000).mul(BigNumber.from(10).pow(BigNumber.from(18))),
+                    n: toWei(BigNumber.from(1000)),
                     d: BigNumber.from(2)
                 },
                 steps: [
@@ -408,7 +408,7 @@ describe('PoolAverageRate', () => {
                                             poolAverageRate.verifyAverageRate(
                                                 {
                                                     n: BigNumber.from(1),
-                                                    d: BigNumber.from(10).pow(BigNumber.from(18))
+                                                    d: toWei(BigNumber.from(10))
                                                 },
                                                 averageRate,
                                                 maxDeviation

@@ -56,10 +56,10 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                 it(`baseArbitrage(${[b, f, m]})`, async () => {
                     const expected = baseArbitrage(b, f, m);
                     if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
+                        const actual = await poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString());
                         expect(actual).to.equal(expected);
                     } else {
-                        await expect(poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
+                        await expect(poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString())).to.be
                             .reverted;
                     }
                 });
@@ -74,7 +74,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                     it(`networkArbitrage(${[a, b, f, m]})`, async () => {
                         const expected = networkArbitrage(a, b, f, m);
                         if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await poolCollection.networkArbitrageTest(
+                            const actual = await poolCollection.networkArbitrageT(
                                 a.toString(),
                                 b.toString(),
                                 f.toString(),
@@ -83,12 +83,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                             expect(actual).to.equal(expected);
                         } else {
                             await expect(
-                                poolCollection.networkArbitrageTest(
-                                    a.toString(),
-                                    b.toString(),
-                                    f.toString(),
-                                    m.toString()
-                                )
+                                poolCollection.networkArbitrageT(a.toString(), b.toString(), f.toString(), m.toString())
                             ).to.be.reverted;
                         }
                     });

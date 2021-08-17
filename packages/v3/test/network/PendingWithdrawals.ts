@@ -15,9 +15,10 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, Wallet, Signer } from 'ethers';
-import { formatBytes32String } from 'ethers/lib/utils';
+import { BigNumber, Wallet, Signer, utils } from 'ethers';
 import { ethers } from 'hardhat';
+
+const { formatBytes32String } = utils;
 
 describe('PendingWithdrawals', () => {
     const DEFAULT_LOCK_DURATION = duration.days(7).toNumber();

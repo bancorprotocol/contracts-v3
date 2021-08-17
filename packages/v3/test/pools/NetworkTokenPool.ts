@@ -1,17 +1,29 @@
 import Contracts from '../../components/Contracts';
-import { TestBancorNetwork, TestNetworkTokenPool, TestERC20Token } from '../../typechain';
+import {
+    TestBancorNetwork,
+    TestNetworkTokenPool,
+    TestERC20Token,
+    NetworkSettings,
+    TestPoolCollection,
+    PoolToken,
+    BancorVault
+} from '../../typechain';
 import {
     NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
     NETWORK_TOKEN_POOL_TOKEN_NAME,
     FEE_TYPES,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    PPM_RESOLUTION
 } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { createSystem, createPool, createPoolCollection } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
+import { toWei } from '../helpers/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
+
+const { formatBytes32String } = utils;
 
 describe('NetworkTokenPool', () => {
     let nonOwner: SignerWithAddress;
@@ -74,6 +86,330 @@ describe('NetworkTokenPool', () => {
             expect(await poolToken.reserveToken()).to.equal(networkToken.address);
             expect(await poolToken.name()).to.equal(NETWORK_TOKEN_POOL_TOKEN_NAME);
             expect(await poolToken.symbol()).to.equal(NETWORK_TOKEN_POOL_TOKEN_SYMBOL);
+        });
+    });
+
+    describe('request liquidity', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: TestERC20Token;
+        let networkTokenPool: TestNetworkTokenPool;
+        let networkTokenPoolToken: PoolToken;
+        let vault: BancorVault;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        const contextId = formatBytes32String('CTX');
+
+        beforeEach(async () => {
+            ({
+                networkSettings,
+                network,
+                networkToken,
+                networkTokenPool,
+                networkTokenPoolToken,
+                vault,
+                poolCollection
+            } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        });
+
+        it('should revert when attempting to request liquidity for a non-whitelisted pool', async () => {
+            await expect(
+                poolCollection.requestLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken.address,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+        });
+
+        it('should revert when attempting to request liquidity for an invalid pool', async () => {
+            await expect(
+                poolCollection.requestLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    ZERO_ADDRESS,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+        });
+
+        it('should revert when attempting to request liquidity for a pool with no collection managing it', async () => {
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+            // we expect the call to revert with no message when attempting to call a function of a zero contract
+            await expect(
+                poolCollection.requestLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken.address,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
+        });
+
+        it('should revert when attempting to request liquidity for a pool with an unknown collection managing it', async () => {
+            const unknownPoolCollection = await createPoolCollection(network, 1000);
+            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
+
+            await expect(
+                poolCollection.requestLiquidityT(
+                    networkTokenPool.address,
+                    contextId,
+                    reserveToken2.address,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
+        });
+
+        context('with whitelisted and registered pool', () => {
+            let poolToken: PoolToken;
+
+            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MINTING_LIMIT: BigNumber = toWei(BigNumber.from(10_000_000));
+
+            beforeEach(async () => {
+                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
+                await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
+            });
+
+            it('should revert when attempting to request liquidity for a pool from a different collection than the one managing it', async () => {
+                const poolCollection2 = await createPoolCollection(network);
+                await expect(
+                    poolCollection2.requestLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        BigNumber.from(1),
+                        false
+                    )
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when attempting to request a zero liquidity amount', async () => {
+                await expect(
+                    poolCollection.requestLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        BigNumber.from(0),
+                        false
+                    )
+                ).to.be.revertedWith('ERR_ZERO_VALUE');
+            });
+
+            context('when spot rate is too far from average rate', () => {
+                beforeEach(async () => {
+                    const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
+
+                    await poolCollection.setTradingLiquidityT(reserveToken.address, spotRate.n, spotRate.d);
+                    await poolCollection.setAverageRateT(reserveToken.address, {
+                        rate: {
+                            n: spotRate.n.mul(PPM_RESOLUTION),
+                            d: spotRate.d.mul(PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(1000))))
+                        },
+                        time: BigNumber.from(0)
+                    });
+                });
+
+                it('should revert when requesting liquidity', async () => {
+                    await expect(
+                        poolCollection.requestLiquidityT(
+                            networkTokenPool.address,
+                            contextId,
+                            reserveToken.address,
+                            BigNumber.from(1),
+                            false
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_RATE');
+                });
+            });
+
+            context('when spot rate is close enough to the average rate', () => {
+                const testRequest = async (
+                    amount: BigNumber,
+                    expectedAmount: BigNumber,
+                    skipLimitCheck: boolean = false
+                ) => {
+                    const prevStakedBalance = await networkTokenPool.stakedBalance();
+                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+
+                    const prevNetworkTokenPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
+                    const prevNetworkTokenPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(
+                        networkTokenPool.address
+                    );
+                    const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
+
+                    const prevNetworkTokenPoolNetworkTokenAmount = await networkToken.balanceOf(
+                        networkTokenPool.address
+                    );
+                    const prevVaultNetworkTokenAmount = await networkToken.balanceOf(vault.address);
+
+                    let expectedPoolTokenAmount;
+                    if (prevNetworkTokenPoolTokenTotalSupply.isZero()) {
+                        expectedPoolTokenAmount = expectedAmount;
+                    } else {
+                        expectedPoolTokenAmount = expectedAmount
+                            .mul(prevNetworkTokenPoolTokenTotalSupply)
+                            .div(prevStakedBalance);
+                    }
+
+                    const receiveAmount = await poolCollection.callStatic.requestLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        amount,
+                        skipLimitCheck
+                    );
+                    expect(receiveAmount).to.equal(expectedAmount);
+
+                    const res = await poolCollection.requestLiquidityT(
+                        networkTokenPool.address,
+                        contextId,
+                        reserveToken.address,
+                        amount,
+                        skipLimitCheck
+                    );
+
+                    await expect(res)
+                        .to.emit(networkTokenPool, 'LiquidityRequested')
+                        .withArgs(contextId, reserveToken.address, amount, expectedAmount, expectedPoolTokenAmount);
+
+                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
+                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                        prevMintedAmount.add(expectedAmount)
+                    );
+
+                    expect(await networkTokenPoolToken.totalSupply()).to.equal(
+                        prevNetworkTokenPoolTokenTotalSupply.add(expectedPoolTokenAmount)
+                    );
+                    expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevNetworkTokenPoolPoolTokenAmount.add(expectedPoolTokenAmount)
+                    );
+                    expect(await networkTokenPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevNetworkTokenPoolNetworkTokenAmount
+                    );
+                    expect(await networkToken.balanceOf(vault.address)).to.equal(
+                        prevVaultNetworkTokenAmount.add(expectedAmount)
+                    );
+                };
+
+                it('should allow requesting liquidity', async () => {
+                    for (const amount of [
+                        BigNumber.from(1),
+                        BigNumber.from(10_000),
+                        toWei(BigNumber.from(1_000_000)),
+                        toWei(BigNumber.from(500_000))
+                    ]) {
+                        await testRequest(amount, amount);
+                    }
+                });
+
+                context('when close to the minting limit', () => {
+                    beforeEach(async () => {
+                        const amount = MINTING_LIMIT.sub(toWei(BigNumber.from(1_000_000)));
+                        await testRequest(amount, amount);
+                    });
+
+                    it('should allow requesting partial liquidity amount', async () => {
+                        for (const amount of [
+                            BigNumber.from(10),
+                            BigNumber.from(100_000),
+                            toWei(BigNumber.from(2_000_000)),
+                            toWei(BigNumber.from(1_500_000))
+                        ]) {
+                            const remaining = (await networkSettings.poolMintingLimit(reserveToken.address)).sub(
+                                await networkTokenPool.mintedAmounts(reserveToken.address)
+                            );
+                            const expectAmount = BigNumber.min(remaining, amount);
+
+                            await testRequest(amount, expectAmount);
+                        }
+                    });
+
+                    it('should allow explicitly requesting full liquidity', async () => {
+                        for (const amount of [
+                            BigNumber.from(10),
+                            BigNumber.from(100_000),
+                            toWei(BigNumber.from(2_000_000)),
+                            toWei(BigNumber.from(1_500_000))
+                        ]) {
+                            await testRequest(amount, amount, true);
+                        }
+                    });
+
+                    context('when the minting limit is lowered retroactively', () => {
+                        beforeEach(async () => {
+                            await testRequest(BigNumber.from(100_000), BigNumber.from(100_000));
+
+                            await networkSettings.setPoolMintingLimit(reserveToken.address, BigNumber.from(1));
+                        });
+
+                        it('should ignore requesting liquidity', async () => {
+                            for (const amount of [
+                                BigNumber.from(10),
+                                BigNumber.from(100_000),
+                                toWei(BigNumber.from(2_000_000)),
+                                toWei(BigNumber.from(1_500_000))
+                            ]) {
+                                await testRequest(amount, BigNumber.from(0));
+                            }
+                        });
+
+                        it('should allow explicitly requesting full liquidity', async () => {
+                            for (const amount of [
+                                BigNumber.from(10),
+                                BigNumber.from(100_000),
+                                toWei(BigNumber.from(2_000_000)),
+                                toWei(BigNumber.from(1_500_000))
+                            ]) {
+                                await testRequest(amount, amount, true);
+                            }
+                        });
+                    });
+                });
+
+                context('when at the minting limit', () => {
+                    beforeEach(async () => {
+                        await testRequest(MINTING_LIMIT, MINTING_LIMIT);
+                    });
+
+                    it('should ignore requesting liquidity', async () => {
+                        for (const amount of [
+                            BigNumber.from(10),
+                            BigNumber.from(100_000),
+                            toWei(BigNumber.from(2_000_000)),
+                            toWei(BigNumber.from(1_500_000))
+                        ]) {
+                            await testRequest(amount, BigNumber.from(0));
+                        }
+                    });
+
+                    it('should allow explicitly requesting full liquidity amount', async () => {
+                        for (const amount of [
+                            BigNumber.from(10),
+                            BigNumber.from(100_000),
+                            toWei(BigNumber.from(2_000_000)),
+                            toWei(BigNumber.from(1_500_000))
+                        ]) {
+                            await testRequest(amount, amount, true);
+                        }
+                    });
+                });
+            });
         });
     });
 
