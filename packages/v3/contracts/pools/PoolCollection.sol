@@ -55,9 +55,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     // the network contract
     IBancorNetwork private immutable _network;
 
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
-
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) private _pools;
 
@@ -111,7 +108,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _network = initNetwork;
         _settings = initNetwork.settings();
-        _networkTokenPool = INetworkTokenPool(address(0));
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -365,7 +361,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 protectionWalletBalance
+        uint256 protectionWalletBalance,
+        INetworkTokenPool networkTokenPool
     ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
         Pool storage pool = _pools[baseToken];
 
@@ -388,9 +385,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
-                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
+                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
             } else if (amounts.H == Action.burnNetworkTokens) {
-                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
+                networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
 

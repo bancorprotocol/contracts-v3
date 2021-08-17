@@ -44,9 +44,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
-
     // the pending withdrawals contract
     IPendingWithdrawals private _pendingWithdrawals;
 
@@ -210,7 +207,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken = initGovTokenGovernance.token();
 
         _settings = initSettings;
-        _networkTokenPool = INetworkTokenPool(address(0));
     }
 
     /**
@@ -475,6 +471,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
     function withdraw(uint256 id) external override nonReentrant {
         IPendingWithdrawals.WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
+        INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
 
         // verify that the provider is the withdrawal position owner
         require(msg.sender == request.provider, "ERR_ILLEGAL_ID");
@@ -485,7 +482,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // claim the pool tokens
         _pendingWithdrawals.completeWithdrawal(contextId, msg.sender, id);
 
-        if (request.poolToken == _networkTokenPool.poolToken()) {
+        if (request.poolToken == networkTokenPool.poolToken()) {
             // TODO:
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool
@@ -495,7 +492,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         } else {
             IReserveToken baseToken = request.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
-            IBancorVault vault = _networkTokenPool.vault();
+            IBancorVault vault = networkTokenPool.vault();
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
             IPoolCollection.WithdrawalAmounts memory amounts = poolCollection.withdraw(
@@ -504,7 +501,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 baseToken,
                 request.amount,
                 IERC20(address(baseToken)).balanceOf(address(vault)),
-                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet))
+                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet)),
+                networkTokenPool
             );
 
             if (amounts.B > 0) {
