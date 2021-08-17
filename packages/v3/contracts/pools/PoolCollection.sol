@@ -398,15 +398,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     ) private {
         Pool storage pool = _pools[baseToken];
         uint256 totalSupply = pool.poolToken.totalSupply();
+
         uint256 baseTokenTradingLiquidity = pool.baseTokenTradingLiquidity;
         uint256 networkTokenTradingLiquidity = pool.networkTokenTradingLiquidity;
+        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta);
 
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
-        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenTradingLiquidity.sub(baseTokenTradingLiquidityDelta));
-        pool.networkTokenTradingLiquidity = _safeUint128(
-            networkTokenTradingLiquidity.sub(networkTokenTradingLiquidityDelta)
-        );
+        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenNewTradingLiquidity);
+        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenNewTradingLiquidity);
+        pool.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+
+        if (pool.tradingEnabled) {
+            uint256 minLiquidityForTrading = 1; // _settings.minLiquidityForTrading();
+            if (networkTokenTradingLiquidity >= minLiquidityForTrading && networkTokenNewTradingLiquidity < minLiquidityForTrading) {
+                emit TradingEnabled(baseToken, false);
+            }
+        }
     }
 
     /**
