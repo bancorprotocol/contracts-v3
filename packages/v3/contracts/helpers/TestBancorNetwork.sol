@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -9,7 +10,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { INetworkTokenPool, DepositAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -22,6 +23,16 @@ contract TestBancorNetwork is BancorNetwork {
 
     function createPoolT(IPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);
+    }
+
+    function depositForT(
+        INetworkTokenPool networkTokenPool,
+        address provider,
+        uint256 networkTokenAmount,
+        bool isMigrating,
+        uint256 originalPoolTokenAmount
+    ) external returns (DepositAmounts memory) {
+        return networkTokenPool.depositFor(provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(

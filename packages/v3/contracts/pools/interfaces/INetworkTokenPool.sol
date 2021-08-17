@@ -104,7 +104,7 @@ interface INetworkTokenPool is IUpgradeable {
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
-        uint256 originalPoolTokenAmount
+        uint256 originalNetworkTokenAmount
     ) external returns (DepositAmounts memory);
 
     /**

@@ -269,11 +269,20 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
-        uint256 originalPoolTokenAmount
-    ) external override onlyNetwork greaterThanZero(networkTokenAmount) returns (DepositAmounts memory) {
+        uint256 originalNetworkTokenAmount
+    )
+        external
+        override
+        onlyNetwork
+        validAddress(provider)
+        greaterThanZero(networkTokenAmount)
+        returns (DepositAmounts memory)
+    {
+        uint256 currentStakedBalance = _stakedBalance;
+        require(currentStakedBalance > 0, "ERR_AMOUNT_TOO_HIGH");
+
         // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = networkTokenAmount.mul(_poolToken.totalSupply()).div(_stakedBalance);
-        require(poolTokenAmount > 0, "ERR_INSUFFICIENT_LIQUIDITY");
+        uint256 poolTokenAmount = networkTokenAmount.mul(_poolToken.totalSupply()).div(currentStakedBalance);
 
         // transfer pool tokens from the protocol to the provider
         _poolToken.transfer(provider, poolTokenAmount);
@@ -281,10 +290,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn the previously received network tokens
         _networkTokenGovernance.burn(networkTokenAmount);
 
-        // check if we need to compensate the provider during a migration
+        // check if we need to compensate the provider during a migration. It's seem that we are comparing apples (pool
+        // token amount) to oranges (original network token amount), but keep in mind that in v2.1, providers received
+        // governance tokens on a one-to-one basis, which de-factor meant that they have also received an equivalent of
+        // pool tokens on a one-to-one basis
         uint256 govTokenAmount = poolTokenAmount;
-        if (isMigrating && poolTokenAmount > originalPoolTokenAmount) {
-            govTokenAmount -= originalPoolTokenAmount;
+        if (isMigrating && poolTokenAmount > originalNetworkTokenAmount) {
+            govTokenAmount -= originalNetworkTokenAmount;
         }
 
         // mint governance tokens to the provider
