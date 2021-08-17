@@ -106,7 +106,7 @@ describe('BancorNetwork', () => {
             await expect(res).not.to.emit(network, 'ExternalProtectionWalletUpdated');
         });
 
-        it('should be to able to set and update the external protection wallet', async () => {
+        it('should be able to set and update the external protection wallet', async () => {
             await newExternalProtectionWallet.transferOwnership(network.address);
 
             const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
