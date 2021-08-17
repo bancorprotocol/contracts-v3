@@ -149,7 +149,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should be to able to set and update a token symbol override', async () => {
+        it('should be able to set and update a token symbol override', async () => {
             expect(await poolCollection.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
 
             await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
@@ -194,7 +194,7 @@ describe('PoolCollection', () => {
             await expect(res).not.to.emit(poolCollection, 'DefaultTradingFeePPMUpdated');
         });
 
-        it('should be to able to set and update the default trading fee', async () => {
+        it('should be able to set and update the default trading fee', async () => {
             const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
             await expect(res)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
