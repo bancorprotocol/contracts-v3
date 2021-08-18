@@ -88,5 +88,8 @@ interface IBancorNetwork is IUpgradeable {
      */
     function createPool(uint16 poolType, IReserveToken reserveToken) external;
 
+    /**
+     * @dev withdraws liquidity in exchange for base pool tokens
+     */
     function withdraw(uint256 id) external;
 }

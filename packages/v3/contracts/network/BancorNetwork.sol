@@ -469,6 +469,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         emit PoolAdded(poolType, reserveToken, poolCollection);
     }
 
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function withdraw(uint256 id) external override nonReentrant {
         IPendingWithdrawals.WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
         INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
