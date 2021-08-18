@@ -406,8 +406,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.stakedBalance = MathEx.mulDivF(pool.stakedBalance, totalSupply - basePoolTokenAmount, totalSupply);
-        pool.baseTokenTradingLiquidity = _safeUint128(baseTokenNextTradingLiquidity);
-        pool.networkTokenTradingLiquidity = _safeUint128(networkTokenNextTradingLiquidity);
+        pool.baseTokenTradingLiquidity = uint128(baseTokenNextTradingLiquidity);
+        pool.networkTokenTradingLiquidity = uint128(networkTokenNextTradingLiquidity);
         pool.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
 
         if (pool.tradingEnabled) {
@@ -734,18 +734,5 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0x0);
-    }
-
-    /**
-     * @dev decodes the uint128 from a single uint256 variable and returns it as uint256
-     */
-    function _decodeUint128(uint256 data, uint256 index) private pure returns (uint256) {
-        assert(index <= 1);
-        return (data >> (index * 128)) & MAX_UINT128;
-    }
-
-    function _safeUint128(uint256 x) private pure returns (uint128) {
-        require(x <= MAX_UINT128, "ERR_TOO_LARGE");
-        return uint128(x);
     }
 }
