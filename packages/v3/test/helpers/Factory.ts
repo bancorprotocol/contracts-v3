@@ -34,7 +34,7 @@ interface Logic {
     contract: BaseContract;
 }
 
-let logicContractsCache: Record<string, Logic> = {};
+const logicContractsCache: Record<string, Logic> = {};
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -52,6 +52,7 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
         return cached.contract;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
     logicContractsCache[factory.contractName] = { ctorArgs, contract: logicContract };
 
@@ -60,7 +61,7 @@ const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F
 
 const createTransparentProxy = async (
     logicContract: BaseContract,
-    skipInitialization: boolean = false,
+    skipInitialization = false,
     initArgs: InitArgs = []
 ) => {
     const admin = await proxyAdmin();
@@ -113,7 +114,7 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract, version: number = 1) => {
+export const createPoolCollection = async (network: string | BaseContract, version = 1) => {
     switch (version) {
         case 1:
             return Contracts.TestPoolCollection.deploy(toAddress(network));

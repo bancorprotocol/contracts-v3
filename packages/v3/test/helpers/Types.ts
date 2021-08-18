@@ -33,6 +33,7 @@ type ToDecimalReturn<T> = T extends Fraction<BigNumber>
     ? Decimal
     : never;
 
+// eslint-disable-next-line no-prototype-builtins
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
 export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn<T> => {
@@ -40,7 +41,7 @@ export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn
         return v as BigNumber as ToBigNumberReturn<T>;
     }
 
-    if (v.hasOwnProperty('n') && v.hasOwnProperty('d')) {
+    if (isFraction(v)) {
         return {
             n: BigNumber.from((v as Fraction<Decimal>).n.toFixed()),
             d: BigNumber.from((v as Fraction<Decimal>).d.toFixed())
@@ -59,7 +60,7 @@ export const toDecimal = <T extends ToDecimalInput>(v: T): ToDecimalReturn<T> =>
         return v as Decimal as ToDecimalReturn<T>;
     }
 
-    if (v.hasOwnProperty('n') && v.hasOwnProperty('d')) {
+    if (isFraction(v)) {
         return {
             n: new Decimal((v as Fraction<BigNumber>).n.toString()),
             d: new Decimal((v as Fraction<BigNumber>).d.toString())

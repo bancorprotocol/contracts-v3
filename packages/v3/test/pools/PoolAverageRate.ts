@@ -24,8 +24,6 @@ describe('PoolAverageRate', () => {
             time: BigNumber.from(0)
         };
 
-        let currentTime = BigNumber.from(10000);
-
         it('should update the average rate to the spot rate at the beginning', async () => {
             const currentTime = BigNumber.from(10000);
             const spotRate = { n: BigNumber.from(1), d: BigNumber.from(10) };

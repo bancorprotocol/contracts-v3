@@ -19,6 +19,6 @@ declare module 'ethers' {
 BigNumber.min = (a: any, b: any) => (BigNumber.from(a).lt(b) ? a : b);
 BigNumber.max = (a: any, b: any) => (BigNumber.from(a).lt(b) ? b : a);
 
-extendEnvironment((hre) => {
+extendEnvironment(() => {
     chai.use(customChai);
 });

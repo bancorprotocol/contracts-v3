@@ -178,7 +178,7 @@ describe('PendingWithdrawals', () => {
         });
 
         describe('initiation', () => {
-            const test = (delegated: boolean = false) => {
+            const test = (delegated = false) => {
                 let provider: Signer | Wallet;
                 let providerAddress: string;
                 let providerNonce: BigNumber;
