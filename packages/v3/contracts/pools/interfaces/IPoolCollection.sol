@@ -31,6 +31,8 @@ interface IPoolCollection {
         uint128 baseTokenTradingLiquidity;
         // the network token trading liquidity
         uint128 networkTokenTradingLiquidity;
+        // the recent average rate
+        Fraction averageRate;
         // the product of the base token and network token trading liquidities (used for fee calculations)
         uint256 tradingLiquidityProduct;
         // the staked balance

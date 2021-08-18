@@ -41,6 +41,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
+    struct PoolWithdrawalParams {
+        uint256 networkTokenAvgTradingLiquidity;
+        uint256 baseTokenAvgTradingLiquidity;
+        uint256 baseTokenTradingLiquidity;
+        uint256 basePoolTokenTotalSupply;
+        uint256 baseTokenStakedAmount;
+        uint256 tradeFeePPM;
+    }
+
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
         uint256 n1;
@@ -219,6 +228,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
+            averageRate: Fraction({ n: 0, d: 1 }),
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
@@ -363,16 +373,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 protectionWalletBalance,
         INetworkTokenPool networkTokenPool
     ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
-        Pool memory pool = _pools[baseToken];
+        PoolWithdrawalParams memory params = poolWithdrawalParams(baseToken);
 
         WithdrawalAmounts memory amounts = withdrawalAmounts(
-            pool.networkTokenTradingLiquidity,
-            pool.baseTokenTradingLiquidity,
-            cap(baseTokenVaultBalance, pool.baseTokenTradingLiquidity),
-            pool.poolToken.totalSupply(),
-            pool.stakedBalance,
+            params.networkTokenAvgTradingLiquidity,
+            params.baseTokenAvgTradingLiquidity,
+            cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+            params.basePoolTokenTotalSupply,
+            params.baseTokenStakedAmount,
             protectionWalletBalance,
-            pool.tradingFeePPM,
+            params.tradeFeePPM,
             _settings.withdrawalFeePPM(),
             basePoolTokenAmount
         );
@@ -388,6 +398,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         return amounts;
+    }
+
+    function poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
+        Pool memory pool = _pools[baseToken];
+
+        uint256 prod = uint256(pool.networkTokenTradingLiquidity) * uint256(pool.baseTokenTradingLiquidity);
+
+        return PoolWithdrawalParams({
+            networkTokenAvgTradingLiquidity: MathEx.floorSqrt(MathEx.mulDivF(prod, pool.averageRate.n, pool.averageRate.d)),
+            baseTokenAvgTradingLiquidity: MathEx.floorSqrt(MathEx.mulDivF(prod, pool.averageRate.d, pool.averageRate.n)),
+            baseTokenTradingLiquidity: pool.baseTokenTradingLiquidity,
+            basePoolTokenTotalSupply: pool.poolToken.totalSupply(),
+            baseTokenStakedAmount: pool.stakedBalance,
+            tradeFeePPM: pool.tradingFeePPM
+        });
     }
 
     function withdrawUpdatePool(
