@@ -103,17 +103,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
-    }
-
     modifier validRate(Fraction memory rate) {
         _validRate(rate);
 
@@ -195,7 +184,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
+    function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 

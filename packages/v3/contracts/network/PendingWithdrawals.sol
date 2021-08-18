@@ -157,18 +157,6 @@ contract PendingWithdrawals is
     }
 
     // solhint-enable func-name-mixedcase
-
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
-    }
-
     /**
      * @dev returns the current version of the contract
      */
@@ -330,7 +318,7 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override onlyNetwork returns (uint256) {
+    ) external override only(address(_network)) returns (uint256) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
 

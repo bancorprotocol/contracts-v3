@@ -109,17 +109,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken = initPoolToken;
     }
 
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
-    }
-
     // allows execution by a valid pool collection
     modifier onlyValidPoolCollection(IReserveToken pool) {
         _onlyValidPoolCollection(pool);
@@ -273,7 +262,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     )
         external
         override
-        onlyNetwork
+        only(address(_network))
         validAddress(provider)
         greaterThanZero(networkTokenAmount)
         returns (DepositAmounts memory)
@@ -316,7 +305,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function withdraw(address provider, uint256 poolTokenAmount)
         external
         override
-        onlyNetwork
+        only(address(_network))
         greaterThanZero(poolTokenAmount)
         validAddress(provider)
         returns (WithdrawalAmounts memory)
@@ -437,7 +426,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount,
         uint8 feeType
-    ) external override onlyNetwork validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
+    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         // increase the staked balance by the given amount
         _stakedBalance = _stakedBalance.add(networkTokenAmount);
 
