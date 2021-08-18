@@ -25,6 +25,7 @@ import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
+const { mulDivF } = MathUtils;
 
 describe('NetworkTokenPool', () => {
     let deployer: SignerWithAddress;
