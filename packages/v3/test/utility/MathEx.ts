@@ -1,12 +1,20 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
-import MathUtils from '../helpers/MathUtils';
+import {
+    floorSqrt,
+    ceilSqrt,
+    productRatio,
+    reducedRatio,
+    normalizedRatio,
+    accurateRatio,
+    roundDiv,
+    mulDivC,
+    mulDivF
+} from '../helpers/MathUtils';
 import { Fraction, toBigNumber, toString } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-
-const { floorSqrt, ceilSqrt, productRatio, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 
 const MAX_UINT128 = new Decimal(2).pow(128).sub(1);
 const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
@@ -111,7 +119,7 @@ describe('MathEx', () => {
     const testMulDiv = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
         const [a, b, c] = [x, y, z].map((val) => val.toHex());
         it(`${methodName}(${[a, b, c]})`, async () => {
-            const expected = MathUtils[methodName](a, b, c);
+            const expected = (methodName === 'mulDivC' ? mulDivC : mulDivF)(a, b, c);
             if (expected.lte(MAX_UINT256)) {
                 const actual = await mathContract[methodName](a, b, c);
                 expect(actual).to.equal(expected);

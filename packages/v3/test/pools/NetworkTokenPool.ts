@@ -16,7 +16,7 @@ import {
     PPM_RESOLUTION
 } from '../helpers/Constants';
 import { createSystem, createPool, createPoolCollection } from '../helpers/Factory';
-import MathUtils from '../helpers/MathUtils';
+import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -25,7 +25,6 @@ import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
-const { mulDivF } = MathUtils;
 
 describe('NetworkTokenPool', () => {
     let deployer: SignerWithAddress;
