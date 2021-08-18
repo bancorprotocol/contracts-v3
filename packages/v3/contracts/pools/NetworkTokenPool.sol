@@ -313,25 +313,29 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function withdraw(
-        bytes32 contextId,
-        address provider,
-        uint256 id
-    ) external override onlyNetwork returns (WithdrawalAmounts memory) {
-        // complete the withdrawal request and get back the withdrawn pool token amount
-        uint256 poolTokenAmount = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
+    function withdraw(address provider, uint256 poolTokenAmount)
+        external
+        override
+        onlyNetwork
+        greaterThanZero(poolTokenAmount)
+        validAddress(provider)
+        returns (WithdrawalAmounts memory)
+    {
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        require(poolTokenTotalSupply > 0, "ERR_AMOUNT_TOO_HIGH");
 
         // calculate the network token amount to transfer
-        uint256 networkTokenAmount = poolTokenAmount.mul(_stakedBalance).div(_poolToken.totalSupply());
+        uint256 networkTokenAmount = poolTokenAmount.mul(_stakedBalance).div(poolTokenTotalSupply);
 
         // deduct the exit fee from the network token amount
-        networkTokenAmount = networkTokenAmount.mul(PPM_RESOLUTION - _settings.withdrawalFeePPM()).div(PPM_RESOLUTION);
+        uint256 withdrawalFee = networkTokenAmount.mul(_settings.withdrawalFeePPM()).div(PPM_RESOLUTION);
+        networkTokenAmount = networkTokenAmount.sub(withdrawalFee);
 
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
 
-        // burn the withdrawn pool token amount
-        _poolToken.burn(poolTokenAmount);
+        // burn the pool tokens from the network
+        _poolToken.burnFrom(msg.sender, poolTokenAmount);
 
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);

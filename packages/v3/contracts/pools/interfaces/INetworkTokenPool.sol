@@ -108,21 +108,15 @@ interface INetworkTokenPool is IUpgradeable {
     ) external returns (DepositAmounts memory);
 
     /**
-     * @dev withdraws network token liquidity on behalf of a specific provider and returns the withdrawn amount and
-     * burned pool token amount
+     * @dev withdraws network token liquidity on behalf of a specific provider and returns the withdrawn network token
+     * amount and burned pool token amount
      *
      * requirements:
      *
      * - the caller must be the network contract
-     * - the provider must have already initiated a withdrawal and received the specified id
-     * - the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
-     * - the provider has already approved the respective governance token amount to be transferred by the contract
+     * - the governance tokens must have been already deposited into the contract
      */
-    function withdraw(
-        bytes32 contextId,
-        address provider,
-        uint256 id
-    ) external returns (WithdrawalAmounts memory);
+    function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
      * @dev requests network token liquidity by pools and returns the provided amount (which may be less than the
