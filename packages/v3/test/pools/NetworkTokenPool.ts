@@ -16,6 +16,7 @@ import {
     PPM_RESOLUTION
 } from '../helpers/Constants';
 import { createSystem, createPool, createPoolCollection } from '../helpers/Factory';
+import MathUtils from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -944,10 +945,13 @@ describe('NetworkTokenPool', () => {
                         const prevGovTotalSupply = await govToken.totalSupply();
                         const prevPoolGovTokenAmount = await govToken.balanceOf(networkTokenPool.address);
                         const prevProviderGovTokenAmount = await govToken.balanceOf(provider.address);
-
-                        const networkTokenAmount = poolTokenAmount.mul(prevStakedBalance).div(prevPoolTokenTotalSupply);
-                        const withdrawalFee = networkTokenAmount.mul(WITHDRAWAL_FEE).div(PPM_RESOLUTION);
-                        const expectedTokenAmount = networkTokenAmount.sub(withdrawalFee);
+                        const expectedTokenAmount = BigNumber.from(
+                            mulDivF(
+                                poolTokenAmount,
+                                prevStakedBalance.mul(PPM_RESOLUTION.sub(WITHDRAWAL_FEE)),
+                                prevPoolTokenTotalSupply.mul(PPM_RESOLUTION)
+                            ).toFixed()
+                        );
 
                         const withdrawalAmounts = await network.callStatic.withdrawT(
                             networkTokenPool.address,
@@ -1034,7 +1038,7 @@ describe('NetworkTokenPool', () => {
 
                     it('should allow withdrawing liquidity', async () => {
                         for (const poolTokenAmount of [
-                            BigNumber.from(1),
+                            BigNumber.from(100),
                             BigNumber.from(10_000),
                             toWei(BigNumber.from(20_000)),
                             toWei(BigNumber.from(30_000))

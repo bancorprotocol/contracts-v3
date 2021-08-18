@@ -15,6 +15,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
@@ -271,7 +272,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         require(currentStakedBalance > 0, "ERR_AMOUNT_TOO_HIGH");
 
         // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = networkTokenAmount.mul(_poolToken.totalSupply()).div(currentStakedBalance);
+        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), currentStakedBalance);
 
         // transfer pool tokens from the protocol to the provider
         _poolToken.transfer(provider, poolTokenAmount);
@@ -313,12 +314,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         require(poolTokenTotalSupply > 0, "ERR_AMOUNT_TOO_HIGH");
 
-        // calculate the network token amount to transfer
-        uint256 networkTokenAmount = poolTokenAmount.mul(_stakedBalance).div(poolTokenTotalSupply);
-
-        // deduct the exit fee from the network token amount
-        uint256 withdrawalFee = networkTokenAmount.mul(_settings.withdrawalFeePPM()).div(PPM_RESOLUTION);
-        networkTokenAmount = networkTokenAmount.sub(withdrawalFee);
+        // calculate the network token amount to transfer and deduct the exit fee from the network token amount
+        uint256 networkTokenAmount = MathEx.mulDivF(
+            poolTokenAmount,
+            _stakedBalance.mul(PPM_RESOLUTION - _settings.withdrawalFeePPM()),
+            poolTokenTotalSupply.mul(PPM_RESOLUTION)
+        );
 
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
@@ -369,7 +370,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             // if this is the liquidity provision - use a one-to-one pool token to network token rate
             poolTokenAmount = networkTokenAmount;
         } else {
-            poolTokenAmount = networkTokenAmount.mul(poolTokenTotalSupply).div(_stakedBalance);
+            poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, _stakedBalance);
         }
 
         // update the staked balance
@@ -401,7 +402,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         require(networkTokenAmount <= mintedAmount, "ERR_AMOUNT_TOO_HIGH");
 
         // calculate the pool token amount to burn
-        uint256 poolTokenAmount = networkTokenAmount.mul(_poolToken.totalSupply()).div(_stakedBalance);
+        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
 
         // update the staked balance
         _stakedBalance = _stakedBalance.sub(networkTokenAmount);
