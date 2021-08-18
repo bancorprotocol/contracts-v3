@@ -41,6 +41,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
+    // withdrawal-related input which can be retrieved from the pool
     struct PoolWithdrawalParams {
         uint256 networkTokenAvgTradingLiquidity;
         uint256 baseTokenAvgTradingLiquidity;
@@ -413,7 +414,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the withdrawal-related input parameters stored in the pool
+     * @dev returns withdrawal-related input which can be retrieved from the pool
      */
     function poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
         Pool memory pool = _pools[baseToken];
