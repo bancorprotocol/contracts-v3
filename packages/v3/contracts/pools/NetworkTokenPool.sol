@@ -268,11 +268,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         greaterThanZero(networkTokenAmount)
         returns (DepositAmounts memory)
     {
-        uint256 currentStakedBalance = _stakedBalance;
-        require(currentStakedBalance > 0, "ERR_AMOUNT_TOO_HIGH");
-
         // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), currentStakedBalance);
+        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
 
         // transfer pool tokens from the protocol to the provider
         _poolToken.transfer(provider, poolTokenAmount);
@@ -311,14 +308,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         validAddress(provider)
         returns (WithdrawalAmounts memory)
     {
-        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-        require(poolTokenTotalSupply > 0, "ERR_AMOUNT_TOO_HIGH");
-
         // calculate the network token amount to transfer and deduct the exit fee from the network token amount
         uint256 networkTokenAmount = MathEx.mulDivF(
             poolTokenAmount,
             _stakedBalance.mul(PPM_RESOLUTION - _settings.withdrawalFeePPM()),
-            poolTokenTotalSupply.mul(PPM_RESOLUTION)
+            _poolToken.totalSupply().mul(PPM_RESOLUTION)
         );
 
         // mint network tokens to the provider
@@ -342,52 +336,49 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 networkTokenAmount,
         bool skipLimitCheck
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
-        uint256 originalNetworkTokenAmount = networkTokenAmount;
+        uint256 newNetworkTokenAmount = networkTokenAmount;
         uint256 mintedAmount = _mintedAmounts[pool];
 
         // verify the minting limit (unless asked explicitly to skip this check)
         if (!skipLimitCheck) {
             uint256 mintingLimit = _settings.poolMintingLimit(pool);
 
-            if (mintedAmount > mintingLimit) {
-                networkTokenAmount = 0;
+            if (mintingLimit > mintedAmount) {
+                newNetworkTokenAmount = Math.min(mintingLimit - mintedAmount, networkTokenAmount);
             } else {
-                networkTokenAmount = Math.min(mintingLimit - mintedAmount, networkTokenAmount);
+                // if we're unable to mint more network tokens - abort
+                emit LiquidityRequested(contextId, pool, networkTokenAmount, 0, 0);
+
+                return 0;
             }
         }
 
-        // if we're unable to mint more network tokens - abort
-        if (networkTokenAmount == 0) {
-            emit LiquidityRequested(contextId, pool, originalNetworkTokenAmount, 0, 0);
-
-            return 0;
-        }
-
         // calculate the pool token amount to mint
+        uint256 currentStakedBalance = _stakedBalance;
         uint256 poolTokenAmount;
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
             // if this is the liquidity provision - use a one-to-one pool token to network token rate
-            poolTokenAmount = networkTokenAmount;
+            poolTokenAmount = newNetworkTokenAmount;
         } else {
-            poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, _stakedBalance);
+            poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
         }
 
         // update the staked balance
-        _stakedBalance = _stakedBalance.add(networkTokenAmount);
+        _stakedBalance = currentStakedBalance.add(newNetworkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = mintedAmount.add(networkTokenAmount);
+        _mintedAmounts[pool] = mintedAmount.add(newNetworkTokenAmount);
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint network tokens to the vault
-        _networkTokenGovernance.mint(address(_vault), networkTokenAmount);
+        _networkTokenGovernance.mint(address(_vault), newNetworkTokenAmount);
 
-        emit LiquidityRequested(contextId, pool, originalNetworkTokenAmount, networkTokenAmount, poolTokenAmount);
+        emit LiquidityRequested(contextId, pool, networkTokenAmount, newNetworkTokenAmount, poolTokenAmount);
 
-        return networkTokenAmount;
+        return newNetworkTokenAmount;
     }
 
     /**
@@ -398,17 +389,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) {
-        uint256 mintedAmount = _mintedAmounts[pool];
-        require(networkTokenAmount <= mintedAmount, "ERR_AMOUNT_TOO_HIGH");
+        uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the pool token amount to burn
-        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
+        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), currentStakedBalance);
 
         // update the staked balance
-        _stakedBalance = _stakedBalance.sub(networkTokenAmount);
+        _stakedBalance = currentStakedBalance.sub(networkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = mintedAmount.sub(networkTokenAmount);
+        _mintedAmounts[pool] = _mintedAmounts[pool].sub(networkTokenAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
