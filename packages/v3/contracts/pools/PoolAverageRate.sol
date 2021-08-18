@@ -35,7 +35,7 @@ library PoolAverageRate {
      * S = the current spot price
      *
      *      if t == 0, return P
-     *      if t >- T, return S
+     *      if t >= T, return S
      *      else, return:             T - t         t
      *                           P * ------- + S * ---
      *                                  T           T
