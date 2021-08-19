@@ -158,22 +158,6 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
         });
 
-        it('should revert when attempting to request liquidity for a pool with an unknown collection managing it', async () => {
-            const unknownPoolCollection = await createPoolCollection(network, 1000);
-            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
-            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
-
-            await expect(
-                poolCollection.requestLiquidityT(
-                    networkTokenPool.address,
-                    contextId,
-                    reserveToken2.address,
-                    BigNumber.from(1),
-                    false
-                )
-            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
-        });
-
         context('with a whitelisted and registered pool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -459,22 +443,6 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1)
                 )
             ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
-        });
-
-        it('should revert when attempting to renounce liquidity for a pool with an unknown collection managing it', async () => {
-            const unknownPoolCollection = await createPoolCollection(network, 1000);
-            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
-
-            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
-
-            await expect(
-                poolCollection.renounceLiquidityT(
-                    networkTokenPool.address,
-                    contextId,
-                    reserveToken2.address,
-                    BigNumber.from(1)
-                )
-            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
         });
 
         context('with a whitelisted and registered pool', () => {

@@ -114,18 +114,8 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract, version = 1) => {
-    switch (version) {
-        case 1:
-            return Contracts.TestPoolCollection.deploy(toAddress(network));
-
-        case 1000:
-            return Contracts.TestPoolCollectionUnknownVersion.deploy(toAddress(network));
-
-        default:
-            throw new Error(`Unknown version ${version}`);
-    }
-};
+export const createPoolCollection = async (network: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,

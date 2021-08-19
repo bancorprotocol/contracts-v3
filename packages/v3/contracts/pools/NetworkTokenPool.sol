@@ -123,7 +123,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         // verify that the caller is the known pool collection which manages it
         IPoolCollection poolCollection = _network.collectionByPool(pool);
-        require(poolCollection.version() == 1, "ERR_UNKNOWN_POOL_COLLECTION");
         require(msg.sender == address(poolCollection), "ERR_ACCESS_DENIED");
 
         // verify that the average rate of the pool isn't deviated too much from its spot rate
