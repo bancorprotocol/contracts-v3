@@ -125,7 +125,7 @@ interface INetworkTokenPool is IUpgradeable {
      * requirements:
      *
      * - the caller must be the current collection that manages the given pool
-     * - the pool must have been whitelisted
+     * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function requestLiquidity(
@@ -141,7 +141,7 @@ interface INetworkTokenPool is IUpgradeable {
      * requirements:
      *
      * - the caller must be the current collection that manages the given pool
-     * - the pool must have been whitelisted
+     * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function renounceLiquidity(
