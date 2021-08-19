@@ -995,7 +995,7 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to collect fees from a non-network', async () => {
+        it('should revert when attempting to get notified about collected fee from a non-network', async () => {
             const nonNetwork = deployer;
 
             await expect(
@@ -1005,7 +1005,7 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should revert when attempting to collect fees from an invalid pool', async () => {
+        it('should revert when attempting to get notified about collected fee from an invalid pool', async () => {
             await expect(
                 network.onNetworkTokenFeesCollectedT(
                     networkTokenPool.address,
@@ -1016,7 +1016,7 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should revert when attempting to collect fees with an invalid amount', async () => {
+        it('should revert when attempting to get notified about collected fee with an invalid amount', async () => {
             await expect(
                 network.onNetworkTokenFeesCollectedT(
                     networkTokenPool.address,
