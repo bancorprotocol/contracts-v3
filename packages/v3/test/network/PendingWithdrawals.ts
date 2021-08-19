@@ -24,13 +24,14 @@ describe('PendingWithdrawals', () => {
     const DEFAULT_LOCK_DURATION = duration.days(7).toNumber();
     const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3).toNumber();
 
+    let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
     let dummy: SignerWithAddress;
 
     shouldHaveGap('PendingWithdrawals', '_lockDuration');
 
     before(async () => {
-        [, nonOwner, dummy] = await ethers.getSigners();
+        [deployer, nonOwner, dummy] = await ethers.getSigners();
     });
 
     describe('construction', () => {
@@ -622,7 +623,7 @@ describe('PendingWithdrawals', () => {
                     });
 
                     it('should revert when attempting to complete a withdrawal request from a a non-network', async () => {
-                        const nonNetwork = nonOwner;
+                        const nonNetwork = deployer;
 
                         await expect(
                             pendingWithdrawals.connect(nonNetwork).completeWithdrawal(contextId, provider.address, id)
