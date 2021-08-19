@@ -90,7 +90,7 @@ interface INetworkTokenPool is IUpgradeable {
     /**
      * @dev returns the total minted amount for a given pool
      */
-    function mintedAmounts(IReserveToken pool) external view returns (uint256);
+    function mintedAmount(IReserveToken pool) external view returns (uint256);
 
     /**
      * @dev deposits network token liquidity on behalf of a specific provider

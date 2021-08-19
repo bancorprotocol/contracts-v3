@@ -247,7 +247,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function mintedAmounts(IReserveToken pool) external view override returns (uint256) {
+    function mintedAmount(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
     }
 

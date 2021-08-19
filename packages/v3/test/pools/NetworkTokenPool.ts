@@ -224,7 +224,7 @@ describe('NetworkTokenPool', () => {
             context('when spot rate is close enough to the average rate', () => {
                 const testRequest = async (amount: BigNumber, expectedAmount: BigNumber, skipLimitCheck = false) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
                     const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
                     const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
@@ -265,7 +265,7 @@ describe('NetworkTokenPool', () => {
                         .withArgs(contextId, reserveToken.address, amount, expectedAmount, expectedPoolTokenAmount);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
-                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedAmount)
                     );
 
@@ -309,7 +309,7 @@ describe('NetworkTokenPool', () => {
                             toWei(BigNumber.from(1_500_000))
                         ]) {
                             const remaining = (await networkSettings.poolMintingLimit(reserveToken.address)).sub(
-                                await networkTokenPool.mintedAmounts(reserveToken.address)
+                                await networkTokenPool.mintedAmount(reserveToken.address)
                             );
                             const expectAmount = BigNumber.min(remaining, amount);
 
@@ -507,7 +507,7 @@ describe('NetworkTokenPool', () => {
 
                 const testRenounce = async (amount: BigNumber) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
                     const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
                     const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
@@ -533,7 +533,7 @@ describe('NetworkTokenPool', () => {
                         .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(amount));
-                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.sub(amount)
                     );
 
@@ -1072,7 +1072,7 @@ describe('NetworkTokenPool', () => {
                 const feeAmount = BigNumber.from(12345);
 
                 const prevStakedBalance = await networkTokenPool.stakedBalance();
-                const prevMintingAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                const prevMintingAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
                 await network.onNetworkTokenFeesCollectedT(
                     networkTokenPool.address,
@@ -1082,7 +1082,7 @@ describe('NetworkTokenPool', () => {
                 );
 
                 expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                     prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
                 );
             });
