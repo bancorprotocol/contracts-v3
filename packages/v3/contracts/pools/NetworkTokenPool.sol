@@ -118,8 +118,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     }
 
     function _onlyValidPoolCollection(IReserveToken pool) private view {
-        // verify that the pool is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
+        // verify that the token is whitelisted
+        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
 
         // verify that the caller is the known pool collection which manages it
         IPoolCollection poolCollection = _network.collectionByPool(pool);
