@@ -151,7 +151,7 @@ interface INetworkTokenPool is IUpgradeable {
     ) external;
 
     /**
-     * @dev updates the staked balance (and the minting amount for trading fees) due to fee collection
+     * @dev notifies the pool of accrued fees
      *
      * requirements:
      *
