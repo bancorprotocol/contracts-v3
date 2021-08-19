@@ -735,14 +735,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function cap(Quotient memory q) internal pure returns (Fraction memory) {
         if (q.n1 > q.n2 && q.d1 > q.d2) {
-            // the quotient is positive
+            // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
         }
         if (q.n2 > q.n1 && q.d2 > q.d1) {
-            // the quotient is positive
+            // the quotient is finite and positive
             return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
         }
-        // the quotient is not positive
+        // the quotient is not finite or not positive
         return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
     }
 
