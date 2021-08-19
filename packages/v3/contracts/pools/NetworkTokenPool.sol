@@ -270,7 +270,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // calculate the pool token amount to transfer
         uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
 
-        // transfer pool tokens from the protocol to the provider
+        // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
+        // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
         _poolToken.transfer(provider, poolTokenAmount);
 
         // burn the previously received network tokens
