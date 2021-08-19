@@ -220,14 +220,14 @@ describe('NetworkTokenPool', () => {
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkPoolToken.balanceOf(networkTokenPool.address);
-                    const prevVaultPoolTokenAmount = await networkPoolToken.balanceOf(vault.address);
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(vault.address);
 
-                    expect(prevVaultPoolTokenAmount).to.equal(BigNumber.from(0));
+                    expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevVaultTokenAmount = await networkToken.balanceOf(vault.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
 
                     let expectedPoolTokenAmount;
                     if (prevPoolTokenTotalSupply.isZero()) {
@@ -266,14 +266,14 @@ describe('NetworkTokenPool', () => {
                         prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                     );
                     expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.add(expectedPoolTokenAmount)
+                        prevPoolPoolTokenBalance.add(expectedPoolTokenAmount)
                     );
-                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.add(expectedAmount));
-                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
                     expect(await networkToken.balanceOf(vault.address)).to.equal(
-                        prevVaultTokenAmount.add(expectedAmount)
+                        prevVaultTokenBalance.add(expectedAmount)
                     );
                 };
 
@@ -496,14 +496,14 @@ describe('NetworkTokenPool', () => {
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkPoolToken.balanceOf(networkTokenPool.address);
-                    const prevVaultPoolTokenAmount = await networkPoolToken.balanceOf(vault.address);
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(vault.address);
 
-                    expect(prevVaultPoolTokenAmount).to.equal(BigNumber.from(0));
+                    expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevVaultTokenAmount = await networkToken.balanceOf(vault.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
 
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
@@ -527,13 +527,13 @@ describe('NetworkTokenPool', () => {
                         prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
                     );
                     expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.sub(expectedPoolTokenAmount)
+                        prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                     );
-                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
-                    expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenAmount.sub(amount));
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
+                    expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenBalance.sub(amount));
                 };
 
                 it('should revert when attempting to renounce more liquidity than requested', async () => {
@@ -649,16 +649,16 @@ describe('NetworkTokenPool', () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkPoolToken.balanceOf(networkTokenPool.address);
-                    const prevProviderPoolTokenAmount = await networkPoolToken.balanceOf(provider.address);
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevProviderTokenAmount = await networkToken.balanceOf(provider.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                     const prevGovTotalSupply = await govToken.totalSupply();
-                    const prevPoolGovTokenAmount = await govToken.balanceOf(networkTokenPool.address);
-                    const prevProviderGovTokenAmount = await govToken.balanceOf(provider.address);
+                    const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                    const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
 
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
@@ -692,22 +692,22 @@ describe('NetworkTokenPool', () => {
 
                     expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
                     expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.sub(expectedPoolTokenAmount)
+                        prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                     );
                     expect(await networkPoolToken.balanceOf(provider.address)).to.equal(
-                        prevProviderPoolTokenAmount.add(expectedPoolTokenAmount)
+                        prevProviderPoolTokenBalance.add(expectedPoolTokenAmount)
                     );
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
                     expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolTokenAmount.sub(amount)
+                        prevPoolTokenBalance.sub(amount)
                     );
-                    expect(await networkToken.balanceOf(provider.address)).to.equal(prevProviderTokenAmount);
+                    expect(await networkToken.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
 
                     expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.add(expectedGovTokenAmount));
-                    expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolGovTokenAmount);
+                    expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolGovTokenBalance);
                     expect(await govToken.balanceOf(provider.address)).to.equal(
-                        prevProviderGovTokenAmount.add(expectedGovTokenAmount)
+                        prevProviderGovTokenBalance.add(expectedGovTokenAmount)
                     );
                 };
 
@@ -875,17 +875,17 @@ describe('NetworkTokenPool', () => {
                         const prevStakedBalance = await networkTokenPool.stakedBalance();
 
                         const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                        const prevPoolPoolTokenAmount = await networkPoolToken.balanceOf(networkTokenPool.address);
-                        const prevNetworkPoolTokenAmount = await networkPoolToken.balanceOf(network.address);
-                        const prevProviderPoolTokenAmount = await networkPoolToken.balanceOf(provider.address);
+                        const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                        const prevNetworkPoolTokenBalance = await networkPoolToken.balanceOf(network.address);
+                        const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                         const prevTokenTotalSupply = await networkToken.totalSupply();
-                        const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                        const prevProviderTokenAmount = await networkToken.balanceOf(provider.address);
+                        const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                        const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                         const prevGovTotalSupply = await govToken.totalSupply();
-                        const prevPoolGovTokenAmount = await govToken.balanceOf(networkTokenPool.address);
-                        const prevProviderGovTokenAmount = await govToken.balanceOf(provider.address);
+                        const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                        const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
                         const expectedTokenAmount = BigNumber.from(
                             mulDivF(
                                 poolTokenAmount,
@@ -911,29 +911,29 @@ describe('NetworkTokenPool', () => {
                             prevPoolTokenTotalSupply.sub(poolTokenAmount)
                         );
                         expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                            prevPoolPoolTokenAmount
+                            prevPoolPoolTokenBalance
                         );
 
                         expect(await networkPoolToken.balanceOf(network.address)).to.equal(
-                            prevNetworkPoolTokenAmount.sub(poolTokenAmount)
+                            prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                         );
                         expect(await networkPoolToken.balanceOf(provider.address)).to.equal(
-                            prevProviderPoolTokenAmount
+                            prevProviderPoolTokenBalance
                         );
 
                         expect(await networkToken.totalSupply()).to.equal(
                             prevTokenTotalSupply.add(expectedTokenAmount)
                         );
-                        expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
+                        expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
                         expect(await networkToken.balanceOf(provider.address)).to.equal(
-                            prevProviderTokenAmount.add(expectedTokenAmount)
+                            prevProviderTokenBalance.add(expectedTokenAmount)
                         );
 
                         expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
                         expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(
-                            prevPoolGovTokenAmount.sub(poolTokenAmount)
+                            prevPoolGovTokenBalance.sub(poolTokenAmount)
                         );
-                        expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenAmount);
+                        expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenBalance);
                     };
 
                     it('should revert when attempting to withdraw more than the deposited amount', async () => {
