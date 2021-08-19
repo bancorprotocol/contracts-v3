@@ -317,7 +317,7 @@ describe('NetworkTokenPool', () => {
                         }
                     });
 
-                    it('should allow explicitly requesting full liquidity', async () => {
+                    it('should allow requesting full liquidity by ignoring the minting limit', async () => {
                         for (const amount of [
                             BigNumber.from(10),
                             BigNumber.from(100_000),
@@ -346,7 +346,7 @@ describe('NetworkTokenPool', () => {
                             }
                         });
 
-                        it('should allow explicitly requesting full liquidity', async () => {
+                        it('should allow requesting full liquidity by ignoring the minting limit', async () => {
                             for (const amount of [
                                 BigNumber.from(10),
                                 BigNumber.from(100_000),
@@ -375,7 +375,7 @@ describe('NetworkTokenPool', () => {
                         }
                     });
 
-                    it('should allow explicitly requesting full liquidity amount', async () => {
+                    it('should allow requesting full liquidity by ignoring the minting limit amount', async () => {
                         for (const amount of [
                             BigNumber.from(10),
                             BigNumber.from(100_000),
