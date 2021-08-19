@@ -403,7 +403,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // with network tokens from the vault and burn them
+        // withdraw network tokens from the vault and burn them
         _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
