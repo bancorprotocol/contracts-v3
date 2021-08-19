@@ -532,6 +532,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             // the pool is not in a base-token deficit
             uint256 f = deductFee(bPc - e, x, d, n);
             amounts.G = posArbitrage(cap(a, amounts.F), cap(b, amounts.D), d, f, m, n, eMx);
+            if (amounts.G > cap(a, amounts.F)) {
+                amounts.G = 0;
+            }
             if (amounts.G > 0) {
                 amounts.H = Action.burnNetworkTokens;
             }
