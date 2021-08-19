@@ -19,13 +19,14 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
-import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, Pool, WithdrawalAmounts, Action } from "./interfaces/IPoolCollection.sol";
 import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+import { AverageRate } from "./PoolAverageRate.sol";
 
 /**
- * @dev Liquidity Pool Collection contract
+ * @dev Pool Collection contract
  *
  * notes:
  *
@@ -33,7 +34,6 @@ import { PoolToken } from "./PoolToken.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
-    using MathEx for *;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -66,7 +66,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     IBancorNetwork private immutable _network;
 
     // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) private _pools;
+    mapping(IReserveToken => Pool) internal _pools;
 
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
@@ -122,17 +122,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
-    }
-
     modifier validRate(Fraction memory rate) {
         _validRate(rate);
 
@@ -146,7 +135,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure virtual override returns (uint16) {
         return 1;
     }
 
@@ -214,7 +203,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
+    function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
@@ -222,14 +211,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         Pool memory newPool = Pool({
-            version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
-            averageRate: Fraction({ n: 0, d: 1 }),
+            averageRate: AverageRate({ time: 0, rate: Fraction({ n: 0, d: 1 }) }),
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
@@ -381,14 +369,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenVaultBalance,
         uint256 protectionWalletBalance,
         INetworkTokenPool networkTokenPool
-    ) external override onlyNetwork nonReentrant returns (WithdrawalAmounts memory) {
-        PoolWithdrawalParams memory params = poolWithdrawalParams(baseToken);
+    ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
+        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
 
         // obtain all withdrawal-related amounts
-        WithdrawalAmounts memory amounts = withdrawalAmounts(
+        amounts = _withdrawalAmounts(
             params.networkTokenAvgTradingLiquidity,
             params.baseTokenAvgTradingLiquidity,
-            cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+            _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
             params.basePoolTokenTotalSupply,
             params.baseTokenStakedAmount,
             protectionWalletBalance,
@@ -398,12 +386,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         );
 
         // execute post-withdrawal actions
-        postWithdrawal(baseToken, basePoolTokenAmount, amounts.D, amounts.F);
+        _postWithdrawal(baseToken, basePoolTokenAmount, amounts.D, amounts.F);
 
         // handle the minting or burning of network tokens in the pool
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
-                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G);
+                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G, false);
             } else if (amounts.H == Action.burnNetworkTokens) {
                 networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
@@ -416,7 +404,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns withdrawal-related input which can be retrieved from the pool
      */
-    function poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
+    function _poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
         Pool memory pool = _pools[baseToken];
 
         uint256 prod = uint256(pool.networkTokenTradingLiquidity) * uint256(pool.baseTokenTradingLiquidity);
@@ -424,10 +412,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return
             PoolWithdrawalParams({
                 networkTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, pool.averageRate.n, pool.averageRate.d)
+                    MathEx.mulDivF(prod, pool.averageRate.rate.n, pool.averageRate.rate.d)
                 ),
                 baseTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, pool.averageRate.d, pool.averageRate.n)
+                    MathEx.mulDivF(prod, pool.averageRate.rate.d, pool.averageRate.rate.n)
                 ),
                 baseTokenTradingLiquidity: pool.baseTokenTradingLiquidity,
                 basePoolTokenTotalSupply: pool.poolToken.totalSupply(),
@@ -447,7 +435,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - emits an event if the pool's network token trading liquidity
      *   has crossed the minimum threshold (either above it or below it)
      */
-    function postWithdrawal(
+    function _postWithdrawal(
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
@@ -503,7 +491,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * G = network token amount to burn or mint in the pool, in order to create an arbitrage incentive
      * H = arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
-    function withdrawalAmounts(
+    function _withdrawalAmounts(
         uint256 a,
         uint256 b,
         uint256 c,
@@ -517,21 +505,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 bPc = b.add(c);
 
         if (e > bPc) {
-            uint256 f = deductFee(e - bPc, x, d, n);
+            uint256 f = _deductFee(e - bPc, x, d, n);
             amounts.E = f < w ? f : w;
-            (x, d, e) = reviseInput(amounts.E, x, d, e, n);
+            (x, d, e) = _reviseInput(amounts.E, x, d, e, n);
         }
 
         uint256 eMx = e.mul(x);
 
-        amounts.B = deductFee(1, eMx, d, n);
-        amounts.D = deductFee(b, eMx, d.mul(bPc), n);
-        amounts.F = deductFee(a, eMx, d.mul(bPc), 0);
+        amounts.B = _deductFee(1, eMx, d, n);
+        amounts.D = _deductFee(b, eMx, d.mul(bPc), n);
+        amounts.F = _deductFee(a, eMx, d.mul(bPc), 0);
 
         if (bPc >= e) {
             // the pool is not in a base-token deficit
-            uint256 f = deductFee(bPc - e, x, d, n);
-            amounts.G = posArbitrage(cap(a, amounts.F), cap(b, amounts.D), d, f, m, n, eMx);
+            uint256 f = _deductFee(bPc - e, x, d, n);
+            amounts.G = _posArbitrage(_cap(a, amounts.F), _cap(b, amounts.D), d, f, m, n, eMx);
             if (amounts.G.add(amounts.F) > a) {
                 amounts.G = 0; // ideally this should be a circuit-breaker in the calling function
             }
@@ -541,8 +529,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         } else {
             // the pool is in a base-token deficit
             if (amounts.B <= bPc) {
-                uint256 f = deductFee(e - bPc, x, d, n);
-                amounts.G = negArbitrage(cap(a, amounts.F), cap(b, amounts.D), d, f, m, n, eMx);
+                uint256 f = _deductFee(e - bPc, x, d, n);
+                amounts.G = _negArbitrage(_cap(a, amounts.F), _cap(b, amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
                     amounts.H = Action.mintNetworkTokens;
                 }
@@ -551,10 +539,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = a.mul(x);
                 uint256 bMd = b.mul(d);
-                amounts.C = deductFee(e - bPc, aMx, bMd, n);
-                amounts.B = deductFee(bPc, x, d, n);
-                amounts.D = deductFee(b, x, d, n);
-                amounts.F = deductFee(a, x, d, 0);
+                amounts.C = _deductFee(e - bPc, aMx, bMd, n);
+                amounts.B = _deductFee(bPc, x, d, n);
+                amounts.D = _deductFee(b, x, d, n);
+                amounts.F = _deductFee(a, x, d, 0);
             }
         }
     }
@@ -562,7 +550,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns `xy(1-n) / z`, pretending `n` is normalized
      */
-    function deductFee(
+    function _deductFee(
         uint256 x,
         uint256 y,
         uint256 z,
@@ -586,7 +574,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * d - E / (1 - n) * d / e
      * e - E / (1 - n)
      */
-    function reviseInput(
+    function _reviseInput(
         uint256 E,
         uint256 x,
         uint256 d,
@@ -624,7 +612,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
      * if `f(f + bm - 2fm) / (b - fm) >= exn / d` return `0`
      */
-    function posArbitrage(
+    function _posArbitrage(
         uint256 a,
         uint256 b,
         uint256 d,
@@ -633,7 +621,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 n,
         uint256 ex
     ) internal pure returns (uint256) {
-        return calcArbitrage(a, b, d, f, n, ex, posArbitrage(b, f, m));
+        return _calcArbitrage(a, b, d, f, n, ex, _posArbitrage(b, f, m));
     }
 
     /**
@@ -654,7 +642,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
      * if `f(f - bm - 2fm) / (b + fm) >= exn / d` return `0`
      */
-    function negArbitrage(
+    function _negArbitrage(
         uint256 a,
         uint256 b,
         uint256 d,
@@ -663,7 +651,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 n,
         uint256 ex
     ) internal pure returns (uint256) {
-        return calcArbitrage(a, b, d, f, n, ex, negArbitrage(b, f, m));
+        return _calcArbitrage(a, b, d, f, n, ex, _negArbitrage(b, f, m));
     }
 
     /**
@@ -671,7 +659,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * 1. `(f + bm - 2fm) / (b - fm)`
      * 2. `(2b - bm - f) / (b - fm)`
      */
-    function posArbitrage(
+    function _posArbitrage(
         uint256 b,
         uint256 f,
         uint256 m
@@ -691,7 +679,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * 1. `(f - bm - 2fm) / (b + fm)`
      * 2. `(2b - bm + f) / (b + fm)`
      */
-    function negArbitrage(
+    function _negArbitrage(
         uint256 b,
         uint256 f,
         uint256 m
@@ -709,7 +697,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the arbitrage if it is smaller than the fee paid, and 0 otherwise
      */
-    function calcArbitrage(
+    function _calcArbitrage(
         uint256 a,
         uint256 b,
         uint256 d,
@@ -718,9 +706,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 ex,
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
-        Fraction memory y = cap(quotients[0]);
+        Fraction memory y = _cap(quotients[0]);
         if (MathEx.mulDivF(f, y.n, y.d) < MathEx.mulDivF(ex, n, d.mul(PPM_RESOLUTION))) {
-            Fraction memory z = cap(quotients[1]);
+            Fraction memory z = _cap(quotients[1]);
             return MathEx.mulDivF(a.mul(f), z.n, b.mul(z.d));
         }
         return 0;
@@ -729,14 +717,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the maximum of `n1 - n2` and 0
      */
-    function cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
+    function _cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
         return n1 > n2 ? n1 - n2 : 0;
     }
 
     /**
      * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
      */
-    function cap(Quotient memory q) internal pure returns (Fraction memory) {
+    function _cap(Quotient memory q) internal pure returns (Fraction memory) {
         if (q.n1 > q.n2 && q.d1 > q.d2) {
             // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });

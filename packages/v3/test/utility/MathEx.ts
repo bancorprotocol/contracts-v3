@@ -1,11 +1,20 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
-import MathUtils from '../helpers/MathUtils';
+import {
+    floorSqrt,
+    ceilSqrt,
+    productRatio,
+    reducedRatio,
+    normalizedRatio,
+    accurateRatio,
+    roundDiv,
+    mulDivC,
+    mulDivF
+} from '../helpers/MathUtils';
+import { Fraction, toBigNumber, toString } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-
-const { floorSqrt, ceilSqrt, productRatio, reducedRatio, normalizedRatio, accurateRatio, roundDiv } = MathUtils;
 
 const MAX_UINT128 = new Decimal(2).pow(128).sub(1);
 const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
@@ -20,126 +29,97 @@ describe('MathEx', () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
 
-    const floorSqrtTest = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toHexString();
-        it(`floorSqrt(${x})`, async () => {
+    const testFloorSqrt = (n: number, k: number) => {
+        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k));
+        it(`floorSqrt(${x.toHexString()})`, async () => {
             const expected = floorSqrt(x);
-            const actual = await mathContract.floorSqrtTest(x);
+            const actual = await mathContract.floorSqrt(x);
             expect(actual).to.equal(expected);
         });
     };
 
-    const ceilSqrtTest = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toHexString();
-        it(`ceilSqrt(${x})`, async () => {
+    const testCeilSqrt = (n: number, k: number) => {
+        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k));
+        it(`ceilSqrt(${x.toHexString()})`, async () => {
             const expected = ceilSqrt(x);
-            const actual = await mathContract.ceilSqrtTest(x);
+            const actual = await mathContract.ceilSqrt(x);
             expect(actual).to.equal(expected);
         });
     };
 
-    const productRatioTest = (
-        xn: Decimal,
-        yn: Decimal,
-        xd: Decimal,
-        yd: Decimal,
-        maxAbsoluteError: Decimal,
-        maxRelativeError: Decimal
-    ) => {
-        const [an, bn, ad, bd] = [xn, yn, xd, yd].map((val) => val.toHex());
-        it(`productRatio(${[an, bn, ad, bd]})`, async () => {
-            const expected = productRatio(an, bn, ad, bd);
-            const actual = await mathContract.productRatioTest(an, bn, ad, bd);
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+    const testProductRatio = (x: Fraction, y: Fraction, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+        it(`productRatio(${toString(x)}, ${toString(y)}`, async () => {
+            const expected = productRatio(x, y);
+            const actual = await mathContract.productRatio(toBigNumber(x), toBigNumber(y));
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
-    const reducedRatioTest = (
-        x: Decimal,
-        y: Decimal,
-        scale: Decimal,
-        maxAbsoluteError: Decimal,
-        maxRelativeError: Decimal
-    ) => {
-        const [a, b, max] = [x, y, scale].map((val) => val.toHex());
-        it(`reducedRatio(${[a, b, max]})`, async () => {
-            const expected = reducedRatio(a, b, max);
-            const actual = await mathContract.reducedRatioTest(a, b, max);
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+    const testReducedRatio = (r: Fraction, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+        it(`reducedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
+            const expected = reducedRatio(r, scale);
+            const actual = await mathContract.reducedRatio(toBigNumber(r), toBigNumber(scale));
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
-    const normalizedRatioTest = (
-        x: Decimal,
-        y: Decimal,
-        scale: Decimal,
-        maxAbsoluteError: Decimal,
-        maxRelativeError: Decimal
-    ) => {
-        const [a, b, max] = [x, y, scale].map((val) => val.toHex());
-        it(`normalizedRatio(${[a, b, max]})`, async () => {
-            const expected = normalizedRatio(a, b, max);
-            const actual = await mathContract.normalizedRatioTest(a, b, max);
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+    const testNormalizedRatio = (r: Fraction, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+        it(`normalizedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
+            const expected = normalizedRatio(r, scale);
+            const actual = await mathContract.normalizedRatio(toBigNumber(r), toBigNumber(scale));
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
-    const accurateRatioTest = (
-        x: Decimal,
-        y: Decimal,
-        scale: Decimal,
-        maxAbsoluteError: Decimal,
-        maxRelativeError: Decimal
-    ) => {
-        const [a, b, max] = [x, y, scale].map((val) => val.toHex());
-        it(`accurateRatio(${[a, b, max]})`, async () => {
-            const expected = accurateRatio(a, b, max);
-            const actual = await mathContract.accurateRatioTest(a, b, max);
-            expect(expected).to.almostEqual(actual, maxAbsoluteError, maxRelativeError);
+    const testAccurateRatio = (r: Fraction, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+        it(`accurateRatio(${toString(r)}, ${scale.toString()}})`, async () => {
+            const expected = accurateRatio(r, scale);
+            const actual = await mathContract.accurateRatio(toBigNumber(r), toBigNumber(scale));
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
         });
     };
 
-    const roundDivTest = (x: Decimal, y: Decimal) => {
+    const testRoundDiv = (x: Decimal, y: Decimal) => {
         const [n, d] = [x, y].map((val) => val.toFixed());
         it(`roundDiv(${n}, ${d})`, async () => {
             const expected = roundDiv(n, d);
-            const actual = await mathContract.roundDivTest(n, d);
+            const actual = await mathContract.roundDiv(n, d);
             expect(actual).to.equal(expected);
         });
     };
 
-    const geometricMeanTest = (xs: Decimal[]) => {
+    const testGeometricMean = (xs: Decimal[]) => {
         const values = xs.map((val) => val.toFixed());
         it(`geometricMean([${values}])`, async () => {
             const expected = new Decimal(10).pow(Math.round(values.join('').length / values.length) - 1);
-            const actual = await mathContract.geometricMeanTest(values);
+            const actual = await mathContract.geometricMean(values);
             expect(actual).to.equal(expected);
         });
     };
 
-    const decimalLengthTest = (n: number, k: number) => {
+    const testDecimalLength = (n: number, k: number) => {
         const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toString();
         it(`decimalLength(${x})`, async () => {
             const expected = new Decimal(x.length);
-            const actual = await mathContract.decimalLengthTest(x);
+            const actual = await mathContract.decimalLength(x);
             expect(actual).to.equal(expected);
         });
     };
 
-    const roundDivUnsafeTest = (x: Decimal, y: Decimal) => {
+    const testRoundDivUnsafe = (x: Decimal, y: Decimal) => {
         const [n, d] = [x, y].map((val) => val.toFixed());
         it(`roundDivUnsafe(${[n, d]})`, async () => {
             const expected = roundDiv(n, d);
-            const actual = await mathContract.roundDivUnsafeTest(n, d);
+            const actual = await mathContract.roundDivUnsafe(n, d);
             expect(actual).to.equal(expected);
         });
     };
 
     type MulDivFunction = 'mulDivC' | 'mulDivF';
-    const mulDivTest = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
+    const testMulDiv = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
         const [a, b, c] = [x, y, z].map((val) => val.toHex());
         it(`${methodName}(${[a, b, c]})`, async () => {
-            const expected = MathUtils[methodName](a, b, c);
+            const expected = (methodName === 'mulDivC' ? mulDivC : mulDivF)(a, b, c);
             if (expected.lte(MAX_UINT256)) {
                 const actual = await mathContract[methodName](a, b, c);
                 expect(actual).to.equal(expected);
@@ -152,13 +132,13 @@ describe('MathEx', () => {
     describe('quick tests', () => {
         for (const n of [1, 64, 128, 192, 256]) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                floorSqrtTest(n, k);
+                testFloorSqrt(n, k);
             }
         }
 
         for (const n of [1, 64, 128, 192, 256]) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                ceilSqrtTest(n, k);
+                testCeilSqrt(n, k);
             }
         }
 
@@ -166,7 +146,7 @@ describe('MathEx', () => {
             for (const yn of PR_TEST_ARRAY.slice(-2)) {
                 for (const xd of PR_TEST_ARRAY.slice(-2)) {
                     for (const yd of PR_TEST_ARRAY.slice(-2)) {
-                        productRatioTest(xn, yn, xd, yd, new Decimal(0), PR_MAX_ERROR);
+                        testProductRatio({ n: xn, d: xd }, { n: yn, d: yd }, new Decimal(0), PR_MAX_ERROR);
                     }
                 }
             }
@@ -175,7 +155,7 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = 1; b <= 5; b++) {
-                    reducedRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal(0));
+                    testReducedRatio({ n: new Decimal(a), d: new Decimal(b) }, scale, new Decimal(0), new Decimal(0));
                 }
             }
         }
@@ -183,9 +163,8 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = 1; b <= 5; b++) {
-                    normalizedRatioTest(
-                        new Decimal(a),
-                        new Decimal(b),
+                    testNormalizedRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal(0),
                         new Decimal('0.00000241')
@@ -197,14 +176,19 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = Math.max(a, 1); b <= 5; b++) {
-                    accurateRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal('0.0000024'));
+                    testAccurateRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.0000024')
+                    );
                 }
             }
         }
 
         for (let n = 0; n < 5; n++) {
             for (let d = 1; d <= 5; d++) {
-                roundDivTest(new Decimal(n), new Decimal(d));
+                testRoundDiv(new Decimal(n), new Decimal(d));
             }
         }
 
@@ -212,18 +196,18 @@ describe('MathEx', () => {
             [123, 456789],
             [12, 345, 6789]
         ]) {
-            geometricMeanTest(values.map((x) => new Decimal(x)));
+            testGeometricMean(values.map((x) => new Decimal(x)));
         }
 
         for (const n of [11, 33, 55, 77]) {
             for (const k of [-1, 0, +1]) {
-                decimalLengthTest(n, k);
+                testDecimalLength(n, k);
             }
         }
 
         for (let n = 0; n < 5; n++) {
             for (let d = 1; d <= 5; d++) {
-                roundDivUnsafeTest(new Decimal(n), new Decimal(d));
+                testRoundDivUnsafe(new Decimal(n), new Decimal(d));
             }
         }
 
@@ -237,7 +221,7 @@ describe('MathEx', () => {
                                     const x = new Decimal(2).pow(px).divToInt(ax);
                                     const y = new Decimal(2).pow(py).divToInt(ay);
                                     const z = new Decimal(2).pow(pz).divToInt(az);
-                                    mulDivTest(methodName as MulDivFunction, x, y, z);
+                                    testMulDiv(methodName as MulDivFunction, x, y, z);
                                 }
                             }
                         }
@@ -250,13 +234,13 @@ describe('MathEx', () => {
     describe('@stress tests', () => {
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                floorSqrtTest(n, k);
+                testFloorSqrt(n, k);
             }
         }
 
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                ceilSqrtTest(n, k);
+                testCeilSqrt(n, k);
             }
         }
 
@@ -264,7 +248,7 @@ describe('MathEx', () => {
             for (const yn of PR_TEST_ARRAY) {
                 for (const xd of PR_TEST_ARRAY) {
                     for (const yd of PR_TEST_ARRAY) {
-                        productRatioTest(xn, yn, xd, yd, new Decimal(0), PR_MAX_ERROR);
+                        testProductRatio({ n: xn, d: xd }, { n: yn, d: yd }, new Decimal(0), PR_MAX_ERROR);
                     }
                 }
             }
@@ -273,7 +257,7 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 10; a++) {
                 for (let b = 1; b <= 10; b++) {
-                    reducedRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal(0));
+                    testReducedRatio({ n: new Decimal(a), d: new Decimal(b) }, scale, new Decimal(0), new Decimal(0));
                 }
             }
         }
@@ -283,7 +267,12 @@ describe('MathEx', () => {
                 const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
                 for (let j = new Decimal(1); j.lte(scale); j = j.mul(10)) {
                     const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
-                    reducedRatioTest(a, b, scale, new Decimal(0), new Decimal('0.135'));
+                    testReducedRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.135')
+                    );
                 }
             }
         }
@@ -291,9 +280,8 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 10; a++) {
                 for (let b = 1; b <= 10; b++) {
-                    normalizedRatioTest(
-                        new Decimal(a),
-                        new Decimal(b),
+                    testNormalizedRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal(0),
                         new Decimal('0.00000241')
@@ -307,7 +295,12 @@ describe('MathEx', () => {
                 const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
                 for (let j = new Decimal(1); j.lte(scale); j = j.mul(10)) {
                     const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
-                    normalizedRatioTest(a, b, scale, new Decimal(0), new Decimal('0.135'));
+                    testNormalizedRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.135')
+                    );
                 }
             }
         }
@@ -315,7 +308,12 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 10; a++) {
                 for (let b = Math.max(a, 1); b <= 10; b++) {
-                    accurateRatioTest(new Decimal(a), new Decimal(b), scale, new Decimal(0), new Decimal('0.0000024'));
+                    testAccurateRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.0000024')
+                    );
                 }
             }
         }
@@ -325,7 +323,12 @@ describe('MathEx', () => {
                 const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
                 for (let j = new Decimal(i); j.lte(scale); j = j.mul(10)) {
                     const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
-                    accurateRatioTest(a, b, scale, new Decimal(0), new Decimal('0.135'));
+                    testAccurateRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal(0),
+                        new Decimal('0.135')
+                    );
                 }
             }
         }
@@ -344,14 +347,19 @@ describe('MathEx', () => {
                 MAX_UINT256
             ]) {
                 for (const b of [MAX_UINT256.sub(1), MAX_UINT256].filter((b) => b.gt(a))) {
-                    accurateRatioTest(a, b, scale, new Decimal('1.6'), new Decimal(0));
+                    testAccurateRatio(
+                        { n: new Decimal(a), d: new Decimal(b) },
+                        scale,
+                        new Decimal('1.6'),
+                        new Decimal(0)
+                    );
                 }
             }
         }
 
         for (let n = 0; n < 10; n++) {
             for (let d = 1; d <= 10; d++) {
-                roundDivTest(new Decimal(n), new Decimal(d));
+                testRoundDiv(new Decimal(n), new Decimal(d));
             }
         }
 
@@ -360,18 +368,18 @@ describe('MathEx', () => {
             [12, 345, 6789],
             [1, 1000, 1000000, 1000000000, 1000000000000]
         ]) {
-            geometricMeanTest(values.map((x) => new Decimal(x)));
+            testGeometricMean(values.map((x) => new Decimal(x)));
         }
 
         for (let n = 1; n <= 77; n++) {
             for (const k of [-1, 0, +1]) {
-                decimalLengthTest(n, k);
+                testDecimalLength(n, k);
             }
         }
 
         for (let n = 0; n < 10; n++) {
             for (let d = 1; d <= 10; d++) {
-                roundDivUnsafeTest(new Decimal(n), new Decimal(d));
+                testRoundDivUnsafe(new Decimal(n), new Decimal(d));
             }
         }
 
@@ -385,7 +393,7 @@ describe('MathEx', () => {
                                     const x = new Decimal(2).pow(px).add(ax);
                                     const y = new Decimal(2).pow(py).add(ay);
                                     const z = new Decimal(2).pow(pz).add(az);
-                                    mulDivTest(methodName as MulDivFunction, x, y, z);
+                                    testMulDiv(methodName as MulDivFunction, x, y, z);
                                 }
                             }
                         }
@@ -404,7 +412,7 @@ describe('MathEx', () => {
                                     const x = new Decimal(2).pow(px).sub(ax);
                                     const y = new Decimal(2).pow(py).sub(ay);
                                     const z = new Decimal(2).pow(pz).sub(az);
-                                    mulDivTest(methodName as MulDivFunction, x, y, z);
+                                    testMulDiv(methodName as MulDivFunction, x, y, z);
                                 }
                             }
                         }
@@ -423,7 +431,7 @@ describe('MathEx', () => {
                                     const x = new Decimal(2).pow(px).divToInt(ax);
                                     const y = new Decimal(2).pow(py).divToInt(ay);
                                     const z = new Decimal(2).pow(pz).divToInt(az);
-                                    mulDivTest(methodName as MulDivFunction, x, y, z);
+                                    testMulDiv(methodName as MulDivFunction, x, y, z);
                                 }
                             }
                         }

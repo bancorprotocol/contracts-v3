@@ -42,7 +42,7 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { vault } = await createSystem();
+            const { vault, networkTokenPool } = await createSystem();
 
             expect(await vault.version()).to.equal(1);
 
@@ -50,7 +50,9 @@ describe('BancorVault', () => {
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
                 deployer.address
             ]);
-            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER);
+            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
+                networkTokenPool.address
+            ]);
         });
     });
 
@@ -113,8 +115,8 @@ describe('BancorVault', () => {
                             .to.emit(vault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, partialAmount);
 
-                        let targetBalance = await getBalance(token, target.address);
-                        let vaultBalance = await getBalance(token, vault.address);
+                        const targetBalance = await getBalance(token, target.address);
+                        const vaultBalance = await getBalance(token, vault.address);
 
                         expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
                         expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
@@ -143,7 +145,7 @@ describe('BancorVault', () => {
                     });
                 };
 
-                const testWithdrawRestricted = (reason: string = 'ERR_ACCESS_DENIED') => {
+                const testWithdrawRestricted = (reason = 'ERR_ACCESS_DENIED') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amount)

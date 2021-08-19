@@ -1,58 +1,50 @@
+import { Fraction, toDecimal } from './Types';
 import Decimal from 'decimal.js';
 
-const floorSqrt = (n: Decimal) => n.sqrt().floor();
-
-const ceilSqrt = (n: Decimal) => n.sqrt().ceil();
-
-const productRatio = (an: Decimal, bn: Decimal, ad: Decimal, bd: Decimal) => [an.mul(bn), ad.mul(bd)];
-
-const reducedRatio = (a: Decimal, b: Decimal, max: Decimal) => {
-    if (a.gt(max) || b.gt(max)) {
-        return normalizedRatio(a, b, max);
-    }
-
-    return [a, b];
-};
-
-const normalizedRatio = (a: Decimal, b: Decimal, scale: Decimal) => {
-    if (a.lte(b)) {
-        return accurateRatio(a, b, scale);
-    }
-
-    return accurateRatio(b, a, scale).slice().reverse();
-};
-
-const accurateRatio = (a: Decimal, b: Decimal, scale: Decimal) => [a, b].map((x) => x.div(a.add(b)).mul(scale));
-
-const roundDiv = (a: Decimal, b: Decimal) => new Decimal(a.div(b).toFixed(0, Decimal.ROUND_HALF_UP));
-
-const mulDivF = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor();
-
-const mulDivC = (a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil();
-
-interface ToString {
-    toString: () => string;
-}
-
+// eslint-disable-next-line @typescript-eslint/ban-types
 const decimalize = <C>(func: Function) => {
-    return (...args: ToString[]): C => {
-        const res = func(...args.map((x) => new Decimal(x.toString())));
-        if (Array.isArray(res)) {
-            return res.map((x) => new Decimal(x.toString())) as unknown as C;
-        }
-
-        return new Decimal(res.toString()) as unknown as C;
+    return (...args: any[]): C => {
+        return func(...args.map((x) => toDecimal(x)));
     };
 };
 
-export default {
-    floorSqrt: decimalize<Decimal>(floorSqrt),
-    ceilSqrt: decimalize<Decimal>(ceilSqrt),
-    productRatio: decimalize<Decimal[]>(productRatio),
-    reducedRatio: decimalize<Decimal[]>(reducedRatio),
-    normalizedRatio: decimalize<Decimal[]>(normalizedRatio),
-    accurateRatio: decimalize<Decimal[]>(accurateRatio),
-    roundDiv: decimalize<Decimal>(roundDiv),
-    mulDivF: decimalize<Decimal>(mulDivF),
-    mulDivC: decimalize<Decimal>(mulDivC)
-};
+export const floorSqrt = decimalize<Decimal>((n: Decimal) => n.sqrt().floor());
+
+export const ceilSqrt = decimalize<Decimal>((n: Decimal) => n.sqrt().ceil());
+
+export const productRatio = decimalize<Decimal>(
+    (a: Fraction, b: Fraction): Fraction => ({ n: a.n.mul(b.n), d: a.d.mul(b.d) })
+);
+
+export const reducedRatio = decimalize<Fraction<Decimal>>((r: Fraction, max: Decimal): Fraction => {
+    if (r.n.gt(max) || r.d.gt(max)) {
+        return normalizedRatio(r, max);
+    }
+
+    return r;
+});
+
+export const normalizedRatio = decimalize<Fraction<Decimal>>((r: Fraction, scale: Decimal): Fraction => {
+    if (r.n.lte(r.d)) {
+        return accurateRatio(r, scale);
+    }
+
+    const invR = { n: r.d, d: r.n };
+    const res = accurateRatio(invR, scale);
+    return { n: res.d, d: res.n };
+});
+
+export const accurateRatio = decimalize<Fraction<Decimal>>(
+    (r: Fraction, scale: Decimal): Fraction => ({
+        n: r.n.div(r.n.add(r.d)).mul(scale),
+        d: r.d.div(r.n.add(r.d)).mul(scale)
+    })
+);
+
+export const roundDiv = decimalize<Decimal>(
+    (a: Decimal, b: Decimal) => new Decimal(a.div(b).toFixed(0, Decimal.ROUND_HALF_UP))
+);
+
+export const mulDivF = decimalize<Decimal>((a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor());
+
+export const mulDivC = decimalize<Decimal>((a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil());

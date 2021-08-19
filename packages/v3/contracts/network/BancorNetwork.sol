@@ -15,11 +15,11 @@ import { Utils } from "../utility/Utils.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, Pool, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
@@ -212,7 +212,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals) external initializer {
+    function initialize(IPendingWithdrawals initPendingWithdrawals)
+        external
+        validAddress(address(initPendingWithdrawals))
+        initializer
+    {
         __BancorNetwork_init(initPendingWithdrawals);
     }
 
@@ -473,7 +477,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @inheritdoc IBancorNetwork
      */
     function withdraw(uint256 id) external override nonReentrant {
-        IPendingWithdrawals.WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
+        WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
         INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
 
         // verify that the provider is the withdrawal position owner
@@ -501,7 +505,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             request.poolToken.approve(address(poolCollection), request.amount);
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
-            IPoolCollection.WithdrawalAmounts memory amounts = poolCollection.withdraw(
+            PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
                 contextId,
                 baseToken,
                 request.amount,
@@ -531,7 +535,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 _externalProtectionWallet.withdrawTokens(baseToken, payable(request.provider), amounts.E);
             }
 
-            IPoolCollection.Pool memory pool = poolCollection.poolData(baseToken);
+            Pool memory pool = poolCollection.poolData(baseToken);
 
             emit FundsWithdrawn(
                 contextId,

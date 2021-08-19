@@ -8,7 +8,6 @@ import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 import fs from 'fs';
 import { ethers } from 'hardhat';
-import os from 'os';
 import path from 'path';
 
 interface WithdrawalAmountData {
@@ -31,8 +30,8 @@ interface WithdrawalAmountData {
 }
 
 interface MaxError {
-    absolute: string;
-    relative: string;
+    absolute: Decimal;
+    relative: Decimal;
 }
 
 interface MaxErrors {
@@ -50,139 +49,127 @@ const ACTIONS: Record<string, number> = {
     'mint tokens': 2
 };
 
-const expectAlmostEqual = (actual: BigNumber, expected: string, maxError: MaxError) => {
-    const x = new Decimal(actual.toString());
-    const y = new Decimal(expected);
-    if (!x.eq(y)) {
-        const absoluteError = x.sub(y).abs();
-        const relativeError = x.div(y).sub(1).abs();
-        expect(absoluteError.lte(maxError.absolute) || relativeError.lte(maxError.relative)).to.equal(
-            true,
-            os.EOL +
-                [
-                    `expected value = ${expected}`,
-                    `actual value   = ${actual.toString()}`,
-                    `absolute error = ${absoluteError.toFixed()}`,
-                    `relative error = ${relativeError.toFixed(25)}`
-                ].join(os.EOL)
-        );
-    }
-};
+const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
+    const test = (fileName: string, maxErrors: MaxErrors, maxNumberOfTests?: number) => {
+        let poolCollection: TestPoolCollection;
 
-const withdrawalAmountsTest = (fileName: string, maxErrors: MaxErrors, maxNumberOfTests?: number) => {
-    let poolCollection: TestPoolCollection;
+        const table: WithdrawalAmountData[] = JSON.parse(
+            fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
+        ).slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
 
-    const table: WithdrawalAmountData[] = JSON.parse(
-        fs.readFileSync(path.join(__dirname, '../data', fileName + '.json'), { encoding: 'utf8' })
-    ).slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
+        before(async () => {
+            const { network } = await createSystem();
 
-    before(async () => {
-        const { network } = await createSystem();
-        poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
-    });
-
-    for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
-        it(`withdrawalAmountsTest(${[a, b, c, d, e, w, m, n, x]})`, async () => {
-            const actual = await poolCollection.withdrawalAmountsTest(a, b, c, d, e, w, m, n, x);
-            expectAlmostEqual(actual.B, B, maxErrors.B);
-            expectAlmostEqual(actual.C, C, maxErrors.C);
-            expectAlmostEqual(actual.D, D, maxErrors.D);
-            expectAlmostEqual(actual.E, E, maxErrors.E);
-            expectAlmostEqual(actual.F, F, maxErrors.F);
-            expectAlmostEqual(actual.G, G, maxErrors.G);
-            expect(actual.H).to.equal(ACTIONS[H]);
+            poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
         });
-    }
-};
 
-const withdrawalAmountsTests = (maxNumberOfTests?: number) => {
+        for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
+            it(`should receive correct withdrawal amounts (${[a, b, c, d, e, w, m, n, x]})`, async () => {
+                const actual = await poolCollection.withdrawalAmountsT(a, b, c, d, e, w, m, n, x);
+                expect(actual.B).to.almostEqual(new Decimal(B), maxErrors.B.absolute, maxErrors.B.relative);
+                expect(actual.C).to.almostEqual(new Decimal(C), maxErrors.C.absolute, maxErrors.C.relative);
+                expect(actual.D).to.almostEqual(new Decimal(D), maxErrors.D.absolute, maxErrors.D.relative);
+                expect(actual.E).to.almostEqual(new Decimal(E), maxErrors.E.absolute, maxErrors.E.relative);
+                expect(actual.F).to.almostEqual(new Decimal(F), maxErrors.F.absolute, maxErrors.F.relative);
+                expect(actual.G).to.almostEqual(new Decimal(G), maxErrors.G.absolute, maxErrors.G.relative);
+                expect(actual.H).to.equal(ACTIONS[H]);
+            });
+        }
+    };
+
     describe('regular cases', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.0000000000000000002' },
-            C: { absolute: '1', relative: '0.0000000000000000003' },
-            D: { absolute: '1', relative: '0.0000000000000000002' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.0000000000000000003' },
-            G: { absolute: '1', relative: '0.00000000000000002' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000002') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsRegularCases', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsRegularCases', maxErrors, maxNumberOfTests);
     });
 
     describe('edge cases 1', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.000000003' },
-            C: { absolute: '1', relative: '0.0000000003' },
-            D: { absolute: '1', relative: '0.00000000002' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.0000000001' },
-            G: { absolute: '1', relative: '0.000000002' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000003') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.00000000002') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.0000000001') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases1', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsEdgeCases1', maxErrors, maxNumberOfTests);
     });
 
     describe('edge cases 2', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.0000004' },
-            C: { absolute: '1', relative: '0.00009' },
-            D: { absolute: '1', relative: '0.000002' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.00002' },
-            G: { absolute: '1', relative: '0.0007' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsEdgeCases2', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsEdgeCases2', maxErrors, maxNumberOfTests);
     });
 
     describe('coverage 1', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.0002' },
-            C: { absolute: '1', relative: '0.0000002' },
-            D: { absolute: '1', relative: '0.0002' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.0002' },
-            G: { absolute: '1', relative: '0.0002' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.0000002') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsCoverage1', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsCoverage1', maxErrors, maxNumberOfTests);
     });
 
     describe('coverage 2', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.000000003' },
-            C: { absolute: '1', relative: '0.000000003' },
-            D: { absolute: '1', relative: '0.000000003' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.000000003' },
-            G: { absolute: '1', relative: '0.000000003' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsCoverage2', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsCoverage2', maxErrors, maxNumberOfTests);
     });
 
     describe('coverage 3', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.008' },
-            C: { absolute: '1', relative: '0.000002' },
-            D: { absolute: '1', relative: '0.008' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.008' },
-            G: { absolute: '1', relative: '0.008' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.008') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsCoverage3', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsCoverage3', maxErrors, maxNumberOfTests);
     });
 
     describe('coverage 4', () => {
         const maxErrors = {
-            B: { absolute: '1', relative: '0.0000009' },
-            C: { absolute: '1', relative: '0.0000000002' },
-            D: { absolute: '1', relative: '0.0000009' },
-            E: { absolute: '1', relative: '0' },
-            F: { absolute: '1', relative: '0.0000009' },
-            G: { absolute: '1', relative: '0.0000009' }
+            B: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000002') },
+            D: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            E: { absolute: new Decimal(1), relative: new Decimal('0') },
+            F: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            G: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
         };
-        withdrawalAmountsTest('WithdrawalAmountsCoverage4', maxErrors, maxNumberOfTests);
+
+        test('WithdrawalAmountsCoverage4', maxErrors, maxNumberOfTests);
     });
 };
 
 describe('PoolCollection', () => {
-    const POOL_DATA_VERSION = BigNumber.from(1);
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
@@ -326,7 +313,8 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when attempting to create a pool from a non-network', async () => {
-            let nonNetwork = nonOwner;
+            const nonNetwork = nonOwner;
+
             await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
@@ -382,12 +370,14 @@ describe('PoolCollection', () => {
                 expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
                 expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
 
-                expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositingEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
+                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
@@ -673,10 +663,10 @@ describe('PoolCollection', () => {
     });
 
     describe('withdrawal', () => {
-        withdrawalAmountsTests(10);
+        testWithdrawalAmounts(10);
     });
-});
 
-describe('@stress PoolCollection withdrawal', () => {
-    withdrawalAmountsTests();
+    describe('@stress withdrawal', () => {
+        testWithdrawalAmounts();
+    });
 });

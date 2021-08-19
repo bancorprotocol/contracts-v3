@@ -4,7 +4,7 @@ import { findLast } from 'lodash';
 
 const GAP_LABEL = '__gap';
 const MAX_GAP_SIZE = 50;
-const GAP_SIZE_REGEXP = /\(t_uint256\)(.*?)\_storage/i;
+const GAP_SIZE_REGEXP = /\(t_uint256\)(.*?)_storage/i;
 
 // verifies that an upgradeable contract has properly defined its forward-compatibility storage gap and that its whole
 // contract-level specific storage equals exactly to the MAX_GAP_SIZE slots

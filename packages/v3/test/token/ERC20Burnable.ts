@@ -108,7 +108,6 @@ describe('ERC20Burnable', () => {
         });
 
         it('should revert when the given amount is greater than the allowance', async () => {
-            const initialBalance = await burnable.balanceOf(owner.address);
             const allowance = BigNumber.from(100);
 
             await burnable.connect(owner).approve(burner.address, allowance);

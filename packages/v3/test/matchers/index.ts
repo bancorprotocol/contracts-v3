@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import supportBigNumber from './BigNumber';
 import supportFraction from './Fraction';
 import Decimal from 'decimal.js';
