@@ -119,7 +119,7 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to request liquidity for a non-whitelisted pool', async () => {
+        it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
             await expect(
                 poolCollection.requestLiquidityT(
                     networkTokenPool.address,
@@ -414,7 +414,7 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to renounce liquidity for a non-whitelisted pool', async () => {
+        it('should revert when attempting to renounce liquidity for a non-whitelisted token', async () => {
             await expect(
                 poolCollection.renounceLiquidityT(
                     networkTokenPool.address,
