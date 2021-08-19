@@ -282,7 +282,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // received governance tokens on a one-to-one basis, which de-factor meant that they have also received an
         // equivalent of pool tokens on a one-to-one basis
         uint256 govTokenAmount = poolTokenAmount;
-        if (isMigrating && poolTokenAmount > originalNetworkTokenAmount) {
+        if (isMigrating && govTokenAmount > originalNetworkTokenAmount) {
             govTokenAmount -= originalNetworkTokenAmount;
         }
 
