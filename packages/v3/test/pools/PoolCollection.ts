@@ -248,7 +248,7 @@ describe('PoolCollection', () => {
 
         it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
             await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                'ERR_POOL_NOT_WHITELISTED'
+                'ERR_TOKEN_NOT_WHITELISTED'
             );
         });
 

@@ -128,7 +128,7 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
@@ -140,7 +140,7 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to request liquidity for a pool with no collection managing it', async () => {
@@ -438,13 +438,13 @@ describe('NetworkTokenPool', () => {
                     reserveToken.address,
                     BigNumber.from(1)
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
             await expect(
                 poolCollection.renounceLiquidityT(networkTokenPool.address, contextId, ZERO_ADDRESS, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to renounce liquidity for a pool with no collection managing it', async () => {
