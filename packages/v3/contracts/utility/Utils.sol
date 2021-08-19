@@ -7,7 +7,7 @@ import { PPM_RESOLUTION } from "./Constants.sol";
  * @dev common utilities
  */
 contract Utils {
-    // allows execution by the network only
+    // allows execution by the sender only
     modifier only(address sender) {
         _only(sender);
 
