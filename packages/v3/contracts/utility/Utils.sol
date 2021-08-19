@@ -14,7 +14,7 @@ contract Utils {
         _;
     }
 
-    function _only(address sender) private view {
+    function _only(address sender) internal view {
         require(msg.sender == sender, "ERR_ACCESS_DENIED");
     }
 
