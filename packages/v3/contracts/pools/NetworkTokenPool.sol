@@ -277,13 +277,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn the previously received network tokens
         _networkTokenGovernance.burn(networkTokenAmount);
 
-        // check if we aren't overcompensating the provider during a migration. It's seem that we are comparing apples
-        // (pool token amount) to oranges (original network token amount), but keep in mind that in v2.1, providers
-        // received governance tokens on a one-to-one basis, which de-factor meant that they have also received an
-        // equivalent of pool tokens on a one-to-one basis
         uint256 govTokenAmount = poolTokenAmount;
-        if (isMigrating && govTokenAmount > originalNetworkTokenAmount) {
-            govTokenAmount -= originalNetworkTokenAmount;
+
+        // ensure that we aren't overcompensating the provider during a migration
+        if (isMigrating) {
+            govTokenAmount = govTokenAmount > originalNetworkTokenAmount
+                ? govTokenAmount - originalNetworkTokenAmount
+                : 0;
         }
 
         // mint governance tokens to the provider

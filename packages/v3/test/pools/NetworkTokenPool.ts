@@ -657,7 +657,7 @@ describe('NetworkTokenPool', () => {
                     provider: SignerWithAddress,
                     amount: BigNumber,
                     isMigrating: boolean,
-                    originalPoolTokenAmount: BigNumber
+                    originalNetworkTokenAmount: BigNumber
                 ) => {
                     // since this is only a unit test, we will simulate a proper transfer of the network token amount
                     // from the network to the network token pool
@@ -680,8 +680,10 @@ describe('NetworkTokenPool', () => {
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
                     let expectedGovTokenAmount = expectedPoolTokenAmount;
-                    if (isMigrating && expectedPoolTokenAmount.gt(originalPoolTokenAmount)) {
-                        expectedGovTokenAmount = expectedGovTokenAmount.sub(originalPoolTokenAmount);
+                    if (isMigrating) {
+                        expectedGovTokenAmount = expectedGovTokenAmount.gt(originalNetworkTokenAmount)
+                            ? expectedGovTokenAmount.sub(originalNetworkTokenAmount)
+                            : BigNumber.from(0);
                     }
 
                     const depositAmounts = await network.callStatic.depositForT(
@@ -689,7 +691,7 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalPoolTokenAmount
+                        originalNetworkTokenAmount
                     );
                     expect(depositAmounts.networkTokenAmount).to.equal(amount);
                     expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
@@ -700,7 +702,7 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalPoolTokenAmount
+                        originalNetworkTokenAmount
                     );
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
