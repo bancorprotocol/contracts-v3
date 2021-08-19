@@ -230,6 +230,8 @@ describe('NetworkTokenPool', () => {
                     const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
                     const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
 
+                    expect(prevVaultPoolTokenAmount).to.equal(BigNumber.from(0));
+
                     const prevTokenTotalSupply = await networkToken.totalSupply();
                     const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
                     const prevVaultTokenAmount = await networkToken.balanceOf(vault.address);
@@ -510,6 +512,8 @@ describe('NetworkTokenPool', () => {
                     const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
                     const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
                     const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
+
+                    expect(prevVaultPoolTokenAmount).to.equal(BigNumber.from(0));
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
                     const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
