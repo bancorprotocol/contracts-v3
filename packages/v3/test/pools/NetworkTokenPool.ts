@@ -139,7 +139,6 @@ describe('NetworkTokenPool', () => {
         it('should revert when attempting to request liquidity for a pool with no collection managing it', async () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-            // we expect the call to revert with no message when attempting to call a function of a zero contract
             await expect(
                 poolCollection.requestLiquidityT(
                     networkTokenPool.address,
@@ -148,7 +147,7 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -422,7 +421,6 @@ describe('NetworkTokenPool', () => {
         it('should revert when attempting to renounce liquidity for a pool with no collection managing it', async () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-            // we expect the call to revert with no message when attempting to call a function of a zero contract
             await expect(
                 poolCollection.renounceLiquidityT(
                     networkTokenPool.address,
@@ -430,7 +428,7 @@ describe('NetworkTokenPool', () => {
                     reserveToken.address,
                     BigNumber.from(1)
                 )
-            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         context('with a whitelisted and registered pool', () => {
