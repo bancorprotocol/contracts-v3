@@ -34,18 +34,6 @@ contract TestMathEx {
         return MathEx.roundDiv(n, d);
     }
 
-    function geometricMean(uint256[] calldata values) external pure returns (uint256) {
-        return MathEx.geometricMean(values);
-    }
-
-    function decimalLength(uint256 x) external pure returns (uint256) {
-        return MathEx.decimalLength(x);
-    }
-
-    function roundDivUnsafe(uint256 n, uint256 d) external pure returns (uint256) {
-        return MathEx.roundDivUnsafe(n, d);
-    }
-
     function mulDivF(
         uint256 x,
         uint256 y,

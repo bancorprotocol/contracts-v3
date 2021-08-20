@@ -117,38 +117,6 @@ library MathEx {
     }
 
     /**
-     * @dev returns the average number of decimal digits in a given list of positive integers
-     */
-    function geometricMean(uint256[] memory values) internal pure returns (uint256) {
-        uint256 numOfDigits = 0;
-        uint256 length = values.length;
-        for (uint256 i = 0; i < length; i++) {
-            numOfDigits += decimalLength(values[i]);
-        }
-        return uint256(10)**(roundDivUnsafe(numOfDigits, length) - 1);
-    }
-
-    /**
-     * @dev returns the number of decimal digits in a given positive integer
-     */
-    function decimalLength(uint256 x) internal pure returns (uint256) {
-        uint256 y = 0;
-        for (uint256 tmpX = x; tmpX > 0; tmpX /= 10) {
-            ++y;
-        }
-        return y;
-    }
-
-    /**
-     * @dev returns the nearest integer to a given quotient
-     *
-     * note the computation is overflow-safe assuming that the input is sufficiently small
-     */
-    function roundDivUnsafe(uint256 n, uint256 d) internal pure returns (uint256) {
-        return (n + d / 2) / d;
-    }
-
-    /**
      * @dev returns the largest integer smaller than or equal to `x * y / z`
      */
     function mulDivF(
