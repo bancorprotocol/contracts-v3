@@ -233,7 +233,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function IsPoolRateNormal(IReserveToken reserveToken) external view override returns (bool) {
+    function isPoolRateNormal(IReserveToken reserveToken) external view override returns (bool) {
         Pool memory pool = _pools[reserveToken];
         if (!_validPool(pool)) {
             return false;

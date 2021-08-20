@@ -126,7 +126,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _only(address(poolCollection));
 
         // verify that the pool's rate is in the normal range
-        require(poolCollection.IsPoolRateNormal(pool), "ERR_INVALID_RATE");
+        require(poolCollection.isPoolRateNormal(pool), "ERR_INVALID_RATE");
     }
 
     /**
