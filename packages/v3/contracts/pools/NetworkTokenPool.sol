@@ -337,14 +337,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bool skipLimitCheck
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
         uint256 newNetworkTokenAmount = networkTokenAmount;
-        uint256 mintedAmount = _mintedAmounts[pool];
+        uint256 currentMintedAmount = _mintedAmounts[pool];
 
         // verify the minting limit (unless asked explicitly to skip this check)
         if (!skipLimitCheck) {
             uint256 mintingLimit = _settings.poolMintingLimit(pool);
 
-            if (mintingLimit > mintedAmount) {
-                newNetworkTokenAmount = Math.min(mintingLimit - mintedAmount, networkTokenAmount);
+            if (mintingLimit > currentMintedAmount) {
+                newNetworkTokenAmount = Math.min(mintingLimit - currentMintedAmount, networkTokenAmount);
             } else {
                 // if we're unable to mint more network tokens - abort
                 emit LiquidityRequested(contextId, pool, networkTokenAmount, 0, 0);
@@ -368,7 +368,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _stakedBalance = currentStakedBalance.add(newNetworkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = mintedAmount.add(newNetworkTokenAmount);
+        _mintedAmounts[pool] = currentMintedAmount.add(newNetworkTokenAmount);
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
