@@ -121,17 +121,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // verify that the token is whitelisted
         require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
 
-        // verify that the caller is the known pool collection which manages it
+        // verify that the caller is the current collection that manages the given pool
         IPoolCollection poolCollection = _network.collectionByPool(pool);
         _only(address(poolCollection));
 
-        // verify that the average rate of the pool isn't deviated too much from its spot rate
-        Pool memory poolData = poolCollection.poolData(pool);
-        PoolAverageRate.verifyAverageRate(
-            Fraction({ n: poolData.baseTokenTradingLiquidity, d: poolData.networkTokenTradingLiquidity }),
-            poolData.averageRate,
-            _settings.averageRateMaxDeviationPPM()
-        );
+        // verify that the pool's rate is in the normal range
+        require(poolCollection.IsPoolRateNormal(pool), "ERR_INVALID_RATE");
     }
 
     /**

@@ -75,24 +75,26 @@ library PoolAverageRate {
     }
 
     /**
-     * @dev verifies that the deviation of the average rate from the spot rate is within the permitted range
+     * @dev returns whether the spot rate is in the normal range (i.e., the deviation of the average rate from the
+     * spot rate is within the permitted range)
      *
      * for example, if the maximum permitted deviation is 5%, then verify `95% <= average/spot <= 105%`
      *
      * requirements:
      *
-     * - maxDeviation must be lesser or equalt to PPM_RESOLUTION
+     * - spotRate numerator/denumerator should be bound by 128 bits (otherwise, the check might revert with an overflow)
+     * - maxDeviation must be lesser or equal to PPM_RESOLUTION
      */
-    function verifyAverageRate(
+    function isPoolRateNormal(
         Fraction memory spotRate,
         AverageRate memory averageRate,
         uint32 maxDeviation
-    ) internal pure {
+    ) internal pure returns (bool) {
         uint256 d = averageRate.rate.d.mul(spotRate.n);
         uint256 min = MathEx.mulDivC(d, PPM_RESOLUTION - maxDeviation, PPM_RESOLUTION);
         uint256 mid = averageRate.rate.n.mul(spotRate.d);
         uint256 max = MathEx.mulDivF(d, PPM_RESOLUTION + maxDeviation, PPM_RESOLUTION);
 
-        require(min <= mid && mid <= max, "ERR_INVALID_RATE");
+        return min <= mid && mid <= max;
     }
 }

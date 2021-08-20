@@ -186,7 +186,7 @@ describe('NetworkTokenPool', () => {
                 ).to.be.revertedWith('ERR_ZERO_VALUE');
             });
 
-            context('when spot rate is too far from average rate', () => {
+            context('when spot rate is not in the normal range', () => {
                 beforeEach(async () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
@@ -213,7 +213,7 @@ describe('NetworkTokenPool', () => {
                 });
             });
 
-            context('when spot rate is close enough to the average rate', () => {
+            context('when spot rate is in the normal range', () => {
                 const testRequest = async (amount: BigNumber, expectedAmount: BigNumber, skipLimitCheck = false) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);

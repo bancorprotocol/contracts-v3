@@ -339,13 +339,17 @@ describe('PoolAverageRate', () => {
                                     it('should not allow any deviation', async () => {
                                         const maxDeviation = BigNumber.from(0);
 
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(baseSpotRate, averageRate, maxDeviation)
-                                        ).not.to.be.reverted;
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
+                                                baseSpotRate,
+                                                averageRate,
+                                                maxDeviation
+                                            )
+                                        ).to.be.true;
 
                                         // a small deviation (average < spot)
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: baseSpotRate.n.add(BigNumber.from(1)),
                                                     d: baseSpotRate.d
@@ -353,11 +357,11 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).to.be.revertedWith('ERR_INVALID_RATE');
+                                        ).to.be.false;
 
                                         // a small deviation (average > spot)
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.add(BigNumber.from(1))
@@ -365,7 +369,7 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).to.be.revertedWith('ERR_INVALID_RATE');
+                                        ).to.be.false;
                                     });
                                 });
 
@@ -373,13 +377,17 @@ describe('PoolAverageRate', () => {
                                     it('should allow up to 100% deviation', async () => {
                                         const maxDeviation = PPM_RESOLUTION;
 
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(baseSpotRate, averageRate, maxDeviation)
-                                        ).not.to.be.reverted;
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
+                                                baseSpotRate,
+                                                averageRate,
+                                                maxDeviation
+                                            )
+                                        ).to.be.true;
 
                                         // 200% deviation (average > spot)
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.mul(BigNumber.from(2))
@@ -387,11 +395,11 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).not.to.be.reverted;
+                                        ).to.be.true;
 
                                         // 300% deviation (average > spot)
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.mul(BigNumber.from(3))
@@ -399,11 +407,11 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).to.be.revertedWith('ERR_INVALID_RATE');
+                                        ).to.be.false;
 
                                         // a huge deviation (average > spot)
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: BigNumber.from(1),
                                                     d: toWei(BigNumber.from(10))
@@ -411,10 +419,10 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).to.be.revertedWith('ERR_INVALID_RATE');
+                                        ).to.be.false;
 
-                                        await expect(
-                                            poolAverageRate.verifyAverageRate(
+                                        expect(
+                                            await poolAverageRate.isPoolRateNormal(
                                                 {
                                                     n: baseSpotRate.n.add(BigNumber.from(1)),
                                                     d: baseSpotRate.d
@@ -422,24 +430,24 @@ describe('PoolAverageRate', () => {
                                                 averageRate,
                                                 maxDeviation
                                             )
-                                        ).not.to.be.reverted;
+                                        ).to.be.true;
                                     });
                                 });
 
                                 for (const maxDeviation of maxDeviations) {
                                     context(`max deviation = ${maxDeviation.toString()}`, () => {
                                         it('should properly verify the average rate', async () => {
-                                            await expect(
-                                                poolAverageRate.verifyAverageRate(
+                                            expect(
+                                                await poolAverageRate.isPoolRateNormal(
                                                     baseSpotRate,
                                                     averageRate,
                                                     maxDeviation
                                                 )
-                                            ).not.to.be.reverted;
+                                            ).to.be.true;
 
                                             // at the max deviation (average > spot)
-                                            await expect(
-                                                poolAverageRate.verifyAverageRate(
+                                            expect(
+                                                await poolAverageRate.isPoolRateNormal(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION.add(maxDeviation))
@@ -447,11 +455,11 @@ describe('PoolAverageRate', () => {
                                                     averageRate,
                                                     maxDeviation
                                                 )
-                                            ).not.to.be.reverted;
+                                            ).to.be.true;
 
                                             // above the max deviation (average > spot)
-                                            await expect(
-                                                poolAverageRate.verifyAverageRate(
+                                            expect(
+                                                await poolAverageRate.isPoolRateNormal(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(
@@ -461,11 +469,11 @@ describe('PoolAverageRate', () => {
                                                     averageRate,
                                                     maxDeviation
                                                 )
-                                            ).to.be.revertedWith('ERR_INVALID_RATE');
+                                            ).to.be.false;
 
                                             // at the max deviation (average < spot)
-                                            await expect(
-                                                poolAverageRate.verifyAverageRate(
+                                            expect(
+                                                await poolAverageRate.isPoolRateNormal(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION.sub(maxDeviation))
@@ -473,11 +481,11 @@ describe('PoolAverageRate', () => {
                                                     averageRate,
                                                     maxDeviation
                                                 )
-                                            ).not.to.be.reverted;
+                                            ).to.be.true;
 
                                             // above the max deviation (average < spot)
-                                            await expect(
-                                                poolAverageRate.verifyAverageRate(
+                                            expect(
+                                                await poolAverageRate.isPoolRateNormal(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(
@@ -487,7 +495,7 @@ describe('PoolAverageRate', () => {
                                                     averageRate,
                                                     maxDeviation
                                                 )
-                                            ).to.be.revertedWith('ERR_INVALID_RATE');
+                                            ).to.be.false;
                                         });
                                     });
                                 }

@@ -74,6 +74,11 @@ interface IPoolCollection is IVersioned {
     function isPoolValid(IReserveToken reserveToken) external view returns (bool);
 
     /**
+     * @dev returns whether a pool's rate is in the normal range
+     */
+    function IsPoolRateNormal(IReserveToken reserveToken) external view returns (bool);
+
+    /**
      * @dev returns the pool data for a given reserve token
      */
     function poolData(IReserveToken reserveToken) external view returns (Pool memory);
