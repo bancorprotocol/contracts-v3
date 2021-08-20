@@ -331,11 +331,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 networkTokenAmount,
         bool skipLimitCheck
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
-        uint256 newNetworkTokenAmount = networkTokenAmount;
-        uint256 currentMintedAmount = _mintedAmounts[pool];
-
         // verify the minting limit (unless asked explicitly to skip this check)
-        if (!skipLimitCheck) {
+        uint256 currentMintedAmount = _mintedAmounts[pool];
+        uint256 newNetworkTokenAmount;
+        if (skipLimitCheck) {
+            newNetworkTokenAmount = networkTokenAmount;
+        } else {
             uint256 mintingLimit = _settings.poolMintingLimit(pool);
 
             if (mintingLimit > currentMintedAmount) {
