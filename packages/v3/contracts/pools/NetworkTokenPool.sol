@@ -417,7 +417,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount,
         uint8 feeType
-    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
+    ) external override only(address(_network)) validAddress(address(pool)) {
+        if (networkTokenAmount == 0) {
+            return;
+        }
+
         // increase the staked balance by the given amount
         _stakedBalance = _stakedBalance.add(networkTokenAmount);
 

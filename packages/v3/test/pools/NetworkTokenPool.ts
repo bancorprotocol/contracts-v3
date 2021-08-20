@@ -1014,36 +1014,27 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should revert when attempting to get notified about collected fee with an invalid amount', async () => {
-            await expect(
-                network.onNetworkTokenFeesCollectedT(
-                    networkTokenPool.address,
-                    reserveToken.address,
-                    BigNumber.from(0),
-                    FEE_TYPES.trading
-                )
-            ).to.be.revertedWith('ERR_ZERO_VALUE');
-        });
-
         for (const [name, type] of Object.entries(FEE_TYPES)) {
-            it(`should collect ${name} fees`, async () => {
-                const feeAmount = BigNumber.from(12345);
+            for (const fee of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
+                it(`should collect ${name} fees of ${fee.toString()}`, async () => {
+                    const feeAmount = BigNumber.from(12345);
 
-                const prevStakedBalance = await networkTokenPool.stakedBalance();
-                const prevMintingAmount = await networkTokenPool.mintedAmount(reserveToken.address);
+                    const prevStakedBalance = await networkTokenPool.stakedBalance();
+                    const prevMintingAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
-                await network.onNetworkTokenFeesCollectedT(
-                    networkTokenPool.address,
-                    reserveToken.address,
-                    feeAmount,
-                    type
-                );
+                    await network.onNetworkTokenFeesCollectedT(
+                        networkTokenPool.address,
+                        reserveToken.address,
+                        feeAmount,
+                        type
+                    );
 
-                expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
-                    prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
-                );
-            });
+                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
+                        prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
+                    );
+                });
+            }
         }
     });
 });
