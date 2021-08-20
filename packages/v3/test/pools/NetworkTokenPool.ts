@@ -28,14 +28,13 @@ const { formatBytes32String } = utils;
 
 describe('NetworkTokenPool', () => {
     let deployer: SignerWithAddress;
-    let nonOwner: SignerWithAddress;
     let provider: SignerWithAddress;
     let provider2: SignerWithAddress;
 
     shouldHaveGap('NetworkTokenPool', '_pendingWithdrawals');
 
     before(async () => {
-        [deployer, nonOwner, provider, provider2] = await ethers.getSigners();
+        [deployer, provider, provider2] = await ethers.getSigners();
     });
 
     describe('construction', () => {
