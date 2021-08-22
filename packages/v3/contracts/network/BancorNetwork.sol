@@ -510,8 +510,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 baseToken,
                 request.amount,
                 IERC20(address(baseToken)).balanceOf(address(vault)),
-                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet)),
-                networkTokenPool
+                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet))
             );
 
             if (amounts.B > 0) {

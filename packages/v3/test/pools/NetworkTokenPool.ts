@@ -201,7 +201,7 @@ describe('NetworkTokenPool', () => {
             });
 
             it('should revert when attempting to request liquidity for a pool from a different collection than the one managing it', async () => {
-                const poolCollection2 = await createPoolCollection(network);
+                const poolCollection2 = await createPoolCollection(network, networkTokenPool);
                 await expect(
                     poolCollection2.requestLiquidityT(
                         networkTokenPool.address,
@@ -482,7 +482,7 @@ describe('NetworkTokenPool', () => {
             });
 
             it('should revert when attempting to renounce liquidity for a pool from a different collection than the one managing it', async () => {
-                const poolCollection2 = await createPoolCollection(network);
+                const poolCollection2 = await createPoolCollection(network, networkTokenPool);
                 await expect(
                     poolCollection2.renounceLiquidityT(
                         networkTokenPool.address,

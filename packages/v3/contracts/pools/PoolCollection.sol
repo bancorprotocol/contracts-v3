@@ -59,11 +59,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 d2;
     }
 
+    // the network contract
+    IBancorNetwork private immutable _network;
+
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // the network contract
-    IBancorNetwork private immutable _network;
+    // the network token pool contract
+    INetworkTokenPool private immutable _networkTokenPool;
 
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) internal _pools;
@@ -112,12 +115,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
+    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkTokenPool))
+    {
         __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
         _settings = initNetwork.settings();
+        _networkTokenPool = initNetworkTokenPool;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -149,6 +156,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
+    function network() external view override returns (IBancorNetwork) {
+        return _network;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
     }
@@ -156,8 +170,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function network() external view override returns (IBancorNetwork) {
-        return _network;
+    function networkTokenPool() external view override returns (INetworkTokenPool) {
+        return _networkTokenPool;
     }
 
     /**
@@ -385,8 +399,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 protectionWalletBalance,
-        INetworkTokenPool networkTokenPool
+        uint256 protectionWalletBalance
     ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
 
@@ -409,9 +422,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         // handle the minting or burning of network tokens in the pool
         if (amounts.G > 0) {
             if (amounts.H == Action.mintNetworkTokens) {
-                networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G, false);
+                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G, false);
             } else if (amounts.H == Action.burnNetworkTokens) {
-                networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
+                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
 

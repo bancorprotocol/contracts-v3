@@ -34,16 +34,16 @@ describe('PendingWithdrawals', () => {
     });
 
     describe('construction', () => {
+        it('should revert when initialized with an invalid network contract', async () => {
+            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
         it('should revert when attempting to reinitialize', async () => {
             const { pendingWithdrawals } = await createSystem();
 
             await expect(pendingWithdrawals.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
-        });
-
-        it('should revert when initialized with an invalid network contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {

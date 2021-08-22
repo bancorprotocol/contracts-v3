@@ -12,7 +12,9 @@ import { AverageRate } from "../pools/PoolAverageRate.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
 contract TestPoolCollection is PoolCollection {
-    constructor(IBancorNetwork initNetwork) PoolCollection(initNetwork) {}
+    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNeworkTokenPool)
+        PoolCollection(initNetwork, initNeworkTokenPool)
+    {}
 
     function mintT(
         address recipient,

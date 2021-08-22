@@ -49,18 +49,18 @@ const ACTIONS: Record<string, number> = {
     'mint tokens': 2
 };
 
-const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
-    const test = (fileName: string, maxErrors: MaxErrors, maxNumberOfTests?: number) => {
+const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
+    const test = (fileName: string, maxErrors: MaxErrors) => {
         let poolCollection: TestPoolCollection;
 
         const table: WithdrawalAmountData[] = JSON.parse(
             fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
-        ).slice(0, maxNumberOfTests ? maxNumberOfTests : Number.MAX_SAFE_INTEGER);
+        ).slice(0, maxNumberOfTests);
 
         before(async () => {
-            const { network } = await createSystem();
+            const { network, networkTokenPool } = await createSystem();
 
-            poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
+            poolCollection = await Contracts.TestPoolCollection.deploy(network.address, networkTokenPool.address);
         });
 
         for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
@@ -87,7 +87,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000002') }
         };
 
-        test('WithdrawalAmountsRegularCases', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsRegularCases', maxErrors);
     });
 
     describe('edge cases 1', () => {
@@ -100,7 +100,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
         };
 
-        test('WithdrawalAmountsEdgeCases1', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsEdgeCases1', maxErrors);
     });
 
     describe('edge cases 2', () => {
@@ -113,7 +113,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
         };
 
-        test('WithdrawalAmountsEdgeCases2', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsEdgeCases2', maxErrors);
     });
 
     describe('coverage 1', () => {
@@ -126,7 +126,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
         };
 
-        test('WithdrawalAmountsCoverage1', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsCoverage1', maxErrors);
     });
 
     describe('coverage 2', () => {
@@ -139,7 +139,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
         };
 
-        test('WithdrawalAmountsCoverage2', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsCoverage2', maxErrors);
     });
 
     describe('coverage 3', () => {
@@ -152,7 +152,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.008') }
         };
 
-        test('WithdrawalAmountsCoverage3', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsCoverage3', maxErrors);
     });
 
     describe('coverage 4', () => {
@@ -165,7 +165,7 @@ const testWithdrawalAmounts = (maxNumberOfTests?: number) => {
             G: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
         };
 
-        test('WithdrawalAmountsCoverage4', maxErrors, maxNumberOfTests);
+        test('WithdrawalAmountsCoverage4', maxErrors);
     });
 };
 
@@ -193,6 +193,22 @@ describe('PoolCollection', () => {
     });
 
     describe('construction', () => {
+        it('should revert when initialized with an invalid network contract', async () => {
+            const { networkTokenPool } = await createSystem();
+
+            await expect(Contracts.PoolCollection.deploy(ZERO_ADDRESS, networkTokenPool.address)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
+        it('should revert when initialized with an invalid network token pool contract', async () => {
+            const { network } = await createSystem();
+
+            await expect(Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
         it('should be properly initialized', async () => {
             const { poolCollection, network } = await createSystem();
 

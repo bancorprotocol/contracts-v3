@@ -7,6 +7,8 @@ import { Fraction } from "../../utility/Types.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
+import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
+
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkTokenPool } from "../interfaces/INetworkTokenPool.sol";
@@ -72,14 +74,19 @@ interface IPoolCollection is IVersioned {
     function poolType() external pure returns (uint16);
 
     /**
+     * @dev returns the network contract
+     */
+    function network() external view returns (IBancorNetwork);
+
+    /**
      * @dev returns the network settings contract
      */
     function settings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the network contract
+     * @dev returns the network token pool contract
      */
-    function network() external view returns (IBancorNetwork);
+    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the custom symbol overrides for a given reserve token
@@ -122,7 +129,6 @@ interface IPoolCollection is IVersioned {
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 protectionWalletBalance,
-        INetworkTokenPool networkTokenPool
+        uint256 protectionWalletBalance
     ) external returns (WithdrawalAmounts memory);
 }
