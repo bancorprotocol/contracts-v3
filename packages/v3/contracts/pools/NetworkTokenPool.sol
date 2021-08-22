@@ -315,8 +315,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
 
-        // burn the pool tokens from the network
-        _poolToken.burnFrom(msg.sender, poolTokenAmount);
+        // get the pool tokens from the network
+        _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);

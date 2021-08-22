@@ -904,11 +904,9 @@ describe('NetworkTokenPool', () => {
 
                         expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
 
-                        expect(await networkPoolToken.totalSupply()).to.equal(
-                            prevPoolTokenTotalSupply.sub(poolTokenAmount)
-                        );
+                        expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
                         expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                            prevPoolPoolTokenBalance
+                            prevPoolPoolTokenBalance.add(poolTokenAmount)
                         );
 
                         expect(await networkPoolToken.balanceOf(network.address)).to.equal(
@@ -943,7 +941,7 @@ describe('NetworkTokenPool', () => {
 
                         await expect(
                             network.withdrawT(networkTokenPool.address, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should revert when attempting to deposit without sending the governance tokens', async () => {
@@ -963,7 +961,7 @@ describe('NetworkTokenPool', () => {
 
                         await expect(
                             network.withdrawT(networkTokenPool.address, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERR_INSUFFICIENT_ALLOWANCE');
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should allow withdrawing liquidity', async () => {
