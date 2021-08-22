@@ -545,7 +545,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 contextId,
                 baseToken,
                 request.amount,
-                IERC20(address(baseToken)).balanceOf(address(vault)),
+                IERC20(address(baseToken)).balanceOf(address(_vault)),
                 IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet))
             );
 
@@ -591,7 +591,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 baseToken,
                 request.poolToken.totalSupply(),
                 pool.stakedBalance,
-                IERC20(address(baseToken)).balanceOf(address(vault))
+                IERC20(address(baseToken)).balanceOf(address(_vault))
             );
 
             emit TradingLiquidityUpdated(contextId, baseToken, baseToken, pool.baseTokenTradingLiquidity);
