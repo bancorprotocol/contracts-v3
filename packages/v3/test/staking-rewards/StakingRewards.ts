@@ -23,6 +23,10 @@ const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string)
 describe('StakingRewards', () => {
     let stakingRewards: TestStakingRewards;
 
+    before(async () => {
+        stakingRewards = await Contracts.TestStakingRewards.deploy();
+    });
+
     const expTest = (a: number, b: number, minAccuracy: string) => {
         it(`exp(${a}, ${b})`, async () => {
             if (a / b < 2) {
@@ -43,10 +47,6 @@ describe('StakingRewards', () => {
             assertAccuracy(actual, expected, minAccuracy);
         });
     };
-
-    before(async () => {
-        stakingRewards = await Contracts.TestStakingRewards.deploy();
-    });
 
     for (let a = 0; a < 100; a++) {
         for (let b = 1; b < 100; b++) {
