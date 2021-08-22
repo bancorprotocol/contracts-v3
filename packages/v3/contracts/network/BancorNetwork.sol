@@ -14,6 +14,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { IPoolCollection, Pool, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -29,6 +30,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using ReserveToken for IReserveToken;
 
     // the address of the network token
     IERC20 private immutable _networkToken;
@@ -545,8 +547,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 contextId,
                 baseToken,
                 request.amount,
-                IERC20(address(baseToken)).balanceOf(address(vault)),
-                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet))
+                baseToken.balanceOf(address(_vault)),
+                baseToken.balanceOf(address(_externalProtectionWallet))
             );
 
             if (amounts.B > 0) {
@@ -591,7 +593,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 baseToken,
                 request.poolToken.totalSupply(),
                 pool.stakedBalance,
-                IERC20(address(baseToken)).balanceOf(address(vault))
+                baseToken.balanceOf(address(_vault))
             );
 
             emit TradingLiquidityUpdated(contextId, baseToken, baseToken, pool.baseTokenTradingLiquidity);
