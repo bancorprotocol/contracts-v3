@@ -253,7 +253,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
-        uint256 originalNetworkTokenAmount
+        uint256 originalGovTokenAmount
     )
         external
         override
@@ -274,11 +274,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         uint256 govTokenAmount = poolTokenAmount;
 
-        // ensure that we aren't overcompensating the provider during a migration
+        // the provider should receive pool tokens and gov tokens in equal amounts. since the provider might already
+        // have some gov tokens during migration, the contract only mints the delta between the full amount and the
+        // amount the provider already has
         if (isMigrating) {
-            govTokenAmount = govTokenAmount > originalNetworkTokenAmount
-                ? govTokenAmount - originalNetworkTokenAmount
-                : 0;
+            govTokenAmount = govTokenAmount > originalGovTokenAmount ? govTokenAmount - originalGovTokenAmount : 0;
         }
 
         // mint governance tokens to the provider

@@ -637,7 +637,7 @@ describe('NetworkTokenPool', () => {
                     provider: SignerWithAddress,
                     amount: BigNumber,
                     isMigrating: boolean,
-                    originalNetworkTokenAmount: BigNumber
+                    originalGovTokenAmount: BigNumber
                 ) => {
                     // since this is only a unit test, we will simulate a proper transfer of the network token amount
                     // from the network to the network token pool
@@ -661,8 +661,8 @@ describe('NetworkTokenPool', () => {
 
                     let expectedGovTokenAmount = expectedPoolTokenAmount;
                     if (isMigrating) {
-                        expectedGovTokenAmount = expectedGovTokenAmount.gt(originalNetworkTokenAmount)
-                            ? expectedGovTokenAmount.sub(originalNetworkTokenAmount)
+                        expectedGovTokenAmount = expectedGovTokenAmount.gt(originalGovTokenAmount)
+                            ? expectedGovTokenAmount.sub(originalGovTokenAmount)
                             : BigNumber.from(0);
                     }
 
@@ -671,7 +671,7 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalNetworkTokenAmount
+                        originalGovTokenAmount
                     );
                     expect(depositAmounts.networkTokenAmount).to.equal(amount);
                     expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
@@ -682,7 +682,7 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalNetworkTokenAmount
+                        originalGovTokenAmount
                     );
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
