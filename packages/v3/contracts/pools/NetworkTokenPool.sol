@@ -282,7 +282,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         }
 
         // mint governance tokens to the provider
-        _govTokenGovernance.mint(provider, govTokenAmount);
+        if (govTokenAmount > 0) {
+            _govTokenGovernance.mint(provider, govTokenAmount);
+        }
 
         return
             DepositAmounts({
