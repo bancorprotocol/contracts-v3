@@ -118,21 +118,15 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     }
 
     function _onlyValidPoolCollection(IReserveToken pool) private view {
-        // verify that the pool is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
+        // verify that the token is whitelisted
+        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
 
-        // verify that the caller is the known pool collection which manages it
+        // verify that the caller is the current collection that manages the given pool
         IPoolCollection poolCollection = _network.collectionByPool(pool);
-        require(poolCollection.version() == 1, "ERR_UNKNOWN_POOL_COLLECTION");
-        require(msg.sender == address(poolCollection), "ERR_ACCESS_DENIED");
+        _only(address(poolCollection));
 
-        // verify that the average rate of the pool isn't deviated too much from its spot rate
-        Pool memory poolData = poolCollection.poolData(pool);
-        PoolAverageRate.verifyAverageRate(
-            Fraction({ n: poolData.baseTokenTradingLiquidity, d: poolData.networkTokenTradingLiquidity }),
-            poolData.averageRate,
-            _settings.averageRateMaxDeviationPPM()
-        );
+        // verify that the pool's rate is stable
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 
     /**
@@ -248,7 +242,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function mintedAmounts(IReserveToken pool) external view override returns (uint256) {
+    function mintedAmount(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
     }
 
@@ -259,7 +253,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
-        uint256 originalNetworkTokenAmount
+        uint256 originalGovTokenAmount
     )
         external
         override
@@ -271,23 +265,26 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // calculate the pool token amount to transfer
         uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
 
-        // transfer pool tokens from the protocol to the provider
+        // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
+        // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
         _poolToken.transfer(provider, poolTokenAmount);
 
         // burn the previously received network tokens
         _networkTokenGovernance.burn(networkTokenAmount);
 
-        // check if we aren't overcompensating the provider during a migration. It's seem that we are comparing apples
-        // (pool token amount) to oranges (original network token amount), but keep in mind that in v2.1, providers
-        // received governance tokens on a one-to-one basis, which de-factor meant that they have also received an
-        // equivalent of pool tokens on a one-to-one basis
         uint256 govTokenAmount = poolTokenAmount;
-        if (isMigrating && poolTokenAmount > originalNetworkTokenAmount) {
-            govTokenAmount -= originalNetworkTokenAmount;
+
+        // the provider should receive pool tokens and gov tokens in equal amounts. since the provider might already
+        // have some gov tokens during migration, the contract only mints the delta between the full amount and the
+        // amount the provider already has
+        if (isMigrating) {
+            govTokenAmount = govTokenAmount > originalGovTokenAmount ? govTokenAmount - originalGovTokenAmount : 0;
         }
 
         // mint governance tokens to the provider
-        _govTokenGovernance.mint(provider, govTokenAmount);
+        if (govTokenAmount > 0) {
+            _govTokenGovernance.mint(provider, govTokenAmount);
+        }
 
         return
             DepositAmounts({
@@ -318,8 +315,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
 
-        // burn the pool tokens from the network
-        _poolToken.burnFrom(msg.sender, poolTokenAmount);
+        // get the pool tokens from the caller
+        _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);
@@ -336,15 +333,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 networkTokenAmount,
         bool skipLimitCheck
     ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
-        uint256 newNetworkTokenAmount = networkTokenAmount;
-        uint256 mintedAmount = _mintedAmounts[pool];
-
         // verify the minting limit (unless asked explicitly to skip this check)
-        if (!skipLimitCheck) {
+        uint256 currentMintedAmount = _mintedAmounts[pool];
+        uint256 newNetworkTokenAmount;
+        if (skipLimitCheck) {
+            newNetworkTokenAmount = networkTokenAmount;
+        } else {
             uint256 mintingLimit = _settings.poolMintingLimit(pool);
 
-            if (mintingLimit > mintedAmount) {
-                newNetworkTokenAmount = Math.min(mintingLimit - mintedAmount, networkTokenAmount);
+            if (mintingLimit > currentMintedAmount) {
+                newNetworkTokenAmount = Math.min(mintingLimit - currentMintedAmount, networkTokenAmount);
             } else {
                 // if we're unable to mint more network tokens - abort
                 emit LiquidityRequested(contextId, pool, networkTokenAmount, 0, 0);
@@ -358,7 +356,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 poolTokenAmount;
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
-            // if this is the liquidity provision - use a one-to-one pool token to network token rate
+            // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
             poolTokenAmount = newNetworkTokenAmount;
         } else {
             poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
@@ -368,7 +366,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _stakedBalance = currentStakedBalance.add(newNetworkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = mintedAmount.add(newNetworkTokenAmount);
+        _mintedAmounts[pool] = currentMintedAmount.add(newNetworkTokenAmount);
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
@@ -403,7 +401,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // with network tokens from the vault and burn them
+        // withdraw network tokens from the vault and burn them
         _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
@@ -417,7 +415,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount,
         uint8 feeType
-    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
+    ) external override only(address(_network)) validAddress(address(pool)) {
+        if (networkTokenAmount == 0) {
+            return;
+        }
+
         // increase the staked balance by the given amount
         _stakedBalance = _stakedBalance.add(networkTokenAmount);
 

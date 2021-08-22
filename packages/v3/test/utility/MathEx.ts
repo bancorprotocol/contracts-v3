@@ -88,33 +88,6 @@ describe('MathEx', () => {
         });
     };
 
-    const testGeometricMean = (xs: Decimal[]) => {
-        const values = xs.map((val) => val.toFixed());
-        it(`geometricMean([${values}])`, async () => {
-            const expected = new Decimal(10).pow(Math.round(values.join('').length / values.length) - 1);
-            const actual = await mathContract.geometricMean(values);
-            expect(actual).to.equal(expected);
-        });
-    };
-
-    const testDecimalLength = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k)).toString();
-        it(`decimalLength(${x})`, async () => {
-            const expected = new Decimal(x.length);
-            const actual = await mathContract.decimalLength(x);
-            expect(actual).to.equal(expected);
-        });
-    };
-
-    const testRoundDivUnsafe = (x: Decimal, y: Decimal) => {
-        const [n, d] = [x, y].map((val) => val.toFixed());
-        it(`roundDivUnsafe(${[n, d]})`, async () => {
-            const expected = roundDiv(n, d);
-            const actual = await mathContract.roundDivUnsafe(n, d);
-            expect(actual).to.equal(expected);
-        });
-    };
-
     type MulDivFunction = 'mulDivC' | 'mulDivF';
     const testMulDiv = (methodName: MulDivFunction, x: Decimal, y: Decimal, z: Decimal) => {
         const [a, b, c] = [x, y, z].map((val) => val.toHex());
@@ -189,25 +162,6 @@ describe('MathEx', () => {
         for (let n = 0; n < 5; n++) {
             for (let d = 1; d <= 5; d++) {
                 testRoundDiv(new Decimal(n), new Decimal(d));
-            }
-        }
-
-        for (const values of [
-            [123, 456789],
-            [12, 345, 6789]
-        ]) {
-            testGeometricMean(values.map((x) => new Decimal(x)));
-        }
-
-        for (const n of [11, 33, 55, 77]) {
-            for (const k of [-1, 0, +1]) {
-                testDecimalLength(n, k);
-            }
-        }
-
-        for (let n = 0; n < 5; n++) {
-            for (let d = 1; d <= 5; d++) {
-                testRoundDivUnsafe(new Decimal(n), new Decimal(d));
             }
         }
 
@@ -360,26 +314,6 @@ describe('MathEx', () => {
         for (let n = 0; n < 10; n++) {
             for (let d = 1; d <= 10; d++) {
                 testRoundDiv(new Decimal(n), new Decimal(d));
-            }
-        }
-
-        for (const values of [
-            [123, 456789],
-            [12, 345, 6789],
-            [1, 1000, 1000000, 1000000000, 1000000000000]
-        ]) {
-            testGeometricMean(values.map((x) => new Decimal(x)));
-        }
-
-        for (let n = 1; n <= 77; n++) {
-            for (const k of [-1, 0, +1]) {
-                testDecimalLength(n, k);
-            }
-        }
-
-        for (let n = 0; n < 10; n++) {
-            for (let d = 1; d <= 10; d++) {
-                testRoundDivUnsafe(new Decimal(n), new Decimal(d));
             }
         }
 

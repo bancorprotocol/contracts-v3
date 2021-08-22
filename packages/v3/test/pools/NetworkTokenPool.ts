@@ -28,24 +28,23 @@ const { formatBytes32String } = utils;
 
 describe('NetworkTokenPool', () => {
     let deployer: SignerWithAddress;
-    let nonOwner: SignerWithAddress;
     let provider: SignerWithAddress;
     let provider2: SignerWithAddress;
 
     shouldHaveGap('NetworkTokenPool', '_pendingWithdrawals');
 
     before(async () => {
-        [deployer, nonOwner, provider, provider2] = await ethers.getSigners();
+        [deployer, provider, provider2] = await ethers.getSigners();
     });
 
     describe('construction', () => {
         it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
-            const { networkTokenPoolToken, network, vault } = await createSystem();
+            const { networkPoolToken, network, vault } = await createSystem();
 
             const networkTokenPool = await Contracts.NetworkTokenPool.deploy(
                 network.address,
                 vault.address,
-                networkTokenPoolToken.address
+                networkPoolToken.address
             );
 
             await expect(networkTokenPool.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
@@ -98,7 +97,7 @@ describe('NetworkTokenPool', () => {
         let network: TestBancorNetwork;
         let networkToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
-        let networkTokenPoolToken: PoolToken;
+        let networkPoolToken: PoolToken;
         let vault: BancorVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
@@ -106,20 +105,13 @@ describe('NetworkTokenPool', () => {
         const contextId = formatBytes32String('CTX');
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                networkTokenPool,
-                networkTokenPoolToken,
-                vault,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to request liquidity for a non-whitelisted pool', async () => {
+        it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
             await expect(
                 poolCollection.requestLiquidityT(
                     networkTokenPool.address,
@@ -128,7 +120,7 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
@@ -140,13 +132,12 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to request liquidity for a pool with no collection managing it', async () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-            // we expect the call to revert with no message when attempting to call a function of a zero contract
             await expect(
                 poolCollection.requestLiquidityT(
                     networkTokenPool.address,
@@ -155,23 +146,7 @@ describe('NetworkTokenPool', () => {
                     BigNumber.from(1),
                     false
                 )
-            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
-        });
-
-        it('should revert when attempting to request liquidity for a pool with an unknown collection managing it', async () => {
-            const unknownPoolCollection = await createPoolCollection(network, 1000);
-            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
-            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
-
-            await expect(
-                poolCollection.requestLiquidityT(
-                    networkTokenPool.address,
-                    contextId,
-                    reserveToken2.address,
-                    BigNumber.from(1),
-                    false
-                )
-            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -210,7 +185,7 @@ describe('NetworkTokenPool', () => {
                 ).to.be.revertedWith('ERR_ZERO_VALUE');
             });
 
-            context('when spot rate is too far from average rate', () => {
+            context('when spot rate is unstable', () => {
                 beforeEach(async () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
@@ -237,18 +212,20 @@ describe('NetworkTokenPool', () => {
                 });
             });
 
-            context('when spot rate is close enough to the average rate', () => {
+            context('when spot rate is stable', () => {
                 const testRequest = async (amount: BigNumber, expectedAmount: BigNumber, skipLimitCheck = false) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
-                    const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
-                    const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
+                    const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(vault.address);
+
+                    expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevVaultTokenAmount = await networkToken.balanceOf(vault.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
 
                     let expectedPoolTokenAmount;
                     if (prevPoolTokenTotalSupply.isZero()) {
@@ -279,22 +256,22 @@ describe('NetworkTokenPool', () => {
                         .withArgs(contextId, reserveToken.address, amount, expectedAmount, expectedPoolTokenAmount);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
-                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedAmount)
                     );
 
-                    expect(await networkTokenPoolToken.totalSupply()).to.equal(
+                    expect(await networkPoolToken.totalSupply()).to.equal(
                         prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                     );
-                    expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.add(expectedPoolTokenAmount)
+                    expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevPoolPoolTokenBalance.add(expectedPoolTokenAmount)
                     );
-                    expect(await networkTokenPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.add(expectedAmount));
-                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
                     expect(await networkToken.balanceOf(vault.address)).to.equal(
-                        prevVaultTokenAmount.add(expectedAmount)
+                        prevVaultTokenBalance.add(expectedAmount)
                     );
                 };
 
@@ -323,7 +300,7 @@ describe('NetworkTokenPool', () => {
                             toWei(BigNumber.from(1_500_000))
                         ]) {
                             const remaining = (await networkSettings.poolMintingLimit(reserveToken.address)).sub(
-                                await networkTokenPool.mintedAmounts(reserveToken.address)
+                                await networkTokenPool.mintedAmount(reserveToken.address)
                             );
                             const expectAmount = BigNumber.min(remaining, amount);
 
@@ -331,7 +308,7 @@ describe('NetworkTokenPool', () => {
                         }
                     });
 
-                    it('should allow explicitly requesting full liquidity', async () => {
+                    it('should allow requesting full liquidity by ignoring the minting limit', async () => {
                         for (const amount of [
                             BigNumber.from(10),
                             BigNumber.from(100_000),
@@ -360,7 +337,7 @@ describe('NetworkTokenPool', () => {
                             }
                         });
 
-                        it('should allow explicitly requesting full liquidity', async () => {
+                        it('should allow requesting full liquidity by ignoring the minting limit', async () => {
                             for (const amount of [
                                 BigNumber.from(10),
                                 BigNumber.from(100_000),
@@ -389,7 +366,7 @@ describe('NetworkTokenPool', () => {
                         }
                     });
 
-                    it('should allow explicitly requesting full liquidity amount', async () => {
+                    it('should allow requesting full liquidity by ignoring the minting limit amount', async () => {
                         for (const amount of [
                             BigNumber.from(10),
                             BigNumber.from(100_000),
@@ -409,7 +386,7 @@ describe('NetworkTokenPool', () => {
         let network: TestBancorNetwork;
         let networkToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
-        let networkTokenPoolToken: PoolToken;
+        let networkPoolToken: PoolToken;
         let vault: BancorVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
@@ -417,20 +394,13 @@ describe('NetworkTokenPool', () => {
         const contextId = formatBytes32String('CTX');
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                networkTokenPool,
-                networkTokenPoolToken,
-                vault,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to renounce liquidity for a non-whitelisted pool', async () => {
+        it('should revert when attempting to renounce liquidity for a non-whitelisted token', async () => {
             await expect(
                 poolCollection.renounceLiquidityT(
                     networkTokenPool.address,
@@ -438,19 +408,18 @@ describe('NetworkTokenPool', () => {
                     reserveToken.address,
                     BigNumber.from(1)
                 )
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
             await expect(
                 poolCollection.renounceLiquidityT(networkTokenPool.address, contextId, ZERO_ADDRESS, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to renounce liquidity for a pool with no collection managing it', async () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-            // we expect the call to revert with no message when attempting to call a function of a zero contract
             await expect(
                 poolCollection.renounceLiquidityT(
                     networkTokenPool.address,
@@ -458,23 +427,7 @@ describe('NetworkTokenPool', () => {
                     reserveToken.address,
                     BigNumber.from(1)
                 )
-            ).to.be.revertedWith('Transaction reverted: function call to a non-contract account');
-        });
-
-        it('should revert when attempting to renounce liquidity for a pool with an unknown collection managing it', async () => {
-            const unknownPoolCollection = await createPoolCollection(network, 1000);
-            const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
-
-            await createPool(reserveToken2, network, networkSettings, unknownPoolCollection);
-
-            await expect(
-                poolCollection.renounceLiquidityT(
-                    networkTokenPool.address,
-                    contextId,
-                    reserveToken2.address,
-                    BigNumber.from(1)
-                )
-            ).to.be.revertedWith('ERR_UNKNOWN_POOL_COLLECTION');
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -537,15 +490,17 @@ describe('NetworkTokenPool', () => {
 
                 const testRenounce = async (amount: BigNumber) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintedAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
-                    const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
-                    const prevVaultPoolTokenAmount = await networkTokenPoolToken.balanceOf(vault.address);
+                    const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(vault.address);
+
+                    expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevVaultTokenAmount = await networkToken.balanceOf(vault.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
 
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
@@ -561,21 +516,21 @@ describe('NetworkTokenPool', () => {
                         .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(amount));
-                    expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.sub(amount)
                     );
 
-                    expect(await networkTokenPoolToken.totalSupply()).to.equal(
+                    expect(await networkPoolToken.totalSupply()).to.equal(
                         prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
                     );
-                    expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.sub(expectedPoolTokenAmount)
+                    expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                     );
-                    expect(await networkTokenPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenAmount);
+                    expect(await networkPoolToken.balanceOf(vault.address)).to.equal(prevVaultPoolTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
-                    expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenAmount.sub(amount));
+                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
+                    expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenBalance.sub(amount));
                 };
 
                 it('should revert when attempting to renounce more liquidity than requested', async () => {
@@ -609,27 +564,20 @@ describe('NetworkTokenPool', () => {
         let networkToken: TestERC20Token;
         let govToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
-        let networkTokenPoolToken: PoolToken;
+        let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                govToken,
-                networkTokenPool,
-                networkTokenPoolToken,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
         it('should revert when attempting to deposit from a non-network', async () => {
             const amount = BigNumber.from(1);
-            const nonNetwork = nonOwner;
+            const nonNetwork = deployer;
 
             await expect(
                 networkTokenPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
@@ -689,7 +637,7 @@ describe('NetworkTokenPool', () => {
                     provider: SignerWithAddress,
                     amount: BigNumber,
                     isMigrating: boolean,
-                    originalPoolTokenAmount: BigNumber
+                    originalGovTokenAmount: BigNumber
                 ) => {
                     // since this is only a unit test, we will simulate a proper transfer of the network token amount
                     // from the network to the network token pool
@@ -697,23 +645,25 @@ describe('NetworkTokenPool', () => {
 
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
 
-                    const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
-                    const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
-                    const prevProviderPoolTokenAmount = await networkTokenPoolToken.balanceOf(provider.address);
+                    const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                    const prevProviderTokenAmount = await networkToken.balanceOf(provider.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                     const prevGovTotalSupply = await govToken.totalSupply();
-                    const prevPoolGovTokenAmount = await govToken.balanceOf(networkTokenPool.address);
-                    const prevProviderGovTokenAmount = await govToken.balanceOf(provider.address);
+                    const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                    const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
 
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
                     let expectedGovTokenAmount = expectedPoolTokenAmount;
-                    if (isMigrating && expectedPoolTokenAmount.gt(originalPoolTokenAmount)) {
-                        expectedGovTokenAmount = expectedGovTokenAmount.sub(originalPoolTokenAmount);
+                    if (isMigrating) {
+                        expectedGovTokenAmount = expectedGovTokenAmount.gt(originalGovTokenAmount)
+                            ? expectedGovTokenAmount.sub(originalGovTokenAmount)
+                            : BigNumber.from(0);
                     }
 
                     const depositAmounts = await network.callStatic.depositForT(
@@ -721,7 +671,7 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalPoolTokenAmount
+                        originalGovTokenAmount
                     );
                     expect(depositAmounts.networkTokenAmount).to.equal(amount);
                     expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
@@ -732,29 +682,29 @@ describe('NetworkTokenPool', () => {
                         provider.address,
                         amount,
                         isMigrating,
-                        originalPoolTokenAmount
+                        originalGovTokenAmount
                     );
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
 
-                    expect(await networkTokenPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                    expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolPoolTokenAmount.sub(expectedPoolTokenAmount)
+                    expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
+                    expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                     );
-                    expect(await networkTokenPoolToken.balanceOf(provider.address)).to.equal(
-                        prevProviderPoolTokenAmount.add(expectedPoolTokenAmount)
+                    expect(await networkPoolToken.balanceOf(provider.address)).to.equal(
+                        prevProviderPoolTokenBalance.add(expectedPoolTokenAmount)
                     );
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
                     expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolTokenAmount.sub(amount)
+                        prevPoolTokenBalance.sub(amount)
                     );
-                    expect(await networkToken.balanceOf(provider.address)).to.equal(prevProviderTokenAmount);
+                    expect(await networkToken.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
 
                     expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.add(expectedGovTokenAmount));
-                    expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolGovTokenAmount);
+                    expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolGovTokenBalance);
                     expect(await govToken.balanceOf(provider.address)).to.equal(
-                        prevProviderGovTokenAmount.add(expectedGovTokenAmount)
+                        prevProviderGovTokenBalance.add(expectedGovTokenAmount)
                     );
                 };
 
@@ -773,9 +723,9 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
-                    const maxAmount = (await networkTokenPoolToken.balanceOf(networkTokenPool.address))
+                    const maxAmount = (await networkPoolToken.balanceOf(networkTokenPool.address))
                         .mul(await networkTokenPool.stakedBalance())
-                        .div(await networkTokenPoolToken.totalSupply());
+                        .div(await networkPoolToken.totalSupply());
 
                     await expect(
                         network.depositForT(
@@ -821,26 +771,19 @@ describe('NetworkTokenPool', () => {
         let networkToken: TestERC20Token;
         let govToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
-        let networkTokenPoolToken: PoolToken;
+        let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                govToken,
-                networkTokenPool,
-                networkTokenPoolToken,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
         it('should revert when attempting to withdraw from a non-network', async () => {
-            const nonNetwork = nonOwner;
+            const nonNetwork = deployer;
 
             await expect(
                 networkTokenPool.connect(nonNetwork).withdraw(provider.address, BigNumber.from(1))
@@ -922,28 +865,24 @@ describe('NetworkTokenPool', () => {
                     });
 
                     const testWithdraw = async (provider: SignerWithAddress, poolTokenAmount: BigNumber) => {
-                        await networkTokenPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                        await network.approveT(
-                            networkTokenPoolToken.address,
-                            networkTokenPool.address,
-                            poolTokenAmount
-                        );
+                        await networkPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
+                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
                         await govToken.connect(provider).transfer(networkTokenPool.address, poolTokenAmount);
 
                         const prevStakedBalance = await networkTokenPool.stakedBalance();
 
-                        const prevPoolTokenTotalSupply = await networkTokenPoolToken.totalSupply();
-                        const prevPoolPoolTokenAmount = await networkTokenPoolToken.balanceOf(networkTokenPool.address);
-                        const prevNetworkPoolTokenAmount = await networkTokenPoolToken.balanceOf(network.address);
-                        const prevProviderPoolTokenAmount = await networkTokenPoolToken.balanceOf(provider.address);
+                        const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
+                        const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                        const prevNetworkPoolTokenBalance = await networkPoolToken.balanceOf(network.address);
+                        const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                         const prevTokenTotalSupply = await networkToken.totalSupply();
-                        const prevPoolTokenAmount = await networkToken.balanceOf(networkTokenPool.address);
-                        const prevProviderTokenAmount = await networkToken.balanceOf(provider.address);
+                        const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                        const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                         const prevGovTotalSupply = await govToken.totalSupply();
-                        const prevPoolGovTokenAmount = await govToken.balanceOf(networkTokenPool.address);
-                        const prevProviderGovTokenAmount = await govToken.balanceOf(provider.address);
+                        const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                        const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
                         const expectedTokenAmount = BigNumber.from(
                             mulDivF(
                                 poolTokenAmount,
@@ -965,61 +904,51 @@ describe('NetworkTokenPool', () => {
 
                         expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
 
-                        expect(await networkTokenPoolToken.totalSupply()).to.equal(
-                            prevPoolTokenTotalSupply.sub(poolTokenAmount)
-                        );
-                        expect(await networkTokenPoolToken.balanceOf(networkTokenPool.address)).to.equal(
-                            prevPoolPoolTokenAmount
+                        expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
+                        expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                            prevPoolPoolTokenBalance.add(poolTokenAmount)
                         );
 
-                        expect(await networkTokenPoolToken.balanceOf(network.address)).to.equal(
-                            prevNetworkPoolTokenAmount.sub(poolTokenAmount)
+                        expect(await networkPoolToken.balanceOf(network.address)).to.equal(
+                            prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                         );
-                        expect(await networkTokenPoolToken.balanceOf(provider.address)).to.equal(
-                            prevProviderPoolTokenAmount
+                        expect(await networkPoolToken.balanceOf(provider.address)).to.equal(
+                            prevProviderPoolTokenBalance
                         );
 
                         expect(await networkToken.totalSupply()).to.equal(
                             prevTokenTotalSupply.add(expectedTokenAmount)
                         );
-                        expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenAmount);
+                        expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
                         expect(await networkToken.balanceOf(provider.address)).to.equal(
-                            prevProviderTokenAmount.add(expectedTokenAmount)
+                            prevProviderTokenBalance.add(expectedTokenAmount)
                         );
 
                         expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
                         expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(
-                            prevPoolGovTokenAmount.sub(poolTokenAmount)
+                            prevPoolGovTokenBalance.sub(poolTokenAmount)
                         );
-                        expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenAmount);
+                        expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenBalance);
                     };
 
                     it('should revert when attempting to withdraw more than the deposited amount', async () => {
                         const extra = BigNumber.from(1);
                         const poolTokenAmount = depositAmounts.poolTokenAmount.add(extra);
 
-                        await network.approveT(
-                            networkTokenPoolToken.address,
-                            networkTokenPool.address,
-                            poolTokenAmount
-                        );
+                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
                         await govToken.connect(deployer).transfer(provider.address, extra);
                         await govToken.connect(provider).transfer(networkTokenPool.address, poolTokenAmount);
 
                         await expect(
                             network.withdrawT(networkTokenPool.address, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should revert when attempting to deposit without sending the governance tokens', async () => {
                         const poolTokenAmount = BigNumber.from(1000);
 
-                        await networkTokenPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                        await network.approveT(
-                            networkTokenPoolToken.address,
-                            networkTokenPool.address,
-                            poolTokenAmount
-                        );
+                        await networkPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
+                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
 
                         await expect(
                             network.withdrawT(networkTokenPool.address, provider.address, poolTokenAmount)
@@ -1032,7 +961,7 @@ describe('NetworkTokenPool', () => {
 
                         await expect(
                             network.withdrawT(networkTokenPool.address, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERR_INSUFFICIENT_ALLOWANCE');
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should allow withdrawing liquidity', async () => {
@@ -1061,8 +990,8 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to collect fees from a non-network', async () => {
-            const nonNetwork = nonOwner;
+        it('should revert when attempting to get notified about collected fee from a non-network', async () => {
+            const nonNetwork = deployer;
 
             await expect(
                 networkTokenPool
@@ -1071,7 +1000,7 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should revert when attempting to collect fees from an invalid pool', async () => {
+        it('should revert when attempting to get notified about collected fee from an invalid pool', async () => {
             await expect(
                 network.onNetworkTokenFeesCollectedT(
                     networkTokenPool.address,
@@ -1082,36 +1011,27 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should revert when attempting to collect fees with an invalid amount', async () => {
-            await expect(
-                network.onNetworkTokenFeesCollectedT(
-                    networkTokenPool.address,
-                    reserveToken.address,
-                    BigNumber.from(0),
-                    FEE_TYPES.trading
-                )
-            ).to.be.revertedWith('ERR_ZERO_VALUE');
-        });
-
         for (const [name, type] of Object.entries(FEE_TYPES)) {
-            it(`should collect ${name} fees`, async () => {
-                const feeAmount = BigNumber.from(12345);
+            for (const fee of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
+                it(`should collect ${name} fees of ${fee.toString()}`, async () => {
+                    const feeAmount = BigNumber.from(12345);
 
-                const prevStakedBalance = await networkTokenPool.stakedBalance();
-                const prevMintingAmount = await networkTokenPool.mintedAmounts(reserveToken.address);
+                    const prevStakedBalance = await networkTokenPool.stakedBalance();
+                    const prevMintingAmount = await networkTokenPool.mintedAmount(reserveToken.address);
 
-                await network.onNetworkTokenFeesCollectedT(
-                    networkTokenPool.address,
-                    reserveToken.address,
-                    feeAmount,
-                    type
-                );
+                    await network.onNetworkTokenFeesCollectedT(
+                        networkTokenPool.address,
+                        reserveToken.address,
+                        feeAmount,
+                        type
+                    );
 
-                expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                expect(await networkTokenPool.mintedAmounts(reserveToken.address)).to.equal(
-                    prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
-                );
-            });
+                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
+                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
+                        prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
+                    );
+                });
+            }
         }
     });
 });

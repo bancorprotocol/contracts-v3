@@ -114,32 +114,22 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract, version = 1) => {
-    switch (version) {
-        case 1:
-            return Contracts.TestPoolCollection.deploy(toAddress(network));
-
-        case 1000:
-            return Contracts.TestPoolCollectionUnknownVersion.deploy(toAddress(network));
-
-        default:
-            throw new Error(`Unknown version ${version}`);
-    }
-};
+export const createPoolCollection = async (network: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
     vault: BancorVault,
-    networkTokenPoolToken: PoolToken,
+    networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, vault.address, networkTokenPoolToken.address]
+        ctorArgs: [network.address, vault.address, networkPoolToken.address]
     });
 
-    await networkTokenPoolToken.transferOwnership(networkTokenPool.address);
+    await networkPoolToken.transferOwnership(networkTokenPool.address);
 
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
     await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
@@ -160,7 +150,7 @@ export const createSystem = async () => {
     });
 
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
-    const networkTokenPoolToken = await Contracts.PoolToken.deploy(
+    const networkPoolToken = await Contracts.PoolToken.deploy(
         NETWORK_TOKEN_POOL_TOKEN_NAME,
         NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
         networkToken.address
@@ -168,7 +158,7 @@ export const createSystem = async () => {
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
         vault,
-        networkTokenPoolToken,
+        networkPoolToken,
         networkTokenGovernance,
         govTokenGovernance
     );
@@ -190,7 +180,7 @@ export const createSystem = async () => {
         networkTokenGovernance,
         govToken,
         govTokenGovernance,
-        networkTokenPoolToken,
+        networkPoolToken,
         vault,
         networkTokenPool,
         pendingWithdrawals,

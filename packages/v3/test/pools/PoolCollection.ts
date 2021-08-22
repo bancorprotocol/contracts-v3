@@ -179,12 +179,13 @@ describe('PoolCollection', () => {
         d: BigNumber.from(1)
     };
 
+    let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
     let reserveToken: TestERC20Token;
 
     before(async () => {
-        [, nonOwner] = await ethers.getSigners();
+        [deployer, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -313,7 +314,7 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when attempting to create a pool from a non-network', async () => {
-            const nonNetwork = nonOwner;
+            const nonNetwork = deployer;
 
             await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
@@ -322,7 +323,7 @@ describe('PoolCollection', () => {
 
         it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
             await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                'ERR_POOL_NOT_WHITELISTED'
+                'ERR_TOKEN_NOT_WHITELISTED'
             );
         });
 

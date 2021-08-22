@@ -23,7 +23,7 @@ import { IPoolCollection, Pool, WithdrawalAmounts, Action } from "./interfaces/I
 import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
 import { PoolToken } from "./PoolToken.sol";
-import { AverageRate } from "./PoolAverageRate.sol";
+import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 /**
  * @dev Pool Collection contract
@@ -204,7 +204,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @inheritdoc IPoolCollection
      */
     function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
-        require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
+        require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
@@ -247,6 +247,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_pools[reserveToken]);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
+        Pool memory pool = _pools[reserveToken];
+        if (!_validPool(pool)) {
+            return false;
+        }
+
+        // verify that the average rate of the pool isn't deviated too much from its spot rate
+        return
+            PoolAverageRate.isPoolRateStable(
+                Fraction({ n: pool.baseTokenTradingLiquidity, d: pool.networkTokenTradingLiquidity }),
+                pool.averageRate,
+                _settings.averageRateMaxDeviationPPM()
+            );
     }
 
     /**
