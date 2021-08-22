@@ -1,16 +1,17 @@
 import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
 import {
     BancorNetwork,
-    PoolCollection,
+    BancorVault,
     NetworkSettings,
+    PendingWithdrawals,
+    PoolCollection,
+    PoolToken,
     ProxyAdmin,
     TestERC20Token,
-    BancorVault,
-    PoolToken,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
+import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from './Constants';
 import { toAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
@@ -155,6 +156,9 @@ export const createSystem = async () => {
         NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
         networkToken.address
     );
+    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
+        ctorArgs: [network.address]
+    });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
         vault,
@@ -162,10 +166,6 @@ export const createSystem = async () => {
         networkTokenGovernance,
         govTokenGovernance
     );
-
-    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address, networkTokenPool.address]
-    });
 
     await networkTokenPool.initialize(pendingWithdrawals.address);
 

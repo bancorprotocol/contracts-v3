@@ -3,7 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
@@ -34,11 +33,6 @@ interface IPendingWithdrawals is IUpgradeable {
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token pool contract
-     */
-    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the lock duration

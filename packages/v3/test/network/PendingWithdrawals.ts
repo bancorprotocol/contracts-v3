@@ -20,18 +20,17 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe('PendingWithdrawals', () => {
+describe.only('PendingWithdrawals', () => {
     const DEFAULT_LOCK_DURATION = duration.days(7).toNumber();
     const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3).toNumber();
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
-    let dummy: SignerWithAddress;
 
     shouldHaveGap('PendingWithdrawals', '_lockDuration');
 
     before(async () => {
-        [deployer, nonOwner, dummy] = await ethers.getSigners();
+        [deployer, nonOwner] = await ethers.getSigners();
     });
 
     describe('construction', () => {
@@ -44,34 +43,22 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
-        });
-
-        it('should revert when initialized with an invalid network token pool contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {
-            const { pendingWithdrawals, network, networkTokenPool } = await createSystem();
+            const { pendingWithdrawals, network } = await createSystem();
 
             expect(await pendingWithdrawals.version()).to.equal(1);
 
             expect(await pendingWithdrawals.network()).to.equal(network.address);
-            expect(await pendingWithdrawals.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should emit events on initialization', async () => {
-            const { network, networkTokenPool } = await createSystem();
-            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
-                network.address,
-                networkTokenPool.address
-            );
+            const { network } = await createSystem();
+            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(network.address);
             const res = await pendingWithdrawals.initialize();
             await expect(res)
                 .to.emit(pendingWithdrawals, 'LockDurationUpdated')
