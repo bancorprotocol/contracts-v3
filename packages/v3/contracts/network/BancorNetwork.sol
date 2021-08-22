@@ -47,6 +47,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the vault contract
     IBancorVault private immutable _vault;
 
+    // the network token pool contract
+    INetworkTokenPool private _networkTokenPool;
+
     // the pending withdrawals contract
     IPendingWithdrawals private _pendingWithdrawals;
 
@@ -218,12 +221,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals)
+    function initialize(INetworkTokenPool initNetworkTokenPool)
         external
-        validAddress(address(initPendingWithdrawals))
+        validAddress(address(initNetworkTokenPool))
         initializer
     {
-        __BancorNetwork_init(initPendingWithdrawals);
+        __BancorNetwork_init(initNetworkTokenPool);
     }
 
     // solhint-disable func-name-mixedcase
@@ -231,18 +234,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool) internal initializer {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initPendingWithdrawals);
+        __BancorNetwork_init_unchained(initNetworkTokenPool);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
-        _pendingWithdrawals = initPendingWithdrawals;
+    function __BancorNetwork_init_unchained(INetworkTokenPool initNetworkTokenPool) internal initializer {
+        _networkTokenPool = initNetworkTokenPool;
+        _pendingWithdrawals = initNetworkTokenPool.pendingWithdrawals();
     }
 
     // solhint-enable func-name-mixedcase
@@ -294,6 +298,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function vault() external view override returns (IBancorVault) {
         return _vault;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function networkTokenPool() external view override returns (INetworkTokenPool) {
+        return _networkTokenPool;
     }
 
     /**
@@ -491,7 +502,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function withdraw(uint256 id) external override nonReentrant {
         WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
-        INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
 
         // verify that the provider is the withdrawal position owner
         require(msg.sender == request.provider, "ERR_ILLEGAL_ID");
@@ -502,7 +512,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // claim the pool tokens
         _pendingWithdrawals.completeWithdrawal(contextId, msg.sender, id);
 
-        if (request.poolToken == networkTokenPool.poolToken()) {
+        if (request.poolToken == _networkTokenPool.poolToken()) {
             // TODO:
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool

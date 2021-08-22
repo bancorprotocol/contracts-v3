@@ -173,7 +173,7 @@ export const createSystem = async () => {
 
     const poolCollection = await createPoolCollection(network, networkTokenPool);
 
-    await network.initialize(pendingWithdrawals.address);
+    await network.initialize(networkTokenPool.address);
 
     return {
         networkSettings,

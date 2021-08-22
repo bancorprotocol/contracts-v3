@@ -26,7 +26,7 @@ describe('BancorNetwork', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
+        it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
             const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
@@ -40,9 +40,9 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            const { network, pendingWithdrawals } = await createSystem();
+            const { network, networkTokenPool } = await createSystem();
 
-            await expect(network.initialize(pendingWithdrawals.address)).to.be.revertedWith(
+            await expect(network.initialize(networkTokenPool.address)).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
@@ -108,6 +108,7 @@ describe('BancorNetwork', () => {
                 govTokenGovernance,
                 networkSettings,
                 vault,
+                networkTokenPool,
                 pendingWithdrawals
             } = await createSystem();
 
@@ -119,6 +120,7 @@ describe('BancorNetwork', () => {
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.vault()).to.equal(vault.address);
+            expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;

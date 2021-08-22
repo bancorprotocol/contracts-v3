@@ -7,12 +7,10 @@ import { Fraction } from "../../utility/Types.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
-
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
-import { INetworkTokenPool } from "../interfaces/INetworkTokenPool.sol";
 
+import { INetworkTokenPool } from "../interfaces/INetworkTokenPool.sol";
 import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
