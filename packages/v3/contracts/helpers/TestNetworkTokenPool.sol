@@ -15,7 +15,7 @@ contract TestNetworkTokenPool is NetworkTokenPool {
         IPoolToken initPoolToken
     ) NetworkTokenPool(initNetwork, initVault, initPoolToken) {}
 
-    function mint(address recipient, uint256 amount) external {
+    function mintT(address recipient, uint256 amount) external {
         _poolToken.mint(recipient, amount);
     }
 }

@@ -543,7 +543,7 @@ describe('PendingWithdrawals', () => {
                     if (networkToken) {
                         poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
 
-                        await networkTokenPool.mint(provider.address, poolTokenAmount);
+                        await networkTokenPool.mintT(provider.address, poolTokenAmount);
                     } else {
                         poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
