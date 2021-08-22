@@ -19,12 +19,13 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 /**
- * @dev Liquidity Pool Collection contract
+ * @dev Pool Collection contract
  *
  * notes:
  *
@@ -32,7 +33,6 @@ import { PoolToken } from "./PoolToken.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
-    using MathEx for *;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -47,7 +47,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     IBancorNetwork private immutable _network;
 
     // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) private _pools;
+    mapping(IReserveToken => Pool) internal _pools;
 
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
@@ -103,17 +103,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
-    }
-
     modifier validRate(Fraction memory rate) {
         _validRate(rate);
 
@@ -127,7 +116,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure virtual override returns (uint16) {
         return 1;
     }
 
@@ -195,21 +184,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
-        require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
+    function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
+        require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
         Pool memory newPool = Pool({
-            version: 1,
             poolToken: newPoolToken,
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
+            averageRate: AverageRate({ time: 0, rate: Fraction({ n: 0, d: 1 }) }),
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
@@ -239,6 +228,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_pools[reserveToken]);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
+        Pool memory pool = _pools[reserveToken];
+        if (!_validPool(pool)) {
+            return false;
+        }
+
+        // verify that the average rate of the pool isn't deviated too much from its spot rate
+        return
+            PoolAverageRate.isPoolRateStable(
+                Fraction({ n: pool.baseTokenTradingLiquidity, d: pool.networkTokenTradingLiquidity }),
+                pool.averageRate,
+                _settings.averageRateMaxDeviationPPM()
+            );
     }
 
     /**

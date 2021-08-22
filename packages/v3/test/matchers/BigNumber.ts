@@ -1,3 +1,4 @@
+import { toBigNumber } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -9,8 +10,6 @@ const supportBigNumber = (Assertion: Chai.AssertionStatic, utils: Chai.ChaiUtils
     Assertion.overwriteMethod('almostEqual', overrideAlmostEqual(utils));
 };
 
-const toBigNumber = (value: any) => BigNumber.from(Decimal.isDecimal(value) ? value.toFixed() : value);
-
 function override(name: string, utils: Chai.ChaiUtils) {
     return (_super: (...args: any[]) => any) => overwriteBigNumberFunction(name, _super, utils);
 }
@@ -21,8 +20,8 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
         const obj = chaiUtils.flag(this, 'object');
 
         if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            let objBN = BigNumber.from(Decimal.isDecimal(obj) ? obj.toFixed() : obj);
-            let expectedBN = BigNumber.from(Decimal.isDecimal(expected) ? expected.toFixed() : expected);
+            const objBN = BigNumber.from(Decimal.isDecimal(obj) ? obj.toFixed() : obj);
+            const expectedBN = BigNumber.from(Decimal.isDecimal(expected) ? expected.toFixed() : expected);
 
             this.assert(
                 BigNumber.from(objBN).eq(expectedBN),
@@ -38,7 +37,7 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
 }
 
 function overrideAlmostEqual(utils: Chai.ChaiUtils) {
-    return (_super: (...args: any[]) => any) => overwriteBigNumberAlmostEqual(_super, utils);
+    return (_super: (...args: never[]) => never) => overwriteBigNumberAlmostEqual(_super, utils);
 }
 
 function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
@@ -50,8 +49,8 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
         expect(maxRelativeError).to.be.instanceOf(Decimal);
 
         if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            let objBN = toBigNumber(obj);
-            let expectedBN = toBigNumber(expected);
+            const objBN = toBigNumber(obj);
+            const expectedBN = toBigNumber(expected);
 
             const x = new Decimal(objBN.toString());
             const y = new Decimal(expectedBN.toString());
@@ -65,12 +64,10 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objBN.toString()} to be almost equal to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()}, relativeError = ${relativeError.toFixed(
-                    25
-                )}`,
-                `Expected ${objBN.toString()} NOT to be almost equal to to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()}, relativeError = ${relativeError.toFixed(
-                    25
-                )}`,
+                `Expected ${objBN.toString()} to be almost equal to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()},
+                relativeError = ${relativeError.toFixed(25)}`,
+                `Expected ${objBN.toString()} NOT to be almost equal to to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()},
+                relativeError = ${relativeError.toFixed(25)}`,
                 objBN,
                 expectedBN
             );

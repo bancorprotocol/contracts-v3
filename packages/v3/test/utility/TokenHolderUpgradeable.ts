@@ -14,7 +14,6 @@ let token1: TestERC20Token;
 let token2: TestERC20Token;
 
 let accounts: SignerWithAddress[];
-let owner: SignerWithAddress;
 let receiver: SignerWithAddress;
 let nonOwner: SignerWithAddress;
 
@@ -24,7 +23,7 @@ describe('TokenHolderUpgradeable', () => {
     before(async () => {
         accounts = await ethers.getSigners();
 
-        [owner, receiver, nonOwner] = accounts;
+        [, receiver, nonOwner] = accounts;
     });
 
     beforeEach(async () => {
@@ -109,7 +108,7 @@ describe('TokenHolderUpgradeable', () => {
     describe('withdraw multiple assets', () => {
         let assets: TokenWithAddress[];
         let assetAddresses: string[];
-        let amounts: { [address: string]: BigNumber } = {};
+        const amounts: { [address: string]: BigNumber } = {};
 
         beforeEach(async () => {
             assets = [{ address: NATIVE_TOKEN_ADDRESS }, token1, token2];

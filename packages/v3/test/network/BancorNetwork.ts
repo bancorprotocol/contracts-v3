@@ -26,6 +26,18 @@ describe('BancorNetwork', () => {
     });
 
     describe('construction', () => {
+        it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings } = await createSystem();
+
+            const network = await Contracts.BancorNetwork.deploy(
+                networkTokenGovernance.address,
+                govTokenGovernance.address,
+                networkSettings.address
+            );
+
+            await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
         it('should revert when attempting to reinitialize', async () => {
             const { network } = await createSystem();
 
@@ -418,7 +430,7 @@ describe('BancorNetwork', () => {
 
             it('should revert when attempting to create a pool for a non-whitelisted reserve token', async () => {
                 await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
-                    'ERR_POOL_NOT_WHITELISTED'
+                    'ERR_TOKEN_NOT_WHITELISTED'
                 );
             });
 

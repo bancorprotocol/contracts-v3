@@ -90,7 +90,7 @@ const config: HardhatUserConfig = {
         color: true,
         bail: loadENVKey('BAIL'),
         grep: ci ? '' : '@stress',
-        invert: ci ? false : true
+        invert: !ci
     }
 };
 

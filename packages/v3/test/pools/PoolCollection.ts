@@ -18,6 +18,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
 
     before(async () => {
         const { network } = await createSystem();
+
         poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
     });
 
@@ -56,10 +57,10 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                 it(`baseArbitrage(${[b, f, m]})`, async () => {
                     const expected = baseArbitrage(b, f, m);
                     if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString());
+                        const actual = await poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString());
                         expect(actual).to.equal(expected);
                     } else {
-                        await expect(poolCollection.baseArbitrageTest(b.toString(), f.toString(), m.toString())).to.be
+                        await expect(poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString())).to.be
                             .reverted;
                     }
                 });
@@ -74,7 +75,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                     it(`networkArbitrage(${[a, b, f, m]})`, async () => {
                         const expected = networkArbitrage(a, b, f, m);
                         if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await poolCollection.networkArbitrageTest(
+                            const actual = await poolCollection.networkArbitrageT(
                                 a.toString(),
                                 b.toString(),
                                 f.toString(),
@@ -83,12 +84,7 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
                             expect(actual).to.equal(expected);
                         } else {
                             await expect(
-                                poolCollection.networkArbitrageTest(
-                                    a.toString(),
-                                    b.toString(),
-                                    f.toString(),
-                                    m.toString()
-                                )
+                                poolCollection.networkArbitrageT(a.toString(), b.toString(), f.toString(), m.toString())
                             ).to.be.reverted;
                         }
                     });
@@ -99,7 +95,6 @@ const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
 };
 
 describe('PoolCollection', () => {
-    const POOL_DATA_VERSION = BigNumber.from(1);
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
@@ -109,12 +104,13 @@ describe('PoolCollection', () => {
         d: BigNumber.from(1)
     };
 
+    let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
     let reserveToken: TestERC20Token;
 
     before(async () => {
-        [, nonOwner] = await ethers.getSigners();
+        [deployer, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -243,7 +239,8 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when attempting to create a pool from a non-network', async () => {
-            let nonNetwork = nonOwner;
+            const nonNetwork = deployer;
+
             await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
@@ -251,7 +248,7 @@ describe('PoolCollection', () => {
 
         it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
             await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                'ERR_POOL_NOT_WHITELISTED'
+                'ERR_TOKEN_NOT_WHITELISTED'
             );
         });
 
@@ -299,12 +296,14 @@ describe('PoolCollection', () => {
                 expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
                 expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
 
-                expect(pool.version).to.equal(POOL_DATA_VERSION);
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositingEnabled).to.be.true;
                 expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
+                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
                 expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));

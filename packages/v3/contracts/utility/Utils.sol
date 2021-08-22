@@ -7,6 +7,17 @@ import { PPM_RESOLUTION } from "./Constants.sol";
  * @dev common utilities
  */
 contract Utils {
+    // allows execution by the sender only
+    modifier only(address sender) {
+        _only(sender);
+
+        _;
+    }
+
+    function _only(address sender) internal view {
+        require(msg.sender == sender, "ERR_ACCESS_DENIED");
+    }
+
     // verifies that a value is greater than zero
     modifier greaterThanZero(uint256 value) {
         _greaterThanZero(value);

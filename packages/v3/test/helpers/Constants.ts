@@ -11,3 +11,8 @@ export const INVALID_FRACTION = { n: BigNumber.from(0), d: BigNumber.from(0) };
 export const PPM_RESOLUTION = BigNumber.from(1_000_000);
 export const NETWORK_TOKEN_POOL_TOKEN_NAME = 'Bancor BNT Pool Token';
 export const NETWORK_TOKEN_POOL_TOKEN_SYMBOL = 'bnBNT';
+export const FEE_TYPES = {
+    trading: 0,
+    withdrawal: 1,
+    flashLoan: 2
+};
