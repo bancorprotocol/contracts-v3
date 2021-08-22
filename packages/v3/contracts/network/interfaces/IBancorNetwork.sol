@@ -11,6 +11,7 @@ import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
@@ -50,6 +51,11 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the vault contract
      */
     function vault() external view returns (IBancorVault);
+
+    /**
+     * @dev returns the network token pool token contract
+     */
+    function networkPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the network token pool contract

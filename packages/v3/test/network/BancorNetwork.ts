@@ -26,19 +26,6 @@ describe('BancorNetwork', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
-
-            const network = await Contracts.BancorNetwork.deploy(
-                networkTokenGovernance.address,
-                govTokenGovernance.address,
-                networkSettings.address,
-                vault.address
-            );
-
-            await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
-        });
-
         it('should revert when attempting to reinitialize', async () => {
             const { network, networkTokenPool } = await createSystem();
 
@@ -47,53 +34,87 @@ describe('BancorNetwork', () => {
             );
         });
 
+        it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault, networkPoolToken } =
+                await createSystem();
+
+            const network = await Contracts.BancorNetwork.deploy(
+                networkTokenGovernance.address,
+                govTokenGovernance.address,
+                networkSettings.address,
+                vault.address,
+                networkPoolToken.address
+            );
+
+            await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            const { govTokenGovernance, networkSettings, vault } = await createSystem();
+            const { govTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     ZERO_ADDRESS,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    vault.address
+                    vault.address,
+                    networkPoolToken.address
                 )
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            const { networkTokenGovernance, networkSettings, vault } = await createSystem();
+            const { networkTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    vault.address
+                    vault.address,
+                    networkPoolToken.address
                 )
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, vault } = await createSystem();
+            const { networkTokenGovernance, govTokenGovernance, vault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
-                    vault.address
+                    vault.address,
+                    networkPoolToken.address
                 )
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid vault contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings } = await createSystem();
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, networkPoolToken } =
+                await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
+                    ZERO_ADDRESS,
+                    networkPoolToken.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when initialized with an invalid network pool token contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    vault.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
@@ -108,6 +129,7 @@ describe('BancorNetwork', () => {
                 govTokenGovernance,
                 networkSettings,
                 vault,
+                networkPoolToken,
                 networkTokenPool,
                 pendingWithdrawals
             } = await createSystem();
@@ -120,6 +142,7 @@ describe('BancorNetwork', () => {
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.vault()).to.equal(vault.address);
+            expect(await network.networkPoolToken()).to.equal(networkPoolToken.address);
             expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);

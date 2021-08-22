@@ -145,18 +145,26 @@ export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
-    const network = await createProxy(Contracts.TestBancorNetwork, {
-        skipInitialization: true,
-        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address, vault.address]
-    });
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const networkPoolToken = await Contracts.PoolToken.deploy(
         NETWORK_TOKEN_POOL_TOKEN_NAME,
         NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
         networkToken.address
     );
+
+    const network = await createProxy(Contracts.TestBancorNetwork, {
+        skipInitialization: true,
+        ctorArgs: [
+            networkTokenGovernance.address,
+            govTokenGovernance.address,
+            networkSettings.address,
+            vault.address,
+            networkPoolToken.address
+        ]
+    });
+
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address]
     });

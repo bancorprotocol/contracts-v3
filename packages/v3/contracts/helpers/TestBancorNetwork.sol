@@ -13,6 +13,7 @@ import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.s
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
@@ -24,8 +25,11 @@ contract TestBancorNetwork is BancorNetwork {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
-        IBancorVault initVault
-    ) BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault) {}
+        IBancorVault initVault,
+        IPoolToken initNetworkPoolToken
+    )
+        BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault, initNetworkPoolToken)
+    {}
 
     function createPoolT(IPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);
