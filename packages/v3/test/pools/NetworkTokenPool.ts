@@ -39,54 +39,26 @@ describe('NetworkTokenPool', () => {
 
     describe('construction', () => {
         it('should revert when attempting to initialize with an invalid network contract', async () => {
-            const { networkPoolToken, pendingWithdrawals, vault } = await createSystem();
+            const { networkPoolToken, pendingWithdrawals } = await createSystem();
 
             await expect(
-                Contracts.NetworkTokenPool.deploy(
-                    ZERO_ADDRESS,
-                    pendingWithdrawals.address,
-                    vault.address,
-                    networkPoolToken.address
-                )
+                Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, pendingWithdrawals.address, networkPoolToken.address)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
-            const { networkPoolToken, network, vault } = await createSystem();
+            const { networkPoolToken, network } = await createSystem();
 
             await expect(
-                Contracts.NetworkTokenPool.deploy(
-                    network.address,
-                    ZERO_ADDRESS,
-                    vault.address,
-                    networkPoolToken.address
-                )
-            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
-        });
-
-        it('should revert when attempting to initialize with an invalid vault contract', async () => {
-            const { networkPoolToken, network, pendingWithdrawals } = await createSystem();
-
-            await expect(
-                Contracts.NetworkTokenPool.deploy(
-                    network.address,
-                    pendingWithdrawals.address,
-                    ZERO_ADDRESS,
-                    networkPoolToken.address
-                )
+                Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS, networkPoolToken.address)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
-            const { network, pendingWithdrawals, vault } = await createSystem();
+            const { network, pendingWithdrawals } = await createSystem();
 
             await expect(
-                Contracts.NetworkTokenPool.deploy(
-                    network.address,
-                    pendingWithdrawals.address,
-                    vault.address,
-                    ZERO_ADDRESS
-                )
+                Contracts.NetworkTokenPool.deploy(network.address, pendingWithdrawals.address, ZERO_ADDRESS)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 

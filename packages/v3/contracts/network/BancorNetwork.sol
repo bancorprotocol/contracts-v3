@@ -44,6 +44,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     // the network settings contract
     INetworkSettings private immutable _settings;
 
+    // the vault contract
+    IBancorVault private immutable _vault;
+
     // the pending withdrawals contract
     IPendingWithdrawals private _pendingWithdrawals;
 
@@ -195,11 +198,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings
+        INetworkSettings initSettings,
+        IBancorVault initVault
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
+        validAddress(address(initVault))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
         _networkToken = initNetworkTokenGovernance.token();
@@ -207,6 +212,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken = initGovTokenGovernance.token();
 
         _settings = initSettings;
+        _vault = initVault;
     }
 
     /**
@@ -281,6 +287,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function vault() external view override returns (IBancorVault) {
+        return _vault;
     }
 
     /**
@@ -499,7 +512,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         } else {
             IReserveToken baseToken = request.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
-            IBancorVault vault = networkTokenPool.vault();
 
             request.poolToken.transferFrom(request.provider, address(this), request.amount);
             request.poolToken.approve(address(poolCollection), request.amount);
@@ -515,12 +527,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
             if (amounts.B > 0) {
                 // base token amount to transfer from the vault to the user
-                vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
+                _vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
             }
 
             if (amounts.F > 0) {
                 // network token amount to transfer from the vault and then burn
-                vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+                _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
 
                 _networkTokenGovernance.burn(amounts.F);
             }

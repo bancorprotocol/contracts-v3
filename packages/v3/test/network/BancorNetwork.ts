@@ -18,51 +18,85 @@ import { ethers } from 'hardhat';
 describe('BancorNetwork', () => {
     let nonOwner: SignerWithAddress;
     let newOwner: SignerWithAddress;
-    let dummy: SignerWithAddress;
 
     shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
     before(async () => {
-        [, nonOwner, newOwner, dummy] = await ethers.getSigners();
+        [, nonOwner, newOwner] = await ethers.getSigners();
     });
 
     describe('construction', () => {
         it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings } = await createSystem();
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
-                networkSettings.address
+                networkSettings.address,
+                vault.address
             );
 
             await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            const { network } = await createSystem();
+            const { network, pendingWithdrawals } = await createSystem();
 
-            await expect(network.initialize(dummy.address)).to.be.revertedWith(
+            await expect(network.initialize(pendingWithdrawals.address)).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS, dummy.address, dummy.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { govTokenGovernance, networkSettings, vault } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    ZERO_ADDRESS,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    vault.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { networkTokenGovernance, networkSettings, vault } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    vault.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { networkTokenGovernance, govTokenGovernance, vault } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    vault.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when initialized with an invalid vault contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {
@@ -73,6 +107,7 @@ describe('BancorNetwork', () => {
                 govToken,
                 govTokenGovernance,
                 networkSettings,
+                vault,
                 pendingWithdrawals
             } = await createSystem();
 
@@ -83,6 +118,7 @@ describe('BancorNetwork', () => {
             expect(await network.govToken()).to.equal(govToken.address);
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
+            expect(await network.vault()).to.equal(vault.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
@@ -341,8 +377,10 @@ describe('BancorNetwork', () => {
                     expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
                 });
 
+                /* eslint-disable @typescript-eslint/no-empty-function */
                 it.skip('should revert when attempting to remove a pool collection with associated pools', async () => {});
                 it.skip('should revert when attempting to remove a pool collection with an alternative with a different type', async () => {});
+                /* eslint-enable @typescript-eslint/no-empty-function */
             });
         });
 

@@ -98,12 +98,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     constructor(
         IBancorNetwork initNetwork,
         IPendingWithdrawals initPendingWithdrawals,
-        IBancorVault initVault,
         IPoolToken initPoolToken
     )
         validAddress(address(initNetwork))
         validAddress(address(initPendingWithdrawals))
-        validAddress(address(initVault))
         validAddress(address(initPoolToken))
     {
         _network = initNetwork;
@@ -112,8 +110,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _govToken = initNetwork.govToken();
         _govTokenGovernance = initNetwork.govTokenGovernance();
         _settings = initNetwork.settings();
+        _vault = initNetwork.vault();
         _pendingWithdrawals = initPendingWithdrawals;
-        _vault = initVault;
         _poolToken = initPoolToken;
     }
 

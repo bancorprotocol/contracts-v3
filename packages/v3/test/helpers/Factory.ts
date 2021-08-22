@@ -128,7 +128,7 @@ const createNetworkTokenPoolUninitialized = async (
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, pendingWithdrawals.address, vault.address, networkPoolToken.address]
+        ctorArgs: [network.address, pendingWithdrawals.address, networkPoolToken.address]
     });
 
     await networkPoolToken.transferOwnership(networkTokenPool.address);
@@ -145,13 +145,13 @@ export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
-        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address]
+        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address, vault.address]
     });
 
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
     const networkPoolToken = await Contracts.PoolToken.deploy(
         NETWORK_TOKEN_POOL_TOKEN_NAME,
         NETWORK_TOKEN_POOL_TOKEN_SYMBOL,

@@ -13,6 +13,7 @@ import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
+import { IBancorVault } from "./IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
@@ -43,6 +44,11 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the network settings contract
      */
     function settings() external view returns (INetworkSettings);
+
+    /**
+     * @dev returns the vault contract
+     */
+    function vault() external view returns (IBancorVault);
 
     /**
      * @dev returns the pending withdrawals contract
