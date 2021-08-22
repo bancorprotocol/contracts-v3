@@ -20,7 +20,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe.only('PendingWithdrawals', () => {
+describe('PendingWithdrawals', () => {
     const DEFAULT_LOCK_DURATION = duration.days(7).toNumber();
     const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3).toNumber();
 

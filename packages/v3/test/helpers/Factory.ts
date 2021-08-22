@@ -120,6 +120,7 @@ export const createPoolCollection = async (network: string | BaseContract) =>
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
+    pendingWithdrawals: PendingWithdrawals,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
@@ -127,7 +128,7 @@ const createNetworkTokenPoolUninitialized = async (
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, vault.address, networkPoolToken.address]
+        ctorArgs: [network.address, pendingWithdrawals.address, vault.address, networkPoolToken.address]
     });
 
     await networkPoolToken.transferOwnership(networkTokenPool.address);
@@ -161,13 +162,14 @@ export const createSystem = async () => {
     });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
+        pendingWithdrawals,
         vault,
         networkPoolToken,
         networkTokenGovernance,
         govTokenGovernance
     );
 
-    await networkTokenPool.initialize(pendingWithdrawals.address);
+    await networkTokenPool.initialize();
 
     const poolCollection = await createPoolCollection(network);
 

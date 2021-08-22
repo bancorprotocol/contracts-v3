@@ -60,7 +60,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     IPoolToken internal immutable _poolToken;
 
     // the pending withdrawals contract
-    IPendingWithdrawals private _pendingWithdrawals;
+    IPendingWithdrawals private immutable _pendingWithdrawals;
 
     // the total staked network token balance in the network
     uint256 private _stakedBalance;
@@ -69,7 +69,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     mapping(IReserveToken => uint256) private _mintedAmounts;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint256[MAX_GAP - 2] private __gap;
 
     /**
      * @dev triggered when liquidity pools have requested liquidity
@@ -97,15 +97,22 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     constructor(
         IBancorNetwork initNetwork,
+        IPendingWithdrawals initPendingWithdrawals,
         IBancorVault initVault,
         IPoolToken initPoolToken
-    ) validAddress(address(initNetwork)) validAddress(address(initVault)) validAddress(address(initPoolToken)) {
+    )
+        validAddress(address(initNetwork))
+        validAddress(address(initPendingWithdrawals))
+        validAddress(address(initVault))
+        validAddress(address(initPoolToken))
+    {
         _network = initNetwork;
         _networkToken = initNetwork.networkToken();
         _networkTokenGovernance = initNetwork.networkTokenGovernance();
         _govToken = initNetwork.govToken();
         _govTokenGovernance = initNetwork.govTokenGovernance();
         _settings = initNetwork.settings();
+        _pendingWithdrawals = initPendingWithdrawals;
         _vault = initVault;
         _poolToken = initPoolToken;
     }
@@ -132,12 +139,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals)
-        external
-        initializer
-        validAddress(address(initPendingWithdrawals))
-    {
-        __NetworkTokenPool_init(initPendingWithdrawals);
+    function initialize() external initializer {
+        __NetworkTokenPool_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -145,18 +148,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkTokenPool_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+    function __NetworkTokenPool_init() internal initializer {
         __ReentrancyGuard_init();
 
-        __NetworkTokenPool_init_unchained(initPendingWithdrawals);
+        __NetworkTokenPool_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkTokenPool_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
-        _pendingWithdrawals = initPendingWithdrawals;
-
+    function __NetworkTokenPool_init_unchained() internal initializer {
         _poolToken.acceptOwnership();
     }
 

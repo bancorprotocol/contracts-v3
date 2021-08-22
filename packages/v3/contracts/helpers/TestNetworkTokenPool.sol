@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { NetworkTokenPool } from "../pools/NetworkTokenPool.sol";
@@ -11,9 +12,10 @@ import { NetworkTokenPool } from "../pools/NetworkTokenPool.sol";
 contract TestNetworkTokenPool is NetworkTokenPool {
     constructor(
         IBancorNetwork initNetwork,
+        IPendingWithdrawals initPendingWithdrawals,
         IBancorVault initVault,
         IPoolToken initPoolToken
-    ) NetworkTokenPool(initNetwork, initVault, initPoolToken) {}
+    ) NetworkTokenPool(initNetwork, initPendingWithdrawals, initVault, initPoolToken) {}
 
     function mintT(address recipient, uint256 amount) external {
         _poolToken.mint(recipient, amount);
