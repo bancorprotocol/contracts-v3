@@ -1,17 +1,22 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewards } from '../../typechain';
-import Decimal from 'decimal.js';
 import { expect } from 'chai';
+import Decimal from 'decimal.js';
+import { EOL } from 'os';
 
-const ONE    = new Decimal(1);
+const ONE = new Decimal(1);
 const LAMBDA = new Decimal(2).div(10000000);
 
 const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
     const accuracy = actual.div(expected);
-    expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(true,
-        `\nexpected = ${expected.toFixed(minAccuracy.length)}` +
-        `\nactual   = ${actual.toFixed(minAccuracy.length)}` +
-        `\naccuracy = ${accuracy.toFixed(minAccuracy.length)}`
+    expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
+        true,
+        EOL +
+            [
+                `expected = ${expected.toFixed(minAccuracy.length)}`,
+                `actual   = ${actual.toFixed(minAccuracy.length)}`,
+                `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
+            ].join(EOL)
     );
 };
 
@@ -25,8 +30,7 @@ describe('StakingRewards', () => {
                 const actual = new Decimal(retval[0].toString()).div(retval[1].toString());
                 const expected = new Decimal(a).div(b).exp();
                 assertAccuracy(actual, expected, minAccuracy);
-            }
-            else {
+            } else {
                 await expect(stakingRewards.expT(a, b)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
             }
         });
@@ -74,8 +78,8 @@ describe('StakingRewards', () => {
         }
     }
 
-    for (const remainingRewards of [1, 2, 3, 4, 5, 6].map(n => `${n}`.repeat(21 + n))) {
-        for (const numOfBlocksElapsed of [0, 1, 2, 3, 4, 5, 6].map(n => '1' + '0'.repeat(n))) {
+    for (const remainingRewards of [1, 2, 3, 4, 5, 6].map((n) => `${n}`.repeat(21 + n))) {
+        for (const numOfBlocksElapsed of [0, 1, 2, 3, 4, 5, 6].map((n) => '1' + '0'.repeat(n))) {
             rewardTest(remainingRewards, numOfBlocksElapsed, '0.99999999999999');
         }
     }
