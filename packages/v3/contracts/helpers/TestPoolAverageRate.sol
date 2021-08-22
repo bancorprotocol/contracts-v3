@@ -14,11 +14,11 @@ contract TestPoolAverageRate {
         return PoolAverageRate.calcAverageRate(spotRate, averageRate, currentTime);
     }
 
-    function isPoolRateNormal(
+    function isPoolRateStable(
         Fraction calldata spotRate,
         AverageRate calldata averageRate,
         uint32 maxDeviation
     ) external pure returns (bool) {
-        return PoolAverageRate.isPoolRateNormal(spotRate, averageRate, maxDeviation);
+        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation);
     }
 }

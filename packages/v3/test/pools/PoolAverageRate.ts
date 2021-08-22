@@ -340,7 +340,7 @@ describe('PoolAverageRate', () => {
                                         const maxDeviation = BigNumber.from(0);
 
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
                                                 maxDeviation
@@ -349,7 +349,7 @@ describe('PoolAverageRate', () => {
 
                                         // a small deviation (average < spot)
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: baseSpotRate.n.add(BigNumber.from(1)),
                                                     d: baseSpotRate.d
@@ -361,7 +361,7 @@ describe('PoolAverageRate', () => {
 
                                         // a small deviation (average > spot)
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.add(BigNumber.from(1))
@@ -378,7 +378,7 @@ describe('PoolAverageRate', () => {
                                         const maxDeviation = PPM_RESOLUTION;
 
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
                                                 maxDeviation
@@ -387,7 +387,7 @@ describe('PoolAverageRate', () => {
 
                                         // 200% deviation (average > spot)
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.mul(BigNumber.from(2))
@@ -399,7 +399,7 @@ describe('PoolAverageRate', () => {
 
                                         // 300% deviation (average > spot)
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: baseSpotRate.n,
                                                     d: baseSpotRate.d.mul(BigNumber.from(3))
@@ -411,7 +411,7 @@ describe('PoolAverageRate', () => {
 
                                         // a huge deviation (average > spot)
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: BigNumber.from(1),
                                                     d: toWei(BigNumber.from(10))
@@ -422,7 +422,7 @@ describe('PoolAverageRate', () => {
                                         ).to.be.false;
 
                                         expect(
-                                            await poolAverageRate.isPoolRateNormal(
+                                            await poolAverageRate.isPoolRateStable(
                                                 {
                                                     n: baseSpotRate.n.add(BigNumber.from(1)),
                                                     d: baseSpotRate.d
@@ -438,7 +438,7 @@ describe('PoolAverageRate', () => {
                                     context(`max deviation = ${maxDeviation.toString()}`, () => {
                                         it('should properly verify the average rate', async () => {
                                             expect(
-                                                await poolAverageRate.isPoolRateNormal(
+                                                await poolAverageRate.isPoolRateStable(
                                                     baseSpotRate,
                                                     averageRate,
                                                     maxDeviation
@@ -447,7 +447,7 @@ describe('PoolAverageRate', () => {
 
                                             // at the max deviation (average > spot)
                                             expect(
-                                                await poolAverageRate.isPoolRateNormal(
+                                                await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION.add(maxDeviation))
@@ -459,7 +459,7 @@ describe('PoolAverageRate', () => {
 
                                             // above the max deviation (average > spot)
                                             expect(
-                                                await poolAverageRate.isPoolRateNormal(
+                                                await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(
@@ -473,7 +473,7 @@ describe('PoolAverageRate', () => {
 
                                             // at the max deviation (average < spot)
                                             expect(
-                                                await poolAverageRate.isPoolRateNormal(
+                                                await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION.sub(maxDeviation))
@@ -485,7 +485,7 @@ describe('PoolAverageRate', () => {
 
                                             // above the max deviation (average < spot)
                                             expect(
-                                                await poolAverageRate.isPoolRateNormal(
+                                                await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
                                                         d: baseSpotRate.d.mul(

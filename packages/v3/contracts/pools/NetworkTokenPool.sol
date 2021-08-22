@@ -125,8 +125,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IPoolCollection poolCollection = _network.collectionByPool(pool);
         _only(address(poolCollection));
 
-        // verify that the pool's rate is in the normal range
-        require(poolCollection.isPoolRateNormal(pool), "ERR_INVALID_RATE");
+        // verify that the pool's rate is stable
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 
     /**

@@ -233,7 +233,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateNormal(IReserveToken reserveToken) external view override returns (bool) {
+    function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
         Pool memory pool = _pools[reserveToken];
         if (!_validPool(pool)) {
             return false;
@@ -241,7 +241,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // verify that the average rate of the pool isn't deviated too much from its spot rate
         return
-            PoolAverageRate.isPoolRateNormal(
+            PoolAverageRate.isPoolRateStable(
                 Fraction({ n: pool.baseTokenTradingLiquidity, d: pool.networkTokenTradingLiquidity }),
                 pool.averageRate,
                 _settings.averageRateMaxDeviationPPM()

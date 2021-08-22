@@ -75,7 +75,7 @@ library PoolAverageRate {
     }
 
     /**
-     * @dev returns whether the spot rate is in the normal range (i.e., the deviation of the average rate from the
+     * @dev returns whether the spot rate is stable (i.e., the deviation of the average rate from the
      * spot rate is within the permitted range)
      *
      * for example, if the maximum permitted deviation is 5%, then verify `95% <= average/spot <= 105%`
@@ -85,7 +85,7 @@ library PoolAverageRate {
      * - spotRate numerator/denumerator should be bound by 128 bits (otherwise, the check might revert with an overflow)
      * - maxDeviation must be lesser or equal to PPM_RESOLUTION
      */
-    function isPoolRateNormal(
+    function isPoolRateStable(
         Fraction memory spotRate,
         AverageRate memory averageRate,
         uint32 maxDeviation
