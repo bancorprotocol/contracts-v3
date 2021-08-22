@@ -38,7 +38,7 @@ describe('NetworkTokenPool', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to initialize with an invalid netwrk contract', async () => {
+        it('should revert when attempting to initialize with an invalid network contract', async () => {
             const { networkPoolToken, pendingWithdrawals, vault } = await createSystem();
 
             await expect(
