@@ -344,7 +344,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
                 newNetworkTokenAmount = Math.min(mintingLimit - currentMintedAmount, networkTokenAmount);
             } else {
                 // if we're unable to mint more network tokens - abort
-                emit LiquidityRequested(contextId, pool, networkTokenAmount, 0, 0);
+                emit LiquidityRequested({
+                    contextId: contextId,
+                    pool: pool,
+                    networkTokenAmountRequested: networkTokenAmount,
+                    networkTokenAmountProvided: 0,
+                    poolTokenAmount: 0
+                });
 
                 return 0;
             }
@@ -373,7 +379,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // mint network tokens to the vault
         _networkTokenGovernance.mint(address(_vault), newNetworkTokenAmount);
 
-        emit LiquidityRequested(contextId, pool, networkTokenAmount, newNetworkTokenAmount, poolTokenAmount);
+        emit LiquidityRequested({
+            contextId: contextId,
+            pool: pool,
+            networkTokenAmountRequested: networkTokenAmount,
+            networkTokenAmountProvided: newNetworkTokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
 
         return newNetworkTokenAmount;
     }
@@ -404,7 +416,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
-        emit LiquidityRenounced(contextId, pool, networkTokenAmount, poolTokenAmount);
+        emit LiquidityRenounced({
+            contextId: contextId,
+            pool: pool,
+            networkTokenAmountRenounced: networkTokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
     }
 
     /**

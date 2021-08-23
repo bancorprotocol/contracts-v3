@@ -240,13 +240,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _pools[reserveToken] = newPool;
 
-        emit PoolCreated(newPoolToken, reserveToken);
+        emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
-        emit TradingFeePPMUpdated(reserveToken, 0, newPool.tradingFeePPM);
-        emit TradingEnabled(reserveToken, newPool.tradingEnabled);
-        emit DepositingEnabled(reserveToken, newPool.depositingEnabled);
-        emit InitialRateUpdated(reserveToken, Fraction({ n: 0, d: 0 }), newPool.initialRate);
-        emit DepositLimitUpdated(reserveToken, 0, newPool.depositLimit);
+        emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
+        emit TradingEnabled({ pool: reserveToken, newStatus: newPool.tradingEnabled });
+        emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
+        emit InitialRateUpdated({
+            pool: reserveToken,
+            prevRate: Fraction({ n: 0, d: 0 }),
+            newRate: newPool.initialRate
+        });
+        emit DepositLimitUpdated({ pool: reserveToken, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
     /**
@@ -302,7 +306,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         p.tradingFeePPM = newTradingFeePPM;
 
-        emit TradingFeePPMUpdated(pool, prevTradingFeePPM, newTradingFeePPM);
+        emit TradingFeePPMUpdated({ pool: pool, prevFeePPM: prevTradingFeePPM, newFeePPM: newTradingFeePPM });
     }
 
     /**
@@ -321,7 +325,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         p.tradingEnabled = status;
 
-        emit TradingEnabled(pool, status);
+        emit TradingEnabled({ pool: pool, newStatus: status });
     }
 
     /**
@@ -339,7 +343,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         p.depositingEnabled = status;
 
-        emit DepositingEnabled(pool, status);
+        emit DepositingEnabled({ pool: pool, newStatus: status });
     }
 
     /**
@@ -363,7 +367,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         p.initialRate = newInitialRate;
 
-        emit InitialRateUpdated(pool, prevInitialRate, newInitialRate);
+        emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
     }
 
     /**
@@ -383,7 +387,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         p.depositLimit = newDepositLimit;
 
-        emit DepositLimitUpdated(pool, prevDepositLimit, newDepositLimit);
+        emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
     }
 
     /**
@@ -493,7 +497,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
             bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
             if (nextEnabled != currEnabled) {
-                emit TradingEnabled(baseToken, nextEnabled);
+                emit TradingEnabled({ pool: baseToken, newStatus: nextEnabled });
             }
         }
     }
@@ -783,7 +787,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _defaultTradingFeePPM = newDefaultTradingFeePPM;
 
-        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
+        emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
     }
 
     /**

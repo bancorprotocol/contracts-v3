@@ -285,13 +285,13 @@ contract PendingWithdrawals is
 
         uint32 currentTime = _time();
 
-        emit WithdrawalReinitiated(
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.poolTokenAmount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalReinitiated({
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
         request.createdAt = currentTime;
     }
@@ -319,14 +319,14 @@ contract PendingWithdrawals is
         // transfer the locked pool tokens back to the caller
         request.poolToken.safeTransfer(msg.sender, request.poolTokenAmount);
 
-        emit WithdrawalCompleted(
-            contextId,
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.poolTokenAmount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalCompleted({
+            contextId: contextId,
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
         return CompletedWithdrawalRequest({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
     }
@@ -347,7 +347,7 @@ contract PendingWithdrawals is
 
         _lockDuration = newLockDuration;
 
-        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+        emit LockDurationUpdated({ prevLockDuration: prevLockDuration, newLockDuration: newLockDuration });
     }
 
     /**
@@ -365,7 +365,10 @@ contract PendingWithdrawals is
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
 
-        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
+        emit WithdrawalWindowDurationUpdated({
+            prevWithdrawalWindowDuration: prevWithdrawalWindowDuration,
+            newWithdrawalWindowDuration: newWithdrawalWindowDuration
+        });
     }
 
     /**
@@ -396,7 +399,7 @@ contract PendingWithdrawals is
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
-        emit WithdrawalInitiated(pool, provider, id, poolTokenAmount);
+        emit WithdrawalInitiated({ pool: pool, provider: provider, requestId: id, poolTokenAmount: poolTokenAmount });
     }
 
     /**
@@ -409,13 +412,13 @@ contract PendingWithdrawals is
         // transfer the locked pool tokens back to the provider
         request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
 
-        emit WithdrawalCancelled(
-            request.poolToken.reserveToken(),
-            request.provider,
-            id,
-            request.poolTokenAmount,
-            uint32(_time().sub(request.createdAt))
-        );
+        emit WithdrawalCancelled({
+            pool: request.poolToken.reserveToken(),
+            provider: request.provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(_time().sub(request.createdAt))
+        });
     }
 
     /**
