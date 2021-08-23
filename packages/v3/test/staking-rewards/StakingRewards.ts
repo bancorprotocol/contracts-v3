@@ -8,7 +8,7 @@ const ONE = new Decimal(1);
 const LAMBDA = new Decimal('0.0000000142857142857143');
 const TOTAL_REWARDS = new Decimal('4e25'); // 40 million + 18 decimals
 
-const EXP_VAL_TOO_HIGH = 2;
+const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
 
 const SECOND = 1;
@@ -32,7 +32,7 @@ const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string)
     }
 };
 
-describe.only('StakingRewards', () => {
+describe('StakingRewards', () => {
     let stakingRewards: TestStakingRewards;
 
     before(async () => {
@@ -66,7 +66,7 @@ describe.only('StakingRewards', () => {
 
     for (let a = 0; a < 100; a++) {
         for (let b = 1; b < 100; b++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+            expTest(a, b, '0.99999999999999999999999999999999999');
         }
     }
 
@@ -94,6 +94,18 @@ describe.only('StakingRewards', () => {
         }
     }
 
+    for (let b = 1000; b < 1000000000; b *= 10) {
+        for (let a = 2 * b + 1; a <= 2 * b + 10; a++) {
+            expTest(a, b, '0.9999999999999999999999999999999999999');
+        }
+    }
+
+    for (let b = 1000; b < 1000000000; b *= 10) {
+        for (let a = EXP_VAL_TOO_HIGH * b - 10; a <= EXP_VAL_TOO_HIGH * b - 1; a++) {
+            expTest(a, b, '0.99999999999999999999999999999999999');
+        }
+    }
+
     for (const numOfSeconds of [
         0,
         1 * SECOND,
@@ -107,8 +119,10 @@ describe.only('StakingRewards', () => {
         100 * DAY,
         1 * YEAR,
         2 * YEAR,
-        3 * YEAR,
         4 * YEAR,
+        8 * YEAR,
+        16 * YEAR,
+        32 * YEAR,
         SECONDS_TOO_HIGH - 1,
         SECONDS_TOO_HIGH
     ]) {
