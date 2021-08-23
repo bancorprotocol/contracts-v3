@@ -50,18 +50,18 @@ const ACTIONS: Record<string, number> = {
 };
 
 const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
-    const test = (fileName: string, maxErrors: MaxErrors) => {
-        let poolCollection: TestPoolCollection;
+    let poolCollection: TestPoolCollection;
 
+    before(async () => {
+        const { network, networkTokenPool } = await createSystem();
+
+        poolCollection = await Contracts.TestPoolCollection.deploy(network.address, networkTokenPool.address);
+    });
+
+    const test = (fileName: string, maxErrors: MaxErrors) => {
         const table: WithdrawalAmountData[] = JSON.parse(
             fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
         ).slice(0, maxNumberOfTests);
-
-        before(async () => {
-            const { network, networkTokenPool } = await createSystem();
-
-            poolCollection = await Contracts.TestPoolCollection.deploy(network.address, networkTokenPool.address);
-        });
 
         for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
             it(`should receive correct withdrawal amounts (${[a, b, c, d, e, w, m, n, x]})`, async () => {
