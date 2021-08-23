@@ -65,8 +65,8 @@ describe('StakingRewards formula', () => {
     };
 
     describe('regular tests:', () => {
-        for (let a = 0; a < 100; a++) {
-            for (let b = 1; b < 100; b++) {
+        for (let a = 0; a < 10; a++) {
+            for (let b = 1; b < 10; b++) {
                 expTest(a, b, '0.99999999999999999999999999999999999');
             }
         }
@@ -128,6 +128,14 @@ describe('StakingRewards formula', () => {
             SECONDS_TOO_HIGH
         ]) {
             rewardTest(numOfSeconds, '0.999999999999999999');
+        }
+    });
+
+    describe('@stress tests:', () => {
+        for (let a = 0; a < 100; a++) {
+            for (let b = 1; b < 100; b++) {
+                expTest(a, b, '0.99999999999999999999999999999999999');
+            }
         }
     });
 });
