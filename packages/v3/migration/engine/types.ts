@@ -24,6 +24,7 @@ export interface Migration {
     healthCheck: (
         signer: Signer,
         contracts: Contracts,
+        initialState: any,
         newState: any,
         { deploy, execute, deployProxy }: executionFunctions
     ) => Promise<any>;

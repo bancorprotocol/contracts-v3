@@ -13,7 +13,7 @@ const migration: Migration = {
         return initialState;
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const bancorNetwork = await contracts.BancorNetwork.attach(state.bancorNetwork);
 
         if ((await bancorNetwork.owner()) !== (await signer.getAddress())) throw new InvalidOwner();

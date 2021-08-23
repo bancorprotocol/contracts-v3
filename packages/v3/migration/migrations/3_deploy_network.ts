@@ -1,3 +1,4 @@
+import { InvalidRole } from '../engine/errors/errors';
 import { deployedContract, Migration } from '../engine/types';
 import { NextState as InitialState } from './2_deploy_networkSettings';
 
@@ -24,7 +25,7 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {},
+    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {},
 
     down: async (
         signer,

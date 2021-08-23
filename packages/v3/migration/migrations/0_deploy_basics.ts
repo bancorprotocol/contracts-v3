@@ -1,4 +1,4 @@
-import { InvalidOwner } from '../../migration/engine/errors/errors';
+import { InvalidOwner, InvalidRole } from '../../migration/engine/errors/errors';
 import { deployedContract, Migration } from '../../migration/engine/types';
 
 export type InitialState = {};
@@ -41,13 +41,13 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
+    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
         const vBNTGovernance = await contracts.TokenGovernance.attach(state.vBNT.governance);
         if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new InvalidOwner();
+            throw new InvalidRole();
         if (!(await vBNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new InvalidOwner();
+            throw new InvalidRole();
     },
 
     down: async (

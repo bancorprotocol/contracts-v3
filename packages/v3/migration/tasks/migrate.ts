@@ -23,15 +23,18 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         return;
     }
 
-    for (let index = 0; index < migrationsData.length; index++) {
+    let index = 0;
+    let stateSaves: SystemState[] = [];
+
+    for (; index < migrationsData.length; index++) {
         const migrationData = migrationsData[index];
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
         log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
-        // save oldState
-        const oldState = currentState;
+        // save
+        stateSaves.push(currentState);
         try {
             currentState.networkState = await migration.up(
                 signer,
@@ -41,12 +44,18 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
             );
 
             try {
-                await migration.healthCheck(signer, contracts, currentState.networkState, executionFunctions);
+                await migration.healthCheck(
+                    signer,
+                    contracts,
+                    stateSaves[index].networkState,
+                    currentState.networkState,
+                    executionFunctions
+                );
                 log.success('Health check success ✨ ');
             } catch (e) {
-                log.error('Health check failed: ' + e);
-                // @TODO revert process here
-                return;
+                log.error('Health check failed');
+                log.error(e.stack);
+                break;
             }
 
             // if health check passed, update the state and write it to the system
@@ -56,9 +65,38 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
             };
             writeState(currentState);
         } catch (e) {
-            log.error('Migration execution failed: ' + e);
-            log.error('Aborting ...');
+            log.error('Migration execution failed');
+            log.error(e.stack);
+            log.error('Aborting.');
             return;
+        }
+    }
+
+    // if the index of the latest migration is not equal to the length of the migrationsData array then an error occured an we should revert
+    if (index != migrationsData.length) {
+        log.executing('Reverting migration ...');
+
+        for (; index >= 0; index--) {
+            const migrationData = migrationsData[index];
+
+            const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+
+            log.executing(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+
+            currentState.networkState = migration.down(
+                signer,
+                contracts,
+                stateSaves[index].networkState,
+                currentState.networkState,
+                executionFunctions
+            );
+
+            // if revert passed, update the state and write it to the system
+            currentState = {
+                migrationState: { latestMigration: stateSaves[index].migrationState.latestMigration },
+                networkState: currentState.networkState
+            };
+            writeState(currentState);
         }
     }
 

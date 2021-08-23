@@ -8,12 +8,22 @@ export class ExecutionError extends Error {
         super('Execution Error');
         this.receipt = receipt;
         this.tx = tx;
+
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, ExecutionError);
+        }
     }
 }
 
 export class MigrationError extends Error {
     constructor(msg: string) {
         super('Migration Error: ' + msg);
+    }
+}
+
+export class InvalidRole extends MigrationError {
+    constructor() {
+        super('Invalid role');
     }
 }
 
