@@ -18,7 +18,7 @@ import { Time } from "../utility/Time.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
@@ -289,7 +289,7 @@ contract PendingWithdrawals is
             request.poolToken.reserveToken(),
             provider,
             id,
-            request.amount,
+            request.poolTokenAmount,
             uint32(currentTime.sub(request.createdAt))
         );
 
@@ -303,7 +303,7 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override only(address(_network)) returns (uint256) {
+    ) external override only(address(_network)) returns (CompletedWithdrawalRequest memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
 
@@ -317,18 +317,18 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, request.amount);
+        request.poolToken.safeTransfer(msg.sender, request.poolTokenAmount);
 
         emit WithdrawalCompleted(
             contextId,
             request.poolToken.reserveToken(),
             provider,
             id,
-            request.amount,
+            request.poolTokenAmount,
             uint32(currentTime.sub(request.createdAt))
         );
 
-        return request.amount;
+        return CompletedWithdrawalRequest({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
     }
 
     /**
@@ -386,7 +386,7 @@ contract PendingWithdrawals is
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
-            amount: poolTokenAmount,
+            poolTokenAmount: poolTokenAmount,
             createdAt: _time()
         });
 
@@ -407,13 +407,13 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the provider
-        request.poolToken.safeTransfer(request.provider, request.amount);
+        request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
 
         emit WithdrawalCancelled(
             request.poolToken.reserveToken(),
             request.provider,
             id,
-            request.amount,
+            request.poolTokenAmount,
             uint32(_time().sub(request.createdAt))
         );
     }
