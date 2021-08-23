@@ -110,7 +110,7 @@ describe.only('StakingRewards', () => {
         3 * YEAR,
         4 * YEAR,
         SECONDS_TOO_HIGH - 1,
-        SECONDS_TOO_HIGH,
+        SECONDS_TOO_HIGH
     ]) {
         rewardTest(numOfSeconds, '0.999999999999999999');
     }
