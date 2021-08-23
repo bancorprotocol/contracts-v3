@@ -3,18 +3,22 @@ pragma solidity 0.7.6;
 
 import "./interfaces/IStakingRewards.sol";
 import { MathEx } from "../utility/MathEx.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @dev This contract manages the distribution of the staking rewards
  */
 contract StakingRewards is IStakingRewards {
-    uint256 internal constant LAMBDA_N = 1;
-    uint256 internal constant LAMBDA_D = 5000000;
+    using SafeMath for uint256;
+
+    uint256 internal constant LAMBDA_N = 142857142857143;
+    uint256 internal constant LAMBDA_D = 10000000000000000000000;
+    uint256 internal constant TOTAL_REWARDS = 4e25; // 40 million + 18 decimals
     uint256 internal constant ONE = 1 << 127;
 
-    function reward(uint256 remainingRewards, uint256 numOfBlocksElapsed) internal pure returns (uint256) {
-        uint256 n = exp(numOfBlocksElapsed * LAMBDA_N, LAMBDA_D);
-        return MathEx.mulDivF(remainingRewards, n - ONE, n);
+    function reward(uint256 numOfSeconds) internal pure returns (uint256) {
+        uint256 n = exp(numOfSeconds.mul(LAMBDA_N), LAMBDA_D);
+        return MathEx.mulDivF(TOTAL_REWARDS, n - ONE, n);
     }
 
     /**
@@ -30,7 +34,7 @@ contract StakingRewards is IStakingRewards {
         uint256 y;
         uint256 z;
 
-        require(x < ONE * 2, "ERR_EXP_VAL_TOO_HIGH");
+        require(x < (ONE << 1), "ERR_EXP_VAL_TOO_HIGH");
 
         z = y = x % (ONE >> 6); // get the input modulo 2^(-6)
         z = z * y / ONE; n += z * 0xa261d9400; // add y^02 * (14! / 02!)

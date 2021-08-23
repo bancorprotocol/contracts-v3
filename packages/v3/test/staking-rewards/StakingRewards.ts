@@ -5,22 +5,34 @@ import Decimal from 'decimal.js';
 import { EOL } from 'os';
 
 const ONE = new Decimal(1);
-const LAMBDA = new Decimal(2).div(10000000);
+const LAMBDA = new Decimal('0.0000000142857142857143');
+const TOTAL_REWARDS = new Decimal('4e25'); // 40 million + 18 decimals
+
+const EXP_VAL_TOO_HIGH = 2;
+const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
+
+const SECOND = 1;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+const YEAR = 365 * DAY;
 
 const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
-    const accuracy = actual.div(expected);
-    expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
-        true,
-        EOL +
-            [
-                `expected = ${expected.toFixed(minAccuracy.length)}`,
-                `actual   = ${actual.toFixed(minAccuracy.length)}`,
-                `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
-            ].join(EOL)
-    );
+    if (!actual.eq(expected)) {
+        const accuracy = actual.div(expected);
+        expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
+            true,
+            EOL +
+                [
+                    `expected = ${expected.toFixed(minAccuracy.length)}`,
+                    `actual   = ${actual.toFixed(minAccuracy.length)}`,
+                    `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
+                ].join(EOL)
+        );
+    }
 };
 
-describe('StakingRewards', () => {
+describe.only('StakingRewards', () => {
     let stakingRewards: TestStakingRewards;
 
     before(async () => {
@@ -29,7 +41,7 @@ describe('StakingRewards', () => {
 
     const expTest = (a: number, b: number, minAccuracy: string) => {
         it(`exp(${a}, ${b})`, async () => {
-            if (a / b < 2) {
+            if (a / b < EXP_VAL_TOO_HIGH) {
                 const retval = await stakingRewards.expT(a, b);
                 const actual = new Decimal(retval[0].toString()).div(retval[1].toString());
                 const expected = new Decimal(a).div(b).exp();
@@ -40,11 +52,15 @@ describe('StakingRewards', () => {
         });
     };
 
-    const rewardTest = (remainingRewards: string, numOfBlocksElapsed: string, minAccuracy: string) => {
-        it(`reward(${remainingRewards}, ${numOfBlocksElapsed})`, async () => {
-            const actual = new Decimal((await stakingRewards.rewardT(remainingRewards, numOfBlocksElapsed)).toString());
-            const expected = new Decimal(remainingRewards).mul(ONE.sub(LAMBDA.neg().mul(numOfBlocksElapsed).exp()));
-            assertAccuracy(actual, expected, minAccuracy);
+    const rewardTest = (numOfSeconds: number, minAccuracy: string) => {
+        it(`reward(${numOfSeconds})`, async () => {
+            if (numOfSeconds < SECONDS_TOO_HIGH) {
+                const actual = new Decimal((await stakingRewards.rewardT(numOfSeconds)).toString());
+                const expected = TOTAL_REWARDS.mul(ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp()));
+                assertAccuracy(actual, expected, minAccuracy);
+            } else {
+                await expect(stakingRewards.rewardT(numOfSeconds)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+            }
         });
     };
 
@@ -78,9 +94,24 @@ describe('StakingRewards', () => {
         }
     }
 
-    for (const remainingRewards of [1, 2, 3, 4, 5, 6].map((n) => `${n}`.repeat(21 + n))) {
-        for (const numOfBlocksElapsed of [0, 1, 2, 3, 4, 5, 6].map((n) => '1' + '0'.repeat(n))) {
-            rewardTest(remainingRewards, numOfBlocksElapsed, '0.99999999999999');
-        }
+    for (const numOfSeconds of [
+        0,
+        1 * SECOND,
+        10 * SECOND,
+        1 * MINUTE,
+        10 * MINUTE,
+        1 * HOUR,
+        10 * HOUR,
+        1 * DAY,
+        10 * DAY,
+        100 * DAY,
+        1 * YEAR,
+        2 * YEAR,
+        3 * YEAR,
+        4 * YEAR,
+        SECONDS_TOO_HIGH - 1,
+        SECONDS_TOO_HIGH,
+    ]) {
+        rewardTest(numOfSeconds, '0.999999999999999999');
     }
 });
