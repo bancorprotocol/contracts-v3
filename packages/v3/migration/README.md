@@ -89,9 +89,25 @@ yarn hh migrate --network mainnet
 
 Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
 
-To do so you have to execute the command by specifying the network in which you want to fork as an ENV variable. You'll also need to have the original network `state.json` file. Meaning that if you want to test a migration on a fork of the `mainnet` network you'll need to provide the correct state to the `mainnet` network folder.
+To fork the network `mainnet` you need to:
 
-In order for this to work you need to have in your `config.json` at the root of the `v3` repo in the `urls` object the url for the corresponding FORK value. Example: `"mainnet": "https://eth-mainnet.alchemyapi.io/v2/supersecretcode"` if you are forking mainnet, i.e: `FORK=mainnet yarn hh migrate`.
+-   Have in your `config.json` file (at the root of the `v3` package) the url for the `mainnet` network, like so:
+
+```
+{
+    ...,
+
+    "networks": {
+        "mainnet": {
+            "url": "https://eth-mainnet.alchemyapi.io/v2/supersecretkey"
+        }
+    }
+}
+```
+
+-   Provide the `state.json` file to the `mainnet` data folder.
+
+-   Specify the network you want to fork as an ENV variable: `FORK=mainnet yarn hh migrate`
 
 ## What does a basic migration file looks like ?
 
