@@ -31,29 +31,41 @@ describe('NetworkTokenPool', () => {
     let provider: SignerWithAddress;
     let provider2: SignerWithAddress;
 
-    shouldHaveGap('NetworkTokenPool', '_pendingWithdrawals');
+    shouldHaveGap('NetworkTokenPool', '_stakedBalance');
 
     before(async () => {
         [deployer, provider, provider2] = await ethers.getSigners();
     });
 
     describe('construction', () => {
+        it('should revert when attempting to initialize with an invalid network contract', async () => {
+            const { networkPoolToken, pendingWithdrawals } = await createSystem();
+
+            await expect(
+                Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, pendingWithdrawals.address, networkPoolToken.address)
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
         it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
-            const { networkPoolToken, network, vault } = await createSystem();
+            const { networkPoolToken, network } = await createSystem();
 
-            const networkTokenPool = await Contracts.NetworkTokenPool.deploy(
-                network.address,
-                vault.address,
-                networkPoolToken.address
-            );
+            await expect(
+                Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS, networkPoolToken.address)
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
 
-            await expect(networkTokenPool.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
+            const { network, pendingWithdrawals } = await createSystem();
+
+            await expect(
+                Contracts.NetworkTokenPool.deploy(network.address, pendingWithdrawals.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            const { networkTokenPool, pendingWithdrawals } = await createSystem();
+            const { networkTokenPool } = await createSystem();
 
-            await expect(networkTokenPool.initialize(pendingWithdrawals.address)).to.be.revertedWith(
+            await expect(networkTokenPool.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
@@ -79,8 +91,8 @@ describe('NetworkTokenPool', () => {
             expect(await networkTokenPool.govToken()).to.equal(govToken.address);
             expect(await networkTokenPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await networkTokenPool.settings()).to.equal(networkSettings.address);
-            expect(await networkTokenPool.vault()).to.equal(vault.address);
             expect(await networkTokenPool.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+            expect(await networkTokenPool.vault()).to.equal(vault.address);
 
             expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
 
@@ -161,7 +173,7 @@ describe('NetworkTokenPool', () => {
             });
 
             it('should revert when attempting to request liquidity for a pool from a different collection than the one managing it', async () => {
-                const poolCollection2 = await createPoolCollection(network);
+                const poolCollection2 = await createPoolCollection(network, networkTokenPool);
                 await expect(
                     poolCollection2.requestLiquidityT(
                         networkTokenPool.address,
@@ -442,7 +454,7 @@ describe('NetworkTokenPool', () => {
             });
 
             it('should revert when attempting to renounce liquidity for a pool from a different collection than the one managing it', async () => {
-                const poolCollection2 = await createPoolCollection(network);
+                const poolCollection2 = await createPoolCollection(network, networkTokenPool);
                 await expect(
                     poolCollection2.renounceLiquidityT(
                         networkTokenPool.address,

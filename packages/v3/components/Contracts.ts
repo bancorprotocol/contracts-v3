@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
     BancorNetwork__factory,
     BancorVault__factory,
@@ -24,6 +25,8 @@ import {
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
+
+/* eslint-enable camelcase */
 import { Signer } from '@ethersproject/abstract-signer';
 import { ContractFactory } from '@ethersproject/contracts';
 import { ethers } from 'hardhat';
@@ -46,7 +49,7 @@ const deployOrAttach = <F extends ContractFactory>(contractName: string, passedS
     return {
         contractName,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            const defaultSigner = passedSigner || (await ethers.getSigners())[0];
 
             return (await ethers.getContractFactory(contractName, defaultSigner)).deploy(
                 ...(args || [])
@@ -59,7 +62,7 @@ const deployOrAttach = <F extends ContractFactory>(contractName: string, passedS
 const attachOnly = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            const defaultSigner = passedSigner || (await ethers.getSigners())[0];
             return ethers.getContractAt(contractName, address, signer || defaultSigner) as Contract<F>;
         }
     };
@@ -68,6 +71,7 @@ const attachOnly = <F extends ContractFactory>(contractName: string, passedSigne
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    /* eslint-disable camelcase */
     BancorNetwork: deployOrAttach<BancorNetwork__factory>('BancorNetwork', signer),
     BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
     ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
@@ -95,6 +99,7 @@ const getContracts = (signer?: Signer) => ({
         'TransparentUpgradeableProxy',
         signer
     )
+    /* eslint-enable camelcase */
 });
 
 export default getContracts();

@@ -16,7 +16,6 @@ import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
@@ -45,9 +44,6 @@ contract PendingWithdrawals is
 
     // the network contract
     IBancorNetwork private immutable _network;
-
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -120,13 +116,9 @@ contract PendingWithdrawals is
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
-    {
+    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
         _networkToken = initNetwork.networkToken();
         _network = initNetwork;
-        _networkTokenPool = initNetworkTokenPool;
     }
 
     /**
@@ -169,13 +161,6 @@ contract PendingWithdrawals is
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function networkTokenPool() external view override returns (INetworkTokenPool) {
-        return _networkTokenPool;
     }
 
     /**

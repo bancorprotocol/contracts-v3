@@ -8,10 +8,12 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
@@ -22,8 +24,12 @@ contract TestBancorNetwork is BancorNetwork {
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings
-    ) BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings) {}
+        INetworkSettings initSettings,
+        IBancorVault initVault,
+        IPoolToken initNetworkPoolToken
+    )
+        BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault, initNetworkPoolToken)
+    {}
 
     function createPoolT(IPoolCollection liquidityPoolCollection, IReserveToken reserveToken) external {
         liquidityPoolCollection.createPool(reserveToken);

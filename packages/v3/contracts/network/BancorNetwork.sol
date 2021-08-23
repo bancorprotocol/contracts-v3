@@ -16,6 +16,7 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
 import { IPoolCollection, Pool, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
@@ -43,6 +44,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
     // the network settings contract
     INetworkSettings private immutable _settings;
+
+    // the vault contract
+    IBancorVault private immutable _vault;
+
+    // the network token pool token
+    IPoolToken private immutable _networkPoolToken;
+
+    // the network token pool contract
+    INetworkTokenPool private _networkTokenPool;
 
     // the pending withdrawals contract
     IPendingWithdrawals private _pendingWithdrawals;
@@ -195,11 +205,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings
+        INetworkSettings initSettings,
+        IBancorVault initVault,
+        IPoolToken initNetworkPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
+        validAddress(address(initVault))
+        validAddress(address(initNetworkPoolToken))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
         _networkToken = initNetworkTokenGovernance.token();
@@ -207,17 +221,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken = initGovTokenGovernance.token();
 
         _settings = initSettings;
+        _vault = initVault;
+        _networkPoolToken = initNetworkPoolToken;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals)
+    function initialize(INetworkTokenPool initNetworkTokenPool)
         external
-        validAddress(address(initPendingWithdrawals))
+        validAddress(address(initNetworkTokenPool))
         initializer
     {
-        __BancorNetwork_init(initPendingWithdrawals);
+        __BancorNetwork_init(initNetworkTokenPool);
     }
 
     // solhint-disable func-name-mixedcase
@@ -225,18 +241,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool) internal initializer {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initPendingWithdrawals);
+        __BancorNetwork_init_unchained(initNetworkTokenPool);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
-        _pendingWithdrawals = initPendingWithdrawals;
+    function __BancorNetwork_init_unchained(INetworkTokenPool initNetworkTokenPool) internal initializer {
+        _networkTokenPool = initNetworkTokenPool;
+        _pendingWithdrawals = initNetworkTokenPool.pendingWithdrawals();
     }
 
     // solhint-enable func-name-mixedcase
@@ -281,6 +298,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function vault() external view override returns (IBancorVault) {
+        return _vault;
+    }
+
+    /**
+     * @dev IBancorNetwork
+     */
+    function networkPoolToken() external view override returns (IPoolToken) {
+        return _networkPoolToken;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function networkTokenPool() external view override returns (INetworkTokenPool) {
+        return _networkTokenPool;
     }
 
     /**
@@ -478,7 +516,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function withdraw(uint256 id) external override nonReentrant {
         WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
-        INetworkTokenPool networkTokenPool = _pendingWithdrawals.networkTokenPool();
 
         // verify that the provider is the withdrawal position owner
         require(msg.sender == request.provider, "ERR_ILLEGAL_ID");
@@ -489,7 +526,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // claim the pool tokens
         _pendingWithdrawals.completeWithdrawal(contextId, msg.sender, id);
 
-        if (request.poolToken == networkTokenPool.poolToken()) {
+        if (request.poolToken == _networkPoolToken) {
             // TODO:
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool
@@ -499,7 +536,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         } else {
             IReserveToken baseToken = request.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
-            IBancorVault vault = networkTokenPool.vault();
 
             request.poolToken.transferFrom(request.provider, address(this), request.amount);
             request.poolToken.approve(address(poolCollection), request.amount);
@@ -509,19 +545,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 contextId,
                 baseToken,
                 request.amount,
-                IERC20(address(baseToken)).balanceOf(address(vault)),
-                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet)),
-                networkTokenPool
+                IERC20(address(baseToken)).balanceOf(address(_vault)),
+                IERC20(address(baseToken)).balanceOf(address(_externalProtectionWallet))
             );
 
             if (amounts.B > 0) {
                 // base token amount to transfer from the vault to the user
-                vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
+                _vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
             }
 
             if (amounts.F > 0) {
                 // network token amount to transfer from the vault and then burn
-                vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+                _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+
                 _networkTokenGovernance.burn(amounts.F);
             }
 
@@ -555,7 +591,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 baseToken,
                 request.poolToken.totalSupply(),
                 pool.stakedBalance,
-                IERC20(address(baseToken)).balanceOf(address(vault))
+                IERC20(address(baseToken)).balanceOf(address(_vault))
             );
 
             emit TradingLiquidityUpdated(contextId, baseToken, baseToken, pool.baseTokenTradingLiquidity);

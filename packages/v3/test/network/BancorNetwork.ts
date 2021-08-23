@@ -1,13 +1,14 @@
 import Contracts from '../../components/Contracts';
 import {
     BancorNetwork,
-    TokenHolderUpgradeable,
+    NetworkSettings,
+    NetworkTokenPool,
     PoolCollection,
     TestERC20Token,
-    NetworkSettings
+    TokenHolderUpgradeable
 } from '../../typechain';
 import { ZERO_ADDRESS } from '../helpers/Constants';
-import { createSystem, createTokenHolder, createPoolCollection } from '../helpers/Factory';
+import { createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -17,51 +18,106 @@ import { ethers } from 'hardhat';
 describe('BancorNetwork', () => {
     let nonOwner: SignerWithAddress;
     let newOwner: SignerWithAddress;
-    let dummy: SignerWithAddress;
 
     shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
     before(async () => {
-        [, nonOwner, newOwner, dummy] = await ethers.getSigners();
+        [, nonOwner, newOwner] = await ethers.getSigners();
     });
 
     describe('construction', () => {
-        it('should revert when attempting to initialize with an invalid pending withdrawal contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings } = await createSystem();
+        it('should revert when attempting to reinitialize', async () => {
+            const { network, networkTokenPool } = await createSystem();
+
+            await expect(network.initialize(networkTokenPool.address)).to.be.revertedWith(
+                'Initializable: contract is already initialized'
+            );
+        });
+
+        it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault, networkPoolToken } =
+                await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
-                networkSettings.address
+                networkSettings.address,
+                vault.address,
+                networkPoolToken.address
             );
 
             await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
-        it('should revert when attempting to reinitialize', async () => {
-            const { network } = await createSystem();
-
-            await expect(network.initialize(dummy.address)).to.be.revertedWith(
-                'Initializable: contract is already initialized'
-            );
-        });
-
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(ZERO_ADDRESS, dummy.address, dummy.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { govTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    ZERO_ADDRESS,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    vault.address,
+                    networkPoolToken.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, ZERO_ADDRESS, dummy.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { networkTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    vault.address,
+                    networkPoolToken.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            await expect(Contracts.BancorNetwork.deploy(dummy.address, dummy.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            const { networkTokenGovernance, govTokenGovernance, vault, networkPoolToken } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    vault.address,
+                    networkPoolToken.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when initialized with an invalid vault contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, networkPoolToken } =
+                await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    networkPoolToken.address
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when initialized with an invalid network pool token contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    vault.address,
+                    ZERO_ADDRESS
+                )
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {
@@ -72,6 +128,9 @@ describe('BancorNetwork', () => {
                 govToken,
                 govTokenGovernance,
                 networkSettings,
+                vault,
+                networkPoolToken,
+                networkTokenPool,
                 pendingWithdrawals
             } = await createSystem();
 
@@ -82,6 +141,9 @@ describe('BancorNetwork', () => {
             expect(await network.govToken()).to.equal(govToken.address);
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
+            expect(await network.vault()).to.equal(vault.address);
+            expect(await network.networkPoolToken()).to.equal(networkPoolToken.address);
+            expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
@@ -164,11 +226,12 @@ describe('BancorNetwork', () => {
 
     describe('pool collections', () => {
         let network: BancorNetwork;
+        let networkTokenPool: NetworkTokenPool;
         let poolCollection: PoolCollection;
         let poolType: number;
 
         beforeEach(async () => {
-            ({ network, poolCollection } = await createSystem());
+            ({ network, networkTokenPool, poolCollection } = await createSystem());
 
             poolType = await poolCollection.poolType();
         });
@@ -214,7 +277,7 @@ describe('BancorNetwork', () => {
                 it('should add a new pool collection with the same type', async () => {
                     expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                    const newPoolCollection = await createPoolCollection(network);
+                    const newPoolCollection = await createPoolCollection(network, networkTokenPool);
                     const poolType = await newPoolCollection.poolType();
 
                     const res = await network.addPoolCollection(newPoolCollection.address);
@@ -241,7 +304,7 @@ describe('BancorNetwork', () => {
             it('should add another new pool collection with the same type', async () => {
                 expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                const newPoolCollection = await createPoolCollection(network);
+                const newPoolCollection = await createPoolCollection(network, networkTokenPool);
                 const poolType = await newPoolCollection.poolType();
 
                 const res = await network.addPoolCollection(newPoolCollection.address);
@@ -257,7 +320,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                const newPoolCollection = await createPoolCollection(network);
+                const newPoolCollection = await createPoolCollection(network, networkTokenPool);
                 await expect(
                     network.removePoolCollection(poolCollection.address, newPoolCollection.address)
                 ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -268,8 +331,8 @@ describe('BancorNetwork', () => {
                 let lastCollection: PoolCollection;
 
                 beforeEach(async () => {
-                    newPoolCollection = await createPoolCollection(network);
-                    lastCollection = await createPoolCollection(network);
+                    newPoolCollection = await createPoolCollection(network, networkTokenPool);
+                    lastCollection = await createPoolCollection(network, networkTokenPool);
 
                     await network.addPoolCollection(newPoolCollection.address);
                     await network.addPoolCollection(lastCollection.address);
@@ -288,7 +351,7 @@ describe('BancorNetwork', () => {
                         network.removePoolCollection(ZERO_ADDRESS, newPoolCollection.address)
                     ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
 
-                    const otherCollection = await createPoolCollection(network);
+                    const otherCollection = await createPoolCollection(network, networkTokenPool);
                     await expect(
                         network.removePoolCollection(otherCollection.address, newPoolCollection.address)
                     ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -339,8 +402,10 @@ describe('BancorNetwork', () => {
                     expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
                 });
 
+                /* eslint-disable @typescript-eslint/no-empty-function */
                 it.skip('should revert when attempting to remove a pool collection with associated pools', async () => {});
                 it.skip('should revert when attempting to remove a pool collection with an alternative with a different type', async () => {});
+                /* eslint-enable @typescript-eslint/no-empty-function */
             });
         });
 
@@ -348,7 +413,7 @@ describe('BancorNetwork', () => {
             let newPoolCollection: PoolCollection;
 
             beforeEach(async () => {
-                newPoolCollection = await createPoolCollection(network);
+                newPoolCollection = await createPoolCollection(network, networkTokenPool);
 
                 await network.addPoolCollection(newPoolCollection.address);
                 await network.addPoolCollection(poolCollection.address);
@@ -365,7 +430,7 @@ describe('BancorNetwork', () => {
                     'ERR_INVALID_ADDRESS'
                 );
 
-                const newPoolCollection2 = await createPoolCollection(network);
+                const newPoolCollection2 = await createPoolCollection(network, networkTokenPool);
                 await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWith(
                     'ERR_COLLECTION_DOES_NOT_EXIST'
                 );
