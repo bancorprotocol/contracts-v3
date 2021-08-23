@@ -17,7 +17,7 @@ export class MigrationError extends Error {
     }
 }
 
-export class OwnerNotSetOrCorrect extends MigrationError {
+export class InvalidOwner extends MigrationError {
     constructor() {
         super('Owner not set or correct');
     }

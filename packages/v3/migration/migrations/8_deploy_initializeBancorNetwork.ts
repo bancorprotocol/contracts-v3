@@ -1,4 +1,4 @@
-import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { InvalidOwner } from '../engine/errors/errors';
 import { Migration } from '../engine/types';
 import { NextState as InitialState } from './7_deploy_liquidityPoolCollection';
 
@@ -16,7 +16,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const bancorNetwork = await contracts.BancorNetwork.attach(state.bancorNetwork);
 
-        if ((await bancorNetwork.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+        if ((await bancorNetwork.owner()) !== (await signer.getAddress())) throw new InvalidOwner();
     },
 
     down: async (

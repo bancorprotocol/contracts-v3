@@ -40,7 +40,7 @@ export const initMigration = async (args: defaultMigrationArgs) => {
         !(migrationNetworkConfig.isFork || migrationNetworkConfig.networkName === 'hardhat')
     ) {
         throw new Error(
-            `Transaction confirmation should be defined or higher than 1 for ${migrationNetworkConfig.networkName} use. Aborting`
+            `Transaction confirmation should be higher than 1 for ${migrationNetworkConfig.networkName} use. Aborting`
         );
     }
 

@@ -19,7 +19,7 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
 
         log.executingTx(`Deploying contract \${${factory.contractName}}`);
         log.executingTx(`Params: [${args}]`);
-        log.normal(`Tx: `, contract.deployTransaction.hash);
+        log.normal(`Deployment Tx: `, contract.deployTransaction.hash);
 
         log.greyed(`Waiting to be mined...`);
         const receipt = await contract.deployTransaction.wait(executionSettings.confirmationToWait);

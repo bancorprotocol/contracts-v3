@@ -1,4 +1,4 @@
-import { OwnerNotSetOrCorrect } from '../engine/errors/errors';
+import { InvalidOwner } from '../engine/errors/errors';
 import { deployedContract, Migration } from '../engine/types';
 import { NextState as InitialState } from './6_deploy_pendingWithdrawals';
 
@@ -19,7 +19,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, state: NextState, { deploy, execute }) => {
         const poolCollection = await contracts.PoolCollection.attach(state.poolCollection);
 
-        if ((await poolCollection.owner()) !== (await signer.getAddress())) throw new OwnerNotSetOrCorrect();
+        if ((await poolCollection.owner()) !== (await signer.getAddress())) throw new InvalidOwner();
     },
 
     down: async (

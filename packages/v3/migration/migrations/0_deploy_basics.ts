@@ -1,4 +1,4 @@
-import { OwnerNotSetOrCorrect } from '../../migration/engine/errors/errors';
+import { InvalidOwner } from '../../migration/engine/errors/errors';
 import { deployedContract, Migration } from '../../migration/engine/types';
 
 export type InitialState = {};
@@ -45,9 +45,9 @@ const migration: Migration = {
         const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
         const vBNTGovernance = await contracts.TokenGovernance.attach(state.vBNT.governance);
         if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new OwnerNotSetOrCorrect();
+            throw new InvalidOwner();
         if (!(await vBNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new OwnerNotSetOrCorrect();
+            throw new InvalidOwner();
     },
 
     down: async (

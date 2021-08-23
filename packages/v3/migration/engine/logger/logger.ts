@@ -28,7 +28,7 @@ export const log = {
         palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
         palette.yellow(`Overrides:`);
         palette.white(`        GasPrice: ${executionSettings.gasPrice} (gwei)`);
-        palette.yellow(`Execution Config:`);
+        palette.yellow(`Execution Setting:`);
         palette.white(`        Confirmation to wait: ${executionSettings.confirmationToWait}`);
         palette.yellow(`********************`);
     }
