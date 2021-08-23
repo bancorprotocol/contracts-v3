@@ -137,5 +137,20 @@ describe('StakingRewards formula', () => {
                 expTest(a, b, '0.99999999999999999999999999999999999');
             }
         }
+
+        for (let seconds = 0; seconds < 5; seconds++) {
+            for (let minutes = 0; minutes < 5; minutes++) {
+                for (let hours = 0; hours < 5; hours++) {
+                    for (let days = 0; days < 5; days++) {
+                        for (let years = 0; years < 5; years++) {
+                            rewardTest(
+                                seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
+                                '0.999999999999999999'
+                            );
+                        }
+                    }
+                }
+            }
+        }
     });
 });
