@@ -65,69 +65,69 @@ describe('StakingRewards formula', () => {
     };
 
     describe('regular tests:', () => {
-    for (let a = 0; a < 100; a++) {
-        for (let b = 1; b < 100; b++) {
-            expTest(a, b, '0.99999999999999999999999999999999999');
+        for (let a = 0; a < 100; a++) {
+            for (let b = 1; b < 100; b++) {
+                expTest(a, b, '0.99999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = 1; a <= 10; a++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = 1; a <= 10; a++) {
+                expTest(a, b, '0.9999999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = b - 10; a <= b - 1; a++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = b - 10; a <= b - 1; a++) {
+                expTest(a, b, '0.9999999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = b + 1; a <= b + 10; a++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = b + 1; a <= b + 10; a++) {
+                expTest(a, b, '0.9999999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = 2 * b - 10; a <= 2 * b - 1; a++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = 2 * b - 10; a <= 2 * b - 1; a++) {
+                expTest(a, b, '0.9999999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = 2 * b + 1; a <= 2 * b + 10; a++) {
-            expTest(a, b, '0.9999999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = 2 * b + 1; a <= 2 * b + 10; a++) {
+                expTest(a, b, '0.9999999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (let b = 1000; b < 1000000000; b *= 10) {
-        for (let a = EXP_VAL_TOO_HIGH * b - 10; a <= EXP_VAL_TOO_HIGH * b - 1; a++) {
-            expTest(a, b, '0.99999999999999999999999999999999999');
+        for (let b = 1000; b < 1000000000; b *= 10) {
+            for (let a = EXP_VAL_TOO_HIGH * b - 10; a <= EXP_VAL_TOO_HIGH * b - 1; a++) {
+                expTest(a, b, '0.99999999999999999999999999999999999');
+            }
         }
-    }
 
-    for (const numOfSeconds of [
-        0,
-        1 * SECOND,
-        10 * SECOND,
-        1 * MINUTE,
-        10 * MINUTE,
-        1 * HOUR,
-        10 * HOUR,
-        1 * DAY,
-        10 * DAY,
-        100 * DAY,
-        1 * YEAR,
-        2 * YEAR,
-        4 * YEAR,
-        8 * YEAR,
-        16 * YEAR,
-        32 * YEAR,
-        SECONDS_TOO_HIGH - 1,
-        SECONDS_TOO_HIGH
-    ]) {
-        rewardTest(numOfSeconds, '0.999999999999999999');
-    }
-});
+        for (const numOfSeconds of [
+            0,
+            1 * SECOND,
+            10 * SECOND,
+            1 * MINUTE,
+            10 * MINUTE,
+            1 * HOUR,
+            10 * HOUR,
+            1 * DAY,
+            10 * DAY,
+            100 * DAY,
+            1 * YEAR,
+            2 * YEAR,
+            4 * YEAR,
+            8 * YEAR,
+            16 * YEAR,
+            32 * YEAR,
+            SECONDS_TOO_HIGH - 1,
+            SECONDS_TOO_HIGH
+        ]) {
+            rewardTest(numOfSeconds, '0.999999999999999999');
+        }
+    });
 });
