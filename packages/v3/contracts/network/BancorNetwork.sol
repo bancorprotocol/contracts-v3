@@ -18,7 +18,7 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { IPoolCollection, Pool, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
@@ -525,7 +525,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // generated context ID for monitoring
         bytes32 contextId = keccak256(abi.encodePacked(provider, block.timestamp, id));
 
-        // claim the pool tokens
+        // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(
             contextId,
             provider,
@@ -533,79 +533,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         );
 
         if (completedRequest.poolToken == _networkPoolToken) {
-            // TODO:
-            // requires approval for vBNT
-            // transfer vBNT from the caller to the BNT pool
-            // call withdraw on the BNT pool
-            // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
-            // emit the TotalLiquidityUpdated event
+            _withdrawNetworkToken(contextId, provider, completedRequest);
         } else {
-            IReserveToken baseToken = completedRequest.poolToken.reserveToken();
-            IPoolCollection poolCollection = _collectionByPool[baseToken];
-
-            completedRequest.poolToken.transferFrom(provider, address(this), completedRequest.poolTokenAmount);
-            completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
-
-            // call withdraw on the TKN pool - returns the amounts/breakdown
-            PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
-                contextId,
-                baseToken,
-                completedRequest.poolTokenAmount,
-                baseToken.balanceOf(address(_vault)),
-                baseToken.balanceOf(address(_externalProtectionWallet))
-            );
-
-            if (amounts.B > 0) {
-                // base token amount to transfer from the vault to the user
-                _vault.withdrawTokens(baseToken, payable(provider), amounts.B);
-            }
-
-            if (amounts.F > 0) {
-                // network token amount to transfer from the vault and then burn
-                _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
-
-                _networkTokenGovernance.burn(amounts.F);
-            }
-
-            if (amounts.C > 0) {
-                // network token amount to mint directly for the user
-                _networkTokenGovernance.mint(provider, amounts.C);
-            }
-
-            if (amounts.E > 0) {
-                // base token amount to transfer from the protection wallet to the user
-                _externalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
-            }
-
-            Pool memory pool = poolCollection.poolData(baseToken);
-
-            emit FundsWithdrawn({
-                contextId: contextId,
-                token: baseToken,
-                provider: provider,
-                poolCollection: poolCollection,
-                poolTokenAmount: completedRequest.poolTokenAmount,
-                govTokenAmount: 0,
-                baseTokenAmount: amounts.B,
-                externalProtectionBaseTokenAmount: amounts.E,
-                networkTokenAmount: amounts.C,
-                withdrawalFee: 0 // TODO: withdrawalFee
-            });
-
-            emit TotalLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                poolTokenSupply: completedRequest.poolToken.totalSupply(),
-                stakedBalance: pool.stakedBalance,
-                actualBalance: baseToken.balanceOf(address(_vault))
-            });
-
-            emit TradingLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                reserveToken: baseToken,
-                liquidity: pool.baseTokenTradingLiquidity
-            });
+            _withdrawBaseToken(contextId, provider, completedRequest);
         }
     }
 
@@ -652,5 +582,101 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 "ERR_COLLECTION_IS_NOT_EMPTY"
             );
         }
+    }
+
+    /**
+     * @dev handles network token withdrawal
+     */
+    function _withdrawNetworkToken(
+        bytes32 contextId,
+        address provider,
+        CompletedWithdrawalRequest memory completedRequest
+    ) private {
+        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+        // transfer governance tokens from the caller to the network token pool
+        _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
+
+        // call withdraw on the network token pool - returns the amounts/breakdown
+        NetworkTokenPoolWithdrawalAmounts memory amounts = cachedNetworkTokenPool.withdraw(
+            provider,
+            completedRequest.poolTokenAmount
+        );
+    }
+
+    /**
+     * @dev handles base token withdrawal
+     */
+    function _withdrawBaseToken(
+        bytes32 contextId,
+        address provider,
+        CompletedWithdrawalRequest memory completedRequest
+    ) private {
+        IReserveToken baseToken = completedRequest.poolToken.reserveToken();
+        IPoolCollection poolCollection = _collectionByPool[baseToken];
+
+        completedRequest.poolToken.transferFrom(provider, address(this), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
+
+        // call withdraw on the base token pool - returns the amounts/breakdown
+        PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
+            contextId,
+            baseToken,
+            completedRequest.poolTokenAmount,
+            baseToken.balanceOf(address(_vault)),
+            baseToken.balanceOf(address(_externalProtectionWallet))
+        );
+
+        if (amounts.B > 0) {
+            // base token amount to transfer from the vault to the user
+            _vault.withdrawTokens(baseToken, payable(provider), amounts.B);
+        }
+
+        if (amounts.F > 0) {
+            // network token amount to transfer from the vault and then burn
+            _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+
+            _networkTokenGovernance.burn(amounts.F);
+        }
+
+        if (amounts.C > 0) {
+            // network token amount to mint directly for the user
+            _networkTokenGovernance.mint(provider, amounts.C);
+        }
+
+        if (amounts.E > 0) {
+            // base token amount to transfer from the protection wallet to the user
+            _externalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
+        }
+
+        Pool memory pool = poolCollection.poolData(baseToken);
+
+        emit FundsWithdrawn({
+            contextId: contextId,
+            token: baseToken,
+            provider: provider,
+            poolCollection: poolCollection,
+            poolTokenAmount: completedRequest.poolTokenAmount,
+            govTokenAmount: 0,
+            baseTokenAmount: amounts.B,
+            externalProtectionBaseTokenAmount: amounts.E,
+            networkTokenAmount: amounts.C,
+            withdrawalFee: 0 // TODO: withdrawalFee
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            poolTokenSupply: completedRequest.poolToken.totalSupply(),
+            stakedBalance: pool.stakedBalance,
+            actualBalance: baseToken.balanceOf(address(_vault))
+        });
+
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            reserveToken: baseToken,
+            liquidity: pool.baseTokenTradingLiquidity
+        });
     }
 }
