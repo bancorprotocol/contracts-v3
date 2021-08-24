@@ -9,7 +9,7 @@ import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/Token
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals } from "../network/interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, CompletedWithdrawalRequest } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
@@ -40,7 +40,7 @@ contract TestBancorNetwork is BancorNetwork {
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (uint256) {
+    ) external returns (CompletedWithdrawalRequest memory) {
         return pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 

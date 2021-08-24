@@ -21,7 +21,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
@@ -138,8 +138,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken indexed token,
         address indexed provider,
         IPoolCollection poolCollection,
-        uint256 withdrawAmount,
         uint256 poolTokenAmount,
+        uint256 govTokenAmount,
         uint256 baseTokenAmount,
         uint256 externalProtectionBaseTokenAmount,
         uint256 networkTokenAmount,
@@ -517,18 +517,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @inheritdoc IBancorNetwork
      */
     function withdraw(uint256 id) external override nonReentrant {
-        WithdrawalRequest memory request = _pendingWithdrawals.withdrawalRequest(id);
+        address provider = msg.sender;
 
-        // verify that the provider is the withdrawal position owner
-        require(msg.sender == request.provider, "ERR_ILLEGAL_ID");
-
-        // generated using sender, blocktime, and all args
-        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, block.timestamp, id));
+        // generated context ID for monitoring
+        bytes32 contextId = keccak256(abi.encodePacked(provider, block.timestamp, id));
 
         // claim the pool tokens
-        _pendingWithdrawals.completeWithdrawal(contextId, msg.sender, id);
+        CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(
+            contextId,
+            provider,
+            id
+        );
 
-        if (request.poolToken == _networkPoolToken) {
+        if (completedRequest.poolToken == _networkPoolToken) {
             // TODO:
             // requires approval for vBNT
             // transfer vBNT from the caller to the BNT pool
@@ -536,24 +537,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             // emit the FundsWithdrawn event based on the return values from the pool’s withdraw function
             // emit the TotalLiquidityUpdated event
         } else {
-            IReserveToken baseToken = request.poolToken.reserveToken();
+            IReserveToken baseToken = completedRequest.poolToken.reserveToken();
             IPoolCollection poolCollection = _collectionByPool[baseToken];
 
-            request.poolToken.transferFrom(request.provider, address(this), request.amount);
-            request.poolToken.approve(address(poolCollection), request.amount);
+            completedRequest.poolToken.transferFrom(provider, address(this), completedRequest.poolTokenAmount);
+            completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
             // call withdraw on the TKN pool - returns the amounts/breakdown
             PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
                 contextId,
                 baseToken,
-                request.amount,
+                completedRequest.poolTokenAmount,
                 baseToken.balanceOf(address(_vault)),
                 baseToken.balanceOf(address(_externalProtectionWallet))
             );
 
             if (amounts.B > 0) {
                 // base token amount to transfer from the vault to the user
-                _vault.withdrawTokens(baseToken, payable(request.provider), amounts.B);
+                _vault.withdrawTokens(baseToken, payable(provider), amounts.B);
             }
 
             if (amounts.F > 0) {
@@ -565,12 +566,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
             if (amounts.C > 0) {
                 // network token amount to mint directly for the user
-                _networkTokenGovernance.mint(request.provider, amounts.C);
+                _networkTokenGovernance.mint(provider, amounts.C);
             }
 
             if (amounts.E > 0) {
                 // base token amount to transfer from the protection wallet to the user
-                _externalProtectionWallet.withdrawTokens(baseToken, payable(request.provider), amounts.E);
+                _externalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
             }
 
             Pool memory pool = poolCollection.poolData(baseToken);
@@ -578,10 +579,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             emit FundsWithdrawn(
                 contextId,
                 baseToken,
-                request.provider,
+                provider,
                 poolCollection,
-                request.amount,
-                request.amount,
+                completedRequest.poolTokenAmount,
+                0,
                 amounts.B,
                 amounts.E,
                 amounts.C,
@@ -591,7 +592,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             emit TotalLiquidityUpdated(
                 contextId,
                 baseToken,
-                request.poolToken.totalSupply(),
+                completedRequest.poolToken.totalSupply(),
                 pool.stakedBalance,
                 baseToken.balanceOf(address(_vault))
             );

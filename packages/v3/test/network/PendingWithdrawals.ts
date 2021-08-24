@@ -231,7 +231,7 @@ describe('PendingWithdrawals', () => {
                     const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
                     expect(withdrawalRequest.provider).to.equal(providerAddress);
                     expect(withdrawalRequest.poolToken).to.equal(poolToken.address);
-                    expect(withdrawalRequest.amount).to.equal(amount);
+                    expect(withdrawalRequest.poolTokenAmount).to.equal(amount);
                     expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
                 };
 
@@ -368,15 +368,15 @@ describe('PendingWithdrawals', () => {
                             reserveToken.address,
                             provider.address,
                             id,
-                            withdrawalRequest.amount,
+                            withdrawalRequest.poolTokenAmount,
                             (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                         );
 
                     expect(await poolToken.balanceOf(provider.address)).to.equal(
-                        providerBalance.add(withdrawalRequest.amount)
+                        providerBalance.add(withdrawalRequest.poolTokenAmount)
                     );
                     expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
-                        pendingWithdrawalsBalance.sub(withdrawalRequest.amount)
+                        pendingWithdrawalsBalance.sub(withdrawalRequest.poolTokenAmount)
                     );
                     expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
                         withdrawalRequestCount.sub(BigNumber.from(1))
@@ -463,7 +463,7 @@ describe('PendingWithdrawals', () => {
                             reserveToken.address,
                             provider.address,
                             id,
-                            withdrawalRequest.amount,
+                            withdrawalRequest.poolTokenAmount,
                             (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                         );
 
@@ -476,7 +476,7 @@ describe('PendingWithdrawals', () => {
                     const withdrawalRequest2 = await pendingWithdrawals.withdrawalRequest(id);
                     expect(withdrawalRequest2.provider).to.equal(withdrawalRequest.provider);
                     expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
-                    expect(withdrawalRequest2.amount).to.equal(withdrawalRequest.amount);
+                    expect(withdrawalRequest2.poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
                     expect(withdrawalRequest2.createdAt).to.gte(await pendingWithdrawals.currentTime());
                     expect(withdrawalRequest2.createdAt).not.to.equal(withdrawalRequest.createdAt);
                 };
@@ -557,14 +557,15 @@ describe('PendingWithdrawals', () => {
                         );
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
-                        const retPoolTokenAmount = await network.callStatic.completeWithdrawalT(
+                        const completedRequest = await network.callStatic.completeWithdrawalT(
                             pendingWithdrawals.address,
                             contextId,
                             provider.address,
 
                             id
                         );
-                        expect(retPoolTokenAmount).to.equal(withdrawalRequest.amount);
+                        expect(completedRequest.poolToken).to.equal(withdrawalRequest.poolToken);
+                        expect(completedRequest.poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
                         const res = await network.completeWithdrawalT(
                             pendingWithdrawals.address,
@@ -580,16 +581,16 @@ describe('PendingWithdrawals', () => {
                                 networkToken ? await network.networkToken() : reserveToken.address,
                                 provider.address,
                                 id,
-                                withdrawalRequest.amount,
+                                withdrawalRequest.poolTokenAmount,
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
                         expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
                         expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
-                            pendingWithdrawalsBalance.sub(withdrawalRequest.amount)
+                            pendingWithdrawalsBalance.sub(withdrawalRequest.poolTokenAmount)
                         );
                         expect(await poolToken.balanceOf(network.address)).to.equal(
-                            networkBalance.add(withdrawalRequest.amount)
+                            networkBalance.add(withdrawalRequest.poolTokenAmount)
                         );
                         expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
                             withdrawalRequestCount.sub(BigNumber.from(1))

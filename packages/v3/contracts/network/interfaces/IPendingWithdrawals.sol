@@ -17,12 +17,22 @@ import { IBancorNetwork } from "./IBancorNetwork.sol";
 struct WithdrawalRequest {
     // the liquidity provider
     address provider;
-    // the address of the locked pool token
+    // the locked pool token
     IPoolToken poolToken;
     // the time when the request was created (Unix timestamp))
     uint32 createdAt;
     // the locked pool token amount
-    uint256 amount;
+    uint256 poolTokenAmount;
+}
+
+/**
+ * @dev The data struct representing a completed withdrawal request
+ */
+struct CompletedWithdrawalRequest {
+    // the transferred pool token
+    IPoolToken poolToken;
+    // the transferred pool token amount
+    uint256 poolTokenAmount;
 }
 
 /**
@@ -104,7 +114,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function reinitWithdrawal(uint256 id) external;
 
     /**
-     * @dev completes a withdrawal request and return the amount of pool tokens transferred
+     * @dev completes a withdrawal request and returns the pool token and its transferred amount
      *
      * requirements:
      *
@@ -116,5 +126,5 @@ interface IPendingWithdrawals is IUpgradeable {
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (uint256);
+    ) external returns (CompletedWithdrawalRequest memory);
 }
