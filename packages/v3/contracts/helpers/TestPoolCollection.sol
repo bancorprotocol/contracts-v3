@@ -30,8 +30,8 @@ contract TestPoolCollection is PoolCollection {
         uint128 networkTokenTradingLiquidity
     ) external {
         Pool storage data = _pools[reserveToken];
-        data.baseTokenTradingLiquidity = baseTokenTradingLiquidity;
-        data.networkTokenTradingLiquidity = networkTokenTradingLiquidity;
+        data.liquidity.baseTokenTradingLiquidity = baseTokenTradingLiquidity;
+        data.liquidity.networkTokenTradingLiquidity = networkTokenTradingLiquidity;
     }
 
     function setAverageRateT(IReserveToken reserveToken, AverageRate memory newAverageRate) external {

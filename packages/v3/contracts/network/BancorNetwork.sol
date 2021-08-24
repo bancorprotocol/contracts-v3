@@ -668,7 +668,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             contextId: contextId,
             pool: baseToken,
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
-            stakedBalance: pool.stakedBalance,
+            stakedBalance: pool.liquidity.stakedBalance,
             actualBalance: baseToken.balanceOf(address(_vault))
         });
 
@@ -676,7 +676,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             contextId: contextId,
             pool: baseToken,
             reserveToken: baseToken,
-            liquidity: pool.baseTokenTradingLiquidity
+            liquidity: pool.liquidity.baseTokenTradingLiquidity
         });
     }
 }

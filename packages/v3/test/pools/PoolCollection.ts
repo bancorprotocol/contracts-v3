@@ -390,14 +390,22 @@ describe('PoolCollection', () => {
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositingEnabled).to.be.true;
-                expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.averageRate.time).to.equal(BigNumber.from(0));
                 expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
-                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
+
+                const { liquidity } = pool;
+                expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
+
+                const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+                expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
+                expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
+                expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
+                expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
             });
 
             context('with a token symbol override', () => {
