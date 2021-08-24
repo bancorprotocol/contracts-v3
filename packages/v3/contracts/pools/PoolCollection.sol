@@ -492,6 +492,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Pool storage pool = _pools[baseToken];
         uint256 totalSupply = pool.poolToken.totalSupply();
 
+        // all of these are at most MAX_UINT128, but we store them as uint256 in order to avoid 128-bit multiplication
+        // overflows
         uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
