@@ -602,7 +602,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns `xy(1-n) / z`, pretending `n` is normalized
+     * @dev returns `xy(1-n) / z`, assuming `n` is normalized
      */
     function _deductFee(
         uint256 x,
@@ -625,7 +625,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * e = base token staked amount
      * n = withdrawal fee in ppm units
      *
-     * output, pretending `n` is normalized:
+     * output, assuming `n` is normalized:
      * x - E / (1 - n) * d / e
      * d - E / (1 - n) * d / e
      * e - E / (1 - n)
@@ -666,7 +666,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * n = withdrawal fee in ppm units
      * x = base pool token withdrawal amount
      *
-     * output, pretending `m` and `n` are normalized:
+     * output, assuming `m` and `n` are normalized:
      * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
      * if `f(f + bm - 2fm) / (b - fm) >= exn / d` return `0`
      */
@@ -696,7 +696,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * n = withdrawal fee in ppm units
      * x = base pool token withdrawal amount
      *
-     * output, pretending `m` and `n` are normalized:
+     * output, assuming `m` and `n` are normalized:
      * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
      * if `f(f - bm - 2fm) / (b + fm) >= exn / d` return `0`
      */
@@ -713,7 +713,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the following quotients, pretending `m` is normalized:
+     * @dev returns the following quotients, assuming `m` is normalized:
      * 1. `(f + bm - 2fm) / (b - fm)`
      * 2. `(2b - bm - f) / (b - fm)`
      */
@@ -733,7 +733,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the following quotients, pretending `m` is normalized:
+     * @dev returns the following quotients, assuming `m` is normalized:
      * 1. `(f - bm - 2fm) / (b + fm)`
      * 2. `(2b - bm + f) / (b + fm)`
      */
