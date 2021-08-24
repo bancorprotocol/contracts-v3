@@ -615,7 +615,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             baseTokenAmount: 0,
             externalProtectionBaseTokenAmount: 0,
             networkTokenAmount: amounts.networkTokenAmount,
-            withdrawalFeeAmount: amounts.withdrawalFeeAmount
+            withdrawalFeeAmount: amounts.withdrawalFeeNetworkTokenAmount
         });
 
         emit TotalLiquidityUpdated({
