@@ -358,7 +358,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         _externalProtectionWallet = newExternalProtectionWallet;
 
-        emit ExternalProtectionWalletUpdated(prevExternalProtectionWallet, newExternalProtectionWallet);
+        emit ExternalProtectionWalletUpdated({
+            prevWallet: prevExternalProtectionWallet,
+            newWallet: newExternalProtectionWallet
+        });
     }
 
     /**
@@ -391,7 +394,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         uint16 poolType = poolCollection.poolType();
         _setLatestPoolCollection(poolType, poolCollection);
 
-        emit PoolCollectionAdded(poolType, poolCollection);
+        emit PoolCollectionAdded({ poolType: poolType, poolCollection: poolCollection });
     }
 
     /**
@@ -422,7 +425,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         _setLatestPoolCollection(poolType, newLatestPoolCollection);
 
-        emit PoolCollectionRemoved(poolType, poolCollection);
+        emit PoolCollectionRemoved({ poolType: poolType, poolCollection: poolCollection });
     }
 
     /**
@@ -510,7 +513,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // add the pool to the reverse pool collection lookup
         _collectionByPool[reserveToken] = poolCollection;
 
-        emit PoolAdded(poolType, reserveToken, poolCollection);
+        emit PoolAdded({ poolType: poolType, pool: reserveToken, poolCollection: poolCollection });
     }
 
     /**
@@ -576,28 +579,33 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
             Pool memory pool = poolCollection.poolData(baseToken);
 
-            emit FundsWithdrawn(
-                contextId,
-                baseToken,
-                provider,
-                poolCollection,
-                completedRequest.poolTokenAmount,
-                0,
-                amounts.B,
-                amounts.E,
-                amounts.C,
-                0 // TODO: withdrawalFee
-            );
+            emit FundsWithdrawn({
+                contextId: contextId,
+                token: baseToken,
+                provider: provider,
+                poolCollection: poolCollection,
+                poolTokenAmount: completedRequest.poolTokenAmount,
+                govTokenAmount: 0,
+                baseTokenAmount: amounts.B,
+                externalProtectionBaseTokenAmount: amounts.E,
+                networkTokenAmount: amounts.C,
+                withdrawalFee: 0 // TODO: withdrawalFee
+            });
 
-            emit TotalLiquidityUpdated(
-                contextId,
-                baseToken,
-                completedRequest.poolToken.totalSupply(),
-                pool.stakedBalance,
-                baseToken.balanceOf(address(_vault))
-            );
+            emit TotalLiquidityUpdated({
+                contextId: contextId,
+                pool: baseToken,
+                poolTokenSupply: completedRequest.poolToken.totalSupply(),
+                stakedBalance: pool.stakedBalance,
+                actualBalance: baseToken.balanceOf(address(_vault))
+            });
 
-            emit TradingLiquidityUpdated(contextId, baseToken, baseToken, pool.baseTokenTradingLiquidity);
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: baseToken,
+                reserveToken: baseToken,
+                liquidity: pool.baseTokenTradingLiquidity
+            });
         }
     }
 
@@ -616,7 +624,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         _latestPoolCollections[poolType] = poolCollection;
 
-        emit LatestPoolCollectionReplaced(poolType, prevLatestPoolCollection, poolCollection);
+        emit LatestPoolCollectionReplaced({
+            poolType: poolType,
+            prevPoolCollection: prevLatestPoolCollection,
+            newPoolCollection: poolCollection
+        });
     }
 
     /**
