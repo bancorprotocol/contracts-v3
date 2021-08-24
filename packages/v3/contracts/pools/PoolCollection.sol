@@ -602,7 +602,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns `xy(1-n) / z`, assuming `n` is normalized
+     * @dev returns `xy * (1 - n) / z`, assuming `n` is normalized
      */
     function _deductFee(
         uint256 x,
@@ -626,9 +626,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * n = withdrawal fee in ppm units
      *
      * output, assuming `n` is normalized:
-     * x - E / (1 - n) * d / e
-     * d - E / (1 - n) * d / e
-     * e - E / (1 - n)
+     * x = E / (1 - n) * d / e
+     * d = E / (1 - n) * d / e
+     * e = E / (1 - n)
      */
     function _reviseInput(
         uint256 E,
