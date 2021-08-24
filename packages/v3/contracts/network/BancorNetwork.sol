@@ -588,7 +588,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @dev handles network token withdrawal
      */
     function _withdrawNetworkToken(
-        bytes32 contextId,
+        bytes32, /*contextId*/
         address provider,
         CompletedWithdrawalRequest memory completedRequest
     ) private {
@@ -598,10 +598,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the network token pool - returns the amounts/breakdown
-        NetworkTokenPoolWithdrawalAmounts memory amounts = cachedNetworkTokenPool.withdraw(
-            provider,
-            completedRequest.poolTokenAmount
-        );
+        /* NetworkTokenPoolWithdrawalAmounts memory amounts = */
+        cachedNetworkTokenPool.withdraw(provider, completedRequest.poolTokenAmount);
 
         // TODO: emit events
     }
