@@ -16,7 +16,7 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { IPoolCollection, Pool, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
@@ -522,7 +522,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function withdraw(uint256 id) external override nonReentrant {
         address provider = msg.sender;
 
-        // generated context ID for monitoring
+        // generate context ID for monitoring
         bytes32 contextId = keccak256(abi.encodePacked(provider, block.timestamp, id));
 
         // complete the withdrawal and claim the locked pool tokens
@@ -602,6 +602,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             provider,
             completedRequest.poolTokenAmount
         );
+
+        // TODO: emit events
     }
 
     /**
@@ -649,7 +651,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             _externalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
         }
 
-        Pool memory pool = poolCollection.poolData(baseToken);
+        PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);
 
         emit FundsWithdrawn({
             contextId: contextId,
@@ -668,15 +670,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             contextId: contextId,
             pool: baseToken,
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
-            stakedBalance: pool.liquidity.stakedBalance,
+            stakedBalance: poolLiquidity.stakedBalance,
             actualBalance: baseToken.balanceOf(address(_vault))
         });
 
-        emit TradingLiquidityUpdated({
-            contextId: contextId,
-            pool: baseToken,
-            reserveToken: baseToken,
-            liquidity: pool.liquidity.baseTokenTradingLiquidity
-        });
+        if (amounts.B > 0) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: baseToken,
+                reserveToken: baseToken,
+                liquidity: poolLiquidity.baseTokenTradingLiquidity
+            });
+        }
+
+        if (amounts.C > 0) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: baseToken,
+                reserveToken: IReserveToken(address(_networkToken)),
+                liquidity: poolLiquidity.networkTokenTradingLiquidity
+            });
+        }
     }
 }
