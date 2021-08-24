@@ -619,12 +619,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
+        ITokenHolder cachedExternalProtectionWallet = _externalProtectionWallet;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
             contextId,
             baseToken,
             completedRequest.poolTokenAmount,
             baseToken.balanceOf(address(_vault)),
-            baseToken.balanceOf(address(_externalProtectionWallet))
+            baseToken.balanceOf(address(cachedExternalProtectionWallet))
         );
 
         if (amounts.B > 0) {
@@ -646,7 +647,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         if (amounts.E > 0) {
             // base token amount to transfer from the protection wallet to the user
-            _externalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
+            cachedExternalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
         }
 
         PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);

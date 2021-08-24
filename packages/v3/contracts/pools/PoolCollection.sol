@@ -294,9 +294,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @inheritdoc IPoolCollection
      */
     function poolLiquidity(IReserveToken reserveToken) external view override returns (PoolLiquidity memory) {
-        Pool memory pool = _pools[reserveToken];
-
-        return pool.liquidity;
+        return _pools[reserveToken].liquidity;
     }
 
     /**
