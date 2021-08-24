@@ -26,6 +26,8 @@ struct DepositAmounts {
 struct WithdrawalAmounts {
     uint256 networkTokenAmount; // the withdrawn network token amount
     uint256 poolTokenAmount; // the burned pool token amount
+    uint256 govTokenAmount; // the burned governance token amount
+    uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
 }
 
 /**

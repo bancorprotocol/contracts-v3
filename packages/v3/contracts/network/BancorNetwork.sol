@@ -143,7 +143,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         uint256 baseTokenAmount,
         uint256 externalProtectionBaseTokenAmount,
         uint256 networkTokenAmount,
-        uint256 withdrawalFee
+        uint256 withdrawalFeeAmount
     );
 
     /**
@@ -588,7 +588,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @dev handles network token withdrawal
      */
     function _withdrawNetworkToken(
-        bytes32, /*contextId*/
+        bytes32 contextId,
         address provider,
         CompletedWithdrawalRequest memory completedRequest
     ) private {
@@ -598,10 +598,33 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the network token pool - returns the amounts/breakdown
-        /* NetworkTokenPoolWithdrawalAmounts memory amounts = */
-        cachedNetworkTokenPool.withdraw(provider, completedRequest.poolTokenAmount);
+        NetworkTokenPoolWithdrawalAmounts memory amounts = cachedNetworkTokenPool.withdraw(
+            provider,
+            completedRequest.poolTokenAmount
+        );
 
-        // TODO: emit events
+        assert(amounts.poolTokenAmount == completedRequest.poolTokenAmount);
+
+        emit FundsWithdrawn({
+            contextId: contextId,
+            token: IReserveToken(address(_networkToken)),
+            provider: provider,
+            poolCollection: IPoolCollection(address(0x0)),
+            poolTokenAmount: amounts.poolTokenAmount,
+            govTokenAmount: amounts.govTokenAmount,
+            baseTokenAmount: 0,
+            externalProtectionBaseTokenAmount: 0,
+            networkTokenAmount: amounts.networkTokenAmount,
+            withdrawalFeeAmount: amounts.withdrawalFeeAmount
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: IReserveToken(address(_networkToken)),
+            poolTokenSupply: completedRequest.poolToken.totalSupply(),
+            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            actualBalance: _networkToken.balanceOf(address(_vault))
+        });
     }
 
     /**
@@ -662,7 +685,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             baseTokenAmount: amounts.B,
             externalProtectionBaseTokenAmount: amounts.E,
             networkTokenAmount: amounts.C,
-            withdrawalFee: 0 // TODO: withdrawalFee
+            withdrawalFeeAmount: 0 // TODO: withdrawalFee
         });
 
         emit TotalLiquidityUpdated({
