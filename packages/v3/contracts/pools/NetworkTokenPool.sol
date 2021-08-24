@@ -308,12 +308,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 networkTokenAmount = poolTokenAmount.mul(_stakedBalance).div(_poolToken.totalSupply());
 
         // deduct the exit fee from the network token amount
-        uint256 withdrawalFeeNetworkTokenAmount = MathEx.mulDivF(
+        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
             networkTokenAmount,
             _settings.withdrawalFeePPM(),
             PPM_RESOLUTION
         );
-        networkTokenAmount = networkTokenAmount.sub(withdrawalFeeNetworkTokenAmount);
+        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
 
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
@@ -329,7 +329,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
                 networkTokenAmount: networkTokenAmount,
                 poolTokenAmount: poolTokenAmount,
                 govTokenAmount: poolTokenAmount,
-                withdrawalFeeNetworkTokenAmount: withdrawalFeeNetworkTokenAmount
+                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
             });
     }
 
