@@ -50,6 +50,7 @@ struct WithdrawalAmounts {
     uint256 E; // base token amount to transfer from the protection wallet to the user
     uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
     uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+    uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
     Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
 

@@ -599,6 +599,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 amounts.F = _deductFee(a, x, d, 0);
             }
         }
+
+        // TODO: withdrawal fee
+        amounts.baseTokenWithdrawalFeeAmount = 0;
     }
 
     /**
