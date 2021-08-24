@@ -425,9 +425,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // handle the minting or burning of network tokens in the pool
         if (amounts.G > 0) {
-            if (amounts.H == Action.mintNetworkTokens) {
+            if (amounts.H == Action.MintNetworkTokens) {
                 _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G, false);
-            } else if (amounts.H == Action.burnNetworkTokens) {
+            } else if (amounts.H == Action.BurnNetworkTokens) {
                 _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
@@ -559,7 +559,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 amounts.G = 0; // ideally this should be a circuit-breaker in the calling function
             }
             if (amounts.G > 0) {
-                amounts.H = Action.burnNetworkTokens;
+                amounts.H = Action.BurnNetworkTokens;
             }
         } else {
             // the pool is in a base-token deficit
@@ -567,10 +567,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 uint256 f = _deductFee(e - bPc, x, d, n);
                 amounts.G = _negArbitrage(_cap(a, amounts.F), _cap(b, amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
-                    amounts.H = Action.mintNetworkTokens;
+                    amounts.H = Action.MintNetworkTokens;
                 }
             }
-            if (amounts.H == Action.noArbitrage) {
+            if (amounts.H == Action.NoArbitrage) {
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = a.mul(x);
                 uint256 bMd = b.mul(d);

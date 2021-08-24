@@ -42,9 +42,9 @@ struct Pool {
 
 // arbitrage actions upon base token withdrawal
 enum Action {
-    noArbitrage,
-    burnNetworkTokens,
-    mintNetworkTokens
+    NoArbitrage,
+    BurnNetworkTokens,
+    MintNetworkTokens
 }
 
 // solhint-disable var-name-mixedcase
