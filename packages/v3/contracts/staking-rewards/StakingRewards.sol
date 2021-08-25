@@ -16,6 +16,13 @@ contract StakingRewards is IStakingRewards {
     uint256 internal constant TOTAL_REWARDS = 4e25; // 40 million + 18 decimals
     uint256 internal constant ONE = 1 << 127;
 
+    /**
+     * @dev returns the amount of rewards distributed after a given time period since deployment has elapsed
+     * the returned value is calculated as `TOTAL_REWARDS * (1 - 1 / e ^ (LAMBDA * numOfSeconds))`
+     * note that because the exponentiation function is limited to an input of up to (and excluding) 16,
+     * the input value to this function is limited by `LAMBDA * numOfSeconds < 16` --> `numOfSeconds < 1120000000`
+     * for `numOfSeconds = 1120000000 - 1`, the formula above returns more than 99.9999% of `TOTAL_REWARDS`
+     */
     function reward(uint256 numOfSeconds) internal pure returns (uint256) {
         uint256 n = exp(numOfSeconds.mul(LAMBDA_N), LAMBDA_D);
         return MathEx.mulDivF(TOTAL_REWARDS, n - ONE, n);
