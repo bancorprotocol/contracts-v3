@@ -27,6 +27,8 @@ contract StakingRewards is IStakingRewards {
         return MathEx.mulDivF(TOTAL_REWARDS, n - ONE, n);
     }
 
+    // prettier-ignore
+
     /**
      * @dev returns `e ^ (a / b) * ONE`:
      * - Rewrite the input as a sum of binary exponents and a single residual r, as small as possible
