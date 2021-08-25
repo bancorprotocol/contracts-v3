@@ -34,8 +34,8 @@ struct Pool {
 }
 
 // arbitrage actions upon base token withdrawal
-enum Action {
-    NoArbitrage,
+enum WithdrawalArbitrageAction {
+    None,
     BurnNetworkTokens,
     MintNetworkTokens
 }
@@ -51,7 +51,7 @@ struct WithdrawalAmounts {
     uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
     uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
     uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
-    Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
+    WithdrawalArbitrageAction H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
 
 // solhint-enable var-name-mixedcase

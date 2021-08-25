@@ -19,7 +19,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
-import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts, Action } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts, WithdrawalArbitrageAction } from "./interfaces/IPoolCollection.sol";
 import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
 import { PoolToken } from "./PoolToken.sol";
@@ -437,9 +437,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // handle the minting or burning of network tokens in the pool
         if (amounts.G > 0) {
-            if (amounts.H == Action.MintNetworkTokens) {
+            if (amounts.H == WithdrawalArbitrageAction.MintNetworkTokens) {
                 _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.G, false);
-            } else if (amounts.H == Action.BurnNetworkTokens) {
+            } else if (amounts.H == WithdrawalArbitrageAction.BurnNetworkTokens) {
                 _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.G);
             }
         }
@@ -578,7 +578,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 amounts.G = 0; // ideally this should be a circuit-breaker in the calling function
             }
             if (amounts.G > 0) {
-                amounts.H = Action.BurnNetworkTokens;
+                amounts.H = WithdrawalArbitrageAction.BurnNetworkTokens;
             }
         } else {
             // the pool is in a base-token deficit
@@ -586,10 +586,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 uint256 f = _deductFee(e - bPc, x, d, n);
                 amounts.G = _negArbitrage(_cap(a, amounts.F), _cap(b, amounts.D), d, f, m, n, eMx);
                 if (amounts.G > 0) {
-                    amounts.H = Action.MintNetworkTokens;
+                    amounts.H = WithdrawalArbitrageAction.MintNetworkTokens;
                 }
             }
-            if (amounts.H == Action.NoArbitrage) {
+            if (amounts.H == WithdrawalArbitrageAction.None) {
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = a.mul(x);
                 uint256 bMd = b.mul(d);
