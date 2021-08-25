@@ -651,26 +651,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             baseToken.balanceOf(address(cachedExternalProtectionWallet))
         );
 
-        if (amounts.B > 0) {
+        if (amounts.baseTokenAmountToTransferFromVaultToUser > 0) {
             // base token amount to transfer from the vault to the user
-            _vault.withdrawTokens(baseToken, payable(provider), amounts.B);
+            _vault.withdrawTokens(baseToken, payable(provider), amounts.baseTokenAmountToTransferFromVaultToUser);
         }
 
-        if (amounts.F > 0) {
+        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
             // network token amount to transfer from the vault and then burn
-            _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.F);
+            _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.networkTokenAmountToDeductFromLiquidity);
 
-            _networkTokenGovernance.burn(amounts.F);
+            _networkTokenGovernance.burn(amounts.networkTokenAmountToDeductFromLiquidity);
         }
 
-        if (amounts.C > 0) {
+        if (amounts.networkTokenAmountToMintForUser > 0) {
             // network token amount to mint directly for the user
-            _networkTokenGovernance.mint(provider, amounts.C);
+            _networkTokenGovernance.mint(provider, amounts.networkTokenAmountToMintForUser);
         }
 
-        if (amounts.E > 0) {
+        if (amounts.baseTokenAmountToTransferFromWalletToUser > 0) {
             // base token amount to transfer from the protection wallet to the user
-            cachedExternalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.E);
+            cachedExternalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.baseTokenAmountToTransferFromWalletToUser);
         }
 
         PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);
@@ -682,9 +682,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             poolCollection: poolCollection,
             poolTokenAmount: completedRequest.poolTokenAmount,
             govTokenAmount: 0,
-            baseTokenAmount: amounts.B,
-            externalProtectionBaseTokenAmount: amounts.E,
-            networkTokenAmount: amounts.C,
+            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToUser,
+            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromWalletToUser,
+            networkTokenAmount: amounts.networkTokenAmountToMintForUser,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });
 
@@ -696,7 +696,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             actualBalance: baseToken.balanceOf(address(_vault))
         });
 
-        if (amounts.B > 0) {
+        if (amounts.baseTokenAmountToTransferFromVaultToUser > 0) {
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: baseToken,
@@ -705,7 +705,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             });
         }
 
-        if (amounts.C > 0) {
+        if (amounts.networkTokenAmountToMintForUser > 0) {
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: baseToken,
