@@ -305,7 +305,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         returns (WithdrawalAmounts memory)
     {
         // calculate the network token amount to transfer
-        uint256 networkTokenAmount = poolTokenAmount.mul(_stakedBalance).div(_poolToken.totalSupply());
+        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
 
         // deduct the exit fee from the network token amount
         uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
