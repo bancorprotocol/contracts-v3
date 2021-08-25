@@ -693,8 +693,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - n), z.mul(PPM_RESOLUTION));
     }
 
-    // solhint-disable var-name-mixedcase
-
     /**
      * @dev recalculates the values of `x`, `d` and `e`
      *
@@ -733,8 +731,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 h = MathEx.mulDivF(g, basePoolTokenTotalSupply, baseTokenStakedAmount);
         return (basePoolTokenWithdrawalAmount.sub(h), basePoolTokenTotalSupply.sub(h), baseTokenStakedAmount.sub(g));
     }
-
-    // solhint-enable var-name-mixedcase
 
     /**
      * @dev returns the amount of network tokens which should be removed

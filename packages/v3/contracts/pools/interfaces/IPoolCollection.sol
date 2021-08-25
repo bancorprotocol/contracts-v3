@@ -40,8 +40,6 @@ enum Action {
     MintNetworkTokens
 }
 
-// solhint-disable var-name-mixedcase
-
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromVaultToUser; // base token amount to transfer from the vault to the user
@@ -53,8 +51,6 @@ struct WithdrawalAmounts {
     uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
     Action networkTokenArbitrageAction; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
-
-// solhint-enable var-name-mixedcase
 
 /**
  * @dev Pool Collection interface
