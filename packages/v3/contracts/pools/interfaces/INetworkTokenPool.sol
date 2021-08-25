@@ -18,19 +18,16 @@ import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "../../network/interfaces/IPendingWithdrawals.sol";
 
 struct DepositAmounts {
-    // the provided network token amount
-    uint256 networkTokenAmount;
-    // the minted pool token amount
-    uint256 poolTokenAmount;
-    // the minted gov token amount
-    uint256 govTokenAmount;
+    uint256 networkTokenAmount; // the provided network token amount
+    uint256 poolTokenAmount; // the minted pool token amount
+    uint256 govTokenAmount; // the minted gov token amount
 }
 
 struct WithdrawalAmounts {
-    // the withdrawn network token amount
-    uint256 networkTokenAmount;
-    // the burned pool token amount
-    uint256 poolTokenAmount;
+    uint256 networkTokenAmount; // the withdrawn network token amount
+    uint256 poolTokenAmount; // the burned pool token amount
+    uint256 govTokenAmount; // the burned governance token amount
+    uint256 networkTokenWithdrawalFeeAmount; // the withdrawal fee network token amount
 }
 
 /**

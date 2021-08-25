@@ -15,36 +15,29 @@ import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 
+struct PoolLiquidity {
+    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
+    uint128 networkTokenTradingLiquidity; // the network token trading liquidity
+    uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
+    uint256 stakedBalance; // the staked balance
+}
+
 struct Pool {
-    // the pool token of a given pool
-    IPoolToken poolToken;
-    // the trading fee (in units of PPM)
-    uint32 tradingFeePPM;
-    // whether trading is enabled
-    bool tradingEnabled;
-    // whether depositing is enabled
-    bool depositingEnabled;
-    // the base token trading liquidity
-    uint128 baseTokenTradingLiquidity;
-    // the network token trading liquidity
-    uint128 networkTokenTradingLiquidity;
-    // the recent average rate
-    AverageRate averageRate;
-    // the product of the base token and network token trading liquidities (used for fee calculations)
-    uint256 tradingLiquidityProduct;
-    // the staked balance
-    uint256 stakedBalance;
-    // the initial rate of one base token in network token units in a given pool
-    Fraction initialRate;
-    // the deposit limit
-    uint256 depositLimit;
+    IPoolToken poolToken; // the pool token of a given pool
+    uint32 tradingFeePPM; // the trading fee (in units of PPM)
+    bool tradingEnabled; // whether trading is enabled
+    bool depositingEnabled; // whether depositing is enabled
+    AverageRate averageRate; // the recent average rate
+    Fraction initialRate; // the initial rate of one base token in network token units in a given pool
+    uint256 depositLimit; // the deposit limit
+    PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 
 // arbitrage actions upon base token withdrawal
-enum Action {
-    noArbitrage,
-    burnNetworkTokens,
-    mintNetworkTokens
+enum WithdrawalArbitrageAction {
+    None,
+    BurnNetworkTokens,
+    MintNetworkTokens
 }
 
 // solhint-disable var-name-mixedcase
@@ -57,7 +50,8 @@ struct WithdrawalAmounts {
     uint256 E; // base token amount to transfer from the protection wallet to the user
     uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
     uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-    Action H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
+    uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
+    WithdrawalArbitrageAction H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
 
 // solhint-enable var-name-mixedcase
@@ -105,6 +99,11 @@ interface IPoolCollection is IVersioned {
      * @dev returns whether a pool's rate is stable
      */
     function isPoolRateStable(IReserveToken reserveToken) external view returns (bool);
+
+    /**
+     * @dev returns the overall liquidity in the pool
+     */
+    function poolLiquidity(IReserveToken reserveToken) external view returns (PoolLiquidity memory);
 
     /**
      * @dev returns the pool data for a given reserve token

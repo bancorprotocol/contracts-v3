@@ -12,27 +12,21 @@ import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
- * @dev The data struct representing a pending withdrawal request
+ * @dev the data struct representing a pending withdrawal request
  */
 struct WithdrawalRequest {
-    // the liquidity provider
-    address provider;
-    // the locked pool token
-    IPoolToken poolToken;
-    // the time when the request was created (Unix timestamp))
-    uint32 createdAt;
-    // the locked pool token amount
-    uint256 poolTokenAmount;
+    address provider; // the liquidity provider
+    IPoolToken poolToken; // the locked pool token
+    uint32 createdAt; // the time when the request was created (Unix timestamp))
+    uint256 poolTokenAmount; // the locked pool token amount
 }
 
 /**
- * @dev The data struct representing a completed withdrawal request
+ * @dev the data struct representing a completed withdrawal request
  */
 struct CompletedWithdrawalRequest {
-    // the transferred pool token
-    IPoolToken poolToken;
-    // the transferred pool token amount
-    uint256 poolTokenAmount;
+    IPoolToken poolToken; // the transferred pool token
+    uint256 poolTokenAmount; // the transferred pool token amount
 }
 
 /**

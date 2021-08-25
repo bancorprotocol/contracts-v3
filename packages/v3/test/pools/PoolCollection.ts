@@ -43,7 +43,7 @@ interface MaxErrors {
     G: MaxError;
 }
 
-const ACTIONS: Record<string, number> = {
+const WITHDRAW_ARBITRAGE_ACTIONS: Record<string, number> = {
     'no arbitrage': 0,
     'burn tokens': 1,
     'mint tokens': 2
@@ -72,7 +72,7 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
                 expect(actual.E).to.almostEqual(new Decimal(E), maxErrors.E.absolute, maxErrors.E.relative);
                 expect(actual.F).to.almostEqual(new Decimal(F), maxErrors.F.absolute, maxErrors.F.relative);
                 expect(actual.G).to.almostEqual(new Decimal(G), maxErrors.G.absolute, maxErrors.G.relative);
-                expect(actual.H).to.equal(ACTIONS[H]);
+                expect(actual.H).to.equal(WITHDRAW_ARBITRAGE_ACTIONS[H]);
             });
         }
     };
@@ -390,14 +390,22 @@ describe('PoolCollection', () => {
                 expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                 expect(pool.tradingEnabled).to.be.true;
                 expect(pool.depositingEnabled).to.be.true;
-                expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
                 expect(pool.averageRate.time).to.equal(BigNumber.from(0));
                 expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
-                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(pool.stakedBalance).to.equal(BigNumber.from(0));
                 expect(pool.initialRate).to.equal(INITIAL_RATE);
                 expect(pool.depositLimit).to.equal(BigNumber.from(0));
+
+                const { liquidity } = pool;
+                expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
+
+                const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+                expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
+                expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
+                expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
+                expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
             });
 
             context('with a token symbol override', () => {

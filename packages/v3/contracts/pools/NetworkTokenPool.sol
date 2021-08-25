@@ -304,12 +304,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         validAddress(provider)
         returns (WithdrawalAmounts memory)
     {
-        // calculate the network token amount to transfer and deduct the exit fee from the network token amount
-        uint256 networkTokenAmount = MathEx.mulDivF(
-            poolTokenAmount,
-            _stakedBalance.mul(PPM_RESOLUTION - _settings.withdrawalFeePPM()),
-            _poolToken.totalSupply().mul(PPM_RESOLUTION)
+        // calculate the network token amount to transfer
+        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+
+        // deduct the exit fee from the network token amount
+        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
+            networkTokenAmount,
+            _settings.withdrawalFeePPM(),
+            PPM_RESOLUTION
         );
+        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
 
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, networkTokenAmount);
@@ -320,7 +324,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);
 
-        return WithdrawalAmounts({ networkTokenAmount: networkTokenAmount, poolTokenAmount: poolTokenAmount });
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
+            });
     }
 
     /**
