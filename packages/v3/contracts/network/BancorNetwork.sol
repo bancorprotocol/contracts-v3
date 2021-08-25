@@ -658,7 +658,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
             // network token amount to transfer from the vault and then burn
-            _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), amounts.networkTokenAmountToDeductFromLiquidity);
+            _vault.withdrawTokens(
+                IReserveToken(address(_networkToken)),
+                payable(address(this)),
+                amounts.networkTokenAmountToDeductFromLiquidity
+            );
 
             _networkTokenGovernance.burn(amounts.networkTokenAmountToDeductFromLiquidity);
         }
@@ -670,7 +674,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         if (amounts.baseTokenAmountToTransferFromWalletToUser > 0) {
             // base token amount to transfer from the protection wallet to the user
-            cachedExternalProtectionWallet.withdrawTokens(baseToken, payable(provider), amounts.baseTokenAmountToTransferFromWalletToUser);
+            cachedExternalProtectionWallet.withdrawTokens(
+                baseToken,
+                payable(provider),
+                amounts.baseTokenAmountToTransferFromWalletToUser
+            );
         }
 
         PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);
