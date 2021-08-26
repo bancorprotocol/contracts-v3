@@ -561,11 +561,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
-        uint256 bPc = baseTokenLiquidity.add(baseTokenExcessAmount);
+        uint256 baseTokenVaultBalance = baseTokenLiquidity.add(baseTokenExcessAmount);
 
-        if (baseTokenStakedAmount > bPc) {
+        if (baseTokenStakedAmount > baseTokenVaultBalance) {
             uint256 baseTokenOffsetAmount = _deductFee(
-                baseTokenStakedAmount - bPc,
+                baseTokenStakedAmount - baseTokenVaultBalance,
                 basePoolTokenWithdrawalAmount,
                 basePoolTokenTotalSupply,
                 withdrawalFeePPM
@@ -582,31 +582,31 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             );
         }
 
-        uint256 eMx = baseTokenStakedAmount.mul(basePoolTokenWithdrawalAmount);
+        uint256 baseTokenShare = baseTokenStakedAmount.mul(basePoolTokenWithdrawalAmount);
 
         amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
             1,
-            eMx,
+            baseTokenShare,
             basePoolTokenTotalSupply,
             withdrawalFeePPM
         );
         amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
             baseTokenLiquidity,
-            eMx,
-            basePoolTokenTotalSupply.mul(bPc),
+            baseTokenShare,
+            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
             withdrawalFeePPM
         );
         amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
             networkTokenLiquidity,
-            eMx,
-            basePoolTokenTotalSupply.mul(bPc),
+            baseTokenShare,
+            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
             0
         );
 
-        if (bPc >= baseTokenStakedAmount) {
+        if (baseTokenVaultBalance >= baseTokenStakedAmount) {
             // the pool is not in a base-token deficit
             uint256 baseTokenOffsetAmount = _deductFee(
-                bPc - baseTokenStakedAmount,
+                baseTokenVaultBalance - baseTokenStakedAmount,
                 basePoolTokenWithdrawalAmount,
                 basePoolTokenTotalSupply,
                 withdrawalFeePPM
@@ -618,7 +618,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 baseTokenOffsetAmount,
                 tradeFeePPM,
                 withdrawalFeePPM,
-                eMx
+                baseTokenShare
             );
             if (
                 amounts.networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) >
@@ -631,9 +631,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             }
         } else {
             // the pool is in a base-token deficit
-            if (amounts.baseTokenAmountToTransferFromVaultToProvider <= bPc) {
+            if (amounts.baseTokenAmountToTransferFromVaultToProvider <= baseTokenVaultBalance) {
                 uint256 baseTokenOffsetAmount = _deductFee(
-                    baseTokenStakedAmount - bPc,
+                    baseTokenStakedAmount - baseTokenVaultBalance,
                     basePoolTokenWithdrawalAmount,
                     basePoolTokenTotalSupply,
                     withdrawalFeePPM
@@ -645,7 +645,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     baseTokenOffsetAmount,
                     tradeFeePPM,
                     withdrawalFeePPM,
-                    eMx
+                    baseTokenShare
                 );
                 if (amounts.networkTokenArbitrageAmount > 0) {
                     amounts.networkTokenArbitrageAction = WithdrawalArbitrageAction.MintNetworkTokens;
@@ -656,13 +656,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
                 uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
                 amounts.networkTokenAmountToMintForUser = _deductFee(
-                    baseTokenStakedAmount - bPc,
+                    baseTokenStakedAmount - baseTokenVaultBalance,
                     aMx,
                     bMd,
                     withdrawalFeePPM
                 );
                 amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
-                    bPc,
+                    baseTokenVaultBalance,
                     basePoolTokenWithdrawalAmount,
                     basePoolTokenTotalSupply,
                     withdrawalFeePPM
@@ -758,6 +758,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * m = trade fee in ppm units
      * n = withdrawal fee in ppm units
      * x = base pool token withdrawal amount
+     * ex = base token share
      *
      * output, assuming `m` and `n` are normalized:
      * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
@@ -770,7 +771,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenOffsetAmount,
         uint256 tradeFeePPM,
         uint256 withdrawalFeePPM,
-        uint256 ex
+        uint256 baseTokenShare
     ) internal pure returns (uint256) {
         return
             _calcArbitrage(
@@ -779,7 +780,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
                 withdrawalFeePPM,
-                ex,
+                baseTokenShare,
                 _posArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
             );
     }
@@ -797,6 +798,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * m = trade fee in ppm units
      * n = withdrawal fee in ppm units
      * x = base pool token withdrawal amount
+     * ex = base token share
      *
      * output, assuming `m` and `n` are normalized:
      * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
@@ -809,7 +811,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenOffsetAmount,
         uint256 tradeFeePPM,
         uint256 withdrawalFeePPM,
-        uint256 ex
+        uint256 baseTokenShare
     ) internal pure returns (uint256) {
         return
             _calcArbitrage(
@@ -818,7 +820,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
                 withdrawalFeePPM,
-                ex,
+                baseTokenShare,
                 _negArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
             );
     }
@@ -877,13 +879,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenOffsetAmount,
         uint256 withdrawalFeePPM,
-        uint256 ex,
+        uint256 baseTokenShare,
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
         Fraction memory y = _cap(quotients[0]);
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
-            MathEx.mulDivF(ex, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
+            MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
         ) {
             Fraction memory z = _cap(quotients[1]);
             return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
