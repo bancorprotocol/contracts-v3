@@ -37,20 +37,20 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 export interface ContractBuilder<F extends ContractFactory> {
     contractName: string;
     deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
-    attach(address: string, passedSigner?: Signer): Promise<Contract<F>>;
+    attach(address: string, signer?: Signer): Promise<Contract<F>>;
 }
 
-const deployOrAttach = <F extends ContractFactory>(contractName: string, passedSigner?: Signer): ContractBuilder<F> => {
+const deployOrAttach = <F extends ContractFactory>(contractName: string, signer?: Signer): ContractBuilder<F> => {
     return {
         contractName,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            let defaultSigner = signer ? signer : (await ethers.getSigners())[0];
 
             return (await ethers.getContractFactory(contractName, defaultSigner)).deploy(
                 ...(args || [])
             ) as Contract<F>;
         },
-        attach: attachOnly<F>(contractName, passedSigner).attach
+        attach: attachOnly<F>(contractName, signer).attach
     };
 };
 
@@ -67,26 +67,26 @@ const deployOrAttachExternal = <F extends ContractFactory>(
     contractName: string,
     // @TODO: needs to replace with correctly typed params but it doesn't work properly for some reason https://github.com/microsoft/TypeScript/issues/31278
     factoryConstructor: { new (signer?: Signer): F },
-    passedSigner?: Signer
+    initialPassedSigner?: Signer
 ): ContractBuilder<F> => {
     return {
         contractName,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            let defaultSigner = initialPassedSigner ? initialPassedSigner : (await ethers.getSigners())[0];
 
             return new factoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
         },
-        attach: attachOnlyExternal<F>(factoryConstructor, passedSigner).attach
+        attach: attachOnlyExternal<F>(factoryConstructor, initialPassedSigner).attach
     };
 };
 
 const attachOnlyExternal = <F extends ContractFactory>(
     factoryConstructor: { new (signer?: Signer): F },
-    passedSigner?: Signer
+    initialPassedSigner?: Signer
 ) => {
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
+            let defaultSigner = initialPassedSigner ? initialPassedSigner : (await ethers.getSigners())[0];
             return new factoryConstructor(signer || defaultSigner).attach(address) as Contract<F>;
         }
     };

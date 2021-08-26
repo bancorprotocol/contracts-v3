@@ -33,7 +33,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
-        log.executing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+        log.processing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         try {
             currentState.networkState = await migration.up(
@@ -75,10 +75,10 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
     // if the index of the latest migration is not equal to the length of the migrationsData array then an error occured an we should revert
     if (index != migrationsData.length) {
-        log.executing('Reverting migration ...');
+        log.processing('Reverting migration ...');
         for (; index >= 0; index--) {
             const migrationData = migrationsData[index];
-            log.executing(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+            log.processing(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
             const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
