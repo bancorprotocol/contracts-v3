@@ -1,6 +1,6 @@
 import Contracts, { ContractBuilder, Contract } from '../../components/Contracts';
 import { ProxyAdmin } from '../../typechain';
-import { ExecutionError } from './errors/errors';
+import { ExecutionError } from './errors';
 import { executionSettings } from './initialization';
 import { log } from './logger/logger';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';

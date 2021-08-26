@@ -1,4 +1,3 @@
-import { InvalidOwner } from '../engine/errors/errors';
 import { deployedContract, Migration } from '../engine/types';
 import { NextState as InitialState } from './3_deploy_network';
 
@@ -23,7 +22,7 @@ const migration: Migration = {
         const bancorVault = await contracts.BancorVault.attach(state.vault);
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
-            throw new InvalidOwner();
+            throw 'Invalid Owner';
     },
 
     down: async (

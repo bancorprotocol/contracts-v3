@@ -1,4 +1,3 @@
-import { InvalidRole } from '../engine/errors/errors';
 import { deployedContract, Migration } from '../engine/types';
 import { NextState as InitialState } from './2_deploy_networkSettings';
 

@@ -1,4 +1,3 @@
-import { InvalidOwner } from '../engine/errors/errors';
 import { deployedContract, Migration } from '../engine/types';
 import { NextState as InitialState } from './5_deploy_networkTokenPool';
 
@@ -27,7 +26,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals);
 
-        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new InvalidOwner();
+        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw 'Invalid Owner';
     },
 
     down: async (

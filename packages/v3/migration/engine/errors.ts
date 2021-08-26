@@ -14,21 +14,3 @@ export class ExecutionError extends Error {
         }
     }
 }
-
-export class MigrationError extends Error {
-    constructor(msg: string) {
-        super('Migration Error: ' + msg);
-    }
-}
-
-export class InvalidRole extends MigrationError {
-    constructor() {
-        super('Invalid role');
-    }
-}
-
-export class InvalidOwner extends MigrationError {
-    constructor() {
-        super('Owner not set or correct');
-    }
-}
