@@ -701,7 +701,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev recalculates the values of `x`, `d` and `e`
      *
-     * input:
+     * let the following denote the input:
      * E = base token amount to transfer from the protection wallet to the provider
      * x = base pool token withdrawal amount
      * d = base pool token total supply
@@ -749,7 +749,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns the amount of network tokens which should be removed
      * from the pool in order to create an optimal arbitrage incentive
      *
-     * input:
+     * let the following denote the input:
      * a = network token hypothetical trading liquidity
      * b = base token hypothetical trading liquidity
      * d = base pool token total supply
@@ -789,7 +789,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns the amount of network tokens which should be added
      * to the pool in order to create an optimal arbitrage incentive
      *
-     * input:
+     * let the following denote the input:
      * a = network token hypothetical trading liquidity
      * b = base token hypothetical trading liquidity
      * d = base pool token total supply
@@ -826,7 +826,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the following quotients, assuming `m` is normalized:
+     * @dev returns a pair of quotients
+     *
+     * let the following denote the input:
+     * b = base token hypothetical trading liquidity
+     * f = base token redundant amount
+     * m = trade fee in ppm units
+     *
+     * output, assuming `m` is normalized:
      * 1. `(f + bm - 2fm) / (b - fm)`
      * 2. `(2b - bm - f) / (b - fm)`
      */
@@ -846,7 +853,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the following quotients, assuming `m` is normalized:
+     * @dev returns a pair of quotients
+     *
+     * let the following denote the input:
+     * b = base token hypothetical trading liquidity
+     * f = base token required amount
+     * m = trade fee in ppm units
+     *
+     * output, assuming `m` is normalized:
      * 1. `(f - bm - 2fm) / (b + fm)`
      * 2. `(2b - bm + f) / (b + fm)`
      */
