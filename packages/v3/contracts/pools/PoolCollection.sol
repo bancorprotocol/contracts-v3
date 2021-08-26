@@ -531,24 +531,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * includes the withdrawal fee, which may need to be deducted (depending on usage)
      *
      * input:
-     * a = network token trading liquidity
-     * b = base token trading liquidity
-     * c = base token excess amount
-     * d = base pool token total supply
-     * e = base token staked amount
-     * w = base token protection wallet balance
-     * m = trade fee in ppm units
-     * n = withdrawal fee in ppm units
-     * x = base pool token withdrawal amount
+     * network token trading liquidity
+     * base token trading liquidity
+     * base token excess amount
+     * base pool token total supply
+     * base token staked amount
+     * base token protection wallet balance
+     * trade fee in ppm units
+     * withdrawal fee in ppm units
+     * base pool token withdrawal amount
      *
      * output:
-     * B = base token amount to transfer from the vault to the provider
-     * C = network token amount to mint directly for the user
-     * D = base token amount to deduct from the trading liquidity
-     * E = base token amount to transfer from the protection wallet to the provider
-     * F = network token amount to deduct from the trading liquidity and burn in the vault
-     * G = network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-     * H = arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
+     * base token amount to transfer from the vault to the provider
+     * network token amount to mint directly for the user
+     * base token amount to deduct from the trading liquidity
+     * base token amount to transfer from the protection wallet to the provider
+     * network token amount to deduct from the trading liquidity and burn in the vault
+     * network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+     * arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
     function _withdrawalAmounts(
         uint256 networkTokenLiquidity,
