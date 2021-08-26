@@ -17,8 +17,8 @@ interface WithdrawalAmountData {
     basePoolTokenTotalSupply: string;
     baseTokenStakedAmount: string;
     baseTokenWalletBalance: string;
-    tradeFee: string;
-    withdrawalFee: string;
+    tradeFeePPM: string;
+    withdrawalFeePPM: string;
     basePoolTokenWithdrawalAmount: string;
     baseTokenAmountToTransferFromVaultToProvider: string;
     networkTokenAmountToMintForUser: string;
@@ -70,8 +70,8 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
             basePoolTokenTotalSupply,
             baseTokenStakedAmount,
             baseTokenWalletBalance,
-            tradeFee,
-            withdrawalFee,
+            tradeFeePPM,
+            withdrawalFeePPM,
             basePoolTokenWithdrawalAmount,
             baseTokenAmountToTransferFromVaultToProvider,
             networkTokenAmountToMintForUser,
@@ -88,8 +88,8 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
                 basePoolTokenTotalSupply,
                 baseTokenStakedAmount,
                 baseTokenWalletBalance,
-                tradeFee,
-                withdrawalFee,
+                tradeFeePPM,
+                withdrawalFeePPM,
                 basePoolTokenWithdrawalAmount,
                 baseTokenAmountToTransferFromVaultToProvider,
                 networkTokenAmountToMintForUser,
@@ -106,8 +106,8 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
                     basePoolTokenTotalSupply,
                     baseTokenStakedAmount,
                     baseTokenWalletBalance,
-                    tradeFee,
-                    withdrawalFee,
+                    tradeFeePPM,
+                    withdrawalFeePPM,
                     basePoolTokenWithdrawalAmount
                 );
                 expect(actual.baseTokenAmountToTransferFromVaultToProvider).to.almostEqual(

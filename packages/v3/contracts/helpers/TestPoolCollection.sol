@@ -65,8 +65,8 @@ contract TestPoolCollection is PoolCollection {
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
         uint256 baseTokenWalletBalance,
-        uint256 tradeFee,
-        uint256 withdrawalFee,
+        uint256 tradeFeePPM,
+        uint256 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
     ) external pure returns (WithdrawalAmounts memory) {
         return
@@ -77,8 +77,8 @@ contract TestPoolCollection is PoolCollection {
                 basePoolTokenTotalSupply,
                 baseTokenStakedAmount,
                 baseTokenWalletBalance,
-                tradeFee,
-                withdrawalFee,
+                tradeFeePPM,
+                withdrawalFeePPM,
                 basePoolTokenWithdrawalAmount
             );
     }
