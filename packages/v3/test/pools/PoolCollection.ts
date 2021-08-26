@@ -193,7 +193,10 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('edge cases 2', () => {
         const maxErrors = {
-            baseTokenAmountToTransferFromVaultToProvider: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000004')
+            },
             networkTokenAmountToMintForUser: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
             baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
             baseTokenAmountToTransferFromWalletToProvider: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -248,7 +251,10 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('coverage 4', () => {
         const maxErrors = {
-            baseTokenAmountToTransferFromVaultToProvider: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000009')
+            },
             networkTokenAmountToMintForUser: { absolute: new Decimal(1), relative: new Decimal('0.0000000002') },
             baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
             baseTokenAmountToTransferFromWalletToProvider: { absolute: new Decimal(1), relative: new Decimal('0') },

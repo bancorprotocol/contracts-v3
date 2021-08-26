@@ -584,7 +584,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         uint256 eMx = baseTokenStakedAmount.mul(basePoolTokenWithdrawalAmount);
 
-        amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(1, eMx, basePoolTokenTotalSupply, withdrawalFee);
+        amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
+            1,
+            eMx,
+            basePoolTokenTotalSupply,
+            withdrawalFee
+        );
         amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
             baseTokenLiquidity,
             eMx,
