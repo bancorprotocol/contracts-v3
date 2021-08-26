@@ -667,17 +667,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             _networkTokenGovernance.burn(amounts.networkTokenAmountToDeductFromLiquidity);
         }
 
-        if (amounts.networkTokenAmountToMintForUser > 0) {
-            // network token amount to mint directly for the user
-            _networkTokenGovernance.mint(provider, amounts.networkTokenAmountToMintForUser);
+        if (amounts.networkTokenAmountToMintForProvider > 0) {
+            // network token amount to mint directly for the provider
+            _networkTokenGovernance.mint(provider, amounts.networkTokenAmountToMintForProvider);
         }
 
-        if (amounts.baseTokenAmountToTransferFromWalletToProvider > 0) {
-            // base token amount to transfer from the protection wallet to the provider
+        if (amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider > 0) {
+            // base token amount to transfer from the external protection wallet to the provider
             cachedExternalProtectionWallet.withdrawTokens(
                 baseToken,
                 payable(provider),
-                amounts.baseTokenAmountToTransferFromWalletToProvider
+                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
             );
         }
 
@@ -691,8 +691,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             poolTokenAmount: completedRequest.poolTokenAmount,
             govTokenAmount: 0,
             baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider,
-            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromWalletToProvider,
-            networkTokenAmount: amounts.networkTokenAmountToMintForUser,
+            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+            networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });
 
@@ -713,7 +713,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             });
         }
 
-        if (amounts.networkTokenAmountToMintForUser > 0) {
+        if (amounts.networkTokenAmountToMintForProvider > 0) {
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: baseToken,

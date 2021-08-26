@@ -43,9 +43,9 @@ enum WithdrawalArbitrageAction {
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromVaultToProvider; // base token amount to transfer from the vault to the provider
-    uint256 networkTokenAmountToMintForUser; // network token amount to mint directly for the user
+    uint256 networkTokenAmountToMintForProvider; // network token amount to mint directly for the provider
     uint256 baseTokenAmountToDeductFromLiquidity; // base token amount to deduct from the trading liquidity
-    uint256 baseTokenAmountToTransferFromWalletToProvider; // base token amount to transfer from the protection wallet to the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // base token amount to transfer from the external protection wallet to the provider
     uint256 networkTokenAmountToDeductFromLiquidity; // network token amount to deduct from the trading liquidity and burn in the vault
     uint256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
     uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount

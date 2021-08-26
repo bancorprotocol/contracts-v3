@@ -415,7 +415,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 protectionWalletBalance
+        uint256 externalProtectionWalletBalance
     ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
 
@@ -426,7 +426,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
             params.basePoolTokenTotalSupply,
             params.baseTokenStakedAmount,
-            protectionWalletBalance,
+            externalProtectionWalletBalance,
             params.tradeFeePPM,
             _settings.withdrawalFeePPM(),
             basePoolTokenAmount
@@ -536,16 +536,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * base token excess amount
      * base pool token total supply
      * base token staked amount
-     * base token protection wallet balance
+     * base token external protection wallet balance
      * trade fee in ppm units
      * withdrawal fee in ppm units
      * base pool token withdrawal amount
      *
      * output:
      * base token amount to transfer from the vault to the provider
-     * network token amount to mint directly for the user
+     * network token amount to mint directly for the provider
      * base token amount to deduct from the trading liquidity
-     * base token amount to transfer from the protection wallet to the provider
+     * base token amount to transfer from the external protection wallet to the provider
      * network token amount to deduct from the trading liquidity and burn in the vault
      * network token amount to burn or mint in the pool, in order to create an arbitrage incentive
      * arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
@@ -556,7 +556,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenExcessAmount,
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
-        uint256 baseTokenWalletBalance,
+        uint256 baseTokenExternalProtectionWalletBalance,
         uint256 tradeFeePPM,
         uint256 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
@@ -570,11 +570,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 basePoolTokenTotalSupply,
                 withdrawalFeePPM
             );
-            amounts.baseTokenAmountToTransferFromWalletToProvider = baseTokenOffsetAmount < baseTokenWalletBalance
+            amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = baseTokenOffsetAmount <
+                baseTokenExternalProtectionWalletBalance
                 ? baseTokenOffsetAmount
-                : baseTokenWalletBalance;
+                : baseTokenExternalProtectionWalletBalance;
             (basePoolTokenWithdrawalAmount, basePoolTokenTotalSupply, baseTokenStakedAmount) = _reviseInput(
-                amounts.baseTokenAmountToTransferFromWalletToProvider,
+                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                 basePoolTokenWithdrawalAmount,
                 basePoolTokenTotalSupply,
                 baseTokenStakedAmount,
@@ -655,7 +656,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
                 uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
-                amounts.networkTokenAmountToMintForUser = _deductFee(
+                amounts.networkTokenAmountToMintForProvider = _deductFee(
                     baseTokenStakedAmount - baseTokenVaultBalance,
                     aMx,
                     bMd,
@@ -702,7 +703,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev recalculates the values of `x`, `d` and `e`
      *
      * let the following denote the input:
-     * E = base token amount to transfer from the protection wallet to the provider
+     * E = base token amount to transfer from the external protection wallet to the provider
      * x = base pool token withdrawal amount
      * d = base pool token total supply
      * e = base token staked amount
@@ -714,7 +715,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * e = e - E / (1 - n)
      */
     function _reviseInput(
-        uint256 baseTokenAmountToTransferFromWalletToProvider,
+        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
         uint256 basePoolTokenWithdrawalAmount,
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
@@ -728,20 +729,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256
         )
     {
-        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFee = MathEx.mulDivF(
-            baseTokenAmountToTransferFromWalletToProvider,
+        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee = MathEx.mulDivF(
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
             PPM_RESOLUTION,
             PPM_RESOLUTION - withdrawalFeePPM
         );
-        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(
-            baseTokenAmountToTransferFromWalletToProviderPlusFee,
+        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(
+            baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee,
             basePoolTokenTotalSupply,
             baseTokenStakedAmount
         );
         return (
-            basePoolTokenWithdrawalAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio),
-            basePoolTokenTotalSupply.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio),
-            baseTokenStakedAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFee)
+            basePoolTokenWithdrawalAmount.sub(
+                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
+            ),
+            basePoolTokenTotalSupply.sub(
+                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
+            ),
+            baseTokenStakedAmount.sub(baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee)
         );
     }
 
