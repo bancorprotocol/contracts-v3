@@ -733,8 +733,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             PPM_RESOLUTION,
             PPM_RESOLUTION - withdrawalFeePPM
         );
-        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(baseTokenAmountToTransferFromWalletToProviderPlusFee, basePoolTokenTotalSupply, baseTokenStakedAmount);
-        return (basePoolTokenWithdrawalAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio), basePoolTokenTotalSupply.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio), baseTokenStakedAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFee));
+        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(
+            baseTokenAmountToTransferFromWalletToProviderPlusFee,
+            basePoolTokenTotalSupply,
+            baseTokenStakedAmount
+        );
+        return (
+            basePoolTokenWithdrawalAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio),
+            basePoolTokenTotalSupply.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio),
+            baseTokenStakedAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFee)
+        );
     }
 
     /**
