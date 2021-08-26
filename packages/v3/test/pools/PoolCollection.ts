@@ -686,12 +686,14 @@ describe('PoolCollection', () => {
             });
         });
     });
+});
 
-    describe('withdrawal', () => {
+describe('PoolCollection withdrawal amounts', () => {
+    describe('regular tests', () => {
         testWithdrawalAmounts(10);
     });
 
-    describe('@stress withdrawal', () => {
+    describe('@stress tests', () => {
         testWithdrawalAmounts();
     });
 });
