@@ -709,9 +709,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * n = withdrawal fee in ppm units
      *
      * output, assuming `n` is normalized:
-     * x = E / (1 - n) * d / e
-     * d = E / (1 - n) * d / e
-     * e = E / (1 - n)
+     * x = x - E / (1 - n) * d / e
+     * d = d - E / (1 - n) * d / e
+     * e = e - E / (1 - n)
      */
     function _reviseInput(
         uint256 baseTokenAmountToTransferFromWalletToProvider,
@@ -728,13 +728,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256
         )
     {
-        uint256 g = MathEx.mulDivF(
+        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFee = MathEx.mulDivF(
             baseTokenAmountToTransferFromWalletToProvider,
             PPM_RESOLUTION,
             PPM_RESOLUTION - withdrawalFeePPM
         );
-        uint256 h = MathEx.mulDivF(g, basePoolTokenTotalSupply, baseTokenStakedAmount);
-        return (basePoolTokenWithdrawalAmount.sub(h), basePoolTokenTotalSupply.sub(h), baseTokenStakedAmount.sub(g));
+        uint256 baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(baseTokenAmountToTransferFromWalletToProviderPlusFee, basePoolTokenTotalSupply, baseTokenStakedAmount);
+        return (basePoolTokenWithdrawalAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio), basePoolTokenTotalSupply.sub(baseTokenAmountToTransferFromWalletToProviderPlusFeeMulRatio), baseTokenStakedAmount.sub(baseTokenAmountToTransferFromWalletToProviderPlusFee));
     }
 
     /**
