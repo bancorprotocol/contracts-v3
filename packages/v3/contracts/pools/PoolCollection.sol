@@ -342,6 +342,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     /**
      * @dev enables/disables depositing to a given pool
+     *
      * requirements:
      *
      * - the caller must be the owner of the contract
@@ -403,8 +404,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev handles some of the withdrawal-related actions
-     * and returns all of the withdrawal-related amounts
+     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
      *
      * requirements:
      *
@@ -527,8 +527,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns all amounts related to base token withdrawal, where each amount
-     * includes the withdrawal fee, which may need to be deducted (depending on usage)
+     * @dev returns all amounts related to base token withdrawal, where each amount includes the withdrawal fee, which
+     * may need to be deducted (depending on usage)
      *
      * input:
      * network token trading liquidity
@@ -605,7 +605,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         );
 
         if (baseTokenVaultBalance >= baseTokenStakedAmount) {
-            // the pool is not in a base-token deficit
+            // the pool is not in a base token deficit
             uint256 baseTokenOffsetAmount = _deductFee(
                 baseTokenVaultBalance - baseTokenStakedAmount,
                 basePoolTokenWithdrawalAmount,
@@ -631,7 +631,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 amounts.networkTokenArbitrageAction = WithdrawalArbitrageAction.BurnNetworkTokens;
             }
         } else {
-            // the pool is in a base-token deficit
+            // the pool is in a base token deficit
             if (amounts.baseTokenAmountToTransferFromVaultToProvider <= baseTokenVaultBalance) {
                 uint256 baseTokenOffsetAmount = _deductFee(
                     baseTokenStakedAmount - baseTokenVaultBalance,
@@ -751,8 +751,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the amount of network tokens which should be removed
-     * from the pool in order to create an optimal arbitrage incentive
+     * @dev returns the amount of network tokens which should be removed from the pool in order to create an optimal
+     * arbitrage incentive
      *
      * let the following denote the input:
      * a = network token hypothetical trading liquidity
@@ -791,8 +791,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the amount of network tokens which should be added
-     * to the pool in order to create an optimal arbitrage incentive
+     * @dev returns the amount of network tokens which should be added to the pool in order to create an optimal
+     * arbitrage incentive
      *
      * let the following denote the input:
      * a = network token hypothetical trading liquidity
