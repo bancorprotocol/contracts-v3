@@ -384,7 +384,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 network.renounceLiquidityT(contextId, reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         context('with a whitelisted and registered pool', () => {
