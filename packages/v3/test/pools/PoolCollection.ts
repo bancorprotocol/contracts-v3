@@ -11,22 +11,22 @@ import { ethers } from 'hardhat';
 import path from 'path';
 
 interface WithdrawalAmountData {
-    a: string;
-    b: string;
-    c: string;
-    d: string;
-    e: string;
-    w: string;
-    m: string;
-    n: string;
-    x: string;
-    B: string;
-    C: string;
-    D: string;
-    E: string;
-    F: string;
-    G: string;
-    H: string;
+    networkTokenLiquidity: string;
+    baseTokenLiquidity: string;
+    baseTokenExcessAmount: string;
+    basePoolTokenTotalSupply: string;
+    baseTokenStakedAmount: string;
+    baseTokenWalletBalance: string;
+    tradeFeePPM: string;
+    withdrawalFeePPM: string;
+    basePoolTokenWithdrawalAmount: string;
+    baseTokenAmountToTransferFromVaultToProvider: string;
+    networkTokenAmountToMintForProvider: string;
+    baseTokenAmountToDeductFromLiquidity: string;
+    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
+    networkTokenAmountToDeductFromLiquidity: string;
+    networkTokenArbitrageAmount: string;
+    networkTokenArbitrageAction: string;
 }
 
 interface MaxError {
@@ -35,12 +35,12 @@ interface MaxError {
 }
 
 interface MaxErrors {
-    B: MaxError;
-    C: MaxError;
-    D: MaxError;
-    E: MaxError;
-    F: MaxError;
-    G: MaxError;
+    baseTokenAmountToTransferFromVaultToProvider: MaxError;
+    networkTokenAmountToMintForProvider: MaxError;
+    baseTokenAmountToDeductFromLiquidity: MaxError;
+    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
+    networkTokenAmountToDeductFromLiquidity: MaxError;
+    networkTokenArbitrageAmount: MaxError;
 }
 
 const WITHDRAW_ARBITRAGE_ACTIONS: Record<string, number> = {
@@ -63,28 +63,113 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
             fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
         ).slice(0, maxNumberOfTests);
 
-        for (const { a, b, c, d, e, w, m, n, x, B, C, D, E, F, G, H } of table) {
-            it(`should receive correct withdrawal amounts (${[a, b, c, d, e, w, m, n, x]})`, async () => {
-                const actual = await poolCollection.withdrawalAmountsT(a, b, c, d, e, w, m, n, x);
-                expect(actual.B).to.almostEqual(new Decimal(B), maxErrors.B.absolute, maxErrors.B.relative);
-                expect(actual.C).to.almostEqual(new Decimal(C), maxErrors.C.absolute, maxErrors.C.relative);
-                expect(actual.D).to.almostEqual(new Decimal(D), maxErrors.D.absolute, maxErrors.D.relative);
-                expect(actual.E).to.almostEqual(new Decimal(E), maxErrors.E.absolute, maxErrors.E.relative);
-                expect(actual.F).to.almostEqual(new Decimal(F), maxErrors.F.absolute, maxErrors.F.relative);
-                expect(actual.G).to.almostEqual(new Decimal(G), maxErrors.G.absolute, maxErrors.G.relative);
-                expect(actual.H).to.equal(WITHDRAW_ARBITRAGE_ACTIONS[H]);
+        for (const {
+            networkTokenLiquidity,
+            baseTokenLiquidity,
+            baseTokenExcessAmount,
+            basePoolTokenTotalSupply,
+            baseTokenStakedAmount,
+            baseTokenWalletBalance,
+            tradeFeePPM,
+            withdrawalFeePPM,
+            basePoolTokenWithdrawalAmount,
+            baseTokenAmountToTransferFromVaultToProvider,
+            networkTokenAmountToMintForProvider,
+            baseTokenAmountToDeductFromLiquidity,
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+            networkTokenAmountToDeductFromLiquidity,
+            networkTokenArbitrageAmount,
+            networkTokenArbitrageAction
+        } of table) {
+            it(`should receive correct withdrawal amounts (${[
+                networkTokenLiquidity,
+                baseTokenLiquidity,
+                baseTokenExcessAmount,
+                basePoolTokenTotalSupply,
+                baseTokenStakedAmount,
+                baseTokenWalletBalance,
+                tradeFeePPM,
+                withdrawalFeePPM,
+                basePoolTokenWithdrawalAmount,
+                baseTokenAmountToTransferFromVaultToProvider,
+                networkTokenAmountToMintForProvider,
+                baseTokenAmountToDeductFromLiquidity,
+                baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                networkTokenAmountToDeductFromLiquidity,
+                networkTokenArbitrageAmount,
+                networkTokenArbitrageAction
+            ]})`, async () => {
+                const actual = await poolCollection.withdrawalAmountsT(
+                    networkTokenLiquidity,
+                    baseTokenLiquidity,
+                    baseTokenExcessAmount,
+                    basePoolTokenTotalSupply,
+                    baseTokenStakedAmount,
+                    baseTokenWalletBalance,
+                    tradeFeePPM,
+                    withdrawalFeePPM,
+                    basePoolTokenWithdrawalAmount
+                );
+                expect(actual.baseTokenAmountToTransferFromVaultToProvider).to.almostEqual(
+                    new Decimal(baseTokenAmountToTransferFromVaultToProvider),
+                    maxErrors.baseTokenAmountToTransferFromVaultToProvider.absolute,
+                    maxErrors.baseTokenAmountToTransferFromVaultToProvider.relative
+                );
+                expect(actual.networkTokenAmountToMintForProvider).to.almostEqual(
+                    new Decimal(networkTokenAmountToMintForProvider),
+                    maxErrors.networkTokenAmountToMintForProvider.absolute,
+                    maxErrors.networkTokenAmountToMintForProvider.relative
+                );
+                expect(actual.baseTokenAmountToDeductFromLiquidity).to.almostEqual(
+                    new Decimal(baseTokenAmountToDeductFromLiquidity),
+                    maxErrors.baseTokenAmountToDeductFromLiquidity.absolute,
+                    maxErrors.baseTokenAmountToDeductFromLiquidity.relative
+                );
+                expect(actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider).to.almostEqual(
+                    new Decimal(baseTokenAmountToTransferFromExternalProtectionWalletToProvider),
+                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
+                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                );
+                expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
+                    new Decimal(networkTokenAmountToDeductFromLiquidity),
+                    maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
+                    maxErrors.networkTokenAmountToDeductFromLiquidity.relative
+                );
+                expect(actual.networkTokenArbitrageAmount).to.almostEqual(
+                    new Decimal(networkTokenArbitrageAmount),
+                    maxErrors.networkTokenArbitrageAmount.absolute,
+                    maxErrors.networkTokenArbitrageAmount.relative
+                );
+                expect(actual.networkTokenArbitrageAction).to.equal(
+                    WITHDRAW_ARBITRAGE_ACTIONS[networkTokenArbitrageAction]
+                );
             });
         }
     };
 
     describe('regular cases', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000002') }
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000000000000000002')
+            },
+            networkTokenAmountToMintForProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000000000000000003')
+            },
+            baseTokenAmountToDeductFromLiquidity: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000000000000000002')
+            },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000000000000000003')
+            },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000002') }
         };
 
         test('WithdrawalAmountsRegularCases', maxErrors);
@@ -92,12 +177,21 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('edge cases 1', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000003') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.00000000002') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.0000000001') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.000000003')
+            },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.0000000003') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.00000000002') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000000001')
+            },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
         };
 
         test('WithdrawalAmountsEdgeCases1', maxErrors);
@@ -105,12 +199,18 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('edge cases 2', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000004')
+            },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
         };
 
         test('WithdrawalAmountsEdgeCases2', maxErrors);
@@ -118,12 +218,15 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('coverage 1', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.0000002') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
+            baseTokenAmountToTransferFromVaultToProvider: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.0000002') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
         };
 
         test('WithdrawalAmountsCoverage1', maxErrors);
@@ -131,12 +234,18 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('coverage 2', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.000000003')
+            },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
         };
 
         test('WithdrawalAmountsCoverage2', maxErrors);
@@ -144,12 +253,15 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('coverage 3', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.008') }
+            baseTokenAmountToTransferFromVaultToProvider: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.008') }
         };
 
         test('WithdrawalAmountsCoverage3', maxErrors);
@@ -157,12 +269,18 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
 
     describe('coverage 4', () => {
         const maxErrors = {
-            B: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
-            C: { absolute: new Decimal(1), relative: new Decimal('0.0000000002') },
-            D: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
-            E: { absolute: new Decimal(1), relative: new Decimal('0') },
-            F: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
-            G: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
+            baseTokenAmountToTransferFromVaultToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0.0000009')
+            },
+            networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.0000000002') },
+            baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                absolute: new Decimal(1),
+                relative: new Decimal('0')
+            },
+            networkTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0000009') },
+            networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
         };
 
         test('WithdrawalAmountsCoverage4', maxErrors);

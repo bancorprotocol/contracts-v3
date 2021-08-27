@@ -40,21 +40,17 @@ enum WithdrawalArbitrageAction {
     MintNetworkTokens
 }
 
-// solhint-disable var-name-mixedcase
-
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 B; // base token amount to transfer from the vault to the user
-    uint256 C; // network token amount to mint directly for the user
-    uint256 D; // base token amount to deduct from the trading liquidity
-    uint256 E; // base token amount to transfer from the protection wallet to the user
-    uint256 F; // network token amount to deduct from the trading liquidity and burn in the vault
-    uint256 G; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // base token amount to transfer from the vault to the provider
+    uint256 networkTokenAmountToMintForProvider; // network token amount to mint directly for the provider
+    uint256 baseTokenAmountToDeductFromLiquidity; // base token amount to deduct from the trading liquidity
+    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // base token amount to transfer from the external protection wallet to the provider
+    uint256 networkTokenAmountToDeductFromLiquidity; // network token amount to deduct from the trading liquidity and burn in the vault
+    uint256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
     uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
-    WithdrawalArbitrageAction H; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
+    WithdrawalArbitrageAction networkTokenArbitrageAction; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
-
-// solhint-enable var-name-mixedcase
 
 /**
  * @dev Pool Collection interface

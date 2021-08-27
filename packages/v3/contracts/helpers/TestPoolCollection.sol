@@ -59,16 +59,27 @@ contract TestPoolCollection is PoolCollection {
     }
 
     function withdrawalAmountsT(
-        uint256 a,
-        uint256 b,
-        uint256 c,
-        uint256 d,
-        uint256 e,
-        uint256 w,
-        uint256 m,
-        uint256 n,
-        uint256 x
+        uint256 networkTokenLiquidity,
+        uint256 baseTokenLiquidity,
+        uint256 baseTokenExcessAmount,
+        uint256 basePoolTokenTotalSupply,
+        uint256 baseTokenStakedAmount,
+        uint256 baseTokenWalletBalance,
+        uint256 tradeFeePPM,
+        uint256 withdrawalFeePPM,
+        uint256 basePoolTokenWithdrawalAmount
     ) external pure returns (WithdrawalAmounts memory) {
-        return super._withdrawalAmounts(a, b, c, d, e, w, m, n, x);
+        return
+            super._withdrawalAmounts(
+                networkTokenLiquidity,
+                baseTokenLiquidity,
+                baseTokenExcessAmount,
+                basePoolTokenTotalSupply,
+                baseTokenStakedAmount,
+                baseTokenWalletBalance,
+                tradeFeePPM,
+                withdrawalFeePPM,
+                basePoolTokenWithdrawalAmount
+            );
     }
 }
