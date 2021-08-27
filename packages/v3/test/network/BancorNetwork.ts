@@ -2,7 +2,6 @@ import Contracts from '../../components/Contracts';
 import {
     BancorNetwork,
     NetworkSettings,
-    NetworkTokenPool,
     PoolCollection,
     TestERC20Token,
     TokenHolderUpgradeable
@@ -226,12 +225,11 @@ describe('BancorNetwork', () => {
 
     describe('pool collections', () => {
         let network: BancorNetwork;
-        let networkTokenPool: NetworkTokenPool;
         let poolCollection: PoolCollection;
         let poolType: number;
 
         beforeEach(async () => {
-            ({ network, networkTokenPool, poolCollection } = await createSystem());
+            ({ network, poolCollection } = await createSystem());
 
             poolType = await poolCollection.poolType();
         });
@@ -277,7 +275,7 @@ describe('BancorNetwork', () => {
                 it('should add a new pool collection with the same type', async () => {
                     expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                    const newPoolCollection = await createPoolCollection(network, networkTokenPool);
+                    const newPoolCollection = await createPoolCollection(network);
                     const poolType = await newPoolCollection.poolType();
 
                     const res = await network.addPoolCollection(newPoolCollection.address);
@@ -304,7 +302,7 @@ describe('BancorNetwork', () => {
             it('should add another new pool collection with the same type', async () => {
                 expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                const newPoolCollection = await createPoolCollection(network, networkTokenPool);
+                const newPoolCollection = await createPoolCollection(network);
                 const poolType = await newPoolCollection.poolType();
 
                 const res = await network.addPoolCollection(newPoolCollection.address);
@@ -320,7 +318,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                const newPoolCollection = await createPoolCollection(network, networkTokenPool);
+                const newPoolCollection = await createPoolCollection(network);
                 await expect(
                     network.removePoolCollection(poolCollection.address, newPoolCollection.address)
                 ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -331,8 +329,8 @@ describe('BancorNetwork', () => {
                 let lastCollection: PoolCollection;
 
                 beforeEach(async () => {
-                    newPoolCollection = await createPoolCollection(network, networkTokenPool);
-                    lastCollection = await createPoolCollection(network, networkTokenPool);
+                    newPoolCollection = await createPoolCollection(network);
+                    lastCollection = await createPoolCollection(network);
 
                     await network.addPoolCollection(newPoolCollection.address);
                     await network.addPoolCollection(lastCollection.address);
@@ -351,7 +349,7 @@ describe('BancorNetwork', () => {
                         network.removePoolCollection(ZERO_ADDRESS, newPoolCollection.address)
                     ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
 
-                    const otherCollection = await createPoolCollection(network, networkTokenPool);
+                    const otherCollection = await createPoolCollection(network);
                     await expect(
                         network.removePoolCollection(otherCollection.address, newPoolCollection.address)
                     ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -413,7 +411,7 @@ describe('BancorNetwork', () => {
             let newPoolCollection: PoolCollection;
 
             beforeEach(async () => {
-                newPoolCollection = await createPoolCollection(network, networkTokenPool);
+                newPoolCollection = await createPoolCollection(network);
 
                 await network.addPoolCollection(newPoolCollection.address);
                 await network.addPoolCollection(poolCollection.address);
@@ -430,7 +428,7 @@ describe('BancorNetwork', () => {
                     'ERR_INVALID_ADDRESS'
                 );
 
-                const newPoolCollection2 = await createPoolCollection(network, networkTokenPool);
+                const newPoolCollection2 = await createPoolCollection(network);
                 await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWith(
                     'ERR_COLLECTION_DOES_NOT_EXIST'
                 );

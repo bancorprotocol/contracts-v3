@@ -558,21 +558,14 @@ describe('PendingWithdrawals', () => {
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
                         const completedRequest = await network.callStatic.completeWithdrawalT(
-                            pendingWithdrawals.address,
                             contextId,
                             provider.address,
-
                             id
                         );
                         expect(completedRequest.poolToken).to.equal(withdrawalRequest.poolToken);
                         expect(completedRequest.poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
-                        const res = await network.completeWithdrawalT(
-                            pendingWithdrawals.address,
-                            contextId,
-                            provider.address,
-                            id
-                        );
+                        const res = await network.completeWithdrawalT(contextId, provider.address, id);
 
                         await expect(res)
                             .to.emit(pendingWithdrawals, 'WithdrawalCompleted')

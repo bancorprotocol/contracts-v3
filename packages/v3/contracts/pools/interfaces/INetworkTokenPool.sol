@@ -121,7 +121,7 @@ interface INetworkTokenPool is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must be the current collection that manages the given pool
+     * - the caller must be the network contract
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */
@@ -137,7 +137,7 @@ interface INetworkTokenPool is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must be the current collection that manages the given pool
+     * - the caller must be the network contract
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */

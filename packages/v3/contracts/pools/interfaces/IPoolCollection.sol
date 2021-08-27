@@ -10,7 +10,6 @@ import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 
-import { INetworkTokenPool } from "../interfaces/INetworkTokenPool.sol";
 import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
@@ -72,11 +71,6 @@ interface IPoolCollection is IVersioned {
     function settings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the network token pool contract
-     */
-    function networkTokenPool() external view returns (INetworkTokenPool);
-
-    /**
      * @dev returns the custom symbol overrides for a given reserve token
      */
     function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
@@ -118,7 +112,6 @@ interface IPoolCollection is IVersioned {
     function createPool(IReserveToken reserveToken) external;
 
     function withdraw(
-        bytes32 contextId,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,

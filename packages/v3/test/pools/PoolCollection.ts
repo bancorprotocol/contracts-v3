@@ -53,9 +53,9 @@ const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGE
     let poolCollection: TestPoolCollection;
 
     before(async () => {
-        const { network, networkTokenPool } = await createSystem();
+        const { network } = await createSystem();
 
-        poolCollection = await Contracts.TestPoolCollection.deploy(network.address, networkTokenPool.address);
+        poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
     });
 
     const test = (fileName: string, maxErrors: MaxErrors) => {
@@ -312,19 +312,7 @@ describe('PoolCollection', () => {
 
     describe('construction', () => {
         it('should revert when initialized with an invalid network contract', async () => {
-            const { networkTokenPool } = await createSystem();
-
-            await expect(Contracts.PoolCollection.deploy(ZERO_ADDRESS, networkTokenPool.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
-        });
-
-        it('should revert when initialized with an invalid network token pool contract', async () => {
-            const { network } = await createSystem();
-
-            await expect(Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
-            );
+            await expect(Contracts.PoolCollection.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should be properly initialized', async () => {

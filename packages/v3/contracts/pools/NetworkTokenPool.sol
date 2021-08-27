@@ -115,25 +115,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken = initPoolToken;
     }
 
-    // allows execution by a valid pool collection
-    modifier onlyValidPoolCollection(IReserveToken pool) {
-        _onlyValidPoolCollection(pool);
-
-        _;
-    }
-
-    function _onlyValidPoolCollection(IReserveToken pool) private view {
-        // verify that the token is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
-
-        // verify that the caller is the current collection that manages the given pool
-        IPoolCollection poolCollection = _network.collectionByPool(pool);
-        _only(address(poolCollection));
-
-        // verify that the pool's rate is stable
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
-    }
-
     /**
      * @dev fully initializes the contract and its parents
      */
@@ -341,7 +322,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount,
         bool skipLimitCheck
-    ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
+    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) returns (uint256) {
+        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
+        _verifyPoolCollection(pool);
+
         // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 newNetworkTokenAmount;
@@ -407,7 +391,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bytes32 contextId,
         IReserveToken pool,
         uint256 networkTokenAmount
-    ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) {
+    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) {
+        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
+        _verifyPoolCollection(pool);
+
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the pool token amount to burn
@@ -454,5 +441,20 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
         }
+    }
+
+    /**
+     * @dev verifies that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
+     */
+    function _verifyPoolCollection(IReserveToken pool) private view {
+        // verify that the token is whitelisted
+        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
+
+        // verify that the pool is managed by a valid pool collection
+        IPoolCollection poolCollection = _network.collectionByPool(pool);
+        _validAddress(address(poolCollection));
+
+        // verify that the pool's rate is stable
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 }
