@@ -64,9 +64,15 @@ contract TestBancorNetwork is BancorNetwork {
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 protectionWalletBalance
+        uint256 externalProtectionWalletBalance
     ) external returns (PoolCollectionWithdrawalAmounts memory) {
-        return poolCollection.withdraw(baseToken, basePoolTokenAmount, baseTokenVaultBalance, protectionWalletBalance);
+        return
+            poolCollection.withdraw(
+                baseToken,
+                basePoolTokenAmount,
+                baseTokenVaultBalance,
+                externalProtectionWalletBalance
+            );
     }
 
     function onNetworkTokenFeesCollectedT(
