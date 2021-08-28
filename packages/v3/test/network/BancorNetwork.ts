@@ -541,7 +541,7 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of ['BNT', 'ETH', 'TKN']) {
+        for (const symbol of ['ETH', 'TKN']) {
             context(symbol, () => {
                 testCreatePool(symbol);
             });

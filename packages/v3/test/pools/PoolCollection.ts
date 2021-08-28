@@ -269,11 +269,19 @@ describe('PoolCollection', () => {
             });
         };
 
-        for (const symbol of ['BNT', 'ETH', 'TKN']) {
+        for (const symbol of ['ETH', 'TKN']) {
             context(symbol, () => {
                 testCreatePool(symbol);
             });
         }
+
+        it('should revert when attempting to create a pool for the network token', async () => {
+            const { network, networkToken, poolCollection } = await createSystem();
+
+            await expect(network.createPoolT(poolCollection.address, networkToken.address)).to.be.revertedWith(
+                'ERR_TOKEN_NOT_WHITELISTED'
+            );
+        });
     });
 
     describe('pool settings', () => {
