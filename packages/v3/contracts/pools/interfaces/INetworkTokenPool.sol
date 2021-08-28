@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
+import { IPoolCollection } from "./IPoolCollection.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
@@ -128,6 +129,7 @@ interface INetworkTokenPool is IUpgradeable {
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount,
         bool skipLimitCheck
     ) external returns (uint256);
@@ -144,6 +146,7 @@ interface INetworkTokenPool is IUpgradeable {
     function renounceLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     ) external;
 

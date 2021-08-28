@@ -335,11 +335,20 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount,
         bool skipLimitCheck
-    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) returns (uint256) {
-        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-        _verifyPoolCollection(pool);
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(address(pool))
+        validAddress(address(poolCollection))
+        greaterThanZero(networkTokenAmount)
+        returns (uint256)
+    {
+        // verify that the provided pool is managed by the provided pool collection with a stable pool's rate
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
 
         // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
@@ -368,12 +377,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
         uint256 poolTokenAmount;
-        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-        if (poolTokenTotalSupply == 0) {
-            // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
-            poolTokenAmount = newNetworkTokenAmount;
-        } else {
-            poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+        {
+            uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+            if (poolTokenTotalSupply == 0) {
+                // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
+                poolTokenAmount = newNetworkTokenAmount;
+            } else {
+                poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            }
         }
 
         // update the staked balance
@@ -405,10 +416,18 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function renounceLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount
-    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) {
-        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-        _verifyPoolCollection(pool);
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(address(pool))
+        validAddress(address(poolCollection))
+        greaterThanZero(networkTokenAmount)
+    {
+        // verify that the provided pool is managed by the provided pool collection with a stable pool's rate
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
 
         uint256 currentStakedBalance = _stakedBalance;
 
@@ -456,20 +475,5 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
         }
-    }
-
-    /**
-     * @dev verifies that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-     */
-    function _verifyPoolCollection(IReserveToken pool) private view {
-        // verify that the token is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
-
-        // verify that the pool is managed by a valid pool collection
-        IPoolCollection poolCollection = _network.collectionByPool(pool);
-        _validAddress(address(poolCollection));
-
-        // verify that the pool's rate is stable
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 }

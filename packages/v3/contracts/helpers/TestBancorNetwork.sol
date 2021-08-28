@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
@@ -23,6 +25,7 @@ import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { TestTime } from "./TestTime.sol";
 
 contract TestBancorNetwork is BancorNetwork, TestTime {
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using SafeERC20 for IERC20;
 
     constructor(
@@ -90,18 +93,20 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function requestLiquidityT(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount,
         bool skipLimitCheck
     ) external returns (uint256) {
-        return _networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount, skipLimitCheck);
+        return _networkTokenPool.requestLiquidity(contextId, pool, poolCollection, networkTokenAmount, skipLimitCheck);
     }
 
     function renounceLiquidityT(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     ) external {
-        _networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
+        _networkTokenPool.renounceLiquidity(contextId, pool, poolCollection, networkTokenAmount);
     }
 
     function approveT(

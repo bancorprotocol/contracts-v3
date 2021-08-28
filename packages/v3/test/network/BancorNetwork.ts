@@ -716,6 +716,16 @@ describe('BancorNetwork', () => {
                                 }
                             });
 
+                            if (!isNetworkToken) {
+                                it('should revert when attempting to withdraw a non-whitelisted token', async () => {
+                                    await networkSettings.removeTokenFromWhitelist(token.address);
+
+                                    await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
+                                        'ERR_TOKEN_NOT_WHITELISTED'
+                                    );
+                                });
+                            }
+
                             context('when spot rate is stable', () => {
                                 beforeEach(async () => {
                                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };

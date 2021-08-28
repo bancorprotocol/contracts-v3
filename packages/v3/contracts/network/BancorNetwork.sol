@@ -641,9 +641,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         CompletedWithdrawalRequest memory completedRequest
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
-        IPoolCollection poolCollection = _collectionByPool[baseToken];
 
-        // TODO: verify the pool
+        // verify that the token is whitelisted
+        require(_settings.isTokenWhitelisted(baseToken), "ERR_TOKEN_NOT_WHITELISTED");
+
+        // get the pool collection that managed this pool
+        IPoolCollection poolCollection = _poolCollection(baseToken);
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -661,9 +664,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // handle the minting or burning of network tokens in the pool
         if (amounts.networkTokenArbitrageAmount > 0) {
             if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.MintNetworkTokens) {
-                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount, false);
+                _networkTokenPool.requestLiquidity(
+                    contextId,
+                    baseToken,
+                    poolCollection,
+                    amounts.networkTokenArbitrageAmount,
+                    false
+                );
             } else if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.BurnNetworkTokens) {
-                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount);
+                _networkTokenPool.renounceLiquidity(
+                    contextId,
+                    baseToken,
+                    poolCollection,
+                    amounts.networkTokenArbitrageAmount
+                );
             }
         }
 
@@ -737,5 +751,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 liquidity: poolLiquidity.networkTokenTradingLiquidity
             });
         }
+    }
+
+    /**
+     * @dev verifies that the specified pool is managed by a valid pool collection and returns it
+     */
+    function _poolCollection(IReserveToken pool) private view returns (IPoolCollection) {
+        // verify that the pool is managed by a valid pool collection
+        IPoolCollection poolCollection = _collectionByPool[pool];
+        _validAddress(address(poolCollection));
+
+        return poolCollection;
     }
 }
