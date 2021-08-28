@@ -391,11 +391,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
-     *
-     * requirements:
-     *
-     * - the caller must be the network contract
+     * @inheritdoc IPoolCollection
      */
     function withdraw(
         IReserveToken baseToken,
