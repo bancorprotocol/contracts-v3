@@ -26,12 +26,13 @@ describe('ReserveToken', () => {
         sender = reserveToken.address;
     });
 
-    for (const hasETH of [true, false]) {
+    for (const symbol of ['ETH', 'TKN']) {
         let token: any;
+        const isETH = symbol === 'ETH';
 
-        context(`${hasETH ? 'ETH' : 'ERC20'} reserve token`, () => {
+        context(`${symbol} reserve token`, () => {
             beforeEach(async () => {
-                if (hasETH) {
+                if (isETH) {
                     token = { address: NATIVE_TOKEN_ADDRESS };
 
                     await deployer.sendTransaction({
@@ -39,14 +40,18 @@ describe('ReserveToken', () => {
                         value: TOTAL_SUPPLY.div(BigNumber.from(2))
                     });
                 } else {
-                    token = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', TOTAL_SUPPLY);
+                    token = await Contracts.TestERC20Token.deploy(symbol, symbol, TOTAL_SUPPLY);
 
                     await token.transfer(sender, TOTAL_SUPPLY.div(BigNumber.from(2)));
                 }
             });
 
             it('should properly check if the reserve token is a native token', async () => {
-                expect(await reserveToken.isNativeToken(token.address)).to.equal(hasETH);
+                expect(await reserveToken.isNativeToken(token.address)).to.equal(isETH);
+            });
+
+            it('should properly get the right symbol', async () => {
+                expect(await reserveToken.symbol(token.address)).to.equal(symbol);
             });
 
             it('should properly get the right balance', async () => {
@@ -65,7 +70,7 @@ describe('ReserveToken', () => {
                 });
             }
 
-            if (hasETH) {
+            if (isETH) {
                 it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
                     const prevSenderBalance = await getBalance(token, sender);
                     const prevRecipientBalance = await getBalance(token, recipient);

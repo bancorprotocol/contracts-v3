@@ -49,3 +49,19 @@ export const transfer = async (
         .connect(sourceAccount)
         .transfer(targetAddress, amount);
 };
+
+export const getTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
+    switch (symbol) {
+        case 'BNT':
+            return networkToken;
+
+        case 'ETH':
+            return { address: NATIVE_TOKEN_ADDRESS };
+
+        case 'TKN':
+            return Contracts.TestERC20Token.deploy(symbol, symbol, BigNumber.from(1_000_000));
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};

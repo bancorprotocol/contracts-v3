@@ -8,6 +8,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
 import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
@@ -33,6 +34,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
+    using ReserveToken for IReserveToken;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -930,9 +932,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
         string memory customSymbol = _tokenSymbolOverrides[reserveToken];
-        string memory tokenSymbol = bytes(customSymbol).length != 0
-            ? customSymbol
-            : ERC20(address(reserveToken)).symbol();
+        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
 
         string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
         string memory name = string(

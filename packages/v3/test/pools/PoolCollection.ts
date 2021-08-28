@@ -2,6 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
 import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { TokenWithAddress, getTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -152,116 +153,127 @@ describe('PoolCollection', () => {
     describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
+        let networkToken: TestERC20Token;
         let poolCollection: TestPoolCollection;
-        let reserveToken: TestERC20Token;
+        let reserveToken: TokenWithAddress;
 
         const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
 
-        beforeEach(async () => {
-            ({ network, networkSettings, poolCollection } = await createSystem());
-
-            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
-        });
-
-        it('should revert when attempting to create a pool from a non-network', async () => {
-            const nonNetwork = deployer;
-
-            await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
-            );
-        });
-
-        it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
-            await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                'ERR_TOKEN_NOT_WHITELISTED'
-            );
-        });
-
-        context('with a whitelisted token', () => {
+        const testCreatePool = (symbol: string) => {
             beforeEach(async () => {
-                await networkSettings.addTokenToWhitelist(reserveToken.address);
+                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+
+                reserveToken = await getTokenBySymbol(symbol, networkToken);
             });
 
-            it('should not allow to create the same pool twice', async () => {
-                await network.createPoolT(poolCollection.address, reserveToken.address);
+            it('should revert when attempting to create a pool from a non-network', async () => {
+                const nonNetwork = deployer;
 
-                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                    'ERR_POOL_ALREADY_EXISTS'
+                await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
+                    'ERR_ACCESS_DENIED'
                 );
             });
 
-            it('should create a pool', async () => {
-                expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
-
-                const res = await network.createPoolT(poolCollection.address, reserveToken.address);
-                const pool = await poolCollection.poolData(reserveToken.address);
-
-                await expect(res).to.emit(poolCollection, 'PoolCreated').withArgs(pool.poolToken, reserveToken.address);
-                await expect(res)
-                    .to.emit(poolCollection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                await expect(res)
-                    .to.emit(poolCollection, 'TradingEnabled')
-                    .withArgs(reserveToken.address, pool.tradingEnabled);
-                await expect(res)
-                    .to.emit(poolCollection, 'DepositingEnabled')
-                    .withArgs(reserveToken.address, pool.depositingEnabled);
-                await expect(res)
-                    .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
-                await expect(res)
-                    .to.emit(poolCollection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
-
-                expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
-                const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
-                expect(poolToken).not.to.equal(ZERO_ADDRESS);
-                const reserveTokenSymbol = await reserveToken.symbol();
-                expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
-                expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
-
-                expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
-                expect(pool.tradingEnabled).to.be.true;
-                expect(pool.depositingEnabled).to.be.true;
-                expect(pool.averageRate.time).to.equal(BigNumber.from(0));
-                expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
-                expect(pool.initialRate).to.equal(INITIAL_RATE);
-                expect(pool.depositLimit).to.equal(BigNumber.from(0));
-
-                const { liquidity } = pool;
-                expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
-
-                const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
-                expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
-                expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
-                expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
-                expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
+            it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
+                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
+                    'ERR_TOKEN_NOT_WHITELISTED'
+                );
             });
 
-            context('with a token symbol override', () => {
-                const newSymbol = 'TKN2';
-
+            context('with a whitelisted token', () => {
                 beforeEach(async () => {
-                    await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                });
+
+                it('should not allow to create the same pool twice', async () => {
+                    await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                    await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
+                        'ERR_POOL_ALREADY_EXISTS'
+                    );
                 });
 
                 it('should create a pool', async () => {
-                    await network.createPoolT(poolCollection.address, reserveToken.address);
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
 
+                    const res = await network.createPoolT(poolCollection.address, reserveToken.address);
                     const pool = await poolCollection.poolData(reserveToken.address);
 
+                    await expect(res)
+                        .to.emit(poolCollection, 'PoolCreated')
+                        .withArgs(pool.poolToken, reserveToken.address);
+                    await expect(res)
+                        .to.emit(poolCollection, 'TradingFeePPMUpdated')
+                        .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
+                    await expect(res)
+                        .to.emit(poolCollection, 'TradingEnabled')
+                        .withArgs(reserveToken.address, pool.tradingEnabled);
+                    await expect(res)
+                        .to.emit(poolCollection, 'DepositingEnabled')
+                        .withArgs(reserveToken.address, pool.depositingEnabled);
+                    await expect(res)
+                        .to.emit(poolCollection, 'InitialRateUpdated')
+                        .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
+                    await expect(res)
+                        .to.emit(poolCollection, 'DepositLimitUpdated')
+                        .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
+
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                    expect(poolToken).not.to.equal(ZERO_ADDRESS);
+                    const reserveTokenSymbol = symbol;
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
-                    expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
+                    expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
+
+                    expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+                    expect(pool.tradingEnabled).to.be.true;
+                    expect(pool.depositingEnabled).to.be.true;
+                    expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                    expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
+                    expect(pool.initialRate).to.equal(INITIAL_RATE);
+                    expect(pool.depositLimit).to.equal(BigNumber.from(0));
+
+                    const { liquidity } = pool;
+                    expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                    expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                    expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                    expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
+
+                    const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+                    expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
+                    expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
+                    expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
+                    expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
+                });
+
+                context('with a token symbol override', () => {
+                    const newSymbol = 'TKN2';
+
+                    beforeEach(async () => {
+                        await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    });
+
+                    it('should create a pool', async () => {
+                        await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                        const pool = await poolCollection.poolData(reserveToken.address);
+
+                        const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                        expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                        expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
+                        expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    });
                 });
             });
-        });
+        };
+
+        for (const symbol of ['BNT', 'ETH', 'TKN']) {
+            context(symbol, () => {
+                testCreatePool(symbol);
+            });
+        }
     });
 
     describe('pool settings', () => {
@@ -862,4 +874,6 @@ describe('PoolCollection', () => {
             testWithdrawalAmounts();
         });
     });
+
+    describe.skip('withdraw', () => {});
 });

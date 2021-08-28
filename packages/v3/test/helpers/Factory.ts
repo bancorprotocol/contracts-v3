@@ -12,7 +12,7 @@ import {
 } from '../../typechain';
 import { roles } from './AccessControl';
 import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from './Constants';
-import { toAddress } from './Utils';
+import { toAddress, TokenWithAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
@@ -199,7 +199,7 @@ export const createSystem = async () => {
 };
 
 export const createPool = async (
-    reserveToken: TestERC20Token,
+    reserveToken: TokenWithAddress,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
     poolCollection: PoolCollection
