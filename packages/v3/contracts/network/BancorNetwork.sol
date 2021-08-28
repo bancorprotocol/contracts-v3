@@ -595,6 +595,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
+        // approve the network token pool to transfer pool tokens, which we have received from the completion of the
+        // pending withdrawal, on behalf of the network
+        completedRequest.poolToken.approve(address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
+
         // transfer governance tokens from the caller to the network token pool
         _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
 
@@ -639,7 +643,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
         IPoolCollection poolCollection = _collectionByPool[baseToken];
 
-        completedRequest.poolToken.transferFrom(provider, address(this), completedRequest.poolTokenAmount);
+        // TODO: verify the pool
+
+        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
+        // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
