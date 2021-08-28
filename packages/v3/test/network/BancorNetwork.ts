@@ -481,7 +481,7 @@ describe('BancorNetwork', () => {
 
         const testCreatePool = async (symbol: string) => {
             beforeEach(async () => {
-                ({ network, networkSettings, poolCollection } = await createSystem());
+                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
                 reserveToken = await getTokenBySymbol(symbol, networkToken);
 
