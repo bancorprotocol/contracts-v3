@@ -519,7 +519,7 @@ describe('PendingWithdrawals', () => {
         describe('completion', () => {
             let provider: SignerWithAddress;
 
-            const test = async (networkToken: boolean) => {
+            const test = async (isNetworkToken: boolean) => {
                 let poolToken: PoolToken;
                 const poolTokenAmount = BigNumber.from(9889898923324);
                 const contextId = formatBytes32String('CTX');
@@ -527,7 +527,7 @@ describe('PendingWithdrawals', () => {
                 beforeEach(async () => {
                     [, provider] = await ethers.getSigners();
 
-                    if (networkToken) {
+                    if (isNetworkToken) {
                         poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
 
                         await networkTokenPool.mintT(provider.address, poolTokenAmount);
@@ -544,7 +544,7 @@ describe('PendingWithdrawals', () => {
                     ).to.be.revertedWith('ERR_ACCESS_DENIED');
                 });
 
-                context('with initiated withdrawal requests', () => {
+                context('with an initiated withdrawal request', () => {
                     let id: BigNumber;
                     let creationTime: number;
 
@@ -571,7 +571,7 @@ describe('PendingWithdrawals', () => {
                             .to.emit(pendingWithdrawals, 'WithdrawalCompleted')
                             .withArgs(
                                 contextId,
-                                networkToken ? await network.networkToken() : reserveToken.address,
+                                isNetworkToken ? await network.networkToken() : reserveToken.address,
                                 provider.address,
                                 id,
                                 withdrawalRequest.poolTokenAmount,
@@ -650,9 +650,9 @@ describe('PendingWithdrawals', () => {
                 });
             };
 
-            for (const networkToken of [false, true]) {
-                context(networkToken ? 'network token pool' : 'base token pool', async () => {
-                    test(networkToken);
+            for (const isNetworkToken of [false, true]) {
+                context(isNetworkToken ? 'network token pool' : 'base token pool', async () => {
+                    test(isNetworkToken);
                 });
             }
         });

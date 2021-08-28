@@ -1,14 +1,18 @@
 import Contracts from '../../components/Contracts';
 import {
-    BancorNetwork,
+    TestBancorNetwork,
     NetworkSettings,
-    PoolCollection,
+    TestPoolCollection,
+    PoolToken,
     TestERC20Token,
-    TokenHolderUpgradeable
+    TestPendingWithdrawals,
+    TokenHolderUpgradeable,
+    TestNetworkTokenPool
 } from '../../typechain';
 import { ZERO_ADDRESS } from '../helpers/Constants';
-import { createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
+import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
+import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -153,7 +157,7 @@ describe('BancorNetwork', () => {
 
     describe('external protection wallet', () => {
         let newExternalProtectionWallet: TokenHolderUpgradeable;
-        let network: BancorNetwork;
+        let network: TestBancorNetwork;
 
         beforeEach(async () => {
             ({ network } = await createSystem());
@@ -224,8 +228,8 @@ describe('BancorNetwork', () => {
     });
 
     describe('pool collections', () => {
-        let network: BancorNetwork;
-        let poolCollection: PoolCollection;
+        let network: TestBancorNetwork;
+        let poolCollection: TestPoolCollection;
         let poolType: number;
 
         beforeEach(async () => {
@@ -325,8 +329,8 @@ describe('BancorNetwork', () => {
             });
 
             context('with an exiting alternative pool collection', () => {
-                let newPoolCollection: PoolCollection;
-                let lastCollection: PoolCollection;
+                let newPoolCollection: TestPoolCollection;
+                let lastCollection: TestPoolCollection;
 
                 beforeEach(async () => {
                     newPoolCollection = await createPoolCollection(network);
@@ -408,7 +412,7 @@ describe('BancorNetwork', () => {
         });
 
         describe('setting the latest pool collections', () => {
-            let newPoolCollection: PoolCollection;
+            let newPoolCollection: TestPoolCollection;
 
             beforeEach(async () => {
                 newPoolCollection = await createPoolCollection(network);
@@ -463,9 +467,9 @@ describe('BancorNetwork', () => {
 
     describe('create pool', () => {
         let reserveToken: TestERC20Token;
+        let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let network: BancorNetwork;
-        let poolCollection: PoolCollection;
+        let poolCollection: TestPoolCollection;
         let poolType: number;
 
         beforeEach(async () => {
@@ -527,5 +531,129 @@ describe('BancorNetwork', () => {
                 });
             });
         });
+    });
+
+    describe.only('withdraw', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkTokenPool: TestNetworkTokenPool;
+        let poolCollection: TestPoolCollection;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let networkPoolToken: PoolToken;
+
+        const setTime = async (time: number) => {
+            await network.setTime(time);
+            await pendingWithdrawals.setTime(time);
+        };
+
+        beforeEach(async () => {
+            ({ network, networkSettings, networkTokenPool, poolCollection, pendingWithdrawals, networkPoolToken } =
+                await createSystem());
+
+            await setTime((await latest()).toNumber());
+        });
+
+        it('should revert when to withdraw a non-existing withdrawal request', async () => {
+            await expect(network.withdraw(BigNumber.from(12345))).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        const testWithdraw = async (isNetworkToken: boolean) => {
+            context('with an initiated withdrawal request', () => {
+                let reserveToken: TestERC20Token;
+                let deployer: SignerWithAddress;
+                let provider: SignerWithAddress;
+                let poolToken: PoolToken;
+                const poolTokenAmount = BigNumber.from(2222222222222);
+                let id: BigNumber;
+                let creationTime: number;
+
+                beforeEach(async () => {
+                    [deployer, provider] = await ethers.getSigners();
+
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
+
+                        await networkTokenPool.mintT(provider.address, poolTokenAmount);
+                    } else {
+                        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await poolCollection.mintT(provider.address, poolToken.address, poolTokenAmount);
+                    }
+
+                    await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
+                    await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+
+                    const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                    id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                    const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                    creationTime = withdrawalRequest.createdAt;
+                });
+
+                it('should revert when attempting to withdraw from a different provider', async () => {
+                    await expect(network.connect(deployer).withdraw(id)).to.be.revertedWith('ERR_ACCESS_DENIED');
+                });
+
+                context('during the lock duration', () => {
+                    beforeEach(async () => {
+                        await setTime(creationTime + 1000);
+                    });
+
+                    it('should revert when attempting to withdraw', async () => {
+                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
+                            'ERR_WITHDRAWAL_NOT_ALLOWED'
+                        );
+                    });
+
+                    context('after the withdrawal window duration', () => {
+                        beforeEach(async () => {
+                            const withdrawalDuration =
+                                (await pendingWithdrawals.lockDuration()) +
+                                (await pendingWithdrawals.withdrawalWindowDuration());
+                            await setTime(creationTime + withdrawalDuration + 1);
+                        });
+
+                        it('should revert when attempting to withdraw', async () => {
+                            await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
+                                'ERR_WITHDRAWAL_NOT_ALLOWED'
+                            );
+                        });
+                    });
+
+                    context('during the withdrawal window duration', () => {
+                        beforeEach(async () => {
+                            const withdrawalDuration =
+                                (await pendingWithdrawals.lockDuration()) +
+                                (await pendingWithdrawals.withdrawalWindowDuration());
+                            await setTime(creationTime + withdrawalDuration - 1);
+                        });
+
+                        it('should revert when attempting to withdraw without approving the pool token amount', async () => {
+                            await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
+                                'ERC20: transfer amount exceeds balance'
+                            );
+                        });
+
+                        context('with an approval', () => {
+                            beforeEach(async () => {
+                                const pool = isNetworkToken ? networkTokenPool : poolCollection;
+                                await poolToken.connect(provider).approve(pool.address, poolTokenAmount);
+                            });
+
+                            it('should complete a withdraw', async () => {
+                                // await testCompleteWithdrawal();
+                            });
+                        });
+                    });
+                });
+            });
+        };
+
+        for (const isNetworkToken of [false, true]) {
+            context(isNetworkToken ? 'network token pool' : 'base token pool', async () => {
+                testWithdraw(isNetworkToken);
+            });
+        }
     });
 });

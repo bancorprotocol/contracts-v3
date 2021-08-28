@@ -11,6 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/Token
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
@@ -28,7 +29,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Network contract
  */
-contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveToken for IReserveToken;
 
@@ -516,6 +517,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         emit PoolAdded({ poolType: poolType, pool: reserveToken, poolCollection: poolCollection });
     }
 
+    // function depositFor(
+    //     IReserveToken pool,
+    //     uint256 tokenAmount,
+    //     address provider
+    // ) external {
+    //     // generate context ID for monitoring
+    //     bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount));
+    // }
+
     /**
      * @inheritdoc IBancorNetwork
      */
@@ -523,7 +533,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider = msg.sender;
 
         // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, block.timestamp, id));
+        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(

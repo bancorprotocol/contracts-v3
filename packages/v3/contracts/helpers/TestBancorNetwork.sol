@@ -7,6 +7,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
+import { Time } from "../utility/Time.sol";
+
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawalRequest } from "../network/interfaces/IPendingWithdrawals.sol";
@@ -18,7 +20,9 @@ import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts as NetworkTokenPoo
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-contract TestBancorNetwork is BancorNetwork {
+import { TestTime } from "./TestTime.sol";
+
+contract TestBancorNetwork is BancorNetwork, TestTime {
     using SafeERC20 for IERC20;
 
     constructor(
@@ -106,5 +110,9 @@ contract TestBancorNetwork is BancorNetwork {
         uint256 amount
     ) external {
         token.safeApprove(spender, amount);
+    }
+
+    function _time() internal view virtual override(Time, TestTime) returns (uint32) {
+        return TestTime._time();
     }
 }
