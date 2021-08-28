@@ -150,7 +150,7 @@ describe('NetworkTokenPool', () => {
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
+                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                 await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
             });
 
@@ -394,7 +394,7 @@ describe('NetworkTokenPool', () => {
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
+                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                 await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
             });
 
