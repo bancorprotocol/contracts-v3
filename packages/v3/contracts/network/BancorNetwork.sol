@@ -517,15 +517,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         emit PoolAdded({ poolType: poolType, pool: reserveToken, poolCollection: poolCollection });
     }
 
-    // function depositFor(
-    //     IReserveToken pool,
-    //     uint256 tokenAmount,
-    //     address provider
-    // ) external {
-    //     // generate context ID for monitoring
-    //     bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount));
-    // }
-
     /**
      * @inheritdoc IBancorNetwork
      */
