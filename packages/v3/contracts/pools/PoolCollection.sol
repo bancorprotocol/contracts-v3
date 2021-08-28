@@ -399,19 +399,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
-        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
-
         // obtain all withdrawal-related amounts
-        amounts = _withdrawalAmounts(
-            params.networkTokenAvgTradingLiquidity,
-            params.baseTokenAvgTradingLiquidity,
-            _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-            params.basePoolTokenTotalSupply,
-            params.baseTokenStakedAmount,
-            externalProtectionWalletBalance,
-            params.tradeFeePPM,
-            _settings.withdrawalFeePPM(),
-            basePoolTokenAmount
+        amounts = _poolWithdrawalAmounts(
+            baseToken,
+            basePoolTokenAmount,
+            baseTokenVaultBalance,
+            externalProtectionWalletBalance
         );
 
         // execute post-withdrawal actions
@@ -424,6 +417,31 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // return all withdrawal-related amounts
         return amounts;
+    }
+
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _poolWithdrawalAmounts(
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenVaultBalance,
+        uint256 externalProtectionWalletBalance
+    ) internal view returns (WithdrawalAmounts memory amounts) {
+        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
+
+        return
+            _withdrawalAmounts(
+                params.networkTokenAvgTradingLiquidity,
+                params.baseTokenAvgTradingLiquidity,
+                _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+                params.basePoolTokenTotalSupply,
+                params.baseTokenStakedAmount,
+                externalProtectionWalletBalance,
+                params.tradeFeePPM,
+                _settings.withdrawalFeePPM(),
+                basePoolTokenAmount
+            );
     }
 
     /**

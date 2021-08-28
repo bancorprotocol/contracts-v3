@@ -285,6 +285,30 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         validAddress(provider)
         returns (WithdrawalAmounts memory)
     {
+        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+
+        // mint network tokens to the provider
+        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
+
+        // get the pool tokens from the caller
+        _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
+
+        // burn the respective governance token amount
+        _govTokenGovernance.burn(poolTokenAmount);
+
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: amounts.networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                networkTokenWithdrawalFeeAmount: amounts.networkTokenWithdrawalFeeAmount
+            });
+    }
+
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
         // calculate the network token amount to transfer
         uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
 
@@ -295,15 +319,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             PPM_RESOLUTION
         );
         networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
-
-        // mint network tokens to the provider
-        _networkTokenGovernance.mint(provider, networkTokenAmount);
-
-        // get the pool tokens from the caller
-        _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
-
-        // burn the respective governance token amount
-        _govTokenGovernance.burn(poolTokenAmount);
 
         return
             WithdrawalAmounts({

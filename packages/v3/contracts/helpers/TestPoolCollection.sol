@@ -36,6 +36,21 @@ contract TestPoolCollection is PoolCollection {
         data.averageRate = newAverageRate;
     }
 
+    function poolWithdrawalAmountsT(
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenVaultBalance,
+        uint256 externalProtectionWalletBalance
+    ) external view returns (WithdrawalAmounts memory) {
+        return
+            _poolWithdrawalAmounts(
+                baseToken,
+                basePoolTokenAmount,
+                baseTokenVaultBalance,
+                externalProtectionWalletBalance
+            );
+    }
+
     function withdrawalAmountsT(
         uint256 networkTokenLiquidity,
         uint256 baseTokenLiquidity,

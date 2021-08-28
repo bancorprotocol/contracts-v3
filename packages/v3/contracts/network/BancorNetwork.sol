@@ -52,7 +52,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     IBancorVault private immutable _vault;
 
     // the network token pool token
-    IPoolToken private immutable _networkPoolToken;
+    IPoolToken internal immutable _networkPoolToken;
 
     // the network token pool contract
     INetworkTokenPool internal _networkTokenPool;
