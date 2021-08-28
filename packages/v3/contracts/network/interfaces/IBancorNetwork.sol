@@ -113,7 +113,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the provider must have already initiated a withdrawal and received the specified id
      * - the specified withdrawal request is eligble for completion
-     * - the provider must have approved the network to transfer the pool token amount on its behalf
+     * - the provider must have approved the network to transfer the governance token amount on its behalf, when
+     * withdrawing network token liquidity
      */
     function withdraw(uint256 id) external;
 }
