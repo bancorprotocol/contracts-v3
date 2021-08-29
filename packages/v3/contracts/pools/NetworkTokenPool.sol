@@ -328,9 +328,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         greaterThanZero(networkTokenAmount)
         returns (uint256)
     {
-        // verify that the provided pool is managed by the provided pool collection with a stable pool's rate
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
-
         // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 newNetworkTokenAmount;
