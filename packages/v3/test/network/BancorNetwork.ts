@@ -594,7 +594,7 @@ describe('BancorNetwork', () => {
             await setTime((await latest()).toNumber());
         });
 
-        it('should revert when to withdraw a non-existing withdrawal request', async () => {
+        it('should revert when attempting to withdraw a non-existing withdrawal request', async () => {
             await expect(network.withdraw(BigNumber.from(12345))).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
