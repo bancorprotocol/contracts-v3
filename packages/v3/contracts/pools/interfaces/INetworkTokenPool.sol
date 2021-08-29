@@ -91,6 +91,11 @@ interface INetworkTokenPool is IUpgradeable {
     function mintedAmount(IReserveToken pool) external view returns (uint256);
 
     /**
+     * @dev returns the available co-investment network token liquidity for a given pool
+     */
+    function availableTradingLiquidity(IReserveToken pool) external view returns (uint256);
+
+    /**
      * @dev deposits network token liquidity on behalf of a specific provider
      *
      * requirements:
@@ -117,21 +122,20 @@ interface INetworkTokenPool is IUpgradeable {
     function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
-     * @dev allows pools to request network token liquidity and returns the provided amount (which may be less than the
-     * requested amount)
+     * @dev allows pools to request network token liquidity and returns the provided amount
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the token must have been whitelisted
+     * - the request amount should be below the minting limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
         IPoolCollection poolCollection,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
+        uint256 networkTokenAmount
     ) external returns (uint256);
 
     /**

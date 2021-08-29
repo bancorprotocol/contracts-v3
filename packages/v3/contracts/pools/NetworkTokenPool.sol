@@ -77,7 +77,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     event LiquidityRequested(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 networkTokenAmountRequested,
         uint256 networkTokenAmountProvided,
         uint256 poolTokenAmount
     );
@@ -235,6 +234,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
+    function availableTradingLiquidity(IReserveToken pool) external view override returns (uint256) {
+        uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 currentMintedAmount = _mintedAmounts[pool];
+
+        return mintingLimit > currentMintedAmount ? mintingLimit - currentMintedAmount : 0;
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
     function depositFor(
         address provider,
         uint256 networkTokenAmount,
@@ -318,8 +327,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bytes32 contextId,
         IReserveToken pool,
         IPoolCollection poolCollection,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
+        uint256 networkTokenAmount
     )
         external
         override
@@ -330,27 +338,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     {
         // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
-        uint256 newNetworkTokenAmount;
-        if (skipLimitCheck) {
-            newNetworkTokenAmount = networkTokenAmount;
-        } else {
-            uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 newMintedAmount = currentMintedAmount.add(networkTokenAmount);
 
-            if (mintingLimit > currentMintedAmount) {
-                newNetworkTokenAmount = Math.min(mintingLimit - currentMintedAmount, networkTokenAmount);
-            } else {
-                // if we're unable to mint more network tokens - abort
-                emit LiquidityRequested({
-                    contextId: contextId,
-                    pool: pool,
-                    networkTokenAmountRequested: networkTokenAmount,
-                    networkTokenAmountProvided: 0,
-                    poolTokenAmount: 0
-                });
-
-                return 0;
-            }
-        }
+        // verify that the pool doesn't try to request liquidity above the minting limit
+        require(mintingLimit >= newMintedAmount, "ERR_INVALID_AMOUNT");
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
@@ -360,33 +352,33 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             if (poolTokenTotalSupply == 0) {
                 // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
                 require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
-                poolTokenAmount = newNetworkTokenAmount;
+
+                poolTokenAmount = networkTokenAmount;
             } else {
-                poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+                poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
             }
         }
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance.add(newNetworkTokenAmount);
+        _stakedBalance = currentStakedBalance.add(networkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = currentMintedAmount.add(newNetworkTokenAmount);
+        _mintedAmounts[pool] = newMintedAmount;
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint network tokens to the vault
-        _networkTokenGovernance.mint(address(_vault), newNetworkTokenAmount);
+        _networkTokenGovernance.mint(address(_vault), networkTokenAmount);
 
         emit LiquidityRequested({
             contextId: contextId,
             pool: pool,
-            networkTokenAmountRequested: networkTokenAmount,
-            networkTokenAmountProvided: newNetworkTokenAmount,
+            networkTokenAmountProvided: networkTokenAmount,
             poolTokenAmount: poolTokenAmount
         });
 
-        return newNetworkTokenAmount;
+        return networkTokenAmount;
     }
 
     /**

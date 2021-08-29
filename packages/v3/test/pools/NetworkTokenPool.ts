@@ -125,25 +125,19 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
             await expect(
-                network.requestLiquidityT(
-                    contextId,
-                    reserveToken.address,
-                    poolCollection.address,
-                    BigNumber.from(1),
-                    false
-                )
+                network.requestLiquidityT(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
             ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
             await expect(
-                network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1), false)
+                network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1))
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool collection', async () => {
             await expect(
-                network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1), false)
+                network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1))
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
@@ -164,8 +158,7 @@ describe('NetworkTokenPool', () => {
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        BigNumber.from(0),
-                        false
+                        BigNumber.from(0)
                     )
                 ).to.be.revertedWith('ERR_ZERO_VALUE');
             });
@@ -190,17 +183,19 @@ describe('NetworkTokenPool', () => {
                             contextId,
                             reserveToken.address,
                             poolCollection.address,
-                            BigNumber.from(1),
-                            false
+                            BigNumber.from(1)
                         )
                     ).to.be.revertedWith('ERR_INVALID_RATE');
                 });
             });
 
             context('when spot rate is stable', () => {
-                const testRequest = async (amount: BigNumber, expectedAmount: BigNumber, skipLimitCheck = false) => {
+                const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
+                    const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(
+                        reserveToken.address
+                    );
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
                     const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -219,30 +214,31 @@ describe('NetworkTokenPool', () => {
                         expectedPoolTokenAmount = expectedAmount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
                     }
 
-                    const receiveAmount = await network.callStatic.requestLiquidityT(
+                    const receivedAmount = await network.callStatic.requestLiquidityT(
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        amount,
-                        skipLimitCheck
+                        amount
                     );
-                    expect(receiveAmount).to.equal(expectedAmount);
+                    expect(receivedAmount).to.equal(expectedAmount);
 
                     const res = await network.requestLiquidityT(
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        amount,
-                        skipLimitCheck
+                        amount
                     );
 
                     await expect(res)
                         .to.emit(networkTokenPool, 'LiquidityRequested')
-                        .withArgs(contextId, reserveToken.address, amount, expectedAmount, expectedPoolTokenAmount);
+                        .withArgs(contextId, reserveToken.address, expectedAmount, expectedPoolTokenAmount);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedAmount)
+                    );
+                    expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+                        prevAvailableLiquidity.sub(expectedAmount)
                     );
 
                     expect(await networkPoolToken.totalSupply()).to.equal(
@@ -272,35 +268,38 @@ describe('NetworkTokenPool', () => {
                 });
 
                 context('when close to the minting limit', () => {
+                    const remaining = toWei(BigNumber.from(1_000_000));
+
                     beforeEach(async () => {
-                        const amount = MINTING_LIMIT.sub(toWei(BigNumber.from(1_000_000)));
+                        const amount = MINTING_LIMIT.sub(remaining);
+
                         await testRequest(amount, amount);
                     });
 
-                    it('should allow requesting partial liquidity amount', async () => {
+                    it('should allow requesting liquidity up to the limit', async () => {
                         for (const amount of [
-                            BigNumber.from(10),
-                            BigNumber.from(100_000),
-                            toWei(BigNumber.from(2_000_000)),
-                            toWei(BigNumber.from(1_500_000))
+                            toWei(BigNumber.from(10)),
+                            toWei(BigNumber.from(100_000)),
+                            toWei(BigNumber.from(899_990))
                         ]) {
-                            const remaining = (await networkSettings.poolMintingLimit(reserveToken.address)).sub(
-                                await networkTokenPool.mintedAmount(reserveToken.address)
-                            );
-                            const expectAmount = BigNumber.min(remaining, amount);
-
-                            await testRequest(amount, expectAmount);
+                            await testRequest(amount, amount);
                         }
                     });
 
-                    it('should allow requesting full liquidity by ignoring the minting limit', async () => {
+                    it('should revert when requesting more liquidity amount than the minting limit', async () => {
                         for (const amount of [
-                            BigNumber.from(10),
-                            BigNumber.from(100_000),
-                            toWei(BigNumber.from(2_000_000)),
-                            toWei(BigNumber.from(1_500_000))
+                            remaining.add(BigNumber.from(1)),
+                            remaining.add(toWei(BigNumber.from(2_000_000))),
+                            toWei(BigNumber.from(2_000_000))
                         ]) {
-                            await testRequest(amount, amount, true);
+                            await expect(
+                                network.requestLiquidityT(
+                                    contextId,
+                                    reserveToken.address,
+                                    poolCollection.address,
+                                    amount
+                                )
+                            ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                         }
                     });
 
@@ -311,25 +310,21 @@ describe('NetworkTokenPool', () => {
                             await networkSettings.setPoolMintingLimit(reserveToken.address, BigNumber.from(1));
                         });
 
-                        it('should ignore requesting liquidity', async () => {
+                        it('should revert when requesting more liquidity amount than the minting limit', async () => {
                             for (const amount of [
                                 BigNumber.from(10),
                                 BigNumber.from(100_000),
                                 toWei(BigNumber.from(2_000_000)),
                                 toWei(BigNumber.from(1_500_000))
                             ]) {
-                                await testRequest(amount, BigNumber.from(0));
-                            }
-                        });
-
-                        it('should allow requesting full liquidity by ignoring the minting limit', async () => {
-                            for (const amount of [
-                                BigNumber.from(10),
-                                BigNumber.from(100_000),
-                                toWei(BigNumber.from(2_000_000)),
-                                toWei(BigNumber.from(1_500_000))
-                            ]) {
-                                await testRequest(amount, amount, true);
+                                await expect(
+                                    network.requestLiquidityT(
+                                        contextId,
+                                        reserveToken.address,
+                                        poolCollection.address,
+                                        amount
+                                    )
+                                ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                             }
                         });
                     });
@@ -340,25 +335,21 @@ describe('NetworkTokenPool', () => {
                         await testRequest(MINTING_LIMIT, MINTING_LIMIT);
                     });
 
-                    it('should ignore requesting liquidity', async () => {
+                    it('should revert when requesting more liquidity amount than the minting limit', async () => {
                         for (const amount of [
                             BigNumber.from(10),
                             BigNumber.from(100_000),
                             toWei(BigNumber.from(2_000_000)),
                             toWei(BigNumber.from(1_500_000))
                         ]) {
-                            await testRequest(amount, BigNumber.from(0));
-                        }
-                    });
-
-                    it('should allow requesting full liquidity by ignoring the minting limit amount', async () => {
-                        for (const amount of [
-                            BigNumber.from(10),
-                            BigNumber.from(100_000),
-                            toWei(BigNumber.from(2_000_000)),
-                            toWei(BigNumber.from(1_500_000))
-                        ]) {
-                            await testRequest(amount, amount, true);
+                            await expect(
+                                network.requestLiquidityT(
+                                    contextId,
+                                    reserveToken.address,
+                                    poolCollection.address,
+                                    amount
+                                )
+                            ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                         }
                     });
                 });
@@ -387,13 +378,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
             await expect(
-                network.requestLiquidityT(
-                    contextId,
-                    reserveToken.address,
-                    poolCollection.address,
-                    BigNumber.from(1),
-                    false
-                )
+                network.requestLiquidityT(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
             ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
@@ -450,14 +435,16 @@ describe('NetworkTokenPool', () => {
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        requestedAmount,
-                        false
+                        requestedAmount
                     );
                 });
 
                 const testRenounce = async (amount: BigNumber) => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
+                    const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(
+                        reserveToken.address
+                    );
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
                     const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -485,6 +472,9 @@ describe('NetworkTokenPool', () => {
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(amount));
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.sub(amount)
+                    );
+                    expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+                        prevAvailableLiquidity.add(amount)
                     );
 
                     expect(await networkPoolToken.totalSupply()).to.equal(
@@ -594,8 +584,7 @@ describe('NetworkTokenPool', () => {
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        requestedAmount,
-                        false
+                        requestedAmount
                     );
                 });
 
@@ -785,8 +774,7 @@ describe('NetworkTokenPool', () => {
                         contextId,
                         reserveToken.address,
                         poolCollection.address,
-                        requestedAmount,
-                        false
+                        requestedAmount
                     );
                 });
 
@@ -933,14 +921,19 @@ describe('NetworkTokenPool', () => {
     });
 
     describe('fee collection', () => {
+        let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkTokenPool: TestNetworkTokenPool;
         let reserveToken: TestERC20Token;
 
+        const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
+
         beforeEach(async () => {
-            ({ networkTokenPool, network } = await createSystem());
+            ({ networkSettings, networkTokenPool, network } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+
+            await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
         });
 
         it('should revert when attempting to get notified about collected fee from a non-network', async () => {
@@ -960,18 +953,23 @@ describe('NetworkTokenPool', () => {
         });
 
         for (const [name, type] of Object.entries(FEE_TYPES)) {
-            for (const fee of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
-                it(`should collect ${name} fees of ${fee.toString()}`, async () => {
-                    const feeAmount = BigNumber.from(12345);
-
+            for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
+                it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintingAmount = await networkTokenPool.mintedAmount(reserveToken.address);
+                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
+                    const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(
+                        reserveToken.address
+                    );
+                    const expectedMintedAmount = type === FEE_TYPES.trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
-                        prevMintingAmount.add(type === FEE_TYPES.trading ? feeAmount : 0)
+                        prevMintedAmount.add(expectedMintedAmount)
+                    );
+                    expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+                        prevAvailableLiquidity.sub(expectedMintedAmount)
                     );
                 });
             }
