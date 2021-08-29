@@ -381,6 +381,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             uint256 poolTokenTotalSupply = _poolToken.totalSupply();
             if (poolTokenTotalSupply == 0) {
                 // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
+                require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
                 poolTokenAmount = newNetworkTokenAmount;
             } else {
                 poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
