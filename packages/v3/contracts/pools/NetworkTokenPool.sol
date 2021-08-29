@@ -142,6 +142,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
     // solhint-enable func-name-mixedcase
 
+    modifier onlyValidPool(IReserveToken pool, IPoolCollection poolCollection) {
+        _verifyPoolCollection(pool, poolCollection);
+
+        _;
+    }
+
     /**
      * @dev returns the current version of the contract
      */
@@ -306,30 +312,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     }
 
     /**
-     * @dev returns withdrawal amounts
-     */
-    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
-        // calculate the network token amount to transfer
-        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
-
-        // deduct the exit fee from the network token amount
-        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
-            networkTokenAmount,
-            _settings.withdrawalFeePPM(),
-            PPM_RESOLUTION
-        );
-        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
-
-        return
-            WithdrawalAmounts({
-                networkTokenAmount: networkTokenAmount,
-                poolTokenAmount: poolTokenAmount,
-                govTokenAmount: poolTokenAmount,
-                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
-            });
-    }
-
-    /**
      * @inheritdoc INetworkTokenPool
      */
     function requestLiquidity(
@@ -342,8 +324,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         external
         override
         only(address(_network))
-        validAddress(address(pool))
-        validAddress(address(poolCollection))
+        onlyValidPool(pool, poolCollection)
         greaterThanZero(networkTokenAmount)
         returns (uint256)
     {
@@ -423,13 +404,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         external
         override
         only(address(_network))
-        validAddress(address(pool))
-        validAddress(address(poolCollection))
+        onlyValidPool(pool, poolCollection)
         greaterThanZero(networkTokenAmount)
     {
-        // verify that the provided pool is managed by the provided pool collection with a stable pool's rate
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
-
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the pool token amount to burn
@@ -476,5 +453,45 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
         }
+    }
+
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
+        // calculate the network token amount to transfer
+        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+
+        // deduct the exit fee from the network token amount
+        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
+            networkTokenAmount,
+            _settings.withdrawalFeePPM(),
+            PPM_RESOLUTION
+        );
+        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
+
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
+            });
+    }
+
+    /**
+     * @dev verifies that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
+     */
+    function _verifyPoolCollection(IReserveToken pool, IPoolCollection poolCollection)
+        private
+        view
+        validAddress(address(pool))
+        validAddress(address(poolCollection))
+    {
+        // verify that the token is whitelisted
+        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
+
+        // verify that the pool's rate is stable
+        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 }

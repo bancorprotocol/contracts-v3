@@ -503,12 +503,6 @@ describe('BancorNetwork', () => {
                     await network.addPoolCollection(poolCollection.address);
                 });
 
-                it('should revert when attempting to create a pool for a non-whitelisted reserve token', async () => {
-                    await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
-                        'ERR_TOKEN_NOT_WHITELISTED'
-                    );
-                });
-
                 context('with a whitelisted token', () => {
                     beforeEach(async () => {
                         await networkSettings.addTokenToWhitelist(reserveToken.address);
@@ -708,16 +702,6 @@ describe('BancorNetwork', () => {
                                     await govToken.connect(provider).approve(network.address, poolTokenAmount);
                                 }
                             });
-
-                            if (!isNetworkToken) {
-                                it('should revert when attempting to withdraw a non-whitelisted token', async () => {
-                                    await networkSettings.removeTokenFromWhitelist(token.address);
-
-                                    await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                        'ERR_TOKEN_NOT_WHITELISTED'
-                                    );
-                                });
-                            }
 
                             context('when spot rate is stable', () => {
                                 beforeEach(async () => {

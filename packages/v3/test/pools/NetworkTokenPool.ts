@@ -123,6 +123,18 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
+        it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
+            await expect(
+                network.requestLiquidityT(
+                    contextId,
+                    reserveToken.address,
+                    poolCollection.address,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
+        });
+
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
             await expect(
                 network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1), false)
@@ -131,7 +143,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to request liquidity for an invalid pool collection', async () => {
             await expect(
-                network.requestLiquidityT(contextId, reserveToken.address, ZERO_ADDRESS, BigNumber.from(1), false)
+                network.requestLiquidityT(contextId, ZERO_ADDRESS, poolCollection.address, BigNumber.from(1), false)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
@@ -371,6 +383,18 @@ describe('NetworkTokenPool', () => {
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        });
+
+        it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
+            await expect(
+                network.requestLiquidityT(
+                    contextId,
+                    reserveToken.address,
+                    poolCollection.address,
+                    BigNumber.from(1),
+                    false
+                )
+            ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {

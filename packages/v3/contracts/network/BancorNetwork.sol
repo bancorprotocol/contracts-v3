@@ -642,9 +642,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
 
-        // verify that the token is whitelisted
-        require(_settings.isTokenWhitelisted(baseToken), "ERR_TOKEN_NOT_WHITELISTED");
-
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
