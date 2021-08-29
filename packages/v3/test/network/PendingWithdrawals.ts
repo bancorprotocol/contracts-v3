@@ -326,7 +326,7 @@ describe('PendingWithdrawals', () => {
                             it('should init multiple withdraws', async () => {
                                 const withdrawals = 3;
                                 for (let i = 0; i < withdrawals; i++) {
-                                    await testInitWithdrawal(poolToken, amount.div(BigNumber.from(withdrawals)));
+                                    await testInitWithdrawal(poolToken, amount.div(BigNumber.from(withdrawals + i)));
                                 }
                             });
                         });
