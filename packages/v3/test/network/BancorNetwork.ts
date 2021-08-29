@@ -618,21 +618,14 @@ describe('BancorNetwork', () => {
 
                     await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
 
-                    switch (symbol) {
-                        case 'BNT':
-                            poolToken = networkPoolToken;
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
 
-                            await networkTokenPool.mintT(provider.address, poolTokenAmount);
+                        await networkTokenPool.mintT(provider.address, poolTokenAmount);
+                    } else {
+                        poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                            break;
-
-                        case 'TKN':
-                        case 'ETH':
-                            poolToken = await createPool(token, network, networkSettings, poolCollection);
-
-                            await poolCollection.mintT(provider.address, poolToken.address, poolTokenAmount);
-
-                            break;
+                        await poolCollection.mintT(provider.address, poolToken.address, poolTokenAmount);
                     }
 
                     await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
