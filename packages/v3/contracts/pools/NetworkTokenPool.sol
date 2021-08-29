@@ -287,14 +287,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     {
         WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
-        // mint network tokens to the provider
-        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
-
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);
+
+        // mint network tokens to the provider
+        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
 
         return
             WithdrawalAmounts({
