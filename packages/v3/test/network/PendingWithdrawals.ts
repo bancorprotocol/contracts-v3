@@ -308,7 +308,6 @@ describe('PendingWithdrawals', () => {
 
                         context('with a pool token balance', () => {
                             const amount = BigNumber.from(12345);
-                            1;
 
                             beforeEach(async () => {
                                 await poolCollection.mintT(providerAddress, poolToken.address, amount);
