@@ -434,7 +434,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             _withdrawalAmounts(
                 params.networkTokenAvgTradingLiquidity,
                 params.baseTokenAvgTradingLiquidity,
-                _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+                MathEx.cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
                 params.basePoolTokenTotalSupply,
                 params.baseTokenStakedAmount,
                 externalProtectionWalletBalance,
@@ -604,8 +604,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 withdrawalFeePPM
             );
             amounts.networkTokenArbitrageAmount = _posArbitrage(
-                _cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                _cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
                 tradeFeePPM,
@@ -631,8 +631,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     withdrawalFeePPM
                 );
                 amounts.networkTokenArbitrageAmount = _negArbitrage(
-                    _cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                    _cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                    MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                    MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
                     baseTokenOffsetAmount,
                     tradeFeePPM,
@@ -901,13 +901,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
         }
         return 0;
-    }
-
-    /**
-     * @dev returns the maximum of `n1 - n2` and 0
-     */
-    function _cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
-        return n1 > n2 ? n1 - n2 : 0;
     }
 
     /**

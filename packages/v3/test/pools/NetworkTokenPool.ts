@@ -15,7 +15,7 @@ import {
     ZERO_ADDRESS,
     PPM_RESOLUTION
 } from '../helpers/Constants';
-import { createSystem, createPool } from '../helpers/Factory';
+import { createSystem, createPool, createPoolCollection } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
@@ -471,10 +471,12 @@ describe('NetworkTokenPool', () => {
 
                     expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(amount));
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
-                        prevMintedAmount.sub(amount)
+                        prevMintedAmount.gt(amount) ? prevMintedAmount.sub(amount) : BigNumber.from(0)
                     );
+                    console.log('prevAvailableLiquidity', prevAvailableLiquidity.toString());
+                    console.log('amount', amount.toString());
                     expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
-                        prevAvailableLiquidity.add(amount)
+                        prevAvailableLiquidity.gt(amount) ? prevAvailableLiquidity.add(amount) : MINTING_LIMIT
                     );
 
                     expect(await networkPoolToken.totalSupply()).to.equal(
@@ -490,7 +492,7 @@ describe('NetworkTokenPool', () => {
                     expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenBalance.sub(amount));
                 };
 
-                it('should revert when attempting to renounce more liquidity than requested', async () => {
+                it('should revert when attempting to renounce more liquidity than the staked balance', async () => {
                     await expect(
                         network.renounceLiquidityT(
                             contextId,
@@ -510,6 +512,32 @@ describe('NetworkTokenPool', () => {
                     ]) {
                         await testRenounce(amount);
                     }
+                });
+
+                it('should allow renouncing more liquidity than the previously requested amount', async () => {
+                    // request more liquidity for another pool, so that we won't underflow the total staked balance
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                        'TKN',
+                        'TKN',
+                        BigNumber.from(1_000_000)
+                    );
+
+                    const renouncedAmount = toWei(requestedAmount.add(BigNumber.from(1)));
+
+                    const poolCollection2 = await createPoolCollection(network);
+                    await createPool(reserveToken2, network, networkSettings, poolCollection2);
+
+                    await networkSettings.setPoolMintingLimit(reserveToken2.address, renouncedAmount);
+
+                    await network.requestLiquidityT(
+                        contextId,
+                        reserveToken2.address,
+                        poolCollection2.address,
+                        renouncedAmount
+                    );
+
+                    // renounce more than the was requested by this pool
+                    await testRenounce(renouncedAmount);
                 });
             });
         });

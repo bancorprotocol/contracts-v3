@@ -235,10 +235,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      * @inheritdoc INetworkTokenPool
      */
     function availableTradingLiquidity(IReserveToken pool) external view override returns (uint256) {
-        uint256 mintingLimit = _settings.poolMintingLimit(pool);
-        uint256 currentMintedAmount = _mintedAmounts[pool];
-
-        return mintingLimit > currentMintedAmount ? mintingLimit - currentMintedAmount : 0;
+        return MathEx.cap(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 
     /**
@@ -404,8 +401,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // update the staked balance
         _stakedBalance = currentStakedBalance.sub(networkTokenAmount);
 
-        // update the current minted amount
-        _mintedAmounts[pool] = _mintedAmounts[pool].sub(networkTokenAmount);
+        // update the current minted amount. Note that the given amount can be higher than the minted amount but the
+        // request shouldn’t fail (and the minted amount cannot get negative)
+        _mintedAmounts[pool] = MathEx.cap(_mintedAmounts[pool], networkTokenAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);

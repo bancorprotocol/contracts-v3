@@ -165,6 +165,13 @@ library MathEx {
     }
 
     /**
+     * @dev returns the maximum of `n1 - n2` and 0
+     */
+    function cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
+        return n1 > n2 ? n1 - n2 : 0;
+    }
+
+    /**
      * @dev returns the value of `x * y` as a pair of 256-bit values
      */
     function _mul512(uint256 x, uint256 y) private pure returns (uint256, uint256) {

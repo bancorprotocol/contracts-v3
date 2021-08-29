@@ -49,4 +49,8 @@ contract TestMathEx {
     ) external pure returns (uint256) {
         return MathEx.mulDivC(x, y, z);
     }
+
+    function cap(uint256 n1, uint256 n2) external pure returns (uint256) {
+        return MathEx.cap(n1, n2);
+    }
 }
