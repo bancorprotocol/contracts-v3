@@ -115,8 +115,8 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract, networkTokenPool: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(networkTokenPool));
+export const createPoolCollection = async (network: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
@@ -179,7 +179,7 @@ export const createSystem = async () => {
 
     await networkTokenPool.initialize();
 
-    const poolCollection = await createPoolCollection(network, networkTokenPool);
+    const poolCollection = await createPoolCollection(network);
 
     await network.initialize(networkTokenPool.address);
 

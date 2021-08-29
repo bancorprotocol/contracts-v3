@@ -20,7 +20,6 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts, WithdrawalArbitrageAction } from "./interfaces/IPoolCollection.sol";
-import { INetworkTokenPool } from "./interfaces/INetworkTokenPool.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
@@ -64,9 +63,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // the network settings contract
     INetworkSettings private immutable _settings;
-
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
 
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) internal _pools;
@@ -115,16 +111,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
-    {
+    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
         __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
         _settings = initNetwork.settings();
-        _networkTokenPool = initNetworkTokenPool;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -165,13 +157,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function settings() external view override returns (INetworkSettings) {
         return _settings;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function networkTokenPool() external view override returns (INetworkTokenPool) {
-        return _networkTokenPool;
     }
 
     /**
@@ -408,10 +393,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      *
      * requirements:
      *
-     * - the caller must be the network
+     * - the caller must be the network contract
      */
     function withdraw(
-        bytes32 contextId,
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
@@ -439,15 +423,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             amounts.baseTokenAmountToDeductFromLiquidity,
             amounts.networkTokenAmountToDeductFromLiquidity
         );
-
-        // handle the minting or burning of network tokens in the pool
-        if (amounts.networkTokenArbitrageAmount > 0) {
-            if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.MintNetworkTokens) {
-                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount, false);
-            } else if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.BurnNetworkTokens) {
-                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount);
-            }
-        }
 
         // return all withdrawal-related amounts
         return amounts;

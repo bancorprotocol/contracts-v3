@@ -16,7 +16,7 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { IPoolCollection, PoolLiquidity, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, WithdrawalAmounts as PoolCollectionWithdrawalAmounts, WithdrawalArbitrageAction } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
@@ -54,10 +54,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     IPoolToken private immutable _networkPoolToken;
 
     // the network token pool contract
-    INetworkTokenPool private _networkTokenPool;
+    INetworkTokenPool internal _networkTokenPool;
 
     // the pending withdrawals contract
-    IPendingWithdrawals private _pendingWithdrawals;
+    IPendingWithdrawals internal _pendingWithdrawals;
 
     // the address of the external protection wallet
     ITokenHolder private _externalProtectionWallet;
@@ -644,12 +644,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // call withdraw on the base token pool - returns the amounts/breakdown
         ITokenHolder cachedExternalProtectionWallet = _externalProtectionWallet;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
-            contextId,
             baseToken,
             completedRequest.poolTokenAmount,
             baseToken.balanceOf(address(_vault)),
             baseToken.balanceOf(address(cachedExternalProtectionWallet))
         );
+
+        // handle the minting or burning of network tokens in the pool
+        if (amounts.networkTokenArbitrageAmount > 0) {
+            if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.MintNetworkTokens) {
+                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount, false);
+            } else if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.BurnNetworkTokens) {
+                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount);
+            }
+        }
 
         if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
             // base token amount to transfer from the vault to the provider
