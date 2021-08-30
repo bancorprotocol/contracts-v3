@@ -67,26 +67,26 @@ const deployOrAttachExternal = <F extends ContractFactory>(
     contractName: string,
     // @TODO: needs to replace with correctly typed params but it doesn't work properly for some reason https://github.com/microsoft/TypeScript/issues/31278
     factoryConstructor: { new (signer?: Signer): F },
-    initialPassedSigner?: Signer
+    initialSigner?: Signer
 ): ContractBuilder<F> => {
     return {
         contractName,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            let defaultSigner = initialPassedSigner ? initialPassedSigner : (await ethers.getSigners())[0];
+            let defaultSigner = initialSigner ? initialSigner : (await ethers.getSigners())[0];
 
             return new factoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
         },
-        attach: attachOnlyExternal<F>(factoryConstructor, initialPassedSigner).attach
+        attach: attachOnlyExternal<F>(factoryConstructor, initialSigner).attach
     };
 };
 
 const attachOnlyExternal = <F extends ContractFactory>(
     factoryConstructor: { new (signer?: Signer): F },
-    initialPassedSigner?: Signer
+    initialSigner?: Signer
 ) => {
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
-            let defaultSigner = initialPassedSigner ? initialPassedSigner : (await ethers.getSigners())[0];
+            let defaultSigner = initialSigner ? initialSigner : (await ethers.getSigners())[0];
             return new factoryConstructor(signer || defaultSigner).attach(address) as Contract<F>;
         }
     };

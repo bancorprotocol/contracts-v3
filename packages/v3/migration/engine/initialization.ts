@@ -11,7 +11,7 @@ export type defaultMigrationArgs = {
     ledger: boolean;
     ledgerPath: string;
     gasPrice: number;
-    confirmationToWait: number;
+    minBlockConfirmations: number;
 };
 
 export type executionSettings = { gasPrice?: BigNumberish; confirmationToWait: number };
@@ -32,7 +32,7 @@ export const initMigration = async (args: defaultMigrationArgs) => {
 
     // init execution settings
     const executionSettings: executionSettings = {
-        confirmationToWait: args.confirmationToWait
+        confirmationToWait: args.minBlockConfirmations
     };
 
     if (

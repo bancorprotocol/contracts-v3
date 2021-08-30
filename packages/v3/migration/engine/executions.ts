@@ -17,7 +17,7 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
     ): Promise<ReturnType<ContractBuilder<F>['deploy']>> => {
         const contract = await factory.deploy(...([...args, overrides] as any));
 
-        log.executingTx(`Deploying contract \${${factory.contractName}}`);
+        log.executingTx(`Deploying contract ${factory.contractName}`);
         log.executingTx(`Params: [${args}]`);
         log.normal(`Deployment Tx: `, contract.deployTransaction.hash);
 
