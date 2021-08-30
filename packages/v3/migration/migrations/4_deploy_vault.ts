@@ -22,7 +22,7 @@ const migration: Migration = {
         const bancorVault = await contracts.BancorVault.attach(state.vault);
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
-            throw 'Invalid Owner';
+            throw new Error('Invalid Owner');
     },
 
     down: async (

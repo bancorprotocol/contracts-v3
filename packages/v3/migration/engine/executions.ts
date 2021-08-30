@@ -29,7 +29,7 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
             throw new ExecutionError(contract.deployTransaction, receipt);
         }
 
-        log.success(`Deployed \${${factory.contractName}} at ${contract.address} 🚀 !`);
+        log.success(`Deployed ${factory.contractName} at ${contract.address} 🚀 !`);
         return contract;
     };
 
@@ -77,9 +77,38 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
         return await logicContractToDeploy.attach(proxy.address);
     };
 
+    const upgradeProxy = async <F extends ContractFactory>(
+        admin: ProxyAdmin,
+        logicContractToDeploy: ContractBuilder<F>,
+        proxyAddress: string,
+        initializeArgs:
+            | {
+                  params: Parameters<any>;
+                  initializeFctName: string;
+              }
+            | 'skipInit',
+        ...ctorArgs: Parameters<F['deploy']>
+    ): Promise<Contract<F>> => {
+        const newLogicContract = await deploy(logicContractToDeploy, ...ctorArgs);
+
+        const data =
+            initializeArgs === 'skipInit'
+                ? []
+                : newLogicContract.interface.encodeFunctionData(
+                      initializeArgs.initializeFctName,
+                      initializeArgs.params
+                  );
+
+        if (initializeArgs === 'skipInit') await admin.upgrade(proxyAddress, newLogicContract.address);
+        else await admin.upgradeAndCall(proxyAddress, newLogicContract.address, data);
+
+        return await logicContractToDeploy.attach(proxyAddress);
+    };
+
     return {
         deploy,
         execute,
-        deployProxy
+        deployProxy,
+        upgradeProxy
     };
 };

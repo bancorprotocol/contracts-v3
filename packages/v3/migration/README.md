@@ -1,6 +1,12 @@
 # Migration
 
-## Data
+## Roadmap
+
+-   [x] Ledger support
+-   [x] Deploy proxy
+-   [x] Upgrade proxy
+
+### Data
 
 The `data` folder consists of one designated folder per network.
 
@@ -18,7 +24,7 @@ In each network folder there is a `state.json` file. It represents the migration
 `latestMigration`: The timestamp of the latest ran migration.
 `networkState`: Initial migration state.
 
-## Migrations
+### Migrations
 
 The `migrations` folder is home to all migration files.
 
@@ -49,13 +55,13 @@ export interface Migration {
 }
 ```
 
-## Engine
+### Engine
 
 The engine is the backbone of the migration system, containing its logic.
 
 It also exposes tasks (task is a hardhat concept for CLI scripts).
 
-### Tasks
+#### Tasks
 
 ##### Migrate
 
@@ -63,7 +69,7 @@ Migrates the system between different states.
 
 Call `yarn migrate --help` for more info on params.
 
-### Subtasks
+#### Subtasks
 
 ##### CreateMigration
 
@@ -71,9 +77,9 @@ Creates a migration file based on a template.
 
 `yarn create-migration --help` for more info on params.
 
-# Getting started
+## Getting started
 
-## How to create a migration file ?
+### How to create a migration file ?
 
 ```
 yarn hh create-migration migrationFileName
@@ -81,7 +87,7 @@ yarn hh create-migration migrationFileName
 
 If you don't use this CLI to generate your migration files, bear in mind that the format is as follow: "X_testfile.ts" with X representing the timestamp of the migration (i.e its order).
 
-## How to execute a migration on a network?
+### How to execute a migration on a network?
 
 ```
 yarn hh migrate --network mainnet
@@ -93,7 +99,7 @@ yarn hh migrate --network mainnet
 
 3. Update the state on the go.
 
-## How to run the migration on a fork ?
+### How to run the migration on a fork ?
 
 Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
 
@@ -117,7 +123,7 @@ To fork the network `mainnet` you need to:
 
 -   Specify the network you want to fork as an ENV variable: `FORK=mainnet yarn hh migrate`
 
-## What does a basic migration file looks like ?
+### What does a basic migration file looks like ?
 
 ```ts
 import { deployedContract, Migration } from 'migration/engine/types';

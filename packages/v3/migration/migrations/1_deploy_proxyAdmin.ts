@@ -19,7 +19,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(state.proxyAdmin);
 
-        if ((await proxyAdmin.owner()) !== (await signer.getAddress())) throw 'Invalid Owner';
+        if ((await proxyAdmin.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
     down: async (

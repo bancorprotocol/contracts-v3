@@ -26,7 +26,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals);
 
-        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw 'Invalid Owner';
+        if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
     down: async (

@@ -18,7 +18,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const poolCollection = await contracts.PoolCollection.attach(state.poolCollection);
 
-        if ((await poolCollection.owner()) !== (await signer.getAddress())) throw 'Invalid Owner';
+        if ((await poolCollection.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
     down: async (

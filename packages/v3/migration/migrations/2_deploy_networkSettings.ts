@@ -21,7 +21,7 @@ const migration: Migration = {
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
         const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings);
 
-        if ((await networkSettings.owner()) !== (await signer.getAddress())) throw 'Invalid Owner';
+        if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
     down: async (
