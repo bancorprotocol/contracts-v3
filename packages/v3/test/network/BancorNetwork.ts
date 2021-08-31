@@ -11,12 +11,12 @@ import {
     BancorVault,
     TokenGovernance
 } from '../../typechain';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { ZERO_ADDRESS } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { TokenWithAddress, getBalance, getTokenBySymbol, getTransactionCost } from '../helpers/Utils';
+import { TokenWithAddress, getBalance, getTokenBySymbol, getTransactionCost, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -555,7 +555,7 @@ describe('BancorNetwork', () => {
         let networkPoolToken: PoolToken;
         let externalProtectionWallet: TokenHolderUpgradeable;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = BigNumber.from(100_000); // %10
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
         const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
 
@@ -610,16 +610,35 @@ describe('BancorNetwork', () => {
 
                     token = await getTokenBySymbol(symbol, networkToken);
 
+                    await transfer(deployer, token, vault.address, toWei(BigNumber.from(100_000)));
+                    await transfer(deployer, token, externalProtectionWallet.address, toWei(BigNumber.from(500_000)));
+
                     await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
 
                     if (isNetworkToken) {
                         poolToken = networkPoolToken;
 
+                        // mint some pool tokens to the provider and additional pool tokens to the deployer, to represent
+                        // other providers
                         await networkTokenPool.mintT(provider.address, poolTokenAmount);
+                        await networkTokenPool.mintT(deployer.address, poolTokenAmount.mul(BigNumber.from(20)));
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
+                        // mint some pool tokens to the provider and additional pool tokens to the deployer, to represent
+                        // other providers
                         await poolCollection.mintT(provider.address, poolToken.address, poolTokenAmount);
+                        await poolCollection.mintT(
+                            deployer.address,
+                            poolToken.address,
+                            poolTokenAmount.mul(BigNumber.from(20))
+                        );
+
+                        // make sure that there are some network token liquidity and pool tokens to accommodate
+                        // withdrawals
+                        await networkTokenPool.mintT(networkTokenPool.address, poolTokenAmount);
+                        await transfer(deployer, networkToken, vault.address, toWei(BigNumber.from(100_000)));
+                        await networkTokenPool.setStakedBalanceT(toWei(BigNumber.from(100_000)));
                     }
 
                     await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
@@ -705,15 +724,22 @@ describe('BancorNetwork', () => {
 
                             context('when spot rate is stable', () => {
                                 beforeEach(async () => {
-                                    const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
+                                    const spotRate = {
+                                        n: toWei(BigNumber.from(1_000_000)),
+                                        d: toWei(BigNumber.from(10_000_000))
+                                    };
 
-                                    await poolCollection.setTradingLiquidityT(token.address, spotRate.n, spotRate.d);
+                                    await poolCollection.setTradingLiquidityT(token.address, {
+                                        baseTokenTradingLiquidity: spotRate.n,
+                                        networkTokenTradingLiquidity: spotRate.d,
+                                        tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
+                                        stakedBalance: toWei(BigNumber.from(1_000_000))
+                                    });
+
                                     await poolCollection.setAverageRateT(token.address, {
                                         rate: {
-                                            n: spotRate.n.mul(PPM_RESOLUTION),
-                                            d: spotRate.d.mul(
-                                                PPM_RESOLUTION.add(MAX_DEVIATION.sub(BigNumber.from(1000)))
-                                            )
+                                            n: spotRate.n,
+                                            d: spotRate.d
                                         },
                                         time: await network.currentTime()
                                     });
@@ -808,7 +834,9 @@ describe('BancorNetwork', () => {
                                                 poolCollection.address,
                                                 poolTokenAmount,
                                                 BigNumber.from(0),
-                                                withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider,
+                                                withdrawalAmounts.networkTokenAmountToMintForProvider.add(
+                                                    withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider
+                                                ),
                                                 withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                                                 withdrawalAmounts.networkTokenAmountToMintForProvider,
                                                 withdrawalAmounts.baseTokenWithdrawalFeeAmount
@@ -827,9 +855,7 @@ describe('BancorNetwork', () => {
                                             );
 
                                         if (
-                                            withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider.gt(
-                                                BigNumber.from(0)
-                                            )
+                                            withdrawalAmounts.baseTokenAmountToDeductFromLiquidity.gt(BigNumber.from(0))
                                         ) {
                                             await expect(res)
                                                 .to.emit(network, 'TradingLiquidityUpdated')

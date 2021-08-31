@@ -63,7 +63,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
     // the total staked network token balance in the network
-    uint256 private _stakedBalance;
+    uint256 internal _stakedBalance;
 
     // a mapping between pools and their total minted amounts
     mapping(IReserveToken => uint256) private _mintedAmounts;
@@ -236,6 +236,33 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function availableTradingLiquidity(IReserveToken pool) external view override returns (uint256) {
         return MathEx.cap(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function mint(address recipient, uint256 networkTokenAmount)
+        external
+        override
+        only(address(_network))
+        validAddress(recipient)
+        greaterThanZero(networkTokenAmount)
+    {
+        _networkTokenGovernance.mint(recipient, networkTokenAmount);
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function burn(uint256 networkTokenAmount)
+        external
+        override
+        only(address(_network))
+        greaterThanZero(networkTokenAmount)
+    {
+        _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
+
+        _networkTokenGovernance.burn(networkTokenAmount);
     }
 
     /**

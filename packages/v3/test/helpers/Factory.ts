@@ -182,6 +182,8 @@ export const createSystem = async () => {
 
     await network.initialize(networkTokenPool.address);
 
+    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
+
     return {
         networkSettings,
         network,

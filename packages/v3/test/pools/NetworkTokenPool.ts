@@ -167,7 +167,12 @@ describe('NetworkTokenPool', () => {
                 beforeEach(async () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
-                    await poolCollection.setTradingLiquidityT(reserveToken.address, spotRate.n, spotRate.d);
+                    await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                        baseTokenTradingLiquidity: spotRate.n,
+                        networkTokenTradingLiquidity: spotRate.d,
+                        tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
+                        stakedBalance: BigNumber.from(0)
+                    });
                     await poolCollection.setAverageRateT(reserveToken.address, {
                         rate: {
                             n: spotRate.n.mul(PPM_RESOLUTION),

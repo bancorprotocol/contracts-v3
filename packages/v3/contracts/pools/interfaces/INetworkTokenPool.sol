@@ -96,6 +96,24 @@ interface INetworkTokenPool is IUpgradeable {
     function availableTradingLiquidity(IReserveToken pool) external view returns (uint256);
 
     /**
+     * @dev mints network tokens to the recipient
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function mint(address recipient, uint256 networkTokenAmount) external;
+
+    /**
+     * @dev burns network tokens from the vault
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function burn(uint256 networkTokenAmount) external;
+
+    /**
      * @dev deposits network token liquidity on behalf of a specific provider
      *
      * requirements:

@@ -656,6 +656,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
                 uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
+
                 amounts.networkTokenAmountToMintForProvider = _deductFee(
                     baseTokenStakedAmount - baseTokenVaultBalance,
                     aMx,
