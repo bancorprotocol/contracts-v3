@@ -478,8 +478,7 @@ describe('NetworkTokenPool', () => {
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.gt(amount) ? prevMintedAmount.sub(amount) : BigNumber.from(0)
                     );
-                    console.log('prevAvailableLiquidity', prevAvailableLiquidity.toString());
-                    console.log('amount', amount.toString());
+
                     expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
                         prevAvailableLiquidity.gt(amount) ? prevAvailableLiquidity.add(amount) : MINTING_LIMIT
                     );
