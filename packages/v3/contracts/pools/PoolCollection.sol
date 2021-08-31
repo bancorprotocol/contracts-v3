@@ -8,6 +8,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
 import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
@@ -33,6 +34,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
+    using ReserveToken for IReserveToken;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -389,11 +391,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
-     *
-     * requirements:
-     *
-     * - the caller must be the network contract
+     * @inheritdoc IPoolCollection
      */
     function withdraw(
         IReserveToken baseToken,
@@ -401,19 +399,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
-        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
-
         // obtain all withdrawal-related amounts
-        amounts = _withdrawalAmounts(
-            params.networkTokenAvgTradingLiquidity,
-            params.baseTokenAvgTradingLiquidity,
-            _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-            params.basePoolTokenTotalSupply,
-            params.baseTokenStakedAmount,
-            externalProtectionWalletBalance,
-            params.tradeFeePPM,
-            _settings.withdrawalFeePPM(),
-            basePoolTokenAmount
+        amounts = _poolWithdrawalAmounts(
+            baseToken,
+            basePoolTokenAmount,
+            baseTokenVaultBalance,
+            externalProtectionWalletBalance
         );
 
         // execute post-withdrawal actions
@@ -426,6 +417,31 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // return all withdrawal-related amounts
         return amounts;
+    }
+
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _poolWithdrawalAmounts(
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenVaultBalance,
+        uint256 externalProtectionWalletBalance
+    ) internal view returns (WithdrawalAmounts memory amounts) {
+        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
+
+        return
+            _withdrawalAmounts(
+                params.networkTokenAvgTradingLiquidity,
+                params.baseTokenAvgTradingLiquidity,
+                _cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+                params.basePoolTokenTotalSupply,
+                params.baseTokenStakedAmount,
+                externalProtectionWalletBalance,
+                params.tradeFeePPM,
+                _settings.withdrawalFeePPM(),
+                basePoolTokenAmount
+            );
     }
 
     /**
@@ -930,9 +946,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
         string memory customSymbol = _tokenSymbolOverrides[reserveToken];
-        string memory tokenSymbol = bytes(customSymbol).length != 0
-            ? customSymbol
-            : ERC20(address(reserveToken)).symbol();
+        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
 
         string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
         string memory name = string(

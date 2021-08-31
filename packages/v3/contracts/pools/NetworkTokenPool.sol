@@ -142,6 +142,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
     // solhint-enable func-name-mixedcase
 
+    modifier onlyValidPool(IReserveToken pool, IPoolCollection poolCollection) {
+        _verifyPoolCollection(pool, poolCollection);
+
+        _;
+    }
+
     /**
      * @dev returns the current version of the contract
      */
@@ -285,19 +291,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         validAddress(provider)
         returns (WithdrawalAmounts memory)
     {
-        // calculate the network token amount to transfer
-        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
-
-        // deduct the exit fee from the network token amount
-        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
-            networkTokenAmount,
-            _settings.withdrawalFeePPM(),
-            PPM_RESOLUTION
-        );
-        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
-
-        // mint network tokens to the provider
-        _networkTokenGovernance.mint(provider, networkTokenAmount);
+        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
@@ -305,12 +299,15 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);
 
+        // mint network tokens to the provider
+        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
+
         return
             WithdrawalAmounts({
-                networkTokenAmount: networkTokenAmount,
+                networkTokenAmount: amounts.networkTokenAmount,
                 poolTokenAmount: poolTokenAmount,
                 govTokenAmount: poolTokenAmount,
-                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
+                networkTokenWithdrawalFeeAmount: amounts.networkTokenWithdrawalFeeAmount
             });
     }
 
@@ -320,12 +317,17 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount,
         bool skipLimitCheck
-    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) returns (uint256) {
-        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-        _verifyPoolCollection(pool);
-
+    )
+        external
+        override
+        only(address(_network))
+        onlyValidPool(pool, poolCollection)
+        greaterThanZero(networkTokenAmount)
+        returns (uint256)
+    {
         // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 newNetworkTokenAmount;
@@ -353,12 +355,15 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
         uint256 poolTokenAmount;
-        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-        if (poolTokenTotalSupply == 0) {
-            // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
-            poolTokenAmount = newNetworkTokenAmount;
-        } else {
-            poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+        {
+            uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+            if (poolTokenTotalSupply == 0) {
+                // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
+                require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+                poolTokenAmount = newNetworkTokenAmount;
+            } else {
+                poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            }
         }
 
         // update the staked balance
@@ -390,11 +395,15 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function renounceLiquidity(
         bytes32 contextId,
         IReserveToken pool,
+        IPoolCollection poolCollection,
         uint256 networkTokenAmount
-    ) external override greaterThanZero(networkTokenAmount) only(address(_network)) {
-        // verify that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-        _verifyPoolCollection(pool);
-
+    )
+        external
+        override
+        only(address(_network))
+        onlyValidPool(pool, poolCollection)
+        greaterThanZero(networkTokenAmount)
+    {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the pool token amount to burn
@@ -444,15 +453,40 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     }
 
     /**
+     * @dev returns withdrawal amounts
+     */
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
+        // calculate the network token amount to transfer
+        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+
+        // deduct the exit fee from the network token amount
+        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
+            networkTokenAmount,
+            _settings.withdrawalFeePPM(),
+            PPM_RESOLUTION
+        );
+        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
+
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
+            });
+    }
+
+    /**
      * @dev verifies that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
      */
-    function _verifyPoolCollection(IReserveToken pool) private view {
+    function _verifyPoolCollection(IReserveToken pool, IPoolCollection poolCollection)
+        private
+        view
+        validAddress(address(pool))
+        validAddress(address(poolCollection))
+    {
         // verify that the token is whitelisted
         require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
-
-        // verify that the pool is managed by a valid pool collection
-        IPoolCollection poolCollection = _network.collectionByPool(pool);
-        _validAddress(address(poolCollection));
 
         // verify that the pool's rate is stable
         require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");

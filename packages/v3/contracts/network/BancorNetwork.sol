@@ -11,6 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/Token
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
@@ -28,7 +29,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Network contract
  */
-contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveToken for IReserveToken;
 
@@ -51,7 +52,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     IBancorVault private immutable _vault;
 
     // the network token pool token
-    IPoolToken private immutable _networkPoolToken;
+    IPoolToken internal immutable _networkPoolToken;
 
     // the network token pool contract
     INetworkTokenPool internal _networkTokenPool;
@@ -523,7 +524,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider = msg.sender;
 
         // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, block.timestamp, id));
+        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(
@@ -594,6 +595,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
+        // approve the network token pool to transfer pool tokens, which we have received from the completion of the
+        // pending withdrawal, on behalf of the network
+        completedRequest.poolToken.approve(address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
+
         // transfer governance tokens from the caller to the network token pool
         _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
 
@@ -636,9 +641,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         CompletedWithdrawalRequest memory completedRequest
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
-        IPoolCollection poolCollection = _collectionByPool[baseToken];
 
-        completedRequest.poolToken.transferFrom(provider, address(this), completedRequest.poolTokenAmount);
+        // get the pool collection that managed this pool
+        IPoolCollection poolCollection = _poolCollection(baseToken);
+
+        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
+        // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
@@ -653,9 +661,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // handle the minting or burning of network tokens in the pool
         if (amounts.networkTokenArbitrageAmount > 0) {
             if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.MintNetworkTokens) {
-                _networkTokenPool.requestLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount, false);
+                _networkTokenPool.requestLiquidity(
+                    contextId,
+                    baseToken,
+                    poolCollection,
+                    amounts.networkTokenArbitrageAmount,
+                    false
+                );
             } else if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.BurnNetworkTokens) {
-                _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenArbitrageAmount);
+                _networkTokenPool.renounceLiquidity(
+                    contextId,
+                    baseToken,
+                    poolCollection,
+                    amounts.networkTokenArbitrageAmount
+                );
             }
         }
 
@@ -729,5 +748,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
                 liquidity: poolLiquidity.networkTokenTradingLiquidity
             });
         }
+    }
+
+    /**
+     * @dev verifies that the specified pool is managed by a valid pool collection and returns it
+     */
+    function _poolCollection(IReserveToken pool) private view returns (IPoolCollection) {
+        // verify that the pool is managed by a valid pool collection
+        IPoolCollection poolCollection = _collectionByPool[pool];
+        _validAddress(address(poolCollection));
+
+        return poolCollection;
     }
 }

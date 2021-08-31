@@ -111,6 +111,14 @@ interface IPoolCollection is IVersioned {
      */
     function createPool(IReserveToken reserveToken) external;
 
+    /**
+     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     * - the caller must have approved the collection to transfer/burn the pool token amount on its behal
+     */
     function withdraw(
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
