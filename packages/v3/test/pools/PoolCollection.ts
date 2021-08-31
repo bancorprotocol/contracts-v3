@@ -609,7 +609,7 @@ describe('PoolCollection', () => {
                     networkTokenAmountToDeductFromLiquidity,
                     networkTokenArbitrageAmount
                 } of table) {
-                    it.only(`should receive correct withdrawal amounts (${[
+                    it(`should receive correct withdrawal amounts (${[
                         networkTokenLiquidity,
                         baseTokenLiquidity,
                         baseTokenExcessAmount,
