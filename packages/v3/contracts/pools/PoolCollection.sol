@@ -20,7 +20,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
-import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts, WithdrawalArbitrageAction } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
@@ -561,10 +561,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 basePoolTokenTotalSupply,
                 withdrawalFeePPM
             );
+
             amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = baseTokenOffsetAmount <
                 baseTokenExternalProtectionWalletBalance
                 ? baseTokenOffsetAmount
                 : baseTokenExternalProtectionWalletBalance;
+
             (basePoolTokenWithdrawalAmount, basePoolTokenTotalSupply, baseTokenStakedAmount) = _reviseInput(
                 amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                 basePoolTokenWithdrawalAmount,
@@ -582,18 +584,22 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             basePoolTokenTotalSupply,
             withdrawalFeePPM
         );
+
         amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
             baseTokenLiquidity,
             baseTokenShare,
             basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
             withdrawalFeePPM
         );
+
         amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
             networkTokenLiquidity,
             baseTokenShare,
             basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
             0
         );
+
+        amounts.networkTokenArbitrageAmount = 0;
 
         if (baseTokenVaultBalance >= baseTokenStakedAmount) {
             // the pool is not in a base token deficit
@@ -603,7 +609,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 basePoolTokenTotalSupply,
                 withdrawalFeePPM
             );
-            amounts.networkTokenArbitrageAmount = _posArbitrage(
+
+            uint256 networkTokenArbitrageAmount = _posArbitrage(
                 MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
                 MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                 basePoolTokenTotalSupply,
@@ -612,14 +619,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 withdrawalFeePPM,
                 baseTokenShare
             );
+
             if (
-                amounts.networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) >
-                networkTokenLiquidity
+                networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) <=
+                networkTokenLiquidity &&
+                networkTokenArbitrageAmount > 0
             ) {
-                amounts.networkTokenArbitrageAmount = 0; // ideally this should be a circuit-breaker in the calling function
-            }
-            if (amounts.networkTokenArbitrageAmount > 0) {
-                amounts.networkTokenArbitrageAction = WithdrawalArbitrageAction.BurnNetworkTokens;
+                amounts.networkTokenArbitrageAmount = -int256(networkTokenArbitrageAmount);
             }
         } else {
             // the pool is in a base token deficit
@@ -630,7 +636,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     basePoolTokenTotalSupply,
                     withdrawalFeePPM
                 );
-                amounts.networkTokenArbitrageAmount = _negArbitrage(
+
+                uint256 networkTokenArbitrageAmount = _negArbitrage(
                     MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
                     MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
@@ -639,11 +646,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     withdrawalFeePPM,
                     baseTokenShare
                 );
-                if (amounts.networkTokenArbitrageAmount > 0) {
-                    amounts.networkTokenArbitrageAction = WithdrawalArbitrageAction.MintNetworkTokens;
+
+                if (networkTokenArbitrageAmount > 0) {
+                    amounts.networkTokenArbitrageAmount = int256(networkTokenArbitrageAmount);
                 }
             }
-            if (amounts.networkTokenArbitrageAction == WithdrawalArbitrageAction.None) {
+
+            if (amounts.networkTokenArbitrageAmount == 0) {
                 // the withdrawal amount is larger than the vault's balance
                 uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
                 uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
@@ -653,18 +662,21 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     bMd,
                     withdrawalFeePPM
                 );
+
                 amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
                     baseTokenVaultBalance,
                     basePoolTokenWithdrawalAmount,
                     basePoolTokenTotalSupply,
                     withdrawalFeePPM
                 );
+
                 amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
                     baseTokenLiquidity,
                     basePoolTokenWithdrawalAmount,
                     basePoolTokenTotalSupply,
                     withdrawalFeePPM
                 );
+
                 amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
                     networkTokenLiquidity,
                     basePoolTokenWithdrawalAmount,
