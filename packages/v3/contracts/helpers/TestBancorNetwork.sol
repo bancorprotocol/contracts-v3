@@ -50,6 +50,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
+    function mintT(address recipient, uint256 networkTokenAmount) external {
+        return _networkTokenPool.mint(recipient, networkTokenAmount);
+    }
+
+    function burnT(uint256 networkTokenAmount) external {
+        return _networkTokenPool.burn(networkTokenAmount);
+    }
+
     function depositToNetworkPoolForT(
         address provider,
         uint256 networkTokenAmount,
@@ -82,14 +90,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             );
     }
 
-    function onNetworkTokenFeesCollectedT(
-        IReserveToken pool,
-        uint256 amount,
-        uint8 feeType
-    ) external {
-        _networkTokenPool.onFeesCollected(pool, amount, feeType);
-    }
-
     function requestLiquidityT(
         bytes32 contextId,
         IReserveToken pool,
@@ -106,6 +106,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 networkTokenAmount
     ) external {
         _networkTokenPool.renounceLiquidity(contextId, pool, poolCollection, networkTokenAmount);
+    }
+
+    function onNetworkTokenFeesCollectedT(
+        IReserveToken pool,
+        uint256 amount,
+        uint8 feeType
+    ) external {
+        _networkTokenPool.onFeesCollected(pool, amount, feeType);
     }
 
     function approveT(

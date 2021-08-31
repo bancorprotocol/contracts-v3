@@ -104,6 +104,94 @@ describe('NetworkTokenPool', () => {
         });
     });
 
+    describe('mint', () => {
+        let network: TestBancorNetwork;
+        let networkToken: TestERC20Token;
+        let networkTokenPool: TestNetworkTokenPool;
+        let recipient: SignerWithAddress;
+
+        before(async () => {
+            [deployer, recipient] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkTokenPool } = await createSystem());
+        });
+
+        it('should revert when attempting to mint from a non-network', async () => {
+            const nonNetwork = deployer;
+
+            await expect(
+                networkTokenPool.connect(nonNetwork).mint(recipient.address, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should revert when attempting to mint to an invalid address', async () => {
+            await expect(network.mintT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when attempting to mint an invalid amount', async () => {
+            await expect(network.mintT(recipient.address, BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
+        });
+
+        it('should mint to the recipient', async () => {
+            const amount = toWei(BigNumber.from(12345));
+
+            const prevTotalSupply = await networkToken.totalSupply();
+            const prevRecipientTokenBalance = await networkToken.balanceOf(recipient.address);
+
+            await network.mintT(recipient.address, amount);
+
+            expect(await networkToken.totalSupply()).to.equal(prevTotalSupply.add(amount));
+            expect(await networkToken.balanceOf(recipient.address)).to.equal(prevRecipientTokenBalance.add(amount));
+        });
+    });
+
+    describe('burn', () => {
+        let network: TestBancorNetwork;
+        let networkToken: TestERC20Token;
+        let networkTokenPool: TestNetworkTokenPool;
+        let vault: BancorVault;
+
+        const amount = toWei(BigNumber.from(12345));
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkTokenPool, vault } = await createSystem());
+
+            await networkToken.transfer(vault.address, amount);
+        });
+
+        it('should revert when attempting to burn from a non-network', async () => {
+            const nonNetwork = deployer;
+
+            await expect(networkTokenPool.connect(nonNetwork).burn(BigNumber.from(1))).to.be.revertedWith(
+                'ERR_ACCESS_DENIED'
+            );
+        });
+
+        it('should revert when attempting to burn an invalid amount', async () => {
+            await expect(network.burnT(BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
+        });
+
+        it('should revert when attempting to burn more than balance of the vault', async () => {
+            await expect(network.burnT(amount.add(BigNumber.from(1)))).to.be.revertedWith(
+                'ERC20: transfer amount exceeds balance'
+            );
+        });
+
+        it('should burn from the vault', async () => {
+            const amount = toWei(BigNumber.from(12345));
+
+            const prevTotalSupply = await networkToken.totalSupply();
+            const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
+
+            await network.burnT(amount);
+
+            expect(await networkToken.totalSupply()).to.equal(prevTotalSupply.sub(amount));
+            expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenBalance.sub(amount));
+        });
+    });
+
     describe('request liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
@@ -121,6 +209,16 @@ describe('NetworkTokenPool', () => {
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        });
+
+        it('should revert when attempting to request liquidity from a non-network', async () => {
+            const nonNetwork = deployer;
+
+            await expect(
+                networkTokenPool
+                    .connect(nonNetwork)
+                    .requestLiquidity(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
@@ -381,9 +479,19 @@ describe('NetworkTokenPool', () => {
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
 
-        it('should revert when attempting to request liquidity for a non-whitelisted token', async () => {
+        it('should revert when attempting to renounce liquidity from a non-network', async () => {
+            const nonNetwork = deployer;
+
             await expect(
-                network.requestLiquidityT(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
+                networkTokenPool
+                    .connect(nonNetwork)
+                    .renounceLiquidity(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should revert when attempting to renounce liquidity for a non-whitelisted token', async () => {
+            await expect(
+                network.renounceLiquidityT(contextId, reserveToken.address, poolCollection.address, BigNumber.from(1))
             ).to.be.revertedWith('ERR_TOKEN_NOT_WHITELISTED');
         });
 
