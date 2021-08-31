@@ -7,7 +7,7 @@ export type NextState = InitialState & {
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
-        const poolCollection = await deploy(contracts.TestPoolCollection, initialState.bancorNetwork);
+        const poolCollection = await deploy(contracts.TestPoolCollection, initialState.bancorNetwork.proxyContract);
         return {
             ...initialState,
 

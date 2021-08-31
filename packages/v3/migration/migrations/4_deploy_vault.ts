@@ -1,8 +1,8 @@
-import { deployedContract, Migration } from '../engine/types';
+import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './3_deploy_network';
 
 export type NextState = InitialState & {
-    vault: deployedContract;
+    vault: deployedProxy;
 };
 
 const migration: Migration = {
@@ -14,12 +14,15 @@ const migration: Migration = {
         return {
             ...initialState,
 
-            vault: bancorVault.address
+            vault: {
+                proxyContract: bancorVault.proxy.address,
+                logicContract: bancorVault.logicContractAddress
+            }
         };
     },
 
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
-        const bancorVault = await contracts.BancorVault.attach(state.vault);
+        const bancorVault = await contracts.BancorVault.attach(state.vault.proxyContract);
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))
             throw new Error('Invalid Owner');

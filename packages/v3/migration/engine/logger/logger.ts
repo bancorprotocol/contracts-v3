@@ -10,21 +10,49 @@ export const palette = {
 export const log = {
     // basic logging
     normal: (...str: string[]) => console.log(...str),
-    info: (...str: string[]) => console.log(chalk.cyanBright(`⚠️  ${str}`)),
-    done: (...str: string[]) => console.log(chalk.yellowBright(`${str}`)),
-    processing: (...str: string[]) => console.log(chalk.blue(`${str}`)),
-    executingTx: (...str: string[]) => console.log(chalk.yellow(`${str}`)),
-    greyed: (...str: string[]) => console.log(chalk.grey(`${str}`)),
-    success: (...str: string[]) => console.log(chalk.greenBright(`${str}`)),
+    warning: (...str: string[]) => console.log(chalk.cyanBright(`⚠️  ${str}`)),
+    info: (...str: string[]) => console.log(chalk.rgb(0, 0, 0).bgWhiteBright(`\n${str}`)),
+    done: (...str: string[]) => console.log(chalk.yellowBright(...str)),
+    //
+    execute: (...str: string[]) => console.log(chalk.rgb(255, 165, 51).italic(...str)),
+    debug: (...str: string[]) => console.log(chalk.rgb(123, 104, 238).italic(...str)),
+    //
+    basicExecutionHeader: (head: string, body: string, args: any[]) => {
+        let space = '  ';
+        for (let i = 0; i < head.length; i++) space += ' ';
+
+        return console.log(
+            chalk.underline.rgb(
+                255,
+                165,
+                51
+            )(
+                `${head}:` +
+                    chalk.reset(` `) +
+                    chalk.reset.bold.rgb(255, 215, 51)(`${body}` + `\n${space}Params: [${args}]`)
+            )
+        );
+    },
+    executionInfo: (...str: string[]) => console.log(chalk.rgb(255, 215, 51)(...str)),
+    //
+    processing: (...str: string[]) => console.log(chalk.blue(...str)),
+    greyed: (...str: string[]) => console.log(chalk.grey(...str)),
+    success: (...str: string[]) => console.log(chalk.greenBright(...str)),
     error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
 
     // specific logging
-    migrationConfig: (signerAddress: string, isLedger: boolean, executionSettings: executionSettings) => {
+    migrationConfig: (
+        signerAddress: string,
+        networkName: string,
+        isLedger: boolean,
+        executionSettings: executionSettings
+    ) => {
         palette.yellow(`**********************`);
         palette.yellow(`** Migration Config **`);
         palette.yellow(`**********************`);
 
         palette.yellow(`Basic info`);
+        palette.white(`        Network: ${networkName}`);
         palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
         palette.yellow(`Overrides:`);
         palette.white(`        GasPrice: ${executionSettings.gasPrice} (gwei)`);

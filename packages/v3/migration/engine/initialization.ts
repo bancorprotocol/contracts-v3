@@ -55,7 +55,7 @@ export const initMigration = async (args: defaultMigrationArgs) => {
     // init execution functions
     const executionFunctions = initExecutionFunctions(contracts, executionSettings);
 
-    log.migrationConfig(await signer.getAddress(), args.ledger, executionSettings);
+    log.migrationConfig(await signer.getAddress(), networkName, args.ledger, executionSettings);
 
     return {
         signer,

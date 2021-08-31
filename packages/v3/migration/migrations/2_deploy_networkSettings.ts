@@ -1,8 +1,8 @@
-import { deployedContract, Migration } from '../engine/types';
+import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './1_deploy_proxyAdmin';
 
 export type NextState = InitialState & {
-    networkSettings: deployedContract;
+    networkSettings: deployedProxy;
 };
 
 const migration: Migration = {
@@ -14,12 +14,15 @@ const migration: Migration = {
         return {
             ...initialState,
 
-            networkSettings: networkSettings.address
+            networkSettings: {
+                proxyContract: networkSettings.proxy.address,
+                logicContract: networkSettings.logicContractAddress
+            }
         };
     },
 
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
-        const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings);
+        const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings.proxyContract);
 
         if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },

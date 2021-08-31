@@ -1,8 +1,8 @@
-import { deployedContract, Migration } from '../engine/types';
+import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './5_deploy_networkTokenPool';
 
 export type NextState = InitialState & {
-    pendingWithdrawals: deployedContract;
+    pendingWithdrawals: deployedProxy;
 };
 
 const migration: Migration = {
@@ -13,18 +13,21 @@ const migration: Migration = {
             proxyAdmin,
             contracts.TestPendingWithdrawals,
             [],
-            initialState.bancorNetwork,
-            initialState.networkTokenPool
+            initialState.bancorNetwork.proxyContract,
+            initialState.networkTokenPool.proxyContract
         );
         return {
             ...initialState,
 
-            pendingWithdrawals: pendingWithdrawals.address
+            pendingWithdrawals: {
+                proxyContract: pendingWithdrawals.proxy.address,
+                logicContract: pendingWithdrawals.logicContractAddress
+            }
         };
     },
 
     healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
-        const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals);
+        const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals.proxyContract);
 
         if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },

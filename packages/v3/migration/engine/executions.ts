@@ -4,7 +4,7 @@ import { ExecutionError } from './errors';
 import { executionSettings } from './initialization';
 import { log } from './logger/logger';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
-import { BaseContract, ContractFactory, Overrides } from 'ethers';
+import { ContractFactory, Overrides } from 'ethers';
 
 export const initExecutionFunctions = (contracts: typeof Contracts, executionSettings: executionSettings) => {
     const overrides: Overrides = {
@@ -15,15 +15,14 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
         factory: ContractBuilder<F>,
         ...args: Parameters<ContractBuilder<F>['deploy']>
     ): Promise<ReturnType<ContractBuilder<F>['deploy']>> => {
+        log.basicExecutionHeader('Deploying', `${factory.contractName} 🚀 `, args);
+
         const contract = await factory.deploy(...([...args, overrides] as any));
 
-        log.executingTx(`Deploying contract ${factory.contractName}`);
-        log.executingTx(`Params: [${args}]`);
-        log.normal(`Deployment Tx: `, contract.deployTransaction.hash);
-
+        log.debug(`Deployment Tx: `, contract.deployTransaction.hash);
         log.greyed(`Waiting to be mined...`);
-        const receipt = await contract.deployTransaction.wait(executionSettings.confirmationToWait);
 
+        const receipt = await contract.deployTransaction.wait(executionSettings.confirmationToWait);
         if (receipt.status !== 1) {
             log.error(`Error while executing`);
             throw new ExecutionError(contract.deployTransaction, receipt);
@@ -38,9 +37,10 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
         func: T,
         ...args: Parameters<T>
     ): Promise<ContractReceipt> => {
+        log.basicExecutionHeader('Executing', executionInstruction, args);
+
         const tx = await func(...args, overrides);
-        log.normal(executionInstruction);
-        log.normal(`Executing tx: `, tx.hash);
+        log.debug(`Executing tx: `, tx.hash);
 
         const receipt = await tx.wait(executionSettings.confirmationToWait);
         if (receipt.status !== 1) {
@@ -53,28 +53,28 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
     };
 
     type initializeArgs = Parameters<any> | 'skipInit';
+    type proxy<F extends ContractFactory> = { proxy: Contract<F>; logicContractAddress: string };
     const deployProxy = async <F extends ContractFactory>(
         admin: ProxyAdmin,
         logicContractToDeploy: ContractBuilder<F>,
         initializeArgs: initializeArgs,
         ...ctorArgs: Parameters<F['deploy']>
-    ): Promise<Contract<F>> => {
-        const createTransparentProxy = async (
-            admin: BaseContract,
-            logicContract: BaseContract,
-            initializeArgs: initializeArgs = []
-        ) => {
-            const data =
-                initializeArgs === 'skipInit'
-                    ? []
-                    : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
-
-            return await deploy(contracts.TransparentUpgradeableProxy, logicContract.address, admin.address, data);
-        };
-
+    ): Promise<proxy<F>> => {
+        log.debug('Deploying proxy');
         const logicContract = await deploy(logicContractToDeploy, ...ctorArgs);
-        const proxy = await createTransparentProxy(admin, logicContract, initializeArgs);
-        return await logicContractToDeploy.attach(proxy.address);
+
+        const data =
+            initializeArgs === 'skipInit'
+                ? []
+                : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
+
+        const proxy = await deploy(contracts.TransparentUpgradeableProxy, logicContract.address, admin.address, data);
+
+        log.success('Proxy deployed 🚀 ');
+        return {
+            proxy: await logicContractToDeploy.attach(proxy.address),
+            logicContractAddress: logicContract.address
+        };
     };
 
     const upgradeProxy = async <F extends ContractFactory>(
@@ -88,7 +88,8 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
               }
             | 'skipInit',
         ...ctorArgs: Parameters<F['deploy']>
-    ): Promise<Contract<F>> => {
+    ): Promise<proxy<F>> => {
+        log.debug('Upgrading proxy');
         const newLogicContract = await deploy(logicContractToDeploy, ...ctorArgs);
 
         const data =
@@ -99,10 +100,22 @@ export const initExecutionFunctions = (contracts: typeof Contracts, executionSet
                       initializeArgs.params
                   );
 
-        if (initializeArgs === 'skipInit') await admin.upgrade(proxyAddress, newLogicContract.address);
-        else await admin.upgradeAndCall(proxyAddress, newLogicContract.address, data);
+        if (initializeArgs === 'skipInit')
+            await execute('Upgrading proxy', admin.upgrade, proxyAddress, newLogicContract.address);
+        else
+            await execute(
+                `Upgrading proxy and call ${initializeArgs.initializeFctName}`,
+                admin.upgradeAndCall,
+                proxyAddress,
+                newLogicContract.address,
+                data
+            );
 
-        return await logicContractToDeploy.attach(proxyAddress);
+        log.success('Proxy upgraded 🚀 ');
+        return {
+            proxy: await logicContractToDeploy.attach(proxyAddress),
+            logicContractAddress: newLogicContract.address
+        };
     };
 
     return {

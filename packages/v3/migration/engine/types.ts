@@ -10,7 +10,8 @@ export type SystemState = {
 };
 
 export type deployedContract = string;
-export type deployedProxy = deployedContract;
+
+export type deployedProxy = { proxyContract: deployedContract; logicContract: deployedContract };
 
 export type executionFunctions = ReturnType<typeof initExecutionFunctions>;
 

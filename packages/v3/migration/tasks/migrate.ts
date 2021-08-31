@@ -33,7 +33,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
-        log.processing(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+        log.info(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         try {
             currentState.networkState = await migration.up(
@@ -78,7 +78,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         log.processing('Reverting migration ...');
         for (; index >= 0; index--) {
             const migrationData = migrationsData[index];
-            log.processing(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+            log.info(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
             const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
@@ -100,7 +100,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
         }
     }
 
-    log.done(`Migration(s) complete ⚡️`);
+    log.done(`\nMigration(s) complete ⚡️`);
 };
 
 type migrationData = {
@@ -115,7 +115,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
 
     // if reset, delete all the files in the corresponding network folder
     if (args.reset) {
-        log.info(`Resetting ${NETWORK_NAME} migratation folder`);
+        log.warning(`Resetting ${NETWORK_NAME} migratation folder`);
         fs.rmSync(pathToState, {
             recursive: true,
             force: true
@@ -148,7 +148,7 @@ export const initMigrate = async (hre: HardhatRuntimeEnvironment, args: migrateP
     // if network is a fork fetch info from original network
     if (args.reset && MIGRATION_CONFIG.isFork) {
         try {
-            log.info(`Fetching initial state from ${MIGRATION_CONFIG.originalNetwork}`);
+            log.warning(`Fetching initial state from ${MIGRATION_CONFIG.originalNetwork}`);
             state = fetchState(
                 path.join(hre.config.paths.root, MIGRATION_DATA_FOLDER, MIGRATION_CONFIG.originalNetwork)
             );

@@ -1,8 +1,8 @@
-import { deployedContract, Migration } from '../engine/types';
+import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './2_deploy_networkSettings';
 
 export type NextState = InitialState & {
-    bancorNetwork: deployedContract;
+    bancorNetwork: deployedProxy;
 };
 
 const migration: Migration = {
@@ -14,13 +14,16 @@ const migration: Migration = {
             contracts.BancorNetwork,
             'skipInit',
             initialState.BNT.token,
-            initialState.networkSettings
+            initialState.networkSettings.proxyContract
         );
 
         return {
             ...initialState,
 
-            bancorNetwork: bancorNetwork.address
+            bancorNetwork: {
+                proxyContract: bancorNetwork.proxy.address,
+                logicContract: bancorNetwork.logicContractAddress
+            }
         };
     },
 

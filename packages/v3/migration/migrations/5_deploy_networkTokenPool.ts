@@ -1,9 +1,9 @@
 import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from '../../test/helpers/Constants';
-import { deployedContract, Migration } from '../engine/types';
+import { deployedContract, deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './4_deploy_vault';
 
 export type NextState = InitialState & {
-    networkTokenPool: deployedContract;
+    networkTokenPool: deployedProxy;
     networkTokenPoolToken: deployedContract;
 };
 
@@ -21,22 +21,25 @@ const migration: Migration = {
             proxyAdmin,
             contracts.TestNetworkTokenPool,
             'skipInit',
-            initialState.networkSettings,
-            initialState.vault,
+            initialState.networkSettings.proxyContract,
+            initialState.vault.proxyContract,
             networkTokenPoolToken.address
         );
 
         await execute(
             'Transfer token ownership to NetworkTokenPool',
             networkTokenPoolToken.transferOwnership,
-            networkTokenPool.address
+            networkTokenPool.proxy.address
         );
-        await execute('Initialize NetworkTokenPool', networkTokenPool.initialize);
+        await execute('Initialize NetworkTokenPool', networkTokenPool.proxy.initialize);
 
         return {
             ...initialState,
 
-            networkTokenPool: networkTokenPool.address,
+            networkTokenPool: {
+                proxyContract: networkTokenPool.proxy.address,
+                logicContract: networkTokenPool.logicContractAddress
+            },
             networkTokenPoolToken: networkTokenPoolToken.address
         };
     },
