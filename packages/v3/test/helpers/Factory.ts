@@ -7,7 +7,6 @@ import {
     PoolCollection,
     PoolToken,
     ProxyAdmin,
-    TestERC20Token,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
