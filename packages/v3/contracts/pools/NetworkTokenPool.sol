@@ -479,6 +479,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
 
         // verify that the pool's rate is stable
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
+        require(poolCollection.isPoolRateStable(pool), "ERR_UNSTABLE_RATE");
     }
 }

@@ -185,7 +185,7 @@ describe('NetworkTokenPool', () => {
                             poolCollection.address,
                             BigNumber.from(1)
                         )
-                    ).to.be.revertedWith('ERR_INVALID_RATE');
+                    ).to.be.revertedWith('ERR_UNSTABLE_RATE');
                 });
             });
 
