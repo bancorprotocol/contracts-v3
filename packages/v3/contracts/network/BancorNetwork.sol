@@ -692,7 +692,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         }
 
         // if the provider should receive some base tokens from the external wallet - remove the tokens from the
-        // external wallet and send them
+        // external wallet and send them to the provider
         if (amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider > 0) {
             cachedExternalProtectionWallet.withdrawTokens(
                 baseToken,
