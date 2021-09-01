@@ -77,7 +77,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     event LiquidityRequested(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 networkTokenAmountProvided,
+        uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
 
@@ -399,7 +399,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         emit LiquidityRequested({
             contextId: contextId,
             pool: pool,
-            networkTokenAmountProvided: networkTokenAmount,
+            networkTokenAmount: networkTokenAmount,
             poolTokenAmount: poolTokenAmount
         });
     }
