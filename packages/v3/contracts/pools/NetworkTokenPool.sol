@@ -362,7 +362,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         IReserveToken pool,
         uint256 networkTokenAmount
     ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
-        // verify the minting limit (unless asked explicitly to skip this check)
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 mintingLimit = _settings.poolMintingLimit(pool);
         uint256 newMintedAmount = currentMintedAmount.add(networkTokenAmount);
