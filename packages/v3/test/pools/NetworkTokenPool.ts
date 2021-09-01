@@ -233,8 +233,8 @@ describe('NetworkTokenPool', () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
                     await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                        baseTokenTradingLiquidity: spotRate.n,
-                        networkTokenTradingLiquidity: spotRate.d,
+                        networkTokenTradingLiquidity: spotRate.n,
+                        baseTokenTradingLiquidity: spotRate.d,
                         tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
                         stakedBalance: BigNumber.from(0)
                     });
@@ -261,8 +261,8 @@ describe('NetworkTokenPool', () => {
                     };
 
                     await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                        baseTokenTradingLiquidity: spotRate.n,
-                        networkTokenTradingLiquidity: spotRate.d,
+                        networkTokenTradingLiquidity: spotRate.n,
+                        baseTokenTradingLiquidity: spotRate.d,
                         tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
                         stakedBalance: toWei(BigNumber.from(1_000_000))
                     });

@@ -269,8 +269,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return
             PoolAverageRate.isPoolRateStable(
                 Fraction({
-                    n: pool.liquidity.baseTokenTradingLiquidity,
-                    d: pool.liquidity.networkTokenTradingLiquidity
+                    n: pool.liquidity.networkTokenTradingLiquidity,
+                    d: pool.liquidity.baseTokenTradingLiquidity
                 }),
                 pool.averageRate,
                 _settings.averageRateMaxDeviationPPM()

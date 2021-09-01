@@ -910,8 +910,8 @@ describe('BancorNetwork', () => {
                                         };
 
                                         await poolCollection.setTradingLiquidityT(token.address, {
-                                            baseTokenTradingLiquidity: spotRate.n,
-                                            networkTokenTradingLiquidity: spotRate.d,
+                                            networkTokenTradingLiquidity: spotRate.n,
+                                            baseTokenTradingLiquidity: spotRate.d,
                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
                                             stakedBalance: toWei(BigNumber.from(1_000_000))
                                         });
@@ -941,8 +941,8 @@ describe('BancorNetwork', () => {
                                         };
 
                                         await poolCollection.setTradingLiquidityT(token.address, {
-                                            baseTokenTradingLiquidity: spotRate.n,
-                                            networkTokenTradingLiquidity: spotRate.d,
+                                            networkTokenTradingLiquidity: spotRate.n,
+                                            baseTokenTradingLiquidity: spotRate.d,
                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
                                             stakedBalance: toWei(BigNumber.from(1_000_000))
                                         });
