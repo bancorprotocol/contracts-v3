@@ -98,7 +98,7 @@ interface INetworkTokenPool is IUpgradeable {
     /**
      * @dev returns the available co-investment network token liquidity for a given pool
      */
-    function availableTradingLiquidity(IReserveToken pool) external view returns (uint256);
+    function availableMintingAmount(IReserveToken pool) external view returns (uint256);
 
     /**
      * @dev mints network tokens to the recipient

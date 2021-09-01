@@ -321,7 +321,7 @@ describe('NetworkTokenPool', () => {
         const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
             const prevStakedBalance = await networkTokenPool.stakedBalance();
             const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-            const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(reserveToken.address);
+            const prevAvailableLiquidity = await networkTokenPool.availableMintingAmount(reserveToken.address);
 
             const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
             const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -353,7 +353,7 @@ describe('NetworkTokenPool', () => {
             expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                 prevMintedAmount.add(expectedAmount)
             );
-            expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+            expect(await networkTokenPool.availableMintingAmount(reserveToken.address)).to.equal(
                 prevAvailableLiquidity.sub(expectedAmount)
             );
 
@@ -539,7 +539,7 @@ describe('NetworkTokenPool', () => {
             const testRenounce = async (amount: BigNumber) => {
                 const prevStakedBalance = await networkTokenPool.stakedBalance();
                 const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(reserveToken.address);
+                const prevAvailableLiquidity = await networkTokenPool.availableMintingAmount(reserveToken.address);
 
                 const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
                 const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -564,7 +564,7 @@ describe('NetworkTokenPool', () => {
                     prevMintedAmount.gt(amount) ? prevMintedAmount.sub(amount) : BigNumber.from(0)
                 );
 
-                expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+                expect(await networkTokenPool.availableMintingAmount(reserveToken.address)).to.equal(
                     prevAvailableLiquidity.gt(amount) ? prevAvailableLiquidity.add(amount) : MINTING_LIMIT
                 );
 
@@ -1049,9 +1049,7 @@ describe('NetworkTokenPool', () => {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                    const prevAvailableLiquidity = await networkTokenPool.availableTradingLiquidity(
-                        reserveToken.address
-                    );
+                    const prevAvailableLiquidity = await networkTokenPool.availableMintingAmount(reserveToken.address);
                     const expectedMintedAmount = type === FEE_TYPES.trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
@@ -1060,7 +1058,7 @@ describe('NetworkTokenPool', () => {
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedMintedAmount)
                     );
-                    expect(await networkTokenPool.availableTradingLiquidity(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.availableMintingAmount(reserveToken.address)).to.equal(
                         prevAvailableLiquidity.sub(expectedMintedAmount)
                     );
                 });
