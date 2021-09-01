@@ -679,6 +679,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
+        // provider
         if (amounts.networkTokenAmountToMintForProvider > 0) {
             _networkPoolToken.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
