@@ -13,7 +13,8 @@ const migration: Migration = {
             proxyAdmin,
             contracts.BancorNetwork,
             'skipInit',
-            initialState.BNT.token,
+            initialState.BNT.governance,
+            initialState.vBNT.governance,
             initialState.networkSettings.proxyContract
         );
 

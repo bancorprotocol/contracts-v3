@@ -16,6 +16,10 @@ const migration: Migration = {
             initialState.bancorNetwork.proxyContract,
             initialState.networkTokenPool.proxyContract
         );
+
+        const networkTokenPool = await contracts.NetworkTokenPool.attach(initialState.networkTokenPool.proxyContract);
+        await execute('Initialize NetworkTokenPool', networkTokenPool.initialize, pendingWithdrawals.proxy.address);
+
         return {
             ...initialState,
 

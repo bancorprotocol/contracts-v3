@@ -5,6 +5,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -26,6 +28,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
     // the address of the network token
     IERC20 private immutable _networkToken;
+
+    // the address of the network token governance
+    ITokenGovernance private immutable _networkTokenGovernance;
+
+    // the address of the governance token
+    IERC20 private immutable _govToken;
+
+    // the address of the governance token governance
+    ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
     INetworkSettings private immutable _settings;
@@ -178,18 +189,31 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IERC20 initNetworkToken, INetworkSettings initSettings)
-        validAddress(address(initNetworkToken))
+    constructor(
+        ITokenGovernance initNetworkTokenGovernance,
+        ITokenGovernance initGovTokenGovernance,
+        INetworkSettings initSettings
+    )
+        validAddress(address(initNetworkTokenGovernance))
+        validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
     {
-        _networkToken = initNetworkToken;
+        _networkTokenGovernance = initNetworkTokenGovernance;
+        _networkToken = initNetworkTokenGovernance.token();
+        _govTokenGovernance = initGovTokenGovernance;
+        _govToken = initGovTokenGovernance.token();
+
         _settings = initSettings;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals) external initializer {
+    function initialize(IPendingWithdrawals initPendingWithdrawals)
+        external
+        validAddress(address(initPendingWithdrawals))
+        initializer
+    {
         __BancorNetwork_init(initPendingWithdrawals);
     }
 
@@ -226,6 +250,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function networkToken() external view override returns (IERC20) {
         return _networkToken;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function networkTokenGovernance() external view override returns (ITokenGovernance) {
+        return _networkTokenGovernance;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function govToken() external view override returns (IERC20) {
+        return _govToken;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function govTokenGovernance() external view override returns (ITokenGovernance) {
+        return _govTokenGovernance;
     }
 
     /**

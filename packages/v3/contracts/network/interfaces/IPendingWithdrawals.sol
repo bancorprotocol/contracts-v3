@@ -13,22 +13,23 @@ import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
+ * @dev The data struct representing a pending withdrawal request
+ */
+struct WithdrawalRequest {
+    // the liquidity provider
+    address provider;
+    // the address of the locked pool token
+    IPoolToken poolToken;
+    // the time when the request was created (Unix timestamp))
+    uint32 createdAt;
+    // the locked pool token amount
+    uint256 amount;
+}
+
+/**
  * @dev Pending Withdrawals interface
  */
 interface IPendingWithdrawals is IUpgradeable {
-    struct WithdrawalRequest {
-        // the version of the struct
-        uint16 version;
-        // the liquidity provider
-        address provider;
-        // the address of the locked pool token
-        IPoolToken poolToken;
-        // the time when the request was created (Unix timestamp))
-        uint32 createdAt;
-        // the locked pool token amount
-        uint256 amount;
-    }
-
     /**
      * @dev returns the network contract
      */
@@ -113,9 +114,9 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
+     * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - in order to complete a network token withdrawal, the caller must be the network token pool
-     * - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
+     * - the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
      */
     function completeWithdrawal(
         bytes32 contextId,

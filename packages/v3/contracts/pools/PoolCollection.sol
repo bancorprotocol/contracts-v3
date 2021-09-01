@@ -19,12 +19,13 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 /**
- * @dev Liquidity Pool Collection contract
+ * @dev Pool Collection contract
  *
  * notes:
  *
@@ -32,7 +33,6 @@ import { PoolToken } from "./PoolToken.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
-    using MathEx for *;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -47,13 +47,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     IBancorNetwork private immutable _network;
 
     // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) private _pools;
+    mapping(IReserveToken => Pool) internal _pools;
 
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
     // the default trading fee (in units of PPM)
-    uint32 private _defaultTradingFeePPM = DEFAULT_TRADING_FEE_PPM;
+    uint32 private _defaultTradingFeePPM;
 
     /**
      * @dev triggered when a pool is created
@@ -64,11 +64,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
-
-    /**
-     * @dev triggered when a pool's initial rate is updated
-     */
-    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
      * @dev triggered when a specific pool's trading fee is updated
@@ -86,14 +81,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     event DepositingEnabled(IReserveToken indexed pool, bool newStatus);
 
     /**
+     * @dev triggered when a pool's initial rate is updated
+     */
+    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
+
+    /**
      * @dev triggered when a pool's deposit limit is updated
      */
     event DepositLimitUpdated(IReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
-
-    /**
-     * @dev triggered when trades in a specific pool are enabled/disabled
-     */
-    event TradesEnabled(IReserveToken indexed pool, bool status);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -104,17 +99,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         _network = initNetwork;
         _settings = initNetwork.settings();
-    }
 
-    // allows execution by the network only
-    modifier onlyNetwork() {
-        _onlyNetwork();
-
-        _;
-    }
-
-    function _onlyNetwork() private view {
-        require(msg.sender == address(_network), "ERR_ACCESS_DENIED");
+        _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
     modifier validRate(Fraction memory rate) {
@@ -130,7 +116,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure virtual override returns (uint16) {
         return 1;
     }
 
@@ -192,41 +178,42 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validFee(newDefaultTradingFeePPM)
     {
-        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
-        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
-            return;
-        }
-
-        _defaultTradingFeePPM = newDefaultTradingFeePPM;
-
-        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
+        _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(IReserveToken reserveToken) external override onlyNetwork nonReentrant {
-        require(_settings.isTokenWhitelisted(reserveToken), "ERR_POOL_NOT_WHITELISTED");
+    function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
+        require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
         (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
         PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
 
-        _pools[reserveToken] = Pool({
-            version: 1,
+        Pool memory newPool = Pool({
             poolToken: newPoolToken,
-            tradingFeePPM: DEFAULT_TRADING_FEE_PPM,
+            tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
             baseTokenTradingLiquidity: 0,
             networkTokenTradingLiquidity: 0,
+            averageRate: AverageRate({ time: 0, rate: Fraction({ n: 0, d: 1 }) }),
             tradingLiquidityProduct: 0,
             stakedBalance: 0,
             initialRate: Fraction({ n: 0, d: 1 }),
             depositLimit: 0
         });
 
+        _pools[reserveToken] = newPool;
+
         emit PoolCreated(newPoolToken, reserveToken);
+
+        emit TradingFeePPMUpdated(reserveToken, 0, newPool.tradingFeePPM);
+        emit TradingEnabled(reserveToken, newPool.tradingEnabled);
+        emit DepositingEnabled(reserveToken, newPool.depositingEnabled);
+        emit InitialRateUpdated(reserveToken, Fraction({ n: 0, d: 0 }), newPool.initialRate);
+        emit DepositLimitUpdated(reserveToken, 0, newPool.depositLimit);
     }
 
     /**
@@ -241,6 +228,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_pools[reserveToken]);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
+        Pool memory pool = _pools[reserveToken];
+        if (!_validPool(pool)) {
+            return false;
+        }
+
+        // verify that the average rate of the pool isn't deviated too much from its spot rate
+        return
+            PoolAverageRate.isPoolRateStable(
+                Fraction({ n: pool.baseTokenTradingLiquidity, d: pool.networkTokenTradingLiquidity }),
+                pool.averageRate,
+                _settings.averageRateMaxDeviationPPM()
+            );
     }
 
     /**
@@ -402,6 +407,20 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 bM = b.mul(PPM_RESOLUTION);
         uint256 fM = f.mul(PPM_RESOLUTION);
         return MathEx.mulDivF(af, b.mul(2 * PPM_RESOLUTION - m).add(fM), b.mul(bM.add(fm)));
+    }
+
+    /**
+     * @dev sets the default trading fee (in units of PPM)
+     */
+    function _setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM) private {
+        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
+        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
+            return;
+        }
+
+        _defaultTradingFeePPM = newDefaultTradingFeePPM;
+
+        emit DefaultTradingFeePPMUpdated(prevDefaultTradingFeePPM, newDefaultTradingFeePPM);
     }
 
     /**

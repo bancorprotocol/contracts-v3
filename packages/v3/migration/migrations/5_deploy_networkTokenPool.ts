@@ -4,14 +4,14 @@ import { NextState as InitialState } from './4_deploy_vault';
 
 export type NextState = InitialState & {
     networkTokenPool: deployedProxy;
-    networkTokenPoolToken: deployedContract;
+    networkPoolToken: deployedContract;
 };
 
 const migration: Migration = {
     up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
-        const networkTokenPoolToken = await contracts.PoolToken.deploy(
+        const networkPoolToken = await contracts.PoolToken.deploy(
             NETWORK_TOKEN_POOL_TOKEN_NAME,
             NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
             initialState.BNT.token
@@ -19,19 +19,18 @@ const migration: Migration = {
 
         const networkTokenPool = await deployProxy(
             proxyAdmin,
-            contracts.TestNetworkTokenPool,
+            contracts.NetworkTokenPool,
             'skipInit',
-            initialState.networkSettings.proxyContract,
+            initialState.bancorNetwork.proxyContract,
             initialState.vault.proxyContract,
-            networkTokenPoolToken.address
+            networkPoolToken.address
         );
 
         await execute(
             'Transfer token ownership to NetworkTokenPool',
-            networkTokenPoolToken.transferOwnership,
+            networkPoolToken.transferOwnership,
             networkTokenPool.proxy.address
         );
-        await execute('Initialize NetworkTokenPool', networkTokenPool.proxy.initialize);
 
         return {
             ...initialState,
@@ -40,7 +39,7 @@ const migration: Migration = {
                 proxyContract: networkTokenPool.proxy.address,
                 logicContract: networkTokenPool.logicContractAddress
             },
-            networkTokenPoolToken: networkTokenPoolToken.address
+            networkPoolToken: networkPoolToken.address
         };
     },
 

@@ -19,7 +19,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
@@ -152,12 +152,11 @@ contract PendingWithdrawals is
      * @dev performs contract-specific initialization
      */
     function __PendingWithdrawals_init_unchained() internal initializer {
-        _lockDuration = DEFAULT_LOCK_DURATION;
-        _withdrawalWindowDuration = DEFAULT_WITHDRAWAL_WINDOW_DURATION;
+        _setLockDuration(DEFAULT_LOCK_DURATION);
+        _setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
     }
 
     // solhint-enable func-name-mixedcase
-
     /**
      * @dev returns the current version of the contract
      */
@@ -187,7 +186,7 @@ contract PendingWithdrawals is
     }
 
     /**
-     * @dev sets the lock duration.
+     * @dev sets the lock duration
      *
      * notes:
      *
@@ -198,14 +197,7 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setLockDuration(uint32 newLockDuration) external onlyOwner {
-        uint32 prevLockDuration = _lockDuration;
-        if (prevLockDuration == newLockDuration) {
-            return;
-        }
-
-        _lockDuration = newLockDuration;
-
-        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+        _setLockDuration(newLockDuration);
     }
 
     /**
@@ -216,7 +208,7 @@ contract PendingWithdrawals is
     }
 
     /**
-     * @dev sets withdrawal window duration.
+     * @dev sets withdrawal window duration
      *
      * notes:
      *
@@ -227,14 +219,7 @@ contract PendingWithdrawals is
      * - the caller must be the owner of the contract
      */
     function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
-        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
-        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
-            return;
-        }
-
-        _withdrawalWindowDuration = newWithdrawalWindowDuration;
-
-        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
+        _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
     /**
@@ -333,19 +318,9 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override returns (uint256) {
+    ) external override only(address(_network)) returns (uint256) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
-
-        // verify the caller:
-        // - in order to complete a network token withdrawal, the caller must be the network token pool
-        // - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
-        IReserveToken reserveToken = request.poolToken.reserveToken();
-        if (address(reserveToken) == address(_networkToken)) {
-            require(msg.sender == address(_networkTokenPool), "ERR_ACCESS_DENIED");
-        } else {
-            require(msg.sender == address(_network.collectionByPool(reserveToken)), "ERR_ACCESS_DENIED");
-        }
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
@@ -361,7 +336,7 @@ contract PendingWithdrawals is
 
         emit WithdrawalCompleted(
             contextId,
-            reserveToken,
+            request.poolToken.reserveToken(),
             provider,
             id,
             request.amount,
@@ -369,6 +344,43 @@ contract PendingWithdrawals is
         );
 
         return request.amount;
+    }
+
+    /**
+     * @dev sets the lock duration
+     *
+     * notes:
+     *
+     * - updating it will affect existing locked positions retroactively
+     *
+     */
+    function _setLockDuration(uint32 newLockDuration) private {
+        uint32 prevLockDuration = _lockDuration;
+        if (prevLockDuration == newLockDuration) {
+            return;
+        }
+
+        _lockDuration = newLockDuration;
+
+        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+    }
+
+    /**
+     * @dev sets withdrawal window duration
+     *
+     * notes:
+     *
+     * - updating it will affect existing locked positions retroactively
+     */
+    function _setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) private {
+        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
+        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
+            return;
+        }
+
+        _withdrawalWindowDuration = newWithdrawalWindowDuration;
+
+        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
     }
 
     /**
@@ -387,7 +399,6 @@ contract PendingWithdrawals is
         uint256 id = _nextWithdrawalRequestId++;
 
         _withdrawalRequests[id] = WithdrawalRequest({
-            version: 1,
             provider: provider,
             poolToken: poolToken,
             amount: poolTokenAmount,

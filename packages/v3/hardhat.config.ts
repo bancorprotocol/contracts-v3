@@ -3,7 +3,6 @@ import { log } from './migration/engine/logger/logger';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import fs from 'fs';
 import 'hardhat-abi-exporter';
@@ -70,9 +69,6 @@ export const FORK_CONFIG = (() => {
 })();
 
 const hardhatDefaultConfig = {
-    hardfork: 'london',
-    gasPrice: 'auto',
-    gas: 9500000,
     accounts: {
         count: 10,
         accountsBalance: '10000000000000000000000000000'
@@ -150,7 +146,7 @@ const config: HardhatUserConfig = {
         color: true,
         bail: getEnvKey('BAIL'),
         grep: ci ? '' : '@stress',
-        invert: ci ? false : true
+        invert: !ci
     }
 };
 
