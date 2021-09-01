@@ -116,7 +116,7 @@ interface INetworkTokenPool is IUpgradeable {
      *
      * - the caller must be the network contract
      */
-    function burn(uint256 networkTokenAmount) external;
+    function burnFromVault(uint256 networkTokenAmount) external;
 
     /**
      * @dev deposits network token liquidity on behalf of a specific provider

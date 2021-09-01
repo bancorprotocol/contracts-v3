@@ -264,7 +264,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function burn(uint256 networkTokenAmount)
+    function burnFromVault(uint256 networkTokenAmount)
         external
         override
         only(address(_network))

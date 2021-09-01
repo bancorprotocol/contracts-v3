@@ -54,8 +54,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _networkTokenPool.mint(recipient, networkTokenAmount);
     }
 
-    function burnT(uint256 networkTokenAmount) external {
-        return _networkTokenPool.burn(networkTokenAmount);
+    function burnFromVaultT(uint256 networkTokenAmount) external {
+        return _networkTokenPool.burnFromVault(networkTokenAmount);
     }
 
     function depositToNetworkPoolForT(

@@ -147,7 +147,7 @@ describe('NetworkTokenPool', () => {
         });
     });
 
-    describe('burn', () => {
+    describe('burnFromVault', () => {
         let network: TestBancorNetwork;
         let networkToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
@@ -164,17 +164,17 @@ describe('NetworkTokenPool', () => {
         it('should revert when attempting to burn from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(networkTokenPool.connect(nonNetwork).burn(BigNumber.from(1))).to.be.revertedWith(
+            await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
                 'ERR_ACCESS_DENIED'
             );
         });
 
         it('should revert when attempting to burn an invalid amount', async () => {
-            await expect(network.burnT(BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
+            await expect(network.burnFromVaultT(BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
         });
 
         it('should revert when attempting to burn more than balance of the vault', async () => {
-            await expect(network.burnT(amount.add(BigNumber.from(1)))).to.be.revertedWith(
+            await expect(network.burnFromVaultT(amount.add(BigNumber.from(1)))).to.be.revertedWith(
                 'ERC20: transfer amount exceeds balance'
             );
         });
@@ -185,7 +185,7 @@ describe('NetworkTokenPool', () => {
             const prevTotalSupply = await networkToken.totalSupply();
             const prevVaultTokenBalance = await networkToken.balanceOf(vault.address);
 
-            await network.burnT(amount);
+            await network.burnFromVaultT(amount);
 
             expect(await networkToken.totalSupply()).to.equal(prevTotalSupply.sub(amount));
             expect(await networkToken.balanceOf(vault.address)).to.equal(prevVaultTokenBalance.sub(amount));

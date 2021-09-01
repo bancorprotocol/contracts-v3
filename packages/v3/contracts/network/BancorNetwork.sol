@@ -675,7 +675,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
         if (amounts.networkTokenArbitrageAmount < 0) {
-            _networkPoolToken.burn(uint256(-amounts.networkTokenArbitrageAmount));
+            _networkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
