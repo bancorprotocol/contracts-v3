@@ -254,10 +254,10 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
-"@bancor/token-governance@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.2.tgz#01f1ff04d422540170ed5d0e0bb9bc386c89a755"
-  integrity sha512-TMv4VJqQOSJzXyRhg3UsvlccE563n1yb0u+s+SGD/VryWFSPybOkEEXKwKNVZxqYLdpQxls0UqeDlvbpBRqtRw==
+"@bancor/token-governance@^0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.3.tgz#c2099c195769a23ac8222bcb7f4508e5616c4978"
+  integrity sha512-rRF/eVAdMagDR8y84VnNAQl8UpFlN/DuR7JNQPEnksTb4wbVWqaLgxQ+3JxP/1oTwXUfCAxs5ioKC7aLzb7c/A==
 
 "@bancor/token-governance@bancorprotocol/token-governance":
   version "0.1.1"
