@@ -340,9 +340,6 @@ describe('NetworkTokenPool', () => {
                 expectedPoolTokenAmount = expectedAmount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
             }
 
-            const receivedAmount = await network.callStatic.requestLiquidityT(contextId, reserveToken.address, amount);
-            expect(receivedAmount).to.equal(expectedAmount);
-
             const res = await network.requestLiquidityT(contextId, reserveToken.address, amount);
 
             await expect(res)

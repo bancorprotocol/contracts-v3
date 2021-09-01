@@ -158,7 +158,7 @@ interface INetworkTokenPool is IUpgradeable {
         bytes32 contextId,
         IReserveToken pool,
         uint256 networkTokenAmount
-    ) external returns (uint256);
+    ) external;
 
     /**
      * @dev renounces network token liquidity by pools
