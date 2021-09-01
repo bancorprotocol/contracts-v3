@@ -75,29 +75,26 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
 
     // if the index of the latest migration is not equal to the length of the migrationsData array then an error occured an we should revert
     if (index != migrationsData.length) {
-        log.processing('Reverting migration ...');
-        for (; index >= 0; index--) {
-            const migrationData = migrationsData[index];
-            log.info(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
+        log.warning('Reverting ...');
 
-            const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+        const migrationData = migrationsData[index];
+        log.info(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
-            currentState.networkState = await migration.down(
-                signer,
-                contracts,
-                stateSaves[index].networkState,
-                currentState.networkState,
-                executionFunctions
-            );
+        const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
 
-            // if revert passed, update the state and write it to the system
-            currentState = {
-                migrationState: { latestMigration: stateSaves[index].migrationState.latestMigration },
-                networkState: currentState.networkState
-            };
+        currentState.networkState = await migration.down(
+            signer,
+            contracts,
+            stateSaves[index].networkState,
+            currentState.networkState,
+            executionFunctions
+        );
 
-            writeState(currentState);
-        }
+        // if revert passed, update the state and write it to the system
+        currentState.migrationState = { latestMigration: stateSaves[index].migrationState.latestMigration };
+
+        writeState(currentState);
+        log.success(`${migrationData.fileName} reverted`);
     }
 
     log.done(`\nMigration(s) complete ⚡️`);
