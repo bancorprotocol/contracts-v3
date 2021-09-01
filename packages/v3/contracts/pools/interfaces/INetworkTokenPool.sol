@@ -145,7 +145,7 @@ interface INetworkTokenPool is IUpgradeable {
     function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
-     * @dev allows pools to request network token liquidity and returns the provided amount
+     * @dev requests network token liquidity
      *
      * requirements:
      *
@@ -161,7 +161,7 @@ interface INetworkTokenPool is IUpgradeable {
     ) external;
 
     /**
-     * @dev renounces network token liquidity by pools
+     * @dev renounces network token liquidity
      *
      * requirements:
      *
