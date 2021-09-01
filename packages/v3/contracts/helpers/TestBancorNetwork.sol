@@ -93,19 +93,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function requestLiquidityT(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     ) external returns (uint256) {
-        return _networkTokenPool.requestLiquidity(contextId, pool, poolCollection, networkTokenAmount);
+        return _networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount);
     }
 
     function renounceLiquidityT(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     ) external {
-        _networkTokenPool.renounceLiquidity(contextId, pool, poolCollection, networkTokenAmount);
+        _networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(

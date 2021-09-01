@@ -141,12 +141,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
     // solhint-enable func-name-mixedcase
 
-    modifier onlyValidPool(IReserveToken pool, IPoolCollection poolCollection) {
-        _verifyPoolCollection(pool, poolCollection);
-
-        _;
-    }
-
     /**
      * @dev returns the current version of the contract
      */
@@ -229,6 +223,22 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function mintedAmount(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function isMintingEnabled(IReserveToken pool, IPoolCollection poolCollection)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return
+            address(pool) != address(0x0) &&
+            address(poolCollection) != address(0x0) &&
+            _settings.isTokenWhitelisted(pool) &&
+            poolCollection.isPoolRateStable(pool);
     }
 
     /**
@@ -350,13 +360,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     )
         external
         override
         only(address(_network))
-        onlyValidPool(pool, poolCollection)
+        validAddress(address(pool))
         greaterThanZero(networkTokenAmount)
         returns (uint256)
     {
@@ -411,15 +420,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function renounceLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
         uint256 networkTokenAmount
-    )
-        external
-        override
-        only(address(_network))
-        onlyValidPool(pool, poolCollection)
-        greaterThanZero(networkTokenAmount)
-    {
+    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the pool token amount to burn
@@ -491,21 +493,5 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
                 govTokenAmount: poolTokenAmount,
                 networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
             });
-    }
-
-    /**
-     * @dev verifies that the specified pool is whitelisted, managed by a valid pool collection with a stable pool's rate
-     */
-    function _verifyPoolCollection(IReserveToken pool, IPoolCollection poolCollection)
-        private
-        view
-        validAddress(address(pool))
-        validAddress(address(poolCollection))
-    {
-        // verify that the token is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
-
-        // verify that the pool's rate is stable
-        require(poolCollection.isPoolRateStable(pool), "ERR_UNSTABLE_RATE");
     }
 }

@@ -647,6 +647,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
+        // make sure that minting is enabled
+        require(_networkTokenPool.isMintingEnabled(baseToken, poolCollection), "ERR_MINTING_DISABLED");
+
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
@@ -662,12 +665,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // if network token trading liquidity should be lowered - renounce liquidity
         if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            _networkTokenPool.renounceLiquidity(
-                contextId,
-                baseToken,
-                poolCollection,
-                amounts.networkTokenAmountToDeductFromLiquidity
-            );
+            _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenAmountToDeductFromLiquidity);
         }
 
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
