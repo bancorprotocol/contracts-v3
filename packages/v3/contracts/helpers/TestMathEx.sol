@@ -50,7 +50,7 @@ contract TestMathEx {
         return MathEx.mulDivC(x, y, z);
     }
 
-    function cap(uint256 n1, uint256 n2) external pure returns (uint256) {
-        return MathEx.cap(n1, n2);
+    function max0(uint256 n1, uint256 n2) external pure returns (uint256) {
+        return MathEx.max0(n1, n2);
     }
 }

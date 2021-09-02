@@ -167,7 +167,7 @@ library MathEx {
     /**
      * @dev returns the maximum of `n1 - n2` and 0
      */
-    function cap(uint256 n1, uint256 n2) internal pure returns (uint256) {
+    function max0(uint256 n1, uint256 n2) internal pure returns (uint256) {
         return n1 > n2 ? n1 - n2 : 0;
     }
 

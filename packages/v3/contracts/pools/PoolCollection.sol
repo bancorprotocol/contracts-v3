@@ -434,7 +434,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             _withdrawalAmounts(
                 params.networkTokenAvgTradingLiquidity,
                 params.baseTokenAvgTradingLiquidity,
-                MathEx.cap(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+                MathEx.max0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
                 params.basePoolTokenTotalSupply,
                 params.baseTokenStakedAmount,
                 externalProtectionWalletBalance,
@@ -611,8 +611,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             );
 
             uint256 networkTokenArbitrageAmount = _posArbitrage(
-                MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
                 tradeFeePPM,
@@ -638,8 +638,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 );
 
                 uint256 networkTokenArbitrageAmount = _negArbitrage(
-                    MathEx.cap(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                    MathEx.cap(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                    MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                    MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
                     baseTokenOffsetAmount,
                     tradeFeePPM,
@@ -905,12 +905,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenShare,
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
-        Fraction memory y = _cap(quotients[0]);
+        Fraction memory y = _max0(quotients[0]);
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
             MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
         ) {
-            Fraction memory z = _cap(quotients[1]);
+            Fraction memory z = _max0(quotients[1]);
             return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
         }
         return 0;
@@ -919,7 +919,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
      */
-    function _cap(Quotient memory q) internal pure returns (Fraction memory) {
+    function _max0(Quotient memory q) internal pure returns (Fraction memory) {
         if (q.n1 > q.n2 && q.d1 > q.d2) {
             // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });

@@ -186,8 +186,8 @@ describe('MathEx', () => {
 
         for (const n1 of [BigNumber.from(0), BigNumber.from(1000), BigNumber.from(10_000)]) {
             for (const n2 of [BigNumber.from(0), BigNumber.from(1000), BigNumber.from(10_000)]) {
-                it(`cap(${n1.toString()}, ${n2.toString()})`, async () => {
-                    expect(await mathContract.cap(n1, n2)).to.equal(n1.gt(n2) ? n1.sub(n2) : BigNumber.from(0));
+                it(`max0(${n1.toString()}, ${n2.toString()})`, async () => {
+                    expect(await mathContract.max0(n1, n2)).to.equal(n1.gt(n2) ? n1.sub(n2) : BigNumber.from(0));
                 });
             }
         }
