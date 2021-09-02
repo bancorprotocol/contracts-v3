@@ -599,8 +599,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             0
         );
 
-        amounts.networkTokenArbitrageAmount = 0;
-
         if (baseTokenVaultBalance >= baseTokenStakedAmount) {
             // the pool is not in a base token deficit
             uint256 baseTokenOffsetAmount = _deductFee(
