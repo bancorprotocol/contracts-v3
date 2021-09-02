@@ -622,8 +622,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
             if (
                 networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) <=
-                networkTokenLiquidity &&
-                networkTokenArbitrageAmount > 0
+                networkTokenLiquidity
             ) {
                 amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
             }
