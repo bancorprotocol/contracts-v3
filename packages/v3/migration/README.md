@@ -36,22 +36,22 @@ export interface Migration {
         signer: Signer,
         contracts: Contracts,
         initialState: any,
-        { deploy, execute, deployProxy }: executionFunctions
-    ) => Promise<{}>;
+        executionFunctions: executionFunctions
+    ) => Promise<any>;
     healthCheck: (
         signer: Signer,
         contracts: Contracts,
         initialState: any,
         newState: any,
-        { deploy, execute, deployProxy }: executionFunctions
+        executionFunctions: executionFunctions
     ) => Promise<any>;
     down: (
         signer: Signer,
         contracts: Contracts,
         initialState: any,
         newState: any,
-        { deploy, execute, deployProxy }: executionFunctions
-    ) => Promise<{}>;
+        executionFunctions: executionFunctions
+    ) => Promise<any>;
 }
 ```
 
