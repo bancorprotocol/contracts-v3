@@ -636,7 +636,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     withdrawalFeePPM
                 );
 
-                uint256 networkTokenArbitrageAmount = _negArbitrage(
+                amounts.networkTokenArbitrageAmount = _negArbitrage(
                     MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
                     MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
@@ -644,11 +644,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     tradeFeePPM,
                     withdrawalFeePPM,
                     baseTokenShare
-                );
-
-                if (networkTokenArbitrageAmount > 0) {
-                    amounts.networkTokenArbitrageAmount = networkTokenArbitrageAmount.toInt256();
-                }
+                ).toInt256();
             }
 
             if (amounts.networkTokenArbitrageAmount == 0) {
