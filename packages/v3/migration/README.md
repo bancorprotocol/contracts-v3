@@ -40,6 +40,7 @@ export interface Migration {
     ) => Promise<any>;
     healthCheck: (
         signer: Signer,
+        config: typeof MIGRATION_CONFIG,
         contracts: Contracts,
         initialState: any,
         newState: any,
@@ -142,7 +143,14 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {},
+    healthCheck: async (
+        signer,
+        config,
+        contracts,
+        initialState: InitialState,
+        state: NextState,
+        { deploy, execute }
+    ) => {},
 
     down: async (
         signer,

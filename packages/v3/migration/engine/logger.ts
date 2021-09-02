@@ -1,3 +1,4 @@
+import { MIGRATION_CONFIG } from './config';
 import { executionSettings } from './initialization';
 import chalk from 'chalk';
 
@@ -39,7 +40,7 @@ export const log = {
     // specific logging
     migrationConfig: (
         signerAddress: string,
-        networkName: string,
+        config: typeof MIGRATION_CONFIG,
         isLedger: boolean,
         executionSettings: executionSettings
     ) => {
@@ -48,8 +49,9 @@ export const log = {
         palette.yellow(`**********************`);
 
         palette.yellow(`Basic info`);
-        palette.white(`        Network: ${networkName}`);
         palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
+        palette.yellow(`Network info`);
+        palette.white(`        Network: ${config.networkName}`);
         palette.yellow(`Overrides:`);
         palette.white(`        GasPrice: ${executionSettings.gasPrice} (gwei)`);
         palette.yellow(`Execution Setting:`);

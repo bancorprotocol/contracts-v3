@@ -30,7 +30,14 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
+    healthCheck: async (
+        signer,
+        config,
+        contracts,
+        initialState: InitialState,
+        state: NextState,
+        { deploy, execute }
+    ) => {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals.proxyContract);
 
         if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');

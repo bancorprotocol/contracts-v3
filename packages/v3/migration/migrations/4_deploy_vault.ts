@@ -21,7 +21,14 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
+    healthCheck: async (
+        signer,
+        config,
+        contracts,
+        initialState: InitialState,
+        state: NextState,
+        { deploy, execute }
+    ) => {
         const bancorVault = await contracts.BancorVault.attach(state.vault.proxyContract);
 
         if (!(await bancorVault.hasRole(await bancorVault.ROLE_ADMIN(), await signer.getAddress())))

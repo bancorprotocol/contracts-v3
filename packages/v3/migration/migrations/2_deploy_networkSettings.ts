@@ -21,7 +21,14 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {
+    healthCheck: async (
+        signer,
+        config,
+        contracts,
+        initialState: InitialState,
+        state: NextState,
+        { deploy, execute }
+    ) => {
         const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings.proxyContract);
 
         if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');

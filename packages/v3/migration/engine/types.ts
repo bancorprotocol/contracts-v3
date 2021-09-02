@@ -1,4 +1,5 @@
 import { Contracts } from '../../components/Contracts';
+import { MIGRATION_CONFIG } from './config';
 import { initExecutionFunctions } from './executions';
 import { Signer } from 'ethers';
 
@@ -24,6 +25,7 @@ export interface Migration {
     ) => Promise<any>;
     healthCheck: (
         signer: Signer,
+        config: typeof MIGRATION_CONFIG,
         contracts: Contracts,
         initialState: any,
         newState: any,

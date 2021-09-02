@@ -14,6 +14,8 @@ export const NETWORK_NAME = GET_NETWORK_NAME();
 
 export const MIGRATION_CONFIG = {
     isFork: NETWORK_NAME.startsWith(FORK_PREFIX),
-    originalNetwork: NETWORK_NAME.substring(FORK_PREFIX.length),
+    isHardhat: NETWORK_NAME === 'hardhat',
+    isTestnet: NETWORK_NAME === 'rinkeby',
+    originalNetwork: NETWORK_NAME.startsWith(FORK_PREFIX) ? NETWORK_NAME.substring(FORK_PREFIX.length) : NETWORK_NAME,
     networkName: NETWORK_NAME
 };

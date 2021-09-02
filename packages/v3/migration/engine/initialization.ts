@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.config';
+import { MIGRATION_CONFIG } from './config';
 import { initExecutionFunctions } from './executions';
 import { log } from './logger';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
@@ -55,7 +56,7 @@ export const initMigration = async (args: defaultMigrationArgs) => {
     // init execution functions
     const executionFunctions = initExecutionFunctions(contracts, executionSettings);
 
-    log.migrationConfig(await signer.getAddress(), networkName, args.ledger, executionSettings);
+    log.migrationConfig(await signer.getAddress(), MIGRATION_CONFIG, args.ledger, executionSettings);
 
     return {
         signer,

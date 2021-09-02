@@ -46,6 +46,7 @@ export default async (args: migrateParamTask, hre: HardhatRuntimeEnvironment) =>
             try {
                 await migration.healthCheck(
                     signer,
+                    MIGRATION_CONFIG,
                     contracts,
                     stateSaves[index].networkState,
                     currentState.networkState,

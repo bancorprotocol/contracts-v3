@@ -43,7 +43,14 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {},
+    healthCheck: async (
+        signer,
+        config,
+        contracts,
+        initialState: InitialState,
+        state: NextState,
+        { deploy, execute }
+    ) => {},
 
     down: async (
         signer,

@@ -24,7 +24,7 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState) => {
+    healthCheck: async (signer, config, contracts, initialState: InitialState, state: NextState) => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(state.proxyAdmin);
 
         const implementationAddress = await proxyAdmin.getProxyImplementation(state.networkSettings.proxyContract);
