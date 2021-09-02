@@ -367,7 +367,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 newMintedAmount = currentMintedAmount.add(networkTokenAmount);
 
         // verify that new minted amount doesn't exceed the limit
-        require(newMintedAmount <= mintingLimit, "ERR_INVALID_AMOUNT");
+        require(newMintedAmount <= mintingLimit, "ERR_MINTING_LIMIT_EXCEEDED");
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;

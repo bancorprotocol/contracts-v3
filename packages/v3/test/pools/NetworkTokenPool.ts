@@ -426,7 +426,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(2_000_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_INVALID_AMOUNT'
+                        'ERR_MINTING_LIMIT_EXCEEDED'
                     );
                 }
             });
@@ -466,7 +466,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(1_500_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_INVALID_AMOUNT'
+                        'ERR_MINTING_LIMIT_EXCEEDED'
                     );
                 }
             });
