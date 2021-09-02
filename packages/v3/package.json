@@ -24,7 +24,7 @@
         "test": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat test",
         "testb": "BAIL=1 yarn test",
         "profile": "PROFILE=1 yarn test",
-        "size": "hardhat size-contracts",
+        "size": "yarn rebuild && hardhat size-contracts",
         "verify": "hardhat verify",
         "coverage": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
         "flatten": "hardhat flatten",
