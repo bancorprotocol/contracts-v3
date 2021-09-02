@@ -474,7 +474,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             _settings.withdrawalFeePPM(),
             PPM_RESOLUTION
         );
-        networkTokenAmount = networkTokenAmount.sub(networkTokenWithdrawalFeeAmount);
+        networkTokenAmount = networkTokenAmount - networkTokenWithdrawalFeeAmount;
 
         return
             WithdrawalAmounts({
