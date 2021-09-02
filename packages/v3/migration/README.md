@@ -3,6 +3,7 @@
 ## Roadmap
 
 -   [x] Ledger support
+-   [x] Revert support
 -   [x] Deploy proxy
 -   [x] Upgrade proxy
 

@@ -9,13 +9,11 @@ export const palette = {
 };
 
 export const log = {
-    // basic logging
     warning: (...str: string[]) => console.log(chalk.cyanBright(`⚠️  ${str}`)),
     info: (...str: string[]) => console.log(chalk.rgb(0, 0, 0).bgWhiteBright(`\n${str}`)),
     done: (...str: string[]) => console.log(chalk.yellowBright(...str)),
-    //
     debug: (...str: string[]) => console.log(chalk.rgb(123, 104, 238).italic(...str)),
-    //
+
     basicExecutionHeader: (head: string, body: string, args: any[]) => {
         let space = '  ';
         for (let i = 0; i < head.length; i++) space += ' ';
@@ -32,12 +30,11 @@ export const log = {
             )
         );
     },
-    //
+
     greyed: (...str: string[]) => console.log(chalk.grey(...str)),
     success: (...str: string[]) => console.log(chalk.greenBright(...str)),
     error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
 
-    // specific logging
     migrationConfig: (
         signerAddress: string,
         config: typeof MIGRATION_CONFIG,
