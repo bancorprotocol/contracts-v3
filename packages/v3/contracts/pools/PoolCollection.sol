@@ -6,6 +6,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -34,6 +35,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
+    using SafeCast for uint256;
     using ReserveToken for IReserveToken;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
@@ -623,7 +625,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 networkTokenLiquidity &&
                 networkTokenArbitrageAmount > 0
             ) {
-                amounts.networkTokenArbitrageAmount = -int256(networkTokenArbitrageAmount);
+                amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
             }
         } else {
             // the pool is in a base token deficit
@@ -646,7 +648,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 );
 
                 if (networkTokenArbitrageAmount > 0) {
-                    amounts.networkTokenArbitrageAmount = int256(networkTokenArbitrageAmount);
+                    amounts.networkTokenArbitrageAmount = networkTokenArbitrageAmount.toInt256();
                 }
             }
 
