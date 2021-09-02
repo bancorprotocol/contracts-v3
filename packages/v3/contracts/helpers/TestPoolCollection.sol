@@ -22,15 +22,11 @@ contract TestPoolCollection is PoolCollection {
     }
 
     function setTradingLiquidityT(IReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
-        Pool storage data = _pools[reserveToken];
-
-        data.liquidity = liquidity;
+        _pools[reserveToken].liquidity = liquidity;
     }
 
     function setAverageRateT(IReserveToken reserveToken, AverageRate calldata newAverageRate) external {
-        Pool storage data = _pools[reserveToken];
-
-        data.averageRate = newAverageRate;
+        _pools[reserveToken].averageRate = newAverageRate;
     }
 
     function poolWithdrawalAmountsT(
