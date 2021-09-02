@@ -56,7 +56,7 @@ contract TestPoolCollection is PoolCollection {
         uint256 basePoolTokenWithdrawalAmount
     ) external pure returns (WithdrawalAmounts memory) {
         return
-            super._withdrawalAmounts(
+            _withdrawalAmounts(
                 networkTokenLiquidity,
                 baseTokenLiquidity,
                 baseTokenExcessAmount,
