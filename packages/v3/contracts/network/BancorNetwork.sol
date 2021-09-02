@@ -715,7 +715,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });
 
-        // TODO: reduce this external call by receiving theuse updated amounts as well
+        // TODO: reduce this external call by receiving these updated amounts as well
         PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);
 
         emit TotalLiquidityUpdated({
