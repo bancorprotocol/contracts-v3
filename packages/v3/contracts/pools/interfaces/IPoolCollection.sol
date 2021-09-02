@@ -32,13 +32,6 @@ struct Pool {
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 
-// arbitrage actions upon base token withdrawal
-enum WithdrawalArbitrageAction {
-    None,
-    BurnNetworkTokens,
-    MintNetworkTokens
-}
-
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromVaultToProvider; // base token amount to transfer from the vault to the provider
@@ -46,9 +39,8 @@ struct WithdrawalAmounts {
     uint256 baseTokenAmountToDeductFromLiquidity; // base token amount to deduct from the trading liquidity
     uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // base token amount to transfer from the external protection wallet to the provider
     uint256 networkTokenAmountToDeductFromLiquidity; // network token amount to deduct from the trading liquidity and burn in the vault
-    uint256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
+    int256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
     uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
-    WithdrawalArbitrageAction networkTokenArbitrageAction; // arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
 }
 
 /**

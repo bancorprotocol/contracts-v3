@@ -91,6 +91,34 @@ interface INetworkTokenPool is IUpgradeable {
     function mintedAmount(IReserveToken pool) external view returns (uint256);
 
     /**
+     * @dev returns whether minting is enabled for the provided pool
+     */
+    function isMintingEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+
+    /**
+     * @dev returns the available co-investment network token liquidity for a given pool
+     */
+    function availableMintingAmount(IReserveToken pool) external view returns (uint256);
+
+    /**
+     * @dev mints network tokens to the recipient
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function mint(address recipient, uint256 networkTokenAmount) external;
+
+    /**
+     * @dev burns network tokens from the vault
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function burnFromVault(uint256 networkTokenAmount) external;
+
+    /**
      * @dev deposits network token liquidity on behalf of a specific provider
      *
      * requirements:
@@ -117,25 +145,23 @@ interface INetworkTokenPool is IUpgradeable {
     function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
-     * @dev allows pools to request network token liquidity and returns the provided amount (which may be less than the
-     * requested amount)
+     * @dev requests network token liquidity
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the token must have been whitelisted
+     * - the request amount should be below the minting limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
-    ) external returns (uint256);
+        uint256 networkTokenAmount
+    ) external;
 
     /**
-     * @dev renounces network token liquidity by pools
+     * @dev renounces network token liquidity
      *
      * requirements:
      *
@@ -146,7 +172,6 @@ interface INetworkTokenPool is IUpgradeable {
     function renounceLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        IPoolCollection poolCollection,
         uint256 networkTokenAmount
     ) external;
 

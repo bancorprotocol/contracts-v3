@@ -5,7 +5,7 @@ pragma abicoder v2;
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { PoolCollection, Pool, WithdrawalAmounts } from "../pools/PoolCollection.sol";
+import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/PoolAverageRate.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
@@ -21,18 +21,15 @@ contract TestPoolCollection is PoolCollection {
         poolToken.mint(recipient, amount);
     }
 
-    function setTradingLiquidityT(
-        IReserveToken reserveToken,
-        uint128 baseTokenTradingLiquidity,
-        uint128 networkTokenTradingLiquidity
-    ) external {
+    function setTradingLiquidityT(IReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
         Pool storage data = _pools[reserveToken];
-        data.liquidity.baseTokenTradingLiquidity = baseTokenTradingLiquidity;
-        data.liquidity.networkTokenTradingLiquidity = networkTokenTradingLiquidity;
+
+        data.liquidity = liquidity;
     }
 
-    function setAverageRateT(IReserveToken reserveToken, AverageRate memory newAverageRate) external {
+    function setAverageRateT(IReserveToken reserveToken, AverageRate calldata newAverageRate) external {
         Pool storage data = _pools[reserveToken];
+
         data.averageRate = newAverageRate;
     }
 

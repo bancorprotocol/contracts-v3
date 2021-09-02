@@ -42,7 +42,8 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { vault, networkTokenPool } = await createSystem();
+            const vault = await Contracts.BancorVault.deploy(reserveToken.address);
+            await vault.initialize();
 
             expect(await vault.version()).to.equal(1);
 
@@ -50,9 +51,7 @@ describe('BancorVault', () => {
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
                 deployer.address
             ]);
-            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
-                networkTokenPool.address
-            ]);
+            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER);
         });
     });
 

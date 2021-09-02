@@ -562,7 +562,6 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
             networkTokenAmountToDeductFromLiquidity: string;
             networkTokenArbitrageAmount: string;
-            networkTokenArbitrageAction: string;
         }
 
         interface MaxError {
@@ -578,12 +577,6 @@ describe('PoolCollection', () => {
             networkTokenAmountToDeductFromLiquidity: MaxError;
             networkTokenArbitrageAmount: MaxError;
         }
-
-        const WITHDRAW_ARBITRAGE_ACTIONS: Record<string, number> = {
-            'no arbitrage': 0,
-            'burn tokens': 1,
-            'mint tokens': 2
-        };
 
         const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
             let poolCollection: TestPoolCollection;
@@ -614,8 +607,7 @@ describe('PoolCollection', () => {
                     baseTokenAmountToDeductFromLiquidity,
                     baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                     networkTokenAmountToDeductFromLiquidity,
-                    networkTokenArbitrageAmount,
-                    networkTokenArbitrageAction
+                    networkTokenArbitrageAmount
                 } of table) {
                     it(`should receive correct withdrawal amounts (${[
                         networkTokenLiquidity,
@@ -632,8 +624,7 @@ describe('PoolCollection', () => {
                         baseTokenAmountToDeductFromLiquidity,
                         baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                         networkTokenAmountToDeductFromLiquidity,
-                        networkTokenArbitrageAmount,
-                        networkTokenArbitrageAction
+                        networkTokenArbitrageAmount
                     ]})`, async () => {
                         const actual = await poolCollection.withdrawalAmountsT(
                             networkTokenLiquidity,
@@ -675,9 +666,6 @@ describe('PoolCollection', () => {
                             new Decimal(networkTokenArbitrageAmount),
                             maxErrors.networkTokenArbitrageAmount.absolute,
                             maxErrors.networkTokenArbitrageAmount.relative
-                        );
-                        expect(actual.networkTokenArbitrageAction).to.equal(
-                            WITHDRAW_ARBITRAGE_ACTIONS[networkTokenArbitrageAction]
                         );
                     });
                 }

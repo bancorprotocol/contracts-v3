@@ -7,7 +7,6 @@ import {
     PoolCollection,
     PoolToken,
     ProxyAdmin,
-    TestERC20Token,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
@@ -182,6 +181,8 @@ export const createSystem = async () => {
     const poolCollection = await createPoolCollection(network);
 
     await network.initialize(networkTokenPool.address);
+
+    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,

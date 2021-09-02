@@ -23,4 +23,8 @@ contract TestNetworkTokenPool is NetworkTokenPool {
     function mintT(address recipient, uint256 amount) external {
         _poolToken.mint(recipient, amount);
     }
+
+    function setStakedBalanceT(uint256 amount) external {
+        _stakedBalance = amount;
+    }
 }

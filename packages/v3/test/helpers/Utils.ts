@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
+import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, BaseContract } from 'ethers';
 import { ethers } from 'hardhat';
@@ -59,7 +60,7 @@ export const getTokenBySymbol = async (symbol: string, networkToken: TestERC20To
             return { address: NATIVE_TOKEN_ADDRESS };
 
         case 'TKN':
-            return Contracts.TestERC20Token.deploy(symbol, symbol, BigNumber.from(1_000_000));
+            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(BigNumber.from(1_000_000_000)));
 
         default:
             throw new Error(`Unsupported type ${symbol}`);

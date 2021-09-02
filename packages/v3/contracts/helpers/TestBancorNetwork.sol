@@ -50,6 +50,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
+    function mintT(address recipient, uint256 networkTokenAmount) external {
+        return _networkTokenPool.mint(recipient, networkTokenAmount);
+    }
+
+    function burnFromVaultT(uint256 networkTokenAmount) external {
+        return _networkTokenPool.burnFromVault(networkTokenAmount);
+    }
+
     function depositToNetworkPoolForT(
         address provider,
         uint256 networkTokenAmount,
@@ -82,31 +90,28 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             );
     }
 
+    function requestLiquidityT(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 networkTokenAmount
+    ) external {
+        _networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount);
+    }
+
+    function renounceLiquidityT(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 networkTokenAmount
+    ) external {
+        _networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
+    }
+
     function onNetworkTokenFeesCollectedT(
         IReserveToken pool,
         uint256 amount,
         uint8 feeType
     ) external {
         _networkTokenPool.onFeesCollected(pool, amount, feeType);
-    }
-
-    function requestLiquidityT(
-        bytes32 contextId,
-        IReserveToken pool,
-        IPoolCollection poolCollection,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
-    ) external returns (uint256) {
-        return _networkTokenPool.requestLiquidity(contextId, pool, poolCollection, networkTokenAmount, skipLimitCheck);
-    }
-
-    function renounceLiquidityT(
-        bytes32 contextId,
-        IReserveToken pool,
-        IPoolCollection poolCollection,
-        uint256 networkTokenAmount
-    ) external {
-        _networkTokenPool.renounceLiquidity(contextId, pool, poolCollection, networkTokenAmount);
     }
 
     function approveT(
