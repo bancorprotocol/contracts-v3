@@ -447,7 +447,7 @@ describe('NetworkTokenPool', () => {
                     ]) {
                         await expect(
                             network.requestLiquidityT(contextId, reserveToken.address, amount)
-                        ).to.be.revertedWith('ERR_INVALID_AMOUNT');
+                        ).to.be.revertedWith('ERR_MINTING_LIMIT_EXCEEDED');
                     }
                 });
             });
