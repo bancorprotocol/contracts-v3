@@ -1,4 +1,4 @@
-import { executionSettings } from '../initialization';
+import { executionSettings } from './initialization';
 import chalk from 'chalk';
 
 export const palette = {

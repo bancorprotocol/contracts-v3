@@ -1,5 +1,5 @@
-import { lazyAction } from '../components/TaskUtils';
 import { defaultMigrationArgs } from './engine/initialization';
+import { lazyAction } from './engine/utils';
 import { task, types } from 'hardhat/config';
 import path from 'path';
 

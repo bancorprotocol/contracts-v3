@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.config';
 import { initExecutionFunctions } from './executions';
-import { log } from './logger/logger';
+import { log } from './logger';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import { BigNumberish } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';

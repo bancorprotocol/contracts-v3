@@ -1,5 +1,5 @@
 import './migration';
-import { log } from './migration/engine/logger/logger';
+import { log } from './migration/engine/logger';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';

@@ -2,7 +2,7 @@ import Contracts, { ContractBuilder, Contract } from '../../components/Contracts
 import { ProxyAdmin } from '../../typechain';
 import { ExecutionError } from './errors';
 import { executionSettings } from './initialization';
-import { log } from './logger/logger';
+import { log } from './logger';
 import { ContractReceipt, ContractTransaction } from '@ethersproject/contracts';
 import { ContractFactory, Overrides } from 'ethers';
 

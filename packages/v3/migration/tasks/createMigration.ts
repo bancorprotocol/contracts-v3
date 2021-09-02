@@ -1,6 +1,6 @@
 import { createMigrationParamTask } from '../../migration';
 import { MIGRATION_FOLDER } from '../../migration/engine/config';
-import { log } from '../../migration/engine/logger/logger';
+import { log } from '../engine/logger';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
