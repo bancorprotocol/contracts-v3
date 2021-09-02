@@ -61,7 +61,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     /**
      * @dev triggered when the minimum liquidity for trading amount is updated
      */
-    event MinLiquidityForTradingUpdated(uint256 prevAmount, uint256 newAmount);
+    event MinLiquidityForTradingUpdated(uint256 prevLiquidity, uint256 newLiquidity);
 
     /**
      * @dev triggered when the network fee is updated
@@ -212,7 +212,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _minLiquidityForTrading = amount;
 
-        emit MinLiquidityForTradingUpdated({ prevAmount: prevMinLiquidityForTrading, newAmount: amount });
+        emit MinLiquidityForTradingUpdated({ prevLiquidity: prevMinLiquidityForTrading, newLiquidity: amount });
     }
 
     /**
