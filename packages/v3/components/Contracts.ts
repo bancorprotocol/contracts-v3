@@ -38,54 +38,33 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
     contractName: string;
+    abi: {};
+    bytecode: string;
     deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
     attach(address: string, signer?: Signer): Promise<Contract<F>>;
 }
 
-const deployOrAttach = <F extends ContractFactory>(contractName: string, signer?: Signer): ContractBuilder<F> => {
-    return {
-        contractName,
-        deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            let defaultSigner = signer ? signer : (await ethers.getSigners())[0];
-
-            return (await ethers.getContractFactory(contractName, defaultSigner)).deploy(
-                ...(args || [])
-            ) as Contract<F>;
-        },
-        attach: attachOnly<F>(contractName, signer).attach
-    };
-};
-
-const attachOnly = <F extends ContractFactory>(contractName: string, passedSigner?: Signer) => {
-    return {
-        attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
-            let defaultSigner = passedSigner ? passedSigner : (await ethers.getSigners())[0];
-            return ethers.getContractAt(contractName, address, signer || defaultSigner) as Contract<F>;
-        }
-    };
-};
-
-const deployOrAttachExternal = <F extends ContractFactory>(
+type FactoryConstructor<F extends ContractFactory> = { new (signer?: Signer): F; abi: {}; bytecode: string };
+const deployOrAttach = <F extends ContractFactory>(
     contractName: string,
     // @TODO: needs to replace with correctly typed params but it doesn't work properly for some reason https://github.com/microsoft/TypeScript/issues/31278
-    factoryConstructor: { new (signer?: Signer): F },
+    factoryConstructor: FactoryConstructor<F>,
     initialSigner?: Signer
 ): ContractBuilder<F> => {
     return {
         contractName,
+        abi: factoryConstructor.abi,
+        bytecode: factoryConstructor.bytecode,
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             let defaultSigner = initialSigner ? initialSigner : (await ethers.getSigners())[0];
 
             return new factoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
         },
-        attach: attachOnlyExternal<F>(factoryConstructor, initialSigner).attach
+        attach: attachOnly<F>(factoryConstructor, initialSigner).attach
     };
 };
 
-const attachOnlyExternal = <F extends ContractFactory>(
-    factoryConstructor: { new (signer?: Signer): F },
-    initialSigner?: Signer
-) => {
+const attachOnly = <F extends ContractFactory>(factoryConstructor: FactoryConstructor<F>, initialSigner?: Signer) => {
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
             let defaultSigner = initialSigner ? initialSigner : (await ethers.getSigners())[0];
@@ -97,35 +76,36 @@ const attachOnlyExternal = <F extends ContractFactory>(
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
-    BancorNetwork: deployOrAttach<BancorNetwork__factory>('BancorNetwork', signer),
-    BancorVault: deployOrAttach<BancorVault__factory>('BancorVault', signer),
-    ERC20: deployOrAttach<ERC20__factory>('ERC20', signer),
-    PoolCollection: deployOrAttach<PoolCollection__factory>('PoolCollection', signer),
-    NetworkSettings: deployOrAttach<NetworkSettings__factory>('NetworkSettings', signer),
-    NetworkTokenPool: deployOrAttach<NetworkTokenPool__factory>('NetworkTokenPool', signer),
-    PendingWithdrawals: deployOrAttach<PendingWithdrawals__factory>('PendingWithdrawals', signer),
-    PoolToken: deployOrAttach<PoolToken__factory>('PoolToken', signer),
-    ProxyAdmin: deployOrAttach<ProxyAdmin__factory>('ProxyAdmin', signer),
-    TestBancorNetwork: deployOrAttach<TestBancorNetwork__factory>('TestBancorNetwork', signer),
-    TestERC20Token: deployOrAttach<TestERC20Token__factory>('TestERC20Token', signer),
-    TestERC20Burnable: deployOrAttach<TestERC20Burnable__factory>('TestERC20Burnable', signer),
-    TestPoolAverageRate: deployOrAttach<TestPoolAverageRate__factory>('TestPoolAverageRate', signer),
-    TestPoolCollection: deployOrAttach<TestPoolCollection__factory>('TestPoolCollection', signer),
-    TestNetworkTokenPool: deployOrAttach<TestNetworkTokenPool__factory>('TestNetworkTokenPool', signer),
-    TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
-    TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
-    TestPendingWithdrawals: deployOrAttach<TestPendingWithdrawals__factory>('TestPendingWithdrawals', signer),
-    TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
-    TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
-    TestSystemToken: deployOrAttach<TestSystemToken__factory>('TestSystemToken', signer),
-    TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),
-    TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
+    BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
+    BancorVault: deployOrAttach('BancorVault', BancorVault__factory, signer),
+    ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
+    PoolCollection: deployOrAttach('PoolCollection', PoolCollection__factory, signer),
+    NetworkSettings: deployOrAttach('NetworkSettings', NetworkSettings__factory, signer),
+    NetworkTokenPool: deployOrAttach('NetworkTokenPool', NetworkTokenPool__factory, signer),
+    PendingWithdrawals: deployOrAttach('PendingWithdrawals', PendingWithdrawals__factory, signer),
+    PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
+    ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
+    TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
+    TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
+    TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
+    TestPoolAverageRate: deployOrAttach('TestPoolAverageRate', TestPoolAverageRate__factory, signer),
+    TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
+    TestNetworkTokenPool: deployOrAttach('TestNetworkTokenPool', TestNetworkTokenPool__factory, signer),
+    TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
+    TestOwnedUpgradeable: deployOrAttach('TestOwnedUpgradeable', TestOwnedUpgradeable__factory, signer),
+    TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
+    TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
+    TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
+    TestSystemToken: deployOrAttach('TestSystemToken', TestSystemToken__factory, signer),
+    TokenHolderUpgradeable: deployOrAttach('TokenHolderUpgradeable', TokenHolderUpgradeable__factory, signer),
+    TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
+        TransparentUpgradeableProxy__factory,
         signer
     ),
 
     // external contracts
-    TokenGovernance: deployOrAttachExternal('TokenGovernance', TokenGovernance__factory, signer)
+    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer)
 });
 
 export type Contracts = ReturnType<typeof getContracts>;
