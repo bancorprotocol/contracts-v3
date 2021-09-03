@@ -26,7 +26,15 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed decimals property)
-    mapping(IReserveToken => uint8) private _tokenDecimalOverrides;
+    mapping(IReserveToken => uint8) private _tokenDecimalsOverrides;
+
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 2] private __gap;
+
+    /**
+     * @dev triggered when a pool token is created
+     */
+    event PoolTokenCreated(IPoolToken indexed poolToken, IReserveToken indexed reserveToken);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -81,29 +89,34 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function tokenDecimalOverride(IReserveToken reserveToken) external view override returns (uint8) {
-        return _tokenDecimalOverrides[reserveToken];
+    function tokenDecimalsOverride(IReserveToken reserveToken) external view override returns (uint8) {
+        return _tokenDecimalsOverrides[reserveToken];
     }
 
     /**
-     * @dev sets the decimal symbol override for a given reserve token
+     * @dev sets the decimals override for a given reserve token
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function setTokenDecimalOverride(IReserveToken reserveToken, uint8 decimals) external onlyOwner {
-        _tokenDecimalOverrides[reserveToken] = decimals;
+    function setTokenDecimalsOverride(IReserveToken reserveToken, uint8 decimals) external onlyOwner {
+        _tokenDecimalsOverrides[reserveToken] = decimals;
     }
 
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function createPoolToken(IReserveToken reserveToken) external override returns (address) {
+    function createPoolToken(IReserveToken reserveToken)
+        external
+        override
+        validAddress(address(reserveToken))
+        returns (IPoolToken)
+    {
         string memory customSymbol = _tokenSymbolOverrides[reserveToken];
         string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
 
-        uint8 customTokenDecimals = _tokenDecimalOverrides[reserveToken];
+        uint8 customTokenDecimals = _tokenDecimalsOverrides[reserveToken];
         uint8 tokenDecimals = customTokenDecimals != 0 ? customTokenDecimals : reserveToken.decimals();
 
         string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
@@ -113,8 +126,11 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
 
         PoolToken newPoolToken = new PoolToken(name, symbol, tokenDecimals, reserveToken);
 
+        // make sure to transfer the ownership to the caller
         newPoolToken.transferOwnership(msg.sender);
 
-        return address(newPoolToken);
+        emit PoolTokenCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
+
+        return newPoolToken;
     }
 }

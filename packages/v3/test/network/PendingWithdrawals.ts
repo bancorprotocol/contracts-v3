@@ -243,7 +243,12 @@ describe('PendingWithdrawals', () => {
 
                     if (!isNetworkToken) {
                         it('should revert when attempting to withdraw from an invalid pool', async () => {
-                            const poolToken = await Contracts.PoolToken.deploy('POOL', 'POOL', reserveToken.address);
+                            const poolToken = await Contracts.PoolToken.deploy(
+                                'POOL',
+                                'POOL',
+                                18,
+                                reserveToken.address
+                            );
                             const amount = BigNumber.from(1);
 
                             if (!delegated) {

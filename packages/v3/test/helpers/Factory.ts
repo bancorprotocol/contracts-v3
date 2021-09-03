@@ -130,6 +130,7 @@ const createNetworkTokenPoolUninitialized = async (
         ctorArgs: [network.address, pendingWithdrawals.address, networkPoolToken.address]
     });
 
+    await networkPoolToken.acceptOwnership();
     await networkPoolToken.transferOwnership(networkTokenPool.address);
 
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
@@ -140,6 +141,14 @@ const createNetworkTokenPoolUninitialized = async (
     return networkTokenPool;
 };
 
+export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
+    const poolTokenAddress = await poolTokenFactory.callStatic.createPoolToken(toAddress(reserveToken));
+
+    await poolTokenFactory.createPoolToken(toAddress(reserveToken));
+
+    return Contracts.PoolToken.attach(poolTokenAddress);
+};
+
 export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
@@ -148,7 +157,7 @@ export const createSystem = async () => {
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
-    const networkPoolToken = await poolTokenFactory.createPoolToken(networkToken.address);
+    const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,

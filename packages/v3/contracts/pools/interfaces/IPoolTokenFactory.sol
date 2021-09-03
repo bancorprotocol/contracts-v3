@@ -17,12 +17,12 @@ interface IPoolTokenFactory is IUpgradeable {
     function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
 
     /**
-     * @dev returns the custom decimal override for a given reserve token
+     * @dev returns the custom decimals override for a given reserve token
      */
-    function tokenDecimalOverride(IReserveToken reserveToken) external view returns (uint8);
+    function tokenDecimalsOverride(IReserveToken reserveToken) external view returns (uint8);
 
     /**
      * @dev creates a pool token for the specified token
      */
-    function createPoolToken(IReserveToken reserveToken) external returns (address);
+    function createPoolToken(IReserveToken reserveToken) external returns (IPoolToken);
 }

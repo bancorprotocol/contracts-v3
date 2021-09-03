@@ -40,7 +40,7 @@ describe('PoolToken', () => {
         });
 
         it('should revert when initialized with an invalid base reserve token', async () => {
-            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, ZERO_ADDRESS)).to.be.revertedWith(
                 'ERR_INVALID_ADDRESS'
             );
         });
@@ -48,7 +48,7 @@ describe('PoolToken', () => {
 
     describe('minting', () => {
         beforeEach(async () => {
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
         });
 
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
@@ -77,7 +77,7 @@ describe('PoolToken', () => {
         beforeEach(async () => {
             sender = await wallet.getAddress();
 
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
 
             await poolToken.mint(sender, BigNumber.from(10000));
         });
