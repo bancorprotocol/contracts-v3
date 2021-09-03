@@ -57,13 +57,13 @@ describe('ReserveToken', () => {
             it('should properly get the right decimals', async () => {
                 const decimals = BigNumber.from(18);
 
-                expect(await reserveToken.symbol(token.address)).to.equal(decimals);
+                expect(await reserveToken.decimals(token.address)).to.equal(decimals);
 
                 if (!isETH) {
                     const decimals2 = BigNumber.from(4);
 
                     await token.setupDecimals(decimals2);
-                    expect(await reserveToken.symbol(token.address)).to.equal(decimals2);
+                    expect(await reserveToken.decimals(token.address)).to.equal(decimals2);
                 }
             });
 
