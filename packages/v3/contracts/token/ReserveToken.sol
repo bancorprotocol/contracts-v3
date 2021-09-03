@@ -42,6 +42,17 @@ library ReserveToken {
     }
 
     /**
+     * @dev returns the decimals of the reserve token
+     */
+    function decimals(IReserveToken reserveToken) internal view returns (uint8) {
+        if (isNativeToken(reserveToken)) {
+            return 18;
+        }
+
+        return toERC20(reserveToken).decimals();
+    }
+
+    /**
      * @dev returns the balance of the reserve token
      */
     function balanceOf(IReserveToken reserveToken, address account) internal view returns (uint256) {

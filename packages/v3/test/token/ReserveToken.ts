@@ -54,6 +54,19 @@ describe('ReserveToken', () => {
                 expect(await reserveToken.symbol(token.address)).to.equal(symbol);
             });
 
+            it('should properly get the right decimals', async () => {
+                const decimals = BigNumber.from(18);
+
+                expect(await reserveToken.symbol(token.address)).to.equal(decimals);
+
+                if (!isETH) {
+                    const decimals2 = BigNumber.from(4);
+
+                    await token.setupDecimals(decimals2);
+                    expect(await reserveToken.symbol(token.address)).to.equal(decimals2);
+                }
+            });
+
             it('should properly get the right balance', async () => {
                 expect(await reserveToken.balanceOf(token.address, sender)).to.equal(await getBalance(token, sender));
             });
