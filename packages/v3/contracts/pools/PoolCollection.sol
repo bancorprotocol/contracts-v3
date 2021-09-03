@@ -21,9 +21,9 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
+import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
 import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
 
-import { PoolToken } from "./PoolToken.sol";
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 /**
@@ -39,10 +39,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     using ReserveToken for IReserveToken;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
-
-    string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
-    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
-    string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
     // withdrawal-related input which can be retrieved from the pool
     struct PoolWithdrawalParams {
@@ -68,11 +64,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     // the network settings contract
     INetworkSettings private immutable _settings;
 
+    // the pool token factory contract
+    IPoolTokenFactory private immutable _poolTokenFactory;
+
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) internal _pools;
-
-    // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
-    mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
@@ -115,12 +111,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
+    constructor(IBancorNetwork initNetwork, IPoolTokenFactory initPoolTokenFactory)
+        validAddress(address(initNetwork))
+        validAddress(address(initPoolTokenFactory))
+    {
         __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
         _settings = initNetwork.settings();
+        _poolTokenFactory = initPoolTokenFactory;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -166,19 +166,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view override returns (string memory) {
-        return _tokenSymbolOverrides[reserveToken];
-    }
-
-    /**
-     * @dev sets the custom symbol overrides for a given reserve token
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbolOverride) external onlyOwner {
-        _tokenSymbolOverrides[reserveToken] = symbolOverride;
+    function poolTokenFactory() external view override returns (IPoolTokenFactory) {
+        return _poolTokenFactory;
     }
 
     /**
@@ -210,8 +199,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
         require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
 
-        (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
-        PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
+        IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
+
+        newPoolToken.acceptOwnership();
 
         Pool memory newPool = Pool({
             poolToken: newPoolToken,
@@ -939,22 +929,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         _defaultTradingFeePPM = newDefaultTradingFeePPM;
 
         emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
-    }
-
-    /**
-     * @dev returns the name and the symbol of the pool token using either the custom token symbol override or by
-     * fetching it from the reserve token itself
-     */
-    function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
-        string memory customSymbol = _tokenSymbolOverrides[reserveToken];
-        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
-
-        string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
-        string memory name = string(
-            abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
-        );
-
-        return (name, symbol);
     }
 
     /**

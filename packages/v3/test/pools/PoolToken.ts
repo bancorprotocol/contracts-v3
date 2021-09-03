@@ -11,6 +11,7 @@ import { ethers } from 'hardhat';
 describe('PoolToken', () => {
     const NAME = 'Pool Token';
     const SYMBOL = 'POOL';
+    const DECIMALS = BigNumber.from(10);
 
     let poolToken: PoolToken;
     let reserveToken: TestERC20Token;
@@ -29,9 +30,11 @@ describe('PoolToken', () => {
 
     describe('construction', () => {
         it('should be properly initialized', async () => {
-            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, reserveToken.address);
+            poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
+
             expect(await poolToken.name()).to.equal(NAME);
             expect(await poolToken.symbol()).to.equal(SYMBOL);
+            expect(await poolToken.decimals()).to.equal(DECIMALS);
             expect(await poolToken.totalSupply()).to.equal(BigNumber.from(0));
             expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
         });

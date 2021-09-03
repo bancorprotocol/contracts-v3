@@ -6,11 +6,11 @@ import {
     PendingWithdrawals,
     PoolCollection,
     PoolToken,
+    PoolTokenFactory,
     ProxyAdmin,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from './Constants';
 import { toAddress, TokenWithAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
@@ -114,8 +114,8 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network));
+export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
@@ -147,11 +147,8 @@ export const createSystem = async () => {
 
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
-    const networkPoolToken = await Contracts.PoolToken.deploy(
-        NETWORK_TOKEN_POOL_TOKEN_NAME,
-        NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
-        networkToken.address
-    );
+    const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
+    const networkPoolToken = await poolTokenFactory.createPoolToken(networkToken.address);
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -178,7 +175,7 @@ export const createSystem = async () => {
 
     await networkTokenPool.initialize();
 
-    const poolCollection = await createPoolCollection(network);
+    const poolCollection = await createPoolCollection(network, poolTokenFactory);
 
     await network.initialize(networkTokenPool.address);
 
@@ -195,6 +192,7 @@ export const createSystem = async () => {
         vault,
         networkTokenPool,
         pendingWithdrawals,
+        poolTokenFactory,
         poolCollection
     };
 };
