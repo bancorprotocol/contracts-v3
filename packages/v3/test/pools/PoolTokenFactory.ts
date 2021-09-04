@@ -11,7 +11,7 @@ import { ethers } from 'hardhat';
 
 describe('PoolTokenFactory', () => {
     const SYMBOL = 'TKN';
-    const DECIMALS = BigNumber.from(18);
+    const DEFAULT_DECIMALS = BigNumber.from(18);
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -89,8 +89,8 @@ describe('PoolTokenFactory', () => {
             await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, newDecimals);
             expect(await poolTokenFactory.tokenDecimalsOverride(reserveToken.address)).to.equal(newDecimals);
 
-            await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, DECIMALS);
-            expect(await poolTokenFactory.tokenDecimalsOverride(reserveToken.address)).to.equal(DECIMALS);
+            await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, DEFAULT_DECIMALS);
+            expect(await poolTokenFactory.tokenDecimalsOverride(reserveToken.address)).to.equal(DEFAULT_DECIMALS);
 
             await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, 0);
             expect(await poolTokenFactory.tokenDecimalsOverride(reserveToken.address)).to.equal(0);
@@ -129,7 +129,7 @@ describe('PoolTokenFactory', () => {
                 expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
                 expect(await poolToken.symbol()).to.equal(poolTokenSymbol(symbol));
                 expect(await poolToken.name()).to.equal(poolTokenName(symbol));
-                expect(await poolToken.decimals()).to.equal(DECIMALS);
+                expect(await poolToken.decimals()).to.equal(DEFAULT_DECIMALS);
 
                 expect(await poolToken.newOwner()).to.equal(deployer.address);
                 await poolToken.acceptOwnership();
@@ -149,7 +149,7 @@ describe('PoolTokenFactory', () => {
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
                     expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
                     expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
-                    expect(await poolToken.decimals()).to.equal(DECIMALS);
+                    expect(await poolToken.decimals()).to.equal(DEFAULT_DECIMALS);
                 });
             });
 

@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestReserveToken } from '../../typechain';
-import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS } from '../helpers/Constants';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -55,13 +55,13 @@ describe('ReserveToken', () => {
             });
 
             it('should properly get the right decimals', async () => {
-                const decimals = BigNumber.from(18);
+                if (isETH) {
+                    expect(await reserveToken.decimals(token.address)).to.equal(NATIVE_TOKEN_DECIMALS);
+                } else {
+                    const decimals = await token.decimals();
+                    expect(await reserveToken.decimals(token.address)).to.equal(decimals);
 
-                expect(await reserveToken.decimals(token.address)).to.equal(decimals);
-
-                if (!isETH) {
                     const decimals2 = BigNumber.from(4);
-
                     await token.setupDecimals(decimals2);
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals2);
                 }
