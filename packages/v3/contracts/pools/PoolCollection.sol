@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
@@ -37,6 +38,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
@@ -69,6 +71,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) internal _pools;
+
+    // the set of all pools (== reserve tokens)  which are managed by this pool collection
+    EnumerableSetUpgradeable.AddressSet private _reserveTokens;
 
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
@@ -178,6 +183,25 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
+     * @inheritdoc IPoolCollection
+     */
+    function pools() external view override returns (IReserveToken[] memory) {
+        uint256 length = _reserveTokens.length();
+        IReserveToken[] memory list = new IReserveToken[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = IReserveToken(_reserveTokens.at(i));
+        }
+        return list;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function poolCount() external view override returns (uint256) {
+        return _reserveTokens.length();
+    }
+
+    /**
      * @dev sets the default trading fee (in units of PPM)
      *
      * requirements:
@@ -197,7 +221,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
-        require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
+        require(_reserveTokens.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
 
         IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
 
@@ -232,13 +256,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             newRate: newPool.initialRate
         });
         emit DepositLimitUpdated({ pool: reserveToken, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
-        return _pools[reserveToken];
     }
 
     /**

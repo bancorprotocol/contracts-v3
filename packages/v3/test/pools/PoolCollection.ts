@@ -172,7 +172,10 @@ describe('PoolCollection', () => {
                 });
 
                 it('should create a pool', async () => {
+                    const prevPoolCount = await poolCollection.poolCount();
+
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
+                    expect(await poolCollection.pools()).not.to.include(reserveToken.address);
 
                     const res = await network.createPoolT(poolCollection.address, reserveToken.address);
                     const pool = await poolCollection.poolData(reserveToken.address);
@@ -197,6 +200,9 @@ describe('PoolCollection', () => {
                         .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
 
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
+                    expect(await poolCollection.pools()).to.include(reserveToken.address);
+                    expect(await poolCollection.poolCount()).to.equal(prevPoolCount.add(BigNumber.from(1)));
+
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
                     expect(poolToken).not.to.equal(ZERO_ADDRESS);
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);

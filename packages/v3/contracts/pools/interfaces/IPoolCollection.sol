@@ -74,6 +74,16 @@ interface IPoolCollection is IVersioned {
     function defaultTradingFeePPM() external view returns (uint32);
 
     /**
+     * @dev returns all the pools which are managed by this pool collection
+     */
+    function pools() external view returns (IReserveToken[] memory);
+
+    /**
+     * @dev returns the number of all the pools which are managed by this pool collection
+     */
+    function poolCount() external view returns (uint256);
+
+    /**
      * @dev returns whether a pool is valid
      */
     function isPoolValid(IReserveToken reserveToken) external view returns (bool);
@@ -87,11 +97,6 @@ interface IPoolCollection is IVersioned {
      * @dev returns the overall liquidity in the pool
      */
     function poolLiquidity(IReserveToken reserveToken) external view returns (PoolLiquidity memory);
-
-    /**
-     * @dev returns the pool data for a given reserve token
-     */
-    function poolData(IReserveToken reserveToken) external view returns (Pool memory);
 
     /**
      * @dev creates a new pool

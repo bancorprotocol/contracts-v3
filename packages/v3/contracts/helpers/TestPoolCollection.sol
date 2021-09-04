@@ -16,6 +16,10 @@ contract TestPoolCollection is PoolCollection {
         PoolCollection(initNetwork, initPoolTokenFactory)
     {}
 
+    function poolData(IReserveToken reserveToken) external view returns (Pool memory) {
+        return _pools[reserveToken];
+    }
+
     function mintT(
         address recipient,
         IPoolToken poolToken,
