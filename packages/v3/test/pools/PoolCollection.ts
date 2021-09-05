@@ -753,7 +753,7 @@ describe('PoolCollection', () => {
                     },
                     networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
-                        relative: new Decimal('0.0002')
+                        relative: new Decimal('0.00003')
                     },
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
