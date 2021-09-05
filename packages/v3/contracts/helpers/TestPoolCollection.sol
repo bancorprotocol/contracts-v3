@@ -17,7 +17,7 @@ contract TestPoolCollection is PoolCollection {
     {}
 
     function poolData(IReserveToken reserveToken) external view returns (Pool memory) {
-        return _pools[reserveToken];
+        return _poolData[reserveToken];
     }
 
     function mintT(
@@ -29,11 +29,11 @@ contract TestPoolCollection is PoolCollection {
     }
 
     function setTradingLiquidityT(IReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
-        _pools[reserveToken].liquidity = liquidity;
+        _poolData[reserveToken].liquidity = liquidity;
     }
 
     function setAverageRateT(IReserveToken reserveToken, AverageRate calldata newAverageRate) external {
-        _pools[reserveToken].averageRate = newAverageRate;
+        _poolData[reserveToken].averageRate = newAverageRate;
     }
 
     function poolWithdrawalAmountsT(
