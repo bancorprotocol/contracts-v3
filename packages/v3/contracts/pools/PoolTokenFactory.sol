@@ -82,8 +82,8 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
      *
      * - the caller must be the owner of the contract
      */
-    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbolOverride) external onlyOwner {
-        _tokenSymbolOverrides[reserveToken] = symbolOverride;
+    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbol) external onlyOwner {
+        _tokenSymbolOverrides[reserveToken] = symbol;
     }
 
     /**
