@@ -691,7 +691,7 @@ describe('PoolCollection', () => {
                     },
                     networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000000000000003')
+                        relative: new Decimal('0.000000000000000002')
                     },
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
@@ -722,9 +722,12 @@ describe('PoolCollection', () => {
                     },
                     networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000001')
+                        relative: new Decimal('0.000000003')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000002')
+                    }
                 };
 
                 test('WithdrawalAmountsEdgeCases1', maxErrors);
@@ -736,7 +739,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000004')
                     },
-                    networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.00009')
+                    },
                     baseTokenAmountToDeductFromLiquidity: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000002')
@@ -747,9 +753,12 @@ describe('PoolCollection', () => {
                     },
                     networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
-                        relative: new Decimal('0.00002')
+                        relative: new Decimal('0.0002')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0007')
+                    }
                 };
 
                 test('WithdrawalAmountsEdgeCases2', maxErrors);
@@ -765,7 +774,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000002')
                     },
-                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0002')
+                    },
                     baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
@@ -774,7 +786,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0002')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0002')
+                    }
                 };
 
                 test('WithdrawalAmountsCoverage1', maxErrors);
@@ -802,7 +817,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000003')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    }
                 };
 
                 test('WithdrawalAmountsCoverage2', maxErrors);
@@ -818,7 +836,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000002')
                     },
-                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.008')
+                    },
                     baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
@@ -827,7 +848,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.008')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.008') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.008')
+                    }
                 };
 
                 test('WithdrawalAmountsCoverage3', maxErrors);
@@ -855,7 +879,10 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000009')
                     },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000009')
+                    }
                 };
 
                 test('WithdrawalAmountsCoverage4', maxErrors);
