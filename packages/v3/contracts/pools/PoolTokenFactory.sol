@@ -25,7 +25,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
-    // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed decimals property)
+    // a mapping between reserve tokens and custom token overrides (only needed for tokens with malformed decimals property)
     mapping(IReserveToken => uint8) private _tokenDecimalsOverrides;
 
     // upgrade forward-compatibility storage gap
