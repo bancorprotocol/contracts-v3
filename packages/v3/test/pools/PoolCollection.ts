@@ -552,7 +552,7 @@ describe('PoolCollection', () => {
             baseTokenExcessAmount: string;
             basePoolTokenTotalSupply: string;
             baseTokenStakedAmount: string;
-            baseTokenWalletBalance: string;
+            baseTokenExternalProtectionWalletBalance: string;
             tradeFeePPM: string;
             withdrawalFeePPM: string;
             basePoolTokenWithdrawalAmount: string;
@@ -598,7 +598,7 @@ describe('PoolCollection', () => {
                     baseTokenExcessAmount,
                     basePoolTokenTotalSupply,
                     baseTokenStakedAmount,
-                    baseTokenWalletBalance,
+                    baseTokenExternalProtectionWalletBalance,
                     tradeFeePPM,
                     withdrawalFeePPM,
                     basePoolTokenWithdrawalAmount,
@@ -615,7 +615,7 @@ describe('PoolCollection', () => {
                         baseTokenExcessAmount,
                         basePoolTokenTotalSupply,
                         baseTokenStakedAmount,
-                        baseTokenWalletBalance,
+                        baseTokenExternalProtectionWalletBalance,
                         tradeFeePPM,
                         withdrawalFeePPM,
                         basePoolTokenWithdrawalAmount,
@@ -632,7 +632,7 @@ describe('PoolCollection', () => {
                             baseTokenExcessAmount,
                             basePoolTokenTotalSupply,
                             baseTokenStakedAmount,
-                            baseTokenWalletBalance,
+                            baseTokenExternalProtectionWalletBalance,
                             tradeFeePPM,
                             withdrawalFeePPM,
                             basePoolTokenWithdrawalAmount
