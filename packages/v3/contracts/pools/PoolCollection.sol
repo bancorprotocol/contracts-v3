@@ -622,6 +622,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
             if (networkTokenArbitrageAmount.add(uint256(amounts.networkTokenDeltaAmount)) <= networkTokenLiquidity) {
                 amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
+            } else {
+                amounts.networkTokenArbitrageAmount = 0; // for clarity, since it is already the case
             }
         } else {
             // the pool is in a base token deficit
@@ -680,17 +682,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         if (amounts.networkTokenArbitrageAmount > 0) {
-            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2;
-            uint256 neg = uint256(amounts.networkTokenArbitrageAmount);
+            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2; // safe because `0 <= networkTokenDeltaAmount < 2^255`
+            uint256 neg = uint256(amounts.networkTokenArbitrageAmount); // safe because `0 <= networkTokenArbitrageAmount < 2^255`
             if (pos > neg) {
-                amounts.networkTokenDeltaAmount = int256((pos - neg) / 2);
+                amounts.networkTokenDeltaAmount = int256((pos - neg) / 2); // safe because `0 <= (pos - neg) / 2 < 2^255`
             } else {
-                amounts.networkTokenDeltaAmount = -int256((neg - pos) / 2);
+                amounts.networkTokenDeltaAmount = -int256((neg - pos) / 2); // safe because `0 <= (neg - pos) / 2 < 2^255`
             }
         } else {
-            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2;
-            uint256 neg = uint256(-amounts.networkTokenArbitrageAmount);
-            amounts.networkTokenDeltaAmount = int256(pos.add(neg) / 2);
+            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2; // safe because `0 <= networkTokenDeltaAmount < 2^255`
+            uint256 neg = uint256(-amounts.networkTokenArbitrageAmount); // safe because `0 <= -networkTokenArbitrageAmount < 2^255`
+            amounts.networkTokenDeltaAmount = int256(pos.add(neg) / 2); // safe because `0 <= pos.add(neg) / 2 < 2^255`
         }
 
         // TODO: withdrawal fee
