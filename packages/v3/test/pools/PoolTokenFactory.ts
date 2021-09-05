@@ -153,7 +153,7 @@ describe('PoolTokenFactory', () => {
                 });
             });
 
-            context('with a token symbol override', () => {
+            context('with a token decimals override', () => {
                 const newDecimals = 4;
 
                 beforeEach(async () => {

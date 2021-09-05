@@ -25,7 +25,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
     // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(IReserveToken => string) private _tokenSymbolOverrides;
 
-    // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed decimals property)
+    // a mapping between reserve tokens and custom token overrides (only needed for tokens with malformed decimals property)
     mapping(IReserveToken => uint8) private _tokenDecimalsOverrides;
 
     // upgrade forward-compatibility storage gap
@@ -82,8 +82,8 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
      *
      * - the caller must be the owner of the contract
      */
-    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbolOverride) external onlyOwner {
-        _tokenSymbolOverrides[reserveToken] = symbolOverride;
+    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbol) external onlyOwner {
+        _tokenSymbolOverrides[reserveToken] = symbol;
     }
 
     /**
@@ -116,8 +116,8 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
         string memory customSymbol = _tokenSymbolOverrides[reserveToken];
         string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
 
-        uint8 customTokenDecimals = _tokenDecimalsOverrides[reserveToken];
-        uint8 tokenDecimals = customTokenDecimals != 0 ? customTokenDecimals : reserveToken.decimals();
+        uint8 customDecimals = _tokenDecimalsOverrides[reserveToken];
+        uint8 tokenDecimals = customDecimals != 0 ? customDecimals : reserveToken.decimals();
 
         string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
         string memory name = string(
