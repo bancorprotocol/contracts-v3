@@ -495,9 +495,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNextTradingLiquidity = networkTokenTradingLiquidityDelta > 0 ?
-            networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta)) :
-            networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
+        uint256 networkTokenNextTradingLiquidity = networkTokenTradingLiquidityDelta > 0
+            ? networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta))
+            : networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
 
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.liquidity.stakedBalance = MathEx.mulDivF(
@@ -620,10 +620,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 baseTokenShare
             );
 
-            if (
-                networkTokenArbitrageAmount.add(uint256(amounts.networkTokenDeltaAmount)) <=
-                networkTokenLiquidity
-            ) {
+            if (networkTokenArbitrageAmount.add(uint256(amounts.networkTokenDeltaAmount)) <= networkTokenLiquidity) {
                 amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
             }
         } else {
