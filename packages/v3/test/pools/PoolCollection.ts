@@ -560,7 +560,7 @@ describe('PoolCollection', () => {
             networkTokenAmountToMintForProvider: string;
             baseTokenAmountToDeductFromLiquidity: string;
             baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
-            networkTokenAmountToDeductFromLiquidity: string;
+            networkTokenDeltaAmount: string;
             networkTokenArbitrageAmount: string;
         }
 
@@ -574,7 +574,7 @@ describe('PoolCollection', () => {
             networkTokenAmountToMintForProvider: MaxError;
             baseTokenAmountToDeductFromLiquidity: MaxError;
             baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
-            networkTokenAmountToDeductFromLiquidity: MaxError;
+            networkTokenDeltaAmount: MaxError;
             networkTokenArbitrageAmount: MaxError;
         }
 
@@ -606,7 +606,7 @@ describe('PoolCollection', () => {
                     networkTokenAmountToMintForProvider,
                     baseTokenAmountToDeductFromLiquidity,
                     baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-                    networkTokenAmountToDeductFromLiquidity,
+                    networkTokenDeltaAmount,
                     networkTokenArbitrageAmount
                 } of table) {
                     it(`should receive correct withdrawal amounts (${[
@@ -623,7 +623,7 @@ describe('PoolCollection', () => {
                         networkTokenAmountToMintForProvider,
                         baseTokenAmountToDeductFromLiquidity,
                         baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-                        networkTokenAmountToDeductFromLiquidity,
+                        networkTokenDeltaAmount,
                         networkTokenArbitrageAmount
                     ]})`, async () => {
                         const actual = await poolCollection.withdrawalAmountsT(
@@ -657,10 +657,10 @@ describe('PoolCollection', () => {
                             maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
                             maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
                         );
-                        expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
-                            new Decimal(networkTokenAmountToDeductFromLiquidity),
-                            maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
-                            maxErrors.networkTokenAmountToDeductFromLiquidity.relative
+                        expect(actual.networkTokenDeltaAmount).to.almostEqual(
+                            new Decimal(networkTokenDeltaAmount),
+                            maxErrors.networkTokenDeltaAmount.absolute,
+                            maxErrors.networkTokenDeltaAmount.relative
                         );
                         expect(actual.networkTokenArbitrageAmount).to.almostEqual(
                             new Decimal(networkTokenArbitrageAmount),
@@ -689,7 +689,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000000000000000003')
                     },
@@ -720,7 +720,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000000001')
                     },
@@ -745,7 +745,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.00002')
                     },
@@ -770,7 +770,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0002')
                     },
@@ -798,7 +798,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000003')
                     },
@@ -823,7 +823,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.008')
                     },
@@ -851,7 +851,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
-                    networkTokenAmountToDeductFromLiquidity: {
+                    networkTokenDeltaAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000009')
                     },

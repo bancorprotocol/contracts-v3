@@ -664,8 +664,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         );
 
         // if network token trading liquidity should be lowered - renounce liquidity
-        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenAmountToDeductFromLiquidity);
+        if (amounts.networkTokenDeltaAmount > 0) {
+            _networkTokenPool.renounceLiquidity(contextId, baseToken, uint256(amounts.networkTokenDeltaAmount));
+        }
+        // if network token trading liquidity should be highered - request liquidity
+        else if (amounts.networkTokenDeltaAmount < 0) {
+            _networkTokenPool.requestLiquidity(contextId, baseToken, uint256(-amounts.networkTokenDeltaAmount));
         }
 
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault

@@ -414,7 +414,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             baseToken,
             basePoolTokenAmount,
             amounts.baseTokenAmountToDeductFromLiquidity,
-            amounts.networkTokenAmountToDeductFromLiquidity
+            amounts.networkTokenDeltaAmount
         );
 
         // return all withdrawal-related amounts
@@ -485,7 +485,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         IReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
-        uint256 networkTokenTradingLiquidityDelta
+        int256 networkTokenTradingLiquidityDelta
     ) private {
         Pool storage pool = _pools[baseToken];
         uint256 totalSupply = pool.poolToken.totalSupply();
@@ -495,9 +495,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNextTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
-            networkTokenTradingLiquidityDelta
-        );
+        uint256 networkTokenNextTradingLiquidity = networkTokenTradingLiquidityDelta > 0 ?
+            networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta)) :
+            networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
 
         pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         pool.liquidity.stakedBalance = MathEx.mulDivF(
@@ -594,12 +594,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             withdrawalFeePPM
         );
 
-        amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
+        amounts.networkTokenDeltaAmount = _deductFee(
             networkTokenLiquidity,
             baseTokenShare,
             basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
             0
-        );
+        ).toInt256();
 
         if (baseTokenVaultBalance >= baseTokenStakedAmount) {
             // the pool is not in a base token deficit
@@ -611,7 +611,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             );
 
             uint256 networkTokenArbitrageAmount = _posArbitrage(
-                MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                MathEx.max0(networkTokenLiquidity, uint256(amounts.networkTokenDeltaAmount)),
                 MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
@@ -621,7 +621,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             );
 
             if (
-                networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) <=
+                networkTokenArbitrageAmount.add(uint256(amounts.networkTokenDeltaAmount)) <=
                 networkTokenLiquidity
             ) {
                 amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
@@ -637,7 +637,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 );
 
                 amounts.networkTokenArbitrageAmount = _negArbitrage(
-                    MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                    MathEx.max0(networkTokenLiquidity, uint256(amounts.networkTokenDeltaAmount)),
                     MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
                     baseTokenOffsetAmount,
@@ -673,13 +673,27 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                     withdrawalFeePPM
                 );
 
-                amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
+                amounts.networkTokenDeltaAmount = _deductFee(
                     networkTokenLiquidity,
                     basePoolTokenWithdrawalAmount,
                     basePoolTokenTotalSupply,
                     0
-                );
+                ).toInt256();
             }
+        }
+
+        if (amounts.networkTokenArbitrageAmount > 0) {
+            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2;
+            uint256 neg = uint256(amounts.networkTokenArbitrageAmount);
+            if (pos > neg) {
+                amounts.networkTokenDeltaAmount = int256((pos - neg) / 2);
+            } else {
+                amounts.networkTokenDeltaAmount = -int256((neg - pos) / 2);
+            }
+        } else {
+            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2;
+            uint256 neg = uint256(-amounts.networkTokenArbitrageAmount);
+            amounts.networkTokenDeltaAmount = int256(pos.add(neg) / 2);
         }
 
         // TODO: withdrawal fee
