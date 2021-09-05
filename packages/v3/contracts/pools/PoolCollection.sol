@@ -72,7 +72,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     // a mapping between reserve tokens and their pools
     mapping(IReserveToken => Pool) internal _pools;
 
-    // the set of all pools (== reserve tokens)  which are managed by this pool collection
+    // the set of all pools (== reserve tokens) which are managed by this pool collection
     EnumerableSetUpgradeable.AddressSet private _reserveTokens;
 
     // the default trading fee (in units of PPM)
