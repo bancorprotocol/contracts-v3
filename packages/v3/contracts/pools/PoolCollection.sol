@@ -236,8 +236,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             initialRate: Fraction({ n: 0, d: 1 }),
             depositLimit: 0,
             liquidity: PoolLiquidity({
-                baseTokenTradingLiquidity: 0,
                 networkTokenTradingLiquidity: 0,
+                baseTokenTradingLiquidity: 0,
                 tradingLiquidityProduct: 0,
                 stakedBalance: 0
             })
@@ -403,14 +403,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @inheritdoc IPoolCollection
      */
     function withdraw(
-        IReserveToken baseToken,
+        IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
         // obtain all withdrawal-related amounts
         amounts = _poolWithdrawalAmounts(
-            baseToken,
+            pool,
             basePoolTokenAmount,
             baseTokenVaultBalance,
             externalProtectionWalletBalance
@@ -418,26 +418,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // execute post-withdrawal actions
         _postWithdrawal(
-            baseToken,
+            pool,
             basePoolTokenAmount,
             amounts.baseTokenAmountToDeductFromLiquidity,
             amounts.networkTokenAmountToDeductFromLiquidity
         );
 
-        // return all withdrawal-related amounts
-        return amounts;
     }
 
     /**
      * @dev returns withdrawal amounts
      */
     function _poolWithdrawalAmounts(
-        IReserveToken baseToken,
+        IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) internal view returns (WithdrawalAmounts memory amounts) {
-        PoolWithdrawalParams memory params = _poolWithdrawalParams(baseToken);
+        PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
 
         return
             _withdrawalAmounts(
@@ -456,24 +454,25 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns withdrawal-related input which can be retrieved from the pool
      */
-    function _poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
-        Pool memory pool = _poolData[baseToken];
+    function _poolWithdrawalParams(IReserveToken pool) private view returns (PoolWithdrawalParams memory) {
+        Pool memory poolData = _poolData[pool];
+        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        uint256 prod = uint256(pool.liquidity.networkTokenTradingLiquidity) *
-            uint256(pool.liquidity.baseTokenTradingLiquidity);
+        uint256 prod = uint256(poolData.liquidity.networkTokenTradingLiquidity) *
+            uint256(poolData.liquidity.baseTokenTradingLiquidity);
 
         return
             PoolWithdrawalParams({
                 networkTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, pool.averageRate.rate.n, pool.averageRate.rate.d)
+                    MathEx.mulDivF(prod, poolData.averageRate.rate.n, poolData.averageRate.rate.d)
                 ),
                 baseTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, pool.averageRate.rate.d, pool.averageRate.rate.n)
+                    MathEx.mulDivF(prod, poolData.averageRate.rate.d, poolData.averageRate.rate.n)
                 ),
-                baseTokenTradingLiquidity: pool.liquidity.baseTokenTradingLiquidity,
-                basePoolTokenTotalSupply: pool.poolToken.totalSupply(),
-                baseTokenStakedAmount: pool.liquidity.stakedBalance,
-                tradeFeePPM: pool.tradingFeePPM
+                baseTokenTradingLiquidity: poolData.liquidity.baseTokenTradingLiquidity,
+                basePoolTokenTotalSupply: poolData.poolToken.totalSupply(),
+                baseTokenStakedAmount: poolData.liquidity.stakedBalance,
+                tradeFeePPM: poolData.tradingFeePPM
             });
     }
 
@@ -489,39 +488,39 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      *   has crossed the minimum threshold (either above it or below it)
      */
     function _postWithdrawal(
-        IReserveToken baseToken,
+        IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
         uint256 networkTokenTradingLiquidityDelta
     ) private {
-        Pool storage pool = _poolData[baseToken];
-        uint256 totalSupply = pool.poolToken.totalSupply();
+        Pool storage poolData = _poolData[pool];
+        uint256 totalSupply = poolData.poolToken.totalSupply();
 
         // all of these are at most MAX_UINT128, but we store them as uint256 in order to avoid 128-bit multiplication
         // overflows
-        uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
-        uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
+        uint256 baseTokenCurrTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity;
+        uint256 networkTokenCurrTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
         uint256 networkTokenNextTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
             networkTokenTradingLiquidityDelta
         );
 
-        pool.poolToken.burnFrom(address(_network), basePoolTokenAmount);
-        pool.liquidity.stakedBalance = MathEx.mulDivF(
-            pool.liquidity.stakedBalance,
+        poolData.poolToken.burnFrom(address(_network), basePoolTokenAmount);
+        poolData.liquidity.stakedBalance = MathEx.mulDivF(
+            poolData.liquidity.stakedBalance,
             totalSupply - basePoolTokenAmount,
             totalSupply
         );
-        pool.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNextTradingLiquidity);
-        pool.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNextTradingLiquidity);
-        pool.liquidity.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
+        poolData.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNextTradingLiquidity);
+        poolData.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNextTradingLiquidity);
+        poolData.liquidity.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
 
-        if (pool.tradingEnabled) {
+        if (poolData.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
             bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
             if (nextEnabled != currEnabled) {
-                emit TradingEnabled({ pool: baseToken, newStatus: nextEnabled });
+                emit TradingEnabled({ pool: pool, newStatus: nextEnabled });
             }
         }
     }
