@@ -35,8 +35,8 @@ function overwriteFractionFunction(readableName: string, _super: (...args: any[]
                 res,
                 `Expected ${toString(objDec)} to be ${readableName} to ${toString(expectedDec)}`,
                 `Expected ${toString(objDec)} NOT to be ${readableName} to ${toString(expectedDec)}`,
-                objDec,
-                expectedDec
+                toString(expectedDec),
+                toString(objDec)
             );
         } else {
             _super.apply(this, args);
@@ -80,8 +80,8 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
                 `Expected ${toString(objFraction)} NOT to be almost equal to to ${toString(
                     expectedFraction
                 )} (absoluteError = ${absoluteError.toFixed()}, relativeError = ${relativeError.toFixed(25)}`,
-                objFraction,
-                expectedFraction
+                toString(expectedFraction),
+                toString(objFraction)
             );
         } else {
             return _super.apply(this, args);
