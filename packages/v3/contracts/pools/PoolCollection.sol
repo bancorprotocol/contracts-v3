@@ -554,6 +554,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
+        amounts.baseTokenWithdrawalFeeAmount = _deductFee(
+            basePoolTokenWithdrawalAmount,
+            baseTokenStakedAmount,
+            basePoolTokenTotalSupply,
+            PPM_RESOLUTION - withdrawalFeePPM
+        );
+
         uint256 baseTokenVaultBalance = baseTokenLiquidity.add(baseTokenExcessAmount);
 
         if (baseTokenStakedAmount > baseTokenVaultBalance) {
@@ -694,9 +701,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256 neg = uint256(-amounts.networkTokenArbitrageAmount); // safe because `0 <= -networkTokenArbitrageAmount < 2^255`
             amounts.networkTokenDeltaAmount = int256(pos.add(neg) / 2); // safe because `0 <= pos.add(neg) / 2 < 2^255`
         }
-
-        // TODO: withdrawal fee
-        amounts.baseTokenWithdrawalFeeAmount = 0;
     }
 
     /**

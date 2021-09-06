@@ -562,6 +562,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
             networkTokenDeltaAmount: string;
             networkTokenArbitrageAmount: string;
+            baseTokenWithdrawalFeeAmount: string;
         }
 
         interface MaxError {
@@ -576,6 +577,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
             networkTokenDeltaAmount: MaxError;
             networkTokenArbitrageAmount: MaxError;
+            baseTokenWithdrawalFeeAmount: MaxError;
         }
 
         const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
@@ -607,7 +609,8 @@ describe('PoolCollection', () => {
                     baseTokenAmountToDeductFromLiquidity,
                     baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                     networkTokenDeltaAmount,
-                    networkTokenArbitrageAmount
+                    networkTokenArbitrageAmount,
+                    baseTokenWithdrawalFeeAmount
                 } of table) {
                     it(`should receive correct withdrawal amounts (${[
                         networkTokenLiquidity,
@@ -624,7 +627,8 @@ describe('PoolCollection', () => {
                         baseTokenAmountToDeductFromLiquidity,
                         baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                         networkTokenDeltaAmount,
-                        networkTokenArbitrageAmount
+                        networkTokenArbitrageAmount,
+                        baseTokenWithdrawalFeeAmount
                     ]})`, async () => {
                         const actual = await poolCollection.withdrawalAmountsT(
                             networkTokenLiquidity,
@@ -667,6 +671,11 @@ describe('PoolCollection', () => {
                             maxErrors.networkTokenArbitrageAmount.absolute,
                             maxErrors.networkTokenArbitrageAmount.relative
                         );
+                        expect(actual.baseTokenWithdrawalFeeAmount).to.almostEqual(
+                            new Decimal(baseTokenWithdrawalFeeAmount),
+                            maxErrors.baseTokenWithdrawalFeeAmount.absolute,
+                            maxErrors.baseTokenWithdrawalFeeAmount.relative
+                        );
                     });
                 }
             };
@@ -696,6 +705,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.00000000000000002')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -727,6 +740,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000002')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -758,6 +775,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0007')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -789,6 +810,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0002')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -820,6 +845,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000003')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -851,6 +880,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.008')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
@@ -882,6 +915,10 @@ describe('PoolCollection', () => {
                     networkTokenArbitrageAmount: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000009')
+                    },
+                    baseTokenWithdrawalFeeAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
                     }
                 };
 
