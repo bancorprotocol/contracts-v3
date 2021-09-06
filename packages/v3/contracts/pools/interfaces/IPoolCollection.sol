@@ -16,8 +16,8 @@ import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 
 struct PoolLiquidity {
-    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
     uint128 networkTokenTradingLiquidity; // the network token trading liquidity
+    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
     uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
     uint256 stakedBalance; // the staked balance
 }
@@ -31,6 +31,12 @@ struct Pool {
     Fraction initialRate; // the initial rate of one base token in network token units in a given pool
     uint256 depositLimit; // the deposit limit
     PoolLiquidity liquidity; // the overall liquidity in the pool
+}
+
+// base toke deposit output amounts
+struct DepositAmounts {
+    uint256 networkTokenDeltaAmount; // network token amount to add to the trading liquidity and to transfer to the vault
+    uint256 poolTokenAmount; // the minted pool token amount
 }
 
 // base token withdrawal output amounts
@@ -118,7 +124,7 @@ interface IPoolCollection is IVersioned {
      * - the caller must have approved the collection to transfer/burn the pool token amount on its behal
      */
     function withdraw(
-        IReserveToken baseToken,
+        IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
