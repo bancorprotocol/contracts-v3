@@ -58,6 +58,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint128 newNetworkTokenTradingLiquidity;
         uint128 newBaseTokenTradingLiquidity;
         uint128 networkTokenDeltaAmount;
+        uint128 baseTokenDeltaAmount;
         bool resetInitialRate;
         bool tradingEnabled;
     }
@@ -410,12 +411,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev deposits base token liquidity on behalf of a specific provider
-     *
-     * requirements:
-     *
-     * - the caller must be the network contract
-     * - assumes that the base token has been already deposited in the vault
+     * @inheritdoc IPoolCollection
      */
     function depositFor(
         address provider,
@@ -424,7 +420,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 availableNetworkTokenLiquidity
     )
         external
-        /* override */
+        override
         only(address(_network))
         greaterThanZero(baseTokenAmount)
         nonReentrant
@@ -463,7 +459,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 poolTokenAmount = MathEx.mulDivF(baseTokenAmount, poolToken.totalSupply(), currentStakedBalance);
 
         // update the staked balance
-        poolData.liquidity.stakedBalance = currentStakedBalance.add(baseTokenAmount);
+        uint256 newStakedBalance = currentStakedBalance.add(baseTokenAmount);
+        poolData.liquidity.stakedBalance = newStakedBalance;
 
         // mint pool tokens to the provider
         poolToken.mint(provider, poolTokenAmount);
@@ -473,7 +470,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         return
             DepositAmounts({
                 networkTokenDeltaAmount: depositParams.networkTokenDeltaAmount,
-                poolTokenAmount: poolTokenAmount
+                baseTokenDeltaAmount: depositParams.baseTokenDeltaAmount,
+                stakedBalance: newStakedBalance,
+                poolTokenAmount: poolTokenAmount,
+                poolToken: poolToken
             });
     }
 
@@ -554,6 +554,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         depositParams.networkTokenDeltaAmount =
             depositParams.newNetworkTokenTradingLiquidity -
             poolData.liquidity.networkTokenTradingLiquidity;
+
+        depositParams.baseTokenDeltaAmount =
+            depositParams.newBaseTokenTradingLiquidity -
+            poolData.liquidity.baseTokenTradingLiquidity;
 
         if (
             poolData.tradingEnabled &&

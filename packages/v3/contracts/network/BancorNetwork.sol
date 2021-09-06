@@ -18,9 +18,9 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { IPoolCollection, PoolLiquidity, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
+import { INetworkTokenPool, DepositAmounts as NetworkTokenPoolDepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
@@ -523,6 +523,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
+    function depositFor(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount
+    ) external override validAddress(provider) greaterThanZero(tokenAmount) {
+        _depositFor(provider, pool, tokenAmount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function deposit(IReserveToken pool, uint256 tokenAmount) external override greaterThanZero(tokenAmount) {
+        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function withdraw(uint256 id) external override nonReentrant {
         address provider = msg.sender;
 
@@ -573,6 +591,167 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             address(poolCollection) == address(0) || _poolCollections.contains(address(poolCollection)),
             "ERR_COLLECTION_DOES_NOT_EXIST"
         );
+    }
+
+    /**
+     * @dev deposits liquidity for the specified provider from sender
+     *
+     * requirements:
+     *
+     * - the caller must have approved have approved the network to transfer the liquidity tokens to on its behalf
+     */
+    function _depositFor(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        address caller
+    ) private {
+        // generate context ID for monitoring
+        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, caller));
+
+        if (pool == IReserveToken(address(_networkToken))) {
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, caller);
+        } else {}
+    }
+
+    /**
+     * @dev deposits network token liquidity for the specified provider from sender
+     *
+     * requirements:
+     *
+     * - the caller must have approved have approved the network to transfer network tokens to on its behalf
+     */
+    function _depositNetworkTokenFor(
+        bytes32 contextId,
+        address provider,
+        uint256 networkTokenAmount,
+        address caller
+    ) private {
+        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+        // transfer the tokens from the caller to the network token pool
+        _networkToken.transferFrom(caller, address(cachedNetworkTokenPool), networkTokenAmount);
+
+        // process network token pool deposit
+        NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
+            provider,
+            networkTokenAmount,
+            false,
+            0
+        );
+
+        emit FundsDeposited({
+            contextId: contextId,
+            token: IReserveToken(address(_networkToken)),
+            provider: provider,
+            poolCollection: IPoolCollection(address(0x0)),
+            depositAmount: networkTokenAmount,
+            poolTokenAmount: depositAmounts.poolTokenAmount
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: IReserveToken(address(_networkToken)),
+            poolTokenSupply: _networkPoolToken.totalSupply(),
+            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            actualBalance: _networkToken.balanceOf(address(_vault))
+        });
+    }
+
+    /**
+     * @dev deposits base token liquidity for the specified provider from sender
+     *
+     * requirements:
+     *
+     * - the caller must have approved have approved the network to transfer base tokens to on its behalf
+     */
+    function _depositBaseTokenFor(
+        bytes32 contextId,
+        address provider,
+        IReserveToken pool,
+        uint256 baseTokenAmount,
+        address caller
+    ) private {
+        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+        // get the pool collection that managed this pool
+        IPoolCollection poolCollection = _poolCollection(pool);
+
+        // make sure that minting is enabled
+        require(cachedNetworkTokenPool.isMintingEnabled(pool, poolCollection), "ERR_MINTING_DISABLED");
+
+        // transfer the tokens from the caller to the vault
+        if (msg.value > 0) {
+            require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
+            require(pool.isNativeToken(), "ERR_INVALID_SOURCE_POOL");
+        } else {
+            require(!pool.isNativeToken(), "ERR_INVALID_SOURCE_POOL");
+
+            pool.safeTransferFrom(caller, address(_vault), baseTokenAmount);
+        }
+
+        // process base token pool deposit (taking into account the ETH pool)
+        PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
+            provider,
+            pool,
+            baseTokenAmount,
+            cachedNetworkTokenPool.availableMintingAmount(pool)
+        );
+
+        // request additional liquidity from the network token pool and transfer it to the vault
+        if (depositAmounts.networkTokenDeltaAmount > 0) {
+            cachedNetworkTokenPool.requestLiquidity(contextId, pool, depositAmounts.networkTokenDeltaAmount);
+
+            _networkToken.transfer(address(_vault), depositAmounts.networkTokenDeltaAmount);
+        }
+
+        // TODO: process network fees based on the return values
+
+        emit FundsDeposited({
+            contextId: contextId,
+            token: pool,
+            provider: provider,
+            poolCollection: poolCollection,
+            depositAmount: baseTokenAmount,
+            poolTokenAmount: depositAmounts.poolTokenAmount
+        });
+
+        // TODO: reduce this external call by receiving these updated amounts as well
+        PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(pool);
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: pool,
+            poolTokenSupply: depositAmounts.poolToken.totalSupply(),
+            stakedBalance: depositAmounts.stakedBalance,
+            actualBalance: pool.balanceOf(address(_vault))
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: IReserveToken(address(_networkToken)),
+            poolTokenSupply: _networkPoolToken.totalSupply(),
+            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            actualBalance: _networkToken.balanceOf(address(_vault))
+        });
+
+        if (depositAmounts.baseTokenDeltaAmount > 0) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: pool,
+                reserveToken: pool,
+                liquidity: poolLiquidity.baseTokenTradingLiquidity
+            });
+        }
+
+        if (depositAmounts.networkTokenDeltaAmount > 0) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: pool,
+                reserveToken: IReserveToken(address(_networkToken)),
+                liquidity: poolLiquidity.networkTokenTradingLiquidity
+            });
+        }
     }
 
     /**
@@ -630,13 +809,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider,
         CompletedWithdrawalRequest memory completedRequest
     ) private {
-        IReserveToken baseToken = completedRequest.poolToken.reserveToken();
+        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+        IReserveToken pool = completedRequest.poolToken.reserveToken();
 
         // get the pool collection that managed this pool
-        IPoolCollection poolCollection = _poolCollection(baseToken);
+        IPoolCollection poolCollection = _poolCollection(pool);
 
         // make sure that minting is enabled
-        require(_networkTokenPool.isMintingEnabled(baseToken, poolCollection), "ERR_MINTING_DISABLED");
+        require(cachedNetworkTokenPool.isMintingEnabled(pool, poolCollection), "ERR_MINTING_DISABLED");
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -645,44 +826,44 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // call withdraw on the base token pool - returns the amounts/breakdown
         ITokenHolder cachedExternalProtectionWallet = _externalProtectionWallet;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
-            baseToken,
+            pool,
             completedRequest.poolTokenAmount,
-            baseToken.balanceOf(address(_vault)),
-            baseToken.balanceOf(address(cachedExternalProtectionWallet))
+            pool.balanceOf(address(_vault)),
+            pool.balanceOf(address(cachedExternalProtectionWallet))
         );
 
         // if network token trading liquidity should be lowered - renounce liquidity
         if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            _networkTokenPool.renounceLiquidity(contextId, baseToken, amounts.networkTokenAmountToDeductFromLiquidity);
+            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
         }
 
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
         if (amounts.networkTokenArbitrageAmount > 0) {
-            _networkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
+            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
         }
         // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
         else if (amounts.networkTokenArbitrageAmount < 0) {
-            _networkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
+            cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
         // provider
         if (amounts.networkTokenAmountToMintForProvider > 0) {
-            _networkTokenPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
+            cachedNetworkTokenPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the vault - remove the tokens from the vault and send
         // them to the provider
         if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
             // base token amount to transfer from the vault to the provider
-            _vault.withdrawTokens(baseToken, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+            _vault.withdrawTokens(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
         // if the provider should receive some base tokens from the external wallet - remove the tokens from the
         // external wallet and send them to the provider
         if (amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider > 0) {
             cachedExternalProtectionWallet.withdrawTokens(
-                baseToken,
+                pool,
                 payable(provider),
                 amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
             );
@@ -690,7 +871,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         emit FundsWithdrawn({
             contextId: contextId,
-            token: baseToken,
+            token: pool,
             provider: provider,
             poolCollection: poolCollection,
             poolTokenAmount: completedRequest.poolTokenAmount,
@@ -704,21 +885,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         });
 
         // TODO: reduce this external call by receiving these updated amounts as well
-        PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(baseToken);
+        PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(pool);
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            pool: baseToken,
+            pool: pool,
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
             stakedBalance: poolLiquidity.stakedBalance,
-            actualBalance: baseToken.balanceOf(address(_vault))
+            actualBalance: pool.balanceOf(address(_vault))
         });
 
         if (amounts.baseTokenAmountToDeductFromLiquidity > 0) {
             emit TradingLiquidityUpdated({
                 contextId: contextId,
-                pool: baseToken,
-                reserveToken: baseToken,
+                pool: pool,
+                reserveToken: pool,
                 liquidity: poolLiquidity.baseTokenTradingLiquidity
             });
         }
@@ -726,7 +907,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         if (amounts.networkTokenAmountToMintForProvider > 0) {
             emit TradingLiquidityUpdated({
                 contextId: contextId,
-                pool: baseToken,
+                pool: pool,
                 reserveToken: IReserveToken(address(_networkToken)),
                 liquidity: poolLiquidity.networkTokenTradingLiquidity
             });

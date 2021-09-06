@@ -35,8 +35,11 @@ struct Pool {
 
 // base toke deposit output amounts
 struct DepositAmounts {
-    uint256 networkTokenDeltaAmount; // network token amount to add to the trading liquidity and to transfer to the vault
+    uint128 networkTokenDeltaAmount; // the network token amount to add to the trading liquidity and to transfer to the vault
+    uint128 baseTokenDeltaAmount; // the base token amount to add to the trading liquidity
+    uint256 stakedBalance; // the new staked balance
     uint256 poolTokenAmount; // the minted pool token amount
+    IPoolToken poolToken; // the pool token
 }
 
 // base token withdrawal output amounts
@@ -114,6 +117,21 @@ interface IPoolCollection is IVersioned {
      * - the pool isn't already defined in the collection
      */
     function createPool(IReserveToken reserveToken) external;
+
+    /**
+     * @dev deposits base token liquidity on behalf of a specific provider
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     * - assumes that the base token has been already deposited in the vault
+     */
+    function depositFor(
+        address provider,
+        IReserveToken pool,
+        uint256 baseTokenAmount,
+        uint256 availableNetworkTokenLiquidity
+    ) external returns (DepositAmounts memory);
 
     /**
      * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
