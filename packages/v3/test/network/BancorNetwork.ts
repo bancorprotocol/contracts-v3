@@ -36,16 +36,22 @@ describe('BancorNetwork', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { network, networkTokenPool } = await createSystem();
+            const { network, networkTokenPool, pendingWithdrawals } = await createSystem();
 
-            await expect(network.initialize(networkTokenPool.address)).to.be.revertedWith(
+            await expect(network.initialize(networkTokenPool.address, pendingWithdrawals.address)).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault, networkPoolToken } =
-                await createSystem();
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                vault,
+                networkPoolToken,
+                pendingWithdrawals
+            } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
@@ -55,7 +61,32 @@ describe('BancorNetwork', () => {
                 networkPoolToken.address
             );
 
-            await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(network.initialize(ZERO_ADDRESS, pendingWithdrawals.address)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
+        it('should revert when attempting to initialize with an invalid pending withdrawals contract', async () => {
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                vault,
+                networkPoolToken,
+                networkTokenPool
+            } = await createSystem();
+
+            const network = await Contracts.BancorNetwork.deploy(
+                networkTokenGovernance.address,
+                govTokenGovernance.address,
+                networkSettings.address,
+                vault.address,
+                networkPoolToken.address
+            );
+
+            await expect(network.initialize(networkTokenPool.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
@@ -540,6 +571,14 @@ describe('BancorNetwork', () => {
                 testCreatePool(symbol);
             });
         }
+
+        it('should revert when attempting to create a pool for the network token', async () => {
+            const { network, networkToken } = await createSystem();
+
+            await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
+                'ERR_UNSUPPORTED_TOKEN'
+            );
+        });
     });
 
     describe('withdraw', () => {
@@ -755,7 +794,7 @@ describe('BancorNetwork', () => {
                                             BigNumber.from(0),
                                             BigNumber.from(0),
                                             withdrawalAmounts.networkTokenAmount,
-                                            withdrawalAmounts.networkTokenWithdrawalFeeAmount
+                                            withdrawalAmounts.withdrawalFeeAmount
                                         );
 
                                     await expect(res)

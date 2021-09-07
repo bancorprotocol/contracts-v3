@@ -206,9 +206,7 @@ describe('PoolCollection', () => {
                     await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
                         .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingEnabled')
-                        .withArgs(reserveToken.address, pool.tradingEnabled);
+                    await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
                     await expect(res)
                         .to.emit(poolCollection, 'DepositingEnabled')
                         .withArgs(reserveToken.address, pool.depositingEnabled);
@@ -274,14 +272,6 @@ describe('PoolCollection', () => {
                 testCreatePool(symbol);
             });
         }
-
-        it('should revert when attempting to create a pool for the network token', async () => {
-            const { network, networkToken, poolCollection } = await createSystem();
-
-            await expect(network.createPoolT(poolCollection.address, networkToken.address)).to.be.revertedWith(
-                'ERR_TOKEN_NOT_WHITELISTED'
-            );
-        });
     });
 
     describe('pool settings', () => {

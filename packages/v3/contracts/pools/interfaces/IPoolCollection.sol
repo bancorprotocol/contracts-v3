@@ -34,13 +34,13 @@ struct Pool {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromVaultToProvider; // base token amount to transfer from the vault to the provider
-    uint256 networkTokenAmountToMintForProvider; // network token amount to mint directly for the provider
-    uint256 baseTokenAmountToDeductFromLiquidity; // base token amount to deduct from the trading liquidity
-    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // base token amount to transfer from the external protection wallet to the provider
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
+    uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // the base token amount to transfer from the external protection wallet to the provider
+    uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
     int256 networkTokenDeltaAmount; // network token amount to deduct from or add to the trading liquidity, and to burn from or mint for the vault
-    int256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-    uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
+    uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
+    int256 networkTokenArbitrageAmount; // the network token amount to burn or mint in the pool, in order to create an arbitrage incentive
 }
 
 /**

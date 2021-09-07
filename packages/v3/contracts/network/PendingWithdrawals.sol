@@ -18,7 +18,7 @@ import { Time } from "../utility/Time.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
@@ -303,7 +303,7 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override only(address(_network)) returns (CompletedWithdrawalRequest memory) {
+    ) external override only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
 
@@ -328,7 +328,7 @@ contract PendingWithdrawals is
             timeElapsed: uint32(currentTime.sub(request.createdAt))
         });
 
-        return CompletedWithdrawalRequest({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
+        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
     }
 
     /**
