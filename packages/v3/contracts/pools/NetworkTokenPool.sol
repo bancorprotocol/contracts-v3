@@ -350,7 +350,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
                 networkTokenAmount: amounts.networkTokenAmount,
                 poolTokenAmount: poolTokenAmount,
                 govTokenAmount: poolTokenAmount,
-                networkTokenWithdrawalFeeAmount: amounts.networkTokenWithdrawalFeeAmount
+                withdrawalFeeAmount: amounts.withdrawalFeeAmount
             });
     }
 
@@ -467,19 +467,15 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
 
         // deduct the exit fee from the network token amount
-        uint256 networkTokenWithdrawalFeeAmount = MathEx.mulDivF(
-            networkTokenAmount,
-            _settings.withdrawalFeePPM(),
-            PPM_RESOLUTION
-        );
-        networkTokenAmount = networkTokenAmount - networkTokenWithdrawalFeeAmount;
+        uint256 withdrawalFeeAmount = MathEx.mulDivF(networkTokenAmount, _settings.withdrawalFeePPM(), PPM_RESOLUTION);
+        networkTokenAmount = networkTokenAmount - withdrawalFeeAmount;
 
         return
             WithdrawalAmounts({
                 networkTokenAmount: networkTokenAmount,
                 poolTokenAmount: poolTokenAmount,
                 govTokenAmount: poolTokenAmount,
-                networkTokenWithdrawalFeeAmount: networkTokenWithdrawalFeeAmount
+                withdrawalFeeAmount: withdrawalFeeAmount
             });
     }
 }

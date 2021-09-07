@@ -755,7 +755,7 @@ describe('BancorNetwork', () => {
                                             BigNumber.from(0),
                                             BigNumber.from(0),
                                             withdrawalAmounts.networkTokenAmount,
-                                            withdrawalAmounts.networkTokenWithdrawalFeeAmount
+                                            withdrawalAmounts.withdrawalFeeAmount
                                         );
 
                                     await expect(res)
