@@ -5,6 +5,7 @@ pragma abicoder v2;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
 
@@ -681,19 +682,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             }
         }
 
-        if (amounts.networkTokenArbitrageAmount > 0) {
-            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2; // safe because `0 <= networkTokenDeltaAmount < 2^255`
-            uint256 neg = uint256(amounts.networkTokenArbitrageAmount); // safe because `0 <= networkTokenArbitrageAmount < 2^255`
-            if (pos > neg) {
-                amounts.networkTokenDeltaAmount = int256((pos - neg) / 2); // safe because `0 <= (pos - neg) / 2 < 2^255`
-            } else {
-                amounts.networkTokenDeltaAmount = -int256((neg - pos) / 2); // safe because `0 <= (neg - pos) / 2 < 2^255`
-            }
-        } else {
-            uint256 pos = uint256(amounts.networkTokenDeltaAmount) * 2; // safe because `0 <= networkTokenDeltaAmount < 2^255`
-            uint256 neg = uint256(-amounts.networkTokenArbitrageAmount); // safe because `0 <= -networkTokenArbitrageAmount < 2^255`
-            amounts.networkTokenDeltaAmount = int256(pos.add(neg) / 2); // safe because `0 <= pos.add(neg) / 2 < 2^255`
-        }
+        amounts.networkTokenDeltaAmount = SignedSafeMath.sub(
+            SignedSafeMath.mul(amounts.networkTokenDeltaAmount, 2),
+            amounts.networkTokenArbitrageAmount
+        ) / 2;
 
         // TODO: withdrawal fee
         amounts.baseTokenWithdrawalFeeAmount = 0;
