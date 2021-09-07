@@ -233,8 +233,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
+        // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
+        // pool is disabled
+        emit TradingEnabled({ pool: reserveToken, newStatus: false });
+
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
-        emit TradingEnabled({ pool: reserveToken, newStatus: newPool.tradingEnabled });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
         emit InitialRateUpdated({
             pool: reserveToken,
