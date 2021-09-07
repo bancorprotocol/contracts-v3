@@ -696,6 +696,14 @@ describe('PendingWithdrawals', () => {
                         it('should complete a withdrawal request', async () => {
                             await testCompleteWithdrawal();
                         });
+
+                        it('should revert when attempting to cancel a completed withdrawal request', async () => {
+                            await network.completeWithdrawalT(contextId, provider.address, id);
+
+                            await expect(pendingWithdrawals.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
+                                'ERR_ACCESS_DENIED'
+                            );
+                        });
                     });
                 });
             });
