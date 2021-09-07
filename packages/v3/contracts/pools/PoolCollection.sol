@@ -483,8 +483,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - updates the pool's base token trading liquidity
      * - updates the pool's network token trading liquidity
      * - updates the pool's trading liquidity product
-     * - emits an event if the pool's network token trading liquidity
-     *   has crossed the minimum threshold (either above it or below it)
+     * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
+     * or below it)
      */
     function _postWithdrawal(
         IReserveToken baseToken,
