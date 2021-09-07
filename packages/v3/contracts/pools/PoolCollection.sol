@@ -44,7 +44,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
-    // withdrawal-related input which can be retrieved from the pool
+    // withdrawal-related input data
     struct PoolWithdrawalParams {
         uint256 networkTokenAvgTradingLiquidity;
         uint256 baseTokenAvgTradingLiquidity;
