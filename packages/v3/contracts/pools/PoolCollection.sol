@@ -455,6 +455,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function _poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
         Pool memory pool = _pools[baseToken];
 
+        // please note that since both networkTokenTradingLiquidity and baseTokenTradingLiquidity are uint128, their
+        // product won't overflow
         uint256 prod = uint256(pool.liquidity.networkTokenTradingLiquidity) *
             uint256(pool.liquidity.baseTokenTradingLiquidity);
 
