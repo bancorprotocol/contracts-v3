@@ -644,7 +644,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
 
-        // get the pool collection that managed this pool
+        // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
         // make sure that minting is enabled
