@@ -16,7 +16,6 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals } from "../../network/interfaces/IPendingWithdrawals.sol";
 
 struct DepositAmounts {
     uint256 networkTokenAmount; // the provided network token amount
@@ -74,11 +73,6 @@ interface INetworkTokenPool is IUpgradeable {
      * @dev returns the network token pool token contract
      */
     function poolToken() external view returns (IPoolToken);
-
-    /**
-     * @dev returns the pending withdrawals contract
-     */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals);
 
     /**
      * @dev returns the total staked network token balance in the network

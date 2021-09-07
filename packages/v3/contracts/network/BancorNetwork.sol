@@ -233,12 +233,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(INetworkTokenPool initNetworkTokenPool)
+    function initialize(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
         external
         validAddress(address(initNetworkTokenPool))
+        validAddress(address(initPendingWithdrawals))
         initializer
     {
-        __BancorNetwork_init(initNetworkTokenPool);
+        __BancorNetwork_init(initNetworkTokenPool, initPendingWithdrawals);
     }
 
     // solhint-disable func-name-mixedcase
@@ -246,19 +247,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool) internal initializer {
+    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
+        internal
+        initializer
+    {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initNetworkTokenPool);
+        __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained(INetworkTokenPool initNetworkTokenPool) internal initializer {
+    function __BancorNetwork_init_unchained(
+        INetworkTokenPool initNetworkTokenPool,
+        IPendingWithdrawals initPendingWithdrawals
+    ) internal initializer {
         _networkTokenPool = initNetworkTokenPool;
-        _pendingWithdrawals = initNetworkTokenPool.pendingWithdrawals();
+        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     // solhint-enable func-name-mixedcase

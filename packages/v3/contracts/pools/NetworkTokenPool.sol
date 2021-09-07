@@ -20,7 +20,6 @@ import { MathEx } from "../utility/MathEx.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals, WithdrawalRequest } from "../network/interfaces/IPendingWithdrawals.sol";
 
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/INetworkTokenPool.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
@@ -59,9 +58,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     // the network token pool token
     IPoolToken internal immutable _poolToken;
 
-    // the pending withdrawals contract
-    IPendingWithdrawals private immutable _pendingWithdrawals;
-
     // the total staked network token balance in the network
     uint256 internal _stakedBalance;
 
@@ -94,13 +90,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(
-        IBancorNetwork initNetwork,
-        IPendingWithdrawals initPendingWithdrawals,
-        IPoolToken initPoolToken
-    )
+    constructor(IBancorNetwork initNetwork, IPoolToken initPoolToken)
         validAddress(address(initNetwork))
-        validAddress(address(initPendingWithdrawals))
         validAddress(address(initPoolToken))
     {
         _network = initNetwork;
@@ -110,7 +101,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _govTokenGovernance = initNetwork.govTokenGovernance();
         _settings = initNetwork.settings();
         _vault = initNetwork.vault();
-        _pendingWithdrawals = initPendingWithdrawals;
         _poolToken = initPoolToken;
     }
 
@@ -202,13 +192,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function poolToken() external view override returns (IPoolToken) {
         return _poolToken;
-    }
-
-    /**
-     *  @inheritdoc INetworkTokenPool
-     */
-    function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
-        return _pendingWithdrawals;
     }
 
     /**
