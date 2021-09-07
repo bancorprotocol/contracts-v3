@@ -72,7 +72,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     uint256[MAX_GAP - 2] private __gap;
 
     /**
-     * @dev triggered when liquidity pools have requested liquidity
+     * @dev triggered when liquidity is requested
      */
     event LiquidityRequested(
         bytes32 indexed contextId,
@@ -82,7 +82,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     );
 
     /**
-     * @dev triggered when liquidity pools have renounced liquidity
+     * @dev triggered when liquidity is renounced
      */
     event LiquidityRenounced(
         bytes32 indexed contextId,
