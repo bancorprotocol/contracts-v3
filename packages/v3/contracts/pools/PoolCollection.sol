@@ -499,8 +499,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         // overflows
         uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNextTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
+        uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
+        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
             networkTokenTradingLiquidityDelta
         );
 
@@ -510,16 +510,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             totalSupply - basePoolTokenAmount,
             totalSupply
         );
-        pool.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNextTradingLiquidity);
-        pool.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNextTradingLiquidity);
-        pool.liquidity.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
+        pool.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNewTradingLiquidity);
+        pool.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNewTradingLiquidity);
+        pool.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
 
         if (pool.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
-            bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
-            if (nextEnabled != currEnabled) {
-                emit TradingEnabled({ pool: baseToken, newStatus: nextEnabled });
+            bool newEnabled = networkTokenNewTradingLiquidity >= minLiquidityForTrading;
+            if (newEnabled != currEnabled) {
+                emit TradingEnabled({ pool: baseToken, newStatus: newEnabled });
             }
         }
     }
