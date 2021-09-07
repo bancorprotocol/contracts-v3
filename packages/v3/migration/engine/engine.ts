@@ -62,7 +62,14 @@ export class Engine {
         };
         this.contracts = Contracts.connect(signer);
 
-        // healthcheck
+        this.healthcheck();
+        this.initIO();
+        this.initMigration();
+
+        log.migrationConfig(signerAddress, args.ledger, this.networkConfig, this.executionSettings, this.overrides);
+    }
+
+    healthcheck = () => {
         const isForkOrHardhat = this.networkConfig.isFork || this.networkConfig.networkName === 'hardhat';
         if (this.executionSettings.confirmationToWait <= 1 && !isForkOrHardhat) {
             throw new Error(
@@ -72,12 +79,7 @@ export class Engine {
         if (!this.overrides.gasPrice && !isForkOrHardhat) {
             throw new Error(`Gas Price shouldn't be equal to 0 for ${this.networkConfig.networkName} use. Aborting`);
         }
-
-        this.initIO();
-        this.initMigration();
-
-        log.migrationConfig(signerAddress, args.ledger, this.networkConfig, this.executionSettings, this.overrides);
-    }
+    };
 
     IO = {
         state: {
