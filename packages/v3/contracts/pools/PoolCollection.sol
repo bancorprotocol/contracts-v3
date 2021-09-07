@@ -527,26 +527,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns all amounts related to base token withdrawal, where each amount includes the withdrawal fee, which
      * may need to be deducted (depending on usage)
-     *
-     * input:
-     * network token trading liquidity
-     * base token trading liquidity
-     * base token excess amount
-     * base pool token total supply
-     * base token staked amount
-     * base token external protection wallet balance
-     * trade fee in ppm units
-     * withdrawal fee in ppm units
-     * base pool token withdrawal amount
-     *
-     * output:
-     * base token amount to transfer from the vault to the provider
-     * network token amount to mint directly for the provider
-     * base token amount to deduct from the trading liquidity
-     * base token amount to transfer from the external protection wallet to the provider
-     * network token amount to deduct from the trading liquidity and burn in the vault
-     * network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-     * arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
     function _withdrawalAmounts(
         uint256 networkTokenLiquidity,
