@@ -1,4 +1,7 @@
+import { engine } from '../../migration/engine';
 import { deployedContract, Migration } from '../../migration/engine/types';
+
+const { signer, deploy, contracts } = engine;
 
 export type InitialState = {};
 
@@ -8,7 +11,7 @@ export type NextState = InitialState & {
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const BNTToken = await deploy(
             contracts.TestERC20Token,
             'Bancor Network Token',
@@ -40,14 +43,7 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
         const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
         const vBNTGovernance = await contracts.TokenGovernance.attach(state.vBNT.governance);
         if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
@@ -56,13 +52,7 @@ const migration: Migration = {
             throw new Error('Invalid Role');
     },
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

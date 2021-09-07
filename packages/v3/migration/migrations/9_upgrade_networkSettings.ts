@@ -1,15 +1,13 @@
+import { engine } from '../../migration/engine';
 import { Migration } from '../engine/types';
 import { NextState as InitialState } from './8_deploy_initializeBancorNetwork';
+
+const { signer, deploy, contracts, upgradeProxy } = engine;
 
 export type NextState = InitialState;
 
 const migration: Migration = {
-    up: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        { deploy, execute, deployProxy, upgradeProxy }
-    ): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
         const networkSettings = await upgradeProxy(
             proxyAdmin,
@@ -24,7 +22,7 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (signer, config, contracts, initialState: InitialState, state: NextState) => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(state.proxyAdmin);
 
         const implementationAddress = await proxyAdmin.getProxyImplementation(state.networkSettings.proxyContract);
@@ -36,13 +34,7 @@ const migration: Migration = {
         }
     },
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

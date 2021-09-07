@@ -11,7 +11,7 @@ export const lazyAction = (pathToAction: string) => {
             ? pathToAction
             : path.join(hre.config.paths.root, pathToAction);
         const action = importCsjOrEsModule(actualPath);
-
-        return action(taskArgs, hre, runSuper);
+        const start = importCsjOrEsModule(path.join(hre.config.paths.root, 'migration/engine/index.ts'));
+        return start(taskArgs, hre, action);
     };
 };

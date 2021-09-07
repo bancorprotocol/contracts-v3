@@ -1,11 +1,11 @@
-import { defaultMigrationArgs } from './engine/initialization';
+import { defaultArgs } from './engine/types';
 import { lazyAction } from './engine/utils';
 import { task, types } from 'hardhat/config';
 import path from 'path';
 
 export const PATH_TO_TASKS_FOLDER = 'migration/tasks';
 
-export type migrateParamTask = defaultMigrationArgs & {
+export type migrateParamTask = defaultArgs & {
     reset: boolean;
 };
 task('migrate', 'Migrate the network')

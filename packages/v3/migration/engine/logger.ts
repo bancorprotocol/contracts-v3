@@ -1,6 +1,7 @@
-import { MIGRATION_CONFIG } from './config';
-import { executionSettings } from './initialization';
+import { Engine } from './engine';
+import { ExecutionSettings } from './types';
 import chalk from 'chalk';
+import { Overrides } from 'ethers';
 
 export const palette = {
     white: (...str: string[]) => console.log(`${str}`),
@@ -37,9 +38,10 @@ export const log = {
 
     migrationConfig: (
         signerAddress: string,
-        config: typeof MIGRATION_CONFIG,
         isLedger: boolean,
-        executionSettings: executionSettings
+        networkConfig: typeof Engine.prototype.networkConfig,
+        executionSettings: ExecutionSettings,
+        overrides: Overrides
     ) => {
         palette.yellow(`**********************`);
         palette.yellow(`** Migration Config **`);
@@ -48,9 +50,9 @@ export const log = {
         palette.yellow(`Basic info`);
         palette.white(`        Signer: ${signerAddress} ${isLedger ? '(ledger)' : ''}`);
         palette.yellow(`Network info`);
-        palette.white(`        Network: ${config.networkName}`);
+        palette.white(`        Network: ${networkConfig.networkName}`);
         palette.yellow(`Overrides:`);
-        palette.white(`        GasPrice: ${executionSettings.gasPrice} (gwei)`);
+        palette.white(`        GasPrice: ${overrides.gasPrice} (gwei)`);
         palette.yellow(`Execution Setting:`);
         palette.white(`        Confirmation to wait: ${executionSettings.confirmationToWait}`);
         palette.yellow(`********************`);

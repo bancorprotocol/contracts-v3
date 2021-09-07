@@ -38,8 +38,10 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
     contractName: string;
-    abi: {};
-    bytecode: string;
+    metadata: {
+        abi: Object;
+        bytecode: string;
+    };
     deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
     attach(address: string, signer?: Signer): Promise<Contract<F>>;
 }
@@ -53,8 +55,10 @@ const deployOrAttach = <F extends ContractFactory>(
 ): ContractBuilder<F> => {
     return {
         contractName,
-        abi: factoryConstructor.abi,
-        bytecode: factoryConstructor.bytecode,
+        metadata: {
+            abi: factoryConstructor.abi,
+            bytecode: factoryConstructor.bytecode
+        },
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             let defaultSigner = initialSigner ? initialSigner : (await ethers.getSigners())[0];
 
@@ -108,6 +112,6 @@ const getContracts = (signer?: Signer) => ({
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer)
 });
 
-export type Contracts = ReturnType<typeof getContracts>;
+export type ContractsType = ReturnType<typeof getContracts>;
 
 export default getContracts();

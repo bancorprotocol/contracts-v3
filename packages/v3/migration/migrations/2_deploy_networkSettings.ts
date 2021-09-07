@@ -1,12 +1,15 @@
+import { engine } from '../../migration/engine';
 import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './1_deploy_proxyAdmin';
+
+const { signer, deploy, contracts, deployProxy } = engine;
 
 export type NextState = InitialState & {
     networkSettings: deployedProxy;
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
         const networkSettings = await deployProxy(proxyAdmin, contracts.NetworkSettings, []);
@@ -21,26 +24,13 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
         const networkSettings = await contracts.NetworkSettings.attach(state.networkSettings.proxyContract);
 
         if ((await networkSettings.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

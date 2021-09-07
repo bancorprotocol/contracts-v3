@@ -1,10 +1,13 @@
+import { engine } from '../../migration/engine';
 import { Migration } from '../engine/types';
 import { NextState as InitialState } from './7_deploy_liquidityPoolCollection';
+
+const { signer, deploy, contracts, execute } = engine;
 
 export type NextState = InitialState;
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const bancorNetwork = await contracts.BancorNetwork.attach(initialState.bancorNetwork.proxyContract);
 
         await execute(
@@ -16,26 +19,13 @@ const migration: Migration = {
         return initialState;
     },
 
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
         const bancorNetwork = await contracts.BancorNetwork.attach(state.bancorNetwork.proxyContract);
 
         if ((await bancorNetwork.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

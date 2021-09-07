@@ -1,12 +1,15 @@
+import { engine } from '../../migration/engine';
 import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './5_deploy_networkTokenPool';
+
+const { signer, deploy, contracts, deployProxy, execute } = engine;
 
 export type NextState = InitialState & {
     pendingWithdrawals: deployedProxy;
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
         const pendingWithdrawals = await deployProxy(
@@ -30,26 +33,13 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
         const pendingWithdrawals = await contracts.PendingWithdrawals.attach(state.pendingWithdrawals.proxyContract);
 
         if ((await pendingWithdrawals.owner()) !== (await signer.getAddress())) throw new Error('Invalid Owner');
     },
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

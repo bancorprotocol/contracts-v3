@@ -1,7 +1,4 @@
-import { Contracts } from '../../components/Contracts';
-import { MIGRATION_CONFIG } from './config';
-import { initExecutionFunctions } from './executions';
-import { Signer } from 'ethers';
+import { Engine } from './engine';
 
 export type SystemState = {
     migrationState: {
@@ -10,32 +7,35 @@ export type SystemState = {
     networkState: any;
 };
 
-export type deployedContract = string;
+export type Deployment = {
+    contractName: string;
+    abi: {};
+    bytecode: {};
+};
+export type SystemDeployments = { [address: string]: Deployment };
 
+export type deployedContract = string;
 export type deployedProxy = { proxyContract: deployedContract; logicContract: deployedContract };
 
-export type executionFunctions = ReturnType<typeof initExecutionFunctions>;
+export type MigrationData = {
+    fullPath: string;
+    fileName: string;
+    migrationTimestamp: number;
+};
+
+export type ExecutionSettings = {
+    confirmationToWait: number;
+};
+
+export type defaultArgs = {
+    ledger: boolean;
+    ledgerPath: string;
+    gasPrice: number;
+    minBlockConfirmations: number;
+};
 
 export interface Migration {
-    up: (
-        signer: Signer,
-        contracts: Contracts,
-        initialState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
-    healthCheck: (
-        signer: Signer,
-        config: typeof MIGRATION_CONFIG,
-        contracts: Contracts,
-        initialState: any,
-        newState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
-    down: (
-        signer: Signer,
-        contracts: Contracts,
-        initialState: any,
-        newState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
+    up: (initialState: any) => Promise<any>;
+    healthCheck: (initialState: any, newState: any) => Promise<any>;
+    down: (initialState: any, newState: any) => Promise<any>;
 }

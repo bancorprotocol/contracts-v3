@@ -1,6 +1,9 @@
+import { engine } from '../../migration/engine';
 import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from '../../test/helpers/Constants';
 import { deployedContract, deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './4_deploy_vault';
+
+const { signer, deploy, contracts, deployProxy, execute } = engine;
 
 export type NextState = InitialState & {
     networkTokenPool: deployedProxy;
@@ -8,7 +11,7 @@ export type NextState = InitialState & {
 };
 
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute, deployProxy }): Promise<NextState> => {
+    up: async (initialState: InitialState): Promise<NextState> => {
         const proxyAdmin = await contracts.ProxyAdmin.attach(initialState.proxyAdmin);
 
         const networkPoolToken = await contracts.PoolToken.deploy(
@@ -43,22 +46,9 @@ const migration: Migration = {
         };
     },
 
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {},
+    healthCheck: async (initialState: InitialState, state: NextState) => {},
 
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };
