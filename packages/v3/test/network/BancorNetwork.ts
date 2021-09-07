@@ -540,6 +540,14 @@ describe('BancorNetwork', () => {
                 testCreatePool(symbol);
             });
         }
+
+        it('should revert when attempting to create a pool for the network token', async () => {
+            const { network, networkToken } = await createSystem();
+
+            await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
+                'ERR_UNSUPPORTED_TOKEN'
+            );
+        });
     });
 
     describe('withdraw', () => {
