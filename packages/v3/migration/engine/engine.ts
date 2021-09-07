@@ -30,7 +30,7 @@ export class Engine {
     readonly contracts: ContractsType;
 
     state!: SystemState;
-    deployments!: SystemDeployments;
+    deployment!: SystemDeployments;
 
     networkConfig = {
         networkName: NETWORK_NAME,
@@ -42,7 +42,7 @@ export class Engine {
             : NETWORK_NAME
     };
 
-    readonly migrationsData: MigrationData[] = [];
+    migrationsData: MigrationData[] = [];
 
     constructor(hre: HardhatRuntimeEnvironment, args: defaultArgs, signer: Signer, signerAddress: string) {
         this.hre = hre;
@@ -100,7 +100,7 @@ export class Engine {
                     path.join(this.pathToNetworkFolder, 'deployment.json'),
                     JSON.stringify(deployments, null, 4) + `\n`
                 );
-                this.deployments = deployments;
+                this.deployment = deployments;
             },
             fetch: (pathToState: string) => {
                 return JSON.parse(
@@ -117,8 +117,11 @@ export class Engine {
             force: true
         });
 
+        this.migrationsData = [];
         this.initIO();
+        this.initMigration();
     };
+
     initIO = () => {
         let defaultState: SystemState = {
             migrationState: {
@@ -134,35 +137,39 @@ export class Engine {
         }
 
         // read all files into the folder and fetch needed files
-        const pathToStateFolder = fs.readdirSync(this.pathToNetworkFolder);
+        const pathToNetworkFolderFiles = fs.readdirSync(this.pathToNetworkFolder);
 
-        let state = defaultState;
-        let deployment = defaultDeployment;
-
-        // if there is no state file in the network's folder, create it
-        if (!pathToStateFolder.find((fileName: string) => fileName === 'state.json')) {
-            if (this.networkConfig.isFork) {
-                try {
-                    const pathToOriginalNetworkFolder = path.join(
-                        this.hre.config.paths.root,
-                        MIGRATION_DATA_FOLDER,
-                        this.networkConfig.originalNetwork
-                    );
-                    console.log(pathToOriginalNetworkFolder);
-                    log.warning(`Fetching initial state from ${this.networkConfig.originalNetwork}`);
-                    state = this.IO.state.fetch(pathToOriginalNetworkFolder);
-                    log.warning(`Fetching initial deployments from ${this.networkConfig.originalNetwork}`);
-                    deployment = this.IO.deployment.fetch(pathToOriginalNetworkFolder);
-                } catch (e) {
-                    log.error(
-                        `${this.networkConfig.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
-                    );
-                    process.exit();
-                }
-            }
+        // if there is no state file in the network's folder, create it along with deployment file
+        const pathToNetworkFolderState = pathToNetworkFolderFiles.find((f: string) => f === 'state.json');
+        if (!pathToNetworkFolderState) {
+            this.IO.state.write(defaultState);
+            this.IO.deployment.write(defaultDeployment);
         }
-        this.IO.state.write(state);
-        this.IO.deployment.write(deployment);
+
+        // if it's a fork we need to get state and deployment files from the original network,
+        // if not just load the current state and deployment into the engine
+        if (this.networkConfig.isFork) {
+            try {
+                const pathToOriginalNetworkFolder = path.join(
+                    this.hre.config.paths.root,
+                    MIGRATION_DATA_FOLDER,
+                    this.networkConfig.originalNetwork
+                );
+                console.log(pathToOriginalNetworkFolder);
+                log.warning(`Fetching initial state from ${this.networkConfig.originalNetwork}`);
+                this.IO.state.write(this.IO.state.fetch(pathToOriginalNetworkFolder));
+                log.warning(`Fetching initial deployments from ${this.networkConfig.originalNetwork}`);
+                this.IO.deployment.write(this.IO.deployment.fetch(pathToOriginalNetworkFolder));
+            } catch (e) {
+                log.error(
+                    `${this.networkConfig.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
+                );
+                process.exit();
+            }
+        } else {
+            this.state = this.IO.state.fetch(this.pathToNetworkFolder);
+            this.deployment = this.IO.deployment.fetch(this.pathToNetworkFolder);
+        }
     };
 
     initMigration = () => {
