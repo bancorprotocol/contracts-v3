@@ -23,7 +23,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
@@ -529,11 +529,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
 
         // complete the withdrawal and claim the locked pool tokens
-        CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(
-            contextId,
-            provider,
-            id
-        );
+        CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _networkPoolToken) {
             _withdrawNetworkToken(contextId, provider, completedRequest);
@@ -593,7 +589,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function _withdrawNetworkToken(
         bytes32 contextId,
         address provider,
-        CompletedWithdrawalRequest memory completedRequest
+        CompletedWithdrawal memory completedRequest
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -640,7 +636,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function _withdrawBaseToken(
         bytes32 contextId,
         address provider,
-        CompletedWithdrawalRequest memory completedRequest
+        CompletedWithdrawal memory completedRequest
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
 
