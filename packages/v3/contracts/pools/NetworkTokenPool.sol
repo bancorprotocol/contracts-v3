@@ -372,16 +372,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
         uint256 poolTokenAmount;
-        {
-            uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-            if (poolTokenTotalSupply == 0) {
-                // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
-                require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        if (poolTokenTotalSupply == 0) {
+            // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
+            require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
 
-                poolTokenAmount = networkTokenAmount;
-            } else {
-                poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
-            }
+            poolTokenAmount = networkTokenAmount;
+        } else {
+            poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
         }
 
         // update the staked balance
