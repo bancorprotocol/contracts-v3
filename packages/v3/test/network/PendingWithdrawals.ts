@@ -373,10 +373,17 @@ describe('PendingWithdrawals', () => {
                 });
 
                 beforeEach(async () => {
-                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
 
-                    await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                    await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                        await networkTokenPool.mintT(provider1.address, amount);
+                        await networkTokenPool.mintT(provider2.address, amount);
+                    } else {
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
+                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                    }
                 });
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
@@ -476,10 +483,17 @@ describe('PendingWithdrawals', () => {
                 });
 
                 beforeEach(async () => {
-                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
 
-                    await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                    await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                        await networkTokenPool.mintT(provider1.address, amount);
+                        await networkTokenPool.mintT(provider2.address, amount);
+                    } else {
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
+                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                    }
                 });
 
                 it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
