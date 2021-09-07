@@ -245,7 +245,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      * @inheritdoc INetworkTokenPool
      */
     function availableMintingAmount(IReserveToken pool) external view override returns (uint256) {
-        return MathEx.max0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
+        return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 
     /**
@@ -420,7 +420,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
         // request shouldn’t fail (and the minted amount cannot get negative)
-        _mintedAmounts[pool] = MathEx.max0(_mintedAmounts[pool], networkTokenAmount);
+        _mintedAmounts[pool] = MathEx.subMax0(_mintedAmounts[pool], networkTokenAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
