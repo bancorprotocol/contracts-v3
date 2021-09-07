@@ -5,9 +5,7 @@ import path from 'path';
 
 export const PATH_TO_TASKS_FOLDER = 'migration/tasks';
 
-export type migrateParamTask = defaultArgs & {
-    reset: boolean;
-};
+export type migrateParamTask = defaultArgs;
 task('migrate', 'Migrate the network')
     .addFlag('ledger', 'Signing from a ledger')
     .addParam('ledgerPath', 'Ledger path', "m/44'/60'/0'/0", types.string)

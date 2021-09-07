@@ -3,7 +3,8 @@ import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from '
 import { deployedContract, deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './4_deploy_vault';
 
-const { signer, deploy, contracts, deployProxy, execute } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type NextState = InitialState & {
     networkTokenPool: deployedProxy;

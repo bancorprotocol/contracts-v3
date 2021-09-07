@@ -1,7 +1,8 @@
 import { engine } from '../../migration/engine';
 import { deployedContract, Migration } from '../../migration/engine/types';
 
-const { signer, deploy, contracts } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type InitialState = {};
 

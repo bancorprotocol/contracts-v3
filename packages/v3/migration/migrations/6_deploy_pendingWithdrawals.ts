@@ -2,7 +2,8 @@ import { engine } from '../../migration/engine';
 import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './5_deploy_networkTokenPool';
 
-const { signer, deploy, contracts, deployProxy, execute } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type NextState = InitialState & {
     pendingWithdrawals: deployedProxy;

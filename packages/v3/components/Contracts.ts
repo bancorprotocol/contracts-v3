@@ -37,8 +37,8 @@ type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any)
 export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 
 export interface ContractBuilder<F extends ContractFactory> {
-    contractName: string;
     metadata: {
+        contractName: string;
         abi: Object;
         bytecode: string;
     };
@@ -54,8 +54,8 @@ const deployOrAttach = <F extends ContractFactory>(
     initialSigner?: Signer
 ): ContractBuilder<F> => {
     return {
-        contractName,
         metadata: {
+            contractName: contractName,
             abi: factoryConstructor.abi,
             bytecode: factoryConstructor.bytecode
         },

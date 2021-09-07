@@ -2,7 +2,8 @@ import { engine } from '../../migration/engine';
 import { deployedProxy, Migration } from '../engine/types';
 import { NextState as InitialState } from './3_deploy_network';
 
-const { signer, deploy, contracts, deployProxy } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type NextState = InitialState & {
     vault: deployedProxy;

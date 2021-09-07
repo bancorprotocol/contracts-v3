@@ -2,7 +2,8 @@ import { engine } from '../../migration/engine';
 import { Migration } from '../engine/types';
 import { NextState as InitialState } from './8_deploy_initializeBancorNetwork';
 
-const { signer, deploy, contracts, upgradeProxy } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type NextState = InitialState;
 

@@ -33,27 +33,9 @@ A migration file is a typescript file that exposes a particular object respectin
 
 ```ts
 export interface Migration {
-    up: (
-        signer: Signer,
-        contracts: Contracts,
-        initialState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
-    healthCheck: (
-        signer: Signer,
-        config: typeof MIGRATION_CONFIG,
-        contracts: Contracts,
-        initialState: any,
-        newState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
-    down: (
-        signer: Signer,
-        contracts: Contracts,
-        initialState: any,
-        newState: any,
-        executionFunctions: executionFunctions
-    ) => Promise<any>;
+    up: (initialState: any) => Promise<any>;
+    healthCheck: (initialState: any, newState: any) => Promise<any>;
+    down: (initialState: any, newState: any) => Promise<any>;
 }
 ```
 
@@ -128,38 +110,38 @@ To fork the network `mainnet` you need to:
 ### What does a basic migration file looks like ?
 
 ```ts
-import { deployedContract, Migration } from 'migration/engine/types';
+import { engine } from '../../migration/engine';
+import { deployedContract, Migration } from '../../migration/engine/types';
 
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 export type InitialState = {};
-export type State = {
-    BNT: deployedContract;
+export type NextState = InitialState & {
+    BNT: { token: deployedContract; governance: deployedContract };
 };
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
-        const BNT = await deploy(contracts.TestERC20Token, 'BNT', 'BNT', 1000000);
+    up: async (initialState: InitialState): Promise<NextState> => {
+        const BNTToken = await deploy(
+            contracts.TestERC20Token,
+            'Bancor Network Token',
+            'BNT',
+            '100000000000000000000000000'
+        );
+        const BNTGovernance = await deploy(contracts.TokenGovernance, BNTToken.address);
         return {
             ...initialState,
-
-            BNT: BNT.address
+            BNT: {
+                token: BNTToken.address,
+                governance: BNTGovernance.address
+            }
         };
     },
-
-    healthCheck: async (
-        signer,
-        config,
-        contracts,
-        initialState: InitialState,
-        state: NextState,
-        { deploy, execute }
-    ) => {},
-
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
+        const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
+        if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
+            throw new Error('Invalid Role');
+    },
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };

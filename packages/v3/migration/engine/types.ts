@@ -28,8 +28,13 @@ export type ExecutionSettings = {
 };
 
 export type defaultArgs = {
+    reset: boolean;
+
+    // ledger
     ledger: boolean;
     ledgerPath: string;
+
+    // settings
     gasPrice: number;
     minBlockConfirmations: number;
 };

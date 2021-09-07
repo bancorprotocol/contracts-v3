@@ -1,43 +1,55 @@
 import { createMigrationParamTask } from '../../migration';
-import { MIGRATION_FOLDER } from '../../migration/engine/config';
+import { MIGRATION_FOLDER } from '../../migration/engine/engine';
 import { log } from '../engine/logger';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
 
 export default async (args: createMigrationParamTask, hre: HardhatRuntimeEnvironment) => {
-    const templateMigrationFile = `import { deployedContract, Migration } from 'migration/engine/types';
-
+    const templateMigrationFile = `import { engine } from '../../migration/engine';
+import { deployedContract, Migration } from '../../migration/engine/types';
+    
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
+    
 export type InitialState = {};
     
-export type State = {
-    BNT: deployedContract;
+export type NextState = InitialState & {
+    BNT: { token: deployedContract; governance: deployedContract };
 };
     
 const migration: Migration = {
-    up: async (signer, contracts, initialState: InitialState, { deploy, execute }): Promise<State> => {
-        const BNT = await deploy(contracts.TestERC20Token, 'BNT', 'BNT', 1000000);
+    up: async (initialState: InitialState): Promise<NextState> => {
+        const BNTToken = await deploy(
+            contracts.TestERC20Token,
+            'Bancor Network Token',
+            'BNT',
+            '100000000000000000000000000'
+        );
+    
+        const BNTGovernance = await deploy(contracts.TokenGovernance, BNTToken.address);
     
         return {
             ...initialState,
-    
-            BNT: BNT.address
+
+            BNT: {
+                token: BNTToken.address,
+                governance: BNTGovernance.address
+            }
         };
     },
     
-    healthCheck: async (signer, contracts, initialState: InitialState, state: NextState, { deploy, execute }) => {},
-
-    down: async (
-        signer,
-        contracts,
-        initialState: InitialState,
-        newState: NextState,
-        { deploy, execute }
-    ): Promise<InitialState> => {
+    healthCheck: async (initialState: InitialState, state: NextState) => {
+        const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
+        if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
+            throw new Error('Invalid Role');
+    },
+    
+    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
         return initialState;
     }
 };
-    
+
 export default migration;
     
 `;

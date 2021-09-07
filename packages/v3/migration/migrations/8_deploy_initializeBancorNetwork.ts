@@ -2,7 +2,8 @@ import { engine } from '../../migration/engine';
 import { Migration } from '../engine/types';
 import { NextState as InitialState } from './7_deploy_liquidityPoolCollection';
 
-const { signer, deploy, contracts, execute } = engine;
+const { signer, contracts } = engine;
+const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
 export type NextState = InitialState;
 
