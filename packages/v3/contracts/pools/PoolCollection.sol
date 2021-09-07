@@ -541,8 +541,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 basePoolTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
         amounts.baseTokenWithdrawalFeeAmount = _deductFee(
-            basePoolTokenWithdrawalAmount,
             baseTokenStakedAmount,
+            basePoolTokenWithdrawalAmount,
             basePoolTokenTotalSupply,
             PPM_RESOLUTION - withdrawalFeePPM
         );
