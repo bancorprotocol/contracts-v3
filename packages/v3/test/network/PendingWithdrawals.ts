@@ -156,6 +156,7 @@ describe('PendingWithdrawals', () => {
         let network: TestBancorNetwork;
         let networkToken: TestERC20Token;
         let networkTokenPool: TestNetworkTokenPool;
+        let networkPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
@@ -163,8 +164,15 @@ describe('PendingWithdrawals', () => {
             const isNetworkToken = symbol === 'BNT';
 
             beforeEach(async () => {
-                ({ network, networkSettings, networkToken, networkTokenPool, pendingWithdrawals, poolCollection } =
-                    await createSystem());
+                ({
+                    network,
+                    networkSettings,
+                    networkToken,
+                    networkTokenPool,
+                    networkPoolToken,
+                    pendingWithdrawals,
+                    poolCollection
+                } = await createSystem());
 
                 reserveToken = await getTokenBySymbol(symbol, networkToken);
 
@@ -296,10 +304,20 @@ describe('PendingWithdrawals', () => {
                         let poolToken: PoolToken;
 
                         beforeEach(async () => {
-                            poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                            if (isNetworkToken) {
+                                poolToken = networkPoolToken;
+                            } else {
+                                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                            }
                         });
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
+                            await expect(initWithdrawal(poolToken, BigNumber.from(10))).to.be.revertedWith(
+                                'ERC20: transfer amount exceeds balance'
+                            );
+                        });
+
+                        it('should revert when attempting to withdraw an insufficient amount of pool tokens', async () => {
                             const providerBalance = await poolToken.balanceOf(providerAddress);
                             await expect(
                                 initWithdrawal(poolToken, providerBalance.add(BigNumber.from(1)))
@@ -310,7 +328,11 @@ describe('PendingWithdrawals', () => {
                             const amount = BigNumber.from(12345);
 
                             beforeEach(async () => {
-                                await poolCollection.mintT(providerAddress, poolToken.address, amount);
+                                if (isNetworkToken) {
+                                    await networkTokenPool.mintT(providerAddress, amount);
+                                } else {
+                                    await poolCollection.mintT(providerAddress, poolToken.address, amount);
+                                }
                             });
 
                             it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
@@ -351,10 +373,17 @@ describe('PendingWithdrawals', () => {
                 });
 
                 beforeEach(async () => {
-                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
 
-                    await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                    await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                        await networkTokenPool.mintT(provider1.address, amount);
+                        await networkTokenPool.mintT(provider2.address, amount);
+                    } else {
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
+                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                    }
                 });
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
@@ -454,10 +483,17 @@ describe('PendingWithdrawals', () => {
                 });
 
                 beforeEach(async () => {
-                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                    if (isNetworkToken) {
+                        poolToken = networkPoolToken;
 
-                    await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                    await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                        await networkTokenPool.mintT(provider1.address, amount);
+                        await networkTokenPool.mintT(provider2.address, amount);
+                    } else {
+                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
+                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
+                    }
                 });
 
                 it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
@@ -673,6 +709,14 @@ describe('PendingWithdrawals', () => {
 
                         it('should complete a withdrawal request', async () => {
                             await testCompleteWithdrawal();
+                        });
+
+                        it('should revert when attempting to cancel a completed withdrawal request', async () => {
+                            await network.completeWithdrawalT(contextId, provider.address, id);
+
+                            await expect(pendingWithdrawals.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
+                                'ERR_ACCESS_DENIED'
+                            );
                         });
                     });
                 });

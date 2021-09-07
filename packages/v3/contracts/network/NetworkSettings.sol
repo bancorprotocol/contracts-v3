@@ -59,7 +59,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
-     * @dev triggered when the minimum liquidity for trading amount is updated
+     * @dev triggered when the minimum liquidity for trading is updated
      */
     event MinLiquidityForTradingUpdated(uint256 prevLiquidity, uint256 newLiquidity);
 
