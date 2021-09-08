@@ -24,7 +24,7 @@ struct WithdrawalRequest {
 /**
  * @dev the data struct representing a completed withdrawal request
  */
-struct CompletedWithdrawalRequest {
+struct CompletedWithdrawal {
     IPoolToken poolToken; // the transferred pool token
     uint256 poolTokenAmount; // the transferred pool token amount
 }
@@ -120,5 +120,5 @@ interface IPendingWithdrawals is IUpgradeable {
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (CompletedWithdrawalRequest memory);
+    ) external returns (CompletedWithdrawal memory);
 }

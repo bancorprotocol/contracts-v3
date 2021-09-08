@@ -23,7 +23,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
@@ -233,12 +233,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(INetworkTokenPool initNetworkTokenPool)
+    function initialize(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
         external
         validAddress(address(initNetworkTokenPool))
+        validAddress(address(initPendingWithdrawals))
         initializer
     {
-        __BancorNetwork_init(initNetworkTokenPool);
+        __BancorNetwork_init(initNetworkTokenPool, initPendingWithdrawals);
     }
 
     // solhint-disable func-name-mixedcase
@@ -246,19 +247,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool) internal initializer {
+    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
+        internal
+        initializer
+    {
         __Owned_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initNetworkTokenPool);
+        __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetwork_init_unchained(INetworkTokenPool initNetworkTokenPool) internal initializer {
+    function __BancorNetwork_init_unchained(
+        INetworkTokenPool initNetworkTokenPool,
+        IPendingWithdrawals initPendingWithdrawals
+    ) internal initializer {
         _networkTokenPool = initNetworkTokenPool;
-        _pendingWithdrawals = initNetworkTokenPool.pendingWithdrawals();
+        _pendingWithdrawals = initPendingWithdrawals;
     }
 
     // solhint-enable func-name-mixedcase
@@ -504,6 +511,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         nonReentrant
         validAddress(address(reserveToken))
     {
+        require(reserveToken != IReserveToken(address(_networkToken)), "ERR_UNSUPPORTED_TOKEN");
         require(_liquidityPools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
 
         // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
@@ -530,11 +538,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
 
         // complete the withdrawal and claim the locked pool tokens
-        CompletedWithdrawalRequest memory completedRequest = _pendingWithdrawals.completeWithdrawal(
-            contextId,
-            provider,
-            id
-        );
+        CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _networkPoolToken) {
             _withdrawNetworkToken(contextId, provider, completedRequest);
@@ -581,7 +585,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function _withdrawNetworkToken(
         bytes32 contextId,
         address provider,
-        CompletedWithdrawalRequest memory completedRequest
+        CompletedWithdrawal memory completedRequest
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -610,7 +614,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             baseTokenAmount: 0,
             externalProtectionBaseTokenAmount: 0,
             networkTokenAmount: amounts.networkTokenAmount,
-            withdrawalFeeAmount: amounts.networkTokenWithdrawalFeeAmount
+            withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
 
         emit TotalLiquidityUpdated({
@@ -628,15 +632,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     function _withdrawBaseToken(
         bytes32 contextId,
         address provider,
-        CompletedWithdrawalRequest memory completedRequest
+        CompletedWithdrawal memory completedRequest
     ) private {
         IReserveToken baseToken = completedRequest.poolToken.reserveToken();
 
-        // get the pool collection that managed this pool
+        // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
-        // make sure that minting is enabled
-        require(_networkTokenPool.isMintingEnabled(baseToken, poolCollection), "ERR_MINTING_DISABLED");
+        // ensure that network token liquidity is enabled
+        require(
+            _networkTokenPool.isNetworkLiquidityEnabled(baseToken, poolCollection),
+            "ERR_NETWORK_LIQUIDITY_DISABLED"
+        );
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -658,7 +665,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
         if (amounts.networkTokenArbitrageAmount > 0) {
-            _networkPoolToken.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
+            _networkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
         }
         // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
         else if (amounts.networkTokenArbitrageAmount < 0) {
@@ -668,7 +675,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
         // provider
         if (amounts.networkTokenAmountToMintForProvider > 0) {
-            _networkPoolToken.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
+            _networkTokenPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the vault - remove the tokens from the vault and send
@@ -714,23 +721,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             actualBalance: baseToken.balanceOf(address(_vault))
         });
 
-        if (amounts.baseTokenAmountToDeductFromLiquidity > 0) {
-            emit TradingLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                reserveToken: baseToken,
-                liquidity: poolLiquidity.baseTokenTradingLiquidity
-            });
-        }
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            reserveToken: baseToken,
+            liquidity: poolLiquidity.baseTokenTradingLiquidity
+        });
 
-        if (amounts.networkTokenAmountToMintForProvider > 0) {
-            emit TradingLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                reserveToken: IReserveToken(address(_networkToken)),
-                liquidity: poolLiquidity.networkTokenTradingLiquidity
-            });
-        }
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            reserveToken: IReserveToken(address(_networkToken)),
+            liquidity: poolLiquidity.networkTokenTradingLiquidity
+        });
     }
 
     /**
