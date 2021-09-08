@@ -11,4 +11,8 @@ contract TestERC20Token is ERC20 {
     ) ERC20(name, symbol) {
         _mint(msg.sender, totalSupply);
     }
+
+    function setupDecimals(uint8 decimals) external {
+        _setupDecimals(decimals);
+    }
 }

@@ -13,6 +13,7 @@ import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
+import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 
 struct PoolLiquidity {
     uint128 baseTokenTradingLiquidity; // the base token trading liquidity
@@ -63,9 +64,9 @@ interface IPoolCollection is IVersioned {
     function settings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the custom symbol overrides for a given reserve token
+     * @dev returns the pool token factory contract
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
+    function poolTokenFactory() external view returns (IPoolTokenFactory);
 
     /**
      * @dev returns the default trading fee (in units of PPM)
