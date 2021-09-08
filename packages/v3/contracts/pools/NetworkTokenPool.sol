@@ -395,15 +395,19 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
-        // calculate the pool token amount to burn
-        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), currentStakedBalance);
+        // calculate the renounced amount to deduct from both the staked balance and pool minted amount
+        uint256 currentMintedAmount = _mintedAmounts[pool];
+        uint256 renouncedAmount = Math.min(currentMintedAmount, networkTokenAmount);
 
-        // update the staked balance
-        _stakedBalance = currentStakedBalance.sub(networkTokenAmount);
+        // calculate the pool token amount to burn
+        uint256 poolTokenAmount = MathEx.mulDivF(renouncedAmount, _poolToken.totalSupply(), currentStakedBalance);
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
         // request shouldn’t fail (and the minted amount cannot get negative)
-        _mintedAmounts[pool] = MathEx.subMax0(_mintedAmounts[pool], networkTokenAmount);
+        _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
+
+        // update the staked balance
+        _stakedBalance = currentStakedBalance.sub(renouncedAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
