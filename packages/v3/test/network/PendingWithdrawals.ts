@@ -13,7 +13,7 @@ import { createSystem, createPool } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { getTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet, Signer, utils } from 'ethers';
@@ -174,7 +174,7 @@ describe('PendingWithdrawals', () => {
                     poolCollection
                 } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
 
                 await pendingWithdrawals.setTime(await latest());
             });
@@ -312,8 +312,8 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
-                            await expect(initWithdrawal(poolToken, BigNumber.from(10))).to.be.revertedWith(
-                                'ERC20: transfer amount exceeds balance'
+                            await expect(initWithdrawal(poolToken, BigNumber.from(0))).to.be.revertedWith(
+                                'ERR_ZERO_VALUE'
                             );
                         });
 
