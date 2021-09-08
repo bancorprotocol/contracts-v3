@@ -868,27 +868,23 @@ describe('BancorNetwork', () => {
                                             await getBalance(token, vault.address)
                                         );
 
-                                    if (withdrawalAmounts.baseTokenAmountToDeductFromLiquidity.gt(BigNumber.from(0))) {
-                                        await expect(res)
-                                            .to.emit(network, 'TradingLiquidityUpdated')
-                                            .withArgs(
-                                                contextId,
-                                                token.address,
-                                                token.address,
-                                                poolLiquidity.baseTokenTradingLiquidity
-                                            );
-                                    }
+                                    await expect(res)
+                                        .to.emit(network, 'TradingLiquidityUpdated')
+                                        .withArgs(
+                                            contextId,
+                                            token.address,
+                                            token.address,
+                                            poolLiquidity.baseTokenTradingLiquidity
+                                        );
 
-                                    if (withdrawalAmounts.networkTokenAmountToMintForProvider.gt(BigNumber.from(0))) {
-                                        await expect(res)
-                                            .to.emit(network, 'TradingLiquidityUpdated')
-                                            .withArgs(
-                                                contextId,
-                                                token.address,
-                                                networkToken.address,
-                                                poolLiquidity.networkTokenTradingLiquidity
-                                            );
-                                    }
+                                    await expect(res)
+                                        .to.emit(network, 'TradingLiquidityUpdated')
+                                        .withArgs(
+                                            contextId,
+                                            token.address,
+                                            networkToken.address,
+                                            poolLiquidity.networkTokenTradingLiquidity
+                                        );
 
                                     expect(await poolToken.totalSupply()).to.equal(
                                         prevPoolTokenTotalSupply.sub(poolTokenAmount)

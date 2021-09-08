@@ -652,7 +652,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
         // ensure that network token liquidity is enabled
-        require(_networkTokenPool.isNetworkLiquidityEnabled(baseToken, poolCollection), "ERR_NETWORK_LIQUIDITY_DISABLED");
+        require(
+            _networkTokenPool.isNetworkLiquidityEnabled(baseToken, poolCollection),
+            "ERR_NETWORK_LIQUIDITY_DISABLED"
+        );
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -730,23 +733,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             actualBalance: baseToken.balanceOf(address(_vault))
         });
 
-        if (amounts.baseTokenAmountToDeductFromLiquidity > 0) {
-            emit TradingLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                reserveToken: baseToken,
-                liquidity: poolLiquidity.baseTokenTradingLiquidity
-            });
-        }
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            reserveToken: baseToken,
+            liquidity: poolLiquidity.baseTokenTradingLiquidity
+        });
 
-        if (amounts.networkTokenAmountToMintForProvider > 0) {
-            emit TradingLiquidityUpdated({
-                contextId: contextId,
-                pool: baseToken,
-                reserveToken: IReserveToken(address(_networkToken)),
-                liquidity: poolLiquidity.networkTokenTradingLiquidity
-            });
-        }
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: baseToken,
+            reserveToken: IReserveToken(address(_networkToken)),
+            liquidity: poolLiquidity.networkTokenTradingLiquidity
+        });
     }
 
     /**
