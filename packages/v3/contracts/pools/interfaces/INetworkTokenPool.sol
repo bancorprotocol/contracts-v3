@@ -85,9 +85,9 @@ interface INetworkTokenPool is IUpgradeable {
     function mintedAmount(IReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether minting is enabled for the provided pool
+     * @dev returns whether network token liquidity minting is enabled for the provided pool
      */
-    function isMintingEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
 
     /**
      * @dev returns the available co-investment network token liquidity for a given pool

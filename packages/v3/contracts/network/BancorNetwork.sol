@@ -651,8 +651,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(baseToken);
 
-        // make sure that minting is enabled
-        require(_networkTokenPool.isMintingEnabled(baseToken, poolCollection), "ERR_MINTING_DISABLED");
+        // ensure that network token liquidity is enabled
+        require(_networkTokenPool.isNetworkLiquidityEnabled(baseToken, poolCollection), "ERR_NETWORK_LIQUIDITY_DISABLED");
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network

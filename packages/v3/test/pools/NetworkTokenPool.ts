@@ -196,15 +196,16 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should return false for an invalid pool', async () => {
-            expect(await networkTokenPool.isMintingEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
+            expect(await networkTokenPool.isNetworkLiquidityEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
         });
 
         it('should return false for an invalid pool collection', async () => {
-            expect(await networkTokenPool.isMintingEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
+            expect(await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
         });
 
         it('should return false for a non-whitelisted token', async () => {
-            expect(await networkTokenPool.isMintingEnabled(reserveToken.address, poolCollection.address)).to.be.false;
+            expect(await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to.be
+                .false;
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -238,8 +239,9 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return false', async () => {
-                    expect(await networkTokenPool.isMintingEnabled(reserveToken.address, poolCollection.address)).to.be
-                        .false;
+                    expect(
+                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)
+                    ).to.be.false;
                 });
             });
 
@@ -267,15 +269,17 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return true', async () => {
-                    expect(await networkTokenPool.isMintingEnabled(reserveToken.address, poolCollection.address)).to.be
-                        .true;
+                    expect(
+                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)
+                    ).to.be.true;
                 });
 
                 it('should return false for another pool collection', async () => {
                     const poolCollection2 = await createPoolCollection(network);
 
-                    expect(await networkTokenPool.isMintingEnabled(reserveToken.address, poolCollection2.address)).to.be
-                        .false;
+                    expect(
+                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)
+                    ).to.be.false;
                 });
             });
         });
@@ -416,7 +420,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(2_000_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_MINTING_LIMIT_EXCEEDED'
+                        'ERR_NETWORK_LIQUIDITY_DISABLED'
                     );
                 }
             });
@@ -437,7 +441,7 @@ describe('NetworkTokenPool', () => {
                     ]) {
                         await expect(
                             network.requestLiquidityT(contextId, reserveToken.address, amount)
-                        ).to.be.revertedWith('ERR_MINTING_LIMIT_EXCEEDED');
+                        ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_DISABLED');
                     }
                 });
             });
@@ -456,7 +460,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(1_500_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_MINTING_LIMIT_EXCEEDED'
+                        'ERR_NETWORK_LIQUIDITY_DISABLED'
                     );
                 }
             });

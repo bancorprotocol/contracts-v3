@@ -211,7 +211,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function isMintingEnabled(IReserveToken pool, IPoolCollection poolCollection)
+    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection)
         external
         view
         override

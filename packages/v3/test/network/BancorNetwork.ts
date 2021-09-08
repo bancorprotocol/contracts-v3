@@ -936,7 +936,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'ERR_MINTING_DISABLED'
+                                            'ERR_NETWORK_LIQUIDITY_DISABLED'
                                         );
                                     });
                                 });
@@ -967,7 +967,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'ERR_MINTING_DISABLED'
+                                            'ERR_NETWORK_LIQUIDITY_DISABLED'
                                         );
                                     });
                                 });
