@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
 import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
-import { TokenWithAddress, getTokenBySymbol } from '../helpers/Utils';
+import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -141,7 +141,7 @@ describe('PoolCollection', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
             });
 
             it('should revert when attempting to create a pool from a non-network', async () => {
@@ -183,9 +183,7 @@ describe('PoolCollection', () => {
                     await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
                         .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingEnabled')
-                        .withArgs(reserveToken.address, pool.tradingEnabled);
+                    await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
                     await expect(res)
                         .to.emit(poolCollection, 'DepositingEnabled')
                         .withArgs(reserveToken.address, pool.depositingEnabled);
@@ -229,14 +227,6 @@ describe('PoolCollection', () => {
                 testCreatePool(symbol);
             });
         }
-
-        it('should revert when attempting to create a pool for the network token', async () => {
-            const { network, networkToken, poolCollection } = await createSystem();
-
-            await expect(network.createPoolT(poolCollection.address, networkToken.address)).to.be.revertedWith(
-                'ERR_TOKEN_NOT_WHITELISTED'
-            );
-        });
     });
 
     describe('pool settings', () => {

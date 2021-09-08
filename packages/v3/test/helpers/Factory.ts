@@ -3,7 +3,6 @@ import {
     BancorNetwork,
     BancorVault,
     NetworkSettings,
-    PendingWithdrawals,
     PoolCollection,
     PoolToken,
     PoolTokenFactory,
@@ -119,7 +118,6 @@ export const createPoolCollection = async (network: string | BaseContract, poolT
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
-    pendingWithdrawals: PendingWithdrawals,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
@@ -127,7 +125,7 @@ const createNetworkTokenPoolUninitialized = async (
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, pendingWithdrawals.address, networkPoolToken.address]
+        ctorArgs: [network.address, networkPoolToken.address]
     });
 
     await networkPoolToken.acceptOwnership();
@@ -175,7 +173,6 @@ export const createSystem = async () => {
     });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
-        pendingWithdrawals,
         vault,
         networkPoolToken,
         networkTokenGovernance,
@@ -186,7 +183,7 @@ export const createSystem = async () => {
 
     const poolCollection = await createPoolCollection(network, poolTokenFactory);
 
-    await network.initialize(networkTokenPool.address);
+    await network.initialize(networkTokenPool.address, pendingWithdrawals.address);
 
     await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
