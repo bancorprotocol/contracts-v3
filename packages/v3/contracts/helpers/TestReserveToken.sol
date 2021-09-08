@@ -17,6 +17,10 @@ contract TestReserveToken {
         return reserveToken.symbol();
     }
 
+    function decimals(IReserveToken reserveToken) external view returns (uint8) {
+        return reserveToken.decimals();
+    }
+
     function balanceOf(IReserveToken reserveToken, address account) external view returns (uint256) {
         return reserveToken.balanceOf(account);
     }

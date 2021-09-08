@@ -1,21 +1,22 @@
 import Contracts from '../../components/Contracts';
 import {
-    TestBancorNetwork,
-    TestNetworkTokenPool,
-    TestERC20Token,
+    BancorVault,
     NetworkSettings,
-    TestPoolCollection,
     PoolToken,
-    BancorVault
+    PoolTokenFactory,
+    TestBancorNetwork,
+    TestERC20Token,
+    TestNetworkTokenPool,
+    TestPoolCollection
 } from '../../typechain';
 import {
-    NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
-    NETWORK_TOKEN_POOL_TOKEN_NAME,
     FEE_TYPES,
-    ZERO_ADDRESS,
-    PPM_RESOLUTION
+    NETWORK_TOKEN_POOL_TOKEN_NAME,
+    NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
+    PPM_RESOLUTION,
+    ZERO_ADDRESS
 } from '../helpers/Constants';
-import { createSystem, createPool, createPoolCollection } from '../helpers/Factory';
+import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
@@ -186,11 +187,12 @@ describe('NetworkTokenPool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkTokenPool: TestNetworkTokenPool;
+        let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkTokenPool, poolCollection } = await createSystem());
+            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
         });
@@ -275,7 +277,7 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return false for another pool collection', async () => {
-                    const poolCollection2 = await createPoolCollection(network);
+                    const poolCollection2 = await createPoolCollection(network, poolTokenFactory);
 
                     expect(
                         await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)
