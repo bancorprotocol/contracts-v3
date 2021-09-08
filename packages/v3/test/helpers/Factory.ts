@@ -3,10 +3,10 @@ import {
     BancorNetwork,
     BancorVault,
     NetworkSettings,
-    PoolCollection,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
+    TestPoolCollection,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
@@ -207,7 +207,7 @@ export const createPool = async (
     reserveToken: TokenWithAddress,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: PoolCollection
+    poolCollection: TestPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 

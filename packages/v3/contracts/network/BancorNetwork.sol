@@ -416,6 +416,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      */
     function removePoolCollection(IPoolCollection poolCollection, IPoolCollection newLatestPoolCollection)
         external
+        validAddress(address(poolCollection))
         onlyOwner
         nonReentrant
     {
@@ -423,7 +424,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
 
         // verify that no pools are associated with the specified pool collection
-        _verifyEmptyPoolCollection(poolCollection);
+        require(poolCollection.poolCount() == 0, "ERR_COLLECTION_IS_NOT_EMPTY");
 
         require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
 
@@ -576,19 +577,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             address(poolCollection) == address(0) || _poolCollections.contains(address(poolCollection)),
             "ERR_COLLECTION_DOES_NOT_EXIST"
         );
-    }
-
-    /**
-     * @dev verifies that no pools are associated with the specified pool collection
-     */
-    function _verifyEmptyPoolCollection(IPoolCollection poolCollection) private view {
-        uint256 length = _liquidityPools.length();
-        for (uint256 i = 0; i < length; i++) {
-            require(
-                _collectionByPool[IReserveToken(_liquidityPools.at(i))] != poolCollection,
-                "ERR_COLLECTION_IS_NOT_EMPTY"
-            );
-        }
     }
 
     /**

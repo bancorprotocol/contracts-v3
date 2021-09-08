@@ -390,7 +390,7 @@ describe('BancorNetwork', () => {
                 it('should revert when attempting to remove a non-existing pool collection', async () => {
                     await expect(
                         network.removePoolCollection(ZERO_ADDRESS, newPoolCollection.address)
-                    ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                     const otherCollection = await createPoolCollection(network, poolTokenFactory);
                     await expect(
