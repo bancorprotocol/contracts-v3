@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
 import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
-import { TokenWithAddress, getTokenBySymbol } from '../helpers/Utils';
+import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -164,7 +164,7 @@ describe('PoolCollection', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
             });
 
             it('should revert when attempting to create a pool from a non-network', async () => {
@@ -247,6 +247,25 @@ describe('PoolCollection', () => {
                 });
 
                 context('with a token symbol override', () => {
+                    const newSymbol = 'TKN2';
+
+                    beforeEach(async () => {
+                        await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    });
+
+                    it('should create a pool', async () => {
+                        await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                        const pool = await poolCollection.poolData(reserveToken.address);
+
+                        const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                        expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                        expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
+                        expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    });
+                });
+
+                context('with a token decimals override', () => {
                     const newSymbol = 'TKN2';
 
                     beforeEach(async () => {
