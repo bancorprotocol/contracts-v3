@@ -312,8 +312,8 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
-                            await expect(initWithdrawal(poolToken, BigNumber.from(10))).to.be.revertedWith(
-                                'ERC20: transfer amount exceeds balance'
+                            await expect(initWithdrawal(poolToken, BigNumber.from(0))).to.be.revertedWith(
+                                'ERR_ZERO_VALUE'
                             );
                         });
 
