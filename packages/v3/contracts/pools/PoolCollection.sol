@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
@@ -21,9 +22,9 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
+import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
 import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
 
-import { PoolToken } from "./PoolToken.sol";
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 /**
@@ -37,14 +38,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
-    string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
-    string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
-    string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
-
-    // withdrawal-related input which can be retrieved from the pool
+    // withdrawal-related input data
     struct PoolWithdrawalParams {
         uint256 networkTokenAvgTradingLiquidity;
         uint256 baseTokenAvgTradingLiquidity;
@@ -68,11 +66,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) internal _pools;
+    // the pool token factory contract
+    IPoolTokenFactory private immutable _poolTokenFactory;
 
-    // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
-    mapping(IReserveToken => string) private _tokenSymbolOverrides;
+    // a mapping between reserve tokens and their pools
+    mapping(IReserveToken => Pool) internal _poolData;
+
+    // the set of all pools which are managed by this pool collection
+    EnumerableSetUpgradeable.AddressSet private _pools;
 
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
@@ -115,12 +116,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
+    constructor(IBancorNetwork initNetwork, IPoolTokenFactory initPoolTokenFactory)
+        validAddress(address(initNetwork))
+        validAddress(address(initPoolTokenFactory))
+    {
         __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
         _settings = initNetwork.settings();
+        _poolTokenFactory = initPoolTokenFactory;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -166,19 +171,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view override returns (string memory) {
-        return _tokenSymbolOverrides[reserveToken];
-    }
-
-    /**
-     * @dev sets the custom symbol overrides for a given reserve token
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setTokenSymbolOverride(IReserveToken reserveToken, string calldata symbolOverride) external onlyOwner {
-        _tokenSymbolOverrides[reserveToken] = symbolOverride;
+    function poolTokenFactory() external view override returns (IPoolTokenFactory) {
+        return _poolTokenFactory;
     }
 
     /**
@@ -186,6 +180,25 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function defaultTradingFeePPM() external view override returns (uint32) {
         return _defaultTradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function pools() external view override returns (IReserveToken[] memory) {
+        uint256 length = _pools.length();
+        IReserveToken[] memory list = new IReserveToken[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = IReserveToken(_pools.at(i));
+        }
+        return list;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function poolCount() external view override returns (uint256) {
+        return _pools.length();
     }
 
     /**
@@ -208,10 +221,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
-        require(!_validPool(_pools[reserveToken]), "ERR_POOL_ALREADY_EXISTS");
+        require(_pools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
 
-        (string memory name, string memory symbol) = _poolTokenMetadata(reserveToken);
-        PoolToken newPoolToken = new PoolToken(name, symbol, reserveToken);
+        IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
+
+        newPoolToken.acceptOwnership();
 
         Pool memory newPool = Pool({
             poolToken: newPoolToken,
@@ -229,12 +243,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             })
         });
 
-        _pools[reserveToken] = newPool;
+        _poolData[reserveToken] = newPool;
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
+        // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
+        // pool is disabled
+        emit TradingEnabled({ pool: reserveToken, newStatus: false });
+
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
-        emit TradingEnabled({ pool: reserveToken, newStatus: newPool.tradingEnabled });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
         emit InitialRateUpdated({
             pool: reserveToken,
@@ -247,22 +264,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolData(IReserveToken reserveToken) external view override returns (Pool memory) {
-        return _pools[reserveToken];
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
     function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
-        return _validPool(_pools[reserveToken]);
+        return _validPool(_poolData[reserveToken]);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
     function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
-        Pool memory pool = _pools[reserveToken];
+        Pool memory pool = _poolData[reserveToken];
         if (!_validPool(pool)) {
             return false;
         }
@@ -283,7 +293,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @inheritdoc IPoolCollection
      */
     function poolLiquidity(IReserveToken reserveToken) external view override returns (PoolLiquidity memory) {
-        return _pools[reserveToken].liquidity;
+        return _poolData[reserveToken].liquidity;
     }
 
     /**
@@ -436,7 +446,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             _withdrawalAmounts(
                 params.networkTokenAvgTradingLiquidity,
                 params.baseTokenAvgTradingLiquidity,
-                MathEx.max0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+                MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
                 params.basePoolTokenTotalSupply,
                 params.baseTokenStakedAmount,
                 externalProtectionWalletBalance,
@@ -450,8 +460,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns withdrawal-related input which can be retrieved from the pool
      */
     function _poolWithdrawalParams(IReserveToken baseToken) private view returns (PoolWithdrawalParams memory) {
-        Pool memory pool = _pools[baseToken];
+        Pool memory pool = _poolData[baseToken];
 
+        // please note that since both networkTokenTradingLiquidity and baseTokenTradingLiquidity are uint128, their
+        // product won't overflow
         uint256 prod = uint256(pool.liquidity.networkTokenTradingLiquidity) *
             uint256(pool.liquidity.baseTokenTradingLiquidity);
 
@@ -478,8 +490,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - updates the pool's base token trading liquidity
      * - updates the pool's network token trading liquidity
      * - updates the pool's trading liquidity product
-     * - emits an event if the pool's network token trading liquidity
-     *   has crossed the minimum threshold (either above it or below it)
+     * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
+     * or below it)
      */
     function _postWithdrawal(
         IReserveToken baseToken,
@@ -487,15 +499,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenTradingLiquidityDelta,
         uint256 networkTokenTradingLiquidityDelta
     ) private {
-        Pool storage pool = _pools[baseToken];
+        Pool storage pool = _poolData[baseToken];
         uint256 totalSupply = pool.poolToken.totalSupply();
 
         // all of these are at most MAX_UINT128, but we store them as uint256 in order to avoid 128-bit multiplication
         // overflows
         uint256 baseTokenCurrTradingLiquidity = pool.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = pool.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNextTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNextTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
+        uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
+        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
             networkTokenTradingLiquidityDelta
         );
 
@@ -505,16 +517,16 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             totalSupply - basePoolTokenAmount,
             totalSupply
         );
-        pool.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNextTradingLiquidity);
-        pool.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNextTradingLiquidity);
-        pool.liquidity.tradingLiquidityProduct = baseTokenNextTradingLiquidity * networkTokenNextTradingLiquidity;
+        pool.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNewTradingLiquidity);
+        pool.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNewTradingLiquidity);
+        pool.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
 
         if (pool.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
-            bool nextEnabled = networkTokenNextTradingLiquidity >= minLiquidityForTrading;
-            if (nextEnabled != currEnabled) {
-                emit TradingEnabled({ pool: baseToken, newStatus: nextEnabled });
+            bool newEnabled = networkTokenNewTradingLiquidity >= minLiquidityForTrading;
+            if (newEnabled != currEnabled) {
+                emit TradingEnabled({ pool: baseToken, newStatus: newEnabled });
             }
         }
     }
@@ -522,26 +534,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns all amounts related to base token withdrawal, where each amount includes the withdrawal fee, which
      * may need to be deducted (depending on usage)
-     *
-     * input:
-     * network token trading liquidity
-     * base token trading liquidity
-     * base token excess amount
-     * base pool token total supply
-     * base token staked amount
-     * base token external protection wallet balance
-     * trade fee in ppm units
-     * withdrawal fee in ppm units
-     * base pool token withdrawal amount
-     *
-     * output:
-     * base token amount to transfer from the vault to the provider
-     * network token amount to mint directly for the provider
-     * base token amount to deduct from the trading liquidity
-     * base token amount to transfer from the external protection wallet to the provider
-     * network token amount to deduct from the trading liquidity and burn in the vault
-     * network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-     * arbitrage action - burn network tokens in the pool or mint network tokens in the pool or neither
      */
     function _withdrawalAmounts(
         uint256 networkTokenLiquidity,
@@ -611,8 +603,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             );
 
             uint256 networkTokenArbitrageAmount = _posArbitrage(
-                MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                 basePoolTokenTotalSupply,
                 baseTokenOffsetAmount,
                 tradeFeePPM,
@@ -637,8 +629,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 );
 
                 amounts.networkTokenArbitrageAmount = _negArbitrage(
-                    MathEx.max0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                    MathEx.max0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
+                    MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
+                    MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
                     basePoolTokenTotalSupply,
                     baseTokenOffsetAmount,
                     tradeFeePPM,
@@ -900,12 +892,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 baseTokenShare,
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
-        Fraction memory y = _max0(quotients[0]);
+        Fraction memory y = _subMax0(quotients[0]);
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
             MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
         ) {
-            Fraction memory z = _max0(quotients[1]);
+            Fraction memory z = _subMax0(quotients[1]);
             return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
         }
         return 0;
@@ -914,7 +906,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
      */
-    function _max0(Quotient memory q) internal pure returns (Fraction memory) {
+    function _subMax0(Quotient memory q) internal pure returns (Fraction memory) {
         if (q.n1 > q.n2 && q.d1 > q.d2) {
             // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
@@ -942,26 +934,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the name and the symbol of the pool token using either the custom token symbol override or by
-     * fetching it from the reserve token itself
-     */
-    function _poolTokenMetadata(IReserveToken reserveToken) private view returns (string memory, string memory) {
-        string memory customSymbol = _tokenSymbolOverrides[reserveToken];
-        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
-
-        string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
-        string memory name = string(
-            abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
-        );
-
-        return (name, symbol);
-    }
-
-    /**
      * @dev returns a storage reference to pool data
      */
     function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
-        Pool storage p = _pools[pool];
+        Pool storage p = _poolData[pool];
         require(_validPool(p), "ERR_POOL_DOES_NOT_EXIST");
 
         return p;

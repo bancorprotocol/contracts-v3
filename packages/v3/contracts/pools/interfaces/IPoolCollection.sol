@@ -13,6 +13,7 @@ import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
+import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 
 struct PoolLiquidity {
     uint128 baseTokenTradingLiquidity; // the base token trading liquidity
@@ -34,13 +35,13 @@ struct Pool {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromVaultToProvider; // base token amount to transfer from the vault to the provider
-    uint256 networkTokenAmountToMintForProvider; // network token amount to mint directly for the provider
-    uint256 baseTokenAmountToDeductFromLiquidity; // base token amount to deduct from the trading liquidity
-    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // base token amount to transfer from the external protection wallet to the provider
-    uint256 networkTokenAmountToDeductFromLiquidity; // network token amount to deduct from the trading liquidity and burn in the vault
-    int256 networkTokenArbitrageAmount; // network token amount to burn or mint in the pool, in order to create an arbitrage incentive
-    uint256 baseTokenWithdrawalFeeAmount; // the withdrawal fee base token amount
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
+    uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // the base token amount to transfer from the external protection wallet to the provider
+    uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
+    uint256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the vault
+    uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
+    int256 networkTokenArbitrageAmount; // the network token amount to burn or mint in the pool, in order to create an arbitrage incentive
 }
 
 /**
@@ -63,14 +64,24 @@ interface IPoolCollection is IVersioned {
     function settings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the custom symbol overrides for a given reserve token
+     * @dev returns the pool token factory contract
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
+    function poolTokenFactory() external view returns (IPoolTokenFactory);
 
     /**
      * @dev returns the default trading fee (in units of PPM)
      */
     function defaultTradingFeePPM() external view returns (uint32);
+
+    /**
+     * @dev returns all the pools which are managed by this pool collection
+     */
+    function pools() external view returns (IReserveToken[] memory);
+
+    /**
+     * @dev returns the number of all the pools which are managed by this pool collection
+     */
+    function poolCount() external view returns (uint256);
 
     /**
      * @dev returns whether a pool is valid
@@ -86,11 +97,6 @@ interface IPoolCollection is IVersioned {
      * @dev returns the overall liquidity in the pool
      */
     function poolLiquidity(IReserveToken reserveToken) external view returns (PoolLiquidity memory);
-
-    /**
-     * @dev returns the pool data for a given reserve token
-     */
-    function poolData(IReserveToken reserveToken) external view returns (Pool memory);
 
     /**
      * @dev creates a new pool

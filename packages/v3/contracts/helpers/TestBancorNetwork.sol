@@ -13,7 +13,7 @@ import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals, CompletedWithdrawalRequest } from "../network/interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IPoolCollection, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
@@ -46,7 +46,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (CompletedWithdrawalRequest memory) {
+    ) external returns (CompletedWithdrawal memory) {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 

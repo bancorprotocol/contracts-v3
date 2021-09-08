@@ -1,22 +1,23 @@
 import Contracts from '../../components/Contracts';
 import {
-    TestBancorNetwork,
-    NetworkSettings,
-    TestPoolCollection,
-    PoolToken,
-    TestERC20Token,
-    TestPendingWithdrawals,
-    TokenHolderUpgradeable,
-    TestNetworkTokenPool,
     BancorVault,
-    TokenGovernance
+    NetworkSettings,
+    PoolToken,
+    PoolTokenFactory,
+    TestBancorNetwork,
+    TestERC20Token,
+    TestNetworkTokenPool,
+    TestPendingWithdrawals,
+    TestPoolCollection,
+    TokenGovernance,
+    TokenHolderUpgradeable
 } from '../../typechain';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { TokenWithAddress, getBalance, getTokenBySymbol, getTransactionCost, transfer } from '../helpers/Utils';
+import { TokenWithAddress, getBalance, createTokenBySymbol, getTransactionCost, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -36,16 +37,22 @@ describe('BancorNetwork', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { network, networkTokenPool } = await createSystem();
+            const { network, networkTokenPool, pendingWithdrawals } = await createSystem();
 
-            await expect(network.initialize(networkTokenPool.address)).to.be.revertedWith(
+            await expect(network.initialize(networkTokenPool.address, pendingWithdrawals.address)).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault, networkPoolToken } =
-                await createSystem();
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                vault,
+                networkPoolToken,
+                pendingWithdrawals
+            } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
@@ -55,7 +62,32 @@ describe('BancorNetwork', () => {
                 networkPoolToken.address
             );
 
-            await expect(network.initialize(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(network.initialize(ZERO_ADDRESS, pendingWithdrawals.address)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
+        });
+
+        it('should revert when attempting to initialize with an invalid pending withdrawals contract', async () => {
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                vault,
+                networkPoolToken,
+                networkTokenPool
+            } = await createSystem();
+
+            const network = await Contracts.BancorNetwork.deploy(
+                networkTokenGovernance.address,
+                govTokenGovernance.address,
+                networkSettings.address,
+                vault.address,
+                networkPoolToken.address
+            );
+
+            await expect(network.initialize(networkTokenPool.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'ERR_INVALID_ADDRESS'
+            );
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
@@ -235,11 +267,12 @@ describe('BancorNetwork', () => {
 
     describe('pool collections', () => {
         let network: TestBancorNetwork;
+        let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolType: number;
 
         beforeEach(async () => {
-            ({ network, poolCollection } = await createSystem());
+            ({ network, poolTokenFactory, poolCollection } = await createSystem());
 
             poolType = await poolCollection.poolType();
         });
@@ -285,7 +318,7 @@ describe('BancorNetwork', () => {
                 it('should add a new pool collection with the same type', async () => {
                     expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                    const newPoolCollection = await createPoolCollection(network);
+                    const newPoolCollection = await createPoolCollection(network, poolTokenFactory);
                     const poolType = await newPoolCollection.poolType();
 
                     const res = await network.addPoolCollection(newPoolCollection.address);
@@ -312,7 +345,7 @@ describe('BancorNetwork', () => {
             it('should add another new pool collection with the same type', async () => {
                 expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
-                const newPoolCollection = await createPoolCollection(network);
+                const newPoolCollection = await createPoolCollection(network, poolTokenFactory);
                 const poolType = await newPoolCollection.poolType();
 
                 const res = await network.addPoolCollection(newPoolCollection.address);
@@ -328,7 +361,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                const newPoolCollection = await createPoolCollection(network);
+                const newPoolCollection = await createPoolCollection(network, poolTokenFactory);
                 await expect(
                     network.removePoolCollection(poolCollection.address, newPoolCollection.address)
                 ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -339,8 +372,8 @@ describe('BancorNetwork', () => {
                 let lastCollection: TestPoolCollection;
 
                 beforeEach(async () => {
-                    newPoolCollection = await createPoolCollection(network);
-                    lastCollection = await createPoolCollection(network);
+                    newPoolCollection = await createPoolCollection(network, poolTokenFactory);
+                    lastCollection = await createPoolCollection(network, poolTokenFactory);
 
                     await network.addPoolCollection(newPoolCollection.address);
                     await network.addPoolCollection(lastCollection.address);
@@ -357,9 +390,9 @@ describe('BancorNetwork', () => {
                 it('should revert when attempting to remove a non-existing pool collection', async () => {
                     await expect(
                         network.removePoolCollection(ZERO_ADDRESS, newPoolCollection.address)
-                    ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
-                    const otherCollection = await createPoolCollection(network);
+                    const otherCollection = await createPoolCollection(network, poolTokenFactory);
                     await expect(
                         network.removePoolCollection(otherCollection.address, newPoolCollection.address)
                     ).to.be.revertedWith('ERR_COLLECTION_DOES_NOT_EXIST');
@@ -421,7 +454,7 @@ describe('BancorNetwork', () => {
             let newPoolCollection: TestPoolCollection;
 
             beforeEach(async () => {
-                newPoolCollection = await createPoolCollection(network);
+                newPoolCollection = await createPoolCollection(network, poolTokenFactory);
 
                 await network.addPoolCollection(newPoolCollection.address);
                 await network.addPoolCollection(poolCollection.address);
@@ -438,7 +471,7 @@ describe('BancorNetwork', () => {
                     'ERR_INVALID_ADDRESS'
                 );
 
-                const newPoolCollection2 = await createPoolCollection(network);
+                const newPoolCollection2 = await createPoolCollection(network, poolTokenFactory);
                 await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWith(
                     'ERR_COLLECTION_DOES_NOT_EXIST'
                 );
@@ -483,7 +516,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
 
                 poolType = await poolCollection.poolType();
             });
@@ -540,6 +573,14 @@ describe('BancorNetwork', () => {
                 testCreatePool(symbol);
             });
         }
+
+        it('should revert when attempting to create a pool for the network token', async () => {
+            const { network, networkToken } = await createSystem();
+
+            await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
+                'ERR_UNSUPPORTED_TOKEN'
+            );
+        });
     });
 
     describe('withdraw', () => {
@@ -608,7 +649,7 @@ describe('BancorNetwork', () => {
                 beforeEach(async () => {
                     [deployer, provider] = await ethers.getSigners();
 
-                    token = await getTokenBySymbol(symbol, networkToken);
+                    token = await createTokenBySymbol(symbol, networkToken);
 
                     await transfer(deployer, token, vault.address, toWei(BigNumber.from(100_000)));
                     await transfer(deployer, token, externalProtectionWallet.address, toWei(BigNumber.from(500_000)));
@@ -755,7 +796,7 @@ describe('BancorNetwork', () => {
                                             BigNumber.from(0),
                                             BigNumber.from(0),
                                             withdrawalAmounts.networkTokenAmount,
-                                            withdrawalAmounts.networkTokenWithdrawalFeeAmount
+                                            withdrawalAmounts.withdrawalFeeAmount
                                         );
 
                                     await expect(res)
@@ -829,27 +870,23 @@ describe('BancorNetwork', () => {
                                             await getBalance(token, vault.address)
                                         );
 
-                                    if (withdrawalAmounts.baseTokenAmountToDeductFromLiquidity.gt(BigNumber.from(0))) {
-                                        await expect(res)
-                                            .to.emit(network, 'TradingLiquidityUpdated')
-                                            .withArgs(
-                                                contextId,
-                                                token.address,
-                                                token.address,
-                                                poolLiquidity.baseTokenTradingLiquidity
-                                            );
-                                    }
+                                    await expect(res)
+                                        .to.emit(network, 'TradingLiquidityUpdated')
+                                        .withArgs(
+                                            contextId,
+                                            token.address,
+                                            token.address,
+                                            poolLiquidity.baseTokenTradingLiquidity
+                                        );
 
-                                    if (withdrawalAmounts.networkTokenAmountToMintForProvider.gt(BigNumber.from(0))) {
-                                        await expect(res)
-                                            .to.emit(network, 'TradingLiquidityUpdated')
-                                            .withArgs(
-                                                contextId,
-                                                token.address,
-                                                networkToken.address,
-                                                poolLiquidity.networkTokenTradingLiquidity
-                                            );
-                                    }
+                                    await expect(res)
+                                        .to.emit(network, 'TradingLiquidityUpdated')
+                                        .withArgs(
+                                            contextId,
+                                            token.address,
+                                            networkToken.address,
+                                            poolLiquidity.networkTokenTradingLiquidity
+                                        );
 
                                     expect(await poolToken.totalSupply()).to.equal(
                                         prevPoolTokenTotalSupply.sub(poolTokenAmount)
@@ -897,7 +934,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'ERR_MINTING_DISABLED'
+                                            'ERR_NETWORK_LIQUIDITY_DISABLED'
                                         );
                                     });
                                 });
@@ -928,7 +965,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'ERR_MINTING_DISABLED'
+                                            'ERR_NETWORK_LIQUIDITY_DISABLED'
                                         );
                                     });
                                 });

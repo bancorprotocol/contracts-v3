@@ -3,14 +3,13 @@ import {
     BancorNetwork,
     BancorVault,
     NetworkSettings,
-    PendingWithdrawals,
-    PoolCollection,
     PoolToken,
+    PoolTokenFactory,
     ProxyAdmin,
+    TestPoolCollection,
     TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { NETWORK_TOKEN_POOL_TOKEN_NAME, NETWORK_TOKEN_POOL_TOKEN_SYMBOL } from './Constants';
 import { toAddress, TokenWithAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
@@ -114,12 +113,11 @@ export const createTokenHolder = async () => {
     return tokenHolder;
 };
 
-export const createPoolCollection = async (network: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network));
+export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
-    pendingWithdrawals: PendingWithdrawals,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
@@ -127,9 +125,10 @@ const createNetworkTokenPoolUninitialized = async (
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, pendingWithdrawals.address, networkPoolToken.address]
+        ctorArgs: [network.address, networkPoolToken.address]
     });
 
+    await networkPoolToken.acceptOwnership();
     await networkPoolToken.transferOwnership(networkTokenPool.address);
 
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
@@ -140,6 +139,14 @@ const createNetworkTokenPoolUninitialized = async (
     return networkTokenPool;
 };
 
+export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
+    const poolTokenAddress = await poolTokenFactory.callStatic.createPoolToken(toAddress(reserveToken));
+
+    await poolTokenFactory.createPoolToken(toAddress(reserveToken));
+
+    return Contracts.PoolToken.attach(poolTokenAddress);
+};
+
 export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
@@ -147,11 +154,8 @@ export const createSystem = async () => {
 
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
-    const networkPoolToken = await Contracts.PoolToken.deploy(
-        NETWORK_TOKEN_POOL_TOKEN_NAME,
-        NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
-        networkToken.address
-    );
+    const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
+    const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
 
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -169,7 +173,6 @@ export const createSystem = async () => {
     });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
-        pendingWithdrawals,
         vault,
         networkPoolToken,
         networkTokenGovernance,
@@ -178,9 +181,9 @@ export const createSystem = async () => {
 
     await networkTokenPool.initialize();
 
-    const poolCollection = await createPoolCollection(network);
+    const poolCollection = await createPoolCollection(network, poolTokenFactory);
 
-    await network.initialize(networkTokenPool.address);
+    await network.initialize(networkTokenPool.address, pendingWithdrawals.address);
 
     await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
@@ -195,6 +198,7 @@ export const createSystem = async () => {
         vault,
         networkTokenPool,
         pendingWithdrawals,
+        poolTokenFactory,
         poolCollection
     };
 };
@@ -203,7 +207,7 @@ export const createPool = async (
     reserveToken: TokenWithAddress,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: PoolCollection
+    poolCollection: TestPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 

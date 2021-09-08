@@ -24,8 +24,11 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     constructor(
         string memory name,
         string memory symbol,
+        uint8 decimals,
         IReserveToken initReserveToken
     ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
+        _setupDecimals(decimals);
+
         _reserveToken = initReserveToken;
 
         __Owned_init();
