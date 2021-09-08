@@ -79,7 +79,7 @@ yarn hh migrate --network mainnet
 
 1. `Migrate` will look for the network data folder or create one if it doesn't exist.
 
-2. Run every migration file in the migrations folder by order of execution starting from the latestMigration timestamp OR the lowest number found.
+2. Run every migration file in the migrations folder by order of execution starting from the latestMigration timestamp.
 
 3. Update the state on the go.
 
