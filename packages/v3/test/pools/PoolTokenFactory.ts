@@ -3,7 +3,7 @@ import { TestERC20Token, PoolTokenFactory } from '../../typechain';
 import { ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, getTokenBySymbol } from '../helpers/Utils';
+import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -109,7 +109,7 @@ describe('PoolTokenFactory', () => {
             beforeEach(async () => {
                 ({ networkToken, poolTokenFactory } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
             });
 
             it('should revert when attempting to create a pool for an invalid token', async () => {
