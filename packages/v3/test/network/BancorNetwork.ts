@@ -16,7 +16,7 @@ import { createPool, createPoolCollection, createSystem, createTokenHolder } fro
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { TokenWithAddress, getBalance, getTokenBySymbol, getTransactionCost, transfer } from '../helpers/Utils';
+import { TokenWithAddress, getBalance, createTokenBySymbol, getTransactionCost, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -514,7 +514,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                reserveToken = await getTokenBySymbol(symbol, networkToken);
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
 
                 poolType = await poolCollection.poolType();
             });
@@ -647,7 +647,7 @@ describe('BancorNetwork', () => {
                 beforeEach(async () => {
                     [deployer, provider] = await ethers.getSigners();
 
-                    token = await getTokenBySymbol(symbol, networkToken);
+                    token = await createTokenBySymbol(symbol, networkToken);
 
                     await transfer(deployer, token, vault.address, toWei(BigNumber.from(100_000)));
                     await transfer(deployer, token, externalProtectionWallet.address, toWei(BigNumber.from(500_000)));
