@@ -6,6 +6,7 @@
 -   [x] Revert support
 -   [x] Deploy proxy
 -   [x] Upgrade proxy
+-   [x] Save ABI and Bytecode of each deployed contract
 
 ### Data
 
