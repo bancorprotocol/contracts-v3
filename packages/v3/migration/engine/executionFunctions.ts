@@ -23,7 +23,7 @@ export const initExecutionFunctions = (engine: Engine) => {
             throw new Error(`Error deploying, tx: ${contract.deployTransaction.hash}`);
         }
 
-        engine.IO.deployment.writeOne(contract.address, factory.metadata);
+        engine.IO.deployment.writeOne(factory.metadata);
         log.success(`Deployed ${factory.metadata.contractName} at ${contract.address} 🚀 !`);
         return contract;
     };
@@ -90,14 +90,6 @@ export const initExecutionFunctions = (engine: Engine) => {
         log.debug('Upgrading proxy');
         const newLogicContract = await deploy(logicContractToDeploy, ...ctorArgs);
 
-        const data =
-            initializeArgs === 'skipInit'
-                ? []
-                : newLogicContract.interface.encodeFunctionData(
-                      initializeArgs.initializeFctName,
-                      initializeArgs.params
-                  );
-
         if (initializeArgs === 'skipInit')
             await execute('Upgrading proxy', admin.upgrade, proxyAddress, newLogicContract.address);
         else
@@ -106,7 +98,7 @@ export const initExecutionFunctions = (engine: Engine) => {
                 admin.upgradeAndCall,
                 proxyAddress,
                 newLogicContract.address,
-                data
+                newLogicContract.interface.encodeFunctionData(initializeArgs.initializeFctName, initializeArgs.params)
             );
 
         log.success('Proxy upgraded 🚀 ');

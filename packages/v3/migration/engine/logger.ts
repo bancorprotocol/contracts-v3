@@ -39,7 +39,7 @@ export const log = {
     migrationConfig: (
         signerAddress: string,
         isLedger: boolean,
-        networkConfig: typeof Engine.prototype.networkConfig,
+        networkConfig: typeof Engine.prototype.networkSettings,
         executionSettings: ExecutionSettings,
         overrides: Overrides
     ) => {

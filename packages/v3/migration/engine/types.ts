@@ -1,5 +1,3 @@
-import { Engine } from './engine';
-
 export type SystemState = {
     migrationState: {
         latestMigration: number;
@@ -9,8 +7,8 @@ export type SystemState = {
 
 export type Deployment = {
     contractName: string;
-    abi: {};
-    bytecode: {};
+    abi: any; // object
+    bytecode: string;
 };
 export type SystemDeployments = { [address: string]: Deployment };
 
@@ -25,6 +23,14 @@ export type MigrationData = {
 
 export type ExecutionSettings = {
     confirmationToWait: number;
+};
+
+export type NetworkSettings = {
+    networkName: string;
+    isFork: boolean;
+    isHardhat: boolean;
+    isTestnet: boolean;
+    originalNetwork: string;
 };
 
 export type defaultArgs = {

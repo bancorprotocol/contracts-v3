@@ -1,157 +1,152 @@
 import Contracts, { ContractsType } from '../../components/Contracts';
 import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.extended.config';
+import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './constant';
 import { initExecutionFunctions } from './executionFunctions';
 import { initIO } from './io';
 import { log } from './logger';
 import { migrate } from './migrate';
-import { defaultArgs, ExecutionSettings, Migration, MigrationData, SystemDeployments, SystemState } from './types';
-import { importCsjOrEsModule } from './utils';
+import { defaultArgs, ExecutionSettings, NetworkSettings } from './types';
+import { isMigrationFolderValid } from './utils';
 import { Overrides, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
-import fs from 'fs';
+import fs from 'fs-extra';
 import { network } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
 
-export const MIGRATION_FOLDER = 'migration/migrations';
-export const MIGRATION_DATA_FOLDER = 'migration/data';
-
-const NETWORK_NAME = FORK_CONFIG ? FORK_CONFIG.networkName : network.name;
-
-const defaultMigration: {
-    state: SystemState;
-    deployment: SystemDeployments;
-    migrationsData: MigrationData[];
-    stateSaves: SystemState[];
-} = {
-    state: {
-        migrationState: {
-            latestMigration: -1
-        },
-        networkState: {}
-    },
-    deployment: {},
-    migrationsData: [],
-    stateSaves: []
-};
-
 export class Engine {
     readonly hre: HardhatRuntimeEnvironment;
 
-    readonly pathToNetworkFolder: string;
+    readonly networkSettings: NetworkSettings;
 
+    // basics
     readonly signer: Signer;
+    readonly contracts: ContractsType;
     readonly executionSettings: ExecutionSettings;
     readonly overrides: Overrides;
-    readonly contracts: ContractsType;
 
-    networkConfig = {
-        networkName: NETWORK_NAME,
-        isFork: NETWORK_NAME.startsWith(FORK_PREFIX),
-        isHardhat: NETWORK_NAME === 'hardhat',
-        isTestnet: NETWORK_NAME === 'rinkeby',
-        originalNetwork: NETWORK_NAME.startsWith(FORK_PREFIX)
-            ? NETWORK_NAME.substring(FORK_PREFIX.length)
-            : NETWORK_NAME
-    };
+    // needed paths
+    readonly pathToNetworkFolder: string;
+    readonly pathToNetworkDeploymentsFolder: string;
+
+    // init additional functionnalities
+    readonly IO = initIO(this);
+    readonly executionFunctions = initExecutionFunctions(this);
+    readonly migrate = () => migrate(this);
 
     // migration info
     migration = defaultMigration;
 
-    // init additional functionnalities
-    IO = initIO(this);
-    executionFunctions = initExecutionFunctions(this);
-
     constructor(hre: HardhatRuntimeEnvironment, args: defaultArgs, signer: Signer, signerAddress: string) {
         this.hre = hre;
-        this.signer = signer;
+
+        // init network settings
+        const networkName = FORK_CONFIG ? FORK_CONFIG.networkName : network.name;
+        this.networkSettings = {
+            networkName: networkName,
+            isFork: networkName.startsWith(FORK_PREFIX),
+            isHardhat: networkName === 'hardhat',
+            isTestnet: networkName === 'rinkeby',
+            originalNetwork: networkName.startsWith(FORK_PREFIX)
+                ? networkName.substring(FORK_PREFIX.length)
+                : networkName
+        };
+
+        // init paths
         this.pathToNetworkFolder = path.join(
             hre.config.paths.root,
             MIGRATION_DATA_FOLDER,
-            this.networkConfig.networkName
+            this.networkSettings.networkName
         );
+        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, 'deployments');
+
+        // init basics
+        this.signer = signer;
+        this.contracts = Contracts.connect(signer);
         this.executionSettings = {
             confirmationToWait: args.minBlockConfirmations
         };
         this.overrides = {
             gasPrice: args.gasPrice === 0 ? undefined : parseUnits(args.gasPrice.toString(), 'gwei')
         };
-        this.contracts = Contracts.connect(signer);
 
-        // system settings healthcheck
-        const isForkOrHardhat = this.networkConfig.isFork || this.networkConfig.networkName === 'hardhat';
-        if (this.executionSettings.confirmationToWait <= 1 && !isForkOrHardhat) {
-            throw new Error(
-                `Transaction confirmation should be higher than 1 for ${this.networkConfig.networkName} use. Aborting`
-            );
-        }
-        if (!this.overrides.gasPrice && !isForkOrHardhat) {
-            throw new Error(`Gas Price shouldn't be equal to 0 for ${this.networkConfig.networkName} use. Aborting`);
-        }
+        this.checkForFailures();
 
-        log.migrationConfig(signerAddress, args.ledger, this.networkConfig, this.executionSettings, this.overrides);
+        log.migrationConfig(signerAddress, args.ledger, this.networkSettings, this.executionSettings, this.overrides);
 
         if (args.reset) {
             this.reset();
-        } else {
-            this.init();
         }
+
+        this.init();
     }
 
-    // reset then init
+    // engine healthcheck
+    checkForFailures = () => {
+        const isForkOrHardhat = this.networkSettings.isFork || this.networkSettings.networkName === 'hardhat';
+        if (this.executionSettings.confirmationToWait <= 1 && !isForkOrHardhat) {
+            throw new Error(
+                `Transaction confirmation should be higher than 1 for ${this.networkSettings.networkName} use. Aborting`
+            );
+        }
+        if (!this.overrides.gasPrice && !isForkOrHardhat) {
+            throw new Error(`Gas Price shouldn't be equal to 0 for ${this.networkSettings.networkName} use. Aborting`);
+        }
+    };
+
     reset = () => {
-        log.warning(`Resetting ${this.networkConfig.networkName} migratation folder`);
+        log.warning(`Resetting ${this.networkSettings.networkName} migratation folder`);
         fs.rmSync(this.pathToNetworkFolder, {
             recursive: true,
             force: true
         });
-
         this.migration = defaultMigration;
-        this.init();
+    };
+
+    initMigrationDefaultFolder = () => {
+        fs.mkdirSync(this.pathToNetworkFolder);
+        fs.mkdirSync(path.join(this.pathToNetworkFolder, 'deployments'));
+        this.IO.state.write(defaultMigration.state);
     };
 
     init = () => {
-        // if network folder doesn't exist, create it
+        // if network doesn't exist
         if (!fs.existsSync(this.pathToNetworkFolder)) {
-            fs.mkdirSync(this.pathToNetworkFolder);
-        }
+            if (this.networkSettings.isFork) {
+                // check if the original network folder is valid and copy it into the current network folder
+                try {
+                    const pathToOriginalNetworkFolder = path.join(
+                        this.hre.config.paths.root,
+                        MIGRATION_DATA_FOLDER,
+                        this.networkSettings.originalNetwork
+                    );
 
-        // read all files into the folder and fetch needed files
-        const pathToNetworkFolderFiles = fs.readdirSync(this.pathToNetworkFolder);
+                    if (!isMigrationFolderValid(pathToOriginalNetworkFolder)) {
+                        throw Error();
+                    }
 
-        // if there is no state file in the network's folder, create it along with deployment file
-        const pathToNetworkFolderState = pathToNetworkFolderFiles.find((f: string) => f === 'state.json');
-        if (!pathToNetworkFolderState) {
-            this.migration.state = this.IO.state.write(defaultMigration.state);
-            this.migration.deployment = this.IO.deployment.write(defaultMigration.deployment);
-        }
-
-        // if it's a fork we need to get state and deployment files from the original network,
-        // if not just load the current state and deployment into the engine
-        if (this.networkConfig.isFork) {
-            try {
-                const pathToOriginalNetworkFolder = path.join(
-                    this.hre.config.paths.root,
-                    MIGRATION_DATA_FOLDER,
-                    this.networkConfig.originalNetwork
-                );
-                console.log(pathToOriginalNetworkFolder);
-                log.warning(`Fetching initial state from ${this.networkConfig.originalNetwork}`);
-                this.migration.state = this.IO.state.write(this.IO.state.fetch(pathToOriginalNetworkFolder));
-                log.warning(`Fetching initial deployments from ${this.networkConfig.originalNetwork}`);
-                this.migration.deployment = this.IO.deployment.write(
-                    this.IO.deployment.fetch(pathToOriginalNetworkFolder)
-                );
-            } catch (e) {
-                log.error(
-                    `${this.networkConfig.originalNetwork} doesn't have a config (needed if you want to fork it), aborting.`
-                );
-                process.exit();
+                    fs.copySync(pathToOriginalNetworkFolder, this.pathToNetworkFolder);
+                } catch {
+                    log.error(
+                        `${this.networkSettings.originalNetwork} doesn't have a correct config (needed if you want to fork it), aborting.`
+                    );
+                    process.exit();
+                }
+            } else {
+                // if not a fork initialize the folder accordingly
+                this.initMigrationDefaultFolder();
             }
-        } else {
-            this.migration.state = this.IO.state.fetch(this.pathToNetworkFolder);
-            this.migration.deployment = this.IO.deployment.fetch(this.pathToNetworkFolder);
         }
+
+        // if network folder does exist but isn't valid, resetting it.
+        if (!isMigrationFolderValid(this.pathToNetworkFolder)) {
+            log.warning(`${this.networkSettings.networkName} migratation folder is invalid, resetting it ...`);
+            this.reset();
+            this.initMigrationDefaultFolder();
+        }
+
+        // update current state to the network folder
+        this.migration.state = this.IO.state.fetch(this.pathToNetworkFolder);
 
         // generate migration files
         const pathToMigrationFiles = path.join(this.hre.config.paths.root, MIGRATION_FOLDER);
@@ -161,6 +156,7 @@ export class Engine {
         for (const migrationFilePath of migrationFilesPath) {
             const fileName = path.basename(migrationFilePath);
             const migrationId = Number(fileName.split('_')[0]);
+            // store migration that are only after the latest migration
             if (migrationId > this.migration.state.migrationState.latestMigration) {
                 this.migration.migrationsData.push({
                     fullPath: migrationFilePath,
@@ -175,6 +171,4 @@ export class Engine {
             a.migrationTimestamp > b.migrationTimestamp ? 1 : b.migrationTimestamp > a.migrationTimestamp ? -1 : 0
         );
     };
-
-    migrate = () => migrate(this);
 }

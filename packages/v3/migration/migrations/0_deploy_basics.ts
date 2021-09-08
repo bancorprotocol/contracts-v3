@@ -4,7 +4,7 @@ import { deployedContract, Migration } from '../../migration/engine/types';
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
-export type InitialState = {};
+export type InitialState = unknown;
 
 export type NextState = InitialState & {
     BNT: { token: deployedContract; governance: deployedContract };
@@ -31,8 +31,6 @@ const migration: Migration = {
         const vBNTGovernance = await deploy(contracts.TokenGovernance, vBNTToken.address);
 
         return {
-            ...initialState,
-
             BNT: {
                 token: BNTToken.address,
                 governance: BNTGovernance.address
