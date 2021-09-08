@@ -27,8 +27,8 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
                 objBN.eq(expectedBN),
                 `Expected ${objBN} to be ${readableName} ${expectedBN}`,
                 `Expected ${objBN} NOT to be ${readableName} ${expectedBN}`,
-                objBN,
-                expectedBN
+                expectedBN.toString(),
+                objBN.toString()
             );
         } else {
             _super.apply(this, args);
@@ -65,8 +65,8 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
                 relativeError = ${relativeError.toFixed(25)}`,
                 `Expected ${objDec.toFixed()} NOT to be almost equal to to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
                 relativeError = ${relativeError.toFixed(25)}`,
-                objDec,
-                expectedDec
+                expectedDec.toFixed(),
+                objDec.toFixed()
             );
         } else {
             _super.apply(this, args);
