@@ -149,6 +149,6 @@ contract BancorVault is
 
         reserveToken.safeTransfer(target, amount);
 
-        emit TokensWithdrawn(reserveToken, msg.sender, target, amount);
+        emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
     }
 }

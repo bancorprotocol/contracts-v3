@@ -3,7 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
@@ -13,17 +12,21 @@ import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
- * @dev The data struct representing a pending withdrawal request
+ * @dev the data struct representing a pending withdrawal request
  */
 struct WithdrawalRequest {
-    // the liquidity provider
-    address provider;
-    // the address of the locked pool token
-    IPoolToken poolToken;
-    // the time when the request was created (Unix timestamp))
-    uint32 createdAt;
-    // the locked pool token amount
-    uint256 amount;
+    address provider; // the liquidity provider
+    IPoolToken poolToken; // the locked pool token
+    uint32 createdAt; // the time when the request was created (Unix timestamp))
+    uint256 poolTokenAmount; // the locked pool token amount
+}
+
+/**
+ * @dev the data struct representing a completed withdrawal request
+ */
+struct CompletedWithdrawal {
+    IPoolToken poolToken; // the transferred pool token
+    uint256 poolTokenAmount; // the transferred pool token amount
 }
 
 /**
@@ -34,11 +37,6 @@ interface IPendingWithdrawals is IUpgradeable {
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token pool contract
-     */
-    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the lock duration
@@ -110,7 +108,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function reinitWithdrawal(uint256 id) external;
 
     /**
-     * @dev completes a withdrawal request and return the amount of pool tokens transferred
+     * @dev completes a withdrawal request and returns the pool token and its transferred amount
      *
      * requirements:
      *
@@ -122,5 +120,5 @@ interface IPendingWithdrawals is IUpgradeable {
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (uint256);
+    ) external returns (CompletedWithdrawal memory);
 }

@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
+import { IPoolCollection } from "./IPoolCollection.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
@@ -15,22 +16,18 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals } from "../../network/interfaces/IPendingWithdrawals.sol";
 
 struct DepositAmounts {
-    // the provided network token amount
-    uint256 networkTokenAmount;
-    // the minted pool token amount
-    uint256 poolTokenAmount;
-    // the minted gov token amount
-    uint256 govTokenAmount;
+    uint256 networkTokenAmount; // the provided network token amount
+    uint256 poolTokenAmount; // the minted pool token amount
+    uint256 govTokenAmount; // the minted gov token amount
 }
 
 struct WithdrawalAmounts {
-    // the withdrawn network token amount
-    uint256 networkTokenAmount;
-    // the burned pool token amount
-    uint256 poolTokenAmount;
+    uint256 networkTokenAmount; // the withdrawn network token amount
+    uint256 poolTokenAmount; // the burned pool token amount
+    uint256 govTokenAmount; // the burned governance token amount
+    uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
 }
 
 /**
@@ -78,11 +75,6 @@ interface INetworkTokenPool is IUpgradeable {
     function poolToken() external view returns (IPoolToken);
 
     /**
-     * @dev returns the pending withdrawals contract
-     */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals);
-
-    /**
      * @dev returns the total staked network token balance in the network
      */
     function stakedBalance() external view returns (uint256);
@@ -91,6 +83,34 @@ interface INetworkTokenPool is IUpgradeable {
      * @dev returns the total minted amount for a given pool
      */
     function mintedAmount(IReserveToken pool) external view returns (uint256);
+
+    /**
+     * @dev returns whether network token liquidity minting is enabled for the provided pool
+     */
+    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+
+    /**
+     * @dev returns the available co-investment network token liquidity for a given pool
+     */
+    function availableMintingAmount(IReserveToken pool) external view returns (uint256);
+
+    /**
+     * @dev mints network tokens to the recipient
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function mint(address recipient, uint256 networkTokenAmount) external;
+
+    /**
+     * @dev burns network tokens from the vault
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function burnFromVault(uint256 networkTokenAmount) external;
 
     /**
      * @dev deposits network token liquidity on behalf of a specific provider
@@ -119,28 +139,27 @@ interface INetworkTokenPool is IUpgradeable {
     function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
-     * @dev allows pools to request network token liquidity and returns the provided amount (which may be less than the
-     * requested amount)
+     * @dev requests network token liquidity
      *
      * requirements:
      *
-     * - the caller must be the current collection that manages the given pool
+     * - the caller must be the network contract
      * - the token must have been whitelisted
+     * - the request amount should be below the minting limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
-    ) external returns (uint256);
+        uint256 networkTokenAmount
+    ) external;
 
     /**
-     * @dev renounces network token liquidity by pools
+     * @dev renounces network token liquidity
      *
      * requirements:
      *
-     * - the caller must be the current collection that manages the given pool
+     * - the caller must be the network contract
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */

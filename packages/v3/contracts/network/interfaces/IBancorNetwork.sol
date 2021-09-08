@@ -11,8 +11,11 @@ import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
+import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
+import { IBancorVault } from "./IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
@@ -43,6 +46,21 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the network settings contract
      */
     function settings() external view returns (INetworkSettings);
+
+    /**
+     * @dev returns the vault contract
+     */
+    function vault() external view returns (IBancorVault);
+
+    /**
+     * @dev returns the network token pool token contract
+     */
+    function networkPoolToken() external view returns (IPoolToken);
+
+    /**
+     * @dev returns the network token pool contract
+     */
+    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the pending withdrawals contract
@@ -87,4 +105,16 @@ interface IBancorNetwork is IUpgradeable {
      * - the pool doesn't exist
      */
     function createPool(uint16 poolType, IReserveToken reserveToken) external;
+
+    /**
+     * @dev withdraws liquidity in exchange for base pool tokens
+     *
+     * requirements:
+     *
+     * - the provider must have already initiated a withdrawal and received the specified id
+     * - the specified withdrawal request is eligble for completion
+     * - the provider must have approved the network to transfer the governance token amount on its behalf, when
+     * withdrawing network token liquidity
+     */
+    function withdraw(uint256 id) external;
 }

@@ -16,10 +16,9 @@ import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals, WithdrawalRequest } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
@@ -45,9 +44,6 @@ contract PendingWithdrawals is
 
     // the network contract
     IBancorNetwork private immutable _network;
-
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -120,13 +116,9 @@ contract PendingWithdrawals is
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
-    {
+    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
         _networkToken = initNetwork.networkToken();
         _network = initNetwork;
-        _networkTokenPool = initNetworkTokenPool;
     }
 
     /**
@@ -169,13 +161,6 @@ contract PendingWithdrawals is
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function networkTokenPool() external view override returns (INetworkTokenPool) {
-        return _networkTokenPool;
     }
 
     /**
@@ -300,13 +285,13 @@ contract PendingWithdrawals is
 
         uint32 currentTime = _time();
 
-        emit WithdrawalReinitiated(
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.amount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalReinitiated({
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
         request.createdAt = currentTime;
     }
@@ -318,7 +303,7 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override only(address(_network)) returns (uint256) {
+    ) external override only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
 
@@ -332,18 +317,18 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, request.amount);
+        request.poolToken.safeTransfer(msg.sender, request.poolTokenAmount);
 
-        emit WithdrawalCompleted(
-            contextId,
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.amount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalCompleted({
+            contextId: contextId,
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
-        return request.amount;
+        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
     }
 
     /**
@@ -362,7 +347,7 @@ contract PendingWithdrawals is
 
         _lockDuration = newLockDuration;
 
-        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+        emit LockDurationUpdated({ prevLockDuration: prevLockDuration, newLockDuration: newLockDuration });
     }
 
     /**
@@ -380,7 +365,10 @@ contract PendingWithdrawals is
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
 
-        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
+        emit WithdrawalWindowDurationUpdated({
+            prevWithdrawalWindowDuration: prevWithdrawalWindowDuration,
+            newWithdrawalWindowDuration: newWithdrawalWindowDuration
+        });
     }
 
     /**
@@ -401,7 +389,7 @@ contract PendingWithdrawals is
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
-            amount: poolTokenAmount,
+            poolTokenAmount: poolTokenAmount,
             createdAt: _time()
         });
 
@@ -411,7 +399,7 @@ contract PendingWithdrawals is
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
-        emit WithdrawalInitiated(pool, provider, id, poolTokenAmount);
+        emit WithdrawalInitiated({ pool: pool, provider: provider, requestId: id, poolTokenAmount: poolTokenAmount });
     }
 
     /**
@@ -422,15 +410,15 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the provider
-        request.poolToken.safeTransfer(request.provider, request.amount);
+        request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
 
-        emit WithdrawalCancelled(
-            request.poolToken.reserveToken(),
-            request.provider,
-            id,
-            request.amount,
-            uint32(_time().sub(request.createdAt))
-        );
+        emit WithdrawalCancelled({
+            pool: request.poolToken.reserveToken(),
+            provider: request.provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(_time().sub(request.createdAt))
+        });
     }
 
     /**

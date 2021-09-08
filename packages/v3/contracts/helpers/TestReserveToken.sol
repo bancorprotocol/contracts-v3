@@ -13,6 +13,10 @@ contract TestReserveToken {
         return reserveToken.isNativeToken();
     }
 
+    function symbol(IReserveToken reserveToken) external view returns (string memory) {
+        return reserveToken.symbol();
+    }
+
     function balanceOf(IReserveToken reserveToken, address account) external view returns (uint256) {
         return reserveToken.balanceOf(account);
     }

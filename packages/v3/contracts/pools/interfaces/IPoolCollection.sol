@@ -14,29 +14,33 @@ import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 
+struct PoolLiquidity {
+    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
+    uint128 networkTokenTradingLiquidity; // the network token trading liquidity
+    uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
+    uint256 stakedBalance; // the staked balance
+}
+
 struct Pool {
-    // the pool token of a given pool
-    IPoolToken poolToken;
-    // the trading fee (in units of PPM)
-    uint32 tradingFeePPM;
-    // whether trading is enabled
-    bool tradingEnabled;
-    // whether depositing is enabled
-    bool depositingEnabled;
-    // the base token trading liquidity
-    uint128 baseTokenTradingLiquidity;
-    // the network token trading liquidity
-    uint128 networkTokenTradingLiquidity;
-    // the recent average rate
-    AverageRate averageRate;
-    // the product of the base token and network token trading liquidities (used for fee calculations)
-    uint256 tradingLiquidityProduct;
-    // the staked balance
-    uint256 stakedBalance;
-    // the initial rate of one base token in network token units in a given pool
-    Fraction initialRate;
-    // the deposit limit
-    uint256 depositLimit;
+    IPoolToken poolToken; // the pool token of a given pool
+    uint32 tradingFeePPM; // the trading fee (in units of PPM)
+    bool tradingEnabled; // whether trading is enabled
+    bool depositingEnabled; // whether depositing is enabled
+    AverageRate averageRate; // the recent average rate
+    Fraction initialRate; // the initial rate of one base token in network token units in a given pool
+    uint256 depositLimit; // the deposit limit
+    PoolLiquidity liquidity; // the overall liquidity in the pool
+}
+
+// base token withdrawal output amounts
+struct WithdrawalAmounts {
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
+    uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // the base token amount to transfer from the external protection wallet to the provider
+    uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
+    uint256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the vault
+    uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
+    int256 networkTokenArbitrageAmount; // the network token amount to burn or mint in the pool, in order to create an arbitrage incentive
 }
 
 /**
@@ -49,14 +53,14 @@ interface IPoolCollection is IVersioned {
     function poolType() external pure returns (uint16);
 
     /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
+
+    /**
+     * @dev returns the network settings contract
+     */
+    function settings() external view returns (INetworkSettings);
 
     /**
      * @dev returns the custom symbol overrides for a given reserve token
@@ -79,6 +83,11 @@ interface IPoolCollection is IVersioned {
     function isPoolRateStable(IReserveToken reserveToken) external view returns (bool);
 
     /**
+     * @dev returns the overall liquidity in the pool
+     */
+    function poolLiquidity(IReserveToken reserveToken) external view returns (PoolLiquidity memory);
+
+    /**
      * @dev returns the pool data for a given reserve token
      */
     function poolData(IReserveToken reserveToken) external view returns (Pool memory);
@@ -93,4 +102,19 @@ interface IPoolCollection is IVersioned {
      * - the pool isn't already defined in the collection
      */
     function createPool(IReserveToken reserveToken) external;
+
+    /**
+     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     * - the caller must have approved the collection to transfer/burn the pool token amount on its behal
+     */
+    function withdraw(
+        IReserveToken baseToken,
+        uint256 basePoolTokenAmount,
+        uint256 baseTokenVaultBalance,
+        uint256 externalProtectionWalletBalance
+    ) external returns (WithdrawalAmounts memory);
 }

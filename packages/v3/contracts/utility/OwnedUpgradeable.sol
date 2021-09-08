@@ -91,6 +91,6 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
         _owner = ownerCandidate;
         _newOwner = address(0);
 
-        emit OwnerUpdate(prevOwner, ownerCandidate);
+        emit OwnerUpdate({ prevOwner: prevOwner, newOwner: ownerCandidate });
     }
 }

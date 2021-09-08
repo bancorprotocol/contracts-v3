@@ -20,11 +20,11 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
         const obj = chaiUtils.flag(this, 'object');
 
         if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            const objBN = BigNumber.from(Decimal.isDecimal(obj) ? obj.toFixed() : obj);
-            const expectedBN = BigNumber.from(Decimal.isDecimal(expected) ? expected.toFixed() : expected);
+            const objBN = toBigNumber<BigNumber>(obj);
+            const expectedBN = toBigNumber<BigNumber>(expected);
 
             this.assert(
-                BigNumber.from(objBN).eq(expectedBN),
+                objBN.eq(expectedBN),
                 `Expected ${objBN} to be ${readableName} ${expectedBN}`,
                 `Expected ${objBN} NOT to be ${readableName} ${expectedBN}`,
                 objBN,
@@ -49,27 +49,24 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
         expect(maxRelativeError).to.be.instanceOf(Decimal);
 
         if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            const objBN = toBigNumber(obj);
-            const expectedBN = toBigNumber(expected);
+            const objDec = new Decimal(obj.toString());
+            const expectedDec = new Decimal(expected.toString());
 
-            const x = new Decimal(objBN.toString());
-            const y = new Decimal(expectedBN.toString());
-
-            if (x.eq(y)) {
+            if (objDec.eq(expectedDec)) {
                 return;
             }
 
-            const absoluteError = x.sub(y).abs();
-            const relativeError = x.div(y).sub(1).abs();
+            const absoluteError = objDec.sub(expectedDec).abs();
+            const relativeError = objDec.div(expectedDec).sub(1).abs();
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objBN.toString()} to be almost equal to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()},
+                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
                 relativeError = ${relativeError.toFixed(25)}`,
-                `Expected ${objBN.toString()} NOT to be almost equal to to ${expectedBN.toString()} (absoluteError = ${absoluteError.toFixed()},
+                `Expected ${objDec.toFixed()} NOT to be almost equal to to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
                 relativeError = ${relativeError.toFixed(25)}`,
-                objBN,
-                expectedBN
+                objDec,
+                expectedDec
             );
         } else {
             _super.apply(this, args);

@@ -7,10 +7,10 @@
 yarn-debug.log*
 yarn-error.log*
 
-cache
-artifacts
-data
-typechain
+/cache
+/artifacts
+/typechain
+/data
 
 .coverage_artifacts
 .coverage_contracts

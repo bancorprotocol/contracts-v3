@@ -1,98 +1,15 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
-import { MAX_UINT256, ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
+import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
+import fs from 'fs';
 import { ethers } from 'hardhat';
-
-const testFormula = (amounts: Decimal[], testFees: Decimal[]) => {
-    const MAX_VAL = new Decimal(MAX_UINT256.toString());
-    const PPMR = new Decimal(PPM_RESOLUTION.toString());
-
-    const fees = testFees.map((x) => x.mul(PPMR).div(100));
-
-    let poolCollection: TestPoolCollection;
-
-    before(async () => {
-        const { network } = await createSystem();
-
-        poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
-    });
-
-    // f(f - bm - 2fm) / (fm + b)
-    const baseArbitrage = (baseBalance: Decimal, baseAmount: Decimal, tradeFee: Decimal) => {
-        const b = baseBalance;
-        const f = baseAmount;
-        const m = tradeFee.div(PPMR);
-        return f
-            .mul(f.sub(b.mul(m)).sub(f.mul(m).mul(2)))
-            .div(f.mul(m).add(b))
-            .floor();
-    };
-
-    // af(b(2 - m) + f) / (b(b + fm))
-    const networkArbitrage = (
-        networkBalance: Decimal,
-        baseBalance: Decimal,
-        baseAmount: Decimal,
-        tradeFee: Decimal
-    ) => {
-        const a = networkBalance;
-        const b = baseBalance;
-        const f = baseAmount;
-        const m = tradeFee.div(PPMR);
-        return a
-            .mul(f)
-            .mul(b.mul(m.sub(2).neg()).add(f))
-            .div(b.mul(b.add(f.mul(m))))
-            .floor();
-    };
-
-    for (const b of amounts) {
-        for (const f of amounts) {
-            for (const m of fees) {
-                it(`baseArbitrage(${[b, f, m]})`, async () => {
-                    const expected = baseArbitrage(b, f, m);
-                    if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                        const actual = await poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString());
-                        expect(actual).to.equal(expected);
-                    } else {
-                        await expect(poolCollection.baseArbitrageT(b.toString(), f.toString(), m.toString())).to.be
-                            .reverted;
-                    }
-                });
-            }
-        }
-    }
-
-    for (const a of amounts) {
-        for (const b of amounts) {
-            for (const f of amounts) {
-                for (const m of fees) {
-                    it(`networkArbitrage(${[a, b, f, m]})`, async () => {
-                        const expected = networkArbitrage(a, b, f, m);
-                        if (expected.gte(0) && expected.lte(MAX_VAL)) {
-                            const actual = await poolCollection.networkArbitrageT(
-                                a.toString(),
-                                b.toString(),
-                                f.toString(),
-                                m.toString()
-                            );
-                            expect(actual).to.equal(expected);
-                        } else {
-                            await expect(
-                                poolCollection.networkArbitrageT(a.toString(), b.toString(), f.toString(), m.toString())
-                            ).to.be.reverted;
-                        }
-                    });
-                }
-            }
-        }
-    }
-};
+import path from 'path';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
@@ -107,24 +24,23 @@ describe('PoolCollection', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    let reserveToken: TestERC20Token;
-
     before(async () => {
         [deployer, nonOwner] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
-    });
-
     describe('construction', () => {
+        it('should revert when initialized with an invalid network contract', async () => {
+            await expect(Contracts.PoolCollection.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
         it('should be properly initialized', async () => {
-            const { poolCollection, network } = await createSystem();
+            const { network, networkSettings, poolCollection } = await createSystem();
 
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
             expect(await poolCollection.network()).to.equal(network.address);
+            expect(await poolCollection.settings()).to.equal(networkSettings.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
 
@@ -139,10 +55,14 @@ describe('PoolCollection', () => {
 
     describe('token symbol overrides', async () => {
         const newSymbol = 'TKN2';
+
         let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
             ({ poolCollection } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
         });
 
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
@@ -167,14 +87,18 @@ describe('PoolCollection', () => {
 
     describe('default trading fee', () => {
         const newDefaultTradingFree = BigNumber.from(100000);
+
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
         });
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
@@ -229,105 +153,144 @@ describe('PoolCollection', () => {
     describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
+        let networkToken: TestERC20Token;
         let poolCollection: TestPoolCollection;
+        let reserveToken: TokenWithAddress;
 
         const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
 
-        beforeEach(async () => {
-            ({ network, networkSettings, poolCollection } = await createSystem());
-        });
-
-        it('should revert when attempting to create a pool from a non-network', async () => {
-            const nonNetwork = deployer;
-
-            await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
-            );
-        });
-
-        it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
-            await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                'ERR_TOKEN_NOT_WHITELISTED'
-            );
-        });
-
-        context('with a whitelisted token', () => {
+        const testCreatePool = (symbol: string) => {
             beforeEach(async () => {
-                await networkSettings.addTokenToWhitelist(reserveToken.address);
+                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
             });
 
-            it('should not allow to create the same pool twice', async () => {
-                await network.createPoolT(poolCollection.address, reserveToken.address);
+            it('should revert when attempting to create a pool from a non-network', async () => {
+                const nonNetwork = deployer;
 
-                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                    'ERR_POOL_ALREADY_EXISTS'
+                await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
+                    'ERR_ACCESS_DENIED'
                 );
             });
 
-            it('should create a pool', async () => {
-                expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
-
-                const res = await network.createPoolT(poolCollection.address, reserveToken.address);
-                const pool = await poolCollection.poolData(reserveToken.address);
-
-                await expect(res).to.emit(poolCollection, 'PoolCreated').withArgs(pool.poolToken, reserveToken.address);
-                await expect(res)
-                    .to.emit(poolCollection, 'TradingFeePPMUpdated')
-                    .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                await expect(res)
-                    .to.emit(poolCollection, 'TradingEnabled')
-                    .withArgs(reserveToken.address, pool.tradingEnabled);
-                await expect(res)
-                    .to.emit(poolCollection, 'DepositingEnabled')
-                    .withArgs(reserveToken.address, pool.depositingEnabled);
-                await expect(res)
-                    .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
-                await expect(res)
-                    .to.emit(poolCollection, 'DepositLimitUpdated')
-                    .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
-
-                expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
-                const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
-                expect(poolToken).not.to.equal(ZERO_ADDRESS);
-                const reserveTokenSymbol = await reserveToken.symbol();
-                expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
-                expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
-
-                expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
-                expect(pool.tradingEnabled).to.be.true;
-                expect(pool.depositingEnabled).to.be.true;
-                expect(pool.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(pool.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(pool.averageRate.time).to.equal(BigNumber.from(0));
-                expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
-                expect(pool.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(pool.stakedBalance).to.equal(BigNumber.from(0));
-                expect(pool.initialRate).to.equal(INITIAL_RATE);
-                expect(pool.depositLimit).to.equal(BigNumber.from(0));
+            it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
+                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
+                    'ERR_TOKEN_NOT_WHITELISTED'
+                );
             });
 
-            context('with a token symbol override', () => {
-                const newSymbol = 'TKN2';
-
+            context('with a whitelisted token', () => {
                 beforeEach(async () => {
-                    await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                });
+
+                it('should not allow to create the same pool twice', async () => {
+                    await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                    await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
+                        'ERR_POOL_ALREADY_EXISTS'
+                    );
                 });
 
                 it('should create a pool', async () => {
-                    await network.createPoolT(poolCollection.address, reserveToken.address);
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
 
+                    const res = await network.createPoolT(poolCollection.address, reserveToken.address);
                     const pool = await poolCollection.poolData(reserveToken.address);
 
+                    await expect(res)
+                        .to.emit(poolCollection, 'PoolCreated')
+                        .withArgs(pool.poolToken, reserveToken.address);
+                    await expect(res)
+                        .to.emit(poolCollection, 'TradingFeePPMUpdated')
+                        .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
+                    await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
+                    await expect(res)
+                        .to.emit(poolCollection, 'DepositingEnabled')
+                        .withArgs(reserveToken.address, pool.depositingEnabled);
+                    await expect(res)
+                        .to.emit(poolCollection, 'InitialRateUpdated')
+                        .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
+                    await expect(res)
+                        .to.emit(poolCollection, 'DepositLimitUpdated')
+                        .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
+
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                    expect(poolToken).not.to.equal(ZERO_ADDRESS);
+                    const reserveTokenSymbol = symbol;
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
-                    expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(reserveTokenSymbol));
+                    expect(await poolToken.name()).to.equal(poolTokenName(reserveTokenSymbol));
+
+                    expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
+                    expect(pool.tradingEnabled).to.be.true;
+                    expect(pool.depositingEnabled).to.be.true;
+                    expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                    expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
+                    expect(pool.initialRate).to.equal(INITIAL_RATE);
+                    expect(pool.depositLimit).to.equal(BigNumber.from(0));
+
+                    const { liquidity } = pool;
+                    expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                    expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                    expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                    expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
+
+                    const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+                    expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
+                    expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
+                    expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
+                    expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
+                });
+
+                context('with a token symbol override', () => {
+                    const newSymbol = 'TKN2';
+
+                    beforeEach(async () => {
+                        await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    });
+
+                    it('should create a pool', async () => {
+                        await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                        const pool = await poolCollection.poolData(reserveToken.address);
+
+                        const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                        expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                        expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
+                        expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    });
+                });
+
+                context('with a token decimals override', () => {
+                    const newSymbol = 'TKN2';
+
+                    beforeEach(async () => {
+                        await poolCollection.setTokenSymbolOverride(reserveToken.address, newSymbol);
+                    });
+
+                    it('should create a pool', async () => {
+                        await network.createPoolT(poolCollection.address, reserveToken.address);
+
+                        const pool = await poolCollection.poolData(reserveToken.address);
+
+                        const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
+                        expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
+                        expect(await poolToken.symbol()).to.equal(poolTokenSymbol(newSymbol));
+                        expect(await poolToken.name()).to.equal(poolTokenName(newSymbol));
+                    });
                 });
             });
-        });
+        };
+
+        for (const symbol of ['ETH', 'TKN']) {
+            context(symbol, () => {
+                testCreatePool(symbol);
+            });
+        }
     });
 
     describe('pool settings', () => {
@@ -335,9 +298,12 @@ describe('PoolCollection', () => {
         let network: TestBancorNetwork;
         let poolCollection: TestPoolCollection;
         let newReserveToken: TestERC20Token;
+        let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
 
             await networkSettings.addTokenToWhitelist(reserveToken.address);
 
@@ -588,18 +554,331 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('formula sanity tests', () => {
-        const AMOUNTS = [18, 21, 24].map((x) => new Decimal(10).pow(x));
-        const FEES = [0.25, 0.5, 1].map((x) => new Decimal(x));
+    describe('withdrawal amounts', () => {
+        interface WithdrawalAmountData {
+            networkTokenLiquidity: string;
+            baseTokenLiquidity: string;
+            baseTokenExcessAmount: string;
+            basePoolTokenTotalSupply: string;
+            baseTokenStakedAmount: string;
+            baseTokenWalletBalance: string;
+            tradeFeePPM: string;
+            withdrawalFeePPM: string;
+            basePoolTokenWithdrawalAmount: string;
+            baseTokenAmountToTransferFromVaultToProvider: string;
+            networkTokenAmountToMintForProvider: string;
+            baseTokenAmountToDeductFromLiquidity: string;
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
+            networkTokenAmountToDeductFromLiquidity: string;
+            networkTokenArbitrageAmount: string;
+        }
 
-        testFormula(AMOUNTS, FEES);
+        interface MaxError {
+            absolute: Decimal;
+            relative: Decimal;
+        }
+
+        interface MaxErrors {
+            baseTokenAmountToTransferFromVaultToProvider: MaxError;
+            networkTokenAmountToMintForProvider: MaxError;
+            baseTokenAmountToDeductFromLiquidity: MaxError;
+            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
+            networkTokenAmountToDeductFromLiquidity: MaxError;
+            networkTokenArbitrageAmount: MaxError;
+        }
+
+        const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
+            let poolCollection: TestPoolCollection;
+
+            before(async () => {
+                const { network } = await createSystem();
+
+                poolCollection = await Contracts.TestPoolCollection.deploy(network.address);
+            });
+
+            const test = (fileName: string, maxErrors: MaxErrors) => {
+                const table: WithdrawalAmountData[] = JSON.parse(
+                    fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
+                ).slice(0, maxNumberOfTests);
+
+                for (const {
+                    networkTokenLiquidity,
+                    baseTokenLiquidity,
+                    baseTokenExcessAmount,
+                    basePoolTokenTotalSupply,
+                    baseTokenStakedAmount,
+                    baseTokenWalletBalance,
+                    tradeFeePPM,
+                    withdrawalFeePPM,
+                    basePoolTokenWithdrawalAmount,
+                    baseTokenAmountToTransferFromVaultToProvider,
+                    networkTokenAmountToMintForProvider,
+                    baseTokenAmountToDeductFromLiquidity,
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                    networkTokenAmountToDeductFromLiquidity,
+                    networkTokenArbitrageAmount
+                } of table) {
+                    it(`should receive correct withdrawal amounts (${[
+                        networkTokenLiquidity,
+                        baseTokenLiquidity,
+                        baseTokenExcessAmount,
+                        basePoolTokenTotalSupply,
+                        baseTokenStakedAmount,
+                        baseTokenWalletBalance,
+                        tradeFeePPM,
+                        withdrawalFeePPM,
+                        basePoolTokenWithdrawalAmount,
+                        baseTokenAmountToTransferFromVaultToProvider,
+                        networkTokenAmountToMintForProvider,
+                        baseTokenAmountToDeductFromLiquidity,
+                        baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                        networkTokenAmountToDeductFromLiquidity,
+                        networkTokenArbitrageAmount
+                    ]})`, async () => {
+                        const actual = await poolCollection.withdrawalAmountsT(
+                            networkTokenLiquidity,
+                            baseTokenLiquidity,
+                            baseTokenExcessAmount,
+                            basePoolTokenTotalSupply,
+                            baseTokenStakedAmount,
+                            baseTokenWalletBalance,
+                            tradeFeePPM,
+                            withdrawalFeePPM,
+                            basePoolTokenWithdrawalAmount
+                        );
+                        expect(actual.baseTokenAmountToTransferFromVaultToProvider).to.almostEqual(
+                            new Decimal(baseTokenAmountToTransferFromVaultToProvider),
+                            maxErrors.baseTokenAmountToTransferFromVaultToProvider.absolute,
+                            maxErrors.baseTokenAmountToTransferFromVaultToProvider.relative
+                        );
+                        expect(actual.networkTokenAmountToMintForProvider).to.almostEqual(
+                            new Decimal(networkTokenAmountToMintForProvider),
+                            maxErrors.networkTokenAmountToMintForProvider.absolute,
+                            maxErrors.networkTokenAmountToMintForProvider.relative
+                        );
+                        expect(actual.baseTokenAmountToDeductFromLiquidity).to.almostEqual(
+                            new Decimal(baseTokenAmountToDeductFromLiquidity),
+                            maxErrors.baseTokenAmountToDeductFromLiquidity.absolute,
+                            maxErrors.baseTokenAmountToDeductFromLiquidity.relative
+                        );
+                        expect(actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider).to.almostEqual(
+                            new Decimal(baseTokenAmountToTransferFromExternalProtectionWalletToProvider),
+                            maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
+                            maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                        );
+                        expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
+                            new Decimal(networkTokenAmountToDeductFromLiquidity),
+                            maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
+                            maxErrors.networkTokenAmountToDeductFromLiquidity.relative
+                        );
+                        expect(actual.networkTokenArbitrageAmount).to.almostEqual(
+                            new Decimal(networkTokenArbitrageAmount),
+                            maxErrors.networkTokenArbitrageAmount.absolute,
+                            maxErrors.networkTokenArbitrageAmount.relative
+                        );
+                    });
+                }
+            };
+
+            describe('regular cases', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000000000000002')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000000000000003')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000000000000002')
+                    },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000000000000003')
+                    },
+                    networkTokenArbitrageAmount: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.00000000000000002')
+                    }
+                };
+
+                test('WithdrawalAmountsRegularCases', maxErrors);
+            });
+
+            describe('edge cases 1', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000003')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.00000000002')
+                    },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000001')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
+                };
+
+                test('WithdrawalAmountsEdgeCases1', maxErrors);
+            });
+
+            describe('edge cases 2', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000004')
+                    },
+                    networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000002')
+                    },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.00002')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
+                };
+
+                test('WithdrawalAmountsEdgeCases2', maxErrors);
+            });
+
+            describe('coverage 1', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0002')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000002')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0002')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
+                };
+
+                test('WithdrawalAmountsCoverage1', maxErrors);
+            });
+
+            describe('coverage 2', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000000003')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
+                };
+
+                test('WithdrawalAmountsCoverage2', maxErrors);
+            });
+
+            describe('coverage 3', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.008')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.000002')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.008')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.008') }
+                };
+
+                test('WithdrawalAmountsCoverage3', maxErrors);
+            });
+
+            describe('coverage 4', () => {
+                const maxErrors = {
+                    baseTokenAmountToTransferFromVaultToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000009')
+                    },
+                    networkTokenAmountToMintForProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000000002')
+                    },
+                    baseTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000009')
+                    },
+                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0')
+                    },
+                    networkTokenAmountToDeductFromLiquidity: {
+                        absolute: new Decimal(1),
+                        relative: new Decimal('0.0000009')
+                    },
+                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
+                };
+
+                test('WithdrawalAmountsCoverage4', maxErrors);
+            });
+        };
+
+        describe('regular tests', () => {
+            testWithdrawalAmounts(10);
+        });
+
+        describe('@stress tests', () => {
+            testWithdrawalAmounts();
+        });
     });
-});
 
-describe('@stress PoolCollection', () => {
-    const AMOUNTS1 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(9).pow(x));
-    const AMOUNTS2 = [12, 15, 18, 21, 25, 29, 34].map((x) => new Decimal(10).pow(x));
-    const FEES = [0, 0.05, 0.25, 0.5, 1].map((x) => new Decimal(x));
-
-    testFormula([...AMOUNTS1, ...AMOUNTS2], FEES);
+    describe.skip('withdraw', () => {});
 });
