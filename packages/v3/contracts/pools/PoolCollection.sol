@@ -45,9 +45,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // withdrawal-related input data
     struct PoolWithdrawalParams {
-        uint256 networkTokenAvgTradingLiquidity;
-        uint256 baseTokenAvgTradingLiquidity;
-        uint256 baseTokenTradingLiquidity;
+        uint128 networkTokenAvgTradingLiquidity;
+        uint128 baseTokenAvgTradingLiquidity;
+        uint128 baseTokenTradingLiquidity;
         uint256 basePoolTokenTotalSupply;
         uint256 baseTokenStakedAmount;
         uint256 tradeFeePPM;
@@ -612,12 +612,12 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         return
             PoolWithdrawalParams({
-                networkTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, poolData.averageRate.rate.n, poolData.averageRate.rate.d)
-                ),
-                baseTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, poolData.averageRate.rate.d, poolData.averageRate.rate.n)
-                ),
+                networkTokenAvgTradingLiquidity: MathEx
+                    .floorSqrt(MathEx.mulDivF(prod, poolData.averageRate.rate.n, poolData.averageRate.rate.d))
+                    .toUint128(),
+                baseTokenAvgTradingLiquidity: MathEx
+                    .floorSqrt(MathEx.mulDivF(prod, poolData.averageRate.rate.d, poolData.averageRate.rate.n))
+                    .toUint128(),
                 baseTokenTradingLiquidity: poolData.liquidity.baseTokenTradingLiquidity,
                 basePoolTokenTotalSupply: poolData.poolToken.totalSupply(),
                 baseTokenStakedAmount: poolData.liquidity.stakedBalance,
