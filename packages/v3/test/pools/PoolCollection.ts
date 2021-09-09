@@ -1,8 +1,9 @@
 import Contracts from '../../components/Contracts';
-import { TestPoolCollection, TestERC20Token, TestBancorNetwork, NetworkSettings } from '../../typechain';
-import { ZERO_ADDRESS, INVALID_FRACTION, PPM_RESOLUTION } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
-import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
+import { NetworkSettings, PoolToken, TestBancorNetwork, TestERC20Token, TestPoolCollection } from '../../typechain';
+import { INVALID_FRACTION, ZERO_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
+import { createPool, createSystem } from '../helpers/Factory';
+import { toWei } from '../helpers/Types';
+import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -15,10 +16,6 @@ describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
-    const INITIAL_RATE = {
-        n: BigNumber.from(0),
-        d: BigNumber.from(1)
-    };
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -209,8 +206,8 @@ describe('PoolCollection', () => {
                     expect(pool.tradingEnabled).to.be.true;
                     expect(pool.depositingEnabled).to.be.true;
                     expect(pool.averageRate.time).to.equal(BigNumber.from(0));
-                    expect(pool.averageRate.rate).to.equal(INITIAL_RATE);
-                    expect(pool.initialRate).to.equal(INITIAL_RATE);
+                    expect(pool.averageRate.rate).to.equal(ZERO_FRACTION);
+                    expect(pool.initialRate).to.equal(ZERO_FRACTION);
                     expect(pool.depositLimit).to.equal(BigNumber.from(0));
 
                     const { liquidity } = pool;
@@ -288,7 +285,7 @@ describe('PoolCollection', () => {
             it('should allow setting and updating the initial rate', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { initialRate } = pool;
-                expect(initialRate).to.equal(INITIAL_RATE);
+                expect(initialRate).to.equal(ZERO_FRACTION);
 
                 const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
                 await expect(res)
@@ -820,6 +817,324 @@ describe('PoolCollection', () => {
         describe('@stress tests', () => {
             testWithdrawalAmounts();
         });
+    });
+
+    describe.only('deposit', () => {
+        const testDeposit = (symbol: string) => {
+            let networkSettings: NetworkSettings;
+            let network: TestBancorNetwork;
+            let networkToken: TestERC20Token;
+            let poolCollection: TestPoolCollection;
+            let reserveToken: TokenWithAddress;
+
+            let provider: SignerWithAddress;
+
+            before(async () => {
+                [deployer, provider] = await ethers.getSigners();
+            });
+
+            beforeEach(async () => {
+                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+
+                reserveToken = await createTokenBySymbol(symbol, networkToken);
+            });
+
+            it('should revert when attempting to create a pool from a non-network', async () => {
+                const nonNetwork = deployer;
+
+                await expect(
+                    poolCollection
+                        .connect(nonNetwork)
+                        .depositFor(provider.address, reserveToken.address, BigNumber.from(1), BigNumber.from(2))
+                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            });
+
+            it('should revert when attempting to deposit for an invalid provider', async () => {
+                await expect(
+                    network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        ZERO_ADDRESS,
+                        reserveToken.address,
+                        BigNumber.from(1),
+                        BigNumber.from(2)
+                    )
+                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            });
+
+            it('should revert when attempting to deposit for an invalid pool', async () => {
+                await expect(
+                    network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        provider.address,
+                        ZERO_ADDRESS,
+                        BigNumber.from(1),
+                        BigNumber.from(2)
+                    )
+                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            });
+
+            it('should revert when attempting to deposit for a pool that does not exist', async () => {
+                await expect(
+                    network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        provider.address,
+                        reserveToken.address,
+                        BigNumber.from(1),
+                        BigNumber.from(2)
+                    )
+                ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+            });
+
+            it('should revert when attempting to deposit an invalid amount', async () => {
+                await expect(
+                    network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        provider.address,
+                        reserveToken.address,
+                        BigNumber.from(0),
+                        BigNumber.from(2)
+                    )
+                ).to.be.revertedWith('ERR_ZERO_VALUE');
+            });
+
+            context('with a registered pool', () => {
+                let poolToken: PoolToken;
+
+                beforeEach(async () => {
+                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                });
+
+                context('when at the deposit limit', () => {
+                    const depositLimit = toWei(BigNumber.from(12345));
+
+                    beforeEach(async () => {
+                        await poolCollection.setDepositLimit(reserveToken.address, depositLimit);
+
+                        await network.depositToPoolCollectionForT(
+                            poolCollection.address,
+                            provider.address,
+                            reserveToken.address,
+                            depositLimit,
+                            MAX_UINT256
+                        );
+                    });
+
+                    it('should revert when attempting to deposit', async () => {
+                        await expect(
+                            network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                provider.address,
+                                reserveToken.address,
+                                BigNumber.from(1),
+                                MAX_UINT256
+                            )
+                        ).to.be.revertedWith('ERR_DEPOSIT_LIMIT_EXCEEDED');
+                    });
+                });
+
+                context('when below the deposit limit', () => {
+                    const testDepositFor = async (amount: BigNumber) => {
+                        const prevPoolData = await poolCollection.poolData(reserveToken.address);
+
+                        const prevPoolTokenTotalSupply = await poolToken.totalSupply();
+                        const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
+
+                        let expectedPoolTokenAmount;
+                        if (prevPoolTokenTotalSupply.isZero()) {
+                            expectedPoolTokenAmount = amount;
+                        } else {
+                            expectedPoolTokenAmount = amount
+                                .mul(prevPoolTokenTotalSupply)
+                                .div(prevPoolData.liquidity.stakedBalance);
+                        }
+
+                        const depositParams = await network.callStatic.depositToPoolCollectionForT(
+                            poolCollection.address,
+                            provider.address,
+                            reserveToken.address,
+                            amount,
+                            MAX_UINT256
+                        );
+
+                        const res = await network.depositToPoolCollectionForT(
+                            poolCollection.address,
+                            provider.address,
+                            reserveToken.address,
+                            amount,
+                            MAX_UINT256
+                        );
+
+                        const poolData = await poolCollection.poolData(reserveToken.address);
+
+                        const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
+                        if (
+                            prevPoolData.tradingEnabled &&
+                            prevPoolData.liquidity.networkTokenTradingLiquidity.lt(minLiquidityForTrading) &&
+                            poolData.liquidity.networkTokenTradingLiquidity.gte(minLiquidityForTrading)
+                        ) {
+                            await expect(res)
+                                .to.emit(poolCollection, 'TradingEnabled')
+                                .withArgs(reserveToken.address, true);
+                        }
+
+                        let rate;
+                        if (
+                            prevPoolData.liquidity.networkTokenTradingLiquidity.lt(
+                                await networkSettings.minLiquidityForTrading()
+                            )
+                        ) {
+                            rate = prevPoolData.initialRate;
+                        } else {
+                            rate = prevPoolData.averageRate.rate;
+
+                            expect(poolData.initialRate).to.equal(ZERO_FRACTION);
+                            if (
+                                !prevPoolData.initialRate.n.eq(ZERO_FRACTION.n) ||
+                                !prevPoolData.initialRate.d.eq(ZERO_FRACTION.d)
+                            ) {
+                                await expect(res)
+                                    .to.emit(poolCollection, 'InitialRateUpdated')
+                                    .withArgs(reserveToken.address, prevPoolData.initialRate, poolData.initialRate);
+                            }
+                        }
+
+                        const networkTokenDeltaAmount = amount.mul(rate.n).div(rate.d);
+                        const newBaseTokenTradingLiquidity =
+                            prevPoolData.liquidity.baseTokenTradingLiquidity.add(amount);
+                        const newNetworkTokenTradingLiquidity =
+                            prevPoolData.liquidity.networkTokenTradingLiquidity.add(networkTokenDeltaAmount);
+
+                        expect(depositParams.networkTokenDeltaAmount).to.equal(networkTokenDeltaAmount);
+                        expect(depositParams.poolTokenAmount).to.equal(expectedPoolTokenAmount);
+                        expect(depositParams.poolToken).to.equal(poolToken.address);
+
+                        expect(poolData.liquidity.stakedBalance).to.equal(
+                            prevPoolData.liquidity.stakedBalance.add(amount)
+                        );
+                        expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(newBaseTokenTradingLiquidity);
+                        expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(
+                            newNetworkTokenTradingLiquidity
+                        );
+                        expect(poolData.liquidity.tradingLiquidityProduct).to.equal(
+                            newBaseTokenTradingLiquidity.mul(newNetworkTokenTradingLiquidity)
+                        );
+
+                        expect(await poolToken.totalSupply()).to.equal(
+                            prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
+                        );
+                        expect(await poolToken.balanceOf(provider.address)).to.equal(
+                            prevProviderPoolTokenBalance.add(expectedPoolTokenAmount)
+                        );
+                    };
+
+                    const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
+
+                    beforeEach(async () => {
+                        await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+                        await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+                    });
+
+                    context('when below the minimum network token trading liquidity', () => {
+                        context('when no initial rate was set', () => {
+                            it('should revert when attempting to deposit', async () => {
+                                await expect(
+                                    network.depositToPoolCollectionForT(
+                                        poolCollection.address,
+                                        provider.address,
+                                        reserveToken.address,
+                                        BigNumber.from(1),
+                                        MAX_UINT256
+                                    )
+                                ).to.be.revertedWith('ERR_NO_INITIAL_RATE');
+                            });
+                        });
+
+                        context('when initial rate was set', () => {
+                            const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+
+                            beforeEach(async () => {
+                                await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+                            });
+
+                            it('should deposit', async () => {
+                                for (const amount of [
+                                    BigNumber.from(1),
+                                    BigNumber.from(10_000),
+                                    toWei(BigNumber.from(1_000_000)),
+                                    toWei(BigNumber.from(500_000))
+                                ]) {
+                                    await testDepositFor(amount);
+                                }
+                            });
+
+                            context('when exceeding the available network token liquidity', () => {
+                                it('should revert when attempting to deposit', async () => {
+                                    await expect(
+                                        network.depositToPoolCollectionForT(
+                                            poolCollection.address,
+                                            provider.address,
+                                            reserveToken.address,
+                                            BigNumber.from(1_000_000),
+                                            BigNumber.from(1)
+                                        )
+                                    ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_EXCEEDED');
+                                });
+                            });
+                        });
+                    });
+
+                    context('when above the minimum network token trading liquidity', () => {
+                        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+
+                        beforeEach(async () => {
+                            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+                            await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+
+                            await network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                provider.address,
+                                reserveToken.address,
+                                MIN_LIQUIDITY_FOR_TRADING.mul(INITIAL_RATE.d).div(INITIAL_RATE.n),
+                                MAX_UINT256
+                            );
+                        });
+
+                        it('should deposit', async () => {
+                            for (const amount of [
+                                BigNumber.from(1),
+                                BigNumber.from(10_000),
+                                toWei(BigNumber.from(1_000_000)),
+                                toWei(BigNumber.from(500_000))
+                            ]) {
+                                await testDepositFor(amount);
+                            }
+                        });
+
+                        context('when exceeding the available network token liquidity', () => {
+                            it('should revert when attempting to deposit', async () => {
+                                await expect(
+                                    network.depositToPoolCollectionForT(
+                                        poolCollection.address,
+                                        provider.address,
+                                        reserveToken.address,
+                                        BigNumber.from(1_000_000),
+                                        BigNumber.from(1)
+                                    )
+                                ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_EXCEEDED');
+                            });
+                        });
+                    });
+                });
+            });
+        };
+
+        for (const symbol of ['ETH', 'TKN']) {
+            context(symbol, () => {
+                testDeposit(symbol);
+            });
+        }
     });
 
     describe.skip('withdraw', () => {});

@@ -58,7 +58,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint128 newNetworkTokenTradingLiquidity;
         uint128 newBaseTokenTradingLiquidity;
         uint128 networkTokenDeltaAmount;
-        uint128 baseTokenDeltaAmount;
         bool resetInitialRate;
     }
 
@@ -318,14 +317,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validFee(newTradingFeePPM)
     {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        uint32 prevTradingFeePPM = p.tradingFeePPM;
+        uint32 prevTradingFeePPM = poolData.tradingFeePPM;
         if (prevTradingFeePPM == newTradingFeePPM) {
             return;
         }
 
-        p.tradingFeePPM = newTradingFeePPM;
+        poolData.tradingFeePPM = newTradingFeePPM;
 
         emit TradingFeePPMUpdated({ pool: pool, prevFeePPM: prevTradingFeePPM, newFeePPM: newTradingFeePPM });
     }
@@ -338,13 +337,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function enableTrading(IReserveToken pool, bool status) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        if (p.tradingEnabled == status) {
+        if (poolData.tradingEnabled == status) {
             return;
         }
 
-        p.tradingEnabled = status;
+        poolData.tradingEnabled = status;
 
         emit TradingEnabled({ pool: pool, newStatus: status });
     }
@@ -357,13 +356,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function enableDepositing(IReserveToken pool, bool status) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        if (p.depositingEnabled == status) {
+        if (poolData.depositingEnabled == status) {
             return;
         }
 
-        p.depositingEnabled = status;
+        poolData.depositingEnabled = status;
 
         emit DepositingEnabled({ pool: pool, newStatus: status });
     }
@@ -380,16 +379,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validRate(newInitialRate)
     {
-        Pool storage p = _poolStorage(pool);
-
-        Fraction memory prevInitialRate = p.initialRate;
-        if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
-            return;
-        }
-
-        p.initialRate = newInitialRate;
-
-        emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
+        _setInitialRate(pool, newInitialRate);
     }
 
     /**
@@ -400,14 +390,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        uint256 prevDepositLimit = p.depositLimit;
+        uint256 prevDepositLimit = poolData.depositLimit;
         if (prevDepositLimit == newDepositLimit) {
             return;
         }
 
-        p.depositLimit = newDepositLimit;
+        poolData.depositLimit = newDepositLimit;
 
         emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
     }
@@ -424,32 +414,35 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         external
         override
         only(address(_network))
+        validAddress(provider)
+        validAddress(address(pool))
         greaterThanZero(baseTokenAmount)
         nonReentrant
         returns (DepositAmounts memory)
     {
         PoolDepositParams memory depositParams = _poolDepositParams(pool, baseTokenAmount);
 
-        Pool storage poolData = _poolData[pool];
-
         // ensure that the initial rate is properly reset
         if (depositParams.resetInitialRate) {
-            poolData.initialRate = _zeroRate();
+            _setInitialRate(pool, _zeroRate());
         }
 
         // ensure that we have enough available network token liquidity to accomodate the change
         require(
             depositParams.networkTokenDeltaAmount <= availableNetworkTokenLiquidity,
-            "ERR_NETWORK_TOKEN_LIQUIDITY_EXCEEDED"
+            "ERR_NETWORK_LIQUIDITY_EXCEEDED"
         );
+
+        Pool storage poolData = _poolData[pool];
 
         // if we've passed above the minimum network token liquidity for trading - emit that the trading is now enabled
         if (poolData.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
-            bool currEnabled = poolData.liquidity.networkTokenTradingLiquidity >= minLiquidityForTrading;
-            bool newEnabled = depositParams.newNetworkTokenTradingLiquidity >= minLiquidityForTrading;
-            if (newEnabled != currEnabled) {
-                emit TradingEnabled({ pool: pool, newStatus: newEnabled });
+            if (
+                poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading &&
+                depositParams.newNetworkTokenTradingLiquidity >= minLiquidityForTrading
+            ) {
+                emit TradingEnabled({ pool: pool, newStatus: true });
             }
         }
 
@@ -457,17 +450,28 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         poolData.liquidity.baseTokenTradingLiquidity = depositParams.newBaseTokenTradingLiquidity;
         poolData.liquidity.networkTokenTradingLiquidity = depositParams.newNetworkTokenTradingLiquidity;
         poolData.liquidity.tradingLiquidityProduct =
-            depositParams.newBaseTokenTradingLiquidity *
+            uint256(depositParams.newBaseTokenTradingLiquidity) *
             depositParams.newNetworkTokenTradingLiquidity;
 
         // calculate the pool token amount to mint
-        uint256 currentStakedBalance = poolData.liquidity.stakedBalance;
+        uint256 poolTokenAmount;
         IPoolToken poolToken = poolData.poolToken;
-        uint256 poolTokenAmount = MathEx.mulDivF(baseTokenAmount, poolToken.totalSupply(), currentStakedBalance);
+        uint256 currentStakedBalance = poolData.liquidity.stakedBalance;
+
+        {
+            uint256 poolTokenTotalSupply = poolToken.totalSupply();
+            if (poolTokenTotalSupply == 0) {
+                // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
+                require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+
+                poolTokenAmount = baseTokenAmount;
+            } else {
+                poolTokenAmount = MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            }
+        }
 
         // update the staked balance
-        uint256 newStakedBalance = currentStakedBalance.add(baseTokenAmount);
-        poolData.liquidity.stakedBalance = newStakedBalance;
+        poolData.liquidity.stakedBalance = currentStakedBalance.add(baseTokenAmount);
 
         // mint pool tokens to the provider
         poolToken.mint(provider, poolTokenAmount);
@@ -507,6 +511,22 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
+     * @dev sets the initial rate of a given pool
+     */
+    function _setInitialRate(IReserveToken pool, Fraction memory newInitialRate) private {
+        Pool storage poolData = _poolStorage(pool);
+
+        Fraction memory prevInitialRate = poolData.initialRate;
+        if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
+            return;
+        }
+
+        poolData.initialRate = newInitialRate;
+
+        emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
+    }
+
+    /**
      * @dev returns deposit-related output data
      */
     function _poolDepositParams(IReserveToken pool, uint256 baseTokenAmount)
@@ -526,9 +546,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         // get the effective rate to use when calculating the matching network token trading liquidity amount
         Fraction memory rate;
         if (poolData.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
-            // if the minimum network token trading liquidity isn't met - use the initial rate
+            // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
+            // actually set)
+            require(!_isZeroRate(poolData.initialRate), "ERR_NO_INITIAL_RATE");
+
             rate = poolData.initialRate;
-            require(!_isZeroRate(rate), "ERR_NO_INITIAL_RATE");
         } else {
             // if the minimum network token trading liquidity is met - use the SMA
             rate = poolData.averageRate.rate;
@@ -537,27 +559,18 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         // calculate the matching network token trading liquidity amount
-        depositParams.newBaseTokenTradingLiquidity = uint128(
-            poolData.liquidity.baseTokenTradingLiquidity.add(baseTokenAmount)
-        );
-        depositParams.newNetworkTokenTradingLiquidity = uint128(
-            MathEx.floorSqrt(
-                MathEx.mulDivF(
-                    uint256(poolData.liquidity.networkTokenTradingLiquidity) *
-                        uint256(depositParams.newBaseTokenTradingLiquidity),
-                    rate.n,
-                    rate.d
-                )
-            )
-        );
+        depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d).toUint128();
+        depositParams.newNetworkTokenTradingLiquidity = poolData
+            .liquidity
+            .networkTokenTradingLiquidity
+            .add(depositParams.networkTokenDeltaAmount)
+            .toUint128();
 
-        depositParams.networkTokenDeltaAmount =
-            depositParams.newNetworkTokenTradingLiquidity -
-            poolData.liquidity.networkTokenTradingLiquidity;
-
-        depositParams.baseTokenDeltaAmount =
-            depositParams.newBaseTokenTradingLiquidity -
-            poolData.liquidity.baseTokenTradingLiquidity;
+        depositParams.newBaseTokenTradingLiquidity = poolData
+            .liquidity
+            .baseTokenTradingLiquidity
+            .add(baseTokenAmount)
+            .toUint128();
     }
 
     /**
@@ -1067,10 +1080,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns a storage reference to pool data
      */
     function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
-        Pool storage p = _poolData[pool];
-        require(_validPool(p), "ERR_POOL_DOES_NOT_EXIST");
+        Pool storage poolData = _poolData[pool];
+        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        return p;
+        return poolData;
     }
 
     /**
