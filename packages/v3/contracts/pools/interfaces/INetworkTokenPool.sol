@@ -16,7 +16,6 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals } from "../../network/interfaces/IPendingWithdrawals.sol";
 
 struct DepositAmounts {
     uint256 poolTokenAmount; // the minted pool token amount
@@ -27,7 +26,7 @@ struct WithdrawalAmounts {
     uint256 networkTokenAmount; // the withdrawn network token amount
     uint256 poolTokenAmount; // the burned pool token amount
     uint256 govTokenAmount; // the burned governance token amount
-    uint256 networkTokenWithdrawalFeeAmount; // the withdrawal fee network token amount
+    uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
 }
 
 /**
@@ -75,11 +74,6 @@ interface INetworkTokenPool is IUpgradeable {
     function poolToken() external view returns (IPoolToken);
 
     /**
-     * @dev returns the pending withdrawals contract
-     */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals);
-
-    /**
      * @dev returns the total staked network token balance in the network
      */
     function stakedBalance() external view returns (uint256);
@@ -90,9 +84,9 @@ interface INetworkTokenPool is IUpgradeable {
     function mintedAmount(IReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether minting is enabled for the provided pool
+     * @dev returns whether network token liquidity minting is enabled for the provided pool
      */
-    function isMintingEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
 
     /**
      * @dev returns the available co-investment network token liquidity for a given pool

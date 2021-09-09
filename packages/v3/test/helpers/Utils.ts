@@ -51,7 +51,7 @@ export const transfer = async (
         .transfer(targetAddress, amount);
 };
 
-export const getTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
     switch (symbol) {
         case 'BNT':
             return networkToken;
