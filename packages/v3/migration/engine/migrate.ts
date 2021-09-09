@@ -1,7 +1,65 @@
 import { Engine } from './engine';
 import { log } from './logger';
-import { Migration } from './types';
+import { Migration, SystemState } from './types';
 import { importCsjOrEsModule } from './utils';
+import fs from 'fs';
+import path from 'path';
+import { exit } from 'process';
+
+export const migrateOneUp = async (
+    migration: Migration,
+    timestamp: number,
+    oldNetworkState: any,
+    currentNetworkState: any
+) => {
+    let newNetworkState: any;
+
+    try {
+        newNetworkState = await migration.up(currentNetworkState);
+
+        try {
+            await migration.healthCheck(oldNetworkState, newNetworkState);
+            log.success('Health check success ✨ ');
+        } catch (e: any) {
+            log.error('Health check failed');
+            log.error(e.stack);
+            return undefined;
+        }
+    } catch (e: any) {
+        log.error('Migration up failed');
+        log.error(e.stack);
+        log.error('Aborting.');
+        exit(-1);
+    }
+
+    return {
+        migrationState: { latestMigration: timestamp },
+        networkState: newNetworkState
+    };
+};
+
+export const migrateOneDown = async (
+    migration: Migration,
+    oldNetworkSystemState: SystemState,
+    currentNetworkState: any
+) => {
+    let newNetworkState: any;
+    try {
+        newNetworkState = await migration.down(oldNetworkSystemState.networkState, currentNetworkState);
+    } catch (e: any) {
+        log.error('Migration down failed');
+        log.error(e.stack);
+        log.error('Aborting.');
+        exit(-1);
+    }
+
+    return {
+        migrationState: {
+            latestMigration: oldNetworkSystemState.migrationState.latestMigration
+        },
+        networkState: newNetworkState
+    };
+};
 
 export const migrate = async (engine: Engine) => {
     // if there is no migration to run, exit
@@ -14,66 +72,56 @@ export const migrate = async (engine: Engine) => {
 
     let index = 0;
     for (; index < engine.migration.migrationsData.length; index++) {
-        engine.migration.currentMigrationData = engine.migration.migrationsData[index];
+        const migrationData = engine.migration.migrationsData[index];
 
-        const migration: Migration = importCsjOrEsModule(engine.migration.currentMigrationData.fullPath);
+        const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+        log.info(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
-        log.info(
-            `Executing ${engine.migration.currentMigrationData.fileName}, timestamp: ${engine.migration.currentMigrationData.migrationTimestamp}`
+        // save the current migration data
+        engine.migration.currentMigrationData = migrationData;
+
+        const newSystemState = await migrateOneUp(
+            migration,
+            migrationData.migrationTimestamp,
+            engine.migration.stateSaves[index].networkState,
+            engine.migration.state.networkState
         );
+        if (!newSystemState) break;
 
-        try {
-            engine.migration.state.networkState = await migration.up(engine.migration.state.networkState);
+        // update migration state
+        engine.migration.state = newSystemState;
 
-            try {
-                await migration.healthCheck(
-                    engine.migration.stateSaves[index].networkState,
-                    engine.migration.state.networkState
-                );
-                log.success('Health check success ✨ ');
-            } catch (e: any) {
-                log.error('Health check failed');
-                log.error(e.stack);
-                break;
-            }
+        // add current state to saves
+        engine.migration.stateSaves.push({ ...newSystemState });
 
-            // if health check passed, update the state and write it to the system
-            engine.migration.state = {
-                migrationState: { latestMigration: engine.migration.currentMigrationData.migrationTimestamp },
-                networkState: engine.migration.state.networkState
-            };
-            engine.IO.state.write(engine.migration.state);
-            engine.migration.stateSaves.push({ ...engine.migration.state });
-        } catch (e: any) {
-            log.error('Migration execution failed');
-            log.error(e.stack);
-            log.error('Aborting.');
-            return;
-        }
+        // write state to disk
+        engine.IO.state.write(newSystemState);
     }
 
     // if the index of the latest migration is not equal to the length of the migrationsData array then an error occured an we should revert
     if (index !== engine.migration.migrationsData.length) {
-        log.warning('Reverting ...');
+        const migrationData = engine.migration.migrationsData[index];
 
-        engine.migration.currentMigrationData = engine.migration.migrationsData[index];
-        log.info(
-            `Reverting ${engine.migration.currentMigrationData.fileName}, timestamp: ${engine.migration.currentMigrationData.migrationTimestamp}`
-        );
+        const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+        log.info(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
-        const migration: Migration = importCsjOrEsModule(engine.migration.currentMigrationData.fullPath);
-
-        engine.migration.state.networkState = await migration.down(
-            engine.migration.stateSaves[index].networkState,
+        const newSystemState = await migrateOneDown(
+            migration,
+            engine.migration.stateSaves[index],
             engine.migration.state.networkState
         );
 
-        // if revert passed, update the state and write it to the system
-        engine.migration.state.migrationState = {
-            latestMigration: engine.migration.stateSaves[index].migrationState.latestMigration
-        };
+        // update migration state
+        engine.migration.state = newSystemState;
 
+        // write state to disk
         engine.IO.state.write(engine.migration.state);
+
+        // remove current migration deployment file
+        fs.rmSync(
+            path.join(engine.pathToNetworkDeploymentsFolder, engine.migration.currentMigrationData.fileName + '.json'),
+            { force: true }
+        );
         log.success(`${engine.migration.currentMigrationData.fileName} reverted`);
     }
 

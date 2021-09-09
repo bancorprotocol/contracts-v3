@@ -4,7 +4,7 @@ import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './con
 import { initExecutionFunctions } from './executionFunctions';
 import { initIO } from './io';
 import { log } from './logger';
-import { migrate } from './migrate';
+import { migrate, migrateOneDown, migrateOneUp } from './migrate';
 import { defaultArgs, ExecutionSettings, NetworkSettings } from './types';
 import { isMigrationFolderValid } from './utils';
 import { Overrides, Signer } from 'ethers';
@@ -26,18 +26,29 @@ export class Engine {
     readonly overrides: Overrides;
 
     // needed paths
+    readonly pathToRoot: string;
     readonly pathToNetworkFolder: string;
     readonly pathToNetworkDeploymentsFolder: string;
 
     // init additional functionnalities
     readonly IO = initIO(this);
     readonly executionFunctions = initExecutionFunctions(this);
+    //
     readonly migrate = () => migrate(this);
+    //
+    readonly migrateOneUp = migrateOneUp;
+    readonly migrateOneDown = migrateOneDown;
 
     // migration info
     migration = defaultMigration;
 
-    constructor(hre: HardhatRuntimeEnvironment, args: defaultArgs, signer: Signer, signerAddress: string) {
+    constructor(
+        hre: HardhatRuntimeEnvironment,
+        args: defaultArgs,
+        signer: Signer,
+        signerAddress: string,
+        pathToRoot: string
+    ) {
         this.hre = hre;
 
         // init network settings
@@ -46,18 +57,14 @@ export class Engine {
             networkName: networkName,
             isFork: networkName.startsWith(FORK_PREFIX),
             isHardhat: networkName === 'hardhat',
-            isTestnet: networkName === 'rinkeby',
             originalNetwork: networkName.startsWith(FORK_PREFIX)
                 ? networkName.substring(FORK_PREFIX.length)
                 : networkName
         };
 
         // init paths
-        this.pathToNetworkFolder = path.join(
-            hre.config.paths.root,
-            MIGRATION_DATA_FOLDER,
-            this.networkSettings.networkName
-        );
+        this.pathToRoot = pathToRoot;
+        this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_FOLDER, this.networkSettings.networkName);
         this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, 'deployments');
 
         // init basics
@@ -81,8 +88,11 @@ export class Engine {
         this.init();
     }
 
+    //
+
     // engine healthcheck
     checkForFailures = () => {
+        // some configuration should only reserve for forked network or hardhat networks
         const isForkOrHardhat = this.networkSettings.isFork || this.networkSettings.networkName === 'hardhat';
         if (this.executionSettings.confirmationToWait <= 1 && !isForkOrHardhat) {
             throw new Error(
@@ -104,8 +114,13 @@ export class Engine {
     };
 
     initMigrationDefaultFolder = () => {
+        // init the network folder
         fs.mkdirSync(this.pathToNetworkFolder);
+
+        // init the network deployment folder
         fs.mkdirSync(path.join(this.pathToNetworkFolder, 'deployments'));
+
+        // initialize the first state to default
         this.IO.state.write(defaultMigration.state);
     };
 
@@ -116,7 +131,7 @@ export class Engine {
                 // check if the original network folder is valid and copy it into the current network folder
                 try {
                     const pathToOriginalNetworkFolder = path.join(
-                        this.hre.config.paths.root,
+                        this.pathToRoot,
                         MIGRATION_DATA_FOLDER,
                         this.networkSettings.originalNetwork
                     );
@@ -149,7 +164,7 @@ export class Engine {
         this.migration.state = this.IO.state.fetch(this.pathToNetworkFolder);
 
         // generate migration files
-        const pathToMigrationFiles = path.join(this.hre.config.paths.root, MIGRATION_FOLDER);
+        const pathToMigrationFiles = path.join(this.pathToRoot, MIGRATION_FOLDER);
         const allMigrationFiles = fs.readdirSync(pathToMigrationFiles);
         const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
         const migrationFilesPath = migrationFiles.map((fileName: string) => path.join(pathToMigrationFiles, fileName));

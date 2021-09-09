@@ -12,7 +12,7 @@ export default async (args: defaultArgs, hre: hre, task: (a: any, b: hre) => any
         ? new LedgerSigner(ethers.provider, 'hid', args.ledgerPath)
         : (await ethers.getSigners())[0];
 
-    engine = new Engine(hre, args, signer, await signer.getAddress());
+    engine = new Engine(hre, args, signer, await signer.getAddress(), hre.config.paths.root);
 
     // follow to the actual task
     return task(args, hre);

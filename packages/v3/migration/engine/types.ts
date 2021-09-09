@@ -29,7 +29,6 @@ export type NetworkSettings = {
     networkName: string;
     isFork: boolean;
     isHardhat: boolean;
-    isTestnet: boolean;
     originalNetwork: string;
 };
 

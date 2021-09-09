@@ -67,7 +67,7 @@ Creates a migration file based on a template.
 ### How to create a migration file ?
 
 ```
-yarn hh create-migration migrationFileName
+yarn hh create-migration do migration for me pls
 ```
 
 If you don't use this CLI to generate your migration files, bear in mind that the format is as follow: "X_testfile.ts" with X representing the timestamp of the migration (i.e its order).

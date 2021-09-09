@@ -1,5 +1,5 @@
 import { createMigrationParamTask } from '../../migration';
-import { MIGRATION_FOLDER } from '../../migration/engine/engine';
+import { MIGRATION_FOLDER } from '../../migration/engine/constant';
 import { log } from '../engine/logger';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -54,13 +54,14 @@ export default migration;
     
 `;
 
-    if (args.migrationName === '') {
-        throw new Error('File name cannot be empty');
+    let migrationName = '';
+    for (const a of args.wordList) {
+        migrationName += '_' + a;
     }
 
-    const migrationTimestamp = Date.now();
+    const migrationTimestamp = args.customTimestamp || Date.now();
 
-    const fileName = `${migrationTimestamp}_${args.migrationName}.ts`;
+    const fileName = `${migrationTimestamp}${migrationName}.ts`;
 
     const pathToNewMigrationFile = path.join(hre.config.paths.root, MIGRATION_FOLDER, fileName);
     fs.writeFileSync(pathToNewMigrationFile, templateMigrationFile);
