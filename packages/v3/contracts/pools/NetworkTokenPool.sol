@@ -26,7 +26,6 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
-import { PoolAverageRate } from "./PoolAverageRate.sol";
 
 /**
  * @dev Network Token Pool contract
