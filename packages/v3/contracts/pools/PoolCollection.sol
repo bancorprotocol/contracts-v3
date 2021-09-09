@@ -60,7 +60,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint128 networkTokenDeltaAmount;
         uint128 baseTokenDeltaAmount;
         bool resetInitialRate;
-        bool tradingEnabled;
     }
 
     // represents `(n1 - n2) / (d1 - d2)`
@@ -444,17 +443,22 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             "ERR_NETWORK_TOKEN_LIQUIDITY_EXCEEDED"
         );
 
+        // if we've passed above the minimum network token liquidity for trading - emit that the trading is now enabled
+        if (poolData.tradingEnabled) {
+            uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+            bool currEnabled = poolData.liquidity.networkTokenTradingLiquidity >= minLiquidityForTrading;
+            bool newEnabled = depositParams.newNetworkTokenTradingLiquidity >= minLiquidityForTrading;
+            if (newEnabled != currEnabled) {
+                emit TradingEnabled({ pool: pool, newStatus: newEnabled });
+            }
+        }
+
         // calculate and update the new trading liquidity based on the provided network token amount
         poolData.liquidity.baseTokenTradingLiquidity = depositParams.newBaseTokenTradingLiquidity;
         poolData.liquidity.networkTokenTradingLiquidity = depositParams.newNetworkTokenTradingLiquidity;
         poolData.liquidity.tradingLiquidityProduct =
             depositParams.newBaseTokenTradingLiquidity *
             depositParams.newNetworkTokenTradingLiquidity;
-
-        // if we've passed above the minimum network token liquidity for trading - emit that the trading is now enabled
-        if (depositParams.tradingEnabled) {
-            emit TradingEnabled({ pool: pool, newStatus: true });
-        }
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = poolData.liquidity.stakedBalance;
@@ -520,11 +524,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         );
 
         // get the effective rate to use when calculating the matching network token trading liquidity amount
-        uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
-        bool belowMiniquidityForTrading = poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading;
-
         Fraction memory rate;
-        if (belowMiniquidityForTrading) {
+        if (poolData.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
             // if the minimum network token trading liquidity isn't met - use the initial rate
             rate = poolData.initialRate;
             require(!_isZeroRate(rate), "ERR_NO_INITIAL_RATE");
@@ -557,14 +558,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         depositParams.baseTokenDeltaAmount =
             depositParams.newBaseTokenTradingLiquidity -
             poolData.liquidity.baseTokenTradingLiquidity;
-
-        if (
-            poolData.tradingEnabled &&
-            belowMiniquidityForTrading &&
-            depositParams.newNetworkTokenTradingLiquidity >= minLiquidityForTrading
-        ) {
-            depositParams.tradingEnabled = true;
-        }
     }
 
     /**
