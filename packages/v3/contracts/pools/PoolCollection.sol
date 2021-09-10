@@ -58,7 +58,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint128 newNetworkTokenTradingLiquidity;
         uint128 newBaseTokenTradingLiquidity;
         uint128 networkTokenDeltaAmount;
-        bool resetInitialRate;
+        bool useInitialRate;
     }
 
     // represents `(n1 - n2) / (d1 - d2)`
@@ -422,8 +422,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     {
         PoolDepositParams memory depositParams = _poolDepositParams(pool, baseTokenAmount);
 
-        // ensure that the initial rate is properly reset
-        if (depositParams.resetInitialRate) {
+        Pool storage poolData = _poolData[pool];
+
+        if (depositParams.useInitialRate) {
+            // if we're using the initial rate, ensure that the average rate is set
+            Fraction memory averageRate = poolData.averageRate.rate;
+            Fraction memory initialRate = poolData.initialRate;
+            if (averageRate.n != initialRate.n || averageRate.d != initialRate.d) {
+                poolData.averageRate.rate = initialRate;
+            }
+        } else {
+            // otherwise, ensure that the initial rate is properly reset
             _setInitialRate(pool, _zeroRate());
         }
 
@@ -433,9 +442,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             "ERR_NETWORK_LIQUIDITY_EXCEEDED"
         );
 
-        Pool storage poolData = _poolData[pool];
-
-        // if we've passed above the minimum network token liquidity for trading - emit that the trading is now enabled
+        // if we've passed above the minimum network token liquidity for trading - emit that trading is now enabled
         if (poolData.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
             if (
@@ -492,7 +499,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
-    ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(address(pool))
+        greaterThanZero(basePoolTokenAmount)
+        nonReentrant
+        returns (WithdrawalAmounts memory amounts)
+    {
         // obtain all withdrawal-related amounts
         amounts = _poolWithdrawalAmounts(
             pool,
@@ -537,25 +552,27 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
+        // get the effective rate to use when calculating the matching network token trading liquidity amount
+        uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+        require(minLiquidityForTrading > 0, "ERR_MIN_LIQUIDITY_NOT_SET");
+
         // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
         require(
             poolData.liquidity.stakedBalance.add(baseTokenAmount) <= poolData.depositLimit,
             "ERR_DEPOSIT_LIMIT_EXCEEDED"
         );
 
-        // get the effective rate to use when calculating the matching network token trading liquidity amount
         Fraction memory rate;
-        if (poolData.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
+        depositParams.useInitialRate = poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading;
+        if (depositParams.useInitialRate) {
             // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
             // actually set)
             require(!_isZeroRate(poolData.initialRate), "ERR_NO_INITIAL_RATE");
 
             rate = poolData.initialRate;
         } else {
-            // if the minimum network token trading liquidity is met - use the SMA
+            // if the minimum network token trading liquidity is met - use the average rate
             rate = poolData.averageRate.rate;
-
-            depositParams.resetInitialRate = true;
         }
 
         // calculate the matching network token trading liquidity amount
@@ -663,6 +680,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         poolData.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNewTradingLiquidity);
         poolData.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNewTradingLiquidity);
         poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+
+        // ensure that the average rate is reset when the pool is being emptied
+        if (baseTokenNewTradingLiquidity == 0) {
+            poolData.averageRate.rate = _zeroRate();
+        }
 
         if (poolData.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
