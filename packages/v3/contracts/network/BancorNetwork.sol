@@ -2,6 +2,7 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -31,6 +32,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
  * @dev Bancor Network contract
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+    using Address for address payable;
     using SafeMath for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveToken for IReserveToken;
@@ -535,14 +537,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider,
         IReserveToken pool,
         uint256 tokenAmount
-    ) external override validAddress(provider) greaterThanZero(tokenAmount) {
+    ) external payable override validAddress(address(pool)) validAddress(provider) greaterThanZero(tokenAmount) {
         _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function deposit(IReserveToken pool, uint256 tokenAmount) external override greaterThanZero(tokenAmount) {
+    function deposit(IReserveToken pool, uint256 tokenAmount)
+        external
+        payable
+        override
+        validAddress(address(pool))
+        greaterThanZero(tokenAmount)
+    {
         _depositFor(msg.sender, pool, tokenAmount, msg.sender);
     }
 
@@ -615,7 +623,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         if (pool == IReserveToken(address(_networkToken))) {
             _depositNetworkTokenFor(contextId, provider, tokenAmount, caller);
-        } else {}
+        } else {
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller);
+        }
     }
 
     /**
@@ -689,15 +699,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // transfer the tokens from the caller to the vault
         if (msg.value > 0) {
+            require(pool.isNativeToken(), "ERR_INVALID_POOL");
+
             require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
-            require(pool.isNativeToken(), "ERR_INVALID_SOURCE_POOL");
+
+            // please note that a regular transfer would go over the 2300 gas limit
+            payable(_vault).sendValue(baseTokenAmount);
         } else {
-            require(!pool.isNativeToken(), "ERR_INVALID_SOURCE_POOL");
+            require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
             pool.safeTransferFrom(caller, address(_vault), baseTokenAmount);
         }
 
-        // process base token pool deposit (taking into account the ETH pool)
+        // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
             provider,
             pool,
@@ -708,8 +722,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // request additional liquidity from the network token pool and transfer it to the vault
         if (depositAmounts.networkTokenDeltaAmount > 0) {
             cachedNetworkTokenPool.requestLiquidity(contextId, pool, depositAmounts.networkTokenDeltaAmount);
-
-            _networkToken.transfer(address(_vault), depositAmounts.networkTokenDeltaAmount);
         }
 
         // TODO: process network fees based on the return values

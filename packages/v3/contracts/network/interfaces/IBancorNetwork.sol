@@ -117,7 +117,7 @@ interface IBancorNetwork is IUpgradeable {
         address provider,
         IReserveToken pool,
         uint256 tokenAmount
-    ) external;
+    ) external payable;
 
     /**
      * @dev deposits liquidity for the current provider
@@ -126,7 +126,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved have approved the network to transfer the liquidity tokens to on its behalf
      */
-    function deposit(IReserveToken pool, uint256 tokenAmount) external;
+    function deposit(IReserveToken pool, uint256 tokenAmount) external payable;
 
     /**
      * @dev withdraws liquidity
