@@ -1058,6 +1058,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
         Fraction memory y = _subMax0(quotients[0]);
+
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
             MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
@@ -1076,10 +1077,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
         }
+
         if (q.n2 > q.n1 && q.d2 > q.d1) {
             // the quotient is finite and positive
             return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
         }
+
+        if (q.n2 == q.n1 && q.d2 == q.d1) {
+            // the quotient is 1
+            return Fraction({ n: 1, d: 1 });
+        }
+
         // the quotient is not finite or not positive
         return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
     }
