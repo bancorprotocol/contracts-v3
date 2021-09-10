@@ -900,7 +900,6 @@ describe('BancorNetwork', () => {
                                             prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                                         );
 
-                                        // TODO: XX
                                         expect(await getBalance(token, vault.address)).to.equal(
                                             prevVaultTokenBalance.add(amount)
                                         );
