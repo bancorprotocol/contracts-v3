@@ -823,9 +823,11 @@ describe('BancorNetwork', () => {
                                             prevNetworkTokenTotalSupply.sub(amount)
                                         );
 
-                                        expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.add(amount));
+                                        expect(await govToken.totalSupply()).to.equal(
+                                            prevGovTotalSupply.add(expectedPoolTokenAmount)
+                                        );
                                         expect(await govToken.balanceOf(provider.address)).to.equal(
-                                            prevProviderGovTokenBalance.add(amount)
+                                            prevProviderGovTokenBalance.add(expectedPoolTokenAmount)
                                         );
                                     } else {
                                         const prevPoolLiquidity = await poolCollection.poolLiquidity(token.address);
