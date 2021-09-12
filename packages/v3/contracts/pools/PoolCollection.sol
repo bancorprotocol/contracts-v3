@@ -241,8 +241,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: _zeroRate() }),
-            initialRate: _zeroRate(),
+            averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
+            initialRate: _zeroFraction(),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -433,7 +433,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             }
         } else {
             // otherwise, ensure that the initial rate is properly reset
-            _setInitialRate(pool, _zeroRate());
+            _setInitialRate(pool, _zeroFraction());
         }
 
         // ensure that we have enough available network token liquidity to accomodate the change
@@ -556,7 +556,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         if (depositParams.useInitialRate) {
             // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
             // actually set)
-            require(!_isZeroRate(poolData.initialRate), "ERR_NO_INITIAL_RATE");
+            require(!_isZeroFraction(poolData.initialRate), "ERR_NO_INITIAL_RATE");
 
             rate = poolData.initialRate;
         } else {
@@ -672,7 +672,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // ensure that the average rate is reset when the pool is being emptied
         if (baseTokenNewTradingLiquidity == 0) {
-            poolData.averageRate.rate = _zeroRate();
+            poolData.averageRate.rate = _zeroFraction();
         }
 
         if (poolData.tradingEnabled) {
@@ -1113,17 +1113,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     /**
-     * @dev returns the zero rate
+     * @dev returns the zero fraction
      */
-    function _zeroRate() private pure returns (Fraction memory) {
+    function _zeroFraction() private pure returns (Fraction memory) {
         return Fraction({ n: 0, d: 1 });
     }
 
     /**
-     * @dev returns whether a rate is zero
+     * @dev returns whether a fraction is zero
      */
-    function _isZeroRate(Fraction memory rate) private pure returns (bool) {
-        return rate.n == 0;
+    function _isZeroFraction(Fraction memory fraction) private pure returns (bool) {
+        return fraction.n == 0;
     }
 
     /**
