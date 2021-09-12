@@ -566,17 +566,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // calculate the matching network token trading liquidity amount
         depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d).toUint128();
-        depositParams.newNetworkTokenTradingLiquidity = poolData
-            .liquidity
-            .networkTokenTradingLiquidity
-            .add(depositParams.networkTokenDeltaAmount)
-            .toUint128();
+        depositParams.newNetworkTokenTradingLiquidity = uint128(
+            poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.networkTokenDeltaAmount)
+        );
 
-        depositParams.newBaseTokenTradingLiquidity = poolData
-            .liquidity
-            .baseTokenTradingLiquidity
-            .add(baseTokenAmount)
-            .toUint128();
+        depositParams.newBaseTokenTradingLiquidity = uint128(
+            poolData.liquidity.baseTokenTradingLiquidity.add(baseTokenAmount)
+        );
     }
 
     /**
