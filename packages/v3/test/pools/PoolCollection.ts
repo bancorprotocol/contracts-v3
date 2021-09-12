@@ -875,7 +875,7 @@ describe('PoolCollection', () => {
                 ).to.be.revertedWith('ERR_INVALID_ADDRESS');
             });
 
-            it('should revert when attempting to deposit for a pool that does not exist', async () => {
+            it('should revert when attempting to deposit into a pool that does not exist', async () => {
                 await expect(
                     network.depositToPoolCollectionForT(
                         poolCollection.address,

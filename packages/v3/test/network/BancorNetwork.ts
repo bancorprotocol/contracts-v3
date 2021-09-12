@@ -729,7 +729,7 @@ describe('BancorNetwork', () => {
                         );
                     });
 
-                    it('should revert when attempting to deposit for a pool that does not exist', async () => {
+                    it('should revert when attempting to deposit into a pool that does not exist', async () => {
                         const reserveToken = await createTokenBySymbol('TKN', networkToken);
 
                         await expect(deposit(BigNumber.from(1), { pool: reserveToken.address })).to.be.revertedWith(
