@@ -35,7 +35,8 @@ struct Pool {
 
 // base toke deposit output amounts
 struct DepositAmounts {
-    uint128 networkTokenDeltaAmount; // the network token amount to add to the trading liquidity and to transfer to the vault
+    uint128 networkTokenDeltaAmount; // the network token amount that was added to the trading liquidity
+    uint128 baseTokenDeltaAmount; // the base token amount that was added to the trading liquidity
     uint256 poolTokenAmount; // the minted pool token amount
     IPoolToken poolToken; // the pool token
 }

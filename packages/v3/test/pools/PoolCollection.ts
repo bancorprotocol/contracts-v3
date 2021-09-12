@@ -938,7 +938,10 @@ describe('PoolCollection', () => {
                 });
 
                 context('when below the deposit limit', () => {
-                    const testDepositFor = async (amount: BigNumber) => {
+                    const testDepositFor = async (
+                        baseTokenAmount: BigNumber,
+                        availableNetworkTokenLiquidity = MAX_UINT256
+                    ) => {
                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
 
                         const prevPoolTokenTotalSupply = await poolToken.totalSupply();
@@ -946,9 +949,9 @@ describe('PoolCollection', () => {
 
                         let expectedPoolTokenAmount;
                         if (prevPoolTokenTotalSupply.isZero()) {
-                            expectedPoolTokenAmount = amount;
+                            expectedPoolTokenAmount = baseTokenAmount;
                         } else {
-                            expectedPoolTokenAmount = amount
+                            expectedPoolTokenAmount = baseTokenAmount
                                 .mul(prevPoolTokenTotalSupply)
                                 .div(prevPoolData.liquidity.stakedBalance);
                         }
@@ -957,16 +960,16 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             provider.address,
                             reserveToken.address,
-                            amount,
-                            MAX_UINT256
+                            baseTokenAmount,
+                            availableNetworkTokenLiquidity
                         );
 
                         const res = await network.depositToPoolCollectionForT(
                             poolCollection.address,
                             provider.address,
                             reserveToken.address,
-                            amount,
-                            MAX_UINT256
+                            baseTokenAmount,
+                            availableNetworkTokenLiquidity
                         );
 
                         const poolData = await poolCollection.poolData(reserveToken.address);
@@ -991,29 +994,32 @@ describe('PoolCollection', () => {
                             rate = prevPoolData.averageRate.rate;
 
                             expect(poolData.initialRate).to.equal(ZERO_FRACTION);
-
-                            if (
-                                !prevPoolData.initialRate.n.eq(ZERO_FRACTION.n) ||
-                                !prevPoolData.initialRate.d.eq(ZERO_FRACTION.d)
-                            ) {
-                                await expect(res)
-                                    .to.emit(poolCollection, 'InitialRateUpdated')
-                                    .withArgs(reserveToken.address, prevPoolData.initialRate, poolData.initialRate);
-                            }
                         }
 
-                        const networkTokenDeltaAmount = amount.mul(rate.n).div(rate.d);
+                        let networkTokenDeltaAmount = baseTokenAmount.mul(rate.n).div(rate.d);
+                        let baseTokenExcessLiquidity = BigNumber.from(0);
+                        if (networkTokenDeltaAmount.gt(availableNetworkTokenLiquidity)) {
+                            const unavailableNetworkTokenAmount =
+                                networkTokenDeltaAmount.sub(availableNetworkTokenLiquidity);
+
+                            networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+                            baseTokenExcessLiquidity = unavailableNetworkTokenAmount.mul(rate.d).div(rate.n);
+                        }
+
+                        const baseTokenDeltaAmount = baseTokenAmount.sub(baseTokenExcessLiquidity);
+
                         const newBaseTokenTradingLiquidity =
-                            prevPoolData.liquidity.baseTokenTradingLiquidity.add(amount);
+                            prevPoolData.liquidity.baseTokenTradingLiquidity.add(baseTokenDeltaAmount);
                         const newNetworkTokenTradingLiquidity =
                             prevPoolData.liquidity.networkTokenTradingLiquidity.add(networkTokenDeltaAmount);
 
                         expect(depositAmounts.networkTokenDeltaAmount).to.equal(networkTokenDeltaAmount);
+                        expect(depositAmounts.baseTokenDeltaAmount).to.equal(baseTokenDeltaAmount);
                         expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
                         expect(depositAmounts.poolToken).to.equal(poolToken.address);
 
                         expect(poolData.liquidity.stakedBalance).to.equal(
-                            prevPoolData.liquidity.stakedBalance.add(amount)
+                            prevPoolData.liquidity.stakedBalance.add(baseTokenAmount)
                         );
                         expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(newBaseTokenTradingLiquidity);
                         expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(
@@ -1088,16 +1094,14 @@ describe('PoolCollection', () => {
                                 });
 
                                 context('when exceeding the available network token liquidity', () => {
-                                    it('should revert when attempting to deposit', async () => {
-                                        await expect(
-                                            network.depositToPoolCollectionForT(
-                                                poolCollection.address,
-                                                provider.address,
-                                                reserveToken.address,
-                                                BigNumber.from(1_000_000),
-                                                BigNumber.from(1)
-                                            )
-                                        ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_EXCEEDED');
+                                    it('should deposit', async () => {
+                                        for (const amount of [
+                                            toWei(BigNumber.from(1_000_000)),
+                                            toWei(BigNumber.from(10_000_000)),
+                                            toWei(BigNumber.from(50_000_000))
+                                        ]) {
+                                            await testDepositFor(amount, toWei(BigNumber.from(20_000)));
+                                        }
                                     });
                                 });
                             });
@@ -1130,16 +1134,14 @@ describe('PoolCollection', () => {
                             });
 
                             context('when exceeding the available network token liquidity', () => {
-                                it('should revert when attempting to deposit', async () => {
-                                    await expect(
-                                        network.depositToPoolCollectionForT(
-                                            poolCollection.address,
-                                            provider.address,
-                                            reserveToken.address,
-                                            BigNumber.from(1_000_000),
-                                            BigNumber.from(1)
-                                        )
-                                    ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_EXCEEDED');
+                                it('should deposit', async () => {
+                                    for (const amount of [
+                                        toWei(BigNumber.from(1_000_000)),
+                                        toWei(BigNumber.from(10_000_000)),
+                                        toWei(BigNumber.from(50_000_000))
+                                    ]) {
+                                        await testDepositFor(amount, toWei(BigNumber.from(20_000)));
+                                    }
                                 });
                             });
                         });
