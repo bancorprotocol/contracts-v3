@@ -1021,7 +1021,7 @@ describe('BancorNetwork', () => {
                                                 ).to.be.revertedWith('ERR_INVALID_POOL');
                                             });
                                         } else {
-                                            it('should revert when attempting to deposit with ETH', async () => {
+                                            it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
                                                 const amount = BigNumber.from(1000);
 
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
