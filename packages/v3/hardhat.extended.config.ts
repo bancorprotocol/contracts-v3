@@ -1,5 +1,4 @@
 import './migration';
-import { log } from './migration/engine/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -35,7 +34,7 @@ export const FORK_CONFIG = (() => {
 
     const urlNetworkToFork: string = getNetworkUrl(networkToFork);
     if (!urlNetworkToFork) {
-        log.error(`${networkToFork} config is not present in the config.json file, aborting.`);
+        console.log(`${networkToFork} config is not present in the config.json file, aborting.`);
         process.exit(-1);
     }
 

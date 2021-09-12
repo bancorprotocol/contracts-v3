@@ -88,8 +88,6 @@ export class Engine {
         this.init();
     }
 
-    //
-
     // engine healthcheck
     checkForFailures = () => {
         // some configuration should only reserve for forked network or hardhat networks

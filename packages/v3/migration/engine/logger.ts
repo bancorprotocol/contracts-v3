@@ -1,25 +1,35 @@
+import { test } from './';
 import { Engine } from './engine';
 import { ExecutionSettings } from './types';
 import chalk from 'chalk';
 import { Overrides } from 'ethers';
 
+// in order to prevent printing in tests
+const customConsole = {
+    log: (...any: Parameters<any>) => {
+        if (!test) {
+            console.log(any);
+        }
+    }
+};
+
 export const palette = {
-    white: (...str: string[]) => console.log(`${str}`),
-    magenta: (...str: string[]) => console.log(chalk.magenta(`${str}`)),
-    yellow: (...str: string[]) => console.log(chalk.yellow(`${str}`))
+    white: (...str: string[]) => customConsole.log(`${str}`),
+    magenta: (...str: string[]) => customConsole.log(chalk.magenta(`${str}`)),
+    yellow: (...str: string[]) => customConsole.log(chalk.yellow(`${str}`))
 };
 
 export const log = {
-    warning: (...str: string[]) => console.log(chalk.cyanBright(`⚠️  ${str}`)),
-    info: (...str: string[]) => console.log(chalk.rgb(0, 0, 0).bgWhiteBright(`\n${str}`)),
-    done: (...str: string[]) => console.log(chalk.yellowBright(...str)),
-    debug: (...str: string[]) => console.log(chalk.rgb(123, 104, 238).italic(...str)),
+    warning: (...str: string[]) => customConsole.log(chalk.cyanBright(`⚠️  ${str}`)),
+    info: (...str: string[]) => customConsole.log(chalk.rgb(0, 0, 0).bgWhiteBright(`\n${str}`)),
+    done: (...str: string[]) => customConsole.log(chalk.yellowBright(...str)),
+    debug: (...str: string[]) => customConsole.log(chalk.rgb(123, 104, 238).italic(...str)),
 
     basicExecutionHeader: (head: string, body: string, args: any[]) => {
         let space = '  ';
         for (let i = 0; i < head.length; i++) space += ' ';
 
-        return console.log(
+        return customConsole.log(
             chalk.underline.rgb(
                 255,
                 165,
@@ -32,9 +42,9 @@ export const log = {
         );
     },
 
-    greyed: (...str: string[]) => console.log(chalk.grey(...str)),
-    success: (...str: string[]) => console.log(chalk.greenBright(...str)),
-    error: (...str: string[]) => console.log(chalk.red(`⛔️ ${str}`)),
+    greyed: (...str: string[]) => customConsole.log(chalk.grey(...str)),
+    success: (...str: string[]) => customConsole.log(chalk.greenBright(...str)),
+    error: (...str: string[]) => customConsole.log(chalk.red(`⛔️ ${str}`)),
 
     migrationConfig: (
         signerAddress: string,
