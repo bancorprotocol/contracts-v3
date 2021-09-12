@@ -6,9 +6,9 @@ import { Overrides } from 'ethers';
 
 // in order to prevent printing in tests
 const customConsole = {
-    log: (...any: Parameters<any>) => {
+    log: (text: any) => {
         if (!test) {
-            console.log(any);
+            console.log(text);
         }
     }
 };
