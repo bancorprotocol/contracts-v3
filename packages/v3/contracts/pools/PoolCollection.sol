@@ -461,21 +461,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             depositParams.newNetworkTokenTradingLiquidity;
 
         // calculate the pool token amount to mint
-        uint256 poolTokenAmount;
+
         IPoolToken poolToken = poolData.poolToken;
         uint256 currentStakedBalance = poolData.liquidity.stakedBalance;
-
-        {
-            uint256 poolTokenTotalSupply = poolToken.totalSupply();
-            if (poolTokenTotalSupply == 0) {
-                // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
-                require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
-
-                poolTokenAmount = baseTokenAmount;
-            } else {
-                poolTokenAmount = MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, currentStakedBalance);
-            }
-        }
+        uint256 poolTokenAmount = _calcPoolTokenAmount(poolToken, baseTokenAmount, currentStakedBalance);
 
         // update the staked balance
         poolData.liquidity.stakedBalance = currentStakedBalance.add(baseTokenAmount);
@@ -1135,5 +1124,24 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function _isZeroRate(Fraction memory rate) private pure returns (bool) {
         return rate.n == 0;
+    }
+
+    /**
+     * @dev calculates pool tokens amount
+     */
+    function _calcPoolTokenAmount(
+        IPoolToken poolToken,
+        uint256 baseTokenAmount,
+        uint256 stakedBalance
+    ) private view returns (uint256) {
+        uint256 poolTokenTotalSupply = poolToken.totalSupply();
+        if (poolTokenTotalSupply == 0) {
+            // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
+            require(stakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+
+            return baseTokenAmount;
+        }
+
+        return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
     }
 }
