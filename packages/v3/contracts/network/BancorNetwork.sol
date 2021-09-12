@@ -537,7 +537,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider,
         IReserveToken pool,
         uint256 tokenAmount
-    ) external payable override validAddress(address(pool)) validAddress(provider) greaterThanZero(tokenAmount) {
+    )
+        external
+        payable
+        override
+        validAddress(address(pool))
+        validAddress(provider)
+        greaterThanZero(tokenAmount)
+        nonReentrant
+    {
         _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
@@ -550,6 +558,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         override
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
+        nonReentrant
     {
         _depositFor(msg.sender, pool, tokenAmount, msg.sender);
     }
