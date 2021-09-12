@@ -111,7 +111,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer the liquidity tokens to on its behalf
+     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
      */
     function depositFor(
         address provider,
@@ -124,7 +124,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer the liquidity tokens to on its behalf
+     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
      */
     function deposit(IReserveToken pool, uint256 tokenAmount) external payable;
 

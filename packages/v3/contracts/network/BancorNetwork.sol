@@ -619,7 +619,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer the liquidity tokens to on its behalf
+     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
      */
     function _depositFor(
         address provider,
