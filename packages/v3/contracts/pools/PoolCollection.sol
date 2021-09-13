@@ -562,11 +562,19 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             rate = poolData.averageRate.rate;
         }
 
+        // if there is no network token liquidity - treat all the base token amount as excess and finish
+        if (availableNetworkTokenLiquidity == 0) {
+            depositParams.baseTokenExcessLiquidity = baseTokenAmount;
+            depositParams.baseTokenDeltaAmount = 0;
+
+            return depositParams;
+        }
+
         // calculate the matching network token trading liquidity amount
         depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
 
-        // if there's not enough network token liquidity, we use as much as we can and the remaining base token
-        // liquidity is added as excess
+        // if there's not enough network token liquidity - we'll use as much as we can and the remaining base token
+        // liquidity will be treated as excess
         if (depositParams.networkTokenDeltaAmount > availableNetworkTokenLiquidity) {
             uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
                 availableNetworkTokenLiquidity;
