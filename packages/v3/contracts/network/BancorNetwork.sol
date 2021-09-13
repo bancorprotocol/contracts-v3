@@ -712,8 +712,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
             require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
 
-            // following EIP-1884, using transfer here would revert due to exceeding the 2,300 gas limit
-            // which is why we're using call instead (via sendValue), which the 2,300 gas limit does not apply for
+            // using a regular transfer here would revert due to exceeding the 2,300 gas limit which is why we're using
+            // call instead (via sendValue), which the 2,300 gas limit does not apply for
             payable(_vault).sendValue(baseTokenAmount);
         } else {
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
