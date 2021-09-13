@@ -1125,7 +1125,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns whether a fraction is zero
      */
     function _isZeroFraction(Fraction memory fraction) private pure returns (bool) {
-        return fraction.n == 0;
+        return fraction.n == 0 || fraction.d == 0;
     }
 
     /**
