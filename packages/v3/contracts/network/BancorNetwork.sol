@@ -625,15 +625,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider,
         IReserveToken pool,
         uint256 tokenAmount,
-        address caller
+        address sender
     ) private {
         // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, caller));
+        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
 
         if (pool == IReserveToken(address(_networkToken))) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, caller);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
         }
     }
 
@@ -648,12 +648,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
-        address caller
+        address sender
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
-        // transfer the tokens from the caller to the network token pool
-        _networkToken.transferFrom(caller, address(cachedNetworkTokenPool), networkTokenAmount);
+        // transfer the tokens from the sender to the network token pool
+        _networkToken.transferFrom(sender, address(cachedNetworkTokenPool), networkTokenAmount);
 
         // process network token pool deposit
         NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
@@ -693,7 +693,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         address provider,
         IReserveToken pool,
         uint256 baseTokenAmount,
-        address caller
+        address sender
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -712,7 +712,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             );
         }
 
-        // transfer the tokens from the caller to the vault
+        // transfer the tokens from the sender to the vault
         if (msg.value > 0) {
             require(pool.isNativeToken(), "ERR_INVALID_POOL");
 
@@ -724,7 +724,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         } else {
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
-            pool.safeTransferFrom(caller, address(_vault), baseTokenAmount);
+            pool.safeTransferFrom(sender, address(_vault), baseTokenAmount);
         }
 
         // process deposit to the base token pool (taking into account the ETH pool)
