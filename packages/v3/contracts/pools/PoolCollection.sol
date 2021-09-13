@@ -35,7 +35,6 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
-    using SafeMath for uint128;
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
@@ -45,9 +44,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // withdrawal-related input data
     struct PoolWithdrawalParams {
-        uint128 networkTokenAvgTradingLiquidity;
-        uint128 baseTokenAvgTradingLiquidity;
-        uint128 baseTokenTradingLiquidity;
+        uint256 networkTokenAvgTradingLiquidity;
+        uint256 baseTokenAvgTradingLiquidity;
+        uint256 baseTokenTradingLiquidity;
         uint256 basePoolTokenTotalSupply;
         uint256 baseTokenStakedAmount;
         uint256 tradeFeePPM;
@@ -55,9 +54,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     // deposit-related output data
     struct PoolDepositParams {
-        uint128 networkTokenDeltaAmount;
-        uint128 baseTokenDeltaAmount;
-        uint128 baseTokenExcessLiquidity;
+        uint256 networkTokenDeltaAmount;
+        uint256 baseTokenDeltaAmount;
+        uint256 baseTokenExcessLiquidity;
         bool useInitialRate;
     }
 
@@ -463,14 +462,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         // calculate and update the new trading liquidity based on the provided network token amount
-        poolData.liquidity.networkTokenTradingLiquidity = uint128(
-            poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.networkTokenDeltaAmount)
+        poolData.liquidity.networkTokenTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity.add(
+            depositParams.networkTokenDeltaAmount
         );
-        poolData.liquidity.baseTokenTradingLiquidity = uint128(
-            poolData.liquidity.baseTokenTradingLiquidity.add(depositParams.baseTokenDeltaAmount)
+        poolData.liquidity.baseTokenTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity.add(
+            depositParams.baseTokenDeltaAmount
         );
         poolData.liquidity.tradingLiquidityProduct =
-            uint256(poolData.liquidity.networkTokenTradingLiquidity) *
+            poolData.liquidity.networkTokenTradingLiquidity *
             poolData.liquidity.baseTokenTradingLiquidity;
 
         // calculate the pool token amount to mint
@@ -564,7 +563,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         }
 
         // calculate the matching network token trading liquidity amount
-        depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d).toUint128();
+        depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
 
         // if there's not enough network token liquidity, we use as much as we can and the remaining base token
         // liquidity is added as excess
@@ -572,13 +571,11 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
                 availableNetworkTokenLiquidity;
 
-            depositParams.networkTokenDeltaAmount = uint128(availableNetworkTokenLiquidity);
-            depositParams.baseTokenExcessLiquidity = MathEx
-                .mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n)
-                .toUint128();
+            depositParams.networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+            depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
         }
 
-        depositParams.baseTokenDeltaAmount = (baseTokenAmount - depositParams.baseTokenExcessLiquidity).toUint128();
+        depositParams.baseTokenDeltaAmount = baseTokenAmount - depositParams.baseTokenExcessLiquidity;
     }
 
     /**
@@ -613,19 +610,18 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        // please note that since both networkTokenTradingLiquidity and baseTokenTradingLiquidity are uint128, their
-        // product won't overflow
-        uint256 prod = uint256(poolData.liquidity.networkTokenTradingLiquidity) *
-            uint256(poolData.liquidity.baseTokenTradingLiquidity);
+        uint256 prod = poolData.liquidity.networkTokenTradingLiquidity.mul(
+            poolData.liquidity.baseTokenTradingLiquidity
+        );
 
         return
             PoolWithdrawalParams({
-                networkTokenAvgTradingLiquidity: MathEx
-                    .floorSqrt(MathEx.mulDivF(prod, poolData.averageRate.rate.n, poolData.averageRate.rate.d))
-                    .toUint128(),
-                baseTokenAvgTradingLiquidity: MathEx
-                    .floorSqrt(MathEx.mulDivF(prod, poolData.averageRate.rate.d, poolData.averageRate.rate.n))
-                    .toUint128(),
+                networkTokenAvgTradingLiquidity: MathEx.floorSqrt(
+                    MathEx.mulDivF(prod, poolData.averageRate.rate.n, poolData.averageRate.rate.d)
+                ),
+                baseTokenAvgTradingLiquidity: MathEx.floorSqrt(
+                    MathEx.mulDivF(prod, poolData.averageRate.rate.d, poolData.averageRate.rate.n)
+                ),
                 baseTokenTradingLiquidity: poolData.liquidity.baseTokenTradingLiquidity,
                 basePoolTokenTotalSupply: poolData.poolToken.totalSupply(),
                 baseTokenStakedAmount: poolData.liquidity.stakedBalance,
@@ -668,8 +664,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             totalSupply - basePoolTokenAmount,
             totalSupply
         );
-        poolData.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNewTradingLiquidity);
-        poolData.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNewTradingLiquidity);
+        poolData.liquidity.baseTokenTradingLiquidity = baseTokenNewTradingLiquidity;
+        poolData.liquidity.networkTokenTradingLiquidity = networkTokenNewTradingLiquidity;
         poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
 
         // ensure that the average rate is reset when the pool is being emptied

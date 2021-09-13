@@ -16,8 +16,8 @@ import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 
 struct PoolLiquidity {
-    uint128 networkTokenTradingLiquidity; // the network token trading liquidity
-    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
+    uint256 networkTokenTradingLiquidity; // the network token trading liquidity
+    uint256 baseTokenTradingLiquidity; // the base token trading liquidity
     uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
     uint256 stakedBalance; // the staked balance
 }
@@ -35,8 +35,8 @@ struct Pool {
 
 // base toke deposit output amounts
 struct DepositAmounts {
-    uint128 networkTokenDeltaAmount; // the network token amount that was added to the trading liquidity
-    uint128 baseTokenDeltaAmount; // the base token amount that was added to the trading liquidity
+    uint256 networkTokenDeltaAmount; // the network token amount that was added to the trading liquidity
+    uint256 baseTokenDeltaAmount; // the base token amount that was added to the trading liquidity
     uint256 poolTokenAmount; // the minted pool token amount
     IPoolToken poolToken; // the pool token
 }
