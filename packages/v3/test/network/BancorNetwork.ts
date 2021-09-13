@@ -957,41 +957,40 @@ describe('BancorNetwork', () => {
                                         });
                                     });
                                 } else {
-                                    context('with non-whitelisted token', async () => {
+                                    context('when there is no available network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.removeTokenFromWhitelist(token.address);
+                                            await networkSettings.setPoolMintingLimit(token.address, BigNumber.from(0));
                                         });
 
-                                        it('should revert when attempting to deposit', async () => {
-                                            const amount = BigNumber.from(1000);
+                                        context('with a whitelisted token', async () => {
+                                            it('should complete a deposit', async () => {
+                                                await test();
+                                            });
+                                        });
 
-                                            await expect(deposit(amount)).to.be.revertedWith(
-                                                'ERR_NETWORK_LIQUIDITY_DISABLED'
-                                            );
+                                        context('with non-whitelisted token', async () => {
+                                            beforeEach(async () => {
+                                                await networkSettings.removeTokenFromWhitelist(token.address);
+                                            });
+
+                                            it('should revert when attempting to deposit', async () => {
+                                                const amount = BigNumber.from(1000);
+
+                                                await expect(deposit(amount)).to.be.revertedWith(
+                                                    'ERR_POOL_NOT_WHITELISTED'
+                                                );
+                                            });
                                         });
                                     });
 
-                                    context('when spot rate is unstable', () => {
+                                    context('when there is enough available network token liquidity', () => {
                                         beforeEach(async () => {
-                                            const spotRate = {
-                                                n: toWei(BigNumber.from(1_000_000)),
-                                                d: toWei(BigNumber.from(10_000_000))
-                                            };
+                                            await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+                                        });
 
-                                            await poolCollection.setTradingLiquidityT(token.address, {
-                                                networkTokenTradingLiquidity: spotRate.n,
-                                                baseTokenTradingLiquidity: spotRate.d,
-                                                tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                stakedBalance: toWei(BigNumber.from(1_000_000))
-                                            });
-                                            await poolCollection.setAverageRateT(token.address, {
-                                                rate: {
-                                                    n: spotRate.n.mul(PPM_RESOLUTION),
-                                                    d: spotRate.d.mul(
-                                                        PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
-                                                    )
-                                                },
-                                                time: BigNumber.from(0)
+                                        context('with non-whitelisted token', async () => {
+                                            beforeEach(async () => {
+                                                await networkSettings.removeTokenFromWhitelist(token.address);
                                             });
 
                                             it('should revert when attempting to deposit', async () => {
@@ -1002,41 +1001,90 @@ describe('BancorNetwork', () => {
                                                 );
                                             });
                                         });
-                                    });
 
-                                    context('when spot rate is stable', () => {
-                                        if (isETH) {
-                                            // eslint-disable-next-line max-len
-                                            it('should revert when attempting to deposit a different amount than what was actually sent', async () => {
-                                                await expect(
-                                                    deposit(amount, { value: amount.add(BigNumber.from(1)) })
-                                                ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
+                                        context('when spot rate is unstable', () => {
+                                            beforeEach(async () => {
+                                                const spotRate = {
+                                                    n: toWei(BigNumber.from(1_000_000)),
+                                                    d: toWei(BigNumber.from(10_000_000))
+                                                };
 
-                                                await expect(
-                                                    deposit(amount, { value: amount.sub(BigNumber.from(1)) })
-                                                ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
+                                                await poolCollection.setTradingLiquidityT(token.address, {
+                                                    networkTokenTradingLiquidity: spotRate.n,
+                                                    baseTokenTradingLiquidity: spotRate.d,
+                                                    tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
+                                                    stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                });
+                                                await poolCollection.setAverageRateT(token.address, {
+                                                    rate: {
+                                                        n: spotRate.n.mul(PPM_RESOLUTION),
+                                                        d: spotRate.d.mul(
+                                                            PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
+                                                        )
+                                                    },
+                                                    time: BigNumber.from(0)
+                                                });
 
-                                                await expect(
-                                                    deposit(amount, { value: BigNumber.from(0) })
-                                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                                it('should revert when attempting to deposit', async () => {
+                                                    const amount = BigNumber.from(1000);
+
+                                                    await expect(deposit(amount)).to.be.revertedWith(
+                                                        'ERR_NETWORK_LIQUIDITY_DISABLED'
+                                                    );
+                                                });
                                             });
-                                        } else {
-                                            it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
-                                                const amount = BigNumber.from(1000);
+                                        });
 
-                                                const reserveToken = await Contracts.TestERC20Token.attach(
-                                                    token.address
-                                                );
-                                                await reserveToken.connect(sender).approve(network.address, amount);
+                                        context('when spot rate is stable', () => {
+                                            if (isETH) {
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit a different amount than what was actually sent', async () => {
+                                                    await expect(
+                                                        deposit(amount, { value: amount.add(BigNumber.from(1)) })
+                                                    ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
 
-                                                await expect(
-                                                    deposit(amount, { value: BigNumber.from(1) })
-                                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                                    await expect(
+                                                        deposit(amount, { value: amount.sub(BigNumber.from(1)) })
+                                                    ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
+
+                                                    await expect(
+                                                        deposit(amount, { value: BigNumber.from(0) })
+                                                    ).to.be.revertedWith('ERR_INVALID_POOL');
+                                                });
+                                            } else {
+                                                it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
+                                                    const amount = BigNumber.from(1000);
+
+                                                    const reserveToken = await Contracts.TestERC20Token.attach(
+                                                        token.address
+                                                    );
+                                                    await reserveToken.connect(sender).approve(network.address, amount);
+
+                                                    await expect(
+                                                        deposit(amount, { value: BigNumber.from(1) })
+                                                    ).to.be.revertedWith('ERR_INVALID_POOL');
+                                                });
+                                            }
+
+                                            it('should complete a deposit', async () => {
+                                                await test();
                                             });
-                                        }
 
-                                        it('should complete a deposit', async () => {
-                                            await test();
+                                            context(
+                                                'when close to the limit of the available network token liquidity',
+                                                () => {
+                                                    beforeEach(async () => {
+                                                        await networkSettings.setPoolMintingLimit(
+                                                            token.address,
+                                                            BigNumber.from(1000)
+                                                        );
+                                                    });
+
+                                                    it('should complete a deposit', async () => {
+                                                        await test();
+                                                    });
+                                                }
+                                            );
                                         });
                                     });
                                 }
@@ -1076,6 +1124,7 @@ describe('BancorNetwork', () => {
         let externalProtectionWallet: TokenHolderUpgradeable;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
         const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -1147,7 +1196,7 @@ describe('BancorNetwork', () => {
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                        await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+                        await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
 
                         await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                         await poolCollection.setInitialRate(token.address, INITIAL_RATE);

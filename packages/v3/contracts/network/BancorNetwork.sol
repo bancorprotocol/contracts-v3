@@ -700,11 +700,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // ensure that network token liquidity is enabled
-        require(
-            cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection),
-            "ERR_NETWORK_LIQUIDITY_DISABLED"
-        );
+        // if there is no available network token liquidity - it's enough to check that the pool is whitelisted. Otherwise,
+        // we need to check if the network token pool is able to provide network liquidity
+        uint256 availableNetworkTokenLiquidity = cachedNetworkTokenPool.availableMintingAmount(pool);
+        if (availableNetworkTokenLiquidity == 0) {
+            require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
+        } else {
+            require(
+                cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection),
+                "ERR_NETWORK_LIQUIDITY_DISABLED"
+            );
+        }
 
         // transfer the tokens from the caller to the vault
         if (msg.value > 0) {
@@ -726,7 +732,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             provider,
             pool,
             baseTokenAmount,
-            cachedNetworkTokenPool.availableMintingAmount(pool)
+            availableNetworkTokenLiquidity
         );
 
         // request additional liquidity from the network token pool and transfer it to the vault
