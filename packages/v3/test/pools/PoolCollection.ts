@@ -269,6 +269,13 @@ describe('PoolCollection', () => {
                         d: BigNumber.from(0)
                     })
                 ).to.be.revertedWith('ERR_INVALID_RATE');
+
+                await expect(
+                    poolCollection.setInitialRate(reserveToken.address, {
+                        n: BigNumber.from(0),
+                        d: BigNumber.from(1000)
+                    })
+                ).to.be.revertedWith('ERR_INVALID_RATE');
             });
 
             it('should revert when setting the initial rate of a non-existing pool', async () => {
