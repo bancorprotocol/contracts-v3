@@ -1,5 +1,5 @@
 import Contracts, { ContractsType } from '../../components/Contracts';
-import { FORK_CONFIG, FORK_PREFIX } from '../../hardhat.extended.config';
+import { MIGRATION_FORK_CONFIG, FORK_PREFIX } from '../../hardhat.extended.config';
 import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './constant';
 import { initExecutionFunctions } from './executionFunctions';
 import { initIO } from './io';
@@ -52,7 +52,7 @@ export class Engine {
         this.hre = hre;
 
         // init network settings
-        const networkName = FORK_CONFIG ? FORK_CONFIG.networkName : network.name;
+        const networkName = MIGRATION_FORK_CONFIG?.networkName || network.name;
         this.networkSettings = {
             networkName: networkName,
             isFork: networkName.startsWith(FORK_PREFIX),

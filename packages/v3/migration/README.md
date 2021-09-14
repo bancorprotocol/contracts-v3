@@ -1,16 +1,52 @@
 # Migration
 
-## Roadmap
+## Pre-requisites
+
+In order to use this plugin, some keys needs to be set in our config.json file at the root of the v3 package:
+
+```json
+{
+    "keys": {},
+    "networks": {
+        "networkName": {
+            "url": "https://",
+            "defaultAccount": ["defaultAccountPrivateKey"]
+        }
+    }
+}
+```
+
+`networks` represents an object exposing a network name to an url and a default account (REQUIRED if no ledger is set via CLI). If you try to execute a migration to a network without having set those values it will fail.
+
+`url` represents an endpoint to the network.
+
+`accounts` represents the default migration user (REQUIRED if not using a Ledger).
+
+## Features
+
+### Hardware
 
 -   [x] Ledger support
--   [x] Revert support
--   [x] Deploy proxy
--   [x] Upgrade proxy
+
+### Functions
+
+-   [x] Deploy contracts (deploy)
+-   [x] Contract interaction (execute)
+-   [x] Deploy proxy (deployProxy)
+-   [x] Upgrade proxy (upgradeProxy)
+
+### Engine
+
+-   [x] Revert if migration healthcheck fails
 -   [x] Save ABI and Bytecode of each deployed contract
+
+## Folders
 
 ### Data
 
 The `data` folder consists of one designated folder per network.
+
+#### state.json
 
 In each network folder there is a `state.json` file. It represents the migration state and the network state:
 
@@ -26,6 +62,10 @@ In each network folder there is a `state.json` file. It represents the migration
 `latestMigration`: The timestamp of the latest ran migration.
 `networkState`: Initial migration state.
 
+#### deployments
+
+There is also a `deployments` folder that will host, for each migration, the ABI and bytecode of any deployed contract.
+
 ### Migrations
 
 The `migrations` folder is home to all migration files.
@@ -40,23 +80,25 @@ export interface Migration {
 }
 ```
 
-### Engine
+### Exemples
+
+A serie of migration files to inspire yourself from.
+
+## Engine
 
 The engine is the backbone of the migration system, containing its logic.
 
 It also exposes tasks (task is a hardhat concept for CLI scripts).
 
-#### Tasks
+### Tasks
 
-##### Migrate
+#### Migrate
 
 Migrates the system between different states.
 
 Call `yarn migrate --help` for more info on params.
 
-#### Subtasks
-
-##### CreateMigration
+#### CreateMigration
 
 Creates a migration file based on a template.
 

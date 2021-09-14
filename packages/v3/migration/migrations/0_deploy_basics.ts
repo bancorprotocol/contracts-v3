@@ -1,5 +1,5 @@
-import { engine } from '../../migration/engine';
-import { deployedContract, Migration } from '../../migration/engine/types';
+import { engine } from '../engine';
+import { deployedContract, Migration } from '../engine/types';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
@@ -7,8 +7,8 @@ const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions
 export type InitialState = unknown;
 
 export type NextState = InitialState & {
-    BNT: { token: deployedContract; governance: deployedContract };
-    vBNT: { token: deployedContract; governance: deployedContract };
+    BNT: deployedContract;
+    vBNT: deployedContract;
 };
 
 const migration: Migration = {
@@ -27,28 +27,15 @@ const migration: Migration = {
             '100000000000000000000000000'
         );
 
-        const BNTGovernance = await deploy(contracts.TokenGovernance, BNTToken.address);
-        const vBNTGovernance = await deploy(contracts.TokenGovernance, vBNTToken.address);
-
         return {
-            BNT: {
-                token: BNTToken.address,
-                governance: BNTGovernance.address
-            },
-            vBNT: {
-                token: vBNTToken.address,
-                governance: vBNTGovernance.address
-            }
+            BNT: BNTToken.address,
+            vBNT: vBNTToken.address
         };
     },
 
     healthCheck: async (initialState: InitialState, state: NextState) => {
-        const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
-        const vBNTGovernance = await contracts.TokenGovernance.attach(state.vBNT.governance);
-        if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new Error('Invalid Role');
-        if (!(await vBNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new Error('Invalid Role');
+        const BNT = await contracts.ERC20.attach(state.BNT);
+        const vBNT = await contracts.ERC20.attach(state.vBNT);
     },
 
     down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {

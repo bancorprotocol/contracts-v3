@@ -1,4 +1,4 @@
-import { configFileNetworks, getEnvKey, hardhatForkedConfig, loadKey } from './hardhat.extended.config';
+import { getEnvKey, configFileNetworks, loadConfigFileKey, MIGRATION_FORK_CONFIG } from './hardhat.extended.config';
 import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
@@ -10,9 +10,10 @@ import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import 'hardhat-gas-reporter';
 import { HardhatUserConfig } from 'hardhat/config';
+import { NetworkUserConfig } from 'hardhat/types';
 import 'solidity-coverage';
 
-const hardhatDefaultConfig = {
+const hardhatDefaultConfig: NetworkUserConfig = {
     accounts: {
         count: 10,
         accountsBalance: '10000000000000000000000000000'
@@ -23,7 +24,7 @@ const ci = getEnvKey<boolean>('CI');
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: hardhatForkedConfig || hardhatDefaultConfig,
+        hardhat: MIGRATION_FORK_CONFIG?.hardhatConfig || hardhatDefaultConfig,
 
         ...configFileNetworks
     },
@@ -58,7 +59,7 @@ const config: HardhatUserConfig = {
     },
 
     etherscan: {
-        apiKey: loadKey('etherscan')
+        apiKey: loadConfigFileKey('etherscan')
     },
 
     contractSizer: {
