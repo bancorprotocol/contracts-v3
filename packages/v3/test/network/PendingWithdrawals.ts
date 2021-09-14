@@ -180,19 +180,19 @@ describe('PendingWithdrawals', () => {
             });
 
             describe('initiation', () => {
-                const test = (delegated = false) => {
+                const test = (permitted = false) => {
                     let provider: Signer | Wallet;
                     let providerAddress: string;
                     let providerNonce: BigNumber;
 
                     beforeEach(async () => {
-                        provider = delegated ? Wallet.createRandom() : (await ethers.getSigners())[9];
+                        provider = permitted ? Wallet.createRandom() : (await ethers.getSigners())[9];
                         providerAddress = await provider.getAddress();
                         providerNonce = BigNumber.from(0);
                     });
 
                     const initWithdrawal = async (poolToken: PoolToken, amount: BigNumber) => {
-                        if (!delegated) {
+                        if (!permitted) {
                             await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
 
                             return pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
@@ -210,7 +210,7 @@ describe('PendingWithdrawals', () => {
 
                         providerNonce = providerNonce.add(BigNumber.from(1));
 
-                        return pendingWithdrawals.initWithdrawalDelegated(
+                        return pendingWithdrawals.initWithdrawalPermitted(
                             poolToken.address,
                             amount,
                             providerAddress,
@@ -259,7 +259,7 @@ describe('PendingWithdrawals', () => {
                             );
                             const amount = BigNumber.from(1);
 
-                            if (!delegated) {
+                            if (!permitted) {
                                 await expect(
                                     pendingWithdrawals.initWithdrawal(ZERO_ADDRESS, amount)
                                 ).to.be.revertedWith('ERR_INVALID_ADDRESS');
@@ -279,7 +279,7 @@ describe('PendingWithdrawals', () => {
                                 );
 
                                 await expect(
-                                    pendingWithdrawals.initWithdrawalDelegated(
+                                    pendingWithdrawals.initWithdrawalPermitted(
                                         ZERO_ADDRESS,
                                         BigNumber.from(1),
                                         providerAddress,
@@ -291,7 +291,7 @@ describe('PendingWithdrawals', () => {
                                 ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                                 await expect(
-                                    pendingWithdrawals.initWithdrawalDelegated(
+                                    pendingWithdrawals.initWithdrawalPermitted(
                                         poolToken.address,
                                         BigNumber.from(1),
                                         providerAddress,
@@ -360,9 +360,9 @@ describe('PendingWithdrawals', () => {
                     });
                 };
 
-                for (const delegated of [false, true]) {
-                    context(delegated ? 'delegated' : 'direct', async () => {
-                        test(delegated);
+                for (const permitted of [false, true]) {
+                    context(permitted ? 'permitted' : 'regular', async () => {
+                        test(permitted);
                     });
                 }
             });

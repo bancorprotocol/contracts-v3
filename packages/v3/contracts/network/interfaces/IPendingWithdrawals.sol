@@ -79,7 +79,7 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function initWithdrawalDelegated(
+    function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
         address provider,

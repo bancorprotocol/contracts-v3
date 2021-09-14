@@ -250,7 +250,7 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawalDelegated(
+    function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
         address provider,
