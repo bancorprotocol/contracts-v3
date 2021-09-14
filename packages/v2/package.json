@@ -36,7 +36,7 @@
         "clean": "rm -rf artifacts cache data typechain"
     },
     "dependencies": {
-        "hardhat": "2.6.2"
+        "hardhat": "2.6.4"
     },
     "devDependencies": {
         "@bancor/token-governance": "bancorprotocol/token-governance",
@@ -63,7 +63,7 @@
         "ethereum-waffle": "^3.4.0",
         "ethers": "^5.4.4",
         "hardhat-abi-exporter": "^2.3.0",
-        "hardhat-contract-sizer": "^2.0.3",
+        "hardhat-contract-sizer": "^2.1.0",
         "hardhat-gas-reporter": "^1.0.4",
         "humanize-duration": "^3.26.0",
         "lodash": "^4.17.21",
