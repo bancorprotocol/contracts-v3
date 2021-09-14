@@ -5,6 +5,7 @@ pragma abicoder v2;
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
@@ -541,8 +542,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         external
         payable
         override
-        validAddress(address(pool))
         validAddress(provider)
+        validAddress(address(pool))
         greaterThanZero(tokenAmount)
         nonReentrant
     {
@@ -566,11 +567,38 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
+    function depositForPermitted(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+        _depositBaseTokenForPermitted(provider, pool, tokenAmount, msg.sender, deadline, v, r, s);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function depositPermitted(
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, msg.sender, deadline, v, r, s);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function withdraw(uint256 id) external override nonReentrant {
         address provider = msg.sender;
-
-        // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
+        bytes32 contextId = _withdrawContextId(provider, id);
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
@@ -615,6 +643,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
+     * @dev generates context ID for a deposit requesst
+     */
+    function _depositContextId(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        address sender
+    ) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
+    }
+
+    /**
+     * @dev generates context ID for a withdraw request
+     */
+    function _withdrawContextId(address provider, uint256 id) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(provider, _time(), id));
+    }
+
+    /**
      * @dev deposits liquidity for the specified provider from sender
      *
      * requirements:
@@ -627,8 +674,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         uint256 tokenAmount,
         address sender
     ) private {
-        // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool == IReserveToken(address(_networkToken))) {
             _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
@@ -783,6 +829,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             reserveToken: IReserveToken(address(_networkToken)),
             liquidity: poolLiquidity.networkTokenTradingLiquidity
         });
+    }
+
+    function _depositBaseTokenForPermitted(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        address sender,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) private {
+        // unfortunately, neither the network token or ETH support EIP2612 permit requests
+        require(pool != IReserveToken(address(_networkToken)) && !pool.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
+
+        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
+        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
+        IERC20Permit(address(pool)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
+
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
+
+        _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
     }
 
     /**

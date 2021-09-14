@@ -129,6 +129,41 @@ interface IBancorNetwork is IUpgradeable {
     function deposit(IReserveToken pool, uint256 tokenAmount) external payable;
 
     /**
+     * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
+     * request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+    function depositForPermitted(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
+    /**
+     * @dev deposits liquidity ffor the current provider by providing an EIP712 typed signature for an EIP2612 permit
+     * request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+    function depositPermitted(
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
+    /**
      * @dev withdraws liquidity
      *
      * requirements:
