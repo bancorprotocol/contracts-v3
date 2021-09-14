@@ -468,9 +468,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         poolData.liquidity.baseTokenTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity.add(
             depositParams.baseTokenDeltaAmount
         );
-        poolData.liquidity.tradingLiquidityProduct =
-            poolData.liquidity.networkTokenTradingLiquidity *
-            poolData.liquidity.baseTokenTradingLiquidity;
+        poolData.liquidity.tradingLiquidityProduct = poolData.liquidity.networkTokenTradingLiquidity.mul(
+            poolData.liquidity.baseTokenTradingLiquidity
+        );
 
         // calculate the pool token amount to mint
         IPoolToken poolToken = poolData.poolToken;
