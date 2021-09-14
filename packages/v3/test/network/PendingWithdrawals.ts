@@ -1,22 +1,22 @@
 import Contracts from '../../components/Contracts';
 import {
-    TestPendingWithdrawals,
     NetworkSettings,
-    TestERC20Token,
+    PoolToken,
     TestBancorNetwork,
-    TestPoolCollection,
+    TestERC20Token,
     TestNetworkTokenPool,
-    PoolToken
+    TestPendingWithdrawals,
+    TestPoolCollection
 } from '../../typechain';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
-import { createSystem, createPool } from '../helpers/Factory';
+import { MAX_UINT256, ZERO_ADDRESS } from '../helpers/Constants';
+import { createPool, createSystem } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { createTokenBySymbol, createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, Wallet, Signer, utils } from 'ethers';
+import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
@@ -181,12 +181,12 @@ describe('PendingWithdrawals', () => {
 
             describe('initiation', () => {
                 const test = (permitted = false) => {
-                    let provider: Signer | Wallet;
+                    let provider: Wallet;
                     let providerAddress: string;
                     let providerNonce: BigNumber;
 
                     beforeEach(async () => {
-                        provider = permitted ? Wallet.createRandom() : (await ethers.getSigners())[9];
+                        provider = await createWallet();
                         providerAddress = await provider.getAddress();
                         providerNonce = BigNumber.from(0);
                     });
@@ -210,15 +210,9 @@ describe('PendingWithdrawals', () => {
 
                         providerNonce = providerNonce.add(BigNumber.from(1));
 
-                        return pendingWithdrawals.initWithdrawalPermitted(
-                            poolToken.address,
-                            amount,
-                            providerAddress,
-                            MAX_UINT256,
-                            v,
-                            r,
-                            s
-                        );
+                        return pendingWithdrawals
+                            .connect(provider)
+                            .initWithdrawalPermitted(poolToken.address, amount, MAX_UINT256, v, r, s);
                     };
 
                     const testInitWithdrawal = async (poolToken: PoolToken, amount: BigNumber) => {
@@ -279,27 +273,22 @@ describe('PendingWithdrawals', () => {
                                 );
 
                                 await expect(
-                                    pendingWithdrawals.initWithdrawalPermitted(
-                                        ZERO_ADDRESS,
-                                        BigNumber.from(1),
-                                        providerAddress,
-                                        MAX_UINT256,
-                                        v,
-                                        r,
-                                        s
-                                    )
+                                    pendingWithdrawals
+                                        .connect(provider)
+                                        .initWithdrawalPermitted(ZERO_ADDRESS, BigNumber.from(1), MAX_UINT256, v, r, s)
                                 ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                                 await expect(
-                                    pendingWithdrawals.initWithdrawalPermitted(
-                                        poolToken.address,
-                                        BigNumber.from(1),
-                                        providerAddress,
-                                        MAX_UINT256,
-                                        v,
-                                        r,
-                                        s
-                                    )
+                                    pendingWithdrawals
+                                        .connect(provider)
+                                        .initWithdrawalPermitted(
+                                            poolToken.address,
+                                            BigNumber.from(1),
+                                            MAX_UINT256,
+                                            v,
+                                            r,
+                                            s
+                                        )
                                 ).to.be.revertedWith('ERR_INVALID_POOL');
                             }
                         });

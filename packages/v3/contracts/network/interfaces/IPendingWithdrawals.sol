@@ -82,7 +82,6 @@ interface IPendingWithdrawals is IUpgradeable {
     function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
-        address provider,
         uint256 deadline,
         uint8 v,
         bytes32 r,
