@@ -297,12 +297,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             _govTokenGovernance.mint(provider, govTokenAmount);
         }
 
-        return
-            DepositAmounts({
-                networkTokenAmount: networkTokenAmount,
-                poolTokenAmount: poolTokenAmount,
-                govTokenAmount: govTokenAmount
-            });
+        return DepositAmounts({ poolTokenAmount: poolTokenAmount, govTokenAmount: govTokenAmount });
     }
 
     /**

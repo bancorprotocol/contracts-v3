@@ -107,7 +107,29 @@ interface IBancorNetwork is IUpgradeable {
     function createPool(uint16 poolType, IReserveToken reserveToken) external;
 
     /**
-     * @dev withdraws liquidity in exchange for base pool tokens
+     * @dev deposits liquidity for the specified provider
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
+     */
+    function depositFor(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount
+    ) external payable;
+
+    /**
+     * @dev deposits liquidity for the current provider
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
+     */
+    function deposit(IReserveToken pool, uint256 tokenAmount) external payable;
+
+    /**
+     * @dev withdraws liquidity
      *
      * requirements:
      *

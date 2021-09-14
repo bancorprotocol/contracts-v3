@@ -16,9 +16,9 @@ import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
-import { IPoolCollection, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
+import { INetworkTokenPool, DepositAmounts as NetworkTokenPoolDepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -63,8 +63,18 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
-    ) external returns (DepositAmounts memory) {
+    ) external returns (NetworkTokenPoolDepositAmounts memory) {
         return _networkTokenPool.depositFor(provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
+    }
+
+    function depositToPoolCollectionForT(
+        IPoolCollection poolCollection,
+        address provider,
+        IReserveToken pool,
+        uint256 baseTokenAmount,
+        uint256 availableNetworkTokenLiquidity
+    ) external returns (PoolCollectionDepositAmounts memory) {
+        return poolCollection.depositFor(provider, pool, baseTokenAmount, availableNetworkTokenLiquidity);
     }
 
     function withdrawFromNetworkPoolT(address provider, uint256 poolTokenAmount)
@@ -76,18 +86,13 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function withdrawFromPoolCollectionT(
         IPoolCollection poolCollection,
-        IReserveToken baseToken,
+        IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external returns (PoolCollectionWithdrawalAmounts memory) {
         return
-            poolCollection.withdraw(
-                baseToken,
-                basePoolTokenAmount,
-                baseTokenVaultBalance,
-                externalProtectionWalletBalance
-            );
+            poolCollection.withdraw(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionWalletBalance);
     }
 
     function requestLiquidityT(

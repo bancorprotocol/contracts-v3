@@ -705,7 +705,6 @@ describe('NetworkTokenPool', () => {
                         isMigrating,
                         originalGovTokenAmount
                     );
-                    expect(depositAmounts.networkTokenAmount).to.equal(amount);
                     expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
                     expect(depositAmounts.govTokenAmount).to.equal(expectedGovTokenAmount);
 
@@ -853,7 +852,6 @@ describe('NetworkTokenPool', () => {
 
                 context('with deposited liquidity', () => {
                     let depositAmounts: {
-                        networkTokenAmount: BigNumber;
                         poolTokenAmount: BigNumber;
                         govTokenAmount: BigNumber;
                     };

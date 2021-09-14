@@ -18,7 +18,6 @@ import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol"
 import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
 
 struct DepositAmounts {
-    uint256 networkTokenAmount; // the provided network token amount
     uint256 poolTokenAmount; // the minted pool token amount
     uint256 govTokenAmount; // the minted gov token amount
 }

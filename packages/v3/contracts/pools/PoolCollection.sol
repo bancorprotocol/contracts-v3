@@ -23,7 +23,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
-import { IPoolCollection, PoolLiquidity, Pool, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, Pool, DepositAmounts, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
 
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
@@ -50,6 +50,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 basePoolTokenTotalSupply;
         uint256 baseTokenStakedAmount;
         uint256 tradeFeePPM;
+    }
+
+    // deposit-related output data
+    struct PoolDepositParams {
+        uint256 networkTokenDeltaAmount;
+        uint256 baseTokenDeltaAmount;
+        uint256 baseTokenExcessLiquidity;
+        bool useInitialRate;
     }
 
     // represents `(n1 - n2) / (d1 - d2)`
@@ -137,7 +145,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        require(rate.d != 0, "ERR_INVALID_RATE");
+        require(_isFractionValid(rate), "ERR_INVALID_RATE");
     }
 
     /**
@@ -232,8 +240,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: Fraction({ n: 0, d: 1 }) }),
-            initialRate: Fraction({ n: 0, d: 1 }),
+            averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
+            initialRate: _zeroFraction(),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -308,14 +316,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validFee(newTradingFeePPM)
     {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        uint32 prevTradingFeePPM = p.tradingFeePPM;
+        uint32 prevTradingFeePPM = poolData.tradingFeePPM;
         if (prevTradingFeePPM == newTradingFeePPM) {
             return;
         }
 
-        p.tradingFeePPM = newTradingFeePPM;
+        poolData.tradingFeePPM = newTradingFeePPM;
 
         emit TradingFeePPMUpdated({ pool: pool, prevFeePPM: prevTradingFeePPM, newFeePPM: newTradingFeePPM });
     }
@@ -328,13 +336,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function enableTrading(IReserveToken pool, bool status) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        if (p.tradingEnabled == status) {
+        if (poolData.tradingEnabled == status) {
             return;
         }
 
-        p.tradingEnabled = status;
+        poolData.tradingEnabled = status;
 
         emit TradingEnabled({ pool: pool, newStatus: status });
     }
@@ -347,13 +355,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function enableDepositing(IReserveToken pool, bool status) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        if (p.depositingEnabled == status) {
+        if (poolData.depositingEnabled == status) {
             return;
         }
 
-        p.depositingEnabled = status;
+        poolData.depositingEnabled = status;
 
         emit DepositingEnabled({ pool: pool, newStatus: status });
     }
@@ -370,14 +378,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         onlyOwner
         validRate(newInitialRate)
     {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        Fraction memory prevInitialRate = p.initialRate;
+        Fraction memory prevInitialRate = poolData.initialRate;
         if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
             return;
         }
 
-        p.initialRate = newInitialRate;
+        poolData.initialRate = newInitialRate;
 
         emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
     }
@@ -390,16 +398,100 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * - the caller must be the owner of the contract
      */
     function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
-        Pool storage p = _poolStorage(pool);
+        Pool storage poolData = _poolStorage(pool);
 
-        uint256 prevDepositLimit = p.depositLimit;
+        uint256 prevDepositLimit = poolData.depositLimit;
         if (prevDepositLimit == newDepositLimit) {
             return;
         }
 
-        p.depositLimit = newDepositLimit;
+        poolData.depositLimit = newDepositLimit;
 
         emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function depositFor(
+        address provider,
+        IReserveToken pool,
+        uint256 baseTokenAmount,
+        uint256 availableNetworkTokenLiquidity
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(provider)
+        validAddress(address(pool))
+        greaterThanZero(baseTokenAmount)
+        nonReentrant
+        returns (DepositAmounts memory)
+    {
+        PoolDepositParams memory depositParams = _poolDepositParams(
+            pool,
+            baseTokenAmount,
+            availableNetworkTokenLiquidity
+        );
+
+        Pool memory poolData = _poolData[pool];
+
+        if (depositParams.useInitialRate) {
+            // if we're using the initial rate, ensure that the average rate is set
+            if (
+                poolData.averageRate.rate.n != poolData.initialRate.n ||
+                poolData.averageRate.rate.d != poolData.initialRate.d
+            ) {
+                poolData.averageRate.rate = poolData.initialRate;
+            }
+        } else {
+            // otherwise, ensure that the initial rate is properly reset
+            poolData.initialRate = _zeroFraction();
+        }
+
+        // if we've passed above the minimum network token liquidity for trading - emit that trading is now enabled
+        if (poolData.tradingEnabled) {
+            uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+            if (
+                poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading &&
+                poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.baseTokenDeltaAmount) >=
+                minLiquidityForTrading
+            ) {
+                emit TradingEnabled({ pool: pool, newStatus: true });
+            }
+        }
+
+        // calculate and update the new trading liquidity based on the provided network token amount
+        poolData.liquidity.networkTokenTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity.add(
+            depositParams.networkTokenDeltaAmount
+        );
+        poolData.liquidity.baseTokenTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity.add(
+            depositParams.baseTokenDeltaAmount
+        );
+        poolData.liquidity.tradingLiquidityProduct = poolData.liquidity.networkTokenTradingLiquidity.mul(
+            poolData.liquidity.baseTokenTradingLiquidity
+        );
+
+        // calculate the pool token amount to mint
+        IPoolToken poolToken = poolData.poolToken;
+        uint256 currentStakedBalance = poolData.liquidity.stakedBalance;
+        uint256 poolTokenAmount = _calcPoolTokenAmount(poolToken, baseTokenAmount, currentStakedBalance);
+
+        // update the staked balance with the full base token amount
+        poolData.liquidity.stakedBalance = currentStakedBalance.add(baseTokenAmount);
+
+        _poolData[pool] = poolData;
+
+        // mint pool tokens to the provider
+        poolToken.mint(provider, poolTokenAmount);
+
+        return
+            DepositAmounts({
+                networkTokenDeltaAmount: depositParams.networkTokenDeltaAmount,
+                baseTokenDeltaAmount: depositParams.baseTokenDeltaAmount,
+                poolTokenAmount: poolTokenAmount,
+                poolToken: poolToken
+            });
     }
 
     /**
@@ -410,7 +502,15 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
-    ) external override only(address(_network)) nonReentrant returns (WithdrawalAmounts memory amounts) {
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(address(pool))
+        greaterThanZero(basePoolTokenAmount)
+        nonReentrant
+        returns (WithdrawalAmounts memory amounts)
+    {
         // obtain all withdrawal-related amounts
         amounts = _poolWithdrawalAmounts(
             pool,
@@ -426,6 +526,65 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             amounts.baseTokenAmountToDeductFromLiquidity,
             amounts.networkTokenAmountToDeductFromLiquidity
         );
+    }
+
+    /**
+     * @dev returns deposit-related output data
+     */
+    function _poolDepositParams(
+        IReserveToken pool,
+        uint256 baseTokenAmount,
+        uint256 availableNetworkTokenLiquidity
+    ) private view returns (PoolDepositParams memory depositParams) {
+        Pool memory poolData = _poolData[pool];
+        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+
+        // get the effective rate to use when calculating the matching network token trading liquidity amount
+        uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+        require(minLiquidityForTrading > 0, "ERR_MIN_LIQUIDITY_NOT_SET");
+
+        // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
+        require(
+            poolData.liquidity.stakedBalance.add(baseTokenAmount) <= poolData.depositLimit,
+            "ERR_DEPOSIT_LIMIT_EXCEEDED"
+        );
+
+        Fraction memory rate;
+        depositParams.useInitialRate = poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading;
+        if (depositParams.useInitialRate) {
+            // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
+            // actually set)
+            require(_isFractionValid(poolData.initialRate), "ERR_NO_INITIAL_RATE");
+
+            rate = poolData.initialRate;
+        } else {
+            // if the minimum network token trading liquidity is met - use the average rate
+            rate = poolData.averageRate.rate;
+        }
+
+        // if there is no available network token liquidity - treat all the base token amount as excess and finish
+        if (availableNetworkTokenLiquidity == 0) {
+            depositParams.baseTokenExcessLiquidity = baseTokenAmount;
+            depositParams.baseTokenDeltaAmount = 0;
+
+            return depositParams;
+        }
+
+        // calculate the matching network token trading liquidity amount
+        depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
+
+        // if there's not enough available network token liquidity - we'll use as much as we can and the remaining base
+        // token liquidity will be treated as excess
+        if (depositParams.networkTokenDeltaAmount > availableNetworkTokenLiquidity) {
+            uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
+                availableNetworkTokenLiquidity;
+
+            depositParams.networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+            depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
+        }
+
+        // base token amount is guaranteed to be larger than the excess liquidity
+        depositParams.baseTokenDeltaAmount = baseTokenAmount - depositParams.baseTokenExcessLiquidity;
     }
 
     /**
@@ -460,10 +619,9 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        // please note that since both networkTokenTradingLiquidity and baseTokenTradingLiquidity are uint128, their
-        // product won't overflow
-        uint256 prod = uint256(poolData.liquidity.networkTokenTradingLiquidity) *
-            uint256(poolData.liquidity.baseTokenTradingLiquidity);
+        uint256 prod = poolData.liquidity.networkTokenTradingLiquidity.mul(
+            poolData.liquidity.baseTokenTradingLiquidity
+        );
 
         return
             PoolWithdrawalParams({
@@ -515,9 +673,14 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             totalSupply - basePoolTokenAmount,
             totalSupply
         );
-        poolData.liquidity.baseTokenTradingLiquidity = uint128(baseTokenNewTradingLiquidity);
-        poolData.liquidity.networkTokenTradingLiquidity = uint128(networkTokenNewTradingLiquidity);
-        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+        poolData.liquidity.baseTokenTradingLiquidity = baseTokenNewTradingLiquidity;
+        poolData.liquidity.networkTokenTradingLiquidity = networkTokenNewTradingLiquidity;
+        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity.mul(networkTokenNewTradingLiquidity);
+
+        // ensure that the average rate is reset when the pool is being emptied
+        if (baseTokenNewTradingLiquidity == 0) {
+            poolData.averageRate.rate = _zeroFraction();
+        }
 
         if (poolData.tradingEnabled) {
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
@@ -891,6 +1054,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         Quotient[2] memory quotients
     ) internal pure returns (uint256) {
         Fraction memory y = _subMax0(quotients[0]);
+
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
             MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
@@ -909,10 +1073,17 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             // the quotient is finite and positive
             return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
         }
+
         if (q.n2 > q.n1 && q.d2 > q.d1) {
             // the quotient is finite and positive
             return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
         }
+
+        if (q.n2 == q.n1 && q.d2 == q.d1) {
+            // the quotient is 1
+            return Fraction({ n: 1, d: 1 });
+        }
+
         // the quotient is not finite or not positive
         return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
     }
@@ -935,10 +1106,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      * @dev returns a storage reference to pool data
      */
     function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
-        Pool storage p = _poolData[pool];
-        require(_validPool(p), "ERR_POOL_DOES_NOT_EXIST");
+        Pool storage poolData = _poolData[pool];
+        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        return p;
+        return poolData;
     }
 
     /**
@@ -946,5 +1117,38 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0x0);
+    }
+
+    /**
+     * @dev returns the zero fraction
+     */
+    function _zeroFraction() private pure returns (Fraction memory) {
+        return Fraction({ n: 0, d: 1 });
+    }
+
+    /**
+     * @dev returns whether a fraction is zero
+     */
+    function _isFractionValid(Fraction memory fraction) private pure returns (bool) {
+        return fraction.n != 0 && fraction.d != 0;
+    }
+
+    /**
+     * @dev calculates pool tokens amount
+     */
+    function _calcPoolTokenAmount(
+        IPoolToken poolToken,
+        uint256 baseTokenAmount,
+        uint256 stakedBalance
+    ) private view returns (uint256) {
+        uint256 poolTokenTotalSupply = poolToken.totalSupply();
+        if (poolTokenTotalSupply == 0) {
+            // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
+            require(stakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+
+            return baseTokenAmount;
+        }
+
+        return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
     }
 }
