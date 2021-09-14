@@ -675,7 +675,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         );
         poolData.liquidity.baseTokenTradingLiquidity = baseTokenNewTradingLiquidity;
         poolData.liquidity.networkTokenTradingLiquidity = networkTokenNewTradingLiquidity;
-        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity.mul(networkTokenNewTradingLiquidity);
 
         // ensure that the average rate is reset when the pool is being emptied
         if (baseTokenNewTradingLiquidity == 0) {
