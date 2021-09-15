@@ -597,8 +597,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
      * @inheritdoc IBancorNetwork
      */
     function withdraw(uint256 id) external override nonReentrant {
+        bytes32 contextId = _withdrawContextId(id);
         address provider = msg.sender;
-        bytes32 contextId = _withdrawContextId(provider, id);
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
@@ -657,8 +657,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @dev generates context ID for a withdraw request
      */
-    function _withdrawContextId(address provider, uint256 id) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(provider, _time(), id));
+    function _withdrawContextId(uint256 id) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(msg.sender, _time(), id));
     }
 
     /**
