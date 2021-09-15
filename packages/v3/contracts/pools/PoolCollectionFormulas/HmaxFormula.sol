@@ -21,7 +21,6 @@ library HmaxFormula {
     function surplus(
         uint256 b,
         uint256 c,
-        uint256 d,
         uint256 e,
         uint256 m,
         uint256 n,
@@ -33,7 +32,6 @@ library HmaxFormula {
     {
         assert(b <= MAX_UINT128);
         assert(c <= MAX_UINT128);
-        assert(d <= MAX_UINT128);
         assert(e <= MAX_UINT128);
         assert(x <= MAX_UINT128);
         assert(m <= M / 2);
@@ -41,7 +39,7 @@ library HmaxFormula {
         assert(b + c >= e);
 
         uint512 memory hMaxD;
-        uint512 memory hMaxN = _mul256(b * d, ((b + c) * M).mul(e * n + (b + c - e) * m)); // bd(b+c)(en+(b+c-e)m)
+        uint512 memory hMaxN = _mul256(b * e, ((b + c) * M).mul(e * n + (b + c - e) * m)); // be(b+c)(en+(b+c-e)m)
         hMaxD = _add512(hMaxD, _mul256(b * b, b * M * M));                                 // + bbb
         hMaxD = _add512(hMaxD, _mul256(b * b, c * M * M * 3));                             // + 3bbc
         hMaxD = _add512(hMaxD, _mul256(b * c, c * M * M * 3));                             // + 3bcc
@@ -57,7 +55,6 @@ library HmaxFormula {
     function deficit(
         uint256 b,
         uint256 c,
-        uint256 d,
         uint256 e,
         uint256 m,
         uint256 n,
@@ -69,7 +66,6 @@ library HmaxFormula {
     {
         assert(b <= MAX_UINT128);
         assert(c <= MAX_UINT128);
-        assert(d <= MAX_UINT128);
         assert(e <= MAX_UINT128);
         assert(x <= MAX_UINT128);
         assert(m <= M / 2);
@@ -77,7 +73,7 @@ library HmaxFormula {
         assert(b + c <= e);
 
         uint512 memory hMaxD;
-        uint512 memory hMaxN = _mul256(b * d, (b + c).mul(e * (n * M + (M - n) * m) - (b + c) * m * M)); // bd(b+c)(e(n+(1-n)m)-(b+c)m)
+        uint512 memory hMaxN = _mul256(b * e, (b + c).mul(e * (n * M + (M - n) * m) - (b + c) * m * M)); // be(b+c)(e(n+(1-n)m)-(b+c)m)
         hMaxD = _add512(hMaxD, _mul256(b * b, b * (M - 2 * m) * M));                                     // + bbb(1-2m)
         hMaxD = _add512(hMaxD, _mul256(b * b, c * (M - 2 * m) * M * 3));                                 // + 3bbc(1-2m)
         hMaxD = _add512(hMaxD, _mul256(b * c, c * (M - 2 * m) * M * 3));                                 // + 3bcc(1-2m)

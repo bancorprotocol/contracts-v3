@@ -9,24 +9,22 @@ contract TestHmaxFormula {
     function surplus(
         uint256 b,
         uint256 c,
-        uint256 d,
         uint256 e,
         uint256 m,
         uint256 n,
         uint256 x
     ) external pure returns (bool) {
-        return HmaxFormula.surplus(b, c, d, e, m, n, x);
+        return HmaxFormula.surplus(b, c, e, m, n, x);
     }
 
     function deficit(
         uint256 b,
         uint256 c,
-        uint256 d,
         uint256 e,
         uint256 m,
         uint256 n,
         uint256 x
     ) external pure returns (bool) {
-        return HmaxFormula.deficit(b, c, d, e, m, n, x);
+        return HmaxFormula.deficit(b, c, e, m, n, x);
     }
 }

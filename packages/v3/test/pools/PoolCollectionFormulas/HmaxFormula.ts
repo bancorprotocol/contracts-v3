@@ -16,7 +16,6 @@ describe('HmaxFormula', () => {
         interface Row {
             b: string;
             c: string;
-            d: string;
             e: string;
             m: string;
             n: string;
@@ -30,16 +29,16 @@ describe('HmaxFormula', () => {
                     fs.readFileSync(path.join(__dirname, '../../data', `${fileName}.json`), { encoding: 'utf8' })
                 ).slice(0, numOfTestsPerFile);
 
-                for (const {b, c, d, e, m, n, x, expected} of table) {
+                for (const {b, c, e, m, n, x, expected} of table) {
                     if (BigNumber.from(b).add(BigNumber.from(c)).gte(BigNumber.from(e))) {
-                        it(`surplus(${[b, c, d, e, m, n, x]})`, async () => {
-                            const actual = await formula.surplus(b, c, d, e, m, n, x);
+                        it(`surplus(${[b, c, e, m, n, x]})`, async () => {
+                            const actual = await formula.surplus(b, c, e, m, n, x);
                             expect(actual).to.equal(expected);
                         });
                     }
                     else {
-                        it(`deficit(${[b, c, d, e, m, n, x]})`, async () => {
-                            const actual = await formula.deficit(b, c, d, e, m, n, x);
+                        it(`deficit(${[b, c, e, m, n, x]})`, async () => {
+                            const actual = await formula.deficit(b, c, e, m, n, x);
                             expect(actual).to.equal(expected);
                         });
                     }
@@ -52,6 +51,7 @@ describe('HmaxFormula', () => {
             test('HmaxFormulaCoverage4');
             test('HmaxFormulaCoverage5');
             test('HmaxFormulaCoverage6');
+            test('HmaxFormulaCoverage7');
         };
 
         describe('quick tests', () => {
