@@ -20,7 +20,7 @@ In order to use this plugin, some keys needs to be set in our config.json file a
 
 `url` represents an endpoint to the network.
 
-`accounts` represents the default migration user (REQUIRED if not using a Ledger).
+`defaultAccount` represents the default migration user (REQUIRED if not using a Ledger).
 
 ## Features
 
@@ -37,8 +37,10 @@ In order to use this plugin, some keys needs to be set in our config.json file a
 
 ### Engine
 
--   [x] Revert if migration healthcheck fails
 -   [x] Save ABI and Bytecode of each deployed contract
+-   [x] Save states between migrations
+-   [x] Save execution history of each migrations
+-   [x] Revert if migration healthcheck fails
 
 ## Folders
 
@@ -65,6 +67,31 @@ In each network folder there is a `state.json` file. It represents the migration
 #### deployments
 
 There is also a `deployments` folder that will host, for each migration, the ABI and bytecode of any deployed contract.
+
+#### history.json
+
+In each network folder there is a `history.json` file. It represents every execution done by the engine, it looks like this:
+
+```json
+{
+    "0_deploy_basics.ts": {
+        "executions": [
+            {
+                "type": "DEPLOY",
+                "params": ["Bancor Network Token", "BNT", 18],
+                "description": "BNT",
+                "tx": "0x6d9427f3aef3154b6247ef5377e85e9e1be5375b819f3def82bbf53755bf3d62"
+            },
+            {
+                "type": "DEPLOY",
+                "params": ["Bancor Governance Token", "vBNT", 18],
+                "description": "vBNT",
+                "tx": "0xdf31b607fc7ef31e72c45c2957ac7e84599824d64127bf80e2ccf68543e6e3af"
+            }
+        ]
+    }
+}
+```
 
 ### Migrations
 

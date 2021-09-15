@@ -1,4 +1,4 @@
-import { getEnvKey, configFileNetworks, loadConfigFileKey, MIGRATION_FORK_CONFIG } from './hardhat.extended.config';
+import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
 import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
@@ -24,9 +24,9 @@ const ci = getEnvKey<boolean>('CI');
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: MIGRATION_FORK_CONFIG?.hardhatConfig || hardhatDefaultConfig,
+        hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
 
-        ...configFileNetworks
+        ...CONFIG.networks
     },
 
     solidity: {

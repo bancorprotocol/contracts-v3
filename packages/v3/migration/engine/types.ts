@@ -5,6 +5,19 @@ export type SystemState = {
     networkState: any;
 };
 
+export type HistoryExecution = {
+    type: 'DEPLOY' | 'EXECUTION';
+    params: any[];
+    description: string;
+    tx: string;
+};
+
+export type History = {
+    [migrationName: string]: {
+        executions: HistoryExecution[];
+    };
+};
+
 export type Deployment = {
     contractName: string;
     abi: any; // object
@@ -28,7 +41,6 @@ export type ExecutionSettings = {
 export type NetworkSettings = {
     networkName: string;
     isFork: boolean;
-    isHardhat: boolean;
     originalNetwork: string;
 };
 

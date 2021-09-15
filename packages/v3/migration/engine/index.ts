@@ -15,6 +15,8 @@ const initSigner = async (args: defaultArgs) => {
         ? new LedgerSigner(ethers.provider, 'hid', args.ledgerPath)
         : (await ethers.getSigners())[0];
 
+    if (!signer) throw new Error("Signer shouldn't be undefined");
+
     const signerAddress = await signer.getAddress();
 
     return { signer, signerAddress };

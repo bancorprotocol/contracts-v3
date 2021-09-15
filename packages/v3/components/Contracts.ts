@@ -23,7 +23,11 @@ import {
     TokenHolderUpgradeable__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
-import { TokenGovernance__factory } from '@bancor/token-governance';
+import {
+    TokenGovernance__factory,
+    SmartToken__factory as BNT_factory,
+    DSToken__factory as vBNT_factory
+} from '@bancor/token-governance';
 import { Signer } from '@ethersproject/abstract-signer';
 import { ContractFactory } from '@ethersproject/contracts';
 import { ethers } from 'hardhat';
@@ -110,7 +114,9 @@ const getContracts = (signer?: Signer) => ({
     ),
 
     // external contracts
-    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer)
+    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
+    BNT: deployOrAttach('BNT', BNT_factory, signer),
+    vBNT: deployOrAttach('vBNT', vBNT_factory, signer)
 });
 
 export type ContractsType = ReturnType<typeof getContracts>;

@@ -20,5 +20,5 @@ export type createMigrationParamTask = {
 };
 task('create-migration', 'Create a migration file')
     .addVariadicPositionalParam('wordList', 'Name of the migration')
-    .addParam('customTimestamp', 'Custom timestamp of the migration')
+    .addOptionalParam('customTimestamp', 'Custom timestamp of the migration')
     .setAction(basicTaskLoader(path.join(PATH_TO_TASKS_FOLDER, 'createMigration.ts')));

@@ -24,6 +24,12 @@ export const initExecutionFunctions = (engine: Engine) => {
         }
 
         engine.IO.deployment.writeOne(factory.metadata);
+        engine.IO.history.writeOne({
+            type: 'DEPLOY',
+            params: args,
+            description: factory.metadata.contractName,
+            tx: contract.deployTransaction.hash
+        });
         log.success(`Deployed ${factory.metadata.contractName} at ${contract.address} 🚀 !`);
         return contract;
     };
@@ -42,7 +48,12 @@ export const initExecutionFunctions = (engine: Engine) => {
         if (receipt.status !== 1) {
             throw new Error(`Error executing, tx: ${tx.hash}`);
         }
-
+        engine.IO.history.writeOne({
+            type: 'EXECUTION',
+            params: args,
+            description: executionInstruction,
+            tx: tx.hash
+        });
         log.success(`Executed ✨`);
         return receipt;
     };

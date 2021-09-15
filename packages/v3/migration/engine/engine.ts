@@ -1,5 +1,5 @@
 import Contracts, { ContractsType } from '../../components/Contracts';
-import { MIGRATION_FORK_CONFIG, FORK_PREFIX } from '../../hardhat.extended.config';
+import { CONFIG } from '../../hardhat.extended.config';
 import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './constant';
 import { initExecutionFunctions } from './executionFunctions';
 import { initIO } from './io';
@@ -28,14 +28,17 @@ export class Engine {
     // needed paths
     readonly pathToRoot: string;
     readonly pathToNetworkFolder: string;
+    readonly pathToMigrationsFolder: string;
     readonly pathToNetworkDeploymentsFolder: string;
 
     // init additional functionnalities
     readonly IO = initIO(this);
     readonly executionFunctions = initExecutionFunctions(this);
-    //
+
+    // main functions
     readonly migrate = () => migrate(this);
-    //
+
+    // secondary functions
     readonly migrateOneUp = migrateOneUp;
     readonly migrateOneDown = migrateOneDown;
 
@@ -52,18 +55,18 @@ export class Engine {
         this.hre = hre;
 
         // init network settings
-        const networkName = MIGRATION_FORK_CONFIG?.networkName || network.name;
+        const hardhatForkConfig = CONFIG.hardhatForkConfig;
+
+        const networkName = hardhatForkConfig?.networkName || network.name;
         this.networkSettings = {
             networkName: networkName,
-            isFork: networkName.startsWith(FORK_PREFIX),
-            isHardhat: networkName === 'hardhat',
-            originalNetwork: networkName.startsWith(FORK_PREFIX)
-                ? networkName.substring(FORK_PREFIX.length)
-                : networkName
+            originalNetwork: hardhatForkConfig?.originalNetworkName || networkName,
+            isFork: hardhatForkConfig?.isFork || false
         };
 
         // init paths
         this.pathToRoot = pathToRoot;
+        this.pathToMigrationsFolder = path.join(pathToRoot, MIGRATION_FOLDER);
         this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_FOLDER, this.networkSettings.networkName);
         this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, 'deployments');
 
@@ -162,10 +165,11 @@ export class Engine {
         this.migration.state = this.IO.state.fetch(this.pathToNetworkFolder);
 
         // generate migration files
-        const pathToMigrationFiles = path.join(this.pathToRoot, MIGRATION_FOLDER);
-        const allMigrationFiles = fs.readdirSync(pathToMigrationFiles);
+        const allMigrationFiles = fs.readdirSync(this.pathToMigrationsFolder);
         const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
-        const migrationFilesPath = migrationFiles.map((fileName: string) => path.join(pathToMigrationFiles, fileName));
+        const migrationFilesPath = migrationFiles.map((fileName: string) =>
+            path.join(this.pathToMigrationsFolder, fileName)
+        );
         for (const migrationFilePath of migrationFilesPath) {
             const fileName = path.basename(migrationFilePath);
             const migrationId = Number(fileName.split('_')[0]);

@@ -13,19 +13,8 @@ export type NextState = InitialState & {
 
 const migration: Migration = {
     up: async (initialState: InitialState): Promise<NextState> => {
-        const BNTToken = await deploy(
-            contracts.TestERC20Token,
-            'Bancor Network Token',
-            'BNT',
-            '100000000000000000000000000'
-        );
-
-        const vBNTToken = await deploy(
-            contracts.TestERC20Token,
-            'Bancor Governance Token',
-            'vBNT',
-            '100000000000000000000000000'
-        );
+        const BNTToken = await deploy(contracts.BNT, 'Bancor Network Token', 'BNT', 18);
+        const vBNTToken = await deploy(contracts.vBNT, 'Bancor Governance Token', 'vBNT', 18);
 
         return {
             BNT: BNTToken.address,
@@ -34,8 +23,16 @@ const migration: Migration = {
     },
 
     healthCheck: async (initialState: InitialState, state: NextState) => {
-        const BNT = await contracts.ERC20.attach(state.BNT);
-        const vBNT = await contracts.ERC20.attach(state.vBNT);
+        const BNT = await contracts.BNT.attach(state.BNT);
+        const vBNT = await contracts.vBNT.attach(state.vBNT);
+
+        if ((await BNT.owner()) !== (await signer.getAddress())) {
+            throw new Error("BNT contract doesn't have the right owner");
+        }
+
+        if ((await vBNT.owner()) !== (await signer.getAddress())) {
+            throw new Error("BNT contract doesn't have the right owner");
+        }
     },
 
     down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
