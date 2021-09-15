@@ -147,7 +147,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external;
 
     /**
-     * @dev deposits liquidity ffor the current provider by providing an EIP712 typed signature for an EIP2612 permit
+     * @dev deposits liquidity by providing an EIP712 typed signature for an EIP2612 permit
      * request
      *
      * requirements:
