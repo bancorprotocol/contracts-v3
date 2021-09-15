@@ -51,7 +51,7 @@ library HmaxFormula {
         hMaxD = _sub512(hMaxD, _mul256(b * b, e * (M - n) * (2 * M - m)));                 // - bbe(1-n)*(2-m)
         hMaxD = _sub512(hMaxD, _mul256(b * c, e * (M - n) * (4 * M - m)));                 // - bce(1-n)*(4-m)
         hMaxD = _sub512(hMaxD, _mul256(c * c, e * (M - n) * 2 * M));                       // - 2cce(1-n)
-        return _lt512(hMaxN, _mul512(hMaxD, x));
+        return _gt512(hMaxN, _mul512(hMaxD, x));
     }
 
     function deficit(
@@ -87,7 +87,7 @@ library HmaxFormula {
         hMaxD = _sub512(hMaxD, _mul256(b * b, e * (2 * (M - n) * (M - m) - m * M)));                     // - bbe(2(1-n)(1-m)-m)
         hMaxD = _sub512(hMaxD, _mul256(b * c, e * (4 * (M - n) * (M - m) - m * (3 * M - n))));           // - bce(4(1-n)(1-m)-m(3-n))
         hMaxD = _sub512(hMaxD, _mul256(c * c, e * (2 * (M - n) * (M - m) - m * (2 * M - n))));           // - cce(2(1-n)(1-m)-m(2-n))
-        return _lt512(hMaxN, _mul512(hMaxD, x));
+        return _gt512(hMaxN, _mul512(hMaxD, x));
     }
 
     /**
@@ -125,9 +125,9 @@ library HmaxFormula {
     }
 
     /**
-     * @dev returns true if and only if `x < y`
+     * @dev returns the value of `x > y`
      */
-    function _lt512(uint512 memory x, uint512 memory y) private pure returns (bool) {
-        return x.hi < y.hi || (x.hi == y.hi && x.lo < y.lo);
+    function _gt512(uint512 memory x, uint512 memory y) private pure returns (bool) {
+        return x.hi > y.hi || (x.hi == y.hi && x.lo > y.lo);
     }
 }
