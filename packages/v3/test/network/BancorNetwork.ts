@@ -699,15 +699,8 @@ describe('BancorNetwork', () => {
                     const res = await deposit(amount);
 
                     await expect(res)
-                        .to.emit(network, 'FundsDeposited')
-                        .withArgs(
-                            contextId,
-                            token.address,
-                            providerAddress,
-                            ZERO_ADDRESS,
-                            amount,
-                            expectedPoolTokenAmount
-                        );
+                        .to.emit(network, 'NetworkTokenDeposited')
+                        .withArgs(contextId, providerAddress, amount, expectedPoolTokenAmount, expectedPoolTokenAmount);
 
                     await expect(res)
                         .to.emit(network, 'TotalLiquidityUpdated')
@@ -747,7 +740,7 @@ describe('BancorNetwork', () => {
                     }
 
                     await expect(res)
-                        .to.emit(network, 'FundsDeposited')
+                        .to.emit(network, 'BaseTokenDeposited')
                         .withArgs(
                             contextId,
                             token.address,
@@ -1597,17 +1590,13 @@ describe('BancorNetwork', () => {
                                     const res = await network.connect(provider).withdraw(id);
 
                                     await expect(res)
-                                        .to.emit(network, 'FundsWithdrawn')
+                                        .to.emit(network, 'NetworkTokenWithdrawn')
                                         .withArgs(
                                             contextId,
-                                            token.address,
                                             provider.address,
-                                            ZERO_ADDRESS,
-                                            poolTokenAmount,
-                                            poolTokenAmount,
-                                            BigNumber.from(0),
-                                            BigNumber.from(0),
                                             withdrawalAmounts.networkTokenAmount,
+                                            poolTokenAmount,
+                                            poolTokenAmount,
                                             withdrawalAmounts.withdrawalFeeAmount
                                         );
 
@@ -1648,17 +1637,16 @@ describe('BancorNetwork', () => {
                                     }
 
                                     await expect(res)
-                                        .to.emit(network, 'FundsWithdrawn')
+                                        .to.emit(network, 'BaseTokenWithdrawn')
                                         .withArgs(
                                             contextId,
                                             token.address,
                                             provider.address,
                                             poolCollection.address,
-                                            poolTokenAmount,
-                                            BigNumber.from(0),
-                                            withdrawalAmounts.networkTokenAmountToMintForProvider.add(
-                                                withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider
+                                            withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider.add(
+                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
                                             ),
+                                            poolTokenAmount,
                                             withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
                                             withdrawalAmounts.networkTokenAmountToMintForProvider,
                                             withdrawalAmounts.baseTokenWithdrawalFeeAmount

@@ -125,9 +125,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when funds are deposited
+     * @dev triggered when base token liquidity is deposited
      */
-    event FundsDeposited(
+    event BaseTokenDeposited(
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
@@ -137,18 +137,40 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when funds are withdrawn
+     * @dev triggered when network token liquidity is deposited
      */
-    event FundsWithdrawn(
+    event NetworkTokenDeposited(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 depositAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount
+    );
+
+    /**
+     * @dev triggered when base token liquidity is withdrawn
+     */
+    event BaseTokenWithdrawn(
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
         IPoolCollection poolCollection,
-        uint256 poolTokenAmount,
-        uint256 govTokenAmount,
         uint256 baseTokenAmount,
+        uint256 poolTokenAmount,
         uint256 externalProtectionBaseTokenAmount,
         uint256 networkTokenAmount,
+        uint256 withdrawalFeeAmount
+    );
+
+    /**
+     * @dev triggered when network token liquidity is withdrawn
+     */
+    event NetworkTokenWithdrawn(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 networkTokenAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount,
         uint256 withdrawalFeeAmount
     );
 
@@ -709,13 +731,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             0
         );
 
-        emit FundsDeposited({
+        emit NetworkTokenDeposited({
             contextId: contextId,
-            token: IReserveToken(address(_networkToken)),
             provider: provider,
-            poolCollection: IPoolCollection(address(0x0)),
             depositAmount: networkTokenAmount,
-            poolTokenAmount: depositAmounts.poolTokenAmount
+            poolTokenAmount: depositAmounts.poolTokenAmount,
+            govTokenAmount: depositAmounts.govTokenAmount
         });
 
         emit TotalLiquidityUpdated({
@@ -788,7 +809,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // TODO: process network fees based on the return values
 
-        emit FundsDeposited({
+        emit BaseTokenDeposited({
             contextId: contextId,
             token: pool,
             provider: provider,
@@ -878,16 +899,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         assert(amounts.poolTokenAmount == completedRequest.poolTokenAmount);
 
-        emit FundsWithdrawn({
+        emit NetworkTokenWithdrawn({
             contextId: contextId,
-            token: IReserveToken(address(_networkToken)),
             provider: provider,
-            poolCollection: IPoolCollection(address(0x0)),
+            networkTokenAmount: amounts.networkTokenAmount,
             poolTokenAmount: amounts.poolTokenAmount,
             govTokenAmount: amounts.govTokenAmount,
-            baseTokenAmount: 0,
-            externalProtectionBaseTokenAmount: 0,
-            networkTokenAmount: amounts.networkTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
 
@@ -971,16 +988,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             );
         }
 
-        emit FundsWithdrawn({
+        emit BaseTokenWithdrawn({
             contextId: contextId,
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            poolTokenAmount: completedRequest.poolTokenAmount,
-            govTokenAmount: 0,
             baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider.add(
                 amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
             ),
+            poolTokenAmount: completedRequest.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
