@@ -13,6 +13,11 @@ import { ethers } from 'hardhat';
 import path from 'path';
 
 describe('PoolCollection', () => {
+    enum TradingEnablingReason {
+        Owner = 0,
+        MinLiquidity = 1
+    }
+
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
@@ -185,7 +190,9 @@ describe('PoolCollection', () => {
                     await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
                         .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                    await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
+                    await expect(res)
+                        .to.emit(poolCollection, 'TradingEnabled')
+                        .withArgs(reserveToken.address, false, TradingEnablingReason.Owner);
                     await expect(res)
                         .to.emit(poolCollection, 'DepositingEnabled')
                         .withArgs(reserveToken.address, pool.depositingEnabled);
@@ -397,14 +404,18 @@ describe('PoolCollection', () => {
                 expect(tradingEnabled).to.be.true;
 
                 const res = await poolCollection.enableTrading(reserveToken.address, false);
-                await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, false, TradingEnablingReason.Owner);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
                 expect(tradingEnabled).to.be.false;
 
                 const res2 = await poolCollection.enableTrading(reserveToken.address, true);
-                await expect(res2).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, true, TradingEnablingReason.Owner);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
@@ -989,7 +1000,7 @@ describe('PoolCollection', () => {
                         ) {
                             await expect(res)
                                 .to.emit(poolCollection, 'TradingEnabled')
-                                .withArgs(reserveToken.address, true);
+                                .withArgs(reserveToken.address, true, TradingEnablingReason.MinLiquidity);
                         }
 
                         let rate;
