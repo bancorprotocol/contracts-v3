@@ -14,11 +14,7 @@ contract TestHmaxFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    )
-        external
-        pure
-        returns (bool)
-    {
+    ) external pure returns (bool) {
         return HmaxFormula.surplus(b, c, d, e, m, n, x);
     }
 
@@ -30,11 +26,7 @@ contract TestHmaxFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    )
-        external
-        pure
-        returns (bool)
-    {
+    ) external pure returns (bool) {
         return HmaxFormula.deficit(b, c, d, e, m, n, x);
     }
 }
