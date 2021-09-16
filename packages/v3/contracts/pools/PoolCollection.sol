@@ -42,6 +42,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
+    // trading enabling/disabling reasons
+    uint8 private constant TRADING_ENABLED_BY_OWNER = 0;
+    uint8 private constant TRADING_ENABLED_BY_MINIMUM_LIQUIDITY = 1;
+
     // withdrawal-related input data
     struct PoolWithdrawalParams {
         uint256 networkTokenAvgTradingLiquidity;
@@ -101,15 +105,10 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
      */
     event TradingFeePPMUpdated(IReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
-    enum TradingEnablingReason {
-        Owner,
-        MinmumLiquidity
-    }
-
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed pool, bool newStatus, TradingEnablingReason reason);
+    event TradingEnabled(IReserveToken indexed pool, bool newStatus, uint8 reason);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
@@ -262,7 +261,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
         // pool is disabled
-        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TradingEnablingReason.Owner });
+        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_ENABLED_BY_OWNER });
 
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
@@ -349,7 +348,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         poolData.tradingEnabled = status;
 
-        emit TradingEnabled({ pool: pool, newStatus: status, reason: TradingEnablingReason.Owner });
+        emit TradingEnabled({ pool: pool, newStatus: status, reason: TRADING_ENABLED_BY_OWNER });
     }
 
     /**
@@ -462,7 +461,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.baseTokenDeltaAmount) >=
                 minLiquidityForTrading
             ) {
-                emit TradingEnabled({ pool: pool, newStatus: true, reason: TradingEnablingReason.MinmumLiquidity });
+                emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_ENABLED_BY_MINIMUM_LIQUIDITY });
             }
         }
 
@@ -695,7 +694,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 emit TradingEnabled({
                     pool: pool,
                     newStatus: newEnabled,
-                    reason: TradingEnablingReason.MinmumLiquidity
+                    reason: TRADING_ENABLED_BY_MINIMUM_LIQUIDITY
                 });
             }
         }
