@@ -17,7 +17,12 @@ library ArbFormula {
     /**
      * @dev returns `af(b(2-m)-f) / (b^2(1-m))` assuming `m` is normalized
      */
-    function surplus(uint256 a, uint256 b, uint256 f, uint256 m) internal pure returns (uint256) {
+    function surplus(
+        uint256 a,
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (uint256) {
         assert(a <= MAX_UINT128);
         assert(b <= MAX_UINT128);
         assert(f <= MAX_UINT128);
@@ -29,7 +34,12 @@ library ArbFormula {
     /**
      * @dev returns `af(b(2-m)+f) / (b(b+fm))` assuming `m` is normalized
      */
-    function deficit(uint256 a, uint256 b, uint256 f, uint256 m) internal pure returns (uint256) {
+    function deficit(
+        uint256 a,
+        uint256 b,
+        uint256 f,
+        uint256 m
+    ) internal pure returns (uint256) {
         assert(a <= MAX_UINT128);
         assert(b <= MAX_UINT128);
         assert(f <= MAX_UINT128);
