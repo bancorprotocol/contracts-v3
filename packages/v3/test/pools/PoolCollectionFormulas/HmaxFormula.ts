@@ -31,13 +31,13 @@ describe('HmaxFormula', () => {
 
                 for (const {b, c, e, m, n, x, expected} of table) {
                     if (BigNumber.from(b).add(BigNumber.from(c)).gte(BigNumber.from(e))) {
-                        it(`surplus(${[b, c, e, m, n, x]})`, async () => {
+                        it(`${fileName} surplus(${[b, c, e, m, n, x]})`, async () => {
                             const actual = await formula.surplus(b, c, e, m, n, x);
                             expect(actual).to.equal(expected);
                         });
                     }
                     else {
-                        it(`deficit(${[b, c, e, m, n, x]})`, async () => {
+                        it(`${fileName} deficit(${[b, c, e, m, n, x]})`, async () => {
                             const actual = await formula.deficit(b, c, e, m, n, x);
                             expect(actual).to.equal(expected);
                         });
