@@ -2,7 +2,7 @@
 
 ## Pre-requisites
 
-In order to use this plugin, some keys needs to be set in our config.json file at the root of the v3 package:
+In order to use this plugin, some keys needs to be set in our `config.json` file at the root of the v3 package:
 
 ```json
 {
@@ -10,7 +10,7 @@ In order to use this plugin, some keys needs to be set in our config.json file a
     "networks": {
         "networkName": {
             "url": "https://",
-            "defaultAccount": ["defaultAccountPrivateKey"]
+            "defaultAccount": "defaultAccountPrivateKey"
         }
     }
 }
