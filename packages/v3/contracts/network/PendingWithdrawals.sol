@@ -250,18 +250,17 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawalDelegated(
+    function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
-        address provider,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external override validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
-        poolToken.permit(provider, address(this), poolTokenAmount, deadline, v, r, s);
+        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
-        _initWithdrawal(provider, poolToken, poolTokenAmount);
+        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
 
     /**
