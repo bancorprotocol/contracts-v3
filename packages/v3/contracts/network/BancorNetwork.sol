@@ -862,7 +862,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         bytes32 r,
         bytes32 s
     ) private {
-        // neither the network token or ETH support EIP2612 permit requests
+        // neither the network token nor ETH support EIP2612 permit requests
         require(pool != IReserveToken(address(_networkToken)) && !pool.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
