@@ -1,8 +1,3 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
-import { BigNumber, Wallet, Signer, utils, ContractTransaction } from 'ethers';
-import { ethers } from 'hardhat';
-import { camelCase } from 'lodash';
 import Contracts from '../../components/Contracts';
 import {
     BancorVault,
@@ -14,8 +9,9 @@ import {
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TokenHolderUpgradeable
+    TokenHolder
 } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
@@ -23,17 +19,24 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress, createWallet } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber, Wallet, Signer, utils, ContractTransaction } from 'ethers';
+import { ethers } from 'hardhat';
+import { camelCase } from 'lodash';
 
+const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
+    let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
     let newOwner: SignerWithAddress;
 
     shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
     before(async () => {
-        [, nonOwner, newOwner] = await ethers.getSigners();
+        [deployer, nonOwner, newOwner] = await ethers.getSigners();
     });
 
     describe('construction', () => {
@@ -178,6 +181,8 @@ describe('BancorNetwork', () => {
 
             expect(await network.version()).to.equal(1);
 
+            await expectRole(network, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
+
             expect(await network.networkToken()).to.equal(networkToken.address);
             expect(await network.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
             expect(await network.govToken()).to.equal(govToken.address);
@@ -195,7 +200,7 @@ describe('BancorNetwork', () => {
     });
 
     describe('external protection wallet', () => {
-        let newExternalProtectionWallet: TokenHolderUpgradeable;
+        let newExternalProtectionWallet: TokenHolder;
         let network: TestBancorNetwork;
 
         beforeEach(async () => {
@@ -594,9 +599,7 @@ describe('BancorNetwork', () => {
         let vault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolderUpgradeable;
-
-        let deployer: SignerWithAddress;
+        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -604,10 +607,6 @@ describe('BancorNetwork', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
         const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-
-        before(async () => {
-            [deployer] = await ethers.getSigners();
-        });
 
         beforeEach(async () => {
             ({
@@ -1395,7 +1394,7 @@ describe('BancorNetwork', () => {
         let vault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolderUpgradeable;
+        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -1441,7 +1440,6 @@ describe('BancorNetwork', () => {
             const isETH = symbol === 'ETH';
 
             context('with an initiated withdrawal request', () => {
-                let deployer: SignerWithAddress;
                 let provider: SignerWithAddress;
                 let poolToken: PoolToken;
                 let token: TokenWithAddress;
@@ -1450,7 +1448,7 @@ describe('BancorNetwork', () => {
                 let creationTime: number;
 
                 before(async () => {
-                    [deployer, provider] = await ethers.getSigners();
+                    [, provider] = await ethers.getSigners();
                 });
 
                 beforeEach(async () => {

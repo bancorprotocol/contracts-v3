@@ -1,26 +1,22 @@
 import Contracts from '../../components/Contracts';
-import { TestOwnedUpgradeable } from '../../typechain';
-import { shouldHaveGap } from '../helpers/Proxy';
+import { TestOwned } from '../../typechain';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-let contract: TestOwnedUpgradeable;
+describe('Owned', () => {
+    let contract: TestOwned;
 
-let owner: SignerWithAddress;
-let nonOwner: SignerWithAddress;
-let newOwner: SignerWithAddress;
-
-describe('OwnedUpgradeable', () => {
-    shouldHaveGap('OwnedUpgradeable', '_owner');
+    let owner: SignerWithAddress;
+    let nonOwner: SignerWithAddress;
+    let newOwner: SignerWithAddress;
 
     before(async () => {
         [owner, nonOwner, newOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        contract = await Contracts.TestOwnedUpgradeable.deploy();
-        await contract.initialize();
+        contract = await Contracts.TestOwned.deploy();
     });
 
     it('verifies the owner after construction', async () => {

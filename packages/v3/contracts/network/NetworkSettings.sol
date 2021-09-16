@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 
@@ -15,7 +14,7 @@ import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 /**
  * @dev Network Settings contract
  */
-contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Utils {
+contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a set of tokens which are eligeble for protection
@@ -101,7 +100,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * @dev initializes the contract and its parents
      */
     function __NetworkSettings_init() internal initializer {
-        __Owned_init();
+        __Upgradeable_init();
 
         __NetworkSettings_init_unchained();
     }

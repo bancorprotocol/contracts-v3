@@ -6,41 +6,17 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { ITokenHolder } from "./interfaces/ITokenHolder.sol";
 
-import { OwnedUpgradeable } from "./OwnedUpgradeable.sol";
+import { IVersioned } from "./interfaces/IVersioned.sol";
+import { Owned } from "./Owned.sol";
 import { Utils } from "./Utils.sol";
 
 /**
  * @dev this contract provides an owned token and ETH wallet
  */
-contract TokenHolderUpgradeable is ITokenHolder, OwnedUpgradeable, Utils {
+contract TokenHolder is IVersioned, ITokenHolder, Owned, Utils {
     using ReserveToken for IReserveToken;
 
-    // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 0] private __gap;
-
-    function initialize() external initializer {
-        __TokenHolderUpgradeable_init();
-    }
-
-    // solhint-disable func-name-mixedcase
-
-    /**
-     * @dev initializes the contract and its parents
-     */
-    function __TokenHolderUpgradeable_init() internal initializer {
-        __Owned_init();
-
-        __TokenHolderUpgradeable_init_unchained();
-    }
-
-    /**
-     * @dev performs contract-specific initialization
-     */
-    function __TokenHolderUpgradeable_init_unchained() internal initializer {}
-
     receive() external payable virtual override {}
-
-    // solhint-enable func-name-mixedcase
 
     /**
      * @dev returns the current version of the contract

@@ -1,24 +1,21 @@
 import Contracts from '../../components/Contracts';
-import { TestERC20Token, TokenHolderUpgradeable } from '../../typechain';
+import { TestERC20Token, TokenHolder } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
 import { createTokenHolder } from '../helpers/Factory';
-import { shouldHaveGap } from '../helpers/Proxy';
 import { getBalance, getBalances, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-let holder: TokenHolderUpgradeable;
-let token1: TestERC20Token;
-let token2: TestERC20Token;
+describe('TokenHolder', () => {
+    let holder: TokenHolder;
+    let token1: TestERC20Token;
+    let token2: TestERC20Token;
 
-let accounts: SignerWithAddress[];
-let receiver: SignerWithAddress;
-let nonOwner: SignerWithAddress;
-
-describe('TokenHolderUpgradeable', () => {
-    shouldHaveGap('TokenHolderUpgradeable');
+    let accounts: SignerWithAddress[];
+    let receiver: SignerWithAddress;
+    let nonOwner: SignerWithAddress;
 
     before(async () => {
         accounts = await ethers.getSigners();
@@ -38,10 +35,6 @@ describe('TokenHolderUpgradeable', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            await expect(holder.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
-        });
-
         it('should be properly initialized', async () => {
             expect(await holder.version()).to.equal(1);
         });
