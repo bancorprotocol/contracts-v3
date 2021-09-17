@@ -226,7 +226,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function availableMintingAmount(IReserveToken pool) external view override returns (uint256) {
+    function unallocatedNetworkLiquidity(IReserveToken pool) external view override returns (uint256) {
         return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 

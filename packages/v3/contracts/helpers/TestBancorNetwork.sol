@@ -72,9 +72,9 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         address provider,
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     ) external returns (PoolCollectionDepositAmounts memory) {
-        return poolCollection.depositFor(provider, pool, baseTokenAmount, availableNetworkTokenLiquidity);
+        return poolCollection.depositFor(provider, pool, baseTokenAmount, unallocatedNetworkTokenLiquidity);
     }
 
     function withdrawFromNetworkPoolT(address provider, uint256 poolTokenAmount)
