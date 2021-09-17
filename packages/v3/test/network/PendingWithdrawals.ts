@@ -8,6 +8,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
 import { MAX_UINT256, ZERO_ADDRESS } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
@@ -19,6 +20,7 @@ import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
+const { Upgradeable: UpgradeableRoles } = roles;
 const { formatBytes32String } = utils;
 
 describe('PendingWithdrawals', () => {
@@ -51,6 +53,10 @@ describe('PendingWithdrawals', () => {
             const { pendingWithdrawals, network } = await createSystem();
 
             expect(await pendingWithdrawals.version()).to.equal(1);
+
+            await expectRole(pendingWithdrawals, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+                deployer.address
+            ]);
 
             expect(await pendingWithdrawals.network()).to.equal(network.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);

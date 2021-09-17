@@ -7,16 +7,16 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-const TOTAL_SUPPLY = BigNumber.from(1_000_000);
-
-let reserveToken: TestReserveToken;
-
-let deployer: SignerWithAddress;
-let recipient: SignerWithAddress;
-let spender: SignerWithAddress;
-let sender: string;
-
 describe('ReserveToken', () => {
+    const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+
+    let reserveToken: TestReserveToken;
+
+    let deployer: SignerWithAddress;
+    let recipient: SignerWithAddress;
+    let spender: SignerWithAddress;
+    let sender: string;
+
     before(async () => {
         [deployer, recipient, spender] = await ethers.getSigners();
     });

@@ -10,7 +10,6 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
@@ -23,14 +22,7 @@ import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./i
 /**
  * @dev Pending Withdrawals contract
  */
-contract PendingWithdrawals is
-    IPendingWithdrawals,
-    Upgradeable,
-    OwnedUpgradeable,
-    ReentrancyGuardUpgradeable,
-    Time,
-    Utils
-{
+contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using SafeMath for uint32;
     using SafeMath for uint256;
     using SafeERC20 for IPoolToken;
@@ -134,8 +126,8 @@ contract PendingWithdrawals is
      * @dev initializes the contract and its parents
      */
     function __PendingWithdrawals_init() internal initializer {
+        __Upgradeable_init();
         __ReentrancyGuard_init();
-        __Owned_init();
 
         __PendingWithdrawals_init_unchained();
     }

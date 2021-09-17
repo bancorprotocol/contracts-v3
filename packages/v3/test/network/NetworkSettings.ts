@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
-import { NetworkSettings, TokenHolderUpgradeable, TestERC20Token } from '../../typechain';
+import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
 import { createTokenHolder, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -8,19 +9,21 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
+const { Upgradeable: UpgradeableRoles } = roles;
+
 describe('NetworkSettings', () => {
-    let networkFeeWallet: TokenHolderUpgradeable;
-
-    let nonOwner: SignerWithAddress;
-
+    let networkFeeWallet: TokenHolder;
     let reserveToken: TestERC20Token;
+
+    let deployer: SignerWithAddress;
+    let nonOwner: SignerWithAddress;
 
     const TOTAL_SUPPLY = BigNumber.from(1_000_000);
 
     shouldHaveGap('NetworkSettings', '_protectedTokenWhitelist');
 
     before(async () => {
-        [, nonOwner] = await ethers.getSigners();
+        [deployer, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -42,6 +45,10 @@ describe('NetworkSettings', () => {
             const { networkSettings } = await createSystem();
 
             expect(await networkSettings.version()).to.equal(1);
+
+            await expectRole(networkSettings, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+                deployer.address
+            ]);
 
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
             const networkFeeParams = await networkSettings.networkFeeParams();
@@ -215,11 +222,11 @@ describe('NetworkSettings', () => {
     });
 
     describe('network fee params', () => {
-        let newNetworkFeeWallet: TokenHolderUpgradeable;
+        let newNetworkFeeWallet: TokenHolder;
         const newNetworkFee = BigNumber.from(100000);
         let networkSettings: NetworkSettings;
 
-        const expectNetworkFeeParams = async (wallet: TokenHolderUpgradeable | undefined, fee: BigNumber) => {
+        const expectNetworkFeeParams = async (wallet: TokenHolder | undefined, fee: BigNumber) => {
             const walletAddress = wallet?.address || ZERO_ADDRESS;
             const networkFeeParams = await networkSettings.networkFeeParams();
             expect(networkFeeParams[0]).to.equal(walletAddress);

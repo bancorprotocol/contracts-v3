@@ -1,10 +1,10 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
-import { ethers, waffle } from 'hardhat';
 import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { toWei } from './Types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
+import { ethers, waffle } from 'hardhat';
 
 export type TokenWithAddress = TestERC20Token | { address: string };
 

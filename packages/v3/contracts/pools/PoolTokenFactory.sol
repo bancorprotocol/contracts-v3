@@ -6,7 +6,6 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 
 import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
@@ -15,7 +14,7 @@ import { PoolToken } from "./PoolToken.sol";
 /**
  * @dev Pool Token Factory contract
  */
-contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, Utils {
+contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     using ReserveToken for IReserveToken;
 
     string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
@@ -49,7 +48,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, OwnedUpgradeable, U
      * @dev initializes the contract and its parents
      */
     function __PoolTokenFactory_init() internal initializer {
-        __Owned_init();
+        __Upgradeable_init();
 
         __PoolTokenFactory_init_unchained();
     }

@@ -12,7 +12,6 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -32,7 +31,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Network contract
  */
-contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using Address for address payable;
     using SafeMath for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -276,7 +275,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         internal
         initializer
     {
-        __Owned_init();
+        __Upgradeable_init();
         __ReentrancyGuard_init();
 
         __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals);

@@ -14,7 +14,7 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
 import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Owned } from "../utility/Owned.sol";
 import { Utils } from "../utility/Utils.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -34,7 +34,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
@@ -132,7 +132,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         validAddress(address(initNetwork))
         validAddress(address(initPoolTokenFactory))
     {
-        __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
