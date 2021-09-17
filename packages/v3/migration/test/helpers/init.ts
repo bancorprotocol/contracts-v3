@@ -1,4 +1,4 @@
-import { initEngine as init } from '../../../migration/engine';
+import { initEngine as init } from '../../engine';
 import hre from 'hardhat';
 import path from 'path/posix';
 

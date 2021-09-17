@@ -1,5 +1,5 @@
-import { Engine } from './engine';
-import { defaultArgs } from './types';
+import { Engine } from './Engine';
+import { defaultArgs } from './Types';
 import { Signer } from '@ethersproject/abstract-signer';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
 import { ethers } from 'hardhat';

@@ -1,7 +1,7 @@
-import { Engine } from './engine';
-import { log } from './logger';
-import { Migration, SystemState } from './types';
-import { importCsjOrEsModule } from './utils';
+import { Engine } from './Engine';
+import { log } from './Logger';
+import { Migration, SystemState } from './Types';
+import { importCsjOrEsModule } from './Utils';
 import fs from 'fs';
 import path from 'path';
 import { exit } from 'process';

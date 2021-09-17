@@ -1,5 +1,5 @@
 import { engine } from '../../engine';
-import { deployedContract, Migration } from '../../engine/types';
+import { deployedContract, Migration } from '../../engine/Types';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;

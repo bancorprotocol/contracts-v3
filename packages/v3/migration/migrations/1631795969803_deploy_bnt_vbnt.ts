@@ -1,5 +1,5 @@
 import { engine } from '../engine';
-import { deployedContract, Migration } from '../engine/types';
+import { deployedContract, Migration } from '../engine/Types';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
@@ -27,11 +27,11 @@ const migration: Migration = {
         const vBNT = await contracts.vBNT.attach(state.vBNT);
 
         if ((await BNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("BNT contract doesn't have the right owner");
+            throw new Error("Signer doesn't match contract's owner");
         }
 
         if ((await vBNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("BNT contract doesn't have the right owner");
+            throw new Error("Signer doesn't match contract's owner");
         }
     },
 
@@ -39,4 +39,5 @@ const migration: Migration = {
         return initialState;
     }
 };
+
 export default migration;

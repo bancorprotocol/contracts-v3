@@ -1,5 +1,5 @@
 import { engine } from '../engine';
-import { initEngine } from './helpers/init';
+import { initEngine } from './helpers/Init';
 import { expect } from 'chai';
 
 describe('init engine', () => {

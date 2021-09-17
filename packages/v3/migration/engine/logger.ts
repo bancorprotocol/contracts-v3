@@ -1,6 +1,6 @@
-import { test } from './';
-import { Engine } from './engine';
-import { ExecutionSettings } from './types';
+import { test } from '.';
+import { Engine } from './Engine';
+import { ExecutionSettings } from './Types';
 import chalk from 'chalk';
 import { Overrides } from 'ethers';
 

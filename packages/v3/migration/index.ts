@@ -1,5 +1,5 @@
-import { migrationLoader, basicTaskLoader } from './engine/loaders';
-import { defaultArgs } from './engine/types';
+import { migrationLoader, basicTaskLoader } from './engine/Loaders';
+import { defaultArgs } from './engine/Types';
 import { task, types } from 'hardhat/config';
 import path from 'path';
 
@@ -16,9 +16,7 @@ task('migrate', 'Migrate the network')
 
 export type createMigrationParamTask = {
     wordList: string[];
-    customTimestamp: number;
 };
 task('create-migration', 'Create a migration file')
     .addVariadicPositionalParam('wordList', 'Name of the migration')
-    .addOptionalParam('customTimestamp', 'Custom timestamp of the migration')
     .setAction(basicTaskLoader(path.join(PATH_TO_TASKS_FOLDER, 'createMigration.ts')));

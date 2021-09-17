@@ -1,7 +1,7 @@
 import { ContractBuilder, Contract } from '../../components/Contracts';
 import { ProxyAdmin } from '../../typechain';
-import { Engine } from './engine';
-import { log } from './logger';
+import { Engine } from './Engine';
+import { log } from './Logger';
 import { ContractFactory, ContractReceipt, ContractTransaction } from 'ethers';
 
 type initializeArgs = Parameters<any> | 'skipInit';

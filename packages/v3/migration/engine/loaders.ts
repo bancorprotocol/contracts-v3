@@ -1,4 +1,4 @@
-import { importCsjOrEsModule } from './utils';
+import { importCsjOrEsModule } from './Utils';
 import path from 'path';
 
 export const basicTaskLoader = (pathToAction: string) => {
