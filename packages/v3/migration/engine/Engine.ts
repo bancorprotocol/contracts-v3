@@ -7,7 +7,7 @@ import path from 'path';
 import Contracts, { ContractsType } from '../../components/Contracts';
 import { CONFIG } from '../../hardhat.extended.config';
 import { defaultMigration, MIGRATION_DATA_DIR, MIGRATION_DEPLOYMENTS_DIR, MIGRATION_DIR } from './Constants';
-import { initExecutionFunctions } from './ExecutionFunctions';
+import { initExecutionFunctions } from './Execution';
 import { initIO } from './Io';
 import { log } from './Logger';
 import { migrate, migrateOneDown, migrateOneUp } from './Migrate';
