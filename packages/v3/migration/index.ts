@@ -20,4 +20,4 @@ export type createMigrationParamTask = {
 
 task('create-migration', 'Create a migration file')
     .addVariadicPositionalParam('wordList', 'Name of the migration')
-    .setAction(basicTaskLoader(path.join(MIGRATION_TASKS_DIR, 'createMigration.ts')));
+    .setAction(basicTaskLoader(path.join(MIGRATION_TASKS_DIR, 'CreateMigration.ts')));
