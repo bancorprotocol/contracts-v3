@@ -31,7 +31,7 @@ export class Engine {
     readonly pathToMigrationsFolder: string;
     readonly pathToNetworkDeploymentsFolder: string;
 
-    // init additional functionnalities
+    // init additional functionalities
     readonly IO = initIO(this);
     readonly executionFunctions = initExecutionFunctions(this);
 
@@ -55,7 +55,7 @@ export class Engine {
         this.hre = hre;
 
         // init network settings
-        const hardhatForkConfig = CONFIG.hardhatForkConfig;
+        const { hardhatForkConfig } = CONFIG;
 
         const networkName = hardhatForkConfig?.networkName || network.name;
         this.networkSettings = {
@@ -93,7 +93,7 @@ export class Engine {
         this.init();
     }
 
-    // engine healthcheck
+    // engine health-check
     checkForFailures = () => {
         // some configuration should only reserve for forked network or hardhat networks
         const isForkOrHardhat = this.networkSettings.isFork || this.networkSettings.networkName === 'hardhat';
@@ -108,7 +108,7 @@ export class Engine {
     };
 
     reset = () => {
-        log.warning(`Resetting ${this.networkSettings.networkName} migratation folder`);
+        log.warning(`Resetting ${this.networkSettings.networkName} migration folder`);
         fs.rmSync(this.pathToNetworkFolder, {
             recursive: true,
             force: true
@@ -146,7 +146,7 @@ export class Engine {
                     fs.copySync(pathToOriginalNetworkFolder, this.pathToNetworkFolder);
                 } catch {
                     log.error(
-                        `${this.networkSettings.originalNetwork} doesn't have a correct config (needed if you want to fork it), aborting.`
+                        `${this.networkSettings.originalNetwork} doesn't have a correct config (needed if you want to fork it). Aborting`
                     );
                     process.exit();
                 }
@@ -158,7 +158,7 @@ export class Engine {
 
         // if network folder does exist but isn't valid, resetting it.
         if (!isMigrationFolderValid(this.pathToNetworkFolder)) {
-            log.warning(`${this.networkSettings.networkName} migratation folder is invalid, resetting it ...`);
+            log.warning(`${this.networkSettings.networkName} migration folder is invalid, resetting it...`);
             this.reset();
             this.initMigrationDefaultFolder();
         }
@@ -175,6 +175,7 @@ export class Engine {
         for (const migrationFilePath of migrationFilesPath) {
             const fileName = path.basename(migrationFilePath);
             const migrationId = Number(fileName.split('_')[0]);
+
             // store migration that are only after the latest migration
             if (migrationId > this.migration.state.migrationState.latestMigration) {
                 this.migration.migrationsData.push({
