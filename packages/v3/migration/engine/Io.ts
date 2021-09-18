@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers';
 import fs from 'fs';
 import path from 'path';
-import { MIGRATION_HISTORY_FILE_NAME, MIGRATION_STATE_FILE_NAME, MIGRATION_DEPLOYMENTS_FOLDER } from './Constants';
+import { MIGRATION_HISTORY_FILE_NAME, MIGRATION_STATE_FILE_NAME, MIGRATION_DEPLOYMENTS_DIR } from './Constants';
 import { Engine } from './Engine';
 import { Deployment, History, HistoryExecution, SystemDeployments, SystemState } from './Types';
 
@@ -80,7 +80,7 @@ export const initIO = (engine: Engine) => {
                 // find the migration file in the network deployments folder
                 const pathToNetworkMigrationDeploymentFolder = path.join(
                     engine.pathToNetworkFolder,
-                    MIGRATION_DEPLOYMENTS_FOLDER
+                    MIGRATION_DEPLOYMENTS_DIR
                 );
 
                 // read all files into the folder and fetch needed file
