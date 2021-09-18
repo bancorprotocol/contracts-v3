@@ -76,7 +76,7 @@ export const migrate = async (engine: Engine) => {
     engine.migration.stateSaves.push({ ...engine.migration.state });
 
     let index = 0;
-    while (index++ < engine.migration.migrationsData.length) {
+    for (; index < engine.migration.migrationsData.length; index++) {
         const migrationData = engine.migration.migrationsData[index];
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
