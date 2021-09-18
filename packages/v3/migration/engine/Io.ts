@@ -1,32 +1,48 @@
-import { Engine } from './Engine';
-import { Deployment, History, HistoryExecution, SystemDeployments, SystemState } from './Types';
+import { BigNumber } from 'ethers';
 import fs from 'fs';
 import path from 'path';
+import { MIGRATION_HISTORY_FILE_NAME, MIGRATION_STATE_FILE_NAME } from './Constants';
+import { Engine } from './Engine';
+import { Deployment, History, HistoryExecution, SystemDeployments, SystemState } from './Types';
+
+const replacer = (_: any, value: any) => {
+    const { type, hex } = value;
+    if (type === 'BigNumber') {
+        return BigNumber.from(hex).toString();
+    }
+
+    return value;
+};
 
 export const initIO = (engine: Engine) => {
     return {
         state: {
             write: (state: SystemState) => {
                 fs.writeFileSync(
-                    path.join(engine.pathToNetworkFolder, 'state.json'),
-                    JSON.stringify(state, null, 4) + `\n`
+                    path.join(engine.pathToNetworkFolder, MIGRATION_STATE_FILE_NAME),
+                    JSON.stringify(state, replacer, 4) + `\n`
                 );
+
                 return state;
             },
+
             fetch: (pathToState: string) => {
-                return JSON.parse(fs.readFileSync(path.join(pathToState, 'state.json'), 'utf-8')) as SystemState;
+                return JSON.parse(
+                    fs.readFileSync(path.join(pathToState, MIGRATION_STATE_FILE_NAME), 'utf-8')
+                ) as SystemState;
             }
         },
+
         history: {
             write: (history: History) => {
                 fs.writeFileSync(
-                    path.join(engine.pathToNetworkFolder, 'history.json'),
-                    JSON.stringify(history, null, 4) + `\n`
+                    path.join(engine.pathToNetworkFolder, MIGRATION_HISTORY_FILE_NAME),
+                    JSON.stringify(history, replacer, 4) + `\n`
                 );
                 return history;
             },
             writeOne: (historyExecution: HistoryExecution) => {
-                const migrationHistoryFileName = 'history.json';
+                const migrationHistoryFileName = MIGRATION_HISTORY_FILE_NAME;
 
                 // find the history file in the network folder
                 const pathToNetworkFolderFiles = fs.readdirSync(engine.pathToNetworkFolder);
@@ -47,12 +63,15 @@ export const initIO = (engine: Engine) => {
                 engine.IO.history.write(currentHistory);
             },
             fetch: (pathToHistory: string) => {
-                return JSON.parse(fs.readFileSync(path.join(pathToHistory, 'history.json'), 'utf-8')) as History;
+                return JSON.parse(
+                    fs.readFileSync(path.join(pathToHistory, MIGRATION_HISTORY_FILE_NAME), 'utf-8')
+                ) as History;
             }
         },
         deployment: {
             write: (pathToWrite: string, deployments: SystemDeployments) => {
                 fs.writeFileSync(pathToWrite, JSON.stringify(deployments, null, 4) + `\n`);
+
                 return deployments;
             },
             writeOne: (deployment: Deployment) => {
