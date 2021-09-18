@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
 import { engine } from '../../engine';
 import { deployedContract, Migration } from '../../engine/Types';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
-type InitialState = {};
+type InitialState = Record<string, unknown>;
 
 type NextState = {
     BNT: deployedContract;

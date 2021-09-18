@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
 import { engine } from '../../engine';
 import { deployedContract, Migration } from '../../engine/Types';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
 
-type InitialState = {};
+type InitialState = Record<string, unknown>;
 
-type NextState = {};
+type NextState = Record<string, unknown>;
 
 const migration: Migration = {
     up: async (initialState: InitialState): Promise<NextState> => {
@@ -14,7 +15,7 @@ const migration: Migration = {
     },
 
     healthCheck: async (initialState: any, newState: any) => {
-        throw new Error('');
+        throw new Error('ERROR');
     },
 
     down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {

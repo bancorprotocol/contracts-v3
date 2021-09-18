@@ -1,5 +1,7 @@
 import { engine } from '../engine';
 import { initEngine } from './helpers/Init';
+import basicMigration from './migrations/Basic';
+import throwingMigration from './migrations/Throw';
 import { expect } from 'chai';
 
 describe('init engine', () => {
@@ -8,12 +10,10 @@ describe('init engine', () => {
     });
 
     it('basic migrate', async () => {
-        const migration = (await import('./migrations/Basic')).default;
-        expect(await engine.migrateOneUp(migration, 0, {}, {})).to.not.throw;
+        expect(await engine.migrateOneUp(basicMigration, 0, {}, {})).to.not.throw;
     });
 
     it('throw migrate', async () => {
-        const migration = (await import('./migrations/Throw')).default;
-        expect(await engine.migrateOneUp(migration, 0, {}, {})).to.throw;
+        expect(await engine.migrateOneUp(throwingMigration, 0, {}, {})).to.throw;
     });
 });

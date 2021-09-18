@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
 import { engine } from '../engine';
 import { deployedContract, Migration } from '../engine/Types';
 import { BigNumber } from 'ethers';
