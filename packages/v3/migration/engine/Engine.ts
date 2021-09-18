@@ -1,18 +1,18 @@
-import Contracts, { ContractsType } from '../../components/Contracts';
-import { CONFIG } from '../../hardhat.extended.config';
-import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './Constants';
-import { initExecutionFunctions } from './ExecutionFunctions';
-import { initIO } from './Io';
-import { log } from './Logger';
-import { migrate, migrateOneDown, migrateOneUp } from './Migrate';
-import { defaultArgs, ExecutionSettings, NetworkSettings } from './Types';
-import { isMigrationFolderValid } from './Utils';
 import { Overrides, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import fs from 'fs-extra';
 import { network } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
+import Contracts, { ContractsType } from '../../components/Contracts';
+import { CONFIG } from '../../hardhat.extended.config';
+import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_DEPLOYMENTS_FOLDER, MIGRATION_FOLDER } from './Constants';
+import { initExecutionFunctions } from './ExecutionFunctions';
+import { initIO } from './Io';
+import { log } from './Logger';
+import { migrate, migrateOneDown, migrateOneUp } from './Migrate';
+import { defaultArgs, ExecutionSettings, NetworkSettings } from './Types';
+import { isMigrationFolderValid } from './Utils';
 
 export class Engine {
     readonly hre: HardhatRuntimeEnvironment;
@@ -68,7 +68,7 @@ export class Engine {
         this.pathToRoot = pathToRoot;
         this.pathToMigrationsFolder = path.join(pathToRoot, MIGRATION_FOLDER);
         this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_FOLDER, this.networkSettings.networkName);
-        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, 'deployments');
+        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_FOLDER);
 
         // init basics
         this.signer = signer;
@@ -121,7 +121,7 @@ export class Engine {
         fs.mkdirSync(this.pathToNetworkFolder);
 
         // init the network deployment folder
-        fs.mkdirSync(path.join(this.pathToNetworkFolder, 'deployments'));
+        fs.mkdirSync(path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_FOLDER));
 
         // initialize the first state to default
         this.IO.state.write(defaultMigration.state);
