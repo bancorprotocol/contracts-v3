@@ -22,7 +22,7 @@
         "hh": "hardhat",
         "migrate": "MIGRATION=1 hardhat migrate",
         "create-migration": "MIGRATION=1 hardhat create-migration",
-        "test-migration": "yarn build && hardhat test migration/test/engine.test.ts",
+        "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
         "test": "yarn build && hardhat test",
