@@ -5,6 +5,7 @@ import { basicTaskLoader, migrationLoader } from './engine/Loaders';
 import { defaultArgs } from './engine/Types';
 
 export type migrateParamTask = defaultArgs;
+
 task('migrate', 'Migrate the network')
     .addFlag('ledger', 'Signing from a ledger')
     .addParam('ledgerPath', 'Ledger path', "m/44'/60'/0'/0", types.string)
@@ -16,6 +17,7 @@ task('migrate', 'Migrate the network')
 export type createMigrationParamTask = {
     wordList: string[];
 };
+
 task('create-migration', 'Create a migration file')
     .addVariadicPositionalParam('wordList', 'Name of the migration')
     .setAction(basicTaskLoader(path.join(MIGRATION_TASKS_DIR, 'createMigration.ts')));
