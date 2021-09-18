@@ -26,12 +26,12 @@ const migration: Migration = {
     healthCheck: async (initialState: InitialState, state: NextState) => {
         const BNT = await contracts.BNT.attach(state.BNT);
         if ((await BNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("current signer doesn't match contract's owner");
+            throw new Error("Current signer doesn't match contract's owner");
         }
 
         const vBNT = await contracts.vBNT.attach(state.vBNT);
         if ((await vBNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("current signer doesn't match contract's owner");
+            throw new Error("Current signer doesn't match contract's owner");
         }
     },
 
