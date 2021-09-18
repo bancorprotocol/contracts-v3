@@ -1,8 +1,8 @@
 import { MigrationData, SystemDeployments, SystemState } from './Types';
 
-export const MIGRATION_FOLDER = 'migration/migrations';
-export const MIGRATION_DATA_FOLDER = 'migration/data';
-export const MIGRATION_DEPLOYMENTS_FOLDER = 'deployments';
+export const MIGRATION_DIR = 'migration/migrations';
+export const MIGRATION_DATA_DIR = 'migration/data';
+export const MIGRATION_DEPLOYMENTS_DIR = 'deployments';
 
 export const MIGRATION_HISTORY_FILE_NAME = 'history.json';
 export const MIGRATION_STATE_FILE_NAME = 'state.json';

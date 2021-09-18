@@ -1,5 +1,5 @@
 import { createMigrationParamTask } from '..';
-import { MIGRATION_FOLDER } from '../engine/Constants';
+import { MIGRATION_DIR } from '../engine/Constants';
 import { log } from '../engine/Logger';
 import fs from 'fs';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -52,7 +52,7 @@ export default migration;
 
     const fileName = `${migrationTimestamp}${migrationName}.ts`;
 
-    const pathToNewMigrationFile = path.join(hre.config.paths.root, MIGRATION_FOLDER, fileName);
+    const pathToNewMigrationFile = path.join(hre.config.paths.root, MIGRATION_DIR, fileName);
     fs.writeFileSync(pathToNewMigrationFile, templateMigrationFile);
 
     log.done(`Migration file created ⚡️`);

@@ -6,7 +6,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import path from 'path';
 import Contracts, { ContractsType } from '../../components/Contracts';
 import { CONFIG } from '../../hardhat.extended.config';
-import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_DEPLOYMENTS_FOLDER, MIGRATION_FOLDER } from './Constants';
+import { defaultMigration, MIGRATION_DATA_DIR, MIGRATION_DEPLOYMENTS_DIR, MIGRATION_DIR } from './Constants';
 import { initExecutionFunctions } from './ExecutionFunctions';
 import { initIO } from './Io';
 import { log } from './Logger';
@@ -66,9 +66,9 @@ export class Engine {
 
         // init paths
         this.pathToRoot = pathToRoot;
-        this.pathToMigrationsFolder = path.join(pathToRoot, MIGRATION_FOLDER);
-        this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_FOLDER, this.networkSettings.networkName);
-        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_FOLDER);
+        this.pathToMigrationsFolder = path.join(pathToRoot, MIGRATION_DIR);
+        this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_DIR, this.networkSettings.networkName);
+        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_DIR);
 
         // init basics
         this.signer = signer;
@@ -121,7 +121,7 @@ export class Engine {
         fs.mkdirSync(this.pathToNetworkFolder);
 
         // init the network deployment folder
-        fs.mkdirSync(path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_FOLDER));
+        fs.mkdirSync(path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_DIR));
 
         // initialize the first state to default
         this.IO.state.write(defaultMigration.state);
@@ -135,7 +135,7 @@ export class Engine {
                 try {
                     const pathToOriginalNetworkFolder = path.join(
                         this.pathToRoot,
-                        MIGRATION_DATA_FOLDER,
+                        MIGRATION_DATA_DIR,
                         this.networkSettings.originalNetwork
                     );
 
