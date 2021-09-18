@@ -8,12 +8,12 @@ describe('init engine', () => {
     });
 
     it('basic migrate', async () => {
-        const migration = (await import('./singleMigrations/basic')).default;
+        const migration = (await import('./migrations/basic')).default;
         expect(await engine.migrateOneUp(migration, 0, {}, {})).to.not.throw;
     });
 
     it('throw migrate', async () => {
-        const migration = (await import('./singleMigrations/throw')).default;
+        const migration = (await import('./migrations/throw')).default;
         expect(await engine.migrateOneUp(migration, 0, {}, {})).to.throw;
     });
 });
