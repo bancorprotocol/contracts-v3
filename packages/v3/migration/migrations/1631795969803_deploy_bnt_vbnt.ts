@@ -27,11 +27,11 @@ const migration: Migration = {
         const vBNT = await contracts.vBNT.attach(state.vBNT);
 
         if ((await BNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("Signer doesn't match contract's owner");
+            throw new Error("current signer doesn't match contract's owner");
         }
 
         if ((await vBNT.owner()) !== (await signer.getAddress())) {
-            throw new Error("Signer doesn't match contract's owner");
+            throw new Error("current signer doesn't match contract's owner");
         }
     },
 
