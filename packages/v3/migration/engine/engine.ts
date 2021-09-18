@@ -86,6 +86,8 @@ export class Engine {
 
         if (args.reset) {
             this.reset();
+
+            return;
         }
 
         this.init();
