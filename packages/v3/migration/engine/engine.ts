@@ -1,6 +1,6 @@
 import Contracts, { ContractsType } from '../../components/Contracts';
 import { CONFIG } from '../../hardhat.extended.config';
-import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './Constant';
+import { defaultMigration, MIGRATION_DATA_FOLDER, MIGRATION_FOLDER } from './Constants';
 import { initExecutionFunctions } from './ExecutionFunctions';
 import { initIO } from './Io';
 import { log } from './Logger';
