@@ -2,7 +2,7 @@
 
 ## Pre-requisites
 
-In order to use this plugin, some keys needs to be set in our `config.json` file at the root of the v3 package:
+In order to use this plugin, some keys need to be set in the global `config.json` file at the root of the v3 package:
 
 ```json
 {
@@ -16,31 +16,27 @@ In order to use this plugin, some keys needs to be set in our `config.json` file
 }
 ```
 
-`networks` represents an object exposing a network name to an url and a default account (REQUIRED if no ledger is set via CLI). If you try to execute a migration to a network without having set those values it will fail.
-
-`url` represents an endpoint to the network.
-
-`defaultAccount` represents the default migration user (REQUIRED if not using a Ledger).
+`networks` represents a list of Hardhat network configurations.
 
 ## Features
 
-### Hardware
+### Hardware Wallets Support
 
 -   [x] Ledger support
 
 ### Functions
 
 -   [x] Deploy contracts (deploy)
--   [x] Contract interaction (execute)
--   [x] Deploy proxy (deployProxy)
--   [x] Upgrade proxy (upgradeProxy)
+-   [x] Interact with contracts (execute)
+-   [x] Deploy a proxy contract (deployProxy)
+-   [x] Upgrade a proxy contract (upgradeProxy)
 
 ### Engine
 
--   [x] Save ABI and Bytecode of each deployed contract
--   [x] Save states between migrations
--   [x] Save execution history of each migrations
--   [x] Revert if migration healthcheck fails
+-   [x] Saves ABI and bytecode of each deployed contract
+-   [x] Saves states between migrations
+-   [x] Saves execution history of each migration
+-   [x] Reverts if migration health-check fails
 
 ## Folders
 
@@ -50,7 +46,7 @@ The `data` folder consists of one designated folder per network.
 
 #### state.json
 
-In each network folder there is a `state.json` file. It represents the migration state and the network state:
+In each network folder there is a `state.json` file. It represents the state of the migration and the network:
 
 ```json
 {
@@ -61,8 +57,8 @@ In each network folder there is a `state.json` file. It represents the migration
 }
 ```
 
-`latestMigration`: The timestamp of the latest ran migration.
-`networkState`: Initial migration state.
+-   `latestMigration`: The timestamp of the latest ran migration.
+-   `networkState`: Initial migration state.
 
 #### deployments
 
@@ -70,11 +66,11 @@ There is also a `deployments` folder that will host, for each migration, the ABI
 
 #### history.json
 
-In each network folder there is a `history.json` file. It represents every execution done by the engine, it looks like this:
+In each network folder there is a `history.json` file. It represents every execution done by the engine, e.g.:
 
 ```json
 {
-    "0_deploy_basics.ts": {
+    "1631795969803_deploy_bnt_vbnt.ts": {
         "executions": [
             {
                 "type": "DEPLOY",
@@ -95,9 +91,9 @@ In each network folder there is a `history.json` file. It represents every execu
 
 ### Migrations
 
-The `migrations` folder is home to all migration files.
+The `migrations` folder is contains all migration files.
 
-A migration file is a typescript file that exposes a particular object respecting a strict interface:
+A migration file is a Typescript file that exposes a particular object respecting a strict interface:
 
 ```ts
 export interface Migration {
@@ -107,15 +103,11 @@ export interface Migration {
 }
 ```
 
-### Exemples
-
-A serie of migration files to inspire yourself from.
+Please check the `examples` directory for reference.
 
 ## Engine
 
-The engine is the backbone of the migration system, containing its logic.
-
-It also exposes tasks (task is a hardhat concept for CLI scripts).
+The engine is the backbone of the migration system, containing its logic. It also exposes Hardhat tasks.
 
 ### Tasks
 
@@ -125,25 +117,23 @@ Migrates the system between different states.
 
 Call `yarn migrate --help` for more info on params.
 
-#### CreateMigration
+#### Create a New Migration
 
-Creates a migration file based on a template.
+Creates a new migration file based on a starting template.
 
 `yarn create-migration --help` for more info on params.
 
 ## Getting started
 
-### How to create a migration file ?
+### How to Create a Migration File?
 
-```
+```bash
 yarn hh create-migration do migration for me pls
 ```
 
-If you don't use this CLI to generate your migration files, bear in mind that the format is as follow: "X_testfile.ts" with X representing the timestamp of the migration (i.e its order).
+### How to Execute a Migration on a Network?
 
-### How to execute a migration on a network?
-
-```
+```bash
 yarn hh migrate --network mainnet
 ```
 
@@ -153,13 +143,13 @@ yarn hh migrate --network mainnet
 
 3. Update the state on the go.
 
-### How to run the migration on a fork ?
+### How to Run the Migration on a Fork?
 
 Because of current Hardhat limitation it's not practical to launch a fork and run migration on it via the `hardhat.config.ts`. So we had to find a workaround.
 
 To fork the network `mainnet` you need to:
 
--   Have in your `config.json` file (at the root of the `v3` package) the url for the `mainnet` network, like so:
+-   Have in your `config.json` file (at the root of the `v3` package) the URL for the `mainnet` network, like so:
 
 ```
 {
@@ -176,44 +166,3 @@ To fork the network `mainnet` you need to:
 -   Provide the `state.json` file to the `mainnet` data folder.
 
 -   Specify the network you want to fork as an ENV variable: `FORK=mainnet yarn hh migrate`
-
-### What does a basic migration file looks like ?
-
-```ts
-import { engine } from '../../migration/engine';
-import { deployedContract, Migration } from '../../migration/engine/types';
-
-const { signer, contracts } = engine;
-const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
-export type InitialState = {};
-export type NextState = InitialState & {
-    BNT: { token: deployedContract; governance: deployedContract };
-};
-const migration: Migration = {
-    up: async (initialState: InitialState): Promise<NextState> => {
-        const BNTToken = await deploy(
-            contracts.TestERC20Token,
-            'Bancor Network Token',
-            'BNT',
-            '100000000000000000000000000'
-        );
-        const BNTGovernance = await deploy(contracts.TokenGovernance, BNTToken.address);
-        return {
-            ...initialState,
-            BNT: {
-                token: BNTToken.address,
-                governance: BNTGovernance.address
-            }
-        };
-    },
-    healthCheck: async (initialState: InitialState, state: NextState) => {
-        const BNTGovernance = await contracts.TokenGovernance.attach(state.BNT.governance);
-        if (!(await BNTGovernance.hasRole(await BNTGovernance.ROLE_SUPERVISOR(), await signer.getAddress())))
-            throw new Error('Invalid Role');
-    },
-    down: async (initialState: InitialState, newState: NextState): Promise<InitialState> => {
-        return initialState;
-    }
-};
-export default migration;
-```
