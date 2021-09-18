@@ -766,7 +766,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // if there is no unallocated network token liquidity - it's enough to check that the pool is whitelisted. Otherwise,
+        // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the network token pool is able to provide network liquidity
         uint256 unallocatedNetworkTokenLiquidity = cachedNetworkTokenPool.unallocatedNetworkLiquidity(pool);
         if (unallocatedNetworkTokenLiquidity == 0) {
