@@ -1,6 +1,6 @@
 import { initEngine as init } from '../../engine';
 import hre from 'hardhat';
-import path from 'path/posix';
+import path from 'path';
 
 export const initEngine = async () => {
     const signer = (await hre.ethers.getSigners())[0];
