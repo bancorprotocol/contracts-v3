@@ -102,6 +102,7 @@ export class Engine {
                 `Transaction confirmation should be higher than 1 for ${this.networkSettings.networkName} use. Aborting`
             );
         }
+
         if (!this.overrides.gasPrice && !isForkOrHardhat) {
             throw new Error(`Gas Price shouldn't be equal to 0 for ${this.networkSettings.networkName} use. Aborting`);
         }
@@ -109,6 +110,7 @@ export class Engine {
 
     reset = () => {
         log.warning(`Resetting ${this.networkSettings.networkName} migration folder`);
+
         fs.rmSync(this.pathToNetworkFolder, {
             recursive: true,
             force: true
@@ -148,6 +150,7 @@ export class Engine {
                     log.error(
                         `${this.networkSettings.originalNetwork} doesn't have a correct config (needed if you want to fork it). Aborting`
                     );
+
                     process.exit();
                 }
             } else {
@@ -159,6 +162,7 @@ export class Engine {
         // if network folder does exist but isn't valid, resetting it.
         if (!isMigrationFolderValid(this.pathToNetworkFolder)) {
             log.warning(`${this.networkSettings.networkName} migration folder is invalid, resetting it...`);
+
             this.reset();
             this.initMigrationDefaultFolder();
         }
@@ -172,6 +176,7 @@ export class Engine {
         const migrationFilesPath = migrationFiles.map((fileName: string) =>
             path.join(this.pathToMigrationsFolder, fileName)
         );
+
         for (const migrationFilePath of migrationFilesPath) {
             const fileName = path.basename(migrationFilePath);
             const migrationId = Number(fileName.split('_')[0]);
