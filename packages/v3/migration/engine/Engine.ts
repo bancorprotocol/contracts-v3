@@ -96,7 +96,7 @@ export class Engine {
         }
 
         if (!this.overrides.gasPrice && !isForkOrHardhat) {
-            throw new Error(`Gas Price shouldn't be equal to 0 for ${this.networkSettings.networkName} use. Aborting`);
+            throw new Error(`Gas Price should be larger than 0 for ${this.networkSettings.networkName} use. Aborting`);
         }
     };
 
