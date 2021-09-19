@@ -99,7 +99,7 @@ export const initExecutionFunctions = (engine: Engine) => {
         proxyAddress: string,
         initializeArgs: {
             params: Parameters<any>;
-            initializeFctName: string;
+            initializeFunction: string;
         },
         ctorArgs: Parameters<F['deploy']>,
         skipInitialization?: boolean
@@ -112,11 +112,11 @@ export const initExecutionFunctions = (engine: Engine) => {
             await execute('Upgrading proxy', admin.upgrade, proxyAddress, newLogicContract.address);
         } else {
             await execute(
-                `Upgrading proxy and call ${initializeArgs.initializeFctName}`,
+                `Upgrading proxy and call ${initializeArgs.initializeFunction}`,
                 admin.upgradeAndCall,
                 proxyAddress,
                 newLogicContract.address,
-                newLogicContract.interface.encodeFunctionData(initializeArgs.initializeFctName, initializeArgs.params)
+                newLogicContract.interface.encodeFunctionData(initializeArgs.initializeFunction, initializeArgs.params)
             );
         }
 
