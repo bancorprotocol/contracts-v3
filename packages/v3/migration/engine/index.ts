@@ -16,7 +16,7 @@ const initSigner = async (args: defaultArgs) => {
         : (await ethers.getSigners())[0];
 
     if (!signer) {
-        throw new Error("Signer shouldn't be undefined");
+        throw new Error('Signer must be defined');
     }
 
     const signerAddress = await signer.getAddress();
