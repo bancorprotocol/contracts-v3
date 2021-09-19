@@ -37,7 +37,7 @@ library ArbFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory) {
-        assertInput(a, b, c, e, m, n, x);
+        validate(a, b, c, e, m, n, x);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
         return surplus(surplus(a, b, c, e, m, n, x, y, z), a, b, y, z);
@@ -52,7 +52,7 @@ library ArbFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory output) {
-        assertInput(a, b, c, e, m, n, x);
+        validate(a, b, c, e, m, n, x);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
         return deficit(deficit(a, b, c, e, m, n, x, y, z), a, b, y, z);
@@ -122,7 +122,7 @@ library ArbFormula {
         output.s = z / M;
     }
 
-    function assertInput(
+    function validate(
         uint256 a,
         uint256 b,
         uint256 c,
