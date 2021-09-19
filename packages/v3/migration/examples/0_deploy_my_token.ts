@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
 import { engine } from '../engine';
 import { deployedContract, Migration } from '../engine/Types';
-import { BigNumber } from 'ethers';
+import { utils } from 'ethers';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
@@ -12,7 +12,7 @@ export type NextState = InitialState & {
     myToken: deployedContract;
 };
 
-const TOTAL_SUPPLY = BigNumber.from('100000000000000000000000000');
+const TOTAL_SUPPLY = utils.parseEther('100000000');
 
 const migration: Migration = {
     up: async (initialState: InitialState): Promise<NextState> => {
