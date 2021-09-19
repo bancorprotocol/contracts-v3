@@ -59,9 +59,6 @@ Each network directory contains the `state.json` file, which represents the stat
 }
 ```
 
--   `latestMigration`: The timestamp of the latest ran migration.
--   `networkState`: Initial migration state.
-
 #### deployments
 
 There is also a `deployments` directory that will host, for each migration, the ABI and bytecode of any deployed contract.
