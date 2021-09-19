@@ -125,7 +125,7 @@ export class Engine {
         // if network doesn't exist
         if (!fs.existsSync(this.pathToNetworkDir)) {
             if (this.networkSettings.isFork) {
-                // check if the original network Dir is valid and copy it into the current network directory
+                // check if the original network directory is valid and copy it into the current network directory
                 try {
                     const pathToOriginalNetworkDir = path.join(
                         this.pathToRoot,
@@ -146,14 +146,14 @@ export class Engine {
                     process.exit();
                 }
             } else {
-                // if not a fork initialize the Dir accordingly
+                // if not a fork initialize the directory accordingly
                 this.initMigrationDefaultDir();
             }
         }
 
-        // if network Dir does exist but isn't valid, resetting it.
+        // if network directory does exist but isn't valid, resetting it
         if (!isMigrationDirValid(this.pathToNetworkDir)) {
-            log.warning(`${this.networkSettings.networkName} migration Dir is invalid, resetting it...`);
+            log.warning(`${this.networkSettings.networkName} migration directory is invalid. Resetting...`);
 
             this.reset();
             this.initMigrationDefaultDir();
