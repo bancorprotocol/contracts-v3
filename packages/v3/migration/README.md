@@ -48,7 +48,7 @@ The `data` directory consists of one designated directory per-network.
 
 #### state.json
 
-In each network directory there is a `state.json` file. It represents the state of the migration and the network:
+Each network directory contains the `state.json` file, which represents the state of the migration and the network:
 
 ```json
 {
