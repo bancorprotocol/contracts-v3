@@ -19,16 +19,19 @@ export const migrateOneUp = async (
 
         try {
             await migration.healthCheck(oldNetworkState, newNetworkState);
+
             log.success('Health check success ✨ ');
         } catch (e: any) {
             log.error('Health check failed');
             log.error(e.stack);
+
             return undefined;
         }
     } catch (e: any) {
         log.error('Migration up failed');
         log.error(e.stack);
         log.error('Aborting.');
+
         exit(-1);
     }
 
@@ -50,6 +53,7 @@ export const migrateOneDown = async (
         log.error('Migration down failed');
         log.error(e.stack);
         log.error('Aborting.');
+
         exit(-1);
     }
 
@@ -65,6 +69,7 @@ export const migrate = async (engine: Engine) => {
     // if there is no migration to run, exit
     if (engine.migration.migrationsData.length === 0) {
         log.done(`Nothing to migrate ⚡️`);
+
         return;
     }
 
@@ -75,6 +80,7 @@ export const migrate = async (engine: Engine) => {
         const migrationData = engine.migration.migrationsData[index];
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+
         log.info(`Executing ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         // save the current migration data
@@ -86,7 +92,10 @@ export const migrate = async (engine: Engine) => {
             engine.migration.stateSaves[index].networkState,
             engine.migration.state.networkState
         );
-        if (!newSystemState) break;
+
+        if (!newSystemState) {
+            break;
+        }
 
         // update migration state
         engine.migration.state = newSystemState;
@@ -98,11 +107,13 @@ export const migrate = async (engine: Engine) => {
         engine.IO.state.write(newSystemState);
     }
 
-    // if the index of the latest migration is not equal to the length of the migrationsData array then an error occured an we should revert
+    // if the index of the latest migration is not equal to the length of the migrationsData array then an error occurred
+    // and we should revert
     if (index !== engine.migration.migrationsData.length) {
         const migrationData = engine.migration.migrationsData[index];
 
         const migration: Migration = importCsjOrEsModule(migrationData.fullPath);
+
         log.info(`Reverting ${migrationData.fileName}, timestamp: ${migrationData.migrationTimestamp}`);
 
         const newSystemState = await migrateOneDown(
@@ -119,9 +130,10 @@ export const migrate = async (engine: Engine) => {
 
         // remove current migration deployment file
         fs.rmSync(
-            path.join(engine.pathToNetworkDeploymentsFolder, engine.migration.currentMigrationData.fileName + '.json'),
+            path.join(engine.pathToNetworkDeploymentsDir, engine.migration.currentMigrationData.fileName + '.json'),
             { force: true }
         );
+
         log.success(`${engine.migration.currentMigrationData.fileName} reverted`);
     }
 

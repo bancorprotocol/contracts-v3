@@ -7,13 +7,15 @@ describe('init engine', () => {
         await initEngine();
     });
 
-    it('basic migrate', async () => {
-        const migration = (await import('./singleMigrations/basic')).default;
+    it('basic migration', async () => {
+        const migration = (await import('./migrations/Basic')).default;
+
         expect(await engine.migrateOneUp(migration, 0, {}, {})).to.not.throw;
     });
 
-    it('throw migrate', async () => {
-        const migration = (await import('./singleMigrations/throw')).default;
+    it('throwing migration', async () => {
+        const migration = (await import('./migrations/Throw')).default;
+
         expect(await engine.migrateOneUp(migration, 0, {}, {})).to.throw;
     });
 });

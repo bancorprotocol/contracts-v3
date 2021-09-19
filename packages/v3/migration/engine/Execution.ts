@@ -4,7 +4,7 @@ import { Engine } from './Engine';
 import { log } from './Logger';
 import { ContractFactory, ContractReceipt, ContractTransaction } from 'ethers';
 
-type initializeArgs = Parameters<any> | 'skipInit';
+type initializeArgs = Parameters<any>;
 type proxy<F extends ContractFactory> = { proxy: Contract<F>; logicContractAddress: string };
 
 export const initExecutionFunctions = (engine: Engine) => {
@@ -13,9 +13,10 @@ export const initExecutionFunctions = (engine: Engine) => {
         ...args: Parameters<ContractBuilder<F>['deploy']>
     ): Promise<ReturnType<ContractBuilder<F>['deploy']>> => {
         log.basicExecutionHeader('Deploying', `${factory.metadata.contractName} 🚀 `, args);
+
         const contract = await factory.deploy(...([...args, engine.overrides] as any));
 
-        log.debug(`Deployment Tx: `, contract.deployTransaction.hash);
+        log.debug(`Deployment tx: `, contract.deployTransaction.hash);
         log.greyed(`Waiting to be mined...`);
 
         const receipt = await contract.deployTransaction.wait(engine.executionSettings.confirmationToWait);
@@ -30,7 +31,9 @@ export const initExecutionFunctions = (engine: Engine) => {
             description: factory.metadata.contractName,
             tx: contract.deployTransaction.hash
         });
+
         log.success(`Deployed ${factory.metadata.contractName} at ${contract.address} 🚀 !`);
+
         return contract;
     };
 
@@ -42,19 +45,23 @@ export const initExecutionFunctions = (engine: Engine) => {
         log.basicExecutionHeader('Executing', executionInstruction, args);
 
         const tx = await func(...args, engine.overrides);
+
         log.debug(`Executing tx: `, tx.hash);
 
         const receipt = await tx.wait(engine.executionSettings.confirmationToWait);
         if (receipt.status !== 1) {
             throw new Error(`Error executing, tx: ${tx.hash}`);
         }
+
         engine.IO.history.writeOne({
             type: 'EXECUTION',
             params: args,
             description: executionInstruction,
             tx: tx.hash
         });
+
         log.success(`Executed ✨`);
+
         return receipt;
     };
 
@@ -62,15 +69,14 @@ export const initExecutionFunctions = (engine: Engine) => {
         admin: ProxyAdmin,
         logicContractToDeploy: ContractBuilder<F>,
         initializeArgs: initializeArgs,
-        ...ctorArgs: Parameters<F['deploy']>
+        ctorArgs: Parameters<F['deploy']>,
+        skipInitialization?: boolean
     ): Promise<proxy<F>> => {
         log.debug('Deploying proxy');
+
         const logicContract = await deploy(logicContractToDeploy, ...ctorArgs);
 
-        const data =
-            initializeArgs === 'skipInit'
-                ? []
-                : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
+        const data = skipInitialization ? [] : logicContract.interface.encodeFunctionData('initialize', initializeArgs);
 
         const proxy = await deploy(
             engine.contracts.TransparentUpgradeableProxy,
@@ -80,6 +86,7 @@ export const initExecutionFunctions = (engine: Engine) => {
         );
 
         log.success('Proxy deployed 🚀 ');
+
         return {
             proxy: await logicContractToDeploy.attach(proxy.address),
             logicContractAddress: logicContract.address
@@ -90,29 +97,31 @@ export const initExecutionFunctions = (engine: Engine) => {
         admin: ProxyAdmin,
         logicContractToDeploy: ContractBuilder<F>,
         proxyAddress: string,
-        initializeArgs:
-            | {
-                  params: Parameters<any>;
-                  initializeFctName: string;
-              }
-            | 'skipInit',
-        ...ctorArgs: Parameters<F['deploy']>
+        initializeArgs: {
+            params: Parameters<any>;
+            initializeFunction: string;
+        },
+        ctorArgs: Parameters<F['deploy']>,
+        skipInitialization?: boolean
     ): Promise<proxy<F>> => {
         log.debug('Upgrading proxy');
+
         const newLogicContract = await deploy(logicContractToDeploy, ...ctorArgs);
 
-        if (initializeArgs === 'skipInit')
+        if (skipInitialization) {
             await execute('Upgrading proxy', admin.upgrade, proxyAddress, newLogicContract.address);
-        else
+        } else {
             await execute(
-                `Upgrading proxy and call ${initializeArgs.initializeFctName}`,
+                `Upgrading proxy and call ${initializeArgs.initializeFunction}`,
                 admin.upgradeAndCall,
                 proxyAddress,
                 newLogicContract.address,
-                newLogicContract.interface.encodeFunctionData(initializeArgs.initializeFctName, initializeArgs.params)
+                newLogicContract.interface.encodeFunctionData(initializeArgs.initializeFunction, initializeArgs.params)
             );
+        }
 
         log.success('Proxy upgraded 🚀 ');
+
         return {
             proxy: await logicContractToDeploy.attach(proxyAddress),
             logicContractAddress: newLogicContract.address

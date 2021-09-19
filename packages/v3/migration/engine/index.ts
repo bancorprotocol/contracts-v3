@@ -15,7 +15,9 @@ const initSigner = async (args: defaultArgs) => {
         ? new LedgerSigner(ethers.provider, 'hid', args.ledgerPath)
         : (await ethers.getSigners())[0];
 
-    if (!signer) throw new Error("Signer shouldn't be undefined");
+    if (!signer) {
+        throw new Error('Signer must be defined');
+    }
 
     const signerAddress = await signer.getAddress();
 
@@ -27,17 +29,16 @@ export const initEngine = async (
     hre: hre,
     signer: Signer,
     signerAddress: string,
-    pathToRoot: string,
     isTest: boolean
 ) => {
     test = isTest;
-    engine = new Engine(hre, args, signer, signerAddress, pathToRoot);
+    engine = new Engine(hre, args, signer, signerAddress);
 };
 
 export default async (args: defaultArgs, hre: hre, task: (a: any, b: hre) => any) => {
     const { signer, signerAddress } = await initSigner(args);
 
-    await initEngine(args, hre, signer, signerAddress, hre.config.paths.root, false);
+    await initEngine(args, hre, signer, signerAddress, false);
 
     // now that engine is initialized, go to the actual task
     return task(args, hre);

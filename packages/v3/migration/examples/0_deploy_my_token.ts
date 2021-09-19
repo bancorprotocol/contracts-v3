@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
 import { engine } from '../engine';
 import { deployedContract, Migration } from '../engine/Types';
-import { BigNumber } from 'ethers';
+import { utils } from 'ethers';
 
 const { signer, contracts } = engine;
 const { deploy, execute, deployProxy, upgradeProxy } = engine.executionFunctions;
@@ -11,9 +12,11 @@ export type NextState = InitialState & {
     myToken: deployedContract;
 };
 
+const TOTAL_SUPPLY = utils.parseEther('100000000');
+
 const migration: Migration = {
     up: async (initialState: InitialState): Promise<NextState> => {
-        const myToken = await deploy(contracts.TestERC20Token, 'My Token', 'MYTKN', '100000000000000000000000000');
+        const myToken = await deploy(contracts.TestERC20Token, 'My Token', 'MYTKN', TOTAL_SUPPLY);
         return {
             myToken: myToken.address
         };
@@ -22,7 +25,7 @@ const migration: Migration = {
     healthCheck: async (initialState: InitialState, state: NextState) => {
         const myToken = await contracts.TestERC20Token.attach(state.myToken);
 
-        if (!((await myToken.totalSupply()) !== BigNumber.from('100000000000000000000000000'))) {
+        if (!(await myToken.totalSupply()).eq(TOTAL_SUPPLY)) {
             throw new Error("Total supply isn't correct");
         }
     },

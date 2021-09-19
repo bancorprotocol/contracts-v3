@@ -1,8 +1,8 @@
+import chalk from 'chalk';
+import { Overrides } from 'ethers';
 import { test } from '.';
 import { Engine } from './Engine';
 import { ExecutionSettings } from './Types';
-import chalk from 'chalk';
-import { Overrides } from 'ethers';
 
 // in order to prevent printing in tests
 const customConsole = {
