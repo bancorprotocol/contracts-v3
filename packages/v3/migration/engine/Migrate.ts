@@ -130,7 +130,7 @@ export const migrate = async (engine: Engine) => {
 
         // remove current migration deployment file
         fs.rmSync(
-            path.join(engine.pathToNetworkDeploymentsFolder, engine.migration.currentMigrationData.fileName + '.json'),
+            path.join(engine.pathToNetworkDeploymentsDir, engine.migration.currentMigrationData.fileName + '.json'),
             { force: true }
         );
 

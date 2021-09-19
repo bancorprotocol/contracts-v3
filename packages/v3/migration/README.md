@@ -38,15 +38,15 @@ In order to use this plugin, some keys need to be set in the global `config.json
 -   [x] Saves execution history of each migration
 -   [x] Reverts if migration health-check fails
 
-## Folders
+## Dirs
 
 ### Data
 
-The `data` folder consists of one designated folder per network.
+The `data` dir consists of one designated dir per network.
 
 #### state.json
 
-In each network folder there is a `state.json` file. It represents the state of the migration and the network:
+In each network dir there is a `state.json` file. It represents the state of the migration and the network:
 
 ```json
 {
@@ -62,11 +62,11 @@ In each network folder there is a `state.json` file. It represents the state of 
 
 #### deployments
 
-There is also a `deployments` folder that will host, for each migration, the ABI and bytecode of any deployed contract.
+There is also a `deployments` dir that will host, for each migration, the ABI and bytecode of any deployed contract.
 
 #### history.json
 
-In each network folder there is a `history.json` file. It represents every execution done by the engine, e.g.:
+In each network dir there is a `history.json` file. It represents every execution done by the engine, e.g.:
 
 ```json
 {
@@ -91,7 +91,7 @@ In each network folder there is a `history.json` file. It represents every execu
 
 ### Migrations
 
-The `migrations` folder contains all migration files.
+The `migrations` dir contains all migration files.
 
 A migration file is a Typescript file that exposes a particular object respecting a strict interface:
 
@@ -137,9 +137,9 @@ yarn hh create-migration do migration for me pls
 yarn hh migrate --network mainnet
 ```
 
-1. `Migrate` will look for the network data folder or create one if it doesn't exist.
+1. `Migrate` will look for the network data dir or create one if it doesn't exist.
 
-2. Run every migration file in the migrations folder by order of execution starting from the latestMigration timestamp.
+2. Run every migration file in the migrations dir by order of execution starting from the latestMigration timestamp.
 
 3. Update the state on the go.
 
@@ -163,6 +163,6 @@ To fork the network `mainnet` you need to:
 }
 ```
 
--   Provide the `state.json` file to the `mainnet` data folder.
+-   Provide the `state.json` file to the `mainnet` data dir.
 
 -   Specify the network you want to fork as an ENV variable: `FORK=mainnet yarn hh migrate`

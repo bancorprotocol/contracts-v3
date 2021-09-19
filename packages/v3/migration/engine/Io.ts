@@ -1,9 +1,9 @@
-import { BigNumber } from 'ethers';
-import fs from 'fs';
-import path from 'path';
 import { MIGRATION_HISTORY_FILE_NAME, MIGRATION_STATE_FILE_NAME, MIGRATION_DEPLOYMENTS_DIR } from './Constants';
 import { Engine } from './Engine';
 import { Deployment, History, HistoryExecution, SystemDeployments, SystemState } from './Types';
+import { BigNumber } from 'ethers';
+import fs from 'fs';
+import path from 'path';
 
 const replacer = (_: any, value: any) => {
     const { type, hex } = value;
@@ -19,7 +19,7 @@ export const initIO = (engine: Engine) => {
         state: {
             write: (state: SystemState) => {
                 fs.writeFileSync(
-                    path.join(engine.pathToNetworkFolder, MIGRATION_STATE_FILE_NAME),
+                    path.join(engine.pathToNetworkDir, MIGRATION_STATE_FILE_NAME),
                     JSON.stringify(state, replacer, 4) + `\n`
                 );
 
@@ -36,7 +36,7 @@ export const initIO = (engine: Engine) => {
         history: {
             write: (history: History) => {
                 fs.writeFileSync(
-                    path.join(engine.pathToNetworkFolder, MIGRATION_HISTORY_FILE_NAME),
+                    path.join(engine.pathToNetworkDir, MIGRATION_HISTORY_FILE_NAME),
                     JSON.stringify(history, replacer, 4) + `\n`
                 );
                 return history;
@@ -44,9 +44,9 @@ export const initIO = (engine: Engine) => {
             writeOne: (historyExecution: HistoryExecution) => {
                 const migrationHistoryFileName = MIGRATION_HISTORY_FILE_NAME;
 
-                // find the history file in the network folder
-                const pathToNetworkFolderFiles = fs.readdirSync(engine.pathToNetworkFolder);
-                const pathToMigrationDeploymentFile = pathToNetworkFolderFiles.find(
+                // find the history file in the network dir
+                const pathToNetworkDirFiles = fs.readdirSync(engine.pathToNetworkDir);
+                const pathToMigrationDeploymentFile = pathToNetworkDirFiles.find(
                     (f: string) => f === migrationHistoryFileName
                 );
 
@@ -55,7 +55,7 @@ export const initIO = (engine: Engine) => {
                     engine.IO.history.write({});
                 }
 
-                const currentHistory = engine.IO.history.fetch(engine.pathToNetworkFolder);
+                const currentHistory = engine.IO.history.fetch(engine.pathToNetworkDir);
                 if (!currentHistory[engine.migration.currentMigrationData.fileName]) {
                     currentHistory[engine.migration.currentMigrationData.fileName] = { executions: [] };
                 }
@@ -77,20 +77,20 @@ export const initIO = (engine: Engine) => {
             writeOne: (deployment: Deployment) => {
                 const currentMigrationDeploymentFileName = engine.migration.currentMigrationData.fileName + '.json';
 
-                // find the migration file in the network deployments folder
-                const pathToNetworkMigrationDeploymentFolder = path.join(
-                    engine.pathToNetworkFolder,
+                // find the migration file in the network deployments dir
+                const pathToNetworkMigrationDeploymentDir = path.join(
+                    engine.pathToNetworkDir,
                     MIGRATION_DEPLOYMENTS_DIR
                 );
 
-                // read all files into the folder and fetch needed file
-                const pathToMigrationDeploymentFiles = fs.readdirSync(pathToNetworkMigrationDeploymentFolder);
+                // read all files into the dir and fetch needed file
+                const pathToMigrationDeploymentFiles = fs.readdirSync(pathToNetworkMigrationDeploymentDir);
                 const pathToMigrationDeploymentFile = pathToMigrationDeploymentFiles.find(
                     (f: string) => f === currentMigrationDeploymentFileName
                 );
 
                 const pathToNetworkMigrationDeploymentFile = path.join(
-                    pathToNetworkMigrationDeploymentFolder,
+                    pathToNetworkMigrationDeploymentDir,
                     currentMigrationDeploymentFileName
                 );
 

@@ -6,7 +6,7 @@ import { initIO } from './Io';
 import { log } from './Logger';
 import { migrate, migrateOneDown, migrateOneUp } from './Migrate';
 import { defaultArgs, ExecutionSettings, NetworkSettings } from './Types';
-import { isMigrationFolderValid } from './Utils';
+import { isMigrationDirValid } from './Utils';
 import { Overrides, Signer } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import fs from 'fs-extra';
@@ -27,9 +27,9 @@ export class Engine {
 
     // needed paths
     readonly pathToRoot: string;
-    readonly pathToNetworkFolder: string;
-    readonly pathToMigrationsFolder: string;
-    readonly pathToNetworkDeploymentsFolder: string;
+    readonly pathToNetworkDir: string;
+    readonly pathToMigrationsDir: string;
+    readonly pathToNetworkDeploymentsDir: string;
 
     // init additional functionalities
     readonly IO = initIO(this);
@@ -66,9 +66,9 @@ export class Engine {
 
         // init paths
         this.pathToRoot = pathToRoot;
-        this.pathToMigrationsFolder = path.join(pathToRoot, MIGRATION_DIR);
-        this.pathToNetworkFolder = path.join(this.pathToRoot, MIGRATION_DATA_DIR, this.networkSettings.networkName);
-        this.pathToNetworkDeploymentsFolder = path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_DIR);
+        this.pathToMigrationsDir = path.join(pathToRoot, MIGRATION_DIR);
+        this.pathToNetworkDir = path.join(this.pathToRoot, MIGRATION_DATA_DIR, this.networkSettings.networkName);
+        this.pathToNetworkDeploymentsDir = path.join(this.pathToNetworkDir, MIGRATION_DEPLOYMENTS_DIR);
 
         // init basics
         this.signer = signer;
@@ -107,21 +107,21 @@ export class Engine {
     };
 
     reset = () => {
-        log.warning(`Resetting ${this.networkSettings.networkName} migration folder`);
+        log.warning(`Resetting ${this.networkSettings.networkName} migration dir`);
 
-        fs.rmSync(this.pathToNetworkFolder, {
+        fs.rmSync(this.pathToNetworkDir, {
             recursive: true,
             force: true
         });
         this.migration = defaultMigration;
     };
 
-    initMigrationDefaultFolder = () => {
-        // init the network folder
-        fs.mkdirSync(this.pathToNetworkFolder);
+    initMigrationDefaultDir = () => {
+        // init the network dir
+        fs.mkdirSync(this.pathToNetworkDir);
 
-        // init the network deployment folder
-        fs.mkdirSync(path.join(this.pathToNetworkFolder, MIGRATION_DEPLOYMENTS_DIR));
+        // init the network deployment dir
+        fs.mkdirSync(path.join(this.pathToNetworkDir, MIGRATION_DEPLOYMENTS_DIR));
 
         // initialize the first state to default
         this.IO.state.write(defaultMigration.state);
@@ -129,21 +129,21 @@ export class Engine {
 
     init = () => {
         // if network doesn't exist
-        if (!fs.existsSync(this.pathToNetworkFolder)) {
+        if (!fs.existsSync(this.pathToNetworkDir)) {
             if (this.networkSettings.isFork) {
-                // check if the original network folder is valid and copy it into the current network folder
+                // check if the original network Dir is valid and copy it into the current network dir
                 try {
-                    const pathToOriginalNetworkFolder = path.join(
+                    const pathToOriginalNetworkDir = path.join(
                         this.pathToRoot,
                         MIGRATION_DATA_DIR,
                         this.networkSettings.originalNetwork
                     );
 
-                    if (!isMigrationFolderValid(pathToOriginalNetworkFolder)) {
+                    if (!isMigrationDirValid(pathToOriginalNetworkDir)) {
                         throw Error();
                     }
 
-                    fs.copySync(pathToOriginalNetworkFolder, this.pathToNetworkFolder);
+                    fs.copySync(pathToOriginalNetworkDir, this.pathToNetworkDir);
                 } catch {
                     log.error(
                         `${this.networkSettings.originalNetwork} doesn't have a correct config (needed if you want to fork it). Aborting`
@@ -152,27 +152,27 @@ export class Engine {
                     process.exit();
                 }
             } else {
-                // if not a fork initialize the folder accordingly
-                this.initMigrationDefaultFolder();
+                // if not a fork initialize the Dir accordingly
+                this.initMigrationDefaultDir();
             }
         }
 
-        // if network folder does exist but isn't valid, resetting it.
-        if (!isMigrationFolderValid(this.pathToNetworkFolder)) {
-            log.warning(`${this.networkSettings.networkName} migration folder is invalid, resetting it...`);
+        // if network Dir does exist but isn't valid, resetting it.
+        if (!isMigrationDirValid(this.pathToNetworkDir)) {
+            log.warning(`${this.networkSettings.networkName} migration Dir is invalid, resetting it...`);
 
             this.reset();
-            this.initMigrationDefaultFolder();
+            this.initMigrationDefaultDir();
         }
 
-        // update current state to the network folder
-        this.migration.state = this.IO.state.fetch(this.pathToNetworkFolder);
+        // update current state to the network dir
+        this.migration.state = this.IO.state.fetch(this.pathToNetworkDir);
 
         // generate migration files
-        const allMigrationFiles = fs.readdirSync(this.pathToMigrationsFolder);
+        const allMigrationFiles = fs.readdirSync(this.pathToMigrationsDir);
         const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
         const migrationFilesPath = migrationFiles.map((fileName: string) =>
-            path.join(this.pathToMigrationsFolder, fileName)
+            path.join(this.pathToMigrationsDir, fileName)
         );
 
         for (const migrationFilePath of migrationFilesPath) {
