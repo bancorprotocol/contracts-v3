@@ -317,7 +317,7 @@ describe('NetworkTokenPool', () => {
         const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
             const prevStakedBalance = await networkTokenPool.stakedBalance();
             const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-            const prevUnallocatedLiquidity = await networkTokenPool.unallocatedNetworkLiquidity(reserveToken.address);
+            const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
 
             const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
             const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -346,7 +346,7 @@ describe('NetworkTokenPool', () => {
             expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                 prevMintedAmount.add(expectedAmount)
             );
-            expect(await networkTokenPool.unallocatedNetworkLiquidity(reserveToken.address)).to.equal(
+            expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                 prevUnallocatedLiquidity.sub(expectedAmount)
             );
 
@@ -532,9 +532,7 @@ describe('NetworkTokenPool', () => {
             const testRenounce = async (amount: BigNumber) => {
                 const prevStakedBalance = await networkTokenPool.stakedBalance();
                 const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                const prevUnallocatedLiquidity = await networkTokenPool.unallocatedNetworkLiquidity(
-                    reserveToken.address
-                );
+                const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
 
                 const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
                 const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
@@ -560,7 +558,7 @@ describe('NetworkTokenPool', () => {
                     prevMintedAmount.sub(renouncedAmount)
                 );
 
-                expect(await networkTokenPool.unallocatedNetworkLiquidity(reserveToken.address)).to.equal(
+                expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                     prevUnallocatedLiquidity.gt(renouncedAmount)
                         ? prevUnallocatedLiquidity.add(renouncedAmount)
                         : MINTING_LIMIT
@@ -1030,9 +1028,7 @@ describe('NetworkTokenPool', () => {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                    const prevUnallocatedLiquidity = await networkTokenPool.unallocatedNetworkLiquidity(
-                        reserveToken.address
-                    );
+                    const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
                     const expectedMintedAmount = type === FEE_TYPES.trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
@@ -1041,7 +1037,7 @@ describe('NetworkTokenPool', () => {
                     expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedMintedAmount)
                     );
-                    expect(await networkTokenPool.unallocatedNetworkLiquidity(reserveToken.address)).to.equal(
+                    expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                         prevUnallocatedLiquidity.sub(expectedMintedAmount)
                     );
                 });

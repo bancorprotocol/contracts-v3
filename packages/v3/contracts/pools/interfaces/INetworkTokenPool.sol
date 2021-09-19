@@ -91,7 +91,7 @@ interface INetworkTokenPool is IUpgradeable {
     /**
      * @dev returns the unallocated co-investment network token liquidity for a given pool
      */
-    function unallocatedNetworkLiquidity(IReserveToken pool) external view returns (uint256);
+    function unallocatedLiquidity(IReserveToken pool) external view returns (uint256);
 
     /**
      * @dev mints network tokens to the recipient
