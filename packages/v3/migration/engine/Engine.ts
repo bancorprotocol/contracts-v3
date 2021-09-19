@@ -134,7 +134,7 @@ export class Engine {
                     );
 
                     if (!isMigrationDirValid(pathToOriginalNetworkDir)) {
-                        throw Error();
+                        throw Error('Invalid migration directory');
                     }
 
                     fs.copySync(pathToOriginalNetworkDir, this.pathToNetworkDir);
