@@ -45,13 +45,7 @@ export class Engine {
     // migration info
     migration = defaultMigration;
 
-    constructor(
-        hre: HardhatRuntimeEnvironment,
-        args: defaultArgs,
-        signer: Signer,
-        signerAddress: string,
-        pathToRoot: string
-    ) {
+    constructor(hre: HardhatRuntimeEnvironment, args: defaultArgs, signer: Signer, signerAddress: string) {
         this.hre = hre;
 
         // init network settings
@@ -65,8 +59,8 @@ export class Engine {
         };
 
         // init paths
-        this.pathToRoot = pathToRoot;
-        this.pathToMigrationsDir = path.join(pathToRoot, MIGRATION_DIR);
+        this.pathToRoot = path.resolve(__dirname, '../../');
+        this.pathToMigrationsDir = path.join(this.pathToRoot, MIGRATION_DIR);
         this.pathToNetworkDir = path.join(this.pathToRoot, MIGRATION_DATA_DIR, this.networkSettings.networkName);
         this.pathToNetworkDeploymentsDir = path.join(this.pathToNetworkDir, MIGRATION_DEPLOYMENTS_DIR);
 
