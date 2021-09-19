@@ -420,7 +420,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         address provider,
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     )
         external
         override
@@ -434,7 +434,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         PoolDepositParams memory depositParams = _poolDepositParams(
             pool,
             baseTokenAmount,
-            availableNetworkTokenLiquidity
+            unallocatedNetworkTokenLiquidity
         );
 
         Pool memory poolData = _poolData[pool];
@@ -537,7 +537,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
     function _poolDepositParams(
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     ) private view returns (PoolDepositParams memory depositParams) {
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
@@ -565,8 +565,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
             rate = poolData.averageRate.rate;
         }
 
-        // if there is no available network token liquidity - treat all the base token amount as excess and finish
-        if (availableNetworkTokenLiquidity == 0) {
+        // if all network token liquidity is allocated - treat all the base token amount as excess and finish
+        if (unallocatedNetworkTokenLiquidity == 0) {
             depositParams.baseTokenExcessLiquidity = baseTokenAmount;
             depositParams.baseTokenDeltaAmount = 0;
 
@@ -576,13 +576,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         // calculate the matching network token trading liquidity amount
         depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
 
-        // if there's not enough available network token liquidity - we'll use as much as we can and the remaining base
-        // token liquidity will be treated as excess
-        if (depositParams.networkTokenDeltaAmount > availableNetworkTokenLiquidity) {
+        // if most of network token liquidity is allocated - we'll use as much as we can and the remaining base token
+        // liquidity will be treated as excess
+        if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
             uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
-                availableNetworkTokenLiquidity;
+                unallocatedNetworkTokenLiquidity;
 
-            depositParams.networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+            depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
             depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
         }
 

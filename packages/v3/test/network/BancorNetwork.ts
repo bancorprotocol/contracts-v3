@@ -953,7 +953,7 @@ describe('BancorNetwork', () => {
                                                 });
                                             });
                                         } else {
-                                            context('when there is no available network token liquidity', () => {
+                                            context('when there is no unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setPoolMintingLimit(
                                                         token.address,
@@ -982,7 +982,7 @@ describe('BancorNetwork', () => {
                                                 });
                                             });
 
-                                            context('when there is enough available network token liquidity', () => {
+                                            context('when there is enough unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setPoolMintingLimit(
                                                         token.address,
@@ -1081,7 +1081,7 @@ describe('BancorNetwork', () => {
                                                     });
 
                                                     context(
-                                                        'when close to the limit of the available network token liquidity',
+                                                        'when close to the limit of the unallocated network token liquidity',
                                                         () => {
                                                             beforeEach(async () => {
                                                                 await networkSettings.setPoolMintingLimit(
@@ -1251,7 +1251,7 @@ describe('BancorNetwork', () => {
                                             await reserveToken.transfer(senderAddress, amount);
                                         });
 
-                                        context('when there is no available network token liquidity', () => {
+                                        context('when there is no unallocated network token liquidity', () => {
                                             beforeEach(async () => {
                                                 await networkSettings.setPoolMintingLimit(
                                                     token.address,
@@ -1280,7 +1280,7 @@ describe('BancorNetwork', () => {
                                             });
                                         });
 
-                                        context('when there is enough available network token liquidity', () => {
+                                        context('when there is enough unallocated network token liquidity', () => {
                                             beforeEach(async () => {
                                                 await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
                                             });
@@ -1340,7 +1340,7 @@ describe('BancorNetwork', () => {
                                                 });
 
                                                 context(
-                                                    'when close to the limit of the available network token liquidity',
+                                                    'when close to the limit of the unallocated network token liquidity',
                                                     () => {
                                                         beforeEach(async () => {
                                                             await networkSettings.setPoolMintingLimit(

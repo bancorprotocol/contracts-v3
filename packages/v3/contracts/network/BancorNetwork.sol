@@ -766,10 +766,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // if there is no available network token liquidity - it's enough to check that the pool is whitelisted. Otherwise,
+        // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the network token pool is able to provide network liquidity
-        uint256 availableNetworkTokenLiquidity = cachedNetworkTokenPool.availableMintingAmount(pool);
-        if (availableNetworkTokenLiquidity == 0) {
+        uint256 unallocatedNetworkTokenLiquidity = cachedNetworkTokenPool.unallocatedLiquidity(pool);
+        if (unallocatedNetworkTokenLiquidity == 0) {
             require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
         } else {
             require(
@@ -798,7 +798,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider,
             pool,
             baseTokenAmount,
-            availableNetworkTokenLiquidity
+            unallocatedNetworkTokenLiquidity
         );
 
         // request additional liquidity from the network token pool and transfer it to the vault

@@ -956,7 +956,7 @@ describe('PoolCollection', () => {
                 context('when below the deposit limit', () => {
                     const testDepositFor = async (
                         baseTokenAmount: BigNumber,
-                        availableNetworkTokenLiquidity = MAX_UINT256
+                        unallocatedNetworkTokenLiquidity = MAX_UINT256
                     ) => {
                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
 
@@ -977,7 +977,7 @@ describe('PoolCollection', () => {
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
-                            availableNetworkTokenLiquidity
+                            unallocatedNetworkTokenLiquidity
                         );
 
                         const res = await network.depositToPoolCollectionForT(
@@ -985,7 +985,7 @@ describe('PoolCollection', () => {
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
-                            availableNetworkTokenLiquidity
+                            unallocatedNetworkTokenLiquidity
                         );
 
                         const poolData = await poolCollection.poolData(reserveToken.address);
@@ -1014,11 +1014,12 @@ describe('PoolCollection', () => {
 
                         let networkTokenDeltaAmount = baseTokenAmount.mul(rate.n).div(rate.d);
                         let baseTokenExcessLiquidity = BigNumber.from(0);
-                        if (networkTokenDeltaAmount.gt(availableNetworkTokenLiquidity)) {
-                            const unavailableNetworkTokenAmount =
-                                networkTokenDeltaAmount.sub(availableNetworkTokenLiquidity);
+                        if (networkTokenDeltaAmount.gt(unallocatedNetworkTokenLiquidity)) {
+                            const unavailableNetworkTokenAmount = networkTokenDeltaAmount.sub(
+                                unallocatedNetworkTokenLiquidity
+                            );
 
-                            networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+                            networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
                             baseTokenExcessLiquidity = unavailableNetworkTokenAmount.mul(rate.d).div(rate.n);
                         }
 
@@ -1109,7 +1110,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                context('when exceeding the available network token liquidity', () => {
+                                context('when exceeding the unallocated network token liquidity', () => {
                                     it('should deposit', async () => {
                                         for (const amount of [
                                             toWei(BigNumber.from(1_000_000)),
@@ -1149,7 +1150,7 @@ describe('PoolCollection', () => {
                                 }
                             });
 
-                            context('when exceeding the available network token liquidity', () => {
+                            context('when exceeding the unallocated network token liquidity', () => {
                                 it('should deposit', async () => {
                                     for (const amount of [
                                         toWei(BigNumber.from(1_000_000)),

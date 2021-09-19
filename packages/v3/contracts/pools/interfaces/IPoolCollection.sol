@@ -129,7 +129,7 @@ interface IPoolCollection is IVersioned {
         address provider,
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     ) external returns (DepositAmounts memory);
 
     /**
