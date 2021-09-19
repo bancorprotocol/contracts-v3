@@ -91,7 +91,7 @@ In each network folder there is a `history.json` file. It represents every execu
 
 ### Migrations
 
-The `migrations` folder is contains all migration files.
+The `migrations` folder contains all migration files.
 
 A migration file is a Typescript file that exposes a particular object respecting a strict interface:
 
