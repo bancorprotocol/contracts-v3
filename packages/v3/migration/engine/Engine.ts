@@ -1,9 +1,3 @@
-import { Overrides, Signer } from 'ethers';
-import { parseUnits } from 'ethers/lib/utils';
-import fs from 'fs-extra';
-import { network } from 'hardhat';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import path from 'path';
 import Contracts, { ContractsType } from '../../components/Contracts';
 import { CONFIG } from '../../hardhat.extended.config';
 import { defaultMigration, MIGRATION_DATA_DIR, MIGRATION_DEPLOYMENTS_DIR, MIGRATION_DIR } from './Constants';
@@ -13,6 +7,12 @@ import { log } from './Logger';
 import { migrate, migrateOneDown, migrateOneUp } from './Migrate';
 import { defaultArgs, ExecutionSettings, NetworkSettings } from './Types';
 import { isMigrationFolderValid } from './Utils';
+import { Overrides, Signer } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
+import fs from 'fs-extra';
+import { network } from 'hardhat';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import path from 'path';
 
 export class Engine {
     readonly hre: HardhatRuntimeEnvironment;
@@ -86,8 +86,6 @@ export class Engine {
 
         if (args.reset) {
             this.reset();
-
-            return;
         }
 
         this.init();
