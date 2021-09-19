@@ -24,29 +24,31 @@ In order to use this plugin, some keys need to be set in the global `config.json
 
 -   [x] Ledger support
 
-### Functions
+### Functionality
+
+The user of the framework can:
 
 -   [x] Deploy contracts (deploy)
 -   [x] Interact with contracts (execute)
 -   [x] Deploy a proxy contract (deployProxy)
 -   [x] Upgrade a proxy contract (upgradeProxy)
 
-### Engine
+The migration engine is responsible for:
 
--   [x] Saves ABI and bytecode of each deployed contract
--   [x] Saves states between migrations
--   [x] Saves execution history of each migration
--   [x] Reverts if migration health-check fails
+-   Saving the ABI and bytecode of each deployed contract
+-   Saving states between migrations
+-   Saving the execution history of each migration
+-   Reverting when a migration health-check fails
 
-## Dirs
+## Directories
 
 ### Data
 
-The `data` dir consists of one designated dir per network.
+The `data` directory consists of one designated directory per-network.
 
 #### state.json
 
-In each network dir there is a `state.json` file. It represents the state of the migration and the network:
+In each network directory there is a `state.json` file. It represents the state of the migration and the network:
 
 ```json
 {
@@ -62,11 +64,11 @@ In each network dir there is a `state.json` file. It represents the state of the
 
 #### deployments
 
-There is also a `deployments` dir that will host, for each migration, the ABI and bytecode of any deployed contract.
+There is also a `deployments` directory that will host, for each migration, the ABI and bytecode of any deployed contract.
 
 #### history.json
 
-In each network dir there is a `history.json` file. It represents every execution done by the engine, e.g.:
+In each network directory there is a `history.json` file. It represents every execution done by the engine, e.g.:
 
 ```json
 {
@@ -91,7 +93,7 @@ In each network dir there is a `history.json` file. It represents every executio
 
 ### Migrations
 
-The `migrations` dir contains all migration files.
+The `migrations` directory contains all migration files.
 
 A migration file is a Typescript file that exposes a particular object respecting a strict interface:
 
@@ -137,9 +139,9 @@ yarn hh create-migration do migration for me pls
 yarn hh migrate --network mainnet
 ```
 
-1. `Migrate` will look for the network data dir or create one if it doesn't exist.
+1. `Migrate` will look for the network data directory or create one if it doesn't exist.
 
-2. Run every migration file in the migrations dir by order of execution starting from the latestMigration timestamp.
+2. Run every migration file in the migrations directory by order of execution starting from the latestMigration timestamp.
 
 3. Update the state on the go.
 
@@ -163,6 +165,6 @@ To fork the network `mainnet` you need to:
 }
 ```
 
--   Provide the `state.json` file to the `mainnet` data dir.
+-   Provide the `state.json` file to the `mainnet` data directory.
 
 -   Specify the network you want to fork as an ENV variable: `FORK=mainnet yarn hh migrate`

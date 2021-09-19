@@ -101,7 +101,7 @@ export class Engine {
     };
 
     reset = () => {
-        log.warning(`Resetting ${this.networkSettings.networkName} migration dir`);
+        log.warning(`Resetting ${this.networkSettings.networkName} migration directory`);
 
         fs.rmSync(this.pathToNetworkDir, {
             recursive: true,
@@ -111,10 +111,10 @@ export class Engine {
     };
 
     initMigrationDefaultDir = () => {
-        // init the network dir
+        // init the network directory
         fs.mkdirSync(this.pathToNetworkDir);
 
-        // init the network deployment dir
+        // init the network deployment directory
         fs.mkdirSync(path.join(this.pathToNetworkDir, MIGRATION_DEPLOYMENTS_DIR));
 
         // initialize the first state to default
@@ -125,7 +125,7 @@ export class Engine {
         // if network doesn't exist
         if (!fs.existsSync(this.pathToNetworkDir)) {
             if (this.networkSettings.isFork) {
-                // check if the original network Dir is valid and copy it into the current network dir
+                // check if the original network Dir is valid and copy it into the current network directory
                 try {
                     const pathToOriginalNetworkDir = path.join(
                         this.pathToRoot,
@@ -159,7 +159,7 @@ export class Engine {
             this.initMigrationDefaultDir();
         }
 
-        // update current state to the network dir
+        // update current state to the network directory
         this.migration.state = this.IO.state.fetch(this.pathToNetworkDir);
 
         // generate migration files
@@ -183,7 +183,7 @@ export class Engine {
             }
         }
 
-        // even if migrations should be automatically sorted by the dir fetching, sort again just in case
+        // even if migrations should be automatically sorted by the directory fetching, sort again just in case
         this.migration.migrationsData.sort((a, b) =>
             a.migrationTimestamp > b.migrationTimestamp ? 1 : b.migrationTimestamp > a.migrationTimestamp ? -1 : 0
         );

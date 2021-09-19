@@ -44,7 +44,7 @@ export const initIO = (engine: Engine) => {
             writeOne: (historyExecution: HistoryExecution) => {
                 const migrationHistoryFileName = MIGRATION_HISTORY_FILE_NAME;
 
-                // find the history file in the network dir
+                // find the history file in the network directory
                 const pathToNetworkDirFiles = fs.readdirSync(engine.pathToNetworkDir);
                 const pathToMigrationDeploymentFile = pathToNetworkDirFiles.find(
                     (f: string) => f === migrationHistoryFileName
@@ -77,13 +77,13 @@ export const initIO = (engine: Engine) => {
             writeOne: (deployment: Deployment) => {
                 const currentMigrationDeploymentFileName = engine.migration.currentMigrationData.fileName + '.json';
 
-                // find the migration file in the network deployments dir
+                // find the migration file in the network deployments directory
                 const pathToNetworkMigrationDeploymentDir = path.join(
                     engine.pathToNetworkDir,
                     MIGRATION_DEPLOYMENTS_DIR
                 );
 
-                // read all files into the dir and fetch needed file
+                // read all files into the directory and fetch needed file
                 const pathToMigrationDeploymentFiles = fs.readdirSync(pathToNetworkMigrationDeploymentDir);
                 const pathToMigrationDeploymentFile = pathToMigrationDeploymentFiles.find(
                     (f: string) => f === currentMigrationDeploymentFileName
