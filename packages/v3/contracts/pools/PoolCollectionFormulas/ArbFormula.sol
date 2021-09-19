@@ -14,36 +14,129 @@ library ArbFormula {
 
     uint256 private constant M = PPM_RESOLUTION;
 
-    /**
-     * @dev returns `af(b(2-m)-f) / (b^2(1-m))` assuming `m` is normalized
-     */
+    struct Output {
+        uint256 p; // BNT trading liquidity removed from the pool
+        uint256 q; // BNT minted for the user as compensation
+        uint256 r; // TKN trading liquidity removed from the pool
+        uint256 s; // TKN removed from the vault
+    }
+
+    struct Data {
+        uint256 f; // BNT tentative pool balance
+        uint256 g; // TKN new pool balance
+        uint256 h; // TKN amount to buy or sell 
+        uint256 k; // BNT amount to mint or burn
+    }
+
     function surplus(
         uint256 a,
         uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
-        assert(a <= MAX_UINT128);
-        assert(b <= MAX_UINT128);
-        assert(f <= MAX_UINT128);
-        assert(m <= M);
-        assert(b >= f);
-        return MathEx.mulDivF(a * f, b * (2 * M - m) - f * M, b.mul(b * (M - m)));
+        uint256 c,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) internal pure returns (Output memory) {
+        assertInput(a, b, c, e, m, n, x);
+        uint256 y = (b + c) * M;
+        uint256 z = x * (M - n);
+        return surplus(surplus(a, b, c, e, m, n, x, y, z), a, b, y, z);
     }
 
-    /**
-     * @dev returns `af(b(2-m)+f) / (b(b+fm))` assuming `m` is normalized
-     */
     function deficit(
         uint256 a,
         uint256 b,
-        uint256 f,
-        uint256 m
-    ) internal pure returns (uint256) {
+        uint256 c,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) internal pure returns (Output memory output) {
+        assertInput(a, b, c, e, m, n, x);
+        uint256 y = (b + c) * M;
+        uint256 z = x * (M - n);
+        return deficit(deficit(a, b, c, e, m, n, x, y, z), a, b, y, z);
+    }
+
+    function surplus(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (Data memory data) {
+        assert(b + c >= e);
+        data.f = MathEx.mulDivF(a, y.sub(z), y);
+        data.g = MathEx.mulDivF(b, y.sub(z), y);
+        data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M);
+        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m)));
+        assert(a * x * n + b * data.k * M > MathEx.mulDivF(data.h * M, a * data.g + b * data.f, data.g));
+    }
+
+    function deficit(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (Data memory data) {
+        assert(b + c < e);
+        data.f = MathEx.mulDivF(a, y.sub(z), y);
+        data.g = MathEx.mulDivF(b, y.sub(z), y);
+        data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M);
+        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
+        assert(a * (x * n + data.h * M) > MathEx.mulDivF(b * M, data.k * data.g - data.f * data.h, data.g));
+    }
+
+    function surplus(
+        Data memory data,
+        uint256 a,
+        uint256 b,
+        uint256 y,
+        uint256 z
+    ) private pure returns (Output memory output) {
+        output.p = a.mul(z).add(y.mul(data.k)).div(y);
+        output.q = output.p.sub(data.k).add(MathEx.mulDivF(data.f, data.h, data.g));
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = z / M;
+    }
+
+    function deficit(
+        Data memory data,
+        uint256 a,
+        uint256 b,
+        uint256 y,
+        uint256 z
+    ) private pure returns (Output memory output) {
+        output.p = a.mul(z).sub(y.mul(data.k)).div(y);
+        output.q = output.p.add(data.k).sub(MathEx.mulDivF(data.f, data.h, data.g));
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = z / M;
+    }
+
+    function assertInput(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 e,
+        uint256 m,
+        uint256 n,
+        uint256 x
+    ) private pure {
         assert(a <= MAX_UINT128);
         assert(b <= MAX_UINT128);
-        assert(f <= MAX_UINT128);
+        assert(c <= MAX_UINT128);
+        assert(e <= MAX_UINT128);
+        assert(x <= MAX_UINT128);
         assert(m <= M);
-        return MathEx.mulDivF(a * f, b * (2 * M - m) + f * M, b.mul(b * M + f * m));
+        assert(n <= M);
     }
 }
