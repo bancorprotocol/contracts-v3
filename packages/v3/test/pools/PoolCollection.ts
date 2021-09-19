@@ -1274,4 +1274,53 @@ describe('PoolCollection', () => {
             });
         }
     });
+
+    describe('fee collection', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, poolCollection } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+
+            await createPool(reserveToken, network, networkSettings, poolCollection);
+        });
+
+        it('should revert when attempting to get notified about collected fee from a non-network', async () => {
+            const nonNetwork = deployer;
+
+            await expect(
+                poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+        });
+
+        it('should revert when attempting to get notified about collected fee from an invalid pool', async () => {
+            await expect(
+                network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+        });
+
+        it('should revert when attempting to get notified about collected fee from a non-existing pool', async () => {
+            const reserveToken2 = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+
+            await expect(
+                network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, BigNumber.from(1))
+            ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+        });
+
+        for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
+            it(`should collect fees of ${feeAmount.toString()}`, async () => {
+                const prevPoolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+
+                await network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken.address, feeAmount);
+
+                const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
+
+                expect(poolLiquidity.stakedBalance).to.equal(prevPoolLiquidity.stakedBalance.add(feeAmount));
+            });
+        }
+    });
 });

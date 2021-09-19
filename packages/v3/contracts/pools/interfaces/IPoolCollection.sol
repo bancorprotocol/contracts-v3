@@ -146,4 +146,13 @@ interface IPoolCollection is IVersioned {
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external returns (WithdrawalAmounts memory);
+
+    /**
+     * @dev notifies the pool of accrued fees
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function onFeesCollected(IReserveToken pool, uint256 baseTokenAmount) external;
 }

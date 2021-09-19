@@ -119,6 +119,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         _networkTokenPool.onFeesCollected(pool, amount, feeType);
     }
 
+    function onPoolCollectionFeesCollectedT(
+        IPoolCollection poolCollection,
+        IReserveToken pool,
+        uint256 amount
+    ) external {
+        poolCollection.onFeesCollected(pool, amount);
+    }
+
     function approveT(
         IERC20 token,
         address spender,
