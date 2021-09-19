@@ -106,12 +106,7 @@ export const createGovernedTokens = async () => {
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
 
-export const createTokenHolder = async () => {
-    const tokenHolder = await Contracts.TokenHolderUpgradeable.deploy();
-    await tokenHolder.initialize();
-
-    return tokenHolder;
-};
+export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 
 export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
     Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));

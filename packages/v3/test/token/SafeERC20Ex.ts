@@ -5,15 +5,15 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-const TOTAL_SUPPLY = BigNumber.from(1_000_000);
-
-let safeERC20: TestSafeERC20Ex;
-let token: TestERC20Token;
-
-let spender: SignerWithAddress;
-let sender: string;
-
 describe('SafeERC20Ex', () => {
+    const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+
+    let safeERC20: TestSafeERC20Ex;
+    let token: TestERC20Token;
+
+    let spender: SignerWithAddress;
+    let sender: string;
+
     before(async () => {
         [, spender] = await ethers.getSigners();
     });

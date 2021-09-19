@@ -5,6 +5,10 @@ import { utils, BigNumber } from 'ethers';
 const { id } = utils;
 
 export const roles = {
+    Upgradeable: {
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+
     BancorVault: {
         ROLE_ADMIN: id('ROLE_ADMIN'),
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),

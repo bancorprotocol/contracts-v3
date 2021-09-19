@@ -3,17 +3,12 @@ pragma solidity 0.7.6;
 
 import { IOwned } from "./interfaces/IOwned.sol";
 
-import { Upgradeable } from "./Upgradeable.sol";
-
 /**
  * @dev this contract provides support and utilities for contract ownership
  */
-abstract contract OwnedUpgradeable is IOwned, Upgradeable {
+abstract contract Owned is IOwned {
     address private _owner;
     address private _newOwner;
-
-    // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 2] private __gap;
 
     /**
      * @dev triggered when the owner is updated
@@ -23,16 +18,9 @@ abstract contract OwnedUpgradeable is IOwned, Upgradeable {
     // solhint-disable func-name-mixedcase
 
     /**
-     * @dev initializes the contract and its parents
+     * @dev initializes the contract
      */
-    function __Owned_init() internal initializer {
-        __Owned_init_unchained();
-    }
-
-    /**
-     * @dev performs contract-specific initialization
-     */
-    function __Owned_init_unchained() internal initializer {
+    constructor() {
         _setOwner(msg.sender);
     }
 

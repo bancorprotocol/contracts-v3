@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -8,6 +9,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
+
+const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('PoolTokenFactory', () => {
     const SYMBOL = 'TKN';
@@ -29,6 +32,16 @@ describe('PoolTokenFactory', () => {
             await expect(poolTokenFactory.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
+        });
+
+        it('should be properly initialized', async () => {
+            const { poolTokenFactory } = await createSystem();
+
+            expect(await poolTokenFactory.version()).to.equal(1);
+
+            await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+                deployer.address
+            ]);
         });
     });
 

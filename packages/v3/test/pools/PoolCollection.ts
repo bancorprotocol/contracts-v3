@@ -19,6 +19,9 @@ describe('PoolCollection', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
+    const TRADING_STATUS_UPDATE_OWNER = 0;
+    const TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
+
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
@@ -185,7 +188,9 @@ describe('PoolCollection', () => {
                     await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
                         .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
-                    await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
+                    await expect(res)
+                        .to.emit(poolCollection, 'TradingEnabled')
+                        .withArgs(reserveToken.address, false, TRADING_STATUS_UPDATE_OWNER);
                     await expect(res)
                         .to.emit(poolCollection, 'DepositingEnabled')
                         .withArgs(reserveToken.address, pool.depositingEnabled);
@@ -397,14 +402,18 @@ describe('PoolCollection', () => {
                 expect(tradingEnabled).to.be.true;
 
                 const res = await poolCollection.enableTrading(reserveToken.address, false);
-                await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, false);
+                await expect(res)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, false, TRADING_STATUS_UPDATE_OWNER);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
                 expect(tradingEnabled).to.be.false;
 
                 const res2 = await poolCollection.enableTrading(reserveToken.address, true);
-                await expect(res2).to.emit(poolCollection, 'TradingEnabled').withArgs(reserveToken.address, true);
+                await expect(res2)
+                    .to.emit(poolCollection, 'TradingEnabled')
+                    .withArgs(reserveToken.address, true, TRADING_STATUS_UPDATE_OWNER);
 
                 pool = await poolCollection.poolData(reserveToken.address);
                 ({ tradingEnabled } = pool);
@@ -947,7 +956,7 @@ describe('PoolCollection', () => {
                 context('when below the deposit limit', () => {
                     const testDepositFor = async (
                         baseTokenAmount: BigNumber,
-                        availableNetworkTokenLiquidity = MAX_UINT256
+                        unallocatedNetworkTokenLiquidity = MAX_UINT256
                     ) => {
                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
 
@@ -968,7 +977,7 @@ describe('PoolCollection', () => {
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
-                            availableNetworkTokenLiquidity
+                            unallocatedNetworkTokenLiquidity
                         );
 
                         const res = await network.depositToPoolCollectionForT(
@@ -976,7 +985,7 @@ describe('PoolCollection', () => {
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
-                            availableNetworkTokenLiquidity
+                            unallocatedNetworkTokenLiquidity
                         );
 
                         const poolData = await poolCollection.poolData(reserveToken.address);
@@ -989,7 +998,7 @@ describe('PoolCollection', () => {
                         ) {
                             await expect(res)
                                 .to.emit(poolCollection, 'TradingEnabled')
-                                .withArgs(reserveToken.address, true);
+                                .withArgs(reserveToken.address, true, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
                         }
 
                         let rate;
@@ -1005,11 +1014,12 @@ describe('PoolCollection', () => {
 
                         let networkTokenDeltaAmount = baseTokenAmount.mul(rate.n).div(rate.d);
                         let baseTokenExcessLiquidity = BigNumber.from(0);
-                        if (networkTokenDeltaAmount.gt(availableNetworkTokenLiquidity)) {
-                            const unavailableNetworkTokenAmount =
-                                networkTokenDeltaAmount.sub(availableNetworkTokenLiquidity);
+                        if (networkTokenDeltaAmount.gt(unallocatedNetworkTokenLiquidity)) {
+                            const unavailableNetworkTokenAmount = networkTokenDeltaAmount.sub(
+                                unallocatedNetworkTokenLiquidity
+                            );
 
-                            networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+                            networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
                             baseTokenExcessLiquidity = unavailableNetworkTokenAmount.mul(rate.d).div(rate.n);
                         }
 
@@ -1100,7 +1110,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                context('when exceeding the available network token liquidity', () => {
+                                context('when exceeding the unallocated network token liquidity', () => {
                                     it('should deposit', async () => {
                                         for (const amount of [
                                             toWei(BigNumber.from(1_000_000)),
@@ -1140,7 +1150,7 @@ describe('PoolCollection', () => {
                                 }
                             });
 
-                            context('when exceeding the available network token liquidity', () => {
+                            context('when exceeding the unallocated network token liquidity', () => {
                                 it('should deposit', async () => {
                                     for (const amount of [
                                         toWei(BigNumber.from(1_000_000)),

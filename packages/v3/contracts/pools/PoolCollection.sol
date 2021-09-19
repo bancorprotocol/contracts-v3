@@ -14,7 +14,7 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
 import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Owned } from "../utility/Owned.sol";
 import { Utils } from "../utility/Utils.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -34,13 +34,17 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
+
+    // trading enabling/disabling reasons
+    uint8 private constant TRADING_STATUS_UPDATE_OWNER = 0;
+    uint8 private constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
 
     // withdrawal-related input data
     struct PoolWithdrawalParams {
@@ -104,7 +108,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed pool, bool newStatus);
+    event TradingEnabled(IReserveToken indexed pool, bool newStatus, uint8 reason);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
@@ -128,7 +132,6 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         validAddress(address(initNetwork))
         validAddress(address(initPoolTokenFactory))
     {
-        __Owned_init();
         __ReentrancyGuard_init();
 
         _network = initNetwork;
@@ -257,7 +260,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
         // pool is disabled
-        emit TradingEnabled({ pool: reserveToken, newStatus: false });
+        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_OWNER });
 
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
@@ -344,7 +347,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
 
         poolData.tradingEnabled = status;
 
-        emit TradingEnabled({ pool: pool, newStatus: status });
+        emit TradingEnabled({ pool: pool, newStatus: status, reason: TRADING_STATUS_UPDATE_OWNER });
     }
 
     /**
@@ -417,7 +420,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         address provider,
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     )
         external
         override
@@ -431,7 +434,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         PoolDepositParams memory depositParams = _poolDepositParams(
             pool,
             baseTokenAmount,
-            availableNetworkTokenLiquidity
+            unallocatedNetworkTokenLiquidity
         );
 
         Pool memory poolData = _poolData[pool];
@@ -457,7 +460,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
                 poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.baseTokenDeltaAmount) >=
                 minLiquidityForTrading
             ) {
-                emit TradingEnabled({ pool: pool, newStatus: true });
+                emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
             }
         }
 
@@ -534,7 +537,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
     function _poolDepositParams(
         IReserveToken pool,
         uint256 baseTokenAmount,
-        uint256 availableNetworkTokenLiquidity
+        uint256 unallocatedNetworkTokenLiquidity
     ) private view returns (PoolDepositParams memory depositParams) {
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
@@ -562,8 +565,8 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             rate = poolData.averageRate.rate;
         }
 
-        // if there is no available network token liquidity - treat all the base token amount as excess and finish
-        if (availableNetworkTokenLiquidity == 0) {
+        // if all network token liquidity is allocated - treat all the base token amount as excess and finish
+        if (unallocatedNetworkTokenLiquidity == 0) {
             depositParams.baseTokenExcessLiquidity = baseTokenAmount;
             depositParams.baseTokenDeltaAmount = 0;
 
@@ -573,13 +576,13 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
         // calculate the matching network token trading liquidity amount
         depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
 
-        // if there's not enough available network token liquidity - we'll use as much as we can and the remaining base
-        // token liquidity will be treated as excess
-        if (depositParams.networkTokenDeltaAmount > availableNetworkTokenLiquidity) {
+        // if most of network token liquidity is allocated - we'll use as much as we can and the remaining base token
+        // liquidity will be treated as excess
+        if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
             uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
-                availableNetworkTokenLiquidity;
+                unallocatedNetworkTokenLiquidity;
 
-            depositParams.networkTokenDeltaAmount = availableNetworkTokenLiquidity;
+            depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
             depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
         }
 
@@ -687,7 +690,7 @@ contract PoolCollection is IPoolCollection, OwnedUpgradeable, ReentrancyGuardUpg
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
             bool newEnabled = networkTokenNewTradingLiquidity >= minLiquidityForTrading;
             if (newEnabled != currEnabled) {
-                emit TradingEnabled({ pool: pool, newStatus: newEnabled });
+                emit TradingEnabled({ pool: pool, newStatus: newEnabled, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
             }
         }
     }

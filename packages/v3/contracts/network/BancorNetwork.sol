@@ -5,13 +5,13 @@ pragma abicoder v2;
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -31,7 +31,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Network contract
  */
-contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using Address for address payable;
     using SafeMath for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -124,9 +124,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when funds are deposited
+     * @dev triggered when base token liquidity is deposited
      */
-    event FundsDeposited(
+    event BaseTokenDeposited(
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
@@ -136,18 +136,40 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     );
 
     /**
-     * @dev triggered when funds are withdrawn
+     * @dev triggered when network token liquidity is deposited
      */
-    event FundsWithdrawn(
+    event NetworkTokenDeposited(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 depositAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount
+    );
+
+    /**
+     * @dev triggered when base token liquidity is withdrawn
+     */
+    event BaseTokenWithdrawn(
         bytes32 indexed contextId,
         IReserveToken indexed token,
         address indexed provider,
         IPoolCollection poolCollection,
-        uint256 poolTokenAmount,
-        uint256 govTokenAmount,
         uint256 baseTokenAmount,
+        uint256 poolTokenAmount,
         uint256 externalProtectionBaseTokenAmount,
         uint256 networkTokenAmount,
+        uint256 withdrawalFeeAmount
+    );
+
+    /**
+     * @dev triggered when network token liquidity is withdrawn
+     */
+    event NetworkTokenWithdrawn(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 networkTokenAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount,
         uint256 withdrawalFeeAmount
     );
 
@@ -253,7 +275,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         internal
         initializer
     {
-        __Owned_init();
+        __Upgradeable_init();
         __ReentrancyGuard_init();
 
         __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals);
@@ -541,8 +563,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         external
         payable
         override
-        validAddress(address(pool))
         validAddress(provider)
+        validAddress(address(pool))
         greaterThanZero(tokenAmount)
         nonReentrant
     {
@@ -566,11 +588,38 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdraw(uint256 id) external override nonReentrant {
-        address provider = msg.sender;
+    function depositForPermitted(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+        _depositBaseTokenForPermitted(provider, pool, tokenAmount, msg.sender, deadline, v, r, s);
+    }
 
-        // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), id));
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function depositPermitted(
+        IReserveToken pool,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, msg.sender, deadline, v, r, s);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function withdraw(uint256 id) external override nonReentrant {
+        bytes32 contextId = _withdrawContextId(id);
+        address provider = msg.sender;
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
@@ -615,6 +664,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
     }
 
     /**
+     * @dev generates context ID for a deposit requesst
+     */
+    function _depositContextId(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        address sender
+    ) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
+    }
+
+    /**
+     * @dev generates context ID for a withdraw request
+     */
+    function _withdrawContextId(uint256 id) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(msg.sender, _time(), id));
+    }
+
+    /**
      * @dev deposits liquidity for the specified provider from sender
      *
      * requirements:
@@ -627,8 +695,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         uint256 tokenAmount,
         address sender
     ) private {
-        // generate context ID for monitoring
-        bytes32 contextId = keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool == IReserveToken(address(_networkToken))) {
             _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
@@ -663,13 +730,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             0
         );
 
-        emit FundsDeposited({
+        emit NetworkTokenDeposited({
             contextId: contextId,
-            token: IReserveToken(address(_networkToken)),
             provider: provider,
-            poolCollection: IPoolCollection(address(0x0)),
             depositAmount: networkTokenAmount,
-            poolTokenAmount: depositAmounts.poolTokenAmount
+            poolTokenAmount: depositAmounts.poolTokenAmount,
+            govTokenAmount: depositAmounts.govTokenAmount
         });
 
         emit TotalLiquidityUpdated({
@@ -700,10 +766,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // if there is no available network token liquidity - it's enough to check that the pool is whitelisted. Otherwise,
+        // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the network token pool is able to provide network liquidity
-        uint256 availableNetworkTokenLiquidity = cachedNetworkTokenPool.availableMintingAmount(pool);
-        if (availableNetworkTokenLiquidity == 0) {
+        uint256 unallocatedNetworkTokenLiquidity = cachedNetworkTokenPool.unallocatedLiquidity(pool);
+        if (unallocatedNetworkTokenLiquidity == 0) {
             require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
         } else {
             require(
@@ -732,7 +798,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             provider,
             pool,
             baseTokenAmount,
-            availableNetworkTokenLiquidity
+            unallocatedNetworkTokenLiquidity
         );
 
         // request additional liquidity from the network token pool and transfer it to the vault
@@ -742,7 +808,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         // TODO: process network fees based on the return values
 
-        emit FundsDeposited({
+        emit BaseTokenDeposited({
             contextId: contextId,
             token: pool,
             provider: provider,
@@ -785,6 +851,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
         });
     }
 
+    function _depositBaseTokenForPermitted(
+        address provider,
+        IReserveToken pool,
+        uint256 tokenAmount,
+        address sender,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) private {
+        // neither the network token nor ETH support EIP2612 permit requests
+        require(pool != IReserveToken(address(_networkToken)) && !pool.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
+
+        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
+        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
+        IERC20Permit(address(pool)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
+
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
+
+        _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
+    }
+
     /**
      * @dev handles network token withdrawal
      */
@@ -810,16 +898,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
 
         assert(amounts.poolTokenAmount == completedRequest.poolTokenAmount);
 
-        emit FundsWithdrawn({
+        emit NetworkTokenWithdrawn({
             contextId: contextId,
-            token: IReserveToken(address(_networkToken)),
             provider: provider,
-            poolCollection: IPoolCollection(address(0x0)),
+            networkTokenAmount: amounts.networkTokenAmount,
             poolTokenAmount: amounts.poolTokenAmount,
             govTokenAmount: amounts.govTokenAmount,
-            baseTokenAmount: 0,
-            externalProtectionBaseTokenAmount: 0,
-            networkTokenAmount: amounts.networkTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
 
@@ -903,16 +987,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, OwnedUpgradeable, Reentra
             );
         }
 
-        emit FundsWithdrawn({
+        emit BaseTokenWithdrawn({
             contextId: contextId,
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            poolTokenAmount: completedRequest.poolTokenAmount,
-            govTokenAmount: 0,
             baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider.add(
                 amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
             ),
+            poolTokenAmount: completedRequest.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount

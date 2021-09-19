@@ -17,7 +17,7 @@ import {
     TestHmaxFormula__factory,
     TestMathEx__factory,
     TestNetworkTokenPool__factory,
-    TestOwnedUpgradeable__factory,
+    TestOwned__factory,
     TestPendingWithdrawals__factory,
     TestPoolAverageRate__factory,
     TestPoolCollection__factory,
@@ -25,7 +25,8 @@ import {
     TestSafeERC20Ex__factory,
     TestSystemToken__factory,
     TestTokenGovernance__factory,
-    TokenHolderUpgradeable__factory,
+    TestUpgradeable__factory,
+    TokenHolder__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
 
@@ -94,13 +95,14 @@ const getContracts = (signer?: Signer) => ({
     TestArbFormula: deployOrAttach<TestArbFormula__factory>('TestArbFormula', signer),
     TestHmaxFormula: deployOrAttach<TestHmaxFormula__factory>('TestHmaxFormula', signer),
     TestMathEx: deployOrAttach<TestMathEx__factory>('TestMathEx', signer),
-    TestOwnedUpgradeable: deployOrAttach<TestOwnedUpgradeable__factory>('TestOwnedUpgradeable', signer),
+    TestOwned: deployOrAttach<TestOwned__factory>('TestOwned', signer),
     TestPendingWithdrawals: deployOrAttach<TestPendingWithdrawals__factory>('TestPendingWithdrawals', signer),
     TestReserveToken: deployOrAttach<TestReserveToken__factory>('TestReserveToken', signer),
     TestSafeERC20Ex: deployOrAttach<TestSafeERC20Ex__factory>('TestSafeERC20Ex', signer),
     TestSystemToken: deployOrAttach<TestSystemToken__factory>('TestSystemToken', signer),
     TestTokenGovernance: deployOrAttach<TestTokenGovernance__factory>('TestTokenGovernance', signer),
-    TokenHolderUpgradeable: deployOrAttach<TokenHolderUpgradeable__factory>('TokenHolderUpgradeable', signer),
+    TestUpgradeable: deployOrAttach<TestUpgradeable__factory>('TestUpgradeable', signer),
+    TokenHolder: deployOrAttach<TokenHolder__factory>('TokenHolder', signer),
     TransparentUpgradeableProxy: deployOrAttach<TransparentUpgradeableProxy__factory>(
         'TransparentUpgradeableProxy',
         signer
