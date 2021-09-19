@@ -108,7 +108,7 @@ export const migrate = async (engine: Engine) => {
     }
 
     // if the index of the latest migration is not equal to the length of the migrationsData array then an error occurred
-    // an we should revert
+    // and we should revert
     if (index !== engine.migration.migrationsData.length) {
         const migrationData = engine.migration.migrationsData[index];
 
