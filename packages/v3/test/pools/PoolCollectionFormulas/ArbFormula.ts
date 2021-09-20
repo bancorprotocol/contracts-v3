@@ -108,8 +108,8 @@ describe('ArbFormula', () => {
 
             test(
                 'ArbFormulaCoverage4', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('2') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('2') },
+                    p: { absolute: new Decimal(2), relative: new Decimal('0.003') },
+                    q: { absolute: new Decimal(2), relative: new Decimal('0.002') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
                     s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
