@@ -117,8 +117,6 @@ const getContracts = (signer?: Signer) => ({
         signer
     )
 
-    // external contracts
-
     /* eslint-enable camelcase */
 });
 
