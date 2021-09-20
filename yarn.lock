@@ -252,10 +252,6 @@
   resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.4.tgz#b0b156781981145d631426e0211151e88be797d9"
   integrity sha512-GlxRmt4maRbwEoZPMkqgXhr5L6t02Xf9GogBqh4fvfOFn7grPk7Tdd/THzN7hijfDeDi6/1Ywr3ob+HdQXZT7g==
 
-"@bancor/token-governance@bancorprotocol/token-governance":
-  version "0.1.4"
-  resolved "https://codeload.github.com/bancorprotocol/token-governance/tar.gz/1e9e15b57fa99f836c4633ca595024b50dddadef"
-
 "@cspotcode/source-map-consumer@0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@cspotcode/source-map-consumer/-/source-map-consumer-0.8.0.tgz#33bf4b7b39c178821606f669bbc447a6a629786b"
