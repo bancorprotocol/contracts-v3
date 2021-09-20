@@ -82,7 +82,7 @@ const createGovernedToken = async (name: string, symbol: string, totalSupply: Bi
     const deployer = (await ethers.getSigners())[0];
 
     const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
-    const tokenGovernance = await Contracts.TokenGovernance.deploy(token.address);
+    const tokenGovernance = await Contracts.TestTokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
     await token.transferOwnership(tokenGovernance.address);

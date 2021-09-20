@@ -24,7 +24,7 @@ import {
     TestSystemToken__factory,
     TestUpgradeable__factory,
     TokenHolder__factory,
-    TokenGovernance__factory,
+    TestTokenGovernance__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
 
@@ -109,7 +109,7 @@ const getContracts = (signer?: Signer) => ({
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestSystemToken: deployOrAttach('TestSystemToken', TestSystemToken__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
-    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
+    TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
