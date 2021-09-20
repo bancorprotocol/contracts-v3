@@ -81,69 +81,69 @@ describe('ArbFormula', () => {
 
             test(
                 'ArbFormulaCoverage1', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage2', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000005') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000009') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage3', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage4', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('2') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('2') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage5', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.000007') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage6', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
 
             test(
                 'ArbFormulaCoverage7', {
-                    p: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    q: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.000000001') },
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.000003') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
         };
 
-        describe.skip('quick tests', () => {
+        describe('quick tests', () => {
             tests(100);
         });
 
