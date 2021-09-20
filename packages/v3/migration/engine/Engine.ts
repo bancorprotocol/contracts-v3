@@ -162,6 +162,11 @@ export class Engine {
         // update current state to the network directory
         this.migration.state = this.IO.state.fetch(this.pathToNetworkDir);
 
+        // create migrations dir if it doesn't exist
+        if (!fs.existsSync(this.pathToMigrationsDir)) {
+            fs.mkdirSync(this.pathToMigrationsDir);
+        }
+
         // generate migration files
         const allMigrationFiles = fs.readdirSync(this.pathToMigrationsDir);
         const migrationFiles = allMigrationFiles.filter((fileName: string) => fileName.endsWith('.ts'));
