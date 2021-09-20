@@ -15,7 +15,7 @@ contract TestArbFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbFormula.Output memory output) {
+    ) external pure returns (ArbFormula.Output memory) {
         return ArbFormula.surplus(a, b, c, e, m, n, x);
     }
 
@@ -27,7 +27,7 @@ contract TestArbFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbFormula.Output memory output) {
+    ) external pure returns (ArbFormula.Output memory) {
         return ArbFormula.deficit(a, b, c, e, m, n, x);
     }
 }
