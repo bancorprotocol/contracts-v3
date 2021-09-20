@@ -27,6 +27,11 @@ import {
     TestTokenGovernance__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
+import {
+    SmartToken__factory as BNTToken__factory,
+    DSToken__factory as vBNTToken__factory,
+    TokenGovernance__factory
+} from '@bancor/token-governance';
 
 /* eslint-enable camelcase */
 import { Signer } from '@ethersproject/abstract-signer';
@@ -109,13 +114,17 @@ const getContracts = (signer?: Signer) => ({
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestSystemToken: deployOrAttach('TestSystemToken', TestSystemToken__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
-    TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
         TransparentUpgradeableProxy__factory,
         signer
-    )
+    ),
+
+    // external contracts
+    TokenGovernance: deployOrAttach('BNTToken', TokenGovernance__factory, signer),
+    BNTToken: deployOrAttach('BNTToken', BNTToken__factory, signer),
+    vBTToken: deployOrAttach('BNTToken', vBNTToken__factory, signer)
 
     /* eslint-enable camelcase */
 });
