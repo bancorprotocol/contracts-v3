@@ -10,7 +10,7 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-const { BancorVault: BancorVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
 
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
@@ -42,17 +42,17 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { vault, networkTokenPool } = await createSystem();
+            const vault = await Contracts.BancorVault.deploy(reserveToken.address);
+            await vault.initialize();
 
             expect(await vault.version()).to.equal(1);
 
+            await expectRole(vault, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ADMIN, BancorVaultRoles.ROLE_ADMIN, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
                 deployer.address
             ]);
-            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
-                networkTokenPool.address
-            ]);
+            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER);
         });
     });
 

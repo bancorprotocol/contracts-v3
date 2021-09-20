@@ -9,10 +9,8 @@ import { MAX_UINT112, PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
 
 struct AverageRate {
-    // the time when the rate was recorded (Unix timestamp))
-    uint32 time;
-    // the rate
-    Fraction rate;
+    uint32 time; // the time when the rate was recorded (Unix timestamp))
+    Fraction rate; // the rate
 }
 
 /**

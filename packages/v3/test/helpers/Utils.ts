@@ -1,9 +1,10 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
+import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction, BaseContract } from 'ethers';
-import { ethers } from 'hardhat';
+import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
+import { ethers, waffle } from 'hardhat';
 
 export type TokenWithAddress = TestERC20Token | { address: string };
 
@@ -48,4 +49,29 @@ export const transfer = async (
     return await (await Contracts.TestERC20Token.attach(tokenAddress))
         .connect(sourceAccount)
         .transfer(targetAddress, amount);
+};
+
+export const createTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
+    switch (symbol) {
+        case 'BNT':
+            return networkToken;
+
+        case 'ETH':
+            return { address: NATIVE_TOKEN_ADDRESS };
+
+        case 'TKN':
+            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(BigNumber.from(1_000_000_000)));
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const createWallet = async () => {
+    // create a random wallet, connect it to a test provider, and fund it
+    const wallet = Wallet.createRandom().connect(waffle.provider);
+    const deployer = (await ethers.getSigners())[0];
+    await deployer.sendTransaction({ value: toWei(BigNumber.from(10)), to: await wallet.getAddress() });
+
+    return wallet;
 };

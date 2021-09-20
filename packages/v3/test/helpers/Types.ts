@@ -87,7 +87,7 @@ type ToWeiReturn<T> = T extends BigNumber ? BigNumber : T extends Decimal ? Deci
 
 export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
     if (Decimal.isDecimal(v)) {
-        return v.mul(10 ** 18) as ToWeiReturn<T>;
+        return (v as Decimal).mul(new Decimal(10).pow(18)) as ToWeiReturn<T>;
     }
 
     return (v as BigNumber).mul(BigNumber.from(10).pow(BigNumber.from(18))) as ToWeiReturn<T>;

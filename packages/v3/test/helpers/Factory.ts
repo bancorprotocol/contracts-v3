@@ -1,17 +1,16 @@
 import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
 import {
     BancorNetwork,
-    PoolCollection,
-    NetworkSettings,
-    ProxyAdmin,
-    TestERC20Token,
     BancorVault,
-    PoolToken
+    NetworkSettings,
+    PoolToken,
+    PoolTokenFactory,
+    ProxyAdmin,
+    TestPoolCollection,
+    TokenGovernance
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
-import { toAddress } from './Utils';
-import { TokenGovernance } from '@bancor/token-governance';
+import { toAddress, TokenWithAddress } from './Utils';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
@@ -107,15 +106,10 @@ export const createGovernedTokens = async () => {
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
 
-export const createTokenHolder = async () => {
-    const tokenHolder = await Contracts.TokenHolderUpgradeable.deploy();
-    await tokenHolder.initialize();
+export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 
-    return tokenHolder;
-};
-
-export const createPoolCollection = async (network: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network));
+export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
 
 const createNetworkTokenPoolUninitialized = async (
     network: BancorNetwork,
@@ -126,9 +120,10 @@ const createNetworkTokenPoolUninitialized = async (
 ) => {
     const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, vault.address, networkPoolToken.address]
+        ctorArgs: [network.address, networkPoolToken.address]
     });
 
+    await networkPoolToken.acceptOwnership();
     await networkPoolToken.transferOwnership(networkTokenPool.address);
 
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
@@ -139,22 +134,38 @@ const createNetworkTokenPoolUninitialized = async (
     return networkTokenPool;
 };
 
+export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
+    const poolTokenAddress = await poolTokenFactory.callStatic.createPoolToken(toAddress(reserveToken));
+
+    await poolTokenFactory.createPoolToken(toAddress(reserveToken));
+
+    return Contracts.PoolToken.attach(poolTokenAddress);
+};
+
 export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+
+    const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
+    const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
+
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
-        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address]
+        ctorArgs: [
+            networkTokenGovernance.address,
+            govTokenGovernance.address,
+            networkSettings.address,
+            vault.address,
+            networkPoolToken.address
+        ]
     });
 
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
-    const networkPoolToken = await Contracts.PoolToken.deploy(
-        NETWORK_TOKEN_POOL_TOKEN_NAME,
-        NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
-        networkToken.address
-    );
+    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
+        ctorArgs: [network.address]
+    });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
         vault,
@@ -163,15 +174,13 @@ export const createSystem = async () => {
         govTokenGovernance
     );
 
-    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address, networkTokenPool.address]
-    });
+    await networkTokenPool.initialize();
 
-    await networkTokenPool.initialize(pendingWithdrawals.address);
+    const poolCollection = await createPoolCollection(network, poolTokenFactory);
 
-    const poolCollection = await createPoolCollection(network);
+    await network.initialize(networkTokenPool.address, pendingWithdrawals.address);
 
-    await network.initialize(pendingWithdrawals.address);
+    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,
@@ -184,15 +193,16 @@ export const createSystem = async () => {
         vault,
         networkTokenPool,
         pendingWithdrawals,
+        poolTokenFactory,
         poolCollection
     };
 };
 
 export const createPool = async (
-    reserveToken: TestERC20Token,
+    reserveToken: TokenWithAddress,
     network: BancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: PoolCollection
+    poolCollection: TestPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 

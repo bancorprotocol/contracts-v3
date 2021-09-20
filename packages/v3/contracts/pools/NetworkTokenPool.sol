@@ -20,14 +20,12 @@ import { MathEx } from "../utility/MathEx.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
-import { IPendingWithdrawals, WithdrawalRequest } from "../network/interfaces/IPendingWithdrawals.sol";
 
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/INetworkTokenPool.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
-import { PoolAverageRate } from "./PoolAverageRate.sol";
 
 /**
  * @dev Network Token Pool contract
@@ -59,85 +57,57 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     // the network token pool token
     IPoolToken internal immutable _poolToken;
 
-    // the pending withdrawals contract
-    IPendingWithdrawals private _pendingWithdrawals;
-
     // the total staked network token balance in the network
-    uint256 private _stakedBalance;
+    uint256 internal _stakedBalance;
 
     // a mapping between pools and their total minted amounts
     mapping(IReserveToken => uint256) private _mintedAmounts;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint256[MAX_GAP - 2] private __gap;
 
     /**
-     * @dev triggered when liquidity pools have requested liquidity
+     * @dev triggered when liquidity is requested
      */
     event LiquidityRequested(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 networkTokenAmountRequested,
-        uint256 networkTokenAmountProvided,
+        uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
 
     /**
-     * @dev triggered when liquidity pools have renounced liquidity
+     * @dev triggered when liquidity is renounced
      */
     event LiquidityRenounced(
         bytes32 indexed contextId,
         IReserveToken indexed pool,
-        uint256 networkTokenAmountRenounced,
+        uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(
-        IBancorNetwork initNetwork,
-        IBancorVault initVault,
-        IPoolToken initPoolToken
-    ) validAddress(address(initNetwork)) validAddress(address(initVault)) validAddress(address(initPoolToken)) {
+    constructor(IBancorNetwork initNetwork, IPoolToken initPoolToken)
+        validAddress(address(initNetwork))
+        validAddress(address(initPoolToken))
+    {
         _network = initNetwork;
         _networkToken = initNetwork.networkToken();
         _networkTokenGovernance = initNetwork.networkTokenGovernance();
         _govToken = initNetwork.govToken();
         _govTokenGovernance = initNetwork.govTokenGovernance();
         _settings = initNetwork.settings();
-        _vault = initVault;
+        _vault = initNetwork.vault();
         _poolToken = initPoolToken;
-    }
-
-    // allows execution by a valid pool collection
-    modifier onlyValidPoolCollection(IReserveToken pool) {
-        _onlyValidPoolCollection(pool);
-
-        _;
-    }
-
-    function _onlyValidPoolCollection(IReserveToken pool) private view {
-        // verify that the token is whitelisted
-        require(_settings.isTokenWhitelisted(pool), "ERR_TOKEN_NOT_WHITELISTED");
-
-        // verify that the caller is the current collection that manages the given pool
-        IPoolCollection poolCollection = _network.collectionByPool(pool);
-        _only(address(poolCollection));
-
-        // verify that the pool's rate is stable
-        require(poolCollection.isPoolRateStable(pool), "ERR_INVALID_RATE");
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(IPendingWithdrawals initPendingWithdrawals)
-        external
-        initializer
-        validAddress(address(initPendingWithdrawals))
-    {
-        __NetworkTokenPool_init(initPendingWithdrawals);
+    function initialize() external initializer {
+        __NetworkTokenPool_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -145,18 +115,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkTokenPool_init(IPendingWithdrawals initPendingWithdrawals) internal initializer {
+    function __NetworkTokenPool_init() internal initializer {
         __ReentrancyGuard_init();
 
-        __NetworkTokenPool_init_unchained(initPendingWithdrawals);
+        __NetworkTokenPool_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkTokenPool_init_unchained(IPendingWithdrawals initPendingWithdrawals) internal initializer {
-        _pendingWithdrawals = initPendingWithdrawals;
-
+    function __NetworkTokenPool_init_unchained() internal initializer {
         _poolToken.acceptOwnership();
     }
 
@@ -226,13 +194,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     }
 
     /**
-     *  @inheritdoc INetworkTokenPool
-     */
-    function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
-        return _pendingWithdrawals;
-    }
-
-    /**
      * @inheritdoc INetworkTokenPool
      */
     function stakedBalance() external view override returns (uint256) {
@@ -244,6 +205,56 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function mintedAmount(IReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return
+            address(pool) != address(0x0) &&
+            address(poolCollection) != address(0x0) &&
+            _settings.isTokenWhitelisted(pool) &&
+            poolCollection.isPoolRateStable(pool);
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function unallocatedLiquidity(IReserveToken pool) external view override returns (uint256) {
+        return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function mint(address recipient, uint256 networkTokenAmount)
+        external
+        override
+        only(address(_network))
+        validAddress(recipient)
+        greaterThanZero(networkTokenAmount)
+    {
+        _networkTokenGovernance.mint(recipient, networkTokenAmount);
+    }
+
+    /**
+     * @inheritdoc INetworkTokenPool
+     */
+    function burnFromVault(uint256 networkTokenAmount)
+        external
+        override
+        only(address(_network))
+        greaterThanZero(networkTokenAmount)
+    {
+        _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
+
+        _networkTokenGovernance.burn(networkTokenAmount);
     }
 
     /**
@@ -286,12 +297,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             _govTokenGovernance.mint(provider, govTokenAmount);
         }
 
-        return
-            DepositAmounts({
-                networkTokenAmount: networkTokenAmount,
-                poolTokenAmount: poolTokenAmount,
-                govTokenAmount: govTokenAmount
-            });
+        return DepositAmounts({ poolTokenAmount: poolTokenAmount, govTokenAmount: govTokenAmount });
     }
 
     /**
@@ -305,15 +311,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         validAddress(provider)
         returns (WithdrawalAmounts memory)
     {
-        // calculate the network token amount to transfer and deduct the exit fee from the network token amount
-        uint256 networkTokenAmount = MathEx.mulDivF(
-            poolTokenAmount,
-            _stakedBalance.mul(PPM_RESOLUTION - _settings.withdrawalFeePPM()),
-            _poolToken.totalSupply().mul(PPM_RESOLUTION)
-        );
-
-        // mint network tokens to the provider
-        _networkTokenGovernance.mint(provider, networkTokenAmount);
+        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
@@ -321,7 +319,16 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // burn the respective governance token amount
         _govTokenGovernance.burn(poolTokenAmount);
 
-        return WithdrawalAmounts({ networkTokenAmount: networkTokenAmount, poolTokenAmount: poolTokenAmount });
+        // mint network tokens to the provider
+        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
+
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: amounts.networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                withdrawalFeeAmount: amounts.withdrawalFeeAmount
+            });
     }
 
     /**
@@ -330,26 +337,14 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     function requestLiquidity(
         bytes32 contextId,
         IReserveToken pool,
-        uint256 networkTokenAmount,
-        bool skipLimitCheck
-    ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) returns (uint256) {
-        // verify the minting limit (unless asked explicitly to skip this check)
+        uint256 networkTokenAmount
+    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentMintedAmount = _mintedAmounts[pool];
-        uint256 newNetworkTokenAmount;
-        if (skipLimitCheck) {
-            newNetworkTokenAmount = networkTokenAmount;
-        } else {
-            uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 newMintedAmount = currentMintedAmount.add(networkTokenAmount);
 
-            if (mintingLimit > currentMintedAmount) {
-                newNetworkTokenAmount = Math.min(mintingLimit - currentMintedAmount, networkTokenAmount);
-            } else {
-                // if we're unable to mint more network tokens - abort
-                emit LiquidityRequested(contextId, pool, networkTokenAmount, 0, 0);
-
-                return 0;
-            }
-        }
+        // verify that the new minted amount doesn't exceed the limit
+        require(newMintedAmount <= mintingLimit, "ERR_MINTING_LIMIT_EXCEEDED");
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
@@ -357,26 +352,31 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
             // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
-            poolTokenAmount = newNetworkTokenAmount;
+            require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+
+            poolTokenAmount = networkTokenAmount;
         } else {
-            poolTokenAmount = MathEx.mulDivF(newNetworkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
         }
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance.add(newNetworkTokenAmount);
+        _stakedBalance = currentStakedBalance.add(networkTokenAmount);
 
         // update the current minted amount
-        _mintedAmounts[pool] = currentMintedAmount.add(newNetworkTokenAmount);
+        _mintedAmounts[pool] = newMintedAmount;
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint network tokens to the vault
-        _networkTokenGovernance.mint(address(_vault), newNetworkTokenAmount);
+        _networkTokenGovernance.mint(address(_vault), networkTokenAmount);
 
-        emit LiquidityRequested(contextId, pool, networkTokenAmount, newNetworkTokenAmount, poolTokenAmount);
-
-        return newNetworkTokenAmount;
+        emit LiquidityRequested({
+            contextId: contextId,
+            pool: pool,
+            networkTokenAmount: networkTokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
     }
 
     /**
@@ -386,17 +386,22 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bytes32 contextId,
         IReserveToken pool,
         uint256 networkTokenAmount
-    ) external override greaterThanZero(networkTokenAmount) onlyValidPoolCollection(pool) {
+    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
+        // calculate the renounced amount to deduct from both the staked balance and pool minted amount
+        uint256 currentMintedAmount = _mintedAmounts[pool];
+        uint256 renouncedAmount = Math.min(currentMintedAmount, networkTokenAmount);
+
         // calculate the pool token amount to burn
-        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), currentStakedBalance);
+        uint256 poolTokenAmount = MathEx.mulDivF(renouncedAmount, _poolToken.totalSupply(), currentStakedBalance);
+
+        // update the current minted amount. Note that the given amount can be higher than the minted amount but the
+        // request shouldn’t fail (and the minted amount cannot get negative)
+        _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance.sub(networkTokenAmount);
-
-        // update the current minted amount
-        _mintedAmounts[pool] = _mintedAmounts[pool].sub(networkTokenAmount);
+        _stakedBalance = currentStakedBalance.sub(renouncedAmount);
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
@@ -405,7 +410,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
-        emit LiquidityRenounced(contextId, pool, networkTokenAmount, poolTokenAmount);
+        emit LiquidityRenounced({
+            contextId: contextId,
+            pool: pool,
+            networkTokenAmount: networkTokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
     }
 
     /**
@@ -428,5 +438,25 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
         }
+    }
+
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
+        // calculate the network token amount to transfer
+        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+
+        // deduct the exit fee from the network token amount
+        uint256 withdrawalFeeAmount = MathEx.mulDivF(networkTokenAmount, _settings.withdrawalFeePPM(), PPM_RESOLUTION);
+        networkTokenAmount = networkTokenAmount - withdrawalFeeAmount;
+
+        return
+            WithdrawalAmounts({
+                networkTokenAmount: networkTokenAmount,
+                poolTokenAmount: poolTokenAmount,
+                govTokenAmount: poolTokenAmount,
+                withdrawalFeeAmount: withdrawalFeeAmount
+            });
     }
 }

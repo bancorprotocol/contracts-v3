@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
     BancorNetwork__factory,
     BancorVault__factory,
@@ -7,27 +8,27 @@ import {
     PendingWithdrawals__factory,
     PoolCollection__factory,
     PoolToken__factory,
+    PoolTokenFactory__factory,
     ProxyAdmin__factory,
     TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
     TestMathEx__factory,
     TestNetworkTokenPool__factory,
-    TestOwnedUpgradeable__factory,
+    TestOwned__factory,
     TestPendingWithdrawals__factory,
     TestPoolAverageRate__factory,
     TestPoolCollection__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestSystemToken__factory,
-    TokenHolderUpgradeable__factory,
+    TestUpgradeable__factory,
+    TokenHolder__factory,
+    TokenGovernance__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
-import {
-    TokenGovernance__factory,
-    SmartToken__factory as BNT_factory,
-    DSToken__factory as vBNT_factory
-} from '@bancor/token-governance';
+
+/* eslint-enable camelcase */
 import { Signer } from '@ethersproject/abstract-signer';
 import { ContractFactory } from '@ethersproject/contracts';
 import { ethers } from 'hardhat';
@@ -93,6 +94,7 @@ const getContracts = (signer?: Signer) => ({
     NetworkTokenPool: deployOrAttach('NetworkTokenPool', NetworkTokenPool__factory, signer),
     PendingWithdrawals: deployOrAttach('PendingWithdrawals', PendingWithdrawals__factory, signer),
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
+    PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
@@ -101,22 +103,23 @@ const getContracts = (signer?: Signer) => ({
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
     TestNetworkTokenPool: deployOrAttach('TestNetworkTokenPool', TestNetworkTokenPool__factory, signer),
     TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
-    TestOwnedUpgradeable: deployOrAttach('TestOwnedUpgradeable', TestOwnedUpgradeable__factory, signer),
+    TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestSystemToken: deployOrAttach('TestSystemToken', TestSystemToken__factory, signer),
-    TokenHolderUpgradeable: deployOrAttach('TokenHolderUpgradeable', TokenHolderUpgradeable__factory, signer),
+    TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
+    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
         TransparentUpgradeableProxy__factory,
         signer
-    ),
+    )
 
     // external contracts
-    TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
-    BNT: deployOrAttach('BNT', BNT_factory, signer),
-    vBNT: deployOrAttach('vBNT', vBNT_factory, signer)
+
+    /* eslint-enable camelcase */
 });
 
 export type ContractsType = ReturnType<typeof getContracts>;

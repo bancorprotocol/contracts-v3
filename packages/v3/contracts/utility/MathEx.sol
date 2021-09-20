@@ -84,7 +84,7 @@ library MathEx {
         }
 
         if (ratio.n != ratio.d) {
-            Fraction memory newRatio = Fraction({ n: ratio.n * scale, d: unsafeAdd(ratio.n, ratio.d) });
+            Fraction memory newRatio = Fraction({ n: ratio.n * scale, d: _unsafeAdd(ratio.n, ratio.d) });
 
             if (newRatio.d >= ratio.n) {
                 // no overflow in `ratio.n + ratio.d`
@@ -124,7 +124,7 @@ library MathEx {
         uint256 y,
         uint256 z
     ) internal pure returns (uint256) {
-        (uint256 xyh, uint256 xyl) = mul512(x, y);
+        (uint256 xyh, uint256 xyl) = _mul512(x, y);
 
         // if `x * y < 2 ^ 256`
         if (xyh == 0) {
@@ -134,18 +134,18 @@ library MathEx {
         // assert `x * y / z < 2 ^ 256`
         require(xyh < z, "ERR_OVERFLOW");
 
-        uint256 m = mulMod(x, y, z); // `m = x * y % z`
-        (uint256 nh, uint256 nl) = sub512(xyh, xyl, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
+        uint256 m = _mulMod(x, y, z); // `m = x * y % z`
+        (uint256 nh, uint256 nl) = _sub512(xyh, xyl, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
 
         // if `n < 2 ^ 256`
         if (nh == 0) {
             return nl / z;
         }
 
-        uint256 p = unsafeSub(0, z) & z; // `p` is the largest power of 2 which `z` is divisible by
-        uint256 q = div512(nh, nl, p); // `n` is divisible by `p` because `n` is divisible by `z` and `z` is divisible by `p`
-        uint256 r = inv256(z / p); // `z / p = 1 mod 2` hence `inverse(z / p) = 1 mod 2 ^ 256`
-        return unsafeMul(q, r); // `q * r = (n / p) * inverse(z / p) = n / z`
+        uint256 p = _unsafeSub(0, z) & z; // `p` is the largest power of 2 which `z` is divisible by
+        uint256 q = _div512(nh, nl, p); // `n` is divisible by `p` because `n` is divisible by `z` and `z` is divisible by `p`
+        uint256 r = _inv256(z / p); // `z / p = 1 mod 2` hence `inverse(z / p) = 1 mod 2 ^ 256`
+        return _unsafeMul(q, r); // `q * r = (n / p) * inverse(z / p) = n / z`
     }
 
     /**
@@ -157,7 +157,7 @@ library MathEx {
         uint256 z
     ) internal pure returns (uint256) {
         uint256 w = mulDivF(x, y, z);
-        if (mulMod(x, y, z) > 0) {
+        if (_mulMod(x, y, z) > 0) {
             require(w < MAX_UINT256, "ERR_OVERFLOW");
             return w + 1;
         }
@@ -165,21 +165,28 @@ library MathEx {
     }
 
     /**
+     * @dev returns the maximum of `n1 - n2` and 0
+     */
+    function subMax0(uint256 n1, uint256 n2) internal pure returns (uint256) {
+        return n1 > n2 ? n1 - n2 : 0;
+    }
+
+    /**
      * @dev returns the value of `x * y` as a pair of 256-bit values
      */
-    function mul512(uint256 x, uint256 y) private pure returns (uint256, uint256) {
-        uint256 p = mulModMax(x, y);
-        uint256 q = unsafeMul(x, y);
+    function _mul512(uint256 x, uint256 y) private pure returns (uint256, uint256) {
+        uint256 p = _mulModMax(x, y);
+        uint256 q = _unsafeMul(x, y);
         if (p >= q) {
             return (p - q, q);
         }
-        return (unsafeSub(p, q) - 1, q);
+        return (_unsafeSub(p, q) - 1, q);
     }
 
     /**
      * @dev returns the value of `2 ^ 256 * xh + xl - y`, where `2 ^ 256 * xh + xl >= y`
      */
-    function sub512(
+    function _sub512(
         uint256 xh,
         uint256 xl,
         uint256 y
@@ -187,29 +194,29 @@ library MathEx {
         if (xl >= y) {
             return (xh, xl - y);
         }
-        return (xh - 1, unsafeSub(xl, y));
+        return (xh - 1, _unsafeSub(xl, y));
     }
 
     /**
      * @dev returns the value of `(2 ^ 256 * xh + xl) / pow2n`, where `xl` is divisible by `pow2n`
      */
-    function div512(
+    function _div512(
         uint256 xh,
         uint256 xl,
         uint256 pow2n
     ) private pure returns (uint256) {
-        uint256 pow2nInv = unsafeAdd(unsafeSub(0, pow2n) / pow2n, 1); // `1 << (256 - n)`
-        return unsafeMul(xh, pow2nInv) | (xl / pow2n); // `(xh << (256 - n)) | (xl >> n)`
+        uint256 pow2nInv = _unsafeAdd(_unsafeSub(0, pow2n) / pow2n, 1); // `1 << (256 - n)`
+        return _unsafeMul(xh, pow2nInv) | (xl / pow2n); // `(xh << (256 - n)) | (xl >> n)`
     }
 
     /**
      * @dev returns the inverse of `d` modulo `2 ^ 256`, where `d` is congruent to `1` modulo `2`
      */
-    function inv256(uint256 d) private pure returns (uint256) {
+    function _inv256(uint256 d) private pure returns (uint256) {
         // approximate the root of `f(x) = 1 / x - d` using the newton–raphson convergence method
         uint256 x = 1;
         for (uint256 i = 0; i < 8; i++) {
-            x = unsafeMul(x, unsafeSub(2, unsafeMul(x, d))); // `x = x * (2 - x * d) mod 2 ^ 256`
+            x = _unsafeMul(x, _unsafeSub(2, _unsafeMul(x, d))); // `x = x * (2 - x * d) mod 2 ^ 256`
         }
         return x;
     }
@@ -217,35 +224,35 @@ library MathEx {
     /**
      * @dev returns `(x + y) % 2 ^ 256`
      */
-    function unsafeAdd(uint256 x, uint256 y) private pure returns (uint256) {
+    function _unsafeAdd(uint256 x, uint256 y) private pure returns (uint256) {
         return x + y;
     }
 
     /**
      * @dev returns `(x - y) % 2 ^ 256`
      */
-    function unsafeSub(uint256 x, uint256 y) private pure returns (uint256) {
+    function _unsafeSub(uint256 x, uint256 y) private pure returns (uint256) {
         return x - y;
     }
 
     /**
      * @dev returns `(x * y) % 2 ^ 256`
      */
-    function unsafeMul(uint256 x, uint256 y) private pure returns (uint256) {
+    function _unsafeMul(uint256 x, uint256 y) private pure returns (uint256) {
         return x * y;
     }
 
     /**
      * @dev returns `x * y % (2 ^ 256 - 1)`
      */
-    function mulModMax(uint256 x, uint256 y) private pure returns (uint256) {
+    function _mulModMax(uint256 x, uint256 y) private pure returns (uint256) {
         return mulmod(x, y, MAX_UINT256);
     }
 
     /**
      * @dev returns `x * y % z`
      */
-    function mulMod(
+    function _mulMod(
         uint256 x,
         uint256 y,
         uint256 z

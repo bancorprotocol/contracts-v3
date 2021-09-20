@@ -6,11 +6,11 @@ import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers } from 'hardhat';
 
-let burnable: TestERC20Burnable;
-let owner: SignerWithAddress;
-let burner: SignerWithAddress;
-
 describe('ERC20Burnable', () => {
+    let burnable: TestERC20Burnable;
+    let owner: SignerWithAddress;
+    let burner: SignerWithAddress;
+
     before(async () => {
         [owner, burner] = await ethers.getSigners();
     });
