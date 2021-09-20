@@ -78,10 +78,15 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-const createGovernedToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+const createGovernedToken = async (
+    governedTokenFactory: typeof Contracts['BNTToken'] | typeof Contracts['vBNTToken'],
+    name: string,
+    symbol: string,
+    totalSupply: BigNumber
+) => {
     const deployer = (await ethers.getSigners())[0];
 
-    const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
+    const token = await governedTokenFactory.deploy(name, symbol, totalSupply);
     const tokenGovernance = await Contracts.TokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
@@ -93,11 +98,13 @@ const createGovernedToken = async (name: string, symbol: string, totalSupply: Bi
 
 export const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
+        Contracts.BNTToken,
         'BNT',
         'BNT',
         TOTAL_SUPPLY
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
+        Contracts.vBNTToken,
         'vBNT',
         'vBNT',
         TOTAL_SUPPLY

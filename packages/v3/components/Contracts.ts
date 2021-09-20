@@ -24,7 +24,6 @@ import {
     TestSystemToken__factory,
     TestUpgradeable__factory,
     TokenHolder__factory,
-    TestTokenGovernance__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain';
 import {
@@ -124,7 +123,7 @@ const getContracts = (signer?: Signer) => ({
     // external contracts
     TokenGovernance: deployOrAttach('BNTToken', TokenGovernance__factory, signer),
     BNTToken: deployOrAttach('BNTToken', BNTToken__factory, signer),
-    vBTToken: deployOrAttach('BNTToken', vBNTToken__factory, signer)
+    vBNTToken: deployOrAttach('BNTToken', vBNTToken__factory, signer)
 
     /* eslint-enable camelcase */
 });
