@@ -56,7 +56,7 @@ library DefFormula {
         output.p = MathEx.mulDivF(a, z, y);
         output.r = MathEx.mulDivF(b, z, y);
         output.s = MathEx.mulDivF(z, b + c, y);
-        output.t = MathEx.mulDivF(a * z, e - b - c, b * y);
+        output.t = MathEx.mulDivF(a.mul(z), e - b - c, b.mul(y));
         output.q = output.p;
     }
 
