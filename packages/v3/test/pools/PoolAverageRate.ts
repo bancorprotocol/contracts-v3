@@ -526,4 +526,60 @@ describe('PoolAverageRate', () => {
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });
     });
+
+    describe('equality', () => {
+        for (const [averageRate1, averageRate2] of [
+            [
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(1) }
+            ],
+            [
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(12345) }
+            ],
+            [
+                { rate: { n: BigNumber.from(2000), d: BigNumber.from(1000) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(2), d: BigNumber.from(1) }, time: BigNumber.from(12345) }
+            ],
+            [
+                { rate: { n: BigNumber.from(1), d: BigNumber.from(5) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(2), d: BigNumber.from(10) }, time: BigNumber.from(12345) }
+            ]
+        ]) {
+            it(`should return that ${toString(averageRate1.rate)} and ${toString(
+                averageRate2.rate
+            )} are equal`, async () => {
+                expect(await poolAverageRate.isEqual(averageRate1, averageRate2)).to.be.true;
+            });
+        }
+
+        for (const [averageRate1, averageRate2] of [
+            [
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(1) }, time: BigNumber.from(1) }
+            ],
+            [
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(11) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(123), d: BigNumber.from(1) }, time: BigNumber.from(12345) }
+            ],
+            [
+                { rate: { n: BigNumber.from(2000), d: BigNumber.from(1000) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(2), d: BigNumber.from(2) }, time: BigNumber.from(12345) }
+            ],
+            [
+                { rate: { n: BigNumber.from(2000), d: BigNumber.from(1000) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(2000), d: BigNumber.from(1001) }, time: BigNumber.from(12345) }
+            ],
+            [
+                { rate: { n: BigNumber.from(1), d: BigNumber.from(5) }, time: BigNumber.from(1) },
+                { rate: { n: BigNumber.from(2), d: BigNumber.from(11) }, time: BigNumber.from(12345) }
+            ]
+        ]) {
+            it(`should return that ${toString(averageRate1.rate)} and ${toString(
+                averageRate2.rate
+            )} are not equal`, async () => {
+                expect(await poolAverageRate.isEqual(averageRate1, averageRate2)).to.be.true;
+            });
+        }
+    });
 });

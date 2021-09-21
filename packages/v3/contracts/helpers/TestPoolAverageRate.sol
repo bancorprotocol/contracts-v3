@@ -21,4 +21,8 @@ contract TestPoolAverageRate {
     ) external pure returns (bool) {
         return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation);
     }
+
+    function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) external pure returns (bool) {
+        return PoolAverageRate.isEqual(averageRate1, averageRate2);
+    }
 }
