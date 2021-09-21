@@ -543,6 +543,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         );
     }
 
+    /**
+     * @inheritdoc IPoolCollection
+     */
     function trade(
         IReserveToken sourcePool,
         IReserveToken targetPool,
@@ -550,10 +553,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 minReturnAmount
     )
         external
+        override
         only(address(_network))
         validAddress(address(sourcePool))
         validAddress(address(targetPool))
         greaterThanZero(sourceAmount)
+        greaterThanZero(minReturnAmount)
         returns (TradeAmounts memory)
     {
         TradingParams memory params = _tradeParams(sourcePool, targetPool);
@@ -596,7 +601,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     }
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @inheritdoc IPoolCollection
      */
     function targetAmountAndFee(
         IReserveToken sourcePool,
@@ -605,6 +610,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     )
         external
         view
+        override
         validAddress(address(sourcePool))
         validAddress(address(targetPool))
         greaterThanZero(sourceAmount)
@@ -616,7 +622,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     }
 
     /**
-     * @dev returns the source amount and fee by specifying the target amount
+     * @inheritdoc IPoolCollection
      */
     function sourceAmountAndFee(
         IReserveToken sourcePool,
@@ -625,6 +631,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     )
         external
         view
+        override
         validAddress(address(sourcePool))
         validAddress(address(targetPool))
         greaterThanZero(targetAmount)

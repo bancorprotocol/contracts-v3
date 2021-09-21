@@ -160,6 +160,38 @@ interface IPoolCollection is IVersioned {
     ) external returns (WithdrawalAmounts memory);
 
     /**
+     * @dev performs a trade and returns the target amount and fee
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function trade(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) external returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the target amount and fee by specifying the source amount
+     */
+    function targetAmountAndFee(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the source amount and fee by specifying the target amount
+     */
+    function sourceAmountAndFee(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 targetAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
      * @dev notifies the pool of accrued fees
      *
      * requirements:
