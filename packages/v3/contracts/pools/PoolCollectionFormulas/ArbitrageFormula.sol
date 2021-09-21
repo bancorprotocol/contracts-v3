@@ -9,7 +9,7 @@ import { MathEx } from "../../utility/MathEx.sol";
 /**
  * @dev this library provides mathematical support for TKN withdrawal
  */
-library ArbFormula {
+library ArbitrageFormula {
     using SafeMath for uint256;
 
     uint256 private constant M = PPM_RESOLUTION;

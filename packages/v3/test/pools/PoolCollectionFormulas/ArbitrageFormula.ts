@@ -1,16 +1,16 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
-import { TestArbFormula } from '../../../typechain';
+import { TestArbitrageFormula } from '../../../typechain';
 import fs from 'fs';
 import path from 'path';
 import { BigNumber } from 'ethers';
 import Decimal from 'decimal.js';
 
-describe('ArbFormula', () => {
-    let formula: TestArbFormula;
+describe('ArbitrageFormula', () => {
+    let formula: TestArbitrageFormula;
 
     before(async () => {
-        formula = await Contracts.TestArbFormula.deploy();
+        formula = await Contracts.TestArbitrageFormula.deploy();
     });
 
     describe('tests', () => {
@@ -80,7 +80,7 @@ describe('ArbFormula', () => {
             };
 
             test(
-                'ArbFormulaCoverage1', {
+                'ArbitrageFormulaCoverage1', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -89,7 +89,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage2', {
+                'ArbitrageFormulaCoverage2', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000005') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000009') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -98,7 +98,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage3', {
+                'ArbitrageFormulaCoverage3', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -107,7 +107,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage4', {
+                'ArbitrageFormulaCoverage4', {
                     p: { absolute: new Decimal(2), relative: new Decimal('0.003') },
                     q: { absolute: new Decimal(2), relative: new Decimal('0.002') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -116,7 +116,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage5', {
+                'ArbitrageFormulaCoverage5', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.000007') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -125,7 +125,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage6', {
+                'ArbitrageFormulaCoverage6', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },
@@ -134,7 +134,7 @@ describe('ArbFormula', () => {
             );
 
             test(
-                'ArbFormulaCoverage7', {
+                'ArbitrageFormulaCoverage7', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.000003') },
                     r: { absolute: new Decimal(1), relative: new Decimal('0') },

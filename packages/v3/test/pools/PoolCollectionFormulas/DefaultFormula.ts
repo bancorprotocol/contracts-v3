@@ -1,16 +1,16 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
-import { TestDefFormula } from '../../../typechain';
+import { TestDefaultFormula } from '../../../typechain';
 import fs from 'fs';
 import path from 'path';
 import { BigNumber } from 'ethers';
 import Decimal from 'decimal.js';
 
-describe('DefFormula', () => {
-    let formula: TestDefFormula;
+describe('DefaultFormula', () => {
+    let formula: TestDefaultFormula;
 
     before(async () => {
-        formula = await Contracts.TestDefFormula.deploy();
+        formula = await Contracts.TestDefaultFormula.deploy();
     });
 
     describe('tests', () => {
@@ -30,7 +30,7 @@ describe('DefFormula', () => {
 
         const tests = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
             const table: Row[] = JSON.parse(
-                fs.readFileSync(path.join(__dirname, '../../data/DefFormulaCoverage.json'), { encoding: 'utf8' })
+                fs.readFileSync(path.join(__dirname, '../../data/DefaultFormulaCoverage.json'), { encoding: 'utf8' })
             ).slice(0, numOfTests);
 
             for (const {a, b, c, e, n, x, p, q, r, s, t} of table) {

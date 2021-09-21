@@ -1,15 +1,15 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
-import { TestHmaxFormula } from '../../../typechain';
+import { TestThresholdFormula } from '../../../typechain';
 import fs from 'fs';
 import path from 'path';
 import { BigNumber } from 'ethers';
 
-describe('HmaxFormula', () => {
-    let formula: TestHmaxFormula;
+describe('ThresholdFormula', () => {
+    let formula: TestThresholdFormula;
 
     before(async () => {
-        formula = await Contracts.TestHmaxFormula.deploy();
+        formula = await Contracts.TestThresholdFormula.deploy();
     });
 
     describe('tests', () => {
@@ -25,7 +25,7 @@ describe('HmaxFormula', () => {
 
         const tests = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
             const table: Row[] = JSON.parse(
-                fs.readFileSync(path.join(__dirname, '../../data/HmaxFormulaCoverage.json'), { encoding: 'utf8' })
+                fs.readFileSync(path.join(__dirname, '../../data/ThresholdFormulaCoverage.json'), { encoding: 'utf8' })
             ).slice(0, numOfTests);
 
             for (const {b, c, e, m, n, x, expected} of table) {

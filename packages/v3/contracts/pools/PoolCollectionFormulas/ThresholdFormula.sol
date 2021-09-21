@@ -8,7 +8,7 @@ import { MAX_UINT128, MAX_UINT256, PPM_RESOLUTION } from "../../utility/Constant
 /**
  * @dev this library provides mathematical support for TKN withdrawal
  */
-library HmaxFormula {
+library ThresholdFormula {
     using SafeMath for uint256;
 
     uint256 private constant M = PPM_RESOLUTION;

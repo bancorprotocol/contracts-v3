@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "../pools/PoolCollectionFormulas/HmaxFormula.sol";
+import "../pools/PoolCollectionFormulas/ThresholdFormula.sol";
 
-contract TestHmaxFormula {
-    using HmaxFormula for *;
+contract TestThresholdFormula {
+    using ThresholdFormula for *;
 
     function surplus(
         uint256 b,
@@ -14,7 +14,7 @@ contract TestHmaxFormula {
         uint256 n,
         uint256 x
     ) external pure returns (bool) {
-        return HmaxFormula.surplus(b, c, e, m, n, x);
+        return ThresholdFormula.surplus(b, c, e, m, n, x);
     }
 
     function deficit(
@@ -25,6 +25,6 @@ contract TestHmaxFormula {
         uint256 n,
         uint256 x
     ) external pure returns (bool) {
-        return HmaxFormula.deficit(b, c, e, m, n, x);
+        return ThresholdFormula.deficit(b, c, e, m, n, x);
     }
 }

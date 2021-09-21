@@ -2,10 +2,10 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../pools/PoolCollectionFormulas/ArbFormula.sol";
+import "../pools/PoolCollectionFormulas/ArbitrageFormula.sol";
 
-contract TestArbFormula {
-    using ArbFormula for *;
+contract TestArbitrageFormula {
+    using ArbitrageFormula for *;
 
     function surplus(
         uint256 a,
@@ -15,8 +15,8 @@ contract TestArbFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbFormula.Output memory) {
-        return ArbFormula.surplus(a, b, c, e, m, n, x);
+    ) external pure returns (ArbitrageFormula.Output memory) {
+        return ArbitrageFormula.surplus(a, b, c, e, m, n, x);
     }
 
     function deficit(
@@ -27,7 +27,7 @@ contract TestArbFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbFormula.Output memory) {
-        return ArbFormula.deficit(a, b, c, e, m, n, x);
+    ) external pure returns (ArbitrageFormula.Output memory) {
+        return ArbitrageFormula.deficit(a, b, c, e, m, n, x);
     }
 }

@@ -2,10 +2,10 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import "../pools/PoolCollectionFormulas/DefFormula.sol";
+import "../pools/PoolCollectionFormulas/DefaultFormula.sol";
 
-contract TestDefFormula {
-    using DefFormula for *;
+contract TestDefaultFormula {
+    using DefaultFormula for *;
 
     function surplus(
         uint256 a,
@@ -14,8 +14,8 @@ contract TestDefFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) external pure returns (DefFormula.Output memory) {
-        return DefFormula.surplus(a, b, c, e, n, x);
+    ) external pure returns (DefaultFormula.Output memory) {
+        return DefaultFormula.surplus(a, b, c, e, n, x);
     }
 
     function deficit(
@@ -25,7 +25,7 @@ contract TestDefFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) external pure returns (DefFormula.Output memory) {
-        return DefFormula.deficit(a, b, c, e, n, x);
+    ) external pure returns (DefaultFormula.Output memory) {
+        return DefaultFormula.deficit(a, b, c, e, n, x);
     }
 }
