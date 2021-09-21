@@ -57,8 +57,8 @@ describe('DefFormula', () => {
             }
         };
 
-        describe.only('quick tests', () => {
-            tests();
+        describe('quick tests', () => {
+            tests(100);
         });
 
         describe('@stress tests', () => {
