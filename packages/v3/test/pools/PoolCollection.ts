@@ -47,12 +47,13 @@ describe('PoolCollection', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { network, networkSettings, poolTokenFactory, poolCollection } = await createSystem();
+            const { network, networkToken, networkSettings, poolTokenFactory, poolCollection } = await createSystem();
 
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
             expect(await poolCollection.network()).to.equal(network.address);
+            expect(await poolCollection.networkToken()).to.equal(networkToken.address);
             expect(await poolCollection.settings()).to.equal(networkSettings.address);
             expect(await poolCollection.poolTokenFactory()).to.equal(poolTokenFactory.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
