@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken, GovToken } from '../../components/LegacyContracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { toWei } from './Types';
@@ -51,7 +52,10 @@ export const transfer = async (
         .transfer(targetAddress, amount);
 };
 
-export const createTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (
+    symbol: string,
+    networkToken: TestERC20Token | NetworkToken | GovToken
+): Promise<TokenWithAddress> => {
     switch (symbol) {
         case 'BNT':
             return networkToken;

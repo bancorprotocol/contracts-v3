@@ -63,8 +63,6 @@ const getContracts = (signer?: Signer) => ({
         TransparentUpgradeableProxy__factory,
         signer
     )
-
-    /* eslint-enable camelcase */
 });
 
 export type ContractsType = ReturnType<typeof getContracts>;

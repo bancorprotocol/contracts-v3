@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { NetworkSettings, PoolToken, TestBancorNetwork, TestERC20Token, TestPoolCollection } from '../../typechain';
 import { INVALID_FRACTION, ZERO_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
@@ -135,7 +136,7 @@ describe('PoolCollection', () => {
     describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TokenWithAddress;
 
@@ -841,7 +842,7 @@ describe('PoolCollection', () => {
         const testDeposit = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: TestERC20Token;
+            let networkToken: NetworkToken;
             let poolCollection: TestPoolCollection;
             let reserveToken: TokenWithAddress;
 
@@ -1178,7 +1179,7 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: TestERC20Token;
+            let networkToken: NetworkToken;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;

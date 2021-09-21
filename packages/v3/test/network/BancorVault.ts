@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
@@ -57,7 +58,7 @@ describe('BancorVault', () => {
     });
 
     describe('asset management', () => {
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let vault: BancorVault;
 
         beforeEach(async () => {

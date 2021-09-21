@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken, GovToken } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -97,7 +98,7 @@ describe('NetworkTokenPool', () => {
 
     describe('mint', () => {
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let recipient: SignerWithAddress;
 
@@ -140,7 +141,7 @@ describe('NetworkTokenPool', () => {
 
     describe('burnFromVault', () => {
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let vault: BancorVault;
 
@@ -290,7 +291,7 @@ describe('NetworkTokenPool', () => {
     describe('request liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let vault: BancorVault;
@@ -472,7 +473,7 @@ describe('NetworkTokenPool', () => {
     describe('renounce liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let vault: BancorVault;
@@ -601,8 +602,8 @@ describe('NetworkTokenPool', () => {
     describe('deposit liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
@@ -791,8 +792,8 @@ describe('NetworkTokenPool', () => {
     describe('withdraw liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;

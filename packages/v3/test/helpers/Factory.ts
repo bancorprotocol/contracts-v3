@@ -20,6 +20,7 @@ import { isEqual } from 'lodash';
 const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
+const DECIMALS = BigNumber.from(18);
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -80,10 +81,16 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-const createGovernedToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+const createGovernedToken = async <F extends ContractFactory>(
+    legacyFactory: ContractBuilder<F>,
+    totalSupply: BigNumber,
+    ...args: Parameters<F['deploy']>
+) => {
     const deployer = (await ethers.getSigners())[0];
 
-    const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
+    const token = await legacyFactory.deploy(...args);
+    await token.issue(deployer.address, totalSupply);
+
     const tokenGovernance = await LegacyContracts.TokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
@@ -95,14 +102,18 @@ const createGovernedToken = async (name: string, symbol: string, totalSupply: Bi
 
 export const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
+        LegacyContracts.NetworkToken,
+        TOTAL_SUPPLY,
         'BNT',
         'BNT',
-        TOTAL_SUPPLY
+        DECIMALS
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
+        LegacyContracts.GovToken,
+        TOTAL_SUPPLY,
         'vBNT',
         'vBNT',
-        TOTAL_SUPPLY
+        DECIMALS
     );
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };

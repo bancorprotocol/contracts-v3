@@ -1,11 +1,11 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken, GovToken } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
-    TestERC20Token,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
@@ -514,7 +514,7 @@ describe('BancorNetwork', () => {
         let reserveToken: TokenWithAddress;
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let poolType: number;
 
@@ -592,8 +592,8 @@ describe('BancorNetwork', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let vault: BancorVault;
@@ -1387,8 +1387,8 @@ describe('BancorNetwork', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let vault: BancorVault;
