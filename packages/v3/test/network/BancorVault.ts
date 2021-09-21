@@ -100,7 +100,7 @@ describe('BancorVault', () => {
 
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
-                        ).to.be.revertedWith(symbol !== 'ETH' ? 'ERC20: transfer amount exceeds balance' : '');
+                        ).to.be.revertedWith(symbol !== 'ETH' ? 'SafeERC20: low-level call failed' : '');
                     });
 
                     it('should be able to withdraw any tokens', async () => {

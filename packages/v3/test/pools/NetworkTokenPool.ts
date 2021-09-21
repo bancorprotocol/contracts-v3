@@ -167,7 +167,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to burn more than balance of the vault', async () => {
             await expect(network.burnFromVaultT(amount.add(BigNumber.from(1)))).to.be.revertedWith(
-                'ERC20: transfer amount exceeds balance'
+                'SafeERC20: low-level call failed'
             );
         });
 
