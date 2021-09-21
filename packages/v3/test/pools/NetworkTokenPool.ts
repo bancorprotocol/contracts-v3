@@ -742,9 +742,8 @@ describe('NetworkTokenPool', () => {
                 it('should revert when attempting to deposit without sending the network tokens', async () => {
                     const amount = BigNumber.from(1);
 
-                    await expect(
-                        network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0))
-                    ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                    await expect(network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0)))
+                        .to.be.reverted;
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
@@ -965,7 +964,7 @@ describe('NetworkTokenPool', () => {
 
                         await expect(
                             network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                        ).to.be.revertedWith('ERR_UNDERFLOW');
                     });
 
                     it('should revert when attempting to deposit without approving the network tokens', async () => {

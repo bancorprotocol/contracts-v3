@@ -907,9 +907,7 @@ describe('BancorNetwork', () => {
                                         });
 
                                         it('should revert when attempting to deposit without approving the network', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWith(
-                                                'ERC20: transfer amount exceeds allowance'
-                                            );
+                                            await expect(deposit(amount)).to.be.reverted;
                                         });
                                     }
 
@@ -1536,7 +1534,7 @@ describe('BancorNetwork', () => {
                         if (isNetworkToken) {
                             it('should revert when attempting to withdraw without approving the governance token amount', async () => {
                                 await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERC20: transfer amount exceeds allowance'
+                                    'ERR_UNDERFLOW'
                                 );
                             });
 
@@ -1545,7 +1543,7 @@ describe('BancorNetwork', () => {
                                 await govToken.connect(provider).approve(network.address, poolTokenAmount);
 
                                 await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERC20: transfer amount exceeds balance'
+                                    'ERR_UNDERFLOW'
                                 );
                             });
                         }
