@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
+import { SafeMath, MathEx, Output, validAmount, validPortion, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
@@ -25,7 +25,7 @@ library ArbitrageFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory) {
-        validate(a, b, c, e, m, n, x);
+        validate(a, b, c, e, m, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
         return surplus(surplus(a, b, c, e, m, n, x, y, z), a, b, y, z);
@@ -40,7 +40,7 @@ library ArbitrageFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory output) {
-        validate(a, b, c, e, m, n, x);
+        validate(a, b, c, e, m, n, x, true);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
         return deficit(deficit(a, b, c, e, m, n, x, y, z), a, b, y, z);
@@ -57,7 +57,6 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) {
-        assert(b + c >= e);
         data.f = MathEx.mulDivF(a, y.sub(z), y);
         data.g = MathEx.mulDivF(b, y.sub(z), y);
         data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M);
@@ -76,7 +75,6 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) {
-        assert(b + c < e);
         data.f = MathEx.mulDivF(a, y.sub(z), y);
         data.g = MathEx.mulDivF(b, y.sub(z), y);
         data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M);
@@ -117,14 +115,16 @@ library ArbitrageFormula {
         uint256 e,
         uint256 m,
         uint256 n,
-        uint256 x
+        uint256 x,
+        bool isDeficit
     ) private pure {
-        assert(a <= MAX_UINT128);
-        assert(b <= MAX_UINT128);
-        assert(c <= MAX_UINT128);
-        assert(e <= MAX_UINT128);
-        assert(x <= MAX_UINT128);
-        assert(m <= M);
-        assert(n <= M);
+        validAmount(a);
+        validAmount(b);
+        validAmount(c);
+        validAmount(e);
+        validAmount(x);
+        validPortion(m);
+        validPortion(n);
+        assert((b + c < e) == isDeficit);
     }
 }

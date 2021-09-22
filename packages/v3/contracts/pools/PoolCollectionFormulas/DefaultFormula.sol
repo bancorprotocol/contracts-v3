@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
+import { SafeMath, MathEx, Output, validAmount, validPortion, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
@@ -17,8 +17,7 @@ library DefaultFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory output) {
-        validate(a, b, c, e, n, x);
-        assert(b + c >= e);
+        validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
         output.p = MathEx.mulDivF(a, z, y);
@@ -36,8 +35,7 @@ library DefaultFormula {
         uint256 n,
         uint256 x
     ) internal pure returns (Output memory output) {
-        validate(a, b, c, e, n, x);
-        assert(b + c < e);
+        validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
         output.p = MathEx.mulDivF(a, z, y);
@@ -53,13 +51,15 @@ library DefaultFormula {
         uint256 c,
         uint256 e,
         uint256 n,
-        uint256 x
+        uint256 x,
+        bool isDeficit
     ) private pure {
-        assert(a <= MAX_UINT128);
-        assert(b <= MAX_UINT128);
-        assert(c <= MAX_UINT128);
-        assert(e <= MAX_UINT128);
-        assert(x <= MAX_UINT128);
-        assert(n <= M);
+        validAmount(a);
+        validAmount(b);
+        validAmount(c);
+        validAmount(e);
+        validAmount(x);
+        validPortion(n);
+        assert((b + c < e) == isDeficit);
     }
 }

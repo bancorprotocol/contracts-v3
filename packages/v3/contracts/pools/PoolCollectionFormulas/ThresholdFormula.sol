@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, MAX_UINT128, MAX_UINT256, M } from "./Common.sol";
+import { SafeMath, validAmount, validPortion, MAX_UINT256, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
@@ -21,14 +21,8 @@ library ThresholdFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        validate(b, c, e, m, n, x);
-        assert(b + c >= e);
-
+    ) internal pure returns (bool) {
+        validate(b, c, e, m, n, x, false);
         uint512 memory hMaxD;
         uint512 memory hMaxN = mul256(b * e, ((b + c) * M).mul(e * n + (b + c - e) * m)); // be(b+c)(en+(b+c-e)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * M * M));                                  // + bbb
@@ -37,8 +31,8 @@ library ThresholdFormula {
         hMaxD = add512(hMaxD, mul256(b * e, e * (M - n) * (M - m)));                      // + bee(1-n)(1-m)
         hMaxD = add512(hMaxD, mul256(c * c, c * M * M));                                  // + ccc
         hMaxD = add512(hMaxD, mul256(c * e, e * (M - n) * (M - n)));                      // + cee(1-n)(1-n)
-        hMaxD = sub512(hMaxD, mul256(b * b, e * (M - n) * (2 * M - m)));                  // - bbe(1-n)*(2-m)
-        hMaxD = sub512(hMaxD, mul256(b * c, e * (M - n) * (4 * M - m)));                  // - bce(1-n)*(4-m)
+        hMaxD = sub512(hMaxD, mul256(b * b, e * (M - n) * (2 * M - m)));                  // - bbe(1-n)(2-m)
+        hMaxD = sub512(hMaxD, mul256(b * c, e * (M - n) * (4 * M - m)));                  // - bce(1-n)(4-m)
         hMaxD = sub512(hMaxD, mul256(c * c, e * (M - n) * 2 * M));                        // - 2cce(1-n)
         return gt512(hMaxN, mul512(hMaxD, x));
     }
@@ -50,14 +44,8 @@ library ThresholdFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        validate(b, c, e, m, n, x);
-        assert(b + c < e);
-
+    ) internal pure returns (bool) {
+        validate(b, c, e, m, n, x, true);
         uint512 memory hMaxD;
         uint512 memory hMaxN = mul256(b * e, (b + c).mul(e * (n * M + (M - n) * m) - (b + c) * m * M)); // be(b+c)(e(n+(1-n)m)-(b+c)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * (M - 2 * m) * M));                                      // + bbb(1-2m)
@@ -78,14 +66,18 @@ library ThresholdFormula {
         uint256 e,
         uint256 m,
         uint256 n,
-        uint256 x
+        uint256 x,
+        bool isDeficit
     ) private pure {
-        assert(b <= MAX_UINT128);
-        assert(c <= MAX_UINT128);
-        assert(e <= MAX_UINT128);
-        assert(x <= MAX_UINT128);
-        assert(m <= M / 2);
-        assert(n <= M / 2);
+        validAmount(b);
+        validAmount(c);
+        validAmount(e);
+        validAmount(x);
+        validPortion(m);
+        validPortion(n);
+        validPortion(m * 2);
+        validPortion(n * 2);
+        assert((b + c < e) == isDeficit);
     }
 
     /**
