@@ -21,7 +21,6 @@ import {
     TestPoolCollection__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
-    TestSystemToken__factory,
     TestUpgradeable__factory,
     TokenHolder__factory,
     TransparentUpgradeableProxy__factory
@@ -55,7 +54,6 @@ const getContracts = (signer?: Signer) => ({
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
-    TestSystemToken: deployOrAttach('TestSystemToken', TestSystemToken__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
