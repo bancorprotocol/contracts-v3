@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { MAX_UINT128, PPM_RESOLUTION } from "../../utility/Constants.sol";
 import { MathEx } from "../../utility/MathEx.sol";
