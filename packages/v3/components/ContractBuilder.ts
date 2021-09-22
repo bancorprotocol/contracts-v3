@@ -26,6 +26,7 @@ export type FactoryConstructor<F extends ContractFactory> = {
     abi: unknown;
     bytecode: string;
 };
+
 export const deployOrAttach = <F extends ContractFactory>(
     contractName: string,
     // @TODO: needs to replace with correctly typed params but it doesn't
