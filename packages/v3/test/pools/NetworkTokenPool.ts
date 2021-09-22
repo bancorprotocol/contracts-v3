@@ -739,7 +739,7 @@ describe('NetworkTokenPool', () => {
                     );
                 };
 
-                it.only('should revert when attempting to deposit without sending the network tokens', async () => {
+                it('should revert when attempting to deposit without sending the network tokens', async () => {
                     const amount = BigNumber.from(1);
 
                     await expect(
@@ -827,7 +827,7 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
-            await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(1))).to.be.reverted; // division by 0
+            await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(1))).to.be.revertedWith(''); // division by 0
         });
 
         context('with a whitelisted and registered pool', () => {

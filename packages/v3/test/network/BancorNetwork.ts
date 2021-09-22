@@ -906,7 +906,7 @@ describe('BancorNetwork', () => {
                                             await reserveToken.transfer(sender.address, amount);
                                         });
 
-                                        it.only('should revert when attempting to deposit without approving the network', async () => {
+                                        it('should revert when attempting to deposit without approving the network', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith(
                                                 symbol === 'BNT' ? '' : 'ERC20: transfer amount exceeds allowance'
                                             );
