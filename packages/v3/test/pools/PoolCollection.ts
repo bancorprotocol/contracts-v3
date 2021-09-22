@@ -1295,14 +1295,16 @@ describe('PoolCollection', () => {
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
 
-        const testTrading = (fromNetworkToken: boolean) => {
-            context(`${fromNetworkToken ? 'from' : 'to'} the network token`, () => {
+        const testTrading = (isSourceNetworkToken: boolean) => {
+            const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
+            const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
+            context(`from ${fromTokenName} to ${toTokenName}`, () => {
                 let sourcePool: TestERC20Token;
                 let targetPool: TestERC20Token;
 
                 beforeEach(async () => {
-                    sourcePool = fromNetworkToken ? networkToken : reserveToken;
-                    targetPool = fromNetworkToken ? reserveToken : networkToken;
+                    sourcePool = isSourceNetworkToken ? networkToken : reserveToken;
+                    targetPool = isSourceNetworkToken ? reserveToken : networkToken;
                 });
 
                 it('should revert when attempting to trade from a non-network', async () => {
@@ -1538,19 +1540,23 @@ describe('PoolCollection', () => {
                 });
 
                 context('with sufficient network token liquidity', () => {
-                    const testTargetPool = fromNetworkToken;
-                    const amount = BigNumber.from(12345);
+                    const testTargetPool = isSourceNetworkToken;
 
                     beforeEach(async () => {
+                        const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
+                        const baseTokenTradingLiquidity = BigNumber.from(0);
+
                         await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                            networkTokenTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING,
-                            baseTokenTradingLiquidity: BigNumber.from(0),
-                            tradingLiquidityProduct: BigNumber.from(0),
-                            stakedBalance: BigNumber.from(0)
+                            networkTokenTradingLiquidity,
+                            baseTokenTradingLiquidity,
+                            tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                            stakedBalance: baseTokenTradingLiquidity
                         });
                     });
 
                     context(`with insufficient ${testTargetPool ? 'target' : 'source'} pool balance`, () => {
+                        const amount = BigNumber.from(12345);
+
                         if (testTargetPool) {
                             it('should revert when attempting to trade or query', async () => {
                                 await expect(
@@ -1571,11 +1577,15 @@ describe('PoolCollection', () => {
                             for (const sourceBalance of [BigNumber.from(0), amount.sub(BigNumber.from(1))]) {
                                 context(`with ${sourceBalance} source pool balance`, () => {
                                     beforeEach(async () => {
+                                        const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
+                                        const baseTokenTradingLiquidity = sourceBalance;
+
                                         await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                                            networkTokenTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING,
-                                            baseTokenTradingLiquidity: sourceBalance,
-                                            tradingLiquidityProduct: sourceBalance.mul(MIN_LIQUIDITY_FOR_TRADING),
-                                            stakedBalance: sourceBalance
+                                            networkTokenTradingLiquidity,
+                                            baseTokenTradingLiquidity,
+                                            tradingLiquidityProduct:
+                                                networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                                            stakedBalance: baseTokenTradingLiquidity
                                         });
                                     });
 
@@ -1602,12 +1612,55 @@ describe('PoolCollection', () => {
                             }
                         }
                     });
+
+                    context('with sufficient target and source pool balances', () => {
+                        beforeEach(async () => {
+                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BigNumber.from(1000));
+
+                            // for the tests below, ensure that the source to target ratio above 1, such that a zero
+                            // trading result is possible
+                            const baseTokenTradingLiquidity = isSourceNetworkToken
+                                ? networkTokenTradingLiquidity.div(BigNumber.from(2))
+                                : networkTokenTradingLiquidity.mul(BigNumber.from(2));
+
+                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                                networkTokenTradingLiquidity,
+                                baseTokenTradingLiquidity,
+                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                                stakedBalance: baseTokenTradingLiquidity
+                            });
+                        });
+
+                        it('should revert when the trade result is zero', async () => {
+                            await expect(
+                                network.tradePoolCollectionT(
+                                    poolCollection.address,
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    BigNumber.from(1),
+                                    MIN_RETURN_AMOUNT
+                                )
+                            ).to.be.revertedWith('ERR_ZERO_TARGET_AMOUNT');
+                        });
+
+                        it('should revert when the trade result is below the minimum return amount', async () => {
+                            await expect(
+                                network.tradePoolCollectionT(
+                                    poolCollection.address,
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    toWei(BigNumber.from(12345)),
+                                    MAX_UINT256
+                                )
+                            ).to.be.revertedWith('ERR_RETURN_TOO_LOW');
+                        });
+                    });
                 });
             });
         };
 
-        for (const fromNetworkToken of [true, false]) {
-            testTrading(fromNetworkToken);
+        for (const isSourceNetworkToken of [true, false]) {
+            testTrading(isSourceNetworkToken);
         }
     });
 
