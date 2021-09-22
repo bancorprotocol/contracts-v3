@@ -15,7 +15,7 @@ contract TestArbitrageFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbitrageFormula.Output memory) {
+    ) external pure returns (Output memory) {
         return ArbitrageFormula.surplus(a, b, c, e, m, n, x);
     }
 
@@ -27,7 +27,7 @@ contract TestArbitrageFormula {
         uint256 m,
         uint256 n,
         uint256 x
-    ) external pure returns (ArbitrageFormula.Output memory) {
+    ) external pure returns (Output memory) {
         return ArbitrageFormula.deficit(a, b, c, e, m, n, x);
     }
 }

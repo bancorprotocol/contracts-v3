@@ -14,7 +14,7 @@ contract TestDefaultFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) external pure returns (DefaultFormula.Output memory) {
+    ) external pure returns (Output memory) {
         return DefaultFormula.surplus(a, b, c, e, n, x);
     }
 
@@ -25,7 +25,7 @@ contract TestDefaultFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) external pure returns (DefaultFormula.Output memory) {
+    ) external pure returns (Output memory) {
         return DefaultFormula.deficit(a, b, c, e, n, x);
     }
 }

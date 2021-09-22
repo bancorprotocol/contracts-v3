@@ -1,26 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-
-import { MAX_UINT128, PPM_RESOLUTION } from "../../utility/Constants.sol";
-import { MathEx } from "../../utility/MathEx.sol";
+import { SafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
  */
 library DefaultFormula {
     using SafeMath for uint256;
-
-    uint256 private constant M = PPM_RESOLUTION;
-
-    struct Output {
-        uint256 p; // BNT trading liquidity removed from the pool
-        uint256 q; // BNT minted for the user as compensation
-        uint256 r; // TKN trading liquidity removed from the pool
-        uint256 s; // TKN removed from the vault
-        uint256 t; // BNT received by the user
-    }
 
     function surplus(
         uint256 a,
