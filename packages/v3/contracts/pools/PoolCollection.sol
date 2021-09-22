@@ -1302,8 +1302,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         view
         returns (TradingParams memory params)
     {
-        params.isSourceNetworkToken = address(sourcePool) == address(_networkToken);
-        params.pool = params.isSourceNetworkToken ? targetPool : sourcePool;
+        if (address(sourcePool) == address(_networkToken)) {
+            params.isSourceNetworkToken = true;
+            params.pool = targetPool;
+        } else if (address(targetPool) == address(_networkToken)) {
+            params.isSourceNetworkToken = false;
+            params.pool = sourcePool;
+        } else {
+            revert("ERR_INVALID_POOLS");
+        }
 
         Pool memory poolData = _poolData[params.pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");

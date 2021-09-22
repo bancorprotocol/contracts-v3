@@ -1276,6 +1276,274 @@ describe('PoolCollection', () => {
         }
     });
 
+    describe('trading', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let networkToken: TestERC20Token;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        const MIN_RETURN_AMOUNT = BigNumber.from(1);
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkSettings, poolCollection } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            reserveToken = await Contracts.TestERC20Token.deploy(SYMBOL, SYMBOL, BigNumber.from(1_000_000));
+
+            await createPool(reserveToken, network, networkSettings, poolCollection);
+        });
+
+        const testTrading = (fromNetworkToken: boolean) => {
+            context(`${fromNetworkToken ? 'from' : 'to'} the network token`, () => {
+                let sourcePool: TestERC20Token;
+                let targetPool: TestERC20Token;
+
+                beforeEach(async () => {
+                    sourcePool = fromNetworkToken ? networkToken : reserveToken;
+                    targetPool = fromNetworkToken ? reserveToken : networkToken;
+                });
+
+                it('should revert when attempting to trade from a non-network', async () => {
+                    const nonNetwork = deployer;
+
+                    await expect(
+                        poolCollection
+                            .connect(nonNetwork)
+                            .trade(sourcePool.address, targetPool.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
+                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                });
+
+                it('should revert when attempting to trade or query using an invalid source pool', async () => {
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            ZERO_ADDRESS,
+                            targetPool.address,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(ZERO_ADDRESS, targetPool.address, BigNumber.from(1))
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(ZERO_ADDRESS, targetPool.address, BigNumber.from(1))
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                });
+
+                it('should revert when attempting to trade or query using an invalid target pool', async () => {
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            sourcePool.address,
+                            ZERO_ADDRESS,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(sourcePool.address, ZERO_ADDRESS, BigNumber.from(1))
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(sourcePool.address, ZERO_ADDRESS, BigNumber.from(1))
+                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                });
+
+                it('should revert when attempting to trade or query using a non-existing source pool', async () => {
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                        SYMBOL,
+                        SYMBOL,
+                        BigNumber.from(1_000_000)
+                    );
+
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            reserveToken2.address,
+                            networkToken.address,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(
+                            reserveToken2.address,
+                            networkToken.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(
+                            reserveToken2.address,
+                            networkToken.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+                });
+
+                it('should revert when attempting to trade or query using a non-existing target pool', async () => {
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                        SYMBOL,
+                        SYMBOL,
+                        BigNumber.from(1_000_000)
+                    );
+
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            networkToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(
+                            networkToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(
+                            networkToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
+                });
+
+                it('should revert when attempting to trade or query using an invalid source and target pool pair', async () => {
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                        SYMBOL,
+                        SYMBOL,
+                        BigNumber.from(1_000_000)
+                    );
+
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            reserveToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(
+                            reserveToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(
+                            reserveToken.address,
+                            reserveToken2.address,
+                            BigNumber.from(1)
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+                });
+
+                it('should revert when attempting to trade or query with an invalid amount', async () => {
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            sourcePool.address,
+                            targetPool.address,
+                            BigNumber.from(0),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_ZERO_VALUE');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(0))
+                    ).to.be.revertedWith('ERR_ZERO_VALUE');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(0))
+                    ).to.be.revertedWith('ERR_ZERO_VALUE');
+                });
+
+                it('should revert when attempting to trade with an invalid minimum return amount', async () => {
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            sourcePool.address,
+                            targetPool.address,
+                            BigNumber.from(1),
+                            BigNumber.from(0)
+                        )
+                    ).to.be.revertedWith('ERR_ZERO_VALUE');
+                });
+
+                context('when trading is disabled', () => {
+                    beforeEach(async () => {
+                        await poolCollection.enableTrading(reserveToken.address, false);
+                    });
+
+                    it('should revert when attempting to trade or query', async () => {
+                        await expect(
+                            network.tradePoolCollectionT(
+                                poolCollection.address,
+                                sourcePool.address,
+                                targetPool.address,
+                                BigNumber.from(1),
+                                MIN_RETURN_AMOUNT
+                            )
+                        ).to.be.revertedWith('ERR_TRADING_DISABLED');
+
+                        await expect(
+                            poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                        ).to.be.revertedWith('ERR_TRADING_DISABLED');
+
+                        await expect(
+                            poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                        ).to.be.revertedWith('ERR_TRADING_DISABLED');
+                    });
+                });
+
+                context('with insufficient network token liquidity', () => {
+                    it('should revert when attempting to trade or query', async () => {
+                        await expect(
+                            network.tradePoolCollectionT(
+                                poolCollection.address,
+                                sourcePool.address,
+                                targetPool.address,
+                                BigNumber.from(1),
+                                MIN_RETURN_AMOUNT
+                            )
+                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+
+                        await expect(
+                            poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+
+                        await expect(
+                            poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+                    });
+                });
+            });
+        };
+
+        for (const fromNetworkToken of [true, false]) {
+            testTrading(fromNetworkToken);
+        }
+    });
+
     describe('fee collection', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
