@@ -1536,6 +1536,73 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
                     });
                 });
+
+                context('with sufficient network token liquidity', () => {
+                    const testTargetPool = fromNetworkToken;
+                    const amount = BigNumber.from(12345);
+
+                    beforeEach(async () => {
+                        await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                            networkTokenTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING,
+                            baseTokenTradingLiquidity: BigNumber.from(0),
+                            tradingLiquidityProduct: BigNumber.from(0),
+                            stakedBalance: BigNumber.from(0)
+                        });
+                    });
+
+                    context(`with insufficient ${testTargetPool ? 'target' : 'source'} pool balance`, () => {
+                        if (testTargetPool) {
+                            it('should revert when attempting to trade or query', async () => {
+                                await expect(
+                                    network.tradePoolCollectionT(
+                                        poolCollection.address,
+                                        sourcePool.address,
+                                        targetPool.address,
+                                        amount,
+                                        MIN_RETURN_AMOUNT
+                                    )
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                await expect(
+                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            });
+                        } else {
+                            for (const sourceBalance of [BigNumber.from(0), amount.sub(BigNumber.from(1))]) {
+                                context(`with ${sourceBalance} source pool balance`, () => {
+                                    beforeEach(async () => {
+                                        await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                                            networkTokenTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING,
+                                            baseTokenTradingLiquidity: sourceBalance,
+                                            tradingLiquidityProduct: sourceBalance.mul(MIN_LIQUIDITY_FOR_TRADING),
+                                            stakedBalance: sourceBalance
+                                        });
+                                    });
+
+                                    it('should revert when attempting to trade or query', async () => {
+                                        await expect(
+                                            network.tradePoolCollectionT(
+                                                poolCollection.address,
+                                                sourcePool.address,
+                                                targetPool.address,
+                                                amount,
+                                                MIN_RETURN_AMOUNT
+                                            )
+                                        ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                        await expect(
+                                            poolCollection.targetAmountAndFee(
+                                                sourcePool.address,
+                                                targetPool.address,
+                                                amount
+                                            )
+                                        ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                                    });
+                                });
+                            }
+                        }
+                    });
+                });
             });
         };
 
