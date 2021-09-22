@@ -739,11 +739,12 @@ describe('NetworkTokenPool', () => {
                     );
                 };
 
-                it('should revert when attempting to deposit without sending the network tokens', async () => {
+                it.only('should revert when attempting to deposit without sending the network tokens', async () => {
                     const amount = BigNumber.from(1);
 
-                    await expect(network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0)))
-                        .to.be.reverted;
+                    await expect(
+                        network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0))
+                    ).to.be.revertedWith('');
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
