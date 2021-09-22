@@ -5,8 +5,6 @@ pragma abicoder v2;
 import "../pools/PoolCollectionFormulas/DefaultFormula.sol";
 
 contract TestDefaultFormula {
-    using DefaultFormula for *;
-
     function surplus(
         uint256 a,
         uint256 b,

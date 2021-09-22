@@ -5,8 +5,6 @@ pragma abicoder v2;
 import "../pools/PoolCollectionFormulas/ArbitrageFormula.sol";
 
 contract TestArbitrageFormula {
-    using ArbitrageFormula for *;
-
     function surplus(
         uint256 a,
         uint256 b,

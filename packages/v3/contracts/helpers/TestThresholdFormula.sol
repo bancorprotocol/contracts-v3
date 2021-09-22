@@ -4,8 +4,6 @@ pragma solidity 0.7.6;
 import "../pools/PoolCollectionFormulas/ThresholdFormula.sol";
 
 contract TestThresholdFormula {
-    using ThresholdFormula for *;
-
     function surplus(
         uint256 b,
         uint256 c,
