@@ -24,7 +24,7 @@ import {
     getTransactionCost,
     TokenWithAddress,
     createWallet,
-    tokenErrorMessageExceedsAllowance
+    errorMessageTokenExceedsAllowance
 } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -915,7 +915,7 @@ describe('BancorNetwork', () => {
 
                                         it('should revert when attempting to deposit without approving the network', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith(
-                                                tokenErrorMessageExceedsAllowance(symbol)
+                                                errorMessageTokenExceedsAllowance(symbol)
                                             );
                                         });
                                     }

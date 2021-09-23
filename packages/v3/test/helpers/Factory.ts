@@ -11,7 +11,7 @@ import {
     TestPoolCollection
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { STANDARD_DECIMALS } from './Constants';
+import { DEFAULT_DECIMALS } from './Constants';
 import { toAddress, TokenWithAddress } from './Utils';
 import { TokenGovernance } from '@bancor/token-governance';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -106,14 +106,14 @@ export const createGovernedTokens = async () => {
         TOTAL_SUPPLY,
         'BNT',
         'BNT',
-        STANDARD_DECIMALS
+        DEFAULT_DECIMALS
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
         TOTAL_SUPPLY,
         'vBNT',
         'vBNT',
-        STANDARD_DECIMALS
+        DEFAULT_DECIMALS
     );
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };

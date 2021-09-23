@@ -80,7 +80,7 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const tokenErrorMessageExceedsAllowance = (symbol: string): string => {
+export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
     switch (symbol) {
         case 'BNT':
             return '';
@@ -93,7 +93,7 @@ export const tokenErrorMessageExceedsAllowance = (symbol: string): string => {
     }
 };
 
-export const tokenErrorMessageExceedsBalance = (symbol: string): string => {
+export const errorMessageTokenExceedsBalance = (symbol: string): string => {
     switch (symbol) {
         case 'BNT':
             return 'SafeERC20: low-level call failed';
