@@ -577,25 +577,40 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         Pool storage poolData = _poolData[params.pool];
 
         // update the recent average rate
-        _updateAverageRate(
-            poolData,
+        AverageRate memory currentAverageRate = poolData.averageRate;
+        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(
             Fraction({
                 n: params.liquidity.networkTokenTradingLiquidity,
                 d: params.liquidity.baseTokenTradingLiquidity
-            })
+            }),
+            currentAverageRate,
+            _time()
         );
 
+        if (
+            newAverageRate.time != currentAverageRate.time ||
+            !PoolAverageRate.isEqual(newAverageRate, currentAverageRate)
+        ) {
+            poolData.averageRate = newAverageRate;
+        }
+
         // sync the reserve balances
+        uint256 newNetworkTokenTradingLiquidity;
+        uint256 newBaseTokenTradingLiquidity;
         if (params.isSourceNetworkToken) {
-            poolData.liquidity.networkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
-            poolData.liquidity.baseTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
+            newNetworkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
+            newBaseTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
 
             // if the target token is a base token, make sure add the fee to the staked balance
             poolData.liquidity.stakedBalance = params.liquidity.stakedBalance.add(tradeAmounts.feeAmount);
         } else {
-            poolData.liquidity.baseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
-            poolData.liquidity.networkTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
+            newBaseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
+            newNetworkTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
         }
+
+        poolData.liquidity.networkTokenTradingLiquidity = newNetworkTokenTradingLiquidity;
+        poolData.liquidity.baseTokenTradingLiquidity = newBaseTokenTradingLiquidity;
+        poolData.liquidity.tradingLiquidityProduct = newNetworkTokenTradingLiquidity.mul(newBaseTokenTradingLiquidity);
 
         return tradeAmounts;
     }
@@ -1366,22 +1381,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
         uint256 fullTargetAmount = targetAmount.add(feeAmount);
-        uint256 sourceAmount = fullTargetAmount == 0
-            ? 0
-            : MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
+        uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
-    }
-
-    /**
-     * @dev updates the recent average rate
-     */
-    function _updateAverageRate(Pool storage poolData, Fraction memory spotRate) private {
-        // update the recent average rate
-        AverageRate memory currentAverageRate = poolData.averageRate;
-        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
-        if (!PoolAverageRate.isEqual(newAverageRate, currentAverageRate)) {
-            poolData.averageRate = newAverageRate;
-        }
     }
 }

@@ -1,9 +1,3 @@
-import Contracts from '../../components/Contracts';
-import { NetworkSettings, PoolToken, TestBancorNetwork, TestERC20Token, TestPoolCollection } from '../../typechain';
-import { INVALID_FRACTION, ZERO_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
-import { createPool, createSystem } from '../helpers/Factory';
-import { toWei } from '../helpers/Types';
-import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -11,12 +5,27 @@ import { BigNumber } from 'ethers';
 import fs from 'fs';
 import { ethers } from 'hardhat';
 import path from 'path';
+import Contracts from '../../components/Contracts';
+import {
+    NetworkSettings,
+    PoolToken,
+    TestBancorNetwork,
+    TestERC20Token,
+    TestPoolCollection,
+    TestPoolAverageRate,
+    PoolCollection
+} from '../../typechain';
+import { INVALID_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../helpers/Constants';
+import { createPool, createSystem } from '../helpers/Factory';
+import { duration } from '../helpers/Time';
+import { toWei } from '../helpers/Types';
+import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
     const POOL_TYPE = BigNumber.from(1);
     const SYMBOL = 'TKN';
-    const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1000));
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
     const TRADING_STATUS_UPDATE_OWNER = 0;
@@ -1656,6 +1665,177 @@ describe('PoolCollection', () => {
                         });
                     });
                 });
+
+                // for (const seconds of [0, 1, 2, 3, 10, 100, 200, 300, 400, 500]) {
+
+                interface Spec {
+                    sourceBalance: BigNumber;
+                    targetBalance: BigNumber;
+                    tradingFeePPM: number;
+                    amount: BigNumber;
+                    intervals: number[];
+                }
+
+                const testTrading = (spec: Spec) => {
+                    const { sourceBalance, targetBalance, tradingFeePPM, amount, intervals } = spec;
+
+                    context(`with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${intervals}]`, () => {
+                        type Unpack<T> = T extends Promise<infer U> ? U : T;
+                        type PoolData = Unpack<ReturnType<TestPoolCollection['poolData']>>;
+                        const expectedAverageRate = async (poolData: PoolData, timeElapsed: number) => {
+                            const { liquidity } = poolData;
+
+                            return poolAverageRate.calcAverageRate(
+                                { n: liquidity.networkTokenTradingLiquidity, d: liquidity.baseTokenTradingLiquidity },
+                                poolData.averageRate,
+                                timeElapsed
+                            );
+                        };
+
+                        let poolAverageRate: TestPoolAverageRate;
+
+                        before(async () => {
+                            poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
+                        });
+
+                        beforeEach(async () => {
+                            const networkTokenTradingLiquidity = isSourceNetworkToken ? sourceBalance : targetBalance;
+                            const baseTokenTradingLiquidity = isSourceNetworkToken ? targetBalance : sourceBalance;
+
+                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                                networkTokenTradingLiquidity,
+                                baseTokenTradingLiquidity,
+                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                                stakedBalance: baseTokenTradingLiquidity
+                            });
+
+                            await poolCollection.setAverageRateT(reserveToken.address, {
+                                time: 0,
+                                rate: { n: networkTokenTradingLiquidity, d: baseTokenTradingLiquidity }
+                            });
+
+                            await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
+                        });
+
+                        it.only('should perform a trade', async () => {
+                            for (const interval of intervals) {
+                                await poolCollection.setTime(interval);
+
+                                const prevPoolData = await poolCollection.poolData(reserveToken.address);
+                                const { liquidity: prevLiquidity } = prevPoolData;
+
+                                // TODO:
+                                //
+                                // const prevRate = {
+                                //     n: prevLiquidity.networkTokenTradingLiquidity,
+                                //     d: prevLiquidity.baseTokenTradingLiquidity
+                                // };
+
+                                const targetAmountAndFee = await poolCollection.targetAmountAndFee(
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    amount
+                                );
+                                const sourceAmountAndFee = await poolCollection.sourceAmountAndFee(
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    targetAmountAndFee.amount
+                                );
+
+                                const tradeAmounts = await network.callStatic.tradePoolCollectionT(
+                                    poolCollection.address,
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    amount,
+                                    MIN_RETURN_AMOUNT
+                                );
+
+                                await network.tradePoolCollectionT(
+                                    poolCollection.address,
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    amount,
+                                    MIN_RETURN_AMOUNT
+                                );
+
+                                expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
+                                expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
+                                expect(tradeAmounts.feeAmount).to.equal(amount.mul(tradingFeePPM).div(PPM_RESOLUTION));
+
+                                // TODO: delete
+                                // console.log('interval', interval);
+                                // console.log('targetAmountAndFee.amount', targetAmountAndFee.amount.toString());
+                                // console.log('targetAmountAndFee.feeAmount', targetAmountAndFee.feeAmount.toString());
+                                // console.log('sourceAmountAndFee.amount', sourceAmountAndFee.amount.toString());
+                                // console.log('sourceAmountAndFee.feeAmount', sourceAmountAndFee.feeAmount.toString());
+                                // TODO: restore
+                                // expect(sourceAmountAndFee.amount).to.almostEqual(
+                                //     amount,
+                                //     new Decimal(0),
+                                //     new Decimal(0.001)
+                                // );
+                                // expect(sourceAmountAndFee.feeAmount).to.almostEqual(
+                                //     targetAmountAndFee.feeAmount,
+                                //     new Decimal(0),
+                                //     new Decimal(0.002)
+                                // );
+
+                                const poolData = await poolCollection.poolData(reserveToken.address);
+                                const { liquidity } = poolData;
+
+                                if (isSourceNetworkToken) {
+                                    expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                                        prevLiquidity.networkTokenTradingLiquidity.add(amount)
+                                    );
+                                    expect(liquidity.baseTokenTradingLiquidity).to.equal(
+                                        prevLiquidity.baseTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                    );
+                                    expect(liquidity.stakedBalance).to.equal(
+                                        prevLiquidity.stakedBalance.add(tradeAmounts.feeAmount)
+                                    );
+                                } else {
+                                    expect(liquidity.baseTokenTradingLiquidity).to.equal(
+                                        prevLiquidity.baseTokenTradingLiquidity.add(amount)
+                                    );
+                                    expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                                        prevLiquidity.networkTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                    );
+                                }
+
+                                // verify that the CPMM invariant is preserved:
+                                // TODO:
+
+                                // verify that the average rate has been updated
+                                const expectedNewAverageRate = await expectedAverageRate(prevPoolData, interval);
+                                expect(poolData.averageRate.time).to.equal(expectedNewAverageRate.time);
+                                expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
+                            }
+                        });
+                    });
+                };
+
+                describe('regular tests', () => {
+                    for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(5_000_000))]) {
+                        for (const targetBalance of [
+                            toWei(BigNumber.from(1_000_000)),
+                            toWei(BigNumber.from(5_000_000))
+                        ]) {
+                            for (const tradingFeePPM of [0, 100_000]) {
+                                for (const amount of [toWei(BigNumber.from(1000))]) {
+                                    testTrading({
+                                        sourceBalance,
+                                        targetBalance,
+                                        tradingFeePPM,
+                                        amount,
+                                        intervals: [0, 200, 500]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // TODO: describe('@stress tests', () => {});
             });
         };
 
