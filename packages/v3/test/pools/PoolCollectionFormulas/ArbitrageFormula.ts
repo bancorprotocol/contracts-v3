@@ -41,7 +41,7 @@ describe('ArbitrageFormula', () => {
         }
 
         const tests = (numOfTestsPerFile: number = Number.MAX_SAFE_INTEGER) => {
-            const testSuccess = (fileName: string, maxErrors: MaxErrors) => {
+            const test = (fileName: string, maxErrors: MaxErrors) => {
                 const table: Row[] = JSON.parse(
                     fs.readFileSync(path.join(__dirname, '../../data', `${fileName}.json`), { encoding: 'utf8' })
                 ).slice(0, numOfTestsPerFile);
@@ -68,26 +68,7 @@ describe('ArbitrageFormula', () => {
                 }
             };
 
-            const testFailure = (fileName: string) => {
-                const table: Row[] = JSON.parse(
-                    fs.readFileSync(path.join(__dirname, '../../data', `${fileName}.json`), { encoding: 'utf8' })
-                ).slice(0, numOfTestsPerFile);
-
-                for (const {a, b, c, e, m, n, x} of table) {
-                    if (BigNumber.from(b).add(BigNumber.from(c)).gte(BigNumber.from(e))) {
-                        it(`${fileName} surplus(${[a, b, c, e, m, n, x]})`, async () => {
-                            await expect(formula.surplus(a, b, c, e, m, n, x)).to.be.revertedWith('');
-                        });
-                    }
-                    else {
-                        it(`${fileName} deficit(${[a, b, c, e, m, n, x]})`, async () => {
-                            await expect(formula.deficit(a, b, c, e, m, n, x)).to.be.revertedWith('');
-                        });
-                    }
-                }
-            };
-
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage1', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
@@ -96,7 +77,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage2', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000005') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000009') },
@@ -105,7 +86,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage3', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
@@ -114,7 +95,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage4', {
                     p: { absolute: new Decimal(2), relative: new Decimal('0.003') },
                     q: { absolute: new Decimal(2), relative: new Decimal('0.002') },
@@ -123,7 +104,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage5', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.000007') },
@@ -132,7 +113,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage6', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
@@ -141,7 +122,7 @@ describe('ArbitrageFormula', () => {
                 }
             );
 
-            testSuccess(
+            test(
                 'ArbitrageFormulaCoverage7', {
                     p: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
                     q: { absolute: new Decimal(1), relative: new Decimal('0.000003') },
@@ -149,8 +130,6 @@ describe('ArbitrageFormula', () => {
                     s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
-
-            testFailure('ArbitrageFormulaRevertCoverage');
         };
 
         describe('quick tests', () => {

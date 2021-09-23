@@ -60,8 +60,8 @@ library ArbitrageFormula {
         data.f = MathEx.mulDivF(a, y.sub(z), y);
         data.g = MathEx.mulDivF(b, y.sub(z), y);
         data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M);
-        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m)));
-        assert(a * x * n + b * data.k * M > MathEx.mulDivF(data.h * M, a * data.g + b * data.f, data.g));
+        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m)));
+        assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M));
     }
 
     function deficit(
@@ -78,8 +78,8 @@ library ArbitrageFormula {
         data.f = MathEx.mulDivF(a, y.sub(z), y);
         data.g = MathEx.mulDivF(b, y.sub(z), y);
         data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M);
-        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
-        assert(a * (x * n + data.h * M) > MathEx.mulDivF(b * M, data.k * data.g - data.f * data.h, data.g));
+        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
+        assert(x.mul(a * n).add(data.h.mul((a + 1) * M)) > data.k.mul(b * M));
     }
 
     function surplus(
