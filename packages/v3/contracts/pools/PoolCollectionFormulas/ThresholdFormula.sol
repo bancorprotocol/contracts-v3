@@ -53,7 +53,7 @@ library ThresholdFormula {
         hMaxD = add512(hMaxD, mul256(b * c, c * (M - 2 * m) * M * 3));                                  // + 3bcc(1-2m)
         hMaxD = add512(hMaxD, mul256(b * e, e * (M - n) * (M - m)));                                    // + bee(1-n)(1-m)
         hMaxD = add512(hMaxD, mul256(c * c, c * (M - 2 * m) * M));                                      // + ccc(1-2m)
-        hMaxD = add512(hMaxD, mul256(c * e, e * (M - n) * ((M - n) * (M - m) / M - m)));                // + cee(1-n)((1-n)(1-m)-m)
+        hMaxD = add512(hMaxD, mul256(c * e, e * (M - n) * ((M - n) * (M - m) - m * M) / M));            // + cee(1-n)((1-n)(1-m)-m)
         hMaxD = sub512(hMaxD, mul256(b * b, e * (2 * (M - n) * (M - m) - m * M)));                      // - bbe(2(1-n)(1-m)-m)
         hMaxD = sub512(hMaxD, mul256(b * c, e * (4 * (M - n) * (M - m) - m * (3 * M - n))));            // - bce(4(1-n)(1-m)-m(3-n))
         hMaxD = sub512(hMaxD, mul256(c * c, e * (2 * (M - n) * (M - m) - m * (2 * M - n))));            // - cce(2(1-n)(1-m)-m(2-n))
