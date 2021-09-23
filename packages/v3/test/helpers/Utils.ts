@@ -79,3 +79,32 @@ export const createWallet = async () => {
 
     return wallet;
 };
+
+export const tokenErrorMessageExceedsAllowance = (symbol: string): string => {
+    switch (symbol) {
+        case 'BNT':
+            return '';
+
+        case 'TKN':
+            return 'ERC20: transfer amount exceeds allowance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const tokenErrorMessageExceedsBalance = (symbol: string): string => {
+    switch (symbol) {
+        case 'BNT':
+            return 'SafeERC20: low-level call failed';
+
+        case 'ETH':
+            return '';
+
+        case 'TKN':
+            return 'ERC20: transfer amount exceeds balance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};

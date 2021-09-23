@@ -5,7 +5,7 @@ import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, getBalance, transfer } from '../helpers/Utils';
+import { TokenWithAddress, getBalance, transfer, tokenErrorMessageExceedsBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -100,13 +100,7 @@ describe('BancorVault', () => {
 
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
-                        ).to.be.revertedWith(
-                            symbol !== 'ETH'
-                                ? symbol === 'BNT'
-                                    ? 'SafeERC20: low-level call failed'
-                                    : 'ERC20: transfer amount exceeds balance'
-                                : ''
-                        );
+                        ).to.be.revertedWith(tokenErrorMessageExceedsBalance(symbol));
                     });
 
                     it('should be able to withdraw any tokens', async () => {

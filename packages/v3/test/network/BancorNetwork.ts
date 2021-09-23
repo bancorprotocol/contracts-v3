@@ -18,7 +18,14 @@ import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress, createWallet } from '../helpers/Utils';
+import {
+    createTokenBySymbol,
+    getBalance,
+    getTransactionCost,
+    TokenWithAddress,
+    createWallet,
+    tokenErrorMessageExceedsAllowance
+} from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet, Signer, utils, ContractTransaction } from 'ethers';
@@ -908,7 +915,7 @@ describe('BancorNetwork', () => {
 
                                         it('should revert when attempting to deposit without approving the network', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith(
-                                                symbol === 'BNT' ? '' : 'ERC20: transfer amount exceeds allowance'
+                                                tokenErrorMessageExceedsAllowance(symbol)
                                             );
                                         });
                                     }
