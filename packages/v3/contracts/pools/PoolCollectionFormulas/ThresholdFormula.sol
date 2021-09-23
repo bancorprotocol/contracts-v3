@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, validAmount, validPortion, MAX_UINT256, M } from "./Common.sol";
+import { SafeMath, MAX_UINT128, MAX_UINT256, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
@@ -69,14 +69,12 @@ library ThresholdFormula {
         uint256 x,
         bool isDeficit
     ) private pure {
-        validAmount(b);
-        validAmount(c);
-        validAmount(e);
-        validAmount(x);
-        validPortion(m);
-        validPortion(n);
-        validPortion(m * 2);
-        validPortion(n * 2);
+        assert(b <= MAX_UINT128);
+        assert(c <= MAX_UINT128);
+        assert(e <= MAX_UINT128);
+        assert(x <= MAX_UINT128);
+        assert(m <= M / 2);
+        assert(n <= M / 2);
         assert((b + c < e) == isDeficit);
     }
 

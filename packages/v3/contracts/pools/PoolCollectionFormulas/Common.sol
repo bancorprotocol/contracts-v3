@@ -14,11 +14,3 @@ struct Output {
     uint256 s; // TKN removed from the vault
     uint256 t; // BNT sent to the user
 }
-
-function validAmount(uint256 amount) pure {
-    require(amount <= MAX_UINT128, "ERR_INVALID_AMOUNT");
-}
-
-function validPortion(uint256 portion) pure {
-    require(portion <= M, "ERR_INVALID_PORTION");
-}
