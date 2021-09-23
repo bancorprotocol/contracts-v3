@@ -10,7 +10,7 @@ import { BigNumber } from 'ethers';
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
-    beforeEach(async () => {
+    before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
 
