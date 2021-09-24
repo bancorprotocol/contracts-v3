@@ -1,10 +1,3 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
-import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
-import fs from 'fs';
-import { ethers } from 'hardhat';
-import path from 'path';
 import Contracts from '../../components/Contracts';
 import {
     NetworkSettings,
@@ -18,6 +11,13 @@ import { INVALID_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACT
 import { createPool, createSystem } from '../helpers/Factory';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import Decimal from 'decimal.js';
+import { BigNumber } from 'ethers';
+import fs from 'fs';
+import { ethers } from 'hardhat';
+import path from 'path';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
@@ -1568,15 +1568,15 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+                        ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
 
                         await expect(
                             poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
-                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+                        ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
 
                         await expect(
                             poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
-                        ).to.be.revertedWith('ERR_INSUFFICIENT_NETWORK_LIQUIDITY');
+                        ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
                     });
                 });
 

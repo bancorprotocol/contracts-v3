@@ -1344,7 +1344,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // verify that liquidity is above the minimum network token liquidity for trading
         require(
             params.liquidity.networkTokenTradingLiquidity >= _settings.minLiquidityForTrading(),
-            "ERR_INSUFFICIENT_NETWORK_LIQUIDITY"
+            "ERR_NETWORK_LIQUIDITY_TOO_LOW"
         );
 
         if (params.isSourceNetworkToken) {
