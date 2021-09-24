@@ -1745,7 +1745,7 @@ describe('PoolCollection', () => {
                             await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                         });
 
-                        it.only('should perform a trade', async () => {
+                        it('should perform a trade', async () => {
                             for (const interval of intervals) {
                                 await poolCollection.setTime(interval);
 
