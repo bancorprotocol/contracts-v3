@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken, GovToken } from '../../components/LegacyContracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { toWei } from './Types';
@@ -54,11 +54,11 @@ export const transfer = async (
 
 export const createTokenBySymbol = async (
     symbol: string,
-    networkToken: TestERC20Token | NetworkToken | GovToken
+    networkToken: TestERC20Token | NetworkToken
 ): Promise<TokenWithAddress> => {
     switch (symbol) {
         case 'BNT':
-            return networkToken;
+            return networkToken as NetworkToken;
 
         case 'ETH':
             return { address: NATIVE_TOKEN_ADDRESS };
@@ -85,6 +85,9 @@ export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
         case 'BNT':
             return '';
 
+        case 'vBNT':
+            return 'ERR_UNDERFLOW';
+
         case 'TKN':
             return 'ERC20: transfer amount exceeds allowance';
 
@@ -97,6 +100,9 @@ export const errorMessageTokenExceedsBalance = (symbol: string): string => {
     switch (symbol) {
         case 'BNT':
             return 'SafeERC20: low-level call failed';
+
+        case 'vBNT':
+            return 'ERR_UNDERFLOW';
 
         case 'ETH':
             return '';
