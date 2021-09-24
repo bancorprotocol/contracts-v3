@@ -1446,7 +1446,7 @@ describe('PoolCollection', () => {
                     ).to.be.revertedWith('ERR_POOL_DOES_NOT_EXIST');
                 });
 
-                it('should revert when attempting to trade or query using an invalid source and target pool pair', async () => {
+                it('should revert when attempting to trade or query without using the network token as one of the pools', async () => {
                     const reserveToken2 = await Contracts.TestERC20Token.deploy(
                         SYMBOL,
                         SYMBOL,
@@ -1477,6 +1477,26 @@ describe('PoolCollection', () => {
                             reserveToken2.address,
                             BigNumber.from(1)
                         )
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+                });
+
+                it('should revert when attempting to trade or query using the network token as both of the pools', async () => {
+                    await expect(
+                        network.tradePoolCollectionT(
+                            poolCollection.address,
+                            networkToken.address,
+                            networkToken.address,
+                            BigNumber.from(1),
+                            MIN_RETURN_AMOUNT
+                        )
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+
+                    await expect(
+                        poolCollection.targetAmountAndFee(networkToken.address, networkToken.address, BigNumber.from(1))
+                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+
+                    await expect(
+                        poolCollection.sourceAmountAndFee(networkToken.address, networkToken.address, BigNumber.from(1))
                     ).to.be.revertedWith('ERR_INVALID_POOLS');
                 });
 

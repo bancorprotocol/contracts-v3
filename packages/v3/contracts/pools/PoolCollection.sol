@@ -1318,13 +1318,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         view
         returns (TradingParams memory params)
     {
-        if (address(sourcePool) == address(_networkToken)) {
+        // ensure that the network token is either the source or the target pool
+        bool isSourceNetworkToken = address(sourcePool) == address(_networkToken);
+        bool isTargetNetworkToken = address(targetPool) == address(_networkToken);
+        if (isSourceNetworkToken && !isTargetNetworkToken) {
             params.isSourceNetworkToken = true;
             params.pool = targetPool;
-        } else if (address(targetPool) == address(_networkToken)) {
+        } else if (!isSourceNetworkToken && isTargetNetworkToken) {
             params.isSourceNetworkToken = false;
             params.pool = sourcePool;
         } else {
+            // the network token isn't one of the pools or is both of them
             revert("ERR_INVALID_POOLS");
         }
 
