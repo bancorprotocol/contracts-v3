@@ -73,6 +73,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 d2;
     }
 
+    // trading-related preprocessed data
+    struct TradingParams {
+        uint256 sourceBalance;
+        uint256 targetBalance;
+        PoolLiquidity liquidity;
+        IReserveToken pool;
+        bool isSourceNetworkToken;
+        uint32 tradingFeePPM;
+    }
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -1298,15 +1308,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
-    }
-
-    struct TradingParams {
-        uint256 sourceBalance;
-        uint256 targetBalance;
-        PoolLiquidity liquidity;
-        IReserveToken pool;
-        bool isSourceNetworkToken;
-        uint32 tradingFeePPM;
     }
 
     /**
