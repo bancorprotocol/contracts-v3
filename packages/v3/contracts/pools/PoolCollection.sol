@@ -1362,8 +1362,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     ) private pure returns (TradeAmounts memory) {
         require(sourceBalance > sourceAmount && targetBalance > 0, "ERR_INVALID_POOL_BALANCE");
 
-        uint256 feeAmount = MathEx.mulDivF(sourceAmount, tradingFeePPM, PPM_RESOLUTION);
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance.add(sourceAmount));
+        uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
 
         return TradeAmounts({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
     }

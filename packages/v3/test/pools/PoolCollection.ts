@@ -1692,6 +1692,22 @@ describe('PoolCollection', () => {
                             );
                         };
 
+                        const expectedTargetAmountAndFee = (sourceAmount: BigNumber, poolData: PoolData) => {
+                            const { liquidity } = poolData;
+
+                            const sourcePoolBalance = isSourceNetworkToken
+                                ? liquidity.networkTokenTradingLiquidity
+                                : liquidity.baseTokenTradingLiquidity;
+                            const targetPoolBalance = isSourceNetworkToken
+                                ? liquidity.baseTokenTradingLiquidity
+                                : liquidity.networkTokenTradingLiquidity;
+
+                            const amount = targetPoolBalance.mul(sourceAmount).div(sourcePoolBalance.add(sourceAmount));
+                            const feeAmount = amount.mul(poolData.tradingFeePPM).div(PPM_RESOLUTION);
+
+                            return { amount: amount.sub(feeAmount), feeAmount };
+                        };
+
                         let poolAverageRate: TestPoolAverageRate;
 
                         before(async () => {
@@ -1724,13 +1740,6 @@ describe('PoolCollection', () => {
                                 const prevPoolData = await poolCollection.poolData(reserveToken.address);
                                 const { liquidity: prevLiquidity } = prevPoolData;
 
-                                // TODO:
-                                //
-                                // const prevRate = {
-                                //     n: prevLiquidity.networkTokenTradingLiquidity,
-                                //     d: prevLiquidity.baseTokenTradingLiquidity
-                                // };
-
                                 const targetAmountAndFee = await poolCollection.targetAmountAndFee(
                                     sourcePool.address,
                                     targetPool.address,
@@ -1758,27 +1767,31 @@ describe('PoolCollection', () => {
                                     MIN_RETURN_AMOUNT
                                 );
 
+                                const expectedTargetAmounts = expectedTargetAmountAndFee(amount, prevPoolData);
+                                expect(targetAmountAndFee.amount).to.almostEqual(
+                                    expectedTargetAmounts.amount,
+                                    new Decimal(0),
+                                    new Decimal(0.0001)
+                                );
+                                expect(targetAmountAndFee.feeAmount).to.almostEqual(
+                                    expectedTargetAmounts.feeAmount,
+                                    new Decimal(0),
+                                    new Decimal(0.0001)
+                                );
+
                                 expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
                                 expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
-                                expect(tradeAmounts.feeAmount).to.equal(amount.mul(tradingFeePPM).div(PPM_RESOLUTION));
 
-                                // TODO: delete
-                                // console.log('interval', interval);
-                                // console.log('targetAmountAndFee.amount', targetAmountAndFee.amount.toString());
-                                // console.log('targetAmountAndFee.feeAmount', targetAmountAndFee.feeAmount.toString());
-                                // console.log('sourceAmountAndFee.amount', sourceAmountAndFee.amount.toString());
-                                // console.log('sourceAmountAndFee.feeAmount', sourceAmountAndFee.feeAmount.toString());
-                                // TODO: restore
-                                // expect(sourceAmountAndFee.amount).to.almostEqual(
-                                //     amount,
-                                //     new Decimal(0),
-                                //     new Decimal(0.001)
-                                // );
-                                // expect(sourceAmountAndFee.feeAmount).to.almostEqual(
-                                //     targetAmountAndFee.feeAmount,
-                                //     new Decimal(0),
-                                //     new Decimal(0.002)
-                                // );
+                                expect(sourceAmountAndFee.amount).to.almostEqual(
+                                    amount,
+                                    new Decimal(0),
+                                    new Decimal(0.001)
+                                );
+                                expect(sourceAmountAndFee.feeAmount).to.almostEqual(
+                                    targetAmountAndFee.feeAmount,
+                                    new Decimal(0),
+                                    new Decimal(0.001)
+                                );
 
                                 const poolData = await poolCollection.poolData(reserveToken.address);
                                 const { liquidity } = poolData;
