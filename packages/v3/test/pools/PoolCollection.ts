@@ -1852,7 +1852,7 @@ describe('PoolCollection', () => {
                     });
                 };
 
-                describe.skip('regular tests', () => {
+                describe('regular tests', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000]) {
                             for (const tradingFeePPM of [0, 100_000]) {
