@@ -12,12 +12,10 @@ import {
     TestBancorNetwork,
     TestERC20Token,
     TestPoolCollection,
-    TestPoolAverageRate,
-    PoolCollection
+    TestPoolAverageRate
 } from '../../typechain';
 import { INVALID_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
-import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 
@@ -615,33 +613,47 @@ describe('PoolCollection', () => {
                         );
                         expect(actual.baseTokenAmountToTransferFromVaultToProvider).to.almostEqual(
                             new Decimal(baseTokenAmountToTransferFromVaultToProvider),
-                            maxErrors.baseTokenAmountToTransferFromVaultToProvider.absolute,
-                            maxErrors.baseTokenAmountToTransferFromVaultToProvider.relative
+                            {
+                                maxAbsoluteError: maxErrors.baseTokenAmountToTransferFromVaultToProvider.absolute,
+                                maxRelativeError: maxErrors.baseTokenAmountToTransferFromVaultToProvider.relative
+                            }
                         );
                         expect(actual.networkTokenAmountToMintForProvider).to.almostEqual(
                             new Decimal(networkTokenAmountToMintForProvider),
-                            maxErrors.networkTokenAmountToMintForProvider.absolute,
-                            maxErrors.networkTokenAmountToMintForProvider.relative
+                            {
+                                maxAbsoluteError: maxErrors.networkTokenAmountToMintForProvider.absolute,
+                                maxRelativeError: maxErrors.networkTokenAmountToMintForProvider.relative
+                            }
                         );
                         expect(actual.baseTokenAmountToDeductFromLiquidity).to.almostEqual(
                             new Decimal(baseTokenAmountToDeductFromLiquidity),
-                            maxErrors.baseTokenAmountToDeductFromLiquidity.absolute,
-                            maxErrors.baseTokenAmountToDeductFromLiquidity.relative
+                            {
+                                maxAbsoluteError: maxErrors.baseTokenAmountToDeductFromLiquidity.absolute,
+                                maxRelativeError: maxErrors.baseTokenAmountToDeductFromLiquidity.relative
+                            }
                         );
                         expect(actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider).to.almostEqual(
                             new Decimal(baseTokenAmountToTransferFromExternalProtectionWalletToProvider),
-                            maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
-                            maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                            {
+                                maxAbsoluteError:
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
+                                maxRelativeError:
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                            }
                         );
                         expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
                             new Decimal(networkTokenAmountToDeductFromLiquidity),
-                            maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
-                            maxErrors.networkTokenAmountToDeductFromLiquidity.relative
+                            {
+                                maxAbsoluteError: maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
+                                maxRelativeError: maxErrors.networkTokenAmountToDeductFromLiquidity.relative
+                            }
                         );
                         expect(actual.networkTokenArbitrageAmount).to.almostEqual(
                             new Decimal(networkTokenArbitrageAmount),
-                            maxErrors.networkTokenArbitrageAmount.absolute,
-                            maxErrors.networkTokenArbitrageAmount.relative
+                            {
+                                maxAbsoluteError: maxErrors.networkTokenArbitrageAmount.absolute,
+                                maxRelativeError: maxErrors.networkTokenArbitrageAmount.relative
+                            }
                         );
                     });
                 }
@@ -1733,7 +1745,7 @@ describe('PoolCollection', () => {
                             await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                         });
 
-                        it.only('should perform a trade', async () => {
+                        it('should perform a trade', async () => {
                             for (const interval of intervals) {
                                 await poolCollection.setTime(interval);
 
@@ -1768,30 +1780,22 @@ describe('PoolCollection', () => {
                                 );
 
                                 const expectedTargetAmounts = expectedTargetAmountAndFee(amount, prevPoolData);
-                                expect(targetAmountAndFee.amount).to.almostEqual(
-                                    expectedTargetAmounts.amount,
-                                    new Decimal(0),
-                                    new Decimal(0.0001)
-                                );
-                                expect(targetAmountAndFee.feeAmount).to.almostEqual(
-                                    expectedTargetAmounts.feeAmount,
-                                    new Decimal(0),
-                                    new Decimal(0.0001)
-                                );
+                                expect(targetAmountAndFee.amount).to.almostEqual(expectedTargetAmounts.amount, {
+                                    maxRelativeError: new Decimal(0.0001)
+                                });
+                                expect(targetAmountAndFee.feeAmount).to.almostEqual(expectedTargetAmounts.feeAmount, {
+                                    maxRelativeError: new Decimal(0.0001)
+                                });
 
                                 expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
                                 expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
 
-                                expect(sourceAmountAndFee.amount).to.almostEqual(
-                                    amount,
-                                    new Decimal(0),
-                                    new Decimal(0.001)
-                                );
-                                expect(sourceAmountAndFee.feeAmount).to.almostEqual(
-                                    targetAmountAndFee.feeAmount,
-                                    new Decimal(0),
-                                    new Decimal(0.001)
-                                );
+                                expect(sourceAmountAndFee.amount).to.almostEqual(amount, {
+                                    maxRelativeError: new Decimal(0.0001)
+                                });
+                                expect(sourceAmountAndFee.feeAmount).to.almostEqual(targetAmountAndFee.feeAmount, {
+                                    maxRelativeError: new Decimal(0.0001)
+                                });
 
                                 const poolData = await poolCollection.poolData(reserveToken.address);
                                 const { liquidity } = poolData;
