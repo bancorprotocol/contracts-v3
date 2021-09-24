@@ -1745,7 +1745,7 @@ describe('PoolCollection', () => {
                             await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                         });
 
-                        it('should perform a trade', async () => {
+                        it.only('should perform a trade', async () => {
                             for (const interval of intervals) {
                                 await poolCollection.setTime(interval);
 
@@ -1819,8 +1819,9 @@ describe('PoolCollection', () => {
                                     );
                                 }
 
-                                // verify that the CPMM invariant is preserved:
-                                // TODO:
+                                expect(liquidity.tradingLiquidityProduct).to.equal(
+                                    liquidity.networkTokenTradingLiquidity.mul(liquidity.baseTokenTradingLiquidity)
+                                );
 
                                 // verify that the average rate has been updated
                                 const expectedNewAverageRate = await expectedAverageRate(prevPoolData, interval);
@@ -1831,19 +1832,16 @@ describe('PoolCollection', () => {
                     });
                 };
 
-                describe('regular tests', () => {
-                    for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(5_000_000))]) {
-                        for (const targetBalance of [
-                            toWei(BigNumber.from(1_000_000)),
-                            toWei(BigNumber.from(5_000_000))
-                        ]) {
+                describe.skip('regular tests', () => {
+                    for (const sourceBalance of [1_000_000, 5_000_000]) {
+                        for (const targetBalance of [1_000_000, 5_000_000]) {
                             for (const tradingFeePPM of [0, 100_000]) {
-                                for (const amount of [toWei(BigNumber.from(1000))]) {
+                                for (const amount of [1000]) {
                                     testTrading({
-                                        sourceBalance,
-                                        targetBalance,
+                                        sourceBalance: toWei(BigNumber.from(sourceBalance)),
+                                        targetBalance: toWei(BigNumber.from(targetBalance)),
                                         tradingFeePPM,
-                                        amount,
+                                        amount: toWei(BigNumber.from(amount)),
                                         intervals: [0, 200, 500]
                                     });
                                 }
@@ -1852,7 +1850,23 @@ describe('PoolCollection', () => {
                     }
                 });
 
-                // TODO: describe('@stress tests', () => {});
+                describe('@stress tests', () => {
+                    for (const sourceBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
+                        for (const targetBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
+                            for (const tradingFeePPM of [0, 10_000, 100_000, 500_000]) {
+                                for (const amount of [1000, 10_000, 100_000]) {
+                                    testTrading({
+                                        sourceBalance: toWei(BigNumber.from(sourceBalance)),
+                                        targetBalance: toWei(BigNumber.from(targetBalance)),
+                                        tradingFeePPM,
+                                        amount: toWei(BigNumber.from(amount)),
+                                        intervals: [0, 1, 2, 3, 10, 100, 200, 300, 400, 500]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
             });
         };
 
