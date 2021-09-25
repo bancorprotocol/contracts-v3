@@ -42,10 +42,7 @@ function overrideAlmostEqual(utils: Chai.ChaiUtils) {
 
 function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
-        const [
-            expected,
-            { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(Number.MAX_SAFE_INTEGER) }
-        ] = args;
+        const [expected, { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0) }] = args;
         const obj = chaiUtils.flag(this, 'object');
 
         expect(maxAbsoluteError).to.be.instanceOf(Decimal);
