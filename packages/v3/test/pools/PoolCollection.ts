@@ -4,11 +4,12 @@ import {
     PoolToken,
     TestBancorNetwork,
     TestERC20Token,
-    TestPoolCollection,
-    TestPoolAverageRate
+    TestPoolAverageRate,
+    TestPoolCollection
 } from '../../typechain';
 import { INVALID_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
+import { roundDiv } from '../helpers/MathUtils';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -1317,6 +1318,17 @@ describe('PoolCollection', () => {
         });
 
         const testTrading = (isSourceNetworkToken: boolean) => {
+            const setTradingLiquidity = async (
+                networkTokenTradingLiquidity: BigNumber,
+                baseTokenTradingLiquidity: BigNumber
+            ) =>
+                poolCollection.setTradingLiquidityT(reserveToken.address, {
+                    networkTokenTradingLiquidity,
+                    baseTokenTradingLiquidity,
+                    tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                    stakedBalance: baseTokenTradingLiquidity
+                });
+
             const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
             const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
@@ -1582,53 +1594,7 @@ describe('PoolCollection', () => {
 
                 context('with sufficient network token liquidity', () => {
                     beforeEach(async () => {
-                        const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
-                        const baseTokenTradingLiquidity = BigNumber.from(0);
-
-                        await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                            networkTokenTradingLiquidity,
-                            baseTokenTradingLiquidity,
-                            tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
-                            stakedBalance: baseTokenTradingLiquidity
-                        });
-                    });
-
-                    context('with insufficient pool balances', () => {
-                        beforeEach(async () => {
-                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
-                            const baseTokenTradingLiquidity = BigNumber.from(0);
-
-                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                                networkTokenTradingLiquidity,
-                                baseTokenTradingLiquidity,
-                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
-                                stakedBalance: baseTokenTradingLiquidity
-                            });
-                        });
-
-                        it('should revert when attempting to trade or query', async () => {
-                            const amount = isSourceNetworkToken
-                                ? BigNumber.from(12345)
-                                : MIN_LIQUIDITY_FOR_TRADING.add(BigNumber.from(1));
-
-                            await expect(
-                                network.tradePoolCollectionT(
-                                    poolCollection.address,
-                                    sourcePool.address,
-                                    targetPool.address,
-                                    amount,
-                                    MIN_RETURN_AMOUNT
-                                )
-                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
-
-                            await expect(
-                                poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
-                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
-
-                            await expect(
-                                poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
-                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
-                        });
+                        await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, BigNumber.from(0));
                     });
 
                     context('with sufficient target and source pool balances', () => {
@@ -1641,12 +1607,7 @@ describe('PoolCollection', () => {
                                 ? networkTokenTradingLiquidity.div(BigNumber.from(2))
                                 : networkTokenTradingLiquidity.mul(BigNumber.from(2));
 
-                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                                networkTokenTradingLiquidity,
-                                baseTokenTradingLiquidity,
-                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
-                                stakedBalance: baseTokenTradingLiquidity
-                            });
+                            await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                         });
 
                         it('should revert when the trade result is zero', async () => {
@@ -1675,7 +1636,140 @@ describe('PoolCollection', () => {
                     });
                 });
 
-                // for (const seconds of [0, 1, 2, 3, 10, 100, 200, 300, 400, 500]) {
+                context('with insufficient pool balances', () => {
+                    beforeEach(async () => {
+                        await networkSettings.setMinLiquidityForTrading(BigNumber.from(0));
+                    });
+
+                    context('source pool', () => {
+                        const amount = BigNumber.from(12345);
+
+                        context('empty', () => {
+                            beforeEach(async () => {
+                                const targetBalance = amount.mul(BigNumber.from(999999999999));
+                                const networkTokenTradingLiquidity = isSourceNetworkToken
+                                    ? BigNumber.from(0)
+                                    : targetBalance;
+                                const baseTokenTradingLiquidity = isSourceNetworkToken
+                                    ? targetBalance
+                                    : BigNumber.from(0);
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
+                            });
+
+                            it('should revert when attempting to trade or query', async () => {
+                                await expect(
+                                    network.tradePoolCollectionT(
+                                        poolCollection.address,
+                                        sourcePool.address,
+                                        targetPool.address,
+                                        amount,
+                                        MIN_RETURN_AMOUNT
+                                    )
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                await expect(
+                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                await expect(
+                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            });
+                        });
+                    });
+
+                    context('target pool', () => {
+                        context('empty', () => {
+                            const amount = BigNumber.from(12345);
+
+                            beforeEach(async () => {
+                                const sourceBalance = BigNumber.from(12345);
+                                const networkTokenTradingLiquidity = isSourceNetworkToken
+                                    ? sourceBalance
+                                    : BigNumber.from(0);
+
+                                const baseTokenTradingLiquidity = isSourceNetworkToken
+                                    ? BigNumber.from(0)
+                                    : sourceBalance;
+
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
+                            });
+
+                            it('should revert when attempting to trade or query', async () => {
+                                await expect(
+                                    network.tradePoolCollectionT(
+                                        poolCollection.address,
+                                        sourcePool.address,
+                                        targetPool.address,
+                                        amount,
+                                        MIN_RETURN_AMOUNT
+                                    )
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                await expect(
+                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                                await expect(
+                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            });
+                        });
+
+                        context('insufficient', () => {
+                            const sourceBalance = BigNumber.from(12345);
+                            const targetBalance = BigNumber.from(9999999);
+
+                            let targetAmount: BigNumber;
+
+                            beforeEach(async () => {
+                                await setTradingLiquidity(sourceBalance, targetBalance);
+
+                                targetAmount = targetBalance;
+                            });
+
+                            it('should revert when attempting to query the source amount', async () => {
+                                await expect(
+                                    poolCollection.sourceAmountAndFee(
+                                        sourcePool.address,
+                                        targetPool.address,
+                                        targetAmount
+                                    )
+                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            });
+
+                            context('with a trading fee', () => {
+                                beforeEach(async () => {
+                                    const tradingFeePPM = BigNumber.from(100_000);
+                                    await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
+
+                                    // derive a target amount such that adding a fee to it will result in an amount
+                                    // greater than the target balance by solving the following two equations (left as an
+                                    // exercise for the reader):
+                                    // - feeAmount = targetAmount * tradingFee / (PPM - tradingFee)
+                                    // - targetAmount + feeAmount = targetBalance
+                                    const fee = new Decimal(tradingFeePPM.toString());
+                                    const factor = new Decimal(1).add(
+                                        fee.div(new Decimal(PPM_RESOLUTION.toString()).sub(fee))
+                                    );
+                                    targetAmount = BigNumber.from(
+                                        roundDiv(targetBalance, factor).add(new Decimal(1)).toFixed()
+                                    );
+                                });
+
+                                it('should revert when attempting to query the source amount', async () => {
+                                    await expect(
+                                        poolCollection.sourceAmountAndFee(
+                                            sourcePool.address,
+                                            targetPool.address,
+                                            targetAmount
+                                        )
+                                    ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                                });
+                            });
+                        });
+                    });
+                });
 
                 interface Spec {
                     sourceBalance: BigNumber;
@@ -1726,13 +1820,7 @@ describe('PoolCollection', () => {
                         beforeEach(async () => {
                             const networkTokenTradingLiquidity = isSourceNetworkToken ? sourceBalance : targetBalance;
                             const baseTokenTradingLiquidity = isSourceNetworkToken ? targetBalance : sourceBalance;
-
-                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                                networkTokenTradingLiquidity,
-                                baseTokenTradingLiquidity,
-                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
-                                stakedBalance: baseTokenTradingLiquidity
-                            });
+                            await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
 
                             await poolCollection.setAverageRateT(reserveToken.address, {
                                 time: 0,
