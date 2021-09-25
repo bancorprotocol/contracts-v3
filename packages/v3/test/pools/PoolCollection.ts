@@ -1581,8 +1581,6 @@ describe('PoolCollection', () => {
                 });
 
                 context('with sufficient network token liquidity', () => {
-                    const testTargetPool = isSourceNetworkToken;
-
                     beforeEach(async () => {
                         const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
                         const baseTokenTradingLiquidity = BigNumber.from(0);
@@ -1595,63 +1593,42 @@ describe('PoolCollection', () => {
                         });
                     });
 
-                    context(`with insufficient ${testTargetPool ? 'target' : 'source'} pool balance`, () => {
-                        const amount = BigNumber.from(12345);
+                    context('with insufficient pool balances', () => {
+                        beforeEach(async () => {
+                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
+                            const baseTokenTradingLiquidity = BigNumber.from(0);
 
-                        if (testTargetPool) {
-                            it('should revert when attempting to trade or query', async () => {
-                                await expect(
-                                    network.tradePoolCollectionT(
-                                        poolCollection.address,
-                                        sourcePool.address,
-                                        targetPool.address,
-                                        amount,
-                                        MIN_RETURN_AMOUNT
-                                    )
-                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
-
-                                await expect(
-                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
-                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            await poolCollection.setTradingLiquidityT(reserveToken.address, {
+                                networkTokenTradingLiquidity,
+                                baseTokenTradingLiquidity,
+                                tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
+                                stakedBalance: baseTokenTradingLiquidity
                             });
-                        } else {
-                            for (const sourceBalance of [BigNumber.from(0), amount.sub(BigNumber.from(1))]) {
-                                context(`with ${sourceBalance} source pool balance`, () => {
-                                    beforeEach(async () => {
-                                        const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING;
-                                        const baseTokenTradingLiquidity = sourceBalance;
+                        });
 
-                                        await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                                            networkTokenTradingLiquidity,
-                                            baseTokenTradingLiquidity,
-                                            tradingLiquidityProduct:
-                                                networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
-                                            stakedBalance: baseTokenTradingLiquidity
-                                        });
-                                    });
+                        it('should revert when attempting to trade or query', async () => {
+                            const amount = isSourceNetworkToken
+                                ? BigNumber.from(12345)
+                                : MIN_LIQUIDITY_FOR_TRADING.add(BigNumber.from(1));
 
-                                    it('should revert when attempting to trade or query', async () => {
-                                        await expect(
-                                            network.tradePoolCollectionT(
-                                                poolCollection.address,
-                                                sourcePool.address,
-                                                targetPool.address,
-                                                amount,
-                                                MIN_RETURN_AMOUNT
-                                            )
-                                        ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                            await expect(
+                                network.tradePoolCollectionT(
+                                    poolCollection.address,
+                                    sourcePool.address,
+                                    targetPool.address,
+                                    amount,
+                                    MIN_RETURN_AMOUNT
+                                )
+                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
-                                        await expect(
-                                            poolCollection.targetAmountAndFee(
-                                                sourcePool.address,
-                                                targetPool.address,
-                                                amount
-                                            )
-                                        ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
-                                    });
-                                });
-                            }
-                        }
+                            await expect(
+                                poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+
+                            await expect(
+                                poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                            ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                        });
                     });
 
                     context('with sufficient target and source pool balances', () => {
