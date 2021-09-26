@@ -702,15 +702,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(minReturnAmount)
         returns (TradeAmounts memory)
     {
-        // neither the network token nor ETH support EIP2612 permit requests
-        require(
-            sourcePool != IReserveToken(address(_networkToken)) && !sourcePool.isNativeToken(),
-            "ERR_PERMIT_UNSUPPORTED"
-        );
-
-        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
-        IERC20Permit(address(sourcePool)).permit(msg.sender, address(this), sourceAmount, deadline, v, r, s);
+        _permit(sourcePool, sourceAmount, deadline, v, r, s);
 
         return _trade(sourcePool, targetPool, sourceAmount, minReturnAmount, deadline, beneficiary);
     }
@@ -1015,6 +1007,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @dev performs an EIP2612 permit
+     */
+    function _permit(
+        IReserveToken token,
+        uint256 tokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) private {
+        // neither the network token nor ETH support EIP2612 permit requests
+        require(token != IReserveToken(address(_networkToken)) && !token.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
+
+        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
+        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
+        IERC20Permit(address(token)).permit(msg.sender, address(this), tokenAmount, deadline, v, r, s);
+    }
+
+    /**
      * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
      * request
      *
@@ -1031,16 +1042,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) private {
-        // neither the network token nor ETH support EIP2612 permit requests
-        require(pool != IReserveToken(address(_networkToken)) && !pool.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
+        _permit(pool, tokenAmount, deadline, v, r, s);
 
-        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
-        IERC20Permit(address(pool)).permit(msg.sender, address(this), tokenAmount, deadline, v, r, s);
-
-        bytes32 contextId = _depositContextId(provider, pool, tokenAmount);
-
-        _depositBaseTokenFor(contextId, provider, pool, tokenAmount);
+        _depositBaseTokenFor(_depositContextId(provider, pool, tokenAmount), provider, pool, tokenAmount);
     }
 
     /**
