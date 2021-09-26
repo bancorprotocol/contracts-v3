@@ -568,7 +568,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(provider, pool, tokenAmount, msg.sender);
+        _depositFor(provider, pool, tokenAmount);
     }
 
     /**
@@ -582,7 +582,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
+        _depositFor(msg.sender, pool, tokenAmount);
     }
 
     /**
@@ -597,7 +597,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) external override validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
-        _depositBaseTokenForPermitted(provider, pool, tokenAmount, msg.sender, deadline, v, r, s);
+        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, v, r, s);
     }
 
     /**
@@ -611,7 +611,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) external override validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
-        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, msg.sender, deadline, v, r, s);
+        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, v, r, s);
     }
 
     /**
@@ -669,10 +669,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositContextId(
         address provider,
         IReserveToken pool,
-        uint256 tokenAmount,
-        address sender
+        uint256 tokenAmount
     ) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, sender));
+        return keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, msg.sender));
     }
 
     /**
@@ -692,15 +691,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositFor(
         address provider,
         IReserveToken pool,
-        uint256 tokenAmount,
-        address sender
+        uint256 tokenAmount
     ) private {
-        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount);
 
         if (pool == IReserveToken(address(_networkToken))) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount);
         }
     }
 
@@ -714,13 +712,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositNetworkTokenFor(
         bytes32 contextId,
         address provider,
-        uint256 networkTokenAmount,
-        address sender
+        uint256 networkTokenAmount
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
         // transfer the tokens from the sender to the network token pool
-        _networkToken.transferFrom(sender, address(cachedNetworkTokenPool), networkTokenAmount);
+        _networkToken.transferFrom(msg.sender, address(cachedNetworkTokenPool), networkTokenAmount);
 
         // process network token pool deposit
         NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
@@ -758,8 +755,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         IReserveToken pool,
-        uint256 baseTokenAmount,
-        address sender
+        uint256 baseTokenAmount
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -784,13 +780,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
 
-            // using a regular transfer here would revert due to exceeding the 2,300 gas limit which is why we're using
-            // call instead (via sendValue), which the 2,300 gas limit does not apply for
-            payable(_vault).sendValue(baseTokenAmount);
+            _depositETHToVault(baseTokenAmount);
         } else {
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
-            pool.safeTransferFrom(sender, address(_vault), baseTokenAmount);
+            pool.safeTransferFrom(msg.sender, address(_vault), baseTokenAmount);
         }
 
         // process deposit to the base token pool (taking into account the ETH pool)
@@ -855,7 +849,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         IReserveToken pool,
         uint256 tokenAmount,
-        address sender,
         uint256 deadline,
         uint8 v,
         bytes32 r,
@@ -866,11 +859,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call of the inner safeTransferFrom will revert
-        IERC20Permit(address(pool)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
+        IERC20Permit(address(pool)).permit(msg.sender, address(this), tokenAmount, deadline, v, r, s);
 
-        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount);
 
-        _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
+        _depositBaseTokenFor(contextId, provider, pool, tokenAmount);
     }
 
     /**
@@ -1025,6 +1018,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             reserveToken: IReserveToken(address(_networkToken)),
             liquidity: poolLiquidity.networkTokenTradingLiquidity
         });
+    }
+
+    /**
+     * @dev deposits ETH to the vault
+     */
+    function _depositETHToVault(uint256 value) private {
+        // using a regular transfer here would revert due to exceeding the 2,300 gas limit which is why we're using
+        // call instead (via sendValue), which the 2,300 gas limit does not apply for
+        payable(_vault).sendValue(value);
     }
 
     /**
