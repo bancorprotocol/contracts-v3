@@ -669,8 +669,8 @@ describe('BancorNetwork', () => {
                 const senderAddress = await sender.getAddress();
 
                 const contextId = solidityKeccak256(
-                    ['address', 'uint32', 'address', 'uint256', 'address'],
-                    [providerAddress, await network.currentTime(), token.address, amount, senderAddress]
+                    ['address', 'uint32', 'address', 'address', 'uint256'],
+                    [senderAddress, await network.currentTime(), providerAddress, token.address, amount]
                 );
 
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();

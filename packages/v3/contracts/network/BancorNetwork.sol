@@ -673,7 +673,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken pool,
         uint256 tokenAmount
     ) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(provider, _time(), pool, tokenAmount, msg.sender));
+        return keccak256(abi.encodePacked(msg.sender, _time(), provider, pool, tokenAmount));
     }
 
     /**
@@ -779,13 +779,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // transfer the tokens from the sender to the vault
         if (msg.value > 0) {
             require(pool.isNativeToken(), "ERR_INVALID_POOL");
-
             require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
 
+            // send the deposited amount of ETH to the vault
             _depositETHToVault(baseTokenAmount);
         } else {
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
+            // transfer the deposited amount of baske tokens to the vault
             pool.safeTransferFrom(msg.sender, address(_vault), baseTokenAmount);
         }
 
@@ -847,6 +848,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         });
     }
 
+    /**
+     * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
+     * request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
     function _depositBaseTokenForPermitted(
         address provider,
         IReserveToken pool,
