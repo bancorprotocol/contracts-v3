@@ -1848,7 +1848,7 @@ describe('PoolCollection', () => {
                                     targetAmountAndFee.amount
                                 );
 
-                                const tradeAmounts = await network.callStatic.tradePoolCollectionT(
+                                const tradeAmountsWithLiquidity = await network.callStatic.tradePoolCollectionT(
                                     poolCollection.address,
                                     sourcePool.address,
                                     targetPool.address,
@@ -1872,9 +1872,6 @@ describe('PoolCollection', () => {
                                     maxRelativeError: new Decimal(0.0001)
                                 });
 
-                                expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
-                                expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
-
                                 expect(sourceAmountAndFee.amount).to.almostEqual(amount, {
                                     maxRelativeError: new Decimal(0.0001)
                                 });
@@ -1884,6 +1881,21 @@ describe('PoolCollection', () => {
 
                                 const poolData = await poolCollection.poolData(reserveToken.address);
                                 const { liquidity } = poolData;
+
+                                expect(tradeAmountsWithLiquidity.amount).to.equal(targetAmountAndFee.amount);
+                                expect(tradeAmountsWithLiquidity.feeAmount).to.equal(targetAmountAndFee.feeAmount);
+                                expect(tradeAmountsWithLiquidity.liquidity.networkTokenTradingLiquidity).to.equal(
+                                    liquidity.networkTokenTradingLiquidity
+                                );
+                                expect(tradeAmountsWithLiquidity.liquidity.baseTokenTradingLiquidity).to.equal(
+                                    liquidity.baseTokenTradingLiquidity
+                                );
+                                expect(tradeAmountsWithLiquidity.liquidity.tradingLiquidityProduct).to.equal(
+                                    liquidity.tradingLiquidityProduct
+                                );
+                                expect(tradeAmountsWithLiquidity.liquidity.stakedBalance).to.equal(
+                                    liquidity.stakedBalance
+                                );
 
                                 if (isSourceNetworkToken) {
                                     expect(liquidity.networkTokenTradingLiquidity).to.equal(

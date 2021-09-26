@@ -19,9 +19,24 @@ import { Utils } from "../utility/Utils.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { IPoolCollection, PoolLiquidity, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+// prettier-ignore
+import {
+    IPoolCollection,
+    PoolLiquidity,
+    DepositAmounts as PoolCollectionDepositAmounts,
+    WithdrawalAmounts as PoolCollectionWithdrawalAmounts,
+    TradeAmountsWithLiquidity,
+    TradeAmounts
+} from "../pools/interfaces/IPoolCollection.sol";
+
+// prettier-ignore
+import {
+    INetworkTokenPool,
+    DepositAmounts as NetworkTokenPoolDepositAmounts,
+    WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts
+} from "../pools/interfaces/INetworkTokenPool.sol";
+
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool, DepositAmounts as NetworkTokenPoolDepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
@@ -228,7 +243,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when trading/flash-loan fees are collected
      */
-    event FeesCollected(bytes32 indexed contextId, IReserveToken indexed pool, uint256 amount, uint256 stakedBalance);
+    event FeesCollected(
+        bytes32 indexed contextId,
+        IReserveToken indexed pool,
+        uint8 indexed feeType,
+        uint256 amount,
+        uint256 stakedBalance
+    );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -631,6 +652,151 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
         }
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function trade(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    )
+        external
+        payable
+        override
+        nonReentrant
+        validAddress(address(sourcePool))
+        validAddress(address(targetPool))
+        greaterThanZero(sourceAmount)
+        greaterThanZero(minReturnAmount)
+        returns (TradeAmounts memory)
+    {
+        return _trade(sourcePool, targetPool, sourceAmount, minReturnAmount, deadline, beneficiary);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function tradePermitted(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        external
+        payable
+        override
+        nonReentrant
+        validAddress(address(sourcePool))
+        validAddress(address(targetPool))
+        greaterThanZero(sourceAmount)
+        greaterThanZero(minReturnAmount)
+        returns (TradeAmounts memory)
+    {
+        // neither the network token nor ETH support EIP2612 permit requests
+        require(
+            sourcePool != IReserveToken(address(_networkToken)) && !sourcePool.isNativeToken(),
+            "ERR_PERMIT_UNSUPPORTED"
+        );
+
+        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
+        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
+        IERC20Permit(address(sourcePool)).permit(msg.sender, address(this), sourceAmount, deadline, v, r, s);
+
+        return _trade(sourcePool, targetPool, sourceAmount, minReturnAmount, deadline, beneficiary);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function targetAmountAndFee(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount
+    )
+        external
+        view
+        override
+        validAddress(address(sourcePool))
+        validAddress(address(targetPool))
+        greaterThanZero(sourceAmount)
+        returns (TradeAmounts memory)
+    {
+        // return the target amount and fee when trading the network token to the base token
+        if (address(sourcePool) == address(_networkToken)) {
+            return _poolCollection(targetPool).targetAmountAndFee(sourcePool, targetPool, sourceAmount);
+        }
+
+        // return the target amount and fee when trading the bsase token to the network token
+        if (address(targetPool) == address(_networkToken)) {
+            return _poolCollection(sourcePool).targetAmountAndFee(sourcePool, targetPool, sourceAmount);
+        }
+
+        // return the target amount and fee by simulating double-hop trade from the source token to the target token via
+        // the network token
+        TradeAmounts memory sourceTradeAmounts = _poolCollection(sourcePool).targetAmountAndFee(
+            sourcePool,
+            IReserveToken(address(_networkToken)),
+            sourceAmount
+        );
+
+        return
+            _poolCollection(targetPool).targetAmountAndFee(
+                IReserveToken(address(_networkToken)),
+                targetPool,
+                sourceTradeAmounts.amount
+            );
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function sourceAmountAndFee(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 targetAmount
+    )
+        external
+        view
+        override
+        validAddress(address(sourcePool))
+        validAddress(address(targetPool))
+        greaterThanZero(targetAmount)
+        returns (TradeAmounts memory)
+    {
+        // return the source amount and fee when trading the network token to the base token
+        if (address(sourcePool) == address(_networkToken)) {
+            return _poolCollection(targetPool).sourceAmountAndFee(sourcePool, targetPool, targetAmount);
+        }
+
+        // return the source amount and fee when trading the bsase token to the network token
+        if (address(targetPool) == address(_networkToken)) {
+            return _poolCollection(sourcePool).sourceAmountAndFee(sourcePool, targetPool, targetAmount);
+        }
+
+        // return the source amount and fee by simulating double-hop trade from the source token to the target token via
+        // the network token
+        TradeAmounts memory sourceTradeAmounts = _poolCollection(sourcePool).sourceAmountAndFee(
+            sourcePool,
+            IReserveToken(address(_networkToken)),
+            targetAmount
+        );
+
+        return
+            _poolCollection(targetPool).sourceAmountAndFee(
+                IReserveToken(address(_networkToken)),
+                targetPool,
+                sourceTradeAmounts.amount
+            );
     }
 
     /**
@@ -1038,6 +1204,176 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // using a regular transfer here would revert due to exceeding the 2,300 gas limit which is why we're using
         // call instead (via sendValue), which the 2,300 gas limit does not apply for
         payable(_vault).sendValue(value);
+    }
+
+    /**
+     * @dev performs a trade and returns the target amount and fee
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     */
+    function _trade(
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) private returns (TradeAmounts memory tradeAmounts) {
+        require(deadline == 0 || deadline <= _time(), "ERR_EXPIRED_DEADLINE");
+
+        // ensure the beneficiary is set
+        if (beneficiary == address(0)) {
+            beneficiary = msg.sender;
+        }
+
+        bytes32 contextId = keccak256(
+            abi.encodePacked(
+                msg.sender,
+                _time(),
+                sourcePool,
+                targetPool,
+                sourceAmount,
+                minReturnAmount,
+                deadline,
+                beneficiary
+            )
+        );
+
+        // transfer the tokens from the sender to the vault
+        if (msg.value > 0) {
+            require(sourcePool.isNativeToken(), "ERR_INVALID_POOL");
+            require(msg.value == sourceAmount, "ERR_ETH_AMOUNT_MISMATCH");
+
+            // send the source amount of ETH to the vault
+            _depositETHToVault(sourceAmount);
+        } else {
+            require(!sourcePool.isNativeToken(), "ERR_INVALID_POOL");
+
+            // transfer the source amount of baske tokens to the vault
+            sourcePool.safeTransferFrom(msg.sender, address(_vault), sourceAmount);
+        }
+
+        // perform either a single or double hop trade, based on the source and the target pool
+        if (address(sourcePool) == address(_networkToken)) {
+            tradeAmounts = _tradeFromNetworkToken(contextId, targetPool, sourceAmount, minReturnAmount);
+        } else if (address(targetPool) == address(_networkToken)) {
+            tradeAmounts = _tradeToNetworkToken(contextId, sourcePool, sourceAmount, minReturnAmount);
+        } else {
+            tradeAmounts = _tradeBaseTokens(contextId, sourcePool, targetPool, sourceAmount, minReturnAmount);
+        }
+
+        // transfer the transfer target tokens/ETH to the beneficiary
+        _vault.withdrawTokens(targetPool, payable(beneficiary), tradeAmounts.amount);
+    }
+
+    /**
+     * @dev records a network token to base token single hop trade
+     */
+    function _tradeFromNetworkToken(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) private returns (TradeAmounts memory) {
+        return _tradeNetworkToken(contextId, pool, true, sourceAmount, minReturnAmount);
+    }
+
+    /**
+     * @dev records a base token trade to network token single hop trade
+     */
+    function _tradeToNetworkToken(
+        bytes32 contextId,
+        IReserveToken pool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) private returns (TradeAmounts memory) {
+        return _tradeNetworkToken(contextId, pool, false, sourceAmount, minReturnAmount);
+    }
+
+    /**
+     * @dev records a single hop trade between the network token and a base token
+     */
+    function _tradeNetworkToken(
+        bytes32 contextId,
+        IReserveToken pool,
+        bool isSourceNetworkToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) private returns (TradeAmounts memory) {
+        IPoolCollection poolCollection = _poolCollection(pool);
+
+        IReserveToken networkPool = IReserveToken(address(_networkToken));
+        IReserveToken sourcePool = isSourceNetworkToken ? networkPool : pool;
+        IReserveToken targetPool = isSourceNetworkToken ? pool : networkPool;
+        TradeAmountsWithLiquidity memory tradeAmounts = poolCollection.trade(
+            sourcePool,
+            targetPool,
+            sourceAmount,
+            minReturnAmount
+        );
+
+        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+        // if the target token is the network token, notify the network token pool's onFeesCollected function
+        if (!isSourceNetworkToken) {
+            cachedNetworkTokenPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
+        }
+
+        emit TokensTraded({
+            contextId: contextId,
+            pool: pool,
+            sourceToken: sourcePool,
+            targetToken: targetPool,
+            sourceAmount: sourceAmount,
+            targetAmount: tradeAmounts.amount,
+            trader: msg.sender
+        });
+
+        emit FeesCollected({
+            contextId: contextId,
+            pool: targetPool,
+            feeType: TRADING_FEE,
+            amount: tradeAmounts.feeAmount,
+            stakedBalance: isSourceNetworkToken
+                ? tradeAmounts.liquidity.stakedBalance
+                : cachedNetworkTokenPool.stakedBalance()
+        });
+
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: pool,
+            reserveToken: pool,
+            liquidity: tradeAmounts.liquidity.baseTokenTradingLiquidity
+        });
+
+        emit TradingLiquidityUpdated({
+            contextId: contextId,
+            pool: pool,
+            reserveToken: networkPool,
+            liquidity: tradeAmounts.liquidity.networkTokenTradingLiquidity
+        });
+
+        return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+    }
+
+    /**
+     * @dev records a double hop trade between two base tokens
+     */
+    function _tradeBaseTokens(
+        bytes32 contextId,
+        IReserveToken sourcePool,
+        IReserveToken targetPool,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) private returns (TradeAmounts memory) {
+        // trade the source token to the network token (while accepting any return amount)
+        TradeAmounts memory tradeAmounts = _tradeToNetworkToken(contextId, sourcePool, sourceAmount, 1);
+
+        // trade the received network token target amount to the target token (while respecting the minimum return
+        // amount)
+        return _tradeFromNetworkToken(contextId, targetPool, tradeAmounts.amount, minReturnAmount);
     }
 
     /**

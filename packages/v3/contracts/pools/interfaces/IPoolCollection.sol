@@ -54,6 +54,12 @@ struct WithdrawalAmounts {
     int256 networkTokenArbitrageAmount; // the network token amount to burn or mint in the pool, in order to create an arbitrage incentive
 }
 
+struct TradeAmountsWithLiquidity {
+    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
+    uint256 feeAmount; // the trading fee amount
+    PoolLiquidity liquidity; // the updated liquidity in the pool
+}
+
 struct TradeAmounts {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
     uint256 feeAmount; // the trading fee amount
@@ -171,7 +177,7 @@ interface IPoolCollection is IVersioned {
         IReserveToken targetPool,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmounts memory);
+    ) external returns (TradeAmountsWithLiquidity memory);
 
     /**
      * @dev returns the target amount and fee by specifying the source amount
