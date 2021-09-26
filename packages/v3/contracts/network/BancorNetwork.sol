@@ -28,6 +28,8 @@ import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./i
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
+import { TRADING_FEE } from "./FeeTypes.sol";
+
 /**
  * @dev Bancor Network contract
  */

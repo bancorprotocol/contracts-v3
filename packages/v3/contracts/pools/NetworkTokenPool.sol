@@ -21,6 +21,8 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 
+import { TRADING_FEE } from "../network/FeeTypes.sol";
+
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/INetworkTokenPool.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
@@ -434,7 +436,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _stakedBalance = _stakedBalance.add(networkTokenAmount);
 
         // type 0: trading fee
-        if (feeType == 0) {
+        if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
         }
