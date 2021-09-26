@@ -1921,7 +1921,7 @@ describe('PoolCollection', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000]) {
                             for (const tradingFeePPM of [0, 100_000]) {
-                                for (const amount of [1000]) {
+                                for (const amount of [1_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
@@ -1939,7 +1939,7 @@ describe('PoolCollection', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
                             for (const tradingFeePPM of [0, 10_000, 100_000, 500_000]) {
-                                for (const amount of [1000, 10_000, 100_000]) {
+                                for (const amount of [1_000, 10_000, 100_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
