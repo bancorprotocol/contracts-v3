@@ -950,12 +950,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(cachedExternalProtectionWallet))
         );
 
-        // if network token trading liquidity should be lowered - renounce liquidity
-        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToDeductFromLiquidity));
-        }
-
         // TODO:
+        // if network token trading liquidity should be lowered - renounce liquidity
+        //if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
+        //    cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToDeductFromLiquidity));
+        //}
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
         //if (amounts.networkTokenArbitrageAmount > 0) {
         //    cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));

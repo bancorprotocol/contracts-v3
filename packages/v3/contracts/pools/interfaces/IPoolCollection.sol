@@ -48,6 +48,7 @@ struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // the base token amount to transfer from the external protection wallet to the provider
     uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
     int256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the vault
+    uint256 networkTokenAmountToRenounceByProtocol; // network token amount renounced by the protocol
     uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
 }
 
