@@ -1902,17 +1902,17 @@ describe('PoolCollection', () => {
                                         prevLiquidity.networkTokenTradingLiquidity.add(amount)
                                     );
                                     expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                                        prevLiquidity.baseTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                        prevLiquidity.baseTokenTradingLiquidity.sub(tradeAmountsWithLiquidity.amount)
                                     );
                                     expect(liquidity.stakedBalance).to.equal(
-                                        prevLiquidity.stakedBalance.add(tradeAmounts.feeAmount)
+                                        prevLiquidity.stakedBalance.add(tradeAmountsWithLiquidity.feeAmount)
                                     );
                                 } else {
                                     expect(liquidity.baseTokenTradingLiquidity).to.equal(
                                         prevLiquidity.baseTokenTradingLiquidity.add(amount)
                                     );
                                     expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                                        prevLiquidity.networkTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                        prevLiquidity.networkTokenTradingLiquidity.sub(tradeAmountsWithLiquidity.amount)
                                     );
                                 }
 
