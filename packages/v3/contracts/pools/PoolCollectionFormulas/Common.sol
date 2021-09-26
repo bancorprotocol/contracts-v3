@@ -8,9 +8,10 @@ import { MAX_UINT128, MAX_UINT256, PPM_RESOLUTION } from "../../utility/Constant
 uint256 constant M = PPM_RESOLUTION;
 
 struct Output {
-    uint256 p; // BNT trading liquidity removed from the pool
-    uint256 q; // BNT minted for the user as compensation
-    uint256 r; // TKN trading liquidity removed from the pool
-    uint256 s; // TKN removed from the vault
-    uint256 t; // BNT sent to the user
+    uint256 p; // network token amount removed from the trading liquidity
+    uint256 q; // network token amount renounced by the protocol
+    uint256 r; // base token amount removed from the trading liquidity
+    uint256 s; // base token amount removed from the vault
+    uint256 t; // network token amount sent to the provider
+    uint256 u; // base token amount removed from the external protection wallet
 }

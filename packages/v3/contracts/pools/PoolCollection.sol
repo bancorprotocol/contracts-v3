@@ -27,6 +27,11 @@ import { IPoolCollection, PoolLiquidity, Pool, DepositAmounts, WithdrawalAmounts
 
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
+import { ThresholdFormula } from "./PoolCollectionFormulas/ThresholdFormula.sol";
+import { ArbitrageFormula } from "./PoolCollectionFormulas/ArbitrageFormula.sol";
+import { DefaultFormula } from "./PoolCollectionFormulas/DefaultFormula.sol";
+import { Output } from "./PoolCollectionFormulas/Common.sol";
+
 /**
  * @dev Pool Collection contract
  *
@@ -53,7 +58,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         uint256 baseTokenTradingLiquidity;
         uint256 basePoolTokenTotalSupply;
         uint256 baseTokenStakedAmount;
-        uint256 tradeFeePPM;
+        uint32 tradeFeePPM;
     }
 
     // deposit-related output data
@@ -149,6 +154,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
 
     function _validRate(Fraction memory rate) internal pure {
         require(_isFractionValid(rate), "ERR_INVALID_RATE");
+    }
+
+    function _isUint128(uint256 amount) internal pure {
+        require(amount <= MAX_UINT128, "ERR_INVALID_AMOUNT");
     }
 
     /**
@@ -606,12 +615,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
                 params.networkTokenAvgTradingLiquidity,
                 params.baseTokenAvgTradingLiquidity,
                 MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-                params.basePoolTokenTotalSupply,
                 params.baseTokenStakedAmount,
                 externalProtectionWalletBalance,
                 params.tradeFeePPM,
                 _settings.withdrawalFeePPM(),
-                basePoolTokenAmount
+                MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
             );
     }
 
@@ -656,7 +664,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         IReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
-        uint256 networkTokenTradingLiquidityDelta
+        int256 networkTokenTradingLiquidityDelta
     ) private {
         Pool storage poolData = _poolData[pool];
         uint256 totalSupply = poolData.poolToken.totalSupply();
@@ -666,9 +674,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         uint256 baseTokenCurrTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
-            networkTokenTradingLiquidityDelta
-        );
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta >= 0 ?
+            networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta)) :
+            networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
 
         poolData.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         poolData.liquidity.stakedBalance = MathEx.mulDivF(
@@ -700,395 +708,58 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
      * may need to be deducted (depending on usage)
      */
     function _withdrawalAmounts(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenExcessAmount,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenStakedAmount,
-        uint256 baseTokenExternalProtectionWalletBalance,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
-        uint256 basePoolTokenWithdrawalAmount
+        uint256 a, // networkTokenLiquidity
+        uint256 b, // baseTokenLiquidity
+        uint256 c, // baseTokenExcessAmount
+        uint256 e, // baseTokenStakedAmount
+        uint256 w, // baseTokenExternalProtectionWalletBalance
+        uint32 m,  // tradeFeePPM
+        uint32 n,  // withdrawalFeePPM
+        uint256 x  // baseTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
-        uint256 baseTokenVaultBalance = baseTokenLiquidity.add(baseTokenExcessAmount);
+        _isUint128(a);
+        _isUint128(b);
+        _isUint128(c);
+        _isUint128(e);
+        _isUint128(x);
+        _validFee(m);
+        _validFee(n);
 
-        if (baseTokenStakedAmount > baseTokenVaultBalance) {
-            uint256 baseTokenOffsetAmount = _deductFee(
-                baseTokenStakedAmount - baseTokenVaultBalance,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                withdrawalFeePPM
-            );
+        Output memory output;
 
-            amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = baseTokenOffsetAmount <
-                baseTokenExternalProtectionWalletBalance
-                ? baseTokenOffsetAmount
-                : baseTokenExternalProtectionWalletBalance;
-
-            (basePoolTokenWithdrawalAmount, basePoolTokenTotalSupply, baseTokenStakedAmount) = _reviseInput(
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                baseTokenStakedAmount,
-                withdrawalFeePPM
-            );
-        }
-
-        uint256 baseTokenShare = baseTokenStakedAmount.mul(basePoolTokenWithdrawalAmount);
-
-        amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
-            1,
-            baseTokenShare,
-            basePoolTokenTotalSupply,
-            withdrawalFeePPM
-        );
-
-        amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
-            baseTokenLiquidity,
-            baseTokenShare,
-            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
-            withdrawalFeePPM
-        );
-
-        amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
-            networkTokenLiquidity,
-            baseTokenShare,
-            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
-            0
-        );
-
-        if (baseTokenVaultBalance >= baseTokenStakedAmount) {
-            // the pool is not in a base token deficit
-            uint256 baseTokenOffsetAmount = _deductFee(
-                baseTokenVaultBalance - baseTokenStakedAmount,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                withdrawalFeePPM
-            );
-
-            uint256 networkTokenArbitrageAmount = _posArbitrage(
-                MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                tradeFeePPM,
-                withdrawalFeePPM,
-                baseTokenShare
-            );
-
-            if (
-                networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) <=
-                networkTokenLiquidity
-            ) {
-                amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
+        if (b + c >= e) {
+            if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
+                output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
+            } else {
+                output = DefaultFormula.surplus(a, b, c, e, n, x);
             }
         } else {
-            // the pool is in a base token deficit
-            if (amounts.baseTokenAmountToTransferFromVaultToProvider <= baseTokenVaultBalance) {
-                uint256 baseTokenOffsetAmount = _deductFee(
-                    baseTokenStakedAmount - baseTokenVaultBalance,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-
-                amounts.networkTokenArbitrageAmount = _negArbitrage(
-                    MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                    MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
-                    basePoolTokenTotalSupply,
-                    baseTokenOffsetAmount,
-                    tradeFeePPM,
-                    withdrawalFeePPM,
-                    baseTokenShare
-                ).toInt256();
-            }
-
-            if (amounts.networkTokenArbitrageAmount == 0) {
-                // the withdrawal amount is larger than the vault's balance
-                uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
-                uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
-
-                amounts.networkTokenAmountToMintForProvider = _deductFee(
-                    baseTokenStakedAmount - baseTokenVaultBalance,
-                    aMx,
-                    bMd,
-                    withdrawalFeePPM
-                );
-
-                amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
-                    baseTokenVaultBalance,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-
-                amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
-                    baseTokenLiquidity,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-
-                amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
-                    networkTokenLiquidity,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    0
-                );
+            if (ThresholdFormula.deficit(b, c, e, m, n, x)) {
+                output = ArbitrageFormula.deficit(a, b, c, e, m, n, x);
+            } else {
+                output = DefaultFormula.deficit(a, b, c, e, n, x);
             }
         }
 
-        // TODO: withdrawal fee
-        amounts.baseTokenWithdrawalFeeAmount = 0;
-    }
-
-    /**
-     * @dev returns `xy * (1 - n) / z`, assuming `n` is normalized
-     */
-    function _deductFee(
-        uint256 x,
-        uint256 y,
-        uint256 z,
-        uint256 n
-    ) internal pure returns (uint256) {
-        return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - n), z.mul(PPM_RESOLUTION));
-    }
-
-    /**
-     * @dev recalculates the values of `x`, `d` and `e`
-     *
-     * let the following denote the input:
-     * E = base token amount to transfer from the external protection wallet to the provider
-     * x = base pool token withdrawal amount
-     * d = base pool token total supply
-     * e = base token staked amount
-     * n = withdrawal fee in ppm units
-     *
-     * output, assuming `n` is normalized:
-     * x = x - E / (1 - n) * d / e
-     * d = d - E / (1 - n) * d / e
-     * e = e - E / (1 - n)
-     */
-    function _reviseInput(
-        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-        uint256 basePoolTokenWithdrawalAmount,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenStakedAmount,
-        uint256 withdrawalFeePPM
-    )
-        internal
-        pure
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee = MathEx.mulDivF(
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-            PPM_RESOLUTION,
-            PPM_RESOLUTION - withdrawalFeePPM
-        );
-        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(
-            baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee,
-            basePoolTokenTotalSupply,
-            baseTokenStakedAmount
-        );
-        return (
-            basePoolTokenWithdrawalAmount.sub(
-                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
-            ),
-            basePoolTokenTotalSupply.sub(
-                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
-            ),
-            baseTokenStakedAmount.sub(baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee)
-        );
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be removed from the pool in order to create an optimal
-     * arbitrage incentive
-     *
-     * let the following denote the input:
-     * a = network token hypothetical trading liquidity
-     * b = base token hypothetical trading liquidity
-     * d = base pool token total supply
-     * e = base token staked amount
-     * f = base token redundant amount
-     * m = trade fee in ppm units
-     * n = withdrawal fee in ppm units
-     * x = base pool token withdrawal amount
-     * ex = base token share
-     *
-     * output, assuming `m` and `n` are normalized:
-     * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
-     * if `f(f + bm - 2fm) / (b - fm) >= exn / d` return `0`
-     */
-    function _posArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
-        uint256 baseTokenShare
-    ) internal pure returns (uint256) {
-        return
-            _calcArbitrage(
-                networkTokenLiquidity,
-                baseTokenLiquidity,
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                withdrawalFeePPM,
-                baseTokenShare,
-                _posArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
-            );
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be added to the pool in order to create an optimal
-     * arbitrage incentive
-     *
-     * let the following denote the input:
-     * a = network token hypothetical trading liquidity
-     * b = base token hypothetical trading liquidity
-     * d = base pool token total supply
-     * e = base token staked amount
-     * f = base token required amount
-     * m = trade fee in ppm units
-     * n = withdrawal fee in ppm units
-     * x = base pool token withdrawal amount
-     * ex = base token share
-     *
-     * output, assuming `m` and `n` are normalized:
-     * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
-     * if `f(f - bm - 2fm) / (b + fm) >= exn / d` return `0`
-     */
-    function _negArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
-        uint256 baseTokenShare
-    ) internal pure returns (uint256) {
-        return
-            _calcArbitrage(
-                networkTokenLiquidity,
-                baseTokenLiquidity,
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                withdrawalFeePPM,
-                baseTokenShare,
-                _negArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
-            );
-    }
-
-    /**
-     * @dev returns a pair of quotients
-     *
-     * let the following denote the input:
-     * b = base token hypothetical trading liquidity
-     * f = base token redundant amount
-     * m = trade fee in ppm units
-     *
-     * output, assuming `m` is normalized:
-     * 1. `(f + bm - 2fm) / (b - fm)`
-     * 2. `(2b - bm - f) / (b - fm)`
-     */
-    function _posArbitrage(
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM
-    ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity.mul(tradeFeePPM);
-        uint256 fm = baseTokenOffsetAmount.mul(tradeFeePPM);
-        uint256 bM = baseTokenLiquidity.mul(PPM_RESOLUTION);
-        uint256 fM = baseTokenOffsetAmount.mul(PPM_RESOLUTION);
-        return [
-            Quotient({ n1: fM.add(bm), n2: fm.mul(2), d1: bM, d2: fm }),
-            Quotient({ n1: baseTokenLiquidity.mul(2 * PPM_RESOLUTION - tradeFeePPM), n2: fM, d1: bM, d2: fm })
-        ];
-    }
-
-    /**
-     * @dev returns a pair of quotients
-     *
-     * let the following denote the input:
-     * b = base token hypothetical trading liquidity
-     * f = base token required amount
-     * m = trade fee in ppm units
-     *
-     * output, assuming `m` is normalized:
-     * 1. `(f - bm - 2fm) / (b + fm)`
-     * 2. `(2b - bm + f) / (b + fm)`
-     */
-    function _negArbitrage(
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM
-    ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity.mul(tradeFeePPM);
-        uint256 fm = baseTokenOffsetAmount.mul(tradeFeePPM);
-        uint256 bM = baseTokenLiquidity.mul(PPM_RESOLUTION);
-        uint256 fM = baseTokenOffsetAmount.mul(PPM_RESOLUTION);
-        return [
-            Quotient({ n1: fM, n2: bm.add(fm.mul(2)), d1: bM.add(fm), d2: 0 }),
-            Quotient({
-                n1: baseTokenLiquidity.mul(2 * PPM_RESOLUTION - tradeFeePPM).add(fM),
-                n2: 0,
-                d1: bM.add(fm),
-                d2: 0
-            })
-        ];
-    }
-
-    /**
-     * @dev returns the arbitrage if it is smaller than the fee paid, and 0 otherwise
-     */
-    function _calcArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint256 withdrawalFeePPM,
-        uint256 baseTokenShare,
-        Quotient[2] memory quotients
-    ) internal pure returns (uint256) {
-        Fraction memory y = _subMax0(quotients[0]);
-
-        if (
-            MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
-            MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
-        ) {
-            Fraction memory z = _subMax0(quotients[1]);
-            return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
-        }
-        return 0;
-    }
-
-    /**
-     * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
-     */
-    function _subMax0(Quotient memory q) internal pure returns (Fraction memory) {
-        if (q.n1 > q.n2 && q.d1 > q.d2) {
-            // the quotient is finite and positive
-            return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
+        // if the user is receiving BNT and the external wallet holds TKN
+        if (output.t > 0 && w > 0) {
+            uint256 tb = output.t.mul(b);
+            uint256 wa = w.mul(a);
+            if (tb > wa) {
+                output.t = (tb - wa) / b;
+                output.u = w;
+            } else {
+                output.t = 0;
+                output.u = tb / a;
+            }
         }
 
-        if (q.n2 > q.n1 && q.d2 > q.d1) {
-            // the quotient is finite and positive
-            return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
-        }
-
-        if (q.n2 == q.n1 && q.d2 == q.d1) {
-            // the quotient is 1
-            return Fraction({ n: 1, d: 1 });
-        }
-
-        // the quotient is not finite or not positive
-        return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
+        amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
+        amounts.networkTokenAmountToMintForProvider = output.t;
+        amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
+        amounts.baseTokenAmountToDeductFromLiquidity = output.r;
+        amounts.networkTokenAmountToDeductFromLiquidity = output.p.toInt256();
+        amounts.baseTokenWithdrawalFeeAmount = x * n / PPM_RESOLUTION;
     }
 
     /**

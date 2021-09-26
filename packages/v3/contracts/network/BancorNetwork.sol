@@ -952,17 +952,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if network token trading liquidity should be lowered - renounce liquidity
         if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
+            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToDeductFromLiquidity));
         }
 
+        // TODO:
         // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
-        if (amounts.networkTokenArbitrageAmount > 0) {
-            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
-        }
-        // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
-        else if (amounts.networkTokenArbitrageAmount < 0) {
-            cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
-        }
+        //if (amounts.networkTokenArbitrageAmount > 0) {
+        //    cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
+        //}
+        //// if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
+        //else if (amounts.networkTokenArbitrageAmount < 0) {
+        //    cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
+        //}
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
         // provider
