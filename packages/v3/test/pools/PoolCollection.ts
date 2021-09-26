@@ -1668,11 +1668,11 @@ describe('PoolCollection', () => {
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
                             });
                         });
@@ -1707,12 +1707,12 @@ describe('PoolCollection', () => {
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
-                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                             });
                         });
 
@@ -1735,7 +1735,7 @@ describe('PoolCollection', () => {
                                         targetPool.address,
                                         targetAmount
                                     )
-                                ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                                ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                             });
 
                             context('with a trading fee', () => {
@@ -1764,7 +1764,7 @@ describe('PoolCollection', () => {
                                             targetPool.address,
                                             targetAmount
                                         )
-                                    ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
+                                    ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                                 });
                             });
                         });

@@ -1386,7 +1386,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
         uint256 fullTargetAmount = targetAmount.add(feeAmount);
-        require(fullTargetAmount < targetBalance, "ERR_INVALID_POOL_BALANCE");
+        require(fullTargetAmount < targetBalance, "ERR_INVALID_AMOUNT");
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
