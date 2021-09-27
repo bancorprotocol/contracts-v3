@@ -100,6 +100,6 @@ library PoolAverageRate {
      * @dev compares two average rates
      */
     function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) internal pure returns (bool) {
-        return averageRate1.rate.n.mul(averageRate2.rate.d) == averageRate2.rate.d.mul(averageRate1.rate.n);
+        return averageRate1.rate.n.mul(averageRate2.rate.d) == averageRate2.rate.n.mul(averageRate1.rate.d);
     }
 }

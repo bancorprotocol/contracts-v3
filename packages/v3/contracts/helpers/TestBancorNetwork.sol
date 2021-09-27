@@ -141,12 +141,12 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function tradePoolCollectionT(
         IPoolCollection poolCollection,
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmountsWithLiquidity memory) {
-        return poolCollection.trade(sourcePool, targetPool, sourceAmount, minReturnAmount);
+        return poolCollection.trade(sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
     function approveT(

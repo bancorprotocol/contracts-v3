@@ -576,7 +576,7 @@ describe('PoolAverageRate', () => {
             it(`should return that ${toString(averageRate1.rate)} and ${toString(
                 averageRate2.rate
             )} are not equal`, async () => {
-                expect(await poolAverageRate.isEqual(averageRate1, averageRate2)).to.be.true;
+                expect(await poolAverageRate.isEqual(averageRate1, averageRate2)).to.be.false;
             });
         }
     });

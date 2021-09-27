@@ -184,8 +184,8 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
     function trade(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
         uint256 deadline,
@@ -202,8 +202,8 @@ interface IBancorNetwork is IUpgradeable {
      */
 
     function tradePermitted(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
         uint256 deadline,
@@ -217,8 +217,8 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the target amount and fee by specifying the source amount
      */
     function targetAmountAndFee(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount
     ) external view returns (TradeAmounts memory);
 
@@ -226,8 +226,8 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the source amount and fee by specifying the target amount
      */
     function sourceAmountAndFee(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 targetAmount
     ) external view returns (TradeAmounts memory);
 }
