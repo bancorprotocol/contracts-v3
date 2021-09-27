@@ -1,4 +1,4 @@
-import Contracts from '../../components/Contracts';
+import Contracts, { AsyncReturnType } from '../../components/Contracts';
 import {
     NetworkSettings,
     PoolToken,
@@ -1783,8 +1783,7 @@ describe('PoolCollection', () => {
                     const { sourceBalance, targetBalance, tradingFeePPM, amount, intervals } = spec;
 
                     context(`with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${intervals}]`, () => {
-                        type Unpack<T> = T extends Promise<infer U> ? U : T;
-                        type PoolData = Unpack<ReturnType<TestPoolCollection['poolData']>>;
+                        type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
                         const expectedAverageRate = async (poolData: PoolData, timeElapsed: number) => {
                             const { liquidity } = poolData;
 
