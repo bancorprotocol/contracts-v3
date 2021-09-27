@@ -673,9 +673,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmounts memory)
     {
-        return _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
     }
 
     /**
@@ -700,11 +699,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmounts memory)
     {
         _permit(sourceToken, sourceAmount, deadline, v, r, s);
 
-        return _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
     }
 
     /**
@@ -1220,7 +1218,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) private returns (TradeAmounts memory tradeAmounts) {
+    ) private {
         require(deadline == 0 || deadline <= _time(), "ERR_EXPIRED_DEADLINE");
 
         // ensure the beneficiary is set
@@ -1256,16 +1254,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // perform either a single or double hop trade, based on the source and the target pool
+        uint256 tradeAmount;
         if (address(sourceToken) == address(_networkToken)) {
-            tradeAmounts = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount);
         } else if (address(targetToken) == address(_networkToken)) {
-            tradeAmounts = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount);
         } else {
-            tradeAmounts = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
         }
 
         // transfer the transfer target tokens/ETH to the beneficiary
-        _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmounts.amount);
+        _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
     }
 
     /**
@@ -1276,7 +1275,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken pool,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) private returns (TradeAmounts memory) {
+    ) private returns (uint256) {
         return _tradeNetworkToken(contextId, pool, true, sourceAmount, minReturnAmount);
     }
 
@@ -1288,7 +1287,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken pool,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) private returns (TradeAmounts memory) {
+    ) private returns (uint256) {
         return _tradeNetworkToken(contextId, pool, false, sourceAmount, minReturnAmount);
     }
 
@@ -1301,7 +1300,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isSourceNetworkToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) private returns (TradeAmounts memory) {
+    ) private returns (uint256) {
         IPoolCollection poolCollection = _poolCollection(pool);
 
         IReserveToken networkPool = IReserveToken(address(_networkToken));
@@ -1316,7 +1315,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
-        // if the target token is the network token, notify the network token pool's onFeesCollected function
+        // if the target token is the network token, notify the network token pool on collected feeds
         if (!isSourceNetworkToken) {
             cachedNetworkTokenPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
         }
@@ -1355,7 +1354,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             liquidity: tradeAmounts.liquidity.networkTokenTradingLiquidity
         });
 
-        return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+        return tradeAmounts.amount;
     }
 
     /**
@@ -1367,13 +1366,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) private returns (TradeAmounts memory) {
+    ) private returns (uint256) {
         // trade the source token to the network token (while accepting any return amount)
-        TradeAmounts memory tradeAmounts = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, 1);
+        uint256 tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, 1);
 
         // trade the received network token target amount to the target token (while respecting the minimum return
         // amount)
-        return _tradeFromNetworkToken(contextId, targetToken, tradeAmounts.amount, minReturnAmount);
+        return _tradeFromNetworkToken(contextId, targetToken, tradeAmount, minReturnAmount);
     }
 
     /**

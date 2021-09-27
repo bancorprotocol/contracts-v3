@@ -190,7 +190,7 @@ interface IBancorNetwork is IUpgradeable {
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable returns (TradeAmounts memory);
+    ) external payable;
 
     /**
      * @dev performs a trade by providing an EIP712 typed signature for an EIP2612 permit request and returns the target
@@ -211,7 +211,7 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable returns (TradeAmounts memory);
+    ) external payable;
 
     /**
      * @dev returns the target amount by specifying the source amount
