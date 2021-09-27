@@ -557,21 +557,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function trade(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     )
         external
         override
         only(address(_network))
-        validAddress(address(sourcePool))
-        validAddress(address(targetPool))
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
         returns (TradeAmounts memory)
     {
-        TradingParams memory params = _tradeParams(sourcePool, targetPool);
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         TradeAmounts memory tradeAmounts = _targetAmountAndFee(
             params.sourceBalance,
@@ -629,19 +629,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function targetAmountAndFee(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 sourceAmount
     )
         external
         view
         override
-        validAddress(address(sourcePool))
-        validAddress(address(targetPool))
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
         returns (TradeAmounts memory)
     {
-        TradingParams memory params = _tradeParams(sourcePool, targetPool);
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
     }
@@ -650,19 +650,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function sourceAmountAndFee(
-        IReserveToken sourcePool,
-        IReserveToken targetPool,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
         uint256 targetAmount
     )
         external
         view
         override
-        validAddress(address(sourcePool))
-        validAddress(address(targetPool))
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
         greaterThanZero(targetAmount)
         returns (TradeAmounts memory)
     {
-        TradingParams memory params = _tradeParams(sourcePool, targetPool);
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
     }
@@ -1313,20 +1313,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev returns trading params
      */
-    function _tradeParams(IReserveToken sourcePool, IReserveToken targetPool)
+    function _tradeParams(IReserveToken sourceToken, IReserveToken targetToken)
         private
         view
         returns (TradingParams memory params)
     {
         // ensure that the network token is either the source or the target pool
-        bool isSourceNetworkToken = address(sourcePool) == address(_networkToken);
-        bool isTargetNetworkToken = address(targetPool) == address(_networkToken);
+        bool isSourceNetworkToken = address(sourceToken) == address(_networkToken);
+        bool isTargetNetworkToken = address(targetToken) == address(_networkToken);
         if (isSourceNetworkToken && !isTargetNetworkToken) {
             params.isSourceNetworkToken = true;
-            params.pool = targetPool;
+            params.pool = targetToken;
         } else if (!isSourceNetworkToken && isTargetNetworkToken) {
             params.isSourceNetworkToken = false;
-            params.pool = sourcePool;
+            params.pool = sourceToken;
         } else {
             // the network token isn't one of the pools or is both of them
             revert("ERR_INVALID_POOLS");

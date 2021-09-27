@@ -200,7 +200,7 @@ export const createSystem = async () => {
 
 export const createPool = async (
     reserveToken: TokenWithAddress,
-    network: BancorNetwork,
+    network: TestBancorNetwork,
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {

@@ -1332,12 +1332,12 @@ describe('PoolCollection', () => {
             const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
             const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
-                let sourcePool: TestERC20Token;
-                let targetPool: TestERC20Token;
+                let sourceToken: TestERC20Token;
+                let targetToken: TestERC20Token;
 
                 beforeEach(async () => {
-                    sourcePool = isSourceNetworkToken ? networkToken : reserveToken;
-                    targetPool = isSourceNetworkToken ? reserveToken : networkToken;
+                    sourceToken = isSourceNetworkToken ? networkToken : reserveToken;
+                    targetToken = isSourceNetworkToken ? reserveToken : networkToken;
                 });
 
                 it('should revert when attempting to trade from a non-network', async () => {
@@ -1346,7 +1346,7 @@ describe('PoolCollection', () => {
                     await expect(
                         poolCollection
                             .connect(nonNetwork)
-                            .trade(sourcePool.address, targetPool.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
+                            .trade(sourceToken.address, targetToken.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
                     ).to.be.revertedWith('ERR_ACCESS_DENIED');
                 });
 
@@ -1355,18 +1355,18 @@ describe('PoolCollection', () => {
                         network.tradePoolCollectionT(
                             poolCollection.address,
                             ZERO_ADDRESS,
-                            targetPool.address,
+                            targetToken.address,
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                     await expect(
-                        poolCollection.targetAmountAndFee(ZERO_ADDRESS, targetPool.address, BigNumber.from(1))
+                        poolCollection.targetAmountAndFee(ZERO_ADDRESS, targetToken.address, BigNumber.from(1))
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                     await expect(
-                        poolCollection.sourceAmountAndFee(ZERO_ADDRESS, targetPool.address, BigNumber.from(1))
+                        poolCollection.sourceAmountAndFee(ZERO_ADDRESS, targetToken.address, BigNumber.from(1))
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
                 });
 
@@ -1374,7 +1374,7 @@ describe('PoolCollection', () => {
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
-                            sourcePool.address,
+                            sourceToken.address,
                             ZERO_ADDRESS,
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
@@ -1382,11 +1382,11 @@ describe('PoolCollection', () => {
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                     await expect(
-                        poolCollection.targetAmountAndFee(sourcePool.address, ZERO_ADDRESS, BigNumber.from(1))
+                        poolCollection.targetAmountAndFee(sourceToken.address, ZERO_ADDRESS, BigNumber.from(1))
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
 
                     await expect(
-                        poolCollection.sourceAmountAndFee(sourcePool.address, ZERO_ADDRESS, BigNumber.from(1))
+                        poolCollection.sourceAmountAndFee(sourceToken.address, ZERO_ADDRESS, BigNumber.from(1))
                     ).to.be.revertedWith('ERR_INVALID_ADDRESS');
                 });
 
@@ -1516,19 +1516,19 @@ describe('PoolCollection', () => {
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
-                            sourcePool.address,
-                            targetPool.address,
+                            sourceToken.address,
+                            targetToken.address,
                             BigNumber.from(0),
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('ERR_ZERO_VALUE');
 
                     await expect(
-                        poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(0))
+                        poolCollection.targetAmountAndFee(sourceToken.address, targetToken.address, BigNumber.from(0))
                     ).to.be.revertedWith('ERR_ZERO_VALUE');
 
                     await expect(
-                        poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(0))
+                        poolCollection.sourceAmountAndFee(sourceToken.address, targetToken.address, BigNumber.from(0))
                     ).to.be.revertedWith('ERR_ZERO_VALUE');
                 });
 
@@ -1536,8 +1536,8 @@ describe('PoolCollection', () => {
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
-                            sourcePool.address,
-                            targetPool.address,
+                            sourceToken.address,
+                            targetToken.address,
                             BigNumber.from(1),
                             BigNumber.from(0)
                         )
@@ -1553,19 +1553,27 @@ describe('PoolCollection', () => {
                         await expect(
                             network.tradePoolCollectionT(
                                 poolCollection.address,
-                                sourcePool.address,
-                                targetPool.address,
+                                sourceToken.address,
+                                targetToken.address,
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
                         ).to.be.revertedWith('ERR_TRADING_DISABLED');
 
                         await expect(
-                            poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                            poolCollection.targetAmountAndFee(
+                                sourceToken.address,
+                                targetToken.address,
+                                BigNumber.from(1)
+                            )
                         ).to.be.revertedWith('ERR_TRADING_DISABLED');
 
                         await expect(
-                            poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                            poolCollection.sourceAmountAndFee(
+                                sourceToken.address,
+                                targetToken.address,
+                                BigNumber.from(1)
+                            )
                         ).to.be.revertedWith('ERR_TRADING_DISABLED');
                     });
                 });
@@ -1575,19 +1583,27 @@ describe('PoolCollection', () => {
                         await expect(
                             network.tradePoolCollectionT(
                                 poolCollection.address,
-                                sourcePool.address,
-                                targetPool.address,
+                                sourceToken.address,
+                                targetToken.address,
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
                         ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
 
                         await expect(
-                            poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                            poolCollection.targetAmountAndFee(
+                                sourceToken.address,
+                                targetToken.address,
+                                BigNumber.from(1)
+                            )
                         ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
 
                         await expect(
-                            poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, BigNumber.from(1))
+                            poolCollection.sourceAmountAndFee(
+                                sourceToken.address,
+                                targetToken.address,
+                                BigNumber.from(1)
+                            )
                         ).to.be.revertedWith('ERR_NETWORK_LIQUIDITY_TOO_LOW');
                     });
                 });
@@ -1614,8 +1630,8 @@ describe('PoolCollection', () => {
                             await expect(
                                 network.tradePoolCollectionT(
                                     poolCollection.address,
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     BigNumber.from(1),
                                     MIN_RETURN_AMOUNT
                                 )
@@ -1626,8 +1642,8 @@ describe('PoolCollection', () => {
                             await expect(
                                 network.tradePoolCollectionT(
                                     poolCollection.address,
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     toWei(BigNumber.from(12345)),
                                     MAX_UINT256
                                 )
@@ -1660,19 +1676,19 @@ describe('PoolCollection', () => {
                                 await expect(
                                     network.tradePoolCollectionT(
                                         poolCollection.address,
-                                        sourcePool.address,
-                                        targetPool.address,
+                                        sourceToken.address,
+                                        targetToken.address,
                                         amount,
                                         MIN_RETURN_AMOUNT
                                     )
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.targetAmountAndFee(sourceToken.address, targetToken.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.sourceAmountAndFee(sourceToken.address, targetToken.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
                             });
                         });
@@ -1699,19 +1715,19 @@ describe('PoolCollection', () => {
                                 await expect(
                                     network.tradePoolCollectionT(
                                         poolCollection.address,
-                                        sourcePool.address,
-                                        targetPool.address,
+                                        sourceToken.address,
+                                        targetToken.address,
                                         amount,
                                         MIN_RETURN_AMOUNT
                                     )
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.targetAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.targetAmountAndFee(sourceToken.address, targetToken.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_POOL_BALANCE');
 
                                 await expect(
-                                    poolCollection.sourceAmountAndFee(sourcePool.address, targetPool.address, amount)
+                                    poolCollection.sourceAmountAndFee(sourceToken.address, targetToken.address, amount)
                                 ).to.be.revertedWith('ERR_INVALID_AMOUNT');
                             });
                         });
@@ -1731,8 +1747,8 @@ describe('PoolCollection', () => {
                             it('should revert when attempting to query the source amount', async () => {
                                 await expect(
                                     poolCollection.sourceAmountAndFee(
-                                        sourcePool.address,
-                                        targetPool.address,
+                                        sourceToken.address,
+                                        targetToken.address,
                                         targetAmount
                                     )
                                 ).to.be.revertedWith('ERR_INVALID_AMOUNT');
@@ -1760,8 +1776,8 @@ describe('PoolCollection', () => {
                                 it('should revert when attempting to query the source amount', async () => {
                                     await expect(
                                         poolCollection.sourceAmountAndFee(
-                                            sourcePool.address,
-                                            targetPool.address,
+                                            sourceToken.address,
+                                            targetToken.address,
                                             targetAmount
                                         )
                                     ).to.be.revertedWith('ERR_INVALID_AMOUNT');
@@ -1797,14 +1813,16 @@ describe('PoolCollection', () => {
                         const expectedTargetAmountAndFee = (sourceAmount: BigNumber, poolData: PoolData) => {
                             const { liquidity } = poolData;
 
-                            const sourcePoolBalance = isSourceNetworkToken
+                            const sourceTokenBalance = isSourceNetworkToken
                                 ? liquidity.networkTokenTradingLiquidity
                                 : liquidity.baseTokenTradingLiquidity;
-                            const targetPoolBalance = isSourceNetworkToken
+                            const targetTokenBalance = isSourceNetworkToken
                                 ? liquidity.baseTokenTradingLiquidity
                                 : liquidity.networkTokenTradingLiquidity;
 
-                            const amount = targetPoolBalance.mul(sourceAmount).div(sourcePoolBalance.add(sourceAmount));
+                            const amount = targetTokenBalance
+                                .mul(sourceAmount)
+                                .div(sourceTokenBalance.add(sourceAmount));
                             const feeAmount = amount.mul(poolData.tradingFeePPM).div(PPM_RESOLUTION);
 
                             return { amount: amount.sub(feeAmount), feeAmount };
@@ -1837,28 +1855,28 @@ describe('PoolCollection', () => {
                                 const { liquidity: prevLiquidity } = prevPoolData;
 
                                 const targetAmountAndFee = await poolCollection.targetAmountAndFee(
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     amount
                                 );
                                 const sourceAmountAndFee = await poolCollection.sourceAmountAndFee(
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     targetAmountAndFee.amount
                                 );
 
                                 const tradeAmounts = await network.callStatic.tradePoolCollectionT(
                                     poolCollection.address,
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     amount,
                                     MIN_RETURN_AMOUNT
                                 );
 
                                 await network.tradePoolCollectionT(
                                     poolCollection.address,
-                                    sourcePool.address,
-                                    targetPool.address,
+                                    sourceToken.address,
+                                    targetToken.address,
                                     amount,
                                     MIN_RETURN_AMOUNT
                                 );
