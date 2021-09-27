@@ -949,3 +949,155 @@ describe('PoolCollection', () => {
         }
     });
 });
+
+describe('PoolCollection.withdrawalAmounts', () => {
+    let poolCollection: TestPoolCollection;
+
+    before(async () => {
+        ({ poolCollection } = await createSystem());
+    });
+
+    describe('tests', () => {
+        interface Row {
+            a: string;
+            b: string;
+            c: string;
+            e: string;
+            w: string;
+            m: string;
+            n: string;
+            x: string;
+            p: string;
+            q: string;
+            r: string;
+            s: string;
+            t: string;
+            u: string;
+        }
+
+        interface MaxError {
+            absolute: Decimal;
+            relative: Decimal;
+        }
+
+        interface MaxErrors {
+            p: MaxError;
+            q: MaxError;
+            r: MaxError;
+            s: MaxError;
+            t: MaxError;
+            u: MaxError;
+        }
+
+        const tests = (numOfTestsPerFile: number = Number.MAX_SAFE_INTEGER) => {
+            const test = (fileName: string, maxErrors: MaxErrors) => {
+                const table: Row[] = JSON.parse(
+                    fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
+                ).slice(0, numOfTestsPerFile);
+
+                for (const {a, b, c, e, w, m, n, x, p, q, r, s, t, u} of table) {
+                    it(`${fileName}(${[a, b, c, e, w, m, n, x]})`, async () => {
+                        const actual = await poolCollection.withdrawalAmountsT(a, b, c, e, w, m, n, x);
+                        const actual_p = actual.networkTokenAmountToDeductFromLiquidity;
+                        const actual_q = actual.networkTokenAmountToRenounceByProtocol;
+                        const actual_r = actual.baseTokenAmountToDeductFromLiquidity;
+                        const actual_s = actual.baseTokenAmountToTransferFromVaultToProvider;
+                        const actual_t = actual.networkTokenAmountToMintForProvider;
+                        const actual_u = actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider;
+                        expect(actual_p).to.almostEqual(new Decimal(p), maxErrors.p.absolute, maxErrors.p.relative);
+                        expect(actual_q).to.almostEqual(new Decimal(q), maxErrors.q.absolute, maxErrors.q.relative);
+                        expect(actual_r).to.almostEqual(new Decimal(r), maxErrors.r.absolute, maxErrors.r.relative);
+                        expect(actual_s).to.almostEqual(new Decimal(s), maxErrors.s.absolute, maxErrors.s.relative);
+                        expect(actual_t).to.almostEqual(new Decimal(t), maxErrors.t.absolute, maxErrors.t.relative);
+                        expect(actual_u).to.almostEqual(new Decimal(u), maxErrors.u.absolute, maxErrors.u.relative);
+                    });
+                }
+            };
+
+            test(
+                'WithdrawalAmountsCoverage1', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.0000004') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage2', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000005') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000009') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage3', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000003') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage4', {
+                    p: { absolute: new Decimal(2), relative: new Decimal('0.003') },
+                    q: { absolute: new Decimal(2), relative: new Decimal('0.002') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage5', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00002') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.000007') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage6', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.00000000005') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+
+            test(
+                'WithdrawalAmountsCoverage7', {
+                    p: { absolute: new Decimal(1), relative: new Decimal('0.000002') },
+                    q: { absolute: new Decimal(1), relative: new Decimal('0.000003') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    t: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    u: { absolute: new Decimal(1), relative: new Decimal('0') },
+                }
+            );
+        };
+
+        describe('quick tests', () => {
+            tests(100);
+        });
+
+        describe('@stress tests', () => {
+            tests();
+        });
+    });
+});
