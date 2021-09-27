@@ -674,9 +674,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         uint256 baseTokenCurrTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity;
         uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta >= 0 ?
-            networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta)) :
-            networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta >= 0
+            ? networkTokenCurrTradingLiquidity.sub(uint256(networkTokenTradingLiquidityDelta))
+            : networkTokenCurrTradingLiquidity.add(uint256(-networkTokenTradingLiquidityDelta));
 
         poolData.poolToken.burnFrom(address(_network), basePoolTokenAmount);
         poolData.liquidity.stakedBalance = MathEx.mulDivF(
@@ -713,9 +713,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         uint256 c, // baseTokenExcessAmount
         uint256 e, // baseTokenStakedAmount
         uint256 w, // baseTokenExternalProtectionWalletBalance
-        uint32 m,  // tradeFeePPM
-        uint32 n,  // withdrawalFeePPM
-        uint256 x  // baseTokenWithdrawalAmount
+        uint32 m, // tradeFeePPM
+        uint32 n, // withdrawalFeePPM
+        uint256 x // baseTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
         _isUint128(a);
         _isUint128(b);

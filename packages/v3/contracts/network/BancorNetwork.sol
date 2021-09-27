@@ -953,12 +953,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         if (amounts.networkTokenAmountToRenounceByProtocol > 0) {
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToRenounceByProtocol));
+            cachedNetworkTokenPool.renounceLiquidity(
+                contextId,
+                pool,
+                uint256(amounts.networkTokenAmountToRenounceByProtocol)
+            );
         } else if (amounts.networkTokenAmountToRenounceByProtocol < 0) {
-            cachedNetworkTokenPool.requestLiquidity(contextId, pool, uint256(-amounts.networkTokenAmountToRenounceByProtocol));
+            cachedNetworkTokenPool.requestLiquidity(
+                contextId,
+                pool,
+                uint256(-amounts.networkTokenAmountToRenounceByProtocol)
+            );
         }
 
-        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol.sub(amounts.networkTokenAmountToDeductFromLiquidity);
+        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol.sub(
+            amounts.networkTokenAmountToDeductFromLiquidity
+        );
         if (networkTokenArbitrageAmount > 0) {
             cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
         } else if (networkTokenArbitrageAmount < 0) {
