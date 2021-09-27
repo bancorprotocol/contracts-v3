@@ -589,22 +589,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         Pool storage poolData = _poolData[params.pool];
 
         // update the recent average rate
-        AverageRate memory currentAverageRate = poolData.averageRate;
-        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(
+        _updateAverageRate(
+            poolData,
             Fraction({
                 n: params.liquidity.networkTokenTradingLiquidity,
                 d: params.liquidity.baseTokenTradingLiquidity
-            }),
-            currentAverageRate,
-            _time()
+            })
         );
-
-        if (
-            newAverageRate.time != currentAverageRate.time ||
-            !PoolAverageRate.isEqual(newAverageRate, currentAverageRate)
-        ) {
-            poolData.averageRate = newAverageRate;
-        }
 
         // sync the reserve balances
         uint256 newNetworkTokenTradingLiquidity;
@@ -1392,5 +1383,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
+    }
+
+    /**
+     * @dev updates the average rate
+     */
+    function _updateAverageRate(Pool storage poolData, Fraction memory spotRate) private {
+        // update the recent average rate
+        AverageRate memory currentAverageRate = poolData.averageRate;
+        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
+
+        if (
+            newAverageRate.time != currentAverageRate.time ||
+            !PoolAverageRate.isEqual(newAverageRate, currentAverageRate)
+        ) {
+            poolData.averageRate = newAverageRate;
+        }
     }
 }
