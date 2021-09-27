@@ -1007,7 +1007,7 @@ describe('NetworkTokenPool', () => {
             await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
         });
 
-        it('should revert when attempting to get notified about collected fee from a non-network', async () => {
+        it('should revert when attempting to notify about collected fee from a non-network', async () => {
             const nonNetwork = deployer;
 
             await expect(
@@ -1017,7 +1017,7 @@ describe('NetworkTokenPool', () => {
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
-        it('should revert when attempting to get notified about collected fee from an invalid pool', async () => {
+        it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
                 network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, BigNumber.from(1), FEE_TYPES.trading)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
