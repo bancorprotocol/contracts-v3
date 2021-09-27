@@ -1,11 +1,11 @@
 import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
 import {
-    BancorNetwork,
     BancorVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
+    TestBancorNetwork,
     TestPoolCollection,
     TokenGovernance
 } from '../../typechain';
@@ -112,7 +112,7 @@ export const createPoolCollection = async (network: string | BaseContract, poolT
     Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
 
 const createNetworkTokenPoolUninitialized = async (
-    network: BancorNetwork,
+    network: TestBancorNetwork,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
@@ -200,7 +200,7 @@ export const createSystem = async () => {
 
 export const createPool = async (
     reserveToken: TokenWithAddress,
-    network: BancorNetwork,
+    network: TestBancorNetwork,
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
