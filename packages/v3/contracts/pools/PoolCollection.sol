@@ -582,6 +582,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         // ensure that the trade gives something in return
         require(tradeAmounts.amount != 0, "ERR_ZERO_TARGET_AMOUNT");
+
+        // ensure that the target amount above the requested minimum return amount
         require(tradeAmounts.amount >= minReturnAmount, "ERR_RETURN_TOO_LOW");
 
         Pool storage poolData = _poolData[params.pool];
