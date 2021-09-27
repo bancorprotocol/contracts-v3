@@ -214,20 +214,20 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable returns (TradeAmounts memory);
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @dev returns the target amount by specifying the source amount
      */
-    function targetAmountAndFee(
+    function tradeTargetAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 sourceAmount
-    ) external view returns (TradeAmounts memory);
+    ) external view returns (uint256);
 
     /**
-     * @dev returns the source amount and fee by specifying the target amount
+     * @dev returns the source amount by specifying the target amount
      */
-    function sourceAmountAndFee(
+    function tradeSourceAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 targetAmount
-    ) external view returns (TradeAmounts memory);
+    ) external view returns (uint256);
 }

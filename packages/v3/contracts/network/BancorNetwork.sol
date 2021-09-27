@@ -710,7 +710,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function targetAmountAndFee(
+    function tradeTargetAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 sourceAmount
@@ -721,16 +721,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(sourceToken))
         validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
-        returns (TradeAmounts memory)
+        returns (uint256)
     {
         // return the target amount and fee when trading the network token to the base token
         if (address(sourceToken) == address(_networkToken)) {
-            return _poolCollection(targetToken).targetAmountAndFee(sourceToken, targetToken, sourceAmount);
+            return _poolCollection(targetToken).targetAmountAndFee(sourceToken, targetToken, sourceAmount).amount;
         }
 
         // return the target amount and fee when trading the bsase token to the network token
         if (address(targetToken) == address(_networkToken)) {
-            return _poolCollection(sourceToken).targetAmountAndFee(sourceToken, targetToken, sourceAmount);
+            return _poolCollection(sourceToken).targetAmountAndFee(sourceToken, targetToken, sourceAmount).amount;
         }
 
         // return the target amount and fee by simulating double-hop trade from the source token to the target token via
@@ -742,17 +742,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         return
-            _poolCollection(targetToken).targetAmountAndFee(
-                IReserveToken(address(_networkToken)),
-                targetToken,
-                sourceTradeAmounts.amount
-            );
+            _poolCollection(targetToken)
+                .targetAmountAndFee(IReserveToken(address(_networkToken)), targetToken, sourceTradeAmounts.amount)
+                .amount;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function sourceAmountAndFee(
+    function tradeSourceAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 targetAmount
@@ -763,16 +761,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(sourceToken))
         validAddress(address(targetToken))
         greaterThanZero(targetAmount)
-        returns (TradeAmounts memory)
+        returns (uint256)
     {
         // return the source amount and fee when trading the network token to the base token
         if (address(sourceToken) == address(_networkToken)) {
-            return _poolCollection(targetToken).sourceAmountAndFee(sourceToken, targetToken, targetAmount);
+            return _poolCollection(targetToken).sourceAmountAndFee(sourceToken, targetToken, targetAmount).amount;
         }
 
         // return the source amount and fee when trading the bsase token to the network token
         if (address(targetToken) == address(_networkToken)) {
-            return _poolCollection(sourceToken).sourceAmountAndFee(sourceToken, targetToken, targetAmount);
+            return _poolCollection(sourceToken).sourceAmountAndFee(sourceToken, targetToken, targetAmount).amount;
         }
 
         // return the source amount and fee by simulating double-hop trade from the source token to the target token via
@@ -784,11 +782,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         return
-            _poolCollection(targetToken).sourceAmountAndFee(
-                IReserveToken(address(_networkToken)),
-                targetToken,
-                sourceTradeAmounts.amount
-            );
+            _poolCollection(targetToken)
+                .sourceAmountAndFee(IReserveToken(address(_networkToken)), targetToken, sourceTradeAmounts.amount)
+                .amount;
     }
 
     /**
