@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -34,6 +35,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using Address for address payable;
     using SafeMath for uint256;
+    using SignedSafeMath for int256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveToken for IReserveToken;
 
@@ -950,19 +952,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(cachedExternalProtectionWallet))
         );
 
-        // TODO:
-        // if network token trading liquidity should be lowered - renounce liquidity
-        //if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-        //    cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToDeductFromLiquidity));
-        //}
-        // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
-        //if (amounts.networkTokenArbitrageAmount > 0) {
-        //    cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
-        //}
-        //// if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
-        //else if (amounts.networkTokenArbitrageAmount < 0) {
-        //    cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
-        //}
+        if (amounts.networkTokenAmountToRenounceByProtocol > 0) {
+            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, uint256(amounts.networkTokenAmountToRenounceByProtocol));
+        } else if (amounts.networkTokenAmountToRenounceByProtocol < 0) {
+            cachedNetworkTokenPool.requestLiquidity(contextId, pool, uint256(-amounts.networkTokenAmountToRenounceByProtocol));
+        }
+
+        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol.sub(amounts.networkTokenAmountToDeductFromLiquidity);
+        if (networkTokenArbitrageAmount > 0) {
+            cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
+        } else if (networkTokenArbitrageAmount < 0) {
+            cachedNetworkTokenPool.burnFromVault(uint256(-networkTokenArbitrageAmount));
+        }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
         // provider

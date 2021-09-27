@@ -759,7 +759,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
         amounts.networkTokenAmountToDeductFromLiquidity = output.p.toInt256();
-        amounts.networkTokenAmountToRenounceByProtocol = output.q;
+        amounts.networkTokenAmountToRenounceByProtocol = output.q.toInt256();
         amounts.baseTokenWithdrawalFeeAmount = x * n / PPM_RESOLUTION;
     }
 
