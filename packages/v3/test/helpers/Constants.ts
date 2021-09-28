@@ -1,11 +1,12 @@
-import { ethers, BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
+export const DEFAULT_DECIMALS = BigNumber.from(18);
 export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-export const NATIVE_TOKEN_DECIMALS = BigNumber.from(18);
+export const NATIVE_TOKEN_DECIMALS = DEFAULT_DECIMALS;
 export const MAX_UINT256 = MaxUint256;
 export const ZERO_ADDRESS = AddressZero;
 export const INVALID_FRACTION = { n: BigNumber.from(0), d: BigNumber.from(0) };
