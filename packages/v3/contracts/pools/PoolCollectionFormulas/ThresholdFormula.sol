@@ -9,7 +9,7 @@ import { SafeMath, MAX_UINT128, MAX_UINT256, M } from "./Common.sol";
 library ThresholdFormula {
     using SafeMath for uint256;
 
-    struct uint512 {
+    struct Uint512 {
         uint256 hi;
         uint256 lo;
     }
@@ -23,8 +23,8 @@ library ThresholdFormula {
         uint256 x
     ) internal pure returns (bool) {
         validate(b, c, e, m, n, x, false);
-        uint512 memory hMaxD;
-        uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * M + (b + c - e) * m * M); // be(b+c)(en+(b+c-e)m)
+        Uint512 memory hMaxD;
+        Uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * M + (b + c - e) * m * M); // be(b+c)(en+(b+c-e)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * M * M));                 // + bbb
         hMaxD = add512(hMaxD, mul256(b * b, c * M * M * 3));             // + 3bbc
         hMaxD = add512(hMaxD, mul256(b * c, c * M * M * 3));             // + 3bcc
@@ -46,8 +46,8 @@ library ThresholdFormula {
         uint256 x
     ) internal pure returns (bool) {
         validate(b, c, e, m, n, x, true);
-        uint512 memory hMaxD;
-        uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * (M - m) + (e - b - c) * m * M); // be(b+c)(en(1-m)+(e-b-c)m)
+        Uint512 memory hMaxD;
+        Uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * (M - m) + (e - b - c) * m * M); // be(b+c)(en(1-m)+(e-b-c)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * (M - 2 * m) * M));                           // + bbb(1-2m)
         hMaxD = add512(hMaxD, mul256(b * b, c * (M - 2 * m) * M * 3));                       // + 3bbc(1-2m)
         hMaxD = add512(hMaxD, mul256(b * c, c * (M - 2 * m) * M * 3));                       // + 3bcc(1-2m)
@@ -81,41 +81,41 @@ library ThresholdFormula {
     /**
      * @dev returns the value of `x * y`
      */
-    function mul256(uint256 x, uint256 y) private pure returns (uint512 memory) {
+    function mul256(uint256 x, uint256 y) private pure returns (Uint512 memory) {
         uint256 p = mulmod(x, y, MAX_UINT256);
         uint256 q = x * y;
         uint256 r = p < q ? 1 : 0;
-        return uint512({ hi: p - q - r, lo: q });
+        return Uint512({ hi: p - q - r, lo: q });
     }
 
     /**
      * @dev returns the value of `x * y`
      */
-    function mul512(uint512 memory x, uint256 y) private pure returns (uint512 memory) {
-        uint512 memory xloy = mul256(x.lo, y);
-        return uint512({ hi: x.hi.mul(y).add(xloy.hi), lo: xloy.lo });
+    function mul512(Uint512 memory x, uint256 y) private pure returns (Uint512 memory) {
+        Uint512 memory xloy = mul256(x.lo, y);
+        return Uint512({ hi: x.hi.mul(y).add(xloy.hi), lo: xloy.lo });
     }
 
     /**
      * @dev returns the value of `x + y`
      */
-    function add512(uint512 memory x, uint512 memory y) private pure returns (uint512 memory) {
+    function add512(Uint512 memory x, Uint512 memory y) private pure returns (Uint512 memory) {
         uint256 r = x.lo + y.lo < x.lo ? 1 : 0;
-        return uint512({ hi: x.hi.add(y.hi).add(r), lo: x.lo + y.lo });
+        return Uint512({ hi: x.hi.add(y.hi).add(r), lo: x.lo + y.lo });
     }
 
     /**
      * @dev returns the value of `x - y`
      */
-    function sub512(uint512 memory x, uint512 memory y) private pure returns (uint512 memory) {
+    function sub512(Uint512 memory x, Uint512 memory y) private pure returns (Uint512 memory) {
         uint256 r = x.lo < y.lo ? 1 : 0;
-        return uint512({ hi: x.hi.sub(y.hi).sub(r), lo: x.lo - y.lo + r });
+        return Uint512({ hi: x.hi.sub(y.hi).sub(r), lo: x.lo - y.lo + r });
     }
 
     /**
      * @dev returns the value of `x > y`
      */
-    function gt512(uint512 memory x, uint512 memory y) private pure returns (bool) {
+    function gt512(Uint512 memory x, Uint512 memory y) private pure returns (bool) {
         return x.hi > y.hi || (x.hi == y.hi && x.lo > y.lo);
     }
 }
