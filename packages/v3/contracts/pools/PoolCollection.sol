@@ -1389,7 +1389,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev updates the average rate
      */
     function _updateAverageRate(Pool storage poolData, Fraction memory spotRate) private {
-        // update the recent average rate
         AverageRate memory currentAverageRate = poolData.averageRate;
         AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
 
