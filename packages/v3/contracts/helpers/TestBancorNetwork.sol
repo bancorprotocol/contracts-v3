@@ -7,7 +7,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { Time } from "../utility/Time.sol";
 
