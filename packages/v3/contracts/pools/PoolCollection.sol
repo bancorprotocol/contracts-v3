@@ -760,7 +760,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
         amounts.networkTokenAmountToDeductFromLiquidity = output.p.toInt256();
         amounts.networkTokenAmountToRenounceByProtocol = output.q.toInt256();
-        amounts.baseTokenWithdrawalFeeAmount = x * n / PPM_RESOLUTION;
+        amounts.baseTokenWithdrawalFeeAmount = (x * n) / PPM_RESOLUTION;
     }
 
     /**
