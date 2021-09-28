@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS } from './Constants';
 import { toWei } from './Types';
@@ -51,10 +52,13 @@ export const transfer = async (
         .transfer(targetAddress, amount);
 };
 
-export const createTokenBySymbol = async (symbol: string, networkToken: TestERC20Token): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (
+    symbol: string,
+    networkToken: TestERC20Token | NetworkToken
+): Promise<TokenWithAddress> => {
     switch (symbol) {
         case 'BNT':
-            return networkToken;
+            return networkToken as NetworkToken;
 
         case 'ETH':
             return { address: NATIVE_TOKEN_ADDRESS };
@@ -74,4 +78,39 @@ export const createWallet = async () => {
     await deployer.sendTransaction({ value: toWei(BigNumber.from(10)), to: await wallet.getAddress() });
 
     return wallet;
+};
+
+export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
+    switch (symbol) {
+        case 'BNT':
+            return '';
+
+        case 'vBNT':
+            return 'ERR_UNDERFLOW';
+
+        case 'TKN':
+            return 'ERC20: transfer amount exceeds allowance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const errorMessageTokenExceedsBalance = (symbol: string): string => {
+    switch (symbol) {
+        case 'BNT':
+            return 'SafeERC20: low-level call failed';
+
+        case 'vBNT':
+            return 'ERR_UNDERFLOW';
+
+        case 'ETH':
+            return '';
+
+        case 'TKN':
+            return 'ERC20: transfer amount exceeds balance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
 };

@@ -7,6 +7,12 @@
     },
     "rules": {
         "max-len": ["error", 150, 2],
+        "camelcase": [
+            "error",
+            {
+                "ignoreImports": true
+            }
+        ],
         "indent": [
             "error",
             4,
