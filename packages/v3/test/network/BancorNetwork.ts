@@ -1,8 +1,3 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
-import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
-import { ethers } from 'hardhat';
-import { camelCase } from 'lodash';
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import { GovToken, NetworkToken } from '../../components/LegacyContracts';
@@ -25,11 +20,18 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import {
-    createTokenBySymbol, createWallet,
-    errorMessageTokenExceedsAllowance, getBalance,
+    createTokenBySymbol,
+    createWallet,
+    errorMessageTokenExceedsAllowance,
+    getBalance,
     getTransactionCost,
     TokenWithAddress
 } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { expect } from 'chai';
+import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import { ethers } from 'hardhat';
+import { camelCase } from 'lodash';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
@@ -52,7 +54,11 @@ describe('BancorNetwork', () => {
         amount: BigNumber,
         deadline: BigNumber
     ) => {
-        if (tokenAddress === NATIVE_TOKEN_ADDRESS || tokenAddress === ZERO_ADDRESS) {
+        if (
+            tokenAddress === NATIVE_TOKEN_ADDRESS ||
+            tokenAddress === ZERO_ADDRESS ||
+            tokenAddress === (await network.networkToken())
+        ) {
             return {
                 v: BigNumber.from(0),
                 r: formatBytes32String(''),
@@ -1792,7 +1798,7 @@ describe('BancorNetwork', () => {
     describe('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let vault: BancorVault;
