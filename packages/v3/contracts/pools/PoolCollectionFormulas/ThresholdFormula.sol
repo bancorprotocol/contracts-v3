@@ -24,7 +24,7 @@ library ThresholdFormula {
     ) internal pure returns (bool) {
         validate(b, c, e, m, n, x, false);
         uint512 memory hMaxD;
-        uint512 memory hMaxN = mul512(mul256(b * e, (b + c) * M), e * n + (b + c - e) * m); // be(b+c)(en+(b+c-e)m)
+        uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * M + (b + c - e) * m * M); // be(b+c)(en+(b+c-e)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * M * M));                 // + bbb
         hMaxD = add512(hMaxD, mul256(b * b, c * M * M * 3));             // + 3bbc
         hMaxD = add512(hMaxD, mul256(b * c, c * M * M * 3));             // + 3bcc
@@ -47,7 +47,7 @@ library ThresholdFormula {
     ) internal pure returns (bool) {
         validate(b, c, e, m, n, x, true);
         uint512 memory hMaxD;
-        uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * (n * M + (M - n) * m) - (b + c) * m * M); // be(b+c)(e(n+(1-n)m)-(b+c)m)
+        uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * (M - m) + (e - b - c) * m * M); // be(b+c)(en(1-m)+(e-b-c)m)
         hMaxD = add512(hMaxD, mul256(b * b, b * (M - 2 * m) * M));                           // + bbb(1-2m)
         hMaxD = add512(hMaxD, mul256(b * b, c * (M - 2 * m) * M * 3));                       // + 3bbc(1-2m)
         hMaxD = add512(hMaxD, mul256(b * c, c * (M - 2 * m) * M * 3));                       // + 3bcc(1-2m)
