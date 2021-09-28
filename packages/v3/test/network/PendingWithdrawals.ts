@@ -1,9 +1,9 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import {
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
-    TestERC20Token,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection
@@ -160,7 +160,7 @@ describe('PendingWithdrawals', () => {
         let reserveToken: TokenWithAddress;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;

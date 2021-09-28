@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS } from '../helpers/Constants';
@@ -111,7 +112,7 @@ describe('PoolTokenFactory', () => {
     });
 
     describe('create pool token', () => {
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TokenWithAddress;
 

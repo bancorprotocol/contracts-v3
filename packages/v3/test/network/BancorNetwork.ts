@@ -1,11 +1,11 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken, GovToken } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
-    TestERC20Token,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
@@ -18,7 +18,14 @@ import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress, createWallet } from '../helpers/Utils';
+import {
+    createTokenBySymbol,
+    getBalance,
+    getTransactionCost,
+    TokenWithAddress,
+    createWallet,
+    errorMessageTokenExceedsAllowance
+} from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet, Signer, utils, ContractTransaction } from 'ethers';
@@ -514,7 +521,7 @@ describe('BancorNetwork', () => {
         let reserveToken: TokenWithAddress;
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let poolType: number;
 
@@ -592,8 +599,8 @@ describe('BancorNetwork', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let vault: BancorVault;
@@ -908,7 +915,7 @@ describe('BancorNetwork', () => {
 
                                         it('should revert when attempting to deposit without approving the network', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith(
-                                                'ERC20: transfer amount exceeds allowance'
+                                                errorMessageTokenExceedsAllowance(symbol)
                                             );
                                         });
                                     }
@@ -1387,8 +1394,8 @@ describe('BancorNetwork', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let vault: BancorVault;
@@ -1536,7 +1543,7 @@ describe('BancorNetwork', () => {
                         if (isNetworkToken) {
                             it('should revert when attempting to withdraw without approving the governance token amount', async () => {
                                 await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERC20: transfer amount exceeds allowance'
+                                    'ERR_UNDERFLOW'
                                 );
                             });
 
@@ -1545,7 +1552,7 @@ describe('BancorNetwork', () => {
                                 await govToken.connect(provider).approve(network.address, poolTokenAmount);
 
                                 await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERC20: transfer amount exceeds balance'
+                                    'ERR_UNDERFLOW'
                                 );
                             });
                         }

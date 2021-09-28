@@ -1,4 +1,6 @@
-import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
+import { ContractBuilder, Contract } from '../../components/ContractBuilder';
+import Contracts from '../../components/Contracts';
+import LegacyContracts from '../../components/LegacyContracts';
 import {
     BancorNetwork,
     BancorVault,
@@ -6,11 +8,12 @@ import {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
-    TestPoolCollection,
-    TokenGovernance
+    TestPoolCollection
 } from '../../typechain';
 import { roles } from './AccessControl';
+import { DEFAULT_DECIMALS } from './Constants';
 import { toAddress, TokenWithAddress } from './Utils';
+import { TokenGovernance } from '@bancor/token-governance';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
@@ -78,11 +81,17 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-const createGovernedToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+const createGovernedToken = async <F extends ContractFactory>(
+    legacyFactory: ContractBuilder<F>,
+    totalSupply: BigNumber,
+    ...args: Parameters<F['deploy']>
+) => {
     const deployer = (await ethers.getSigners())[0];
 
-    const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
-    const tokenGovernance = await Contracts.TestTokenGovernance.deploy(token.address);
+    const token = await legacyFactory.deploy(...args);
+    await token.issue(deployer.address, totalSupply);
+
+    const tokenGovernance = await LegacyContracts.TokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
     await token.transferOwnership(tokenGovernance.address);
@@ -93,14 +102,18 @@ const createGovernedToken = async (name: string, symbol: string, totalSupply: Bi
 
 export const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
+        LegacyContracts.NetworkToken,
+        TOTAL_SUPPLY,
         'BNT',
         'BNT',
-        TOTAL_SUPPLY
+        DEFAULT_DECIMALS
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
+        LegacyContracts.GovToken,
+        TOTAL_SUPPLY,
         'vBNT',
         'vBNT',
-        TOTAL_SUPPLY
+        DEFAULT_DECIMALS
     );
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };

@@ -1,7 +1,6 @@
-import { ethers } from 'hardhat';
-import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } from '@ethersproject/contracts';
 import { Signer } from '@ethersproject/abstract-signer';
-
+import { Contract as OldContract, ContractFactory, Overrides as OldOverrides } from '@ethersproject/contracts';
+import { ethers } from 'hardhat';
 import {
     BancorNetwork__factory,
     BancorX__factory,

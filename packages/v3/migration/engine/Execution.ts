@@ -1,4 +1,4 @@
-import { ContractBuilder, Contract } from '../../components/Contracts';
+import { ContractBuilder, Contract } from '../../components/ContractBuilder';
 import { ProxyAdmin } from '../../typechain';
 import { Engine } from './Engine';
 import { log } from './Logger';
