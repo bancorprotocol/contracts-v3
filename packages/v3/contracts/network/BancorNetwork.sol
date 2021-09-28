@@ -9,7 +9,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/drafts/IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { MAX_UINT256 } from "../utility/Constants.sol";
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";

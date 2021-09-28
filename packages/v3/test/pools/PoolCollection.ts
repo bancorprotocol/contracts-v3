@@ -1,11 +1,13 @@
-import Contracts, { AsyncReturnType } from '../../components/Contracts';
+import { AsyncReturnType } from '../../components/ContractBuilder';
+import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import {
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestERC20Token,
-    TestPoolAverageRate,
-    TestPoolCollection
+    TestPoolCollection,
+    TestPoolAverageRate
 } from '../../typechain';
 import { INVALID_FRACTION, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
@@ -144,7 +146,7 @@ describe('PoolCollection', () => {
     describe('create pool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TokenWithAddress;
 
@@ -864,7 +866,7 @@ describe('PoolCollection', () => {
         const testDeposit = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: TestERC20Token;
+            let networkToken: NetworkToken;
             let poolCollection: TestPoolCollection;
             let reserveToken: TokenWithAddress;
 
@@ -1201,7 +1203,7 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: TestERC20Token;
+            let networkToken: NetworkToken;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;
@@ -1301,7 +1303,7 @@ describe('PoolCollection', () => {
     describe('trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
@@ -1332,8 +1334,8 @@ describe('PoolCollection', () => {
             const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
             const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
-                let sourceToken: TestERC20Token;
-                let targetToken: TestERC20Token;
+                let sourceToken: TestERC20Token | NetworkToken;
+                let targetToken: TestERC20Token | NetworkToken;
 
                 beforeEach(async () => {
                     sourceToken = isSourceNetworkToken ? networkToken : reserveToken;

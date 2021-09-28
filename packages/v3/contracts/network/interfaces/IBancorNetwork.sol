@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";

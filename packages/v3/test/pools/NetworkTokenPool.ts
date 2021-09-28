@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken, GovToken } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -97,7 +98,7 @@ describe('NetworkTokenPool', () => {
 
     describe('mint', () => {
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let recipient: SignerWithAddress;
 
@@ -140,7 +141,7 @@ describe('NetworkTokenPool', () => {
 
     describe('burnFromVault', () => {
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let vault: BancorVault;
 
@@ -166,7 +167,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to burn more than balance of the vault', async () => {
             await expect(network.burnFromVaultT(amount.add(BigNumber.from(1)))).to.be.revertedWith(
-                'ERC20: transfer amount exceeds balance'
+                'SafeERC20: low-level call failed'
             );
         });
 
@@ -290,7 +291,7 @@ describe('NetworkTokenPool', () => {
     describe('request liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let vault: BancorVault;
@@ -472,7 +473,7 @@ describe('NetworkTokenPool', () => {
     describe('renounce liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let vault: BancorVault;
@@ -601,8 +602,8 @@ describe('NetworkTokenPool', () => {
     describe('deposit liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
@@ -743,7 +744,7 @@ describe('NetworkTokenPool', () => {
 
                     await expect(
                         network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0))
-                    ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                    ).to.be.revertedWith('');
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
@@ -791,8 +792,8 @@ describe('NetworkTokenPool', () => {
     describe('withdraw liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: TestERC20Token;
-        let govToken: TestERC20Token;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
@@ -826,7 +827,7 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
-            await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(1))).to.be.reverted; // division by 0
+            await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(1))).to.be.revertedWith(''); // division by 0
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -964,7 +965,7 @@ describe('NetworkTokenPool', () => {
 
                         await expect(
                             network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: burn amount exceeds balance');
+                        ).to.be.revertedWith('ERR_UNDERFLOW');
                     });
 
                     it('should revert when attempting to deposit without approving the network tokens', async () => {

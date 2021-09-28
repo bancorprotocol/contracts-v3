@@ -593,7 +593,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // ensure that the trade gives something in return
         require(tradeAmounts.amount != 0, "ERR_ZERO_TARGET_AMOUNT");
 
-        // ensure that the target amount above the requested minimum return amount
+        // ensure that the target amount is above the requested minimum return amount
         require(tradeAmounts.amount >= minReturnAmount, "ERR_RETURN_TOO_LOW");
 
         Pool storage poolData = _poolData[params.pool];
@@ -1411,7 +1411,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev updates the average rate
      */
     function _updateAverageRate(Pool storage poolData, Fraction memory spotRate) private {
-        // update the recent average rate
         AverageRate memory currentAverageRate = poolData.averageRate;
         AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
 
