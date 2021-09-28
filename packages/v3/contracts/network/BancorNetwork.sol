@@ -11,6 +11,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenGovernance } from "@bancor/token-governance/0.7.6/contracts/TokenGovernance.sol";
 
+import { MAX_UINT256 } from "../utility/Constants.sol";
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
@@ -238,14 +239,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when a flash-loan is completed
      */
-    event FlashLoaned(bytes32 indexed contextId, IReserveToken indexed pool, address indexed borrower, uint256 amount);
+    event FlashLoaned(bytes32 indexed contextId, IReserveToken indexed token, address indexed borrower, uint256 amount);
 
     /**
      * @dev triggered when trading/flash-loan fees are collected
      */
     event FeesCollected(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        IReserveToken indexed token,
         uint8 indexed feeType,
         uint256 amount,
         uint256 stakedBalance
@@ -316,6 +317,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     // solhint-enable func-name-mixedcase
+
+    modifier validTokensForTrade(IReserveToken sourceToken, IReserveToken targetToken) {
+        _validTokensForTrade(sourceToken, targetToken);
+
+        _;
+    }
+
+    function _validTokensForTrade(IReserveToken sourceToken, IReserveToken targetToken) internal pure {
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
+        require(sourceToken != targetToken, "ERR_INVALID_TOKENS");
+    }
 
     /**
      * @dev returns the current version of the contract
@@ -662,19 +675,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary
+        address beneficiary,
+        uint256 deadline
     )
         external
         payable
         override
         nonReentrant
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
     {
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline);
     }
 
     /**
@@ -685,24 +697,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        uint256 deadline,
         address beneficiary,
+        uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     )
         external
-        payable
         override
         nonReentrant
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
     {
         _permit(sourceToken, sourceAmount, deadline, v, r, s);
 
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline);
     }
 
     /**
@@ -716,8 +726,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         view
         override
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
         returns (uint256)
     {
@@ -756,8 +765,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         view
         override
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(targetAmount)
         returns (uint256)
     {
@@ -1216,10 +1224,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary
+        address beneficiary,
+        uint256 deadline
     ) private {
-        require(deadline == 0 || deadline <= _time(), "ERR_EXPIRED_DEADLINE");
+        require(deadline == MAX_UINT256 || deadline <= _time(), "ERR_EXPIRED_DEADLINE");
 
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
@@ -1239,7 +1247,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             )
         );
 
-        // transfer the tokens from the sender to the vault
         if (msg.value > 0) {
             require(sourceToken.isNativeToken(), "ERR_INVALID_POOL");
             require(msg.value == sourceAmount, "ERR_ETH_AMOUNT_MISMATCH");
@@ -1332,7 +1339,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         emit FeesCollected({
             contextId: contextId,
-            pool: targetToken,
+            token: targetToken,
             feeType: TRADING_FEE,
             amount: tradeAmounts.feeAmount,
             stakedBalance: isSourceNetworkToken
@@ -1378,10 +1385,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev verifies that the specified pool is managed by a valid pool collection and returns it
      */
-    function _poolCollection(IReserveToken pool) private view returns (IPoolCollection) {
+    function _poolCollection(IReserveToken token) private view returns (IPoolCollection) {
         // verify that the pool is managed by a valid pool collection
-        IPoolCollection poolCollection = _collectionByPool[pool];
-        _validAddress(address(poolCollection));
+        IPoolCollection poolCollection = _collectionByPool[token];
+        require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TOKEN");
 
         return poolCollection;
     }

@@ -12,9 +12,10 @@ export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
 
 export const getTransactionCost = async (res: ContractTransaction) => {
-    const cumulativeGasUsed = (await res.wait()).cumulativeGasUsed;
+    const receipt = await res.wait();
+    const { cumulativeGasUsed, effectiveGasPrice } = receipt;
 
-    return BigNumber.from(res.gasPrice).mul(BigNumber.from(cumulativeGasUsed));
+    return effectiveGasPrice.mul(cumulativeGasUsed);
 };
 
 export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress) => {
@@ -60,6 +61,8 @@ export const createTokenBySymbol = async (symbol: string, networkToken: TestERC2
             return { address: NATIVE_TOKEN_ADDRESS };
 
         case 'TKN':
+        case 'TKN1':
+        case 'TKN2':
             return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(BigNumber.from(1_000_000_000)));
 
         default:

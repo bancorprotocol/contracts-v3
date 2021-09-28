@@ -206,7 +206,10 @@ export const createPool = async (
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-    await network.addPoolCollection(poolCollection.address);
+    const poolCollections = await network.poolCollections();
+    if (!poolCollections.includes(poolCollection.address)) {
+        await network.addPoolCollection(poolCollection.address);
+    }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
     const pool = await poolCollection.poolData(reserveToken.address);

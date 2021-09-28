@@ -188,8 +188,8 @@ interface IBancorNetwork is IUpgradeable {
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary
+        address beneficiary,
+        uint256 deadline
     ) external payable;
 
     /**
@@ -206,12 +206,12 @@ interface IBancorNetwork is IUpgradeable {
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        uint256 deadline,
         address beneficiary,
+        uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 
     /**
      * @dev returns the target amount by specifying the source amount

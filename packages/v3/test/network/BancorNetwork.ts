@@ -1,4 +1,5 @@
-import Contracts from '../../components/Contracts';
+import Contracts, { AsyncReturnType } from '../../components/Contracts';
+
 import {
     BancorVault,
     NetworkSettings,
@@ -12,7 +13,7 @@ import {
     TokenHolder
 } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS, FEE_TYPES } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -38,6 +39,37 @@ describe('BancorNetwork', () => {
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
     });
+
+    const networkPermitSignature = async (
+        sender: Wallet,
+        tokenAddress: string,
+        network: TestBancorNetwork,
+        amount: BigNumber,
+        deadline: BigNumber
+    ) => {
+        if (tokenAddress === NATIVE_TOKEN_ADDRESS || tokenAddress === ZERO_ADDRESS) {
+            return {
+                v: BigNumber.from(0),
+                r: formatBytes32String(''),
+                s: formatBytes32String('')
+            };
+        }
+
+        const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
+        const senderAddress = await sender.getAddress();
+
+        const nonce = await reserveToken.nonces(senderAddress);
+
+        return permitSignature(
+            sender,
+            await reserveToken.name(),
+            reserveToken.address,
+            network.address,
+            amount,
+            nonce,
+            deadline
+        );
+    };
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
@@ -856,17 +888,13 @@ describe('BancorNetwork', () => {
                             }
 
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
-                                let { value, poolAddress } = overrides;
+                                let { value, poolAddress = token.address } = overrides;
 
                                 if (!value) {
                                     value = BigNumber.from(0);
                                     if (isETH) {
                                         value = amount;
                                     }
-                                }
-
-                                if (!poolAddress) {
-                                    poolAddress = token.address;
                                 }
 
                                 switch (method) {
@@ -893,7 +921,7 @@ describe('BancorNetwork', () => {
                             it('should revert when attempting to deposit into a pool that does not exist', async () => {
                                 token = await createTokenBySymbol('TKN', networkToken);
 
-                                await expect(deposit(BigNumber.from(1))).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(deposit(BigNumber.from(1))).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
                             });
 
                             const testDepositAmount = async (amount: BigNumber) => {
@@ -1061,15 +1089,6 @@ describe('BancorNetwork', () => {
                                                         });
                                                     } else {
                                                         it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
-                                                            const amount = BigNumber.from(1000);
-
-                                                            const reserveToken = await Contracts.TestERC20Token.attach(
-                                                                token.address
-                                                            );
-                                                            await reserveToken
-                                                                .connect(sender)
-                                                                .approve(network.address, amount);
-
                                                             await expect(
                                                                 deposit(amount, { value: BigNumber.from(1) })
                                                             ).to.be.revertedWith('ERR_INVALID_POOL');
@@ -1122,7 +1141,6 @@ describe('BancorNetwork', () => {
                         DepositForPermitted
                     }
 
-                    const nonces: { [address: string]: BigNumber } = {};
                     const DEADLINE = MAX_UINT256;
 
                     let provider: Wallet;
@@ -1133,34 +1151,15 @@ describe('BancorNetwork', () => {
                         providerAddress = await provider.getAddress();
                     });
 
-                    const signature = async (sender: Wallet, token: TokenWithAddress, amount: BigNumber) => {
-                        if (token.address === NATIVE_TOKEN_ADDRESS) {
-                            return {
-                                v: BigNumber.from(0),
-                                r: formatBytes32String(''),
-                                s: formatBytes32String('')
-                            };
-                        }
-
-                        const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                        const senderAddress = await sender.getAddress();
-                        const nonce = nonces[senderAddress] || BigNumber.from(0);
-                        nonces[senderAddress] = nonce.add(BigNumber.from(1));
-
-                        return permitSignature(
-                            sender,
-                            await reserveToken.name(),
-                            reserveToken.address,
-                            network.address,
-                            amount,
-                            nonce,
-                            DEADLINE
-                        );
-                    };
-
                     it('should revert when attempting to deposit for an invalid provider', async () => {
                         const amount = BigNumber.from(1);
-                        const { v, r, s } = await signature(provider, token, amount);
+                        const { v, r, s } = await networkPermitSignature(
+                            provider,
+                            token.address,
+                            network,
+                            amount,
+                            DEADLINE
+                        );
 
                         await expect(
                             network.depositForPermitted(ZERO_ADDRESS, token.address, amount, DEADLINE, v, r, s)
@@ -1193,12 +1192,15 @@ describe('BancorNetwork', () => {
                             }
 
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
-                                let { poolAddress } = overrides;
-                                if (!poolAddress) {
-                                    poolAddress = token.address;
-                                }
+                                const { poolAddress = token.address } = overrides;
 
-                                const { v, r, s } = await signature(sender, token, amount);
+                                const { v, r, s } = await networkPermitSignature(
+                                    sender,
+                                    poolAddress,
+                                    network,
+                                    amount,
+                                    DEADLINE
+                                );
 
                                 switch (method) {
                                     case Method.DepositPermitted:
@@ -1232,9 +1234,13 @@ describe('BancorNetwork', () => {
                             });
 
                             it('should revert when attempting to deposit into a pool that does not exist', async () => {
-                                token = await createTokenBySymbol('TKN', networkToken);
+                                const token2 = await createTokenBySymbol('TKN', networkToken);
 
-                                await expect(deposit(BigNumber.from(1))).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    deposit(BigNumber.from(1), {
+                                        poolAddress: token2.address
+                                    })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
                             });
 
                             const testDepositAmount = async (amount: BigNumber) => {
@@ -1245,49 +1251,81 @@ describe('BancorNetwork', () => {
                                         it('should revert when attempting to deposit', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith('ERR_PERMIT_UNSUPPORTED');
                                         });
-                                    } else {
+
+                                        return;
+                                    }
+
+                                    beforeEach(async () => {
+                                        const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                                        await reserveToken.transfer(senderAddress, amount);
+                                    });
+
+                                    context('when there is no unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                            await reserveToken.transfer(senderAddress, amount);
+                                            await networkSettings.setPoolMintingLimit(token.address, BigNumber.from(0));
                                         });
 
-                                        context('when there is no unallocated network token liquidity', () => {
+                                        context('with a whitelisted token', async () => {
+                                            it('should complete a deposit', async () => {
+                                                await test();
+                                            });
+                                        });
+
+                                        context('with non-whitelisted token', async () => {
                                             beforeEach(async () => {
-                                                await networkSettings.setPoolMintingLimit(
-                                                    token.address,
-                                                    BigNumber.from(0)
+                                                await networkSettings.removeTokenFromWhitelist(token.address);
+                                            });
+
+                                            it('should revert when attempting to deposit', async () => {
+                                                const amount = BigNumber.from(1000);
+
+                                                await expect(deposit(amount)).to.be.revertedWith(
+                                                    'ERR_POOL_NOT_WHITELISTED'
                                                 );
                                             });
+                                        });
+                                    });
 
-                                            context('with a whitelisted token', async () => {
-                                                it('should complete a deposit', async () => {
-                                                    await test();
-                                                });
+                                    context('when there is enough unallocated network token liquidity', () => {
+                                        beforeEach(async () => {
+                                            await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+                                        });
+
+                                        context('with non-whitelisted token', async () => {
+                                            beforeEach(async () => {
+                                                await networkSettings.removeTokenFromWhitelist(token.address);
                                             });
 
-                                            context('with non-whitelisted token', async () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.removeTokenFromWhitelist(token.address);
-                                                });
+                                            it('should revert when attempting to deposit', async () => {
+                                                const amount = BigNumber.from(1000);
 
-                                                it('should revert when attempting to deposit', async () => {
-                                                    const amount = BigNumber.from(1000);
-
-                                                    await expect(deposit(amount)).to.be.revertedWith(
-                                                        'ERR_POOL_NOT_WHITELISTED'
-                                                    );
-                                                });
+                                                await expect(deposit(amount)).to.be.revertedWith(
+                                                    'ERR_NETWORK_LIQUIDITY_DISABLED'
+                                                );
                                             });
                                         });
 
-                                        context('when there is enough unallocated network token liquidity', () => {
+                                        context('when spot rate is unstable', () => {
                                             beforeEach(async () => {
-                                                await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
-                                            });
+                                                const spotRate = {
+                                                    n: toWei(BigNumber.from(1_000_000)),
+                                                    d: toWei(BigNumber.from(10_000_000))
+                                                };
 
-                                            context('with non-whitelisted token', async () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.removeTokenFromWhitelist(token.address);
+                                                await poolCollection.setTradingLiquidityT(token.address, {
+                                                    networkTokenTradingLiquidity: spotRate.n,
+                                                    baseTokenTradingLiquidity: spotRate.d,
+                                                    tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
+                                                    stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                });
+                                                await poolCollection.setAverageRateT(token.address, {
+                                                    rate: {
+                                                        n: spotRate.n.mul(PPM_RESOLUTION),
+                                                        d: spotRate.d.mul(
+                                                            PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
+                                                        )
+                                                    },
+                                                    time: BigNumber.from(0)
                                                 });
 
                                                 it('should revert when attempting to deposit', async () => {
@@ -1298,65 +1336,30 @@ describe('BancorNetwork', () => {
                                                     );
                                                 });
                                             });
+                                        });
 
-                                            context('when spot rate is unstable', () => {
-                                                beforeEach(async () => {
-                                                    const spotRate = {
-                                                        n: toWei(BigNumber.from(1_000_000)),
-                                                        d: toWei(BigNumber.from(10_000_000))
-                                                    };
+                                        context('when spot rate is stable', () => {
+                                            it('should complete a deposit', async () => {
+                                                await test();
+                                            });
 
-                                                    await poolCollection.setTradingLiquidityT(token.address, {
-                                                        networkTokenTradingLiquidity: spotRate.n,
-                                                        baseTokenTradingLiquidity: spotRate.d,
-                                                        tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                        stakedBalance: toWei(BigNumber.from(1_000_000))
-                                                    });
-                                                    await poolCollection.setAverageRateT(token.address, {
-                                                        rate: {
-                                                            n: spotRate.n.mul(PPM_RESOLUTION),
-                                                            d: spotRate.d.mul(
-                                                                PPM_RESOLUTION.add(
-                                                                    MAX_DEVIATION.add(BigNumber.from(5000))
-                                                                )
-                                                            )
-                                                        },
-                                                        time: BigNumber.from(0)
-                                                    });
-
-                                                    it('should revert when attempting to deposit', async () => {
-                                                        const amount = BigNumber.from(1000);
-
-                                                        await expect(deposit(amount)).to.be.revertedWith(
-                                                            'ERR_NETWORK_LIQUIDITY_DISABLED'
+                                            context(
+                                                'when close to the limit of the unallocated network token liquidity',
+                                                () => {
+                                                    beforeEach(async () => {
+                                                        await networkSettings.setPoolMintingLimit(
+                                                            token.address,
+                                                            BigNumber.from(1000)
                                                         );
                                                     });
-                                                });
-                                            });
 
-                                            context('when spot rate is stable', () => {
-                                                it('should complete a deposit', async () => {
-                                                    await test();
-                                                });
-
-                                                context(
-                                                    'when close to the limit of the unallocated network token liquidity',
-                                                    () => {
-                                                        beforeEach(async () => {
-                                                            await networkSettings.setPoolMintingLimit(
-                                                                token.address,
-                                                                BigNumber.from(1000)
-                                                            );
-                                                        });
-
-                                                        it('should complete a deposit', async () => {
-                                                            await test();
-                                                        });
-                                                    }
-                                                );
-                                            });
+                                                    it('should complete a deposit', async () => {
+                                                        await test();
+                                                    });
+                                                }
+                                            );
                                         });
-                                    }
+                                    });
                                 });
                             };
 
@@ -1779,5 +1782,923 @@ describe('BancorNetwork', () => {
                 testWithdraw(symbol);
             });
         }
+    });
+
+    describe('trade', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: TestERC20Token;
+        let networkTokenPool: TestNetworkTokenPool;
+        let poolCollection: TestPoolCollection;
+        let vault: BancorVault;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
+        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+        const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
+
+        beforeEach(async () => {
+            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, vault } =
+                await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+        });
+
+        interface Spec {
+            symbol: string;
+            balance: BigNumber;
+            tradingFeePPM: number;
+        }
+
+        const testTrades = (source: Spec, target: Spec, toSelf: boolean) => {
+            context(
+                `trade from (${[source.symbol, source.balance, source.tradingFeePPM]}) to (${[
+                    target.symbol,
+                    target.balance,
+                    target.tradingFeePPM
+                ]}) (${toSelf ? 'to self' : 'to a different beneficiary'})`,
+                () => {
+                    const MIN_RETURN_AMOUNT = BigNumber.from(1);
+
+                    const isSourceETH = source.symbol === 'ETH';
+                    const isTargetETH = target.symbol === 'ETH';
+                    const isSourceNetworkToken = source.symbol === 'BNT';
+                    const isTargetNetworkToken = target.symbol === 'BNT';
+
+                    let sourceToken: TokenWithAddress;
+                    let targetToken: TokenWithAddress;
+
+                    beforeEach(async () => {
+                        let requestedLiquidity = false;
+
+                        sourceToken = await createTokenBySymbol(source.symbol, networkToken);
+                        if (!isSourceNetworkToken) {
+                            // create and configure the source pool
+                            await createPool(sourceToken, network, networkSettings, poolCollection);
+
+                            await networkSettings.setPoolMintingLimit(sourceToken.address, MAX_UINT256);
+                            await poolCollection.setDepositLimit(sourceToken.address, MAX_UINT256);
+                            await poolCollection.setInitialRate(sourceToken.address, INITIAL_RATE);
+                            await poolCollection.setTradingFeePPM(sourceToken.address, source.tradingFeePPM);
+
+                            // deposit the source token liquidity
+                            let sourceValue = BigNumber.from(0);
+                            if (isSourceETH) {
+                                sourceValue = source.balance;
+                            } else {
+                                const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                                await reserveToken.approve(network.address, source.balance);
+                            }
+
+                            await network.deposit(sourceToken.address, source.balance, { value: sourceValue });
+
+                            requestedLiquidity = true;
+                        }
+
+                        targetToken = await createTokenBySymbol(target.symbol, networkToken);
+                        if (!isTargetNetworkToken) {
+                            // create and configure the target pool
+                            await createPool(targetToken, network, networkSettings, poolCollection);
+
+                            await networkSettings.setPoolMintingLimit(targetToken.address, MAX_UINT256);
+                            await poolCollection.setDepositLimit(targetToken.address, MAX_UINT256);
+                            await poolCollection.setInitialRate(targetToken.address, INITIAL_RATE);
+                            await poolCollection.setTradingFeePPM(targetToken.address, target.tradingFeePPM);
+
+                            // deposit the target token liquidity
+                            let targetValue = BigNumber.from(0);
+                            if (isTargetETH) {
+                                targetValue = target.balance;
+                            } else {
+                                const reserveToken = await Contracts.TestERC20Token.attach(targetToken.address);
+                                await reserveToken.approve(network.address, target.balance);
+                            }
+
+                            await network.deposit(targetToken.address, target.balance, { value: targetValue });
+
+                            requestedLiquidity = true;
+                        }
+
+                        // deposit some large enough network token liquidity
+                        if (!requestedLiquidity) {
+                            const tempBalance = toWei(BigNumber.from(1_000_000));
+                            const reserveToken = await Contracts.TestERC20Token.deploy('TKN2', 'TKN2', tempBalance);
+
+                            await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                            await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+                            await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+                            await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+
+                            await reserveToken.approve(network.address, tempBalance);
+                            await network.deposit(reserveToken.address, tempBalance);
+                        }
+
+                        await networkToken.approve(network.address, NETWORK_TOKEN_LIQUIDITY);
+                        await network.deposit(networkToken.address, NETWORK_TOKEN_LIQUIDITY);
+
+                        await network.setTime(await latest());
+                    });
+
+                    interface TradeAmountsOverrides {
+                        sourceTokenAddress?: string;
+                        targetTokenAddress?: string;
+                    }
+                    const tradeTargetAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
+                        const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } =
+                            overrides;
+
+                        return network.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
+                    };
+
+                    const tradeSourceAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
+                        const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } =
+                            overrides;
+
+                        return network.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
+                    };
+
+                    const verifyTrade = async (
+                        trader: Signer | Wallet,
+                        beneficiary: string,
+                        amount: BigNumber,
+                        trade: (amount: BigNumber, options: Record<any, any>) => Promise<ContractTransaction>
+                    ) => {
+                        const traderAddress = await trader.getAddress();
+                        const beneficiaryAddress = beneficiary !== ZERO_ADDRESS ? beneficiary : traderAddress;
+                        const minReturnAmount = MIN_RETURN_AMOUNT;
+                        const deadline = MAX_UINT256;
+
+                        const contextId = solidityKeccak256(
+                            ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'address'],
+                            [
+                                traderAddress,
+                                await network.currentTime(),
+                                sourceToken.address,
+                                targetToken.address,
+                                amount,
+                                minReturnAmount,
+                                deadline,
+                                beneficiaryAddress
+                            ]
+                        );
+
+                        const prevTraderSourceTokenAmount = await getBalance(sourceToken, traderAddress);
+                        const prevVaultSourceTokenAmount = await getBalance(sourceToken, vault.address);
+
+                        const prevBeneficiaryTargetTokenAmount = await getBalance(targetToken, beneficiaryAddress);
+                        const prevVaultTargetTokenAmount = await getBalance(targetToken, vault.address);
+
+                        const prevTraderNetworkTokenAmount = await getBalance(networkToken, traderAddress);
+                        const prevBeneficiaryNetworkTokenAmount = await getBalance(networkToken, beneficiaryAddress);
+                        const prevVaultNetworkTokenAmount = await getBalance(networkToken, vault.address);
+
+                        const prevNetworkTokenPoolStakedBalance = await networkTokenPool.stakedBalance();
+
+                        let sourceTradeAmounts!: AsyncReturnType<
+                            TestBancorNetwork['callStatic']['tradePoolCollectionT']
+                        >;
+                        let tradeAmounts;
+                        if (isSourceNetworkToken || isTargetNetworkToken) {
+                            tradeAmounts = await network.callStatic.tradePoolCollectionT(
+                                poolCollection.address,
+                                sourceToken.address,
+                                targetToken.address,
+                                amount,
+                                MIN_RETURN_AMOUNT
+                            );
+                        } else {
+                            sourceTradeAmounts = await network.callStatic.tradePoolCollectionT(
+                                poolCollection.address,
+                                sourceToken.address,
+                                networkToken.address,
+                                amount,
+                                MIN_RETURN_AMOUNT
+                            );
+
+                            tradeAmounts = await network.callStatic.tradePoolCollectionT(
+                                poolCollection.address,
+                                networkToken.address,
+                                targetToken.address,
+                                sourceTradeAmounts.amount,
+                                MIN_RETURN_AMOUNT
+                            );
+                        }
+
+                        const targetAmount = await tradeTargetAmount(amount);
+                        expect(targetAmount).to.equal(tradeAmounts.amount);
+
+                        const res = await trade(amount, { minReturnAmount, deadline });
+
+                        const transactionCost = await getTransactionCost(res);
+
+                        const networkTokenPoolStakedBalance = await networkTokenPool.stakedBalance();
+
+                        if (isSourceNetworkToken) {
+                            const poolLiquidity = await poolCollection.poolLiquidity(targetToken.address);
+
+                            await expect(res)
+                                .to.emit(network, 'TokensTraded')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    networkToken.address,
+                                    targetToken.address,
+                                    amount,
+                                    tradeAmounts.amount,
+                                    traderAddress
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'FeesCollected')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    FEE_TYPES.trading,
+                                    tradeAmounts.feeAmount,
+                                    poolLiquidity.stakedBalance
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    targetToken.address,
+                                    poolLiquidity.baseTokenTradingLiquidity
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    networkToken.address,
+                                    poolLiquidity.networkTokenTradingLiquidity
+                                );
+                        } else if (isTargetNetworkToken) {
+                            const poolLiquidity = await poolCollection.poolLiquidity(sourceToken.address);
+
+                            await expect(res)
+                                .to.emit(network, 'TokensTraded')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    sourceToken.address,
+                                    networkToken.address,
+                                    amount,
+                                    tradeAmounts.amount,
+                                    traderAddress
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'FeesCollected')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    FEE_TYPES.trading,
+                                    tradeAmounts.feeAmount,
+                                    networkTokenPoolStakedBalance
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    sourceToken.address,
+                                    poolLiquidity.baseTokenTradingLiquidity
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    networkToken.address,
+                                    poolLiquidity.networkTokenTradingLiquidity
+                                );
+
+                            expect(networkTokenPoolStakedBalance).to.equal(
+                                prevNetworkTokenPoolStakedBalance.add(tradeAmounts.feeAmount)
+                            );
+                        } else {
+                            const sourcePoolLiquidity = await poolCollection.poolLiquidity(sourceToken.address);
+                            const targetPoolLiquidity = await poolCollection.poolLiquidity(targetToken.address);
+
+                            await expect(res)
+                                .to.emit(network, 'TokensTraded')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    sourceToken.address,
+                                    networkToken.address,
+                                    amount,
+                                    sourceTradeAmounts.amount,
+                                    traderAddress
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'FeesCollected')
+                                .withArgs(
+                                    contextId,
+                                    networkToken.address,
+                                    FEE_TYPES.trading,
+                                    sourceTradeAmounts.feeAmount,
+                                    networkTokenPoolStakedBalance
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    sourceToken.address,
+                                    sourcePoolLiquidity.baseTokenTradingLiquidity
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    sourceToken.address,
+                                    networkToken.address,
+                                    sourcePoolLiquidity.networkTokenTradingLiquidity
+                                );
+
+                            expect(networkTokenPoolStakedBalance).to.equal(
+                                prevNetworkTokenPoolStakedBalance.add(sourceTradeAmounts.feeAmount)
+                            );
+
+                            await expect(res)
+                                .to.emit(network, 'TokensTraded')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    networkToken.address,
+                                    targetToken.address,
+                                    sourceTradeAmounts.amount,
+                                    tradeAmounts.amount,
+                                    traderAddress
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'FeesCollected')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    FEE_TYPES.trading,
+                                    tradeAmounts.feeAmount,
+                                    targetPoolLiquidity.stakedBalance
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    targetToken.address,
+                                    targetPoolLiquidity.baseTokenTradingLiquidity
+                                );
+
+                            await expect(res)
+                                .to.emit(network, 'TradingLiquidityUpdated')
+                                .withArgs(
+                                    contextId,
+                                    targetToken.address,
+                                    networkToken.address,
+                                    targetPoolLiquidity.networkTokenTradingLiquidity
+                                );
+                        }
+
+                        expect(await getBalance(sourceToken, traderAddress)).to.equal(
+                            prevTraderSourceTokenAmount.sub(
+                                amount.add(isSourceETH ? transactionCost : BigNumber.from(0))
+                            )
+                        );
+                        expect(await getBalance(sourceToken, vault.address)).to.equal(
+                            prevVaultSourceTokenAmount.add(amount)
+                        );
+
+                        expect(await getBalance(targetToken, beneficiaryAddress)).to.equal(
+                            prevBeneficiaryTargetTokenAmount.add(
+                                targetAmount.sub(
+                                    traderAddress === beneficiaryAddress && isTargetETH
+                                        ? transactionCost
+                                        : BigNumber.from(0)
+                                )
+                            )
+                        );
+                        expect(await getBalance(targetToken, vault.address)).to.equal(
+                            prevVaultTargetTokenAmount.sub(targetAmount)
+                        );
+
+                        // if neither the source or the target tokens are the network token - ensure that no network
+                        // token amount has left the system
+                        if (!isSourceNetworkToken && !isTargetNetworkToken) {
+                            expect(await getBalance(networkToken, traderAddress)).to.equal(
+                                prevTraderNetworkTokenAmount
+                            );
+                            expect(await getBalance(networkToken, beneficiaryAddress)).to.equal(
+                                prevBeneficiaryNetworkTokenAmount
+                            );
+                            expect(await getBalance(networkToken, vault.address)).to.equal(prevVaultNetworkTokenAmount);
+                        }
+                    };
+
+                    const testTrade = () => {
+                        context('regular trade', () => {
+                            let trader: SignerWithAddress;
+                            let beneficiary: string;
+
+                            const testAmount = BigNumber.from(1000);
+
+                            before(async () => {
+                                if (toSelf) {
+                                    [, trader] = await ethers.getSigners();
+
+                                    beneficiary = ZERO_ADDRESS;
+                                } else {
+                                    let trader2: SignerWithAddress;
+                                    [, trader, trader2] = await ethers.getSigners();
+
+                                    beneficiary = trader2.address;
+                                }
+                            });
+
+                            beforeEach(async () => {
+                                if (!isSourceETH) {
+                                    const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+
+                                    await reserveToken.transfer(await trader.getAddress(), testAmount);
+                                    await reserveToken.connect(trader).approve(network.address, testAmount);
+                                }
+                            });
+
+                            interface TradeOverrides {
+                                value?: BigNumber;
+                                minReturnAmount?: BigNumber;
+                                deadline?: BigNumber;
+                                sourceTokenAddress?: string;
+                                targetTokenAddress?: string;
+                            }
+
+                            const trade = async (amount: BigNumber, overrides: TradeOverrides = {}) => {
+                                let {
+                                    value,
+                                    minReturnAmount = MIN_RETURN_AMOUNT,
+                                    deadline = MAX_UINT256,
+                                    sourceTokenAddress = sourceToken.address,
+                                    targetTokenAddress = targetToken.address
+                                } = overrides;
+
+                                if (!value) {
+                                    value = BigNumber.from(0);
+                                    if (isSourceETH) {
+                                        value = amount;
+                                    }
+                                }
+
+                                return network
+                                    .connect(trader)
+                                    .trade(
+                                        sourceTokenAddress,
+                                        targetTokenAddress,
+                                        amount,
+                                        minReturnAmount,
+                                        beneficiary,
+                                        deadline,
+                                        { value }
+                                    );
+                            };
+
+                            it('should revert when attempting to trade or query using an invalid source pool', async () => {
+                                await expect(
+                                    trade(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                            });
+
+                            it('should revert when attempting to trade or query using an invalid target pool', async () => {
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                            });
+
+                            it('should revert when attempting to trade or query using an invalid amount', async () => {
+                                const amount = BigNumber.from(0);
+
+                                await expect(trade(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                                await expect(tradeTargetAmount(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                                await expect(tradeSourceAmount(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                            });
+
+                            it('should revert when attempting to trade using an invalid minimum return amount', async () => {
+                                const minReturnAmount = BigNumber.from(0);
+
+                                await expect(trade(testAmount, { minReturnAmount })).to.be.revertedWith(
+                                    'ERR_ZERO_VALUE'
+                                );
+                            });
+
+                            it('should revert when attempting to trade using an expired deadline', async () => {
+                                const deadline = (await latest()).sub(BigNumber.from(1));
+
+                                await expect(trade(testAmount, { deadline })).to.be.revertedWith(
+                                    'ERR_EXPIRED_DEADLINE'
+                                );
+                            });
+
+                            it('should revert when attempting to trade or query using unsupported tokens', async () => {
+                                const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                                    'TKN2',
+                                    'TKN2',
+                                    BigNumber.from(1_000_000)
+                                );
+                                await reserveToken2.transfer(await trader.getAddress(), testAmount);
+                                await reserveToken2.connect(trader).approve(network.address, testAmount);
+
+                                // unknown source token
+                                await expect(
+                                    trade(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+
+                                // unknown target token
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                            });
+
+                            it('should revert when attempting to trade or query using same source and target tokens', async () => {
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                            });
+
+                            const testTradeAmount = async (amount: BigNumber) => {
+                                const test = async () => verifyTrade(trader, beneficiary, amount, trade);
+
+                                context(`${amount} tokens`, () => {
+                                    if (!isSourceETH) {
+                                        beforeEach(async () => {
+                                            const reserveToken = await Contracts.TestERC20Token.attach(
+                                                sourceToken.address
+                                            );
+                                            await reserveToken.transfer(trader.address, amount);
+                                        });
+
+                                        it('should revert when attempting to trade without approving the network', async () => {
+                                            await expect(trade(amount)).to.be.revertedWith(
+                                                'ERC20: transfer amount exceeds allowance'
+                                            );
+                                        });
+                                    }
+
+                                    context('with approval', () => {
+                                        if (isSourceETH) {
+                                            // eslint-disable-next-line max-len
+                                            it('should revert when attempting to trade a different amount than what was actually sent', async () => {
+                                                await expect(
+                                                    trade(amount, {
+                                                        value: amount.add(BigNumber.from(1))
+                                                    })
+                                                ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
+
+                                                await expect(
+                                                    trade(amount, {
+                                                        value: amount.sub(BigNumber.from(1))
+                                                    })
+                                                ).to.be.revertedWith('ERR_ETH_AMOUNT_MISMATCH');
+
+                                                await expect(
+                                                    trade(amount, { value: BigNumber.from(0) })
+                                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                            });
+                                        } else {
+                                            beforeEach(async () => {
+                                                const reserveToken = await Contracts.TestERC20Token.attach(
+                                                    sourceToken.address
+                                                );
+                                                await reserveToken.connect(trader).approve(network.address, amount);
+                                            });
+
+                                            it('should revert when attempting to trade ETH into a non ETH pool', async () => {
+                                                await expect(
+                                                    trade(amount, { value: BigNumber.from(1) })
+                                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                            });
+
+                                            it('should complete a trade', async () => {
+                                                await test();
+                                            });
+                                        }
+                                    });
+                                });
+                            };
+
+                            for (const amount of [
+                                BigNumber.from(10_000),
+                                toWei(BigNumber.from(100_000)),
+                                toWei(BigNumber.from(500_000))
+                            ]) {
+                                testTradeAmount(amount);
+                            }
+                        });
+                    };
+
+                    const testTradePermitted = () => {
+                        context('permitted trade', () => {
+                            let trader: Wallet;
+                            let beneficiary: string;
+
+                            const testAmount = BigNumber.from(1000);
+
+                            beforeEach(async () => {
+                                trader = await createWallet();
+
+                                if (toSelf) {
+                                    beneficiary = ZERO_ADDRESS;
+                                } else {
+                                    const [, trader2] = await ethers.getSigners();
+
+                                    beneficiary = trader2.address;
+                                }
+
+                                if (!isSourceETH) {
+                                    const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+
+                                    await reserveToken.transfer(await trader.getAddress(), testAmount);
+                                    await reserveToken.connect(trader).approve(network.address, testAmount);
+                                }
+                            });
+
+                            interface TradeOverrides {
+                                minReturnAmount?: BigNumber;
+                                deadline?: BigNumber;
+                                sourceTokenAddress?: string;
+                                targetTokenAddress?: string;
+                            }
+
+                            const trade = async (amount: BigNumber, overrides: TradeOverrides = {}) => {
+                                const {
+                                    minReturnAmount = MIN_RETURN_AMOUNT,
+                                    deadline = MAX_UINT256,
+                                    sourceTokenAddress = sourceToken.address,
+                                    targetTokenAddress = targetToken.address
+                                } = overrides;
+
+                                const { v, r, s } = await networkPermitSignature(
+                                    trader,
+                                    sourceTokenAddress,
+                                    network,
+                                    amount,
+                                    deadline
+                                );
+
+                                return network
+                                    .connect(trader)
+                                    .tradePermitted(
+                                        sourceTokenAddress,
+                                        targetTokenAddress,
+                                        amount,
+                                        minReturnAmount,
+                                        beneficiary,
+                                        deadline,
+                                        v,
+                                        r,
+                                        s
+                                    );
+                            };
+
+                            it('should revert when attempting to trade or query using an invalid source pool', async () => {
+                                await expect(
+                                    trade(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                            });
+
+                            it('should revert when attempting to trade or query using an invalid target pool', async () => {
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                            });
+
+                            it('should revert when attempting to trade or query using an invalid amount', async () => {
+                                const amount = BigNumber.from(0);
+
+                                await expect(trade(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                                await expect(tradeTargetAmount(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                                await expect(tradeSourceAmount(amount)).to.be.revertedWith('ERR_ZERO_VALUE');
+                            });
+
+                            it('should revert when attempting to trade using an invalid minimum return amount', async () => {
+                                const minReturnAmount = BigNumber.from(0);
+
+                                await expect(trade(testAmount, { minReturnAmount })).to.be.revertedWith(
+                                    'ERR_ZERO_VALUE'
+                                );
+                            });
+
+                            it('should revert when attempting to trade using an expired deadline', async () => {
+                                const deadline = (await latest()).sub(BigNumber.from(1));
+
+                                await expect(trade(testAmount, { deadline })).to.be.revertedWith(
+                                    'ERC20Permit: expired deadline'
+                                );
+                            });
+
+                            it('should revert when attempting to trade or query using unsupported tokens', async () => {
+                                const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                                    'TKN2',
+                                    'TKN2',
+                                    BigNumber.from(1_000_000)
+                                );
+                                await reserveToken2.transfer(await trader.getAddress(), testAmount);
+                                await reserveToken2.connect(trader).approve(network.address, testAmount);
+
+                                // unknown source token
+                                await expect(
+                                    trade(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+
+                                // unknown target token
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                                ).to.be.revertedWith('ERR_UNSUPPORTED_TOKEN');
+                            });
+
+                            it('should revert when attempting to trade or query using same source and target tokens', async () => {
+                                await expect(
+                                    trade(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                                await expect(
+                                    tradeTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                                await expect(
+                                    tradeSourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                                ).to.be.revertedWith('ERR_INVALID_TOKENS');
+                            });
+
+                            const testTradeAmount = async (amount: BigNumber) => {
+                                const test = async () => verifyTrade(trader, beneficiary, amount, trade);
+
+                                context(`${amount} tokens`, () => {
+                                    if (isSourceNetworkToken || isSourceETH) {
+                                        it('should revert when attempting to trade', async () => {
+                                            await expect(trade(amount)).to.be.revertedWith('ERR_PERMIT_UNSUPPORTED');
+                                        });
+
+                                        return;
+                                    }
+
+                                    beforeEach(async () => {
+                                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                                        await reserveToken.transfer(trader.address, amount);
+                                    });
+
+                                    it('should complete a trade', async () => {
+                                        await test();
+                                    });
+                                });
+                            };
+
+                            for (const amount of [
+                                BigNumber.from(10_000),
+                                toWei(BigNumber.from(100_000)),
+                                toWei(BigNumber.from(500_000))
+                            ]) {
+                                testTradeAmount(amount);
+                            }
+                        });
+                    };
+
+                    testTrade();
+                    testTradePermitted();
+                }
+            );
+        };
+
+        describe('regular tests', () => {
+            for (const [sourceSymbol, targetSymbol] of [
+                ['TKN', 'BNT'],
+                ['TKN', 'ETH'],
+                ['TKN1', 'TKN2'],
+                ['BNT', 'ETH'],
+                ['BNT', 'TKN'],
+                ['ETH', 'BNT'],
+                ['ETH', 'TKN']
+            ]) {
+                for (const sourceBalance of [1_000_000, 5_000_000]) {
+                    for (const targetBalance of [1_000_000, 5_000_000]) {
+                        for (const sourceTradingFeePPM of [0, 10_000]) {
+                            for (const targetTradingFeePPM of [0, 100_000]) {
+                                for (const toSelf of [true, false]) {
+                                    testTrades(
+                                        {
+                                            symbol: sourceSymbol,
+                                            balance: toWei(BigNumber.from(sourceBalance)),
+                                            tradingFeePPM: sourceTradingFeePPM
+                                        },
+                                        {
+                                            symbol: targetSymbol,
+                                            balance: toWei(BigNumber.from(targetBalance)),
+                                            tradingFeePPM: targetTradingFeePPM
+                                        },
+                                        toSelf
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        describe('@stress tests', () => {
+            for (const [sourceSymbol, targetSymbol] of [
+                ['TKN', 'BNT'],
+                ['TKN', 'ETH'],
+                ['TKN1', 'TKN2'],
+                ['BNT', 'ETH'],
+                ['BNT', 'TKN'],
+                ['ETH', 'BNT'],
+                ['ETH', 'TKN']
+            ]) {
+                for (const sourceBalance of [1_000_000, 5_000_000, 50_000_000]) {
+                    for (const targetBalance of [1_000_000, 5_000_000, 50_000_000]) {
+                        for (const sourceTradingFeePPM of [0, 10_000, 500_000]) {
+                            for (const targetTradingFeePPM of [0, 10_000, 500_000]) {
+                                for (const toSelf of [true, false]) {
+                                    testTrades(
+                                        {
+                                            symbol: sourceSymbol,
+                                            balance: toWei(BigNumber.from(sourceBalance)),
+                                            tradingFeePPM: sourceTradingFeePPM
+                                        },
+                                        {
+                                            symbol: targetSymbol,
+                                            balance: toWei(BigNumber.from(targetBalance)),
+                                            tradingFeePPM: targetTradingFeePPM
+                                        },
+                                        toSelf
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
     });
 });
