@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
@@ -15,6 +15,7 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 import { Fraction } from "../utility/Types.sol";
 import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
+import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -23,7 +24,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
-import { IPoolCollection, PoolLiquidity, Pool, DepositAmounts, WithdrawalAmounts } from "./interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, Pool, DepositAmounts, WithdrawalAmounts, TradeAmounts } from "./interfaces/IPoolCollection.sol";
 
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
@@ -34,7 +35,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Utils {
+contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Time, Utils {
     using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
@@ -72,8 +73,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         uint256 d2;
     }
 
+    // trading-related preprocessed data
+    struct TradingParams {
+        uint256 sourceBalance;
+        uint256 targetBalance;
+        PoolLiquidity liquidity;
+        IReserveToken pool;
+        bool isSourceNetworkToken;
+        uint32 tradingFeePPM;
+    }
+
     // the network contract
     IBancorNetwork private immutable _network;
+
+    // the address of the network token
+    IERC20 private immutable _networkToken;
 
     // the network settings contract
     INetworkSettings private immutable _settings;
@@ -135,6 +149,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         __ReentrancyGuard_init();
 
         _network = initNetwork;
+        _networkToken = initNetwork.networkToken();
         _settings = initNetwork.settings();
         _poolTokenFactory = initPoolTokenFactory;
 
@@ -170,6 +185,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function networkToken() external view override returns (IERC20) {
+        return _networkToken;
     }
 
     /**
@@ -529,6 +551,132 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
             amounts.baseTokenAmountToDeductFromLiquidity,
             amounts.networkTokenAmountToDeductFromLiquidity
         );
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function trade(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
+        greaterThanZero(sourceAmount)
+        greaterThanZero(minReturnAmount)
+        returns (TradeAmounts memory)
+    {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        TradeAmounts memory tradeAmounts = _targetAmountAndFee(
+            params.sourceBalance,
+            params.targetBalance,
+            params.tradingFeePPM,
+            sourceAmount
+        );
+
+        // ensure that the trade gives something in return
+        require(tradeAmounts.amount != 0, "ERR_ZERO_TARGET_AMOUNT");
+
+        // ensure that the target amount is above the requested minimum return amount
+        require(tradeAmounts.amount >= minReturnAmount, "ERR_RETURN_TOO_LOW");
+
+        Pool storage poolData = _poolData[params.pool];
+
+        // update the recent average rate
+        _updateAverageRate(
+            poolData,
+            Fraction({
+                n: params.liquidity.networkTokenTradingLiquidity,
+                d: params.liquidity.baseTokenTradingLiquidity
+            })
+        );
+
+        // sync the reserve balances
+        uint256 newNetworkTokenTradingLiquidity;
+        uint256 newBaseTokenTradingLiquidity;
+        if (params.isSourceNetworkToken) {
+            newNetworkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
+            newBaseTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
+
+            // if the target token is a base token, make sure add the fee to the staked balance
+            poolData.liquidity.stakedBalance = params.liquidity.stakedBalance.add(tradeAmounts.feeAmount);
+        } else {
+            newBaseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
+            newNetworkTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
+        }
+
+        poolData.liquidity.networkTokenTradingLiquidity = newNetworkTokenTradingLiquidity;
+        poolData.liquidity.baseTokenTradingLiquidity = newBaseTokenTradingLiquidity;
+        poolData.liquidity.tradingLiquidityProduct = newNetworkTokenTradingLiquidity.mul(newBaseTokenTradingLiquidity);
+
+        return tradeAmounts;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function targetAmountAndFee(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount
+    )
+        external
+        view
+        override
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
+        greaterThanZero(sourceAmount)
+        returns (TradeAmounts memory)
+    {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function sourceAmountAndFee(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 targetAmount
+    )
+        external
+        view
+        override
+        validAddress(address(sourceToken))
+        validAddress(address(targetToken))
+        greaterThanZero(targetAmount)
+        returns (TradeAmounts memory)
+    {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function onFeesCollected(IReserveToken pool, uint256 baseTokenAmount)
+        external
+        override
+        only(address(_network))
+        validAddress(address(pool))
+    {
+        if (baseTokenAmount == 0) {
+            return;
+        }
+
+        Pool storage poolData = _poolStorage(pool);
+
+        // increase the staked balance by the given amount
+        poolData.liquidity.stakedBalance = poolData.liquidity.stakedBalance.add(baseTokenAmount);
     }
 
     /**
@@ -1153,5 +1301,102 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         }
 
         return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
+    }
+
+    /**
+     * @dev returns trading params
+     */
+    function _tradeParams(IReserveToken sourceToken, IReserveToken targetToken)
+        private
+        view
+        returns (TradingParams memory params)
+    {
+        // ensure that the network token is either the source or the target pool
+        bool isSourceNetworkToken = address(sourceToken) == address(_networkToken);
+        bool isTargetNetworkToken = address(targetToken) == address(_networkToken);
+        if (isSourceNetworkToken && !isTargetNetworkToken) {
+            params.isSourceNetworkToken = true;
+            params.pool = targetToken;
+        } else if (!isSourceNetworkToken && isTargetNetworkToken) {
+            params.isSourceNetworkToken = false;
+            params.pool = sourceToken;
+        } else {
+            // the network token isn't one of the pools or is both of them
+            revert("ERR_INVALID_POOLS");
+        }
+
+        Pool memory poolData = _poolData[params.pool];
+        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+
+        params.liquidity = poolData.liquidity;
+        params.tradingFeePPM = poolData.tradingFeePPM;
+
+        // verify that trading is enabled
+        require(poolData.tradingEnabled, "ERR_TRADING_DISABLED");
+
+        // verify that liquidity is above the minimum network token liquidity for trading
+        require(
+            params.liquidity.networkTokenTradingLiquidity >= _settings.minLiquidityForTrading(),
+            "ERR_NETWORK_LIQUIDITY_TOO_LOW"
+        );
+
+        if (params.isSourceNetworkToken) {
+            params.sourceBalance = params.liquidity.networkTokenTradingLiquidity;
+            params.targetBalance = params.liquidity.baseTokenTradingLiquidity;
+        } else {
+            params.sourceBalance = params.liquidity.baseTokenTradingLiquidity;
+            params.targetBalance = params.liquidity.networkTokenTradingLiquidity;
+        }
+    }
+
+    /**
+     * @dev returns the target amount and fee by specifying the source amount
+     */
+    function _targetAmountAndFee(
+        uint256 sourceBalance,
+        uint256 targetBalance,
+        uint32 tradingFeePPM,
+        uint256 sourceAmount
+    ) private pure returns (TradeAmounts memory) {
+        require(sourceBalance > 0 && targetBalance > 0, "ERR_INVALID_POOL_BALANCE");
+
+        uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance.add(sourceAmount));
+        uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
+
+        return TradeAmounts({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
+    }
+
+    /**
+     * @dev returns the source amount and fee by specifying the target amount
+     */
+    function _sourceAmountAndFee(
+        uint256 sourceBalance,
+        uint256 targetBalance,
+        uint32 tradingFeePPM,
+        uint256 targetAmount
+    ) private pure returns (TradeAmounts memory) {
+        require(sourceBalance > 0, "ERR_INVALID_POOL_BALANCE");
+
+        uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
+        uint256 fullTargetAmount = targetAmount.add(feeAmount);
+        require(fullTargetAmount < targetBalance, "ERR_INVALID_AMOUNT");
+        uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
+
+        return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
+    }
+
+    /**
+     * @dev updates the average rate
+     */
+    function _updateAverageRate(Pool storage poolData, Fraction memory spotRate) private {
+        AverageRate memory currentAverageRate = poolData.averageRate;
+        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
+
+        if (
+            newAverageRate.time != currentAverageRate.time ||
+            !PoolAverageRate.isEqual(newAverageRate, currentAverageRate)
+        ) {
+            poolData.averageRate = newAverageRate;
+        }
     }
 }

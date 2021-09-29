@@ -9,9 +9,13 @@ import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/PoolAverageRate.sol";
 
+import { Time } from "../utility/Time.sol";
+
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-contract TestPoolCollection is PoolCollection {
+import { TestTime } from "./TestTime.sol";
+
+contract TestPoolCollection is PoolCollection, TestTime {
     constructor(IBancorNetwork initNetwork, IPoolTokenFactory initPoolTokenFactory)
         PoolCollection(initNetwork, initPoolTokenFactory)
     {}
@@ -74,5 +78,9 @@ contract TestPoolCollection is PoolCollection {
                 withdrawalFeePPM,
                 basePoolTokenWithdrawalAmount
             );
+    }
+
+    function _time() internal view virtual override(Time, TestTime) returns (uint32) {
+        return TestTime._time();
     }
 }

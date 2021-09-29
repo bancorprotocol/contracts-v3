@@ -2,6 +2,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../../utility/Types.sol";
 
@@ -52,6 +54,11 @@ struct WithdrawalAmounts {
     int256 networkTokenArbitrageAmount; // the network token amount to burn or mint in the pool, in order to create an arbitrage incentive
 }
 
+struct TradeAmounts {
+    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
+    uint256 feeAmount; // the trading fee amount
+}
+
 /**
  * @dev Pool Collection interface
  */
@@ -65,6 +72,11 @@ interface IPoolCollection is IVersioned {
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
+
+    /**
+     * @dev returns the network token contract
+     */
+    function networkToken() external view returns (IERC20);
 
     /**
      * @dev returns the network settings contract
@@ -146,4 +158,45 @@ interface IPoolCollection is IVersioned {
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
     ) external returns (WithdrawalAmounts memory);
+
+    /**
+     * @dev performs a trade and returns the target amount and fee
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function trade(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) external returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the target amount and fee by specifying the source amount
+     */
+    function targetAmountAndFee(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the source amount and fee by specifying the target amount
+     */
+    function sourceAmountAndFee(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 targetAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
+     * @dev notifies the pool of accrued fees
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function onFeesCollected(IReserveToken pool, uint256 baseTokenAmount) external;
 }

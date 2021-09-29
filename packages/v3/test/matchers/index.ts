@@ -5,8 +5,12 @@ import Decimal from 'decimal.js';
 
 declare global {
     export namespace Chai {
+        interface AlmostEqualOptions {
+            maxAbsoluteError?: Decimal;
+            maxRelativeError?: Decimal;
+        }
         interface Assertion {
-            almostEqual(expected: any, maxAbsoluteError: Decimal, maxRelativeError: Decimal): void;
+            almostEqual(expected: any, options: AlmostEqualOptions): void;
         }
     }
 }
