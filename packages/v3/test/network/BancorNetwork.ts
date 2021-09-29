@@ -1795,7 +1795,7 @@ describe('BancorNetwork', () => {
         }
     });
 
-    describe('trade', () => {
+    describe.only('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: NetworkToken;
@@ -2640,76 +2640,38 @@ describe('BancorNetwork', () => {
             );
         };
 
-        describe('regular tests', () => {
-            for (const [sourceSymbol, targetSymbol] of [
-                ['TKN', 'BNT'],
-                ['TKN', 'ETH'],
-                ['TKN1', 'TKN2'],
-                ['BNT', 'ETH'],
-                ['BNT', 'TKN'],
-                ['ETH', 'BNT'],
-                ['ETH', 'TKN']
-            ]) {
-                for (const sourceBalance of [1_000_000, 5_000_000]) {
-                    for (const targetBalance of [1_000_000, 5_000_000]) {
-                        for (const sourceTradingFeePPM of [0, 10_000]) {
-                            for (const targetTradingFeePPM of [0, 100_000]) {
-                                for (const toSelf of [true, false]) {
-                                    testTrades(
-                                        {
-                                            symbol: sourceSymbol,
-                                            balance: toWei(BigNumber.from(sourceBalance)),
-                                            tradingFeePPM: sourceTradingFeePPM
-                                        },
-                                        {
-                                            symbol: targetSymbol,
-                                            balance: toWei(BigNumber.from(targetBalance)),
-                                            tradingFeePPM: targetTradingFeePPM
-                                        },
-                                        toSelf
-                                    );
-                                }
+        for (const [sourceSymbol, targetSymbol] of [
+            ['TKN', 'BNT'],
+            ['TKN', 'ETH'],
+            ['TKN1', 'TKN2'],
+            ['BNT', 'ETH'],
+            ['BNT', 'TKN'],
+            ['ETH', 'BNT'],
+            ['ETH', 'TKN']
+        ]) {
+            for (const sourceBalance of [1_000_000, 50_000_000]) {
+                for (const targetBalance of [1_000_000, 50_000_000]) {
+                    for (const sourceTradingFeePPM of [0, 10_000]) {
+                        for (const targetTradingFeePPM of [0, 100_000]) {
+                            for (const toSelf of [true, false]) {
+                                testTrades(
+                                    {
+                                        symbol: sourceSymbol,
+                                        balance: toWei(BigNumber.from(sourceBalance)),
+                                        tradingFeePPM: sourceTradingFeePPM
+                                    },
+                                    {
+                                        symbol: targetSymbol,
+                                        balance: toWei(BigNumber.from(targetBalance)),
+                                        tradingFeePPM: targetTradingFeePPM
+                                    },
+                                    toSelf
+                                );
                             }
                         }
                     }
                 }
             }
-        });
-
-        describe('@stress tests', () => {
-            for (const [sourceSymbol, targetSymbol] of [
-                ['TKN', 'BNT'],
-                ['TKN', 'ETH'],
-                ['TKN1', 'TKN2'],
-                ['BNT', 'ETH'],
-                ['BNT', 'TKN'],
-                ['ETH', 'BNT'],
-                ['ETH', 'TKN']
-            ]) {
-                for (const sourceBalance of [1_000_000, 5_000_000, 50_000_000]) {
-                    for (const targetBalance of [1_000_000, 5_000_000, 50_000_000]) {
-                        for (const sourceTradingFeePPM of [0, 10_000, 500_000]) {
-                            for (const targetTradingFeePPM of [0, 10_000, 500_000]) {
-                                for (const toSelf of [true, false]) {
-                                    testTrades(
-                                        {
-                                            symbol: sourceSymbol,
-                                            balance: toWei(BigNumber.from(sourceBalance)),
-                                            tradingFeePPM: sourceTradingFeePPM
-                                        },
-                                        {
-                                            symbol: targetSymbol,
-                                            balance: toWei(BigNumber.from(targetBalance)),
-                                            tradingFeePPM: targetTradingFeePPM
-                                        },
-                                        toSelf
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        }
     });
 });
