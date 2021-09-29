@@ -81,7 +81,7 @@ library ArbitrageFormula {
         data.g = MathEx.mulDivF(b, y.sub(z), y);
         data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M);
         data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
-        assert(x.mul(a * n).add(data.h.mul((a + 1) * M)) > data.k.mul(b * M));
+        assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M));
     }
 
     function surplus(
