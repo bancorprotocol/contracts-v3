@@ -22,6 +22,7 @@ import { toWei } from '../helpers/Types';
 import {
     createTokenBySymbol,
     createWallet,
+    destroyWallet,
     errorMessageTokenExceedsAllowance,
     getBalance,
     getTransactionCost,
@@ -1162,6 +1163,10 @@ describe('BancorNetwork', () => {
                         providerAddress = await provider.getAddress();
                     });
 
+                    afterEach(async () => {
+                        await destroyWallet(provider);
+                    });
+
                     it('should revert when attempting to deposit for an invalid provider', async () => {
                         const amount = BigNumber.from(1);
                         const { v, r, s } = await networkPermitSignature(
@@ -1196,6 +1201,12 @@ describe('BancorNetwork', () => {
                                 }
 
                                 senderAddress = await sender.getAddress();
+                            });
+
+                            afterEach(async () => {
+                                if (method === Method.DepositForPermitted) {
+                                    await destroyWallet(sender);
+                                }
                             });
 
                             interface Overrides {
@@ -1905,6 +1916,10 @@ describe('BancorNetwork', () => {
             await network.setTime(await latest());
         };
 
+        const tearDownSetup = async () => {
+            await destroyWallet(trader);
+        };
+
         interface TradeOverrides {
             value?: BigNumber;
             minReturnAmount?: BigNumber;
@@ -2294,6 +2309,10 @@ describe('BancorNetwork', () => {
                     }
                 });
 
+                afterEach(async () => {
+                    await tearDownSetup();
+                });
+
                 const options = !isSourceNetworkToken && !isSourceETH ? [false, true] : [false];
                 for (const permitted of options) {
                     context(`${permitted ? 'regular' : 'permitted'} trade`, () => {
@@ -2487,6 +2506,10 @@ describe('BancorNetwork', () => {
                         }
                     });
 
+                    afterEach(async () => {
+                        await tearDownSetup();
+                    });
+
                     it('should complete multiple trades', async () => {
                         for (let i = 0; i < TRADES_COUNT; i++) {
                             await test();
@@ -2516,6 +2539,10 @@ describe('BancorNetwork', () => {
                             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                             await reserveToken.transfer(trader.address, amount);
                         }
+                    });
+
+                    afterEach(async () => {
+                        await tearDownSetup();
                     });
 
                     if (isSourceNetworkToken || isSourceETH) {

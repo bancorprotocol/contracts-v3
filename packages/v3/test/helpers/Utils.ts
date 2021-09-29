@@ -58,11 +58,24 @@ export const createWallet = async () => {
     const wallet = Wallet.createRandom().connect(waffle.provider);
     const deployer = (await ethers.getSigners())[0];
     await deployer.sendTransaction({
-        value: toWei(BigNumber.from(1_000_000_000)),
+        value: toWei(BigNumber.from(10_000_000)),
         to: await wallet.getAddress()
     });
 
     return wallet;
+};
+
+export const destroyWallet = async (wallet: Wallet) => {
+    const extraFactor = BigNumber.from(10);
+    const estimatedTransferCost = BigNumber.from(21000)
+        .mul(await wallet.getGasPrice())
+        .mul(extraFactor);
+
+    const deployer = (await ethers.getSigners())[0];
+    await wallet.sendTransaction({
+        value: (await wallet.getBalance()).sub(estimatedTransferCost),
+        to: deployer.address
+    });
 };
 
 export const createTokenBySymbol = async (
