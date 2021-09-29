@@ -1017,7 +1017,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage1', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.000000002') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.000000002') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.000000003') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.0000000002') },
@@ -1026,7 +1026,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage2', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000000000002') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.00000000000000000008') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000000002') },
@@ -1035,7 +1035,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage3', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.000000000000000000002') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.000000000000000000002') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.000000000000000000002') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.00000000000000000000003') },
@@ -1043,8 +1043,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
             });
 
             test('WithdrawalAmountsCoverage4', {
-                p: { absolute: new Decimal(1), relative: new Decimal('0.003') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.006') },
+                p: { absolute: new Decimal(1), relative: new Decimal('0.005') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.005') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.002') },
@@ -1053,7 +1053,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage5', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.00000002') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.00000003') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.00000002') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.000000003') },
@@ -1062,7 +1062,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage6', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.0000000000002') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.0000000000002') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.00000000000008') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.00000000000001') },
@@ -1071,7 +1071,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
 
             test('WithdrawalAmountsCoverage7', {
                 p: { absolute: new Decimal(1), relative: new Decimal('0.000000005') },
-                q: { absolute: new Decimal(1), relative: new Decimal('0.000000005') },
+                q: { absolute: new Decimal(2), relative: new Decimal('0.0000006') },
                 r: { absolute: new Decimal(1), relative: new Decimal('0') },
                 s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 t: { absolute: new Decimal(1), relative: new Decimal('0.0000000006') },
