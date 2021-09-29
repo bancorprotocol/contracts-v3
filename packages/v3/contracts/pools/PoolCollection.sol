@@ -7,7 +7,6 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -41,7 +40,6 @@ import { Output } from "./PoolCollectionFormulas/Common.sol";
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Utils {
     using SafeMath for uint256;
-    using SafeCast for uint256;
     using ReserveToken for IReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
@@ -758,8 +756,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, U
         amounts.networkTokenAmountToMintForProvider = output.t;
         amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
-        amounts.networkTokenAmountToDeductFromLiquidity = output.p.toInt256();
-        amounts.networkTokenAmountToRenounceByProtocol = output.q.toInt256();
+        amounts.networkTokenAmountToDeductFromLiquidity = output.p;
+        amounts.networkTokenAmountToRenounceByProtocol = output.q;
         amounts.baseTokenWithdrawalFeeAmount = (x * n) / PPM_RESOLUTION;
     }
 

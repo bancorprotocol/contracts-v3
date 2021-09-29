@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
+import { SafeMath, SafeCast, SignedSafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
  */
 library ArbitrageFormula {
     using SafeMath for uint256;
+    using SafeCast for uint256;
+    using SignedSafeMath for int256;
 
     struct Data {
         uint256 f; // BNT tentative pool balance
@@ -113,8 +115,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z,
         uint256 w
-    ) private pure returns (uint256) {
-        return a.mul(z).add(w.mul(y)).div(y);
+    ) private pure returns (int256) {
+        int256 u = a.mul(z).toInt256();
+        int256 v = w.mul(y).toInt256();
+        return u.add(v).div(y.toInt256());
     }
 
     function deficit(
@@ -122,8 +126,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z,
         uint256 w
-    ) private pure returns (uint256) {
-        return a.mul(z).sub(w.mul(y)).div(y);
+    ) private pure returns (int256) {
+        int256 u = a.mul(z).toInt256();
+        int256 v = w.mul(y).toInt256();
+        return u.sub(v).div(y.toInt256());
     }
 
     function validate(

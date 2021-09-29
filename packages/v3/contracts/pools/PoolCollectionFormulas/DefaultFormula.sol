@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
 
-import { SafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
+import { SafeMath, SafeCast, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for TKN withdrawal
  */
 library DefaultFormula {
     using SafeMath for uint256;
+    using SafeCast for uint256;
 
     function surplus(
         uint256 a,
@@ -20,7 +21,7 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y);
+        output.p = MathEx.mulDivF(a, z, y).toInt256();
         output.r = MathEx.mulDivF(b, z, y);
         output.s = z / M;
         output.t = 0;
@@ -38,7 +39,7 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y);
+        output.p = MathEx.mulDivF(a, z, y).toInt256();
         output.r = MathEx.mulDivF(b, z, y);
         output.s = MathEx.mulDivF(z, b + c, y);
         output.t = MathEx.mulDivF(a.mul(z), e - b - c, b.mul(y));
