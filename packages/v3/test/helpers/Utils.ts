@@ -57,7 +57,10 @@ export const createWallet = async () => {
     // create a random wallet, connect it to a test provider, and fund it
     const wallet = Wallet.createRandom().connect(waffle.provider);
     const deployer = (await ethers.getSigners())[0];
-    await deployer.sendTransaction({ value: toWei(BigNumber.from(1000)), to: await wallet.getAddress() });
+    await deployer.sendTransaction({
+        value: toWei(BigNumber.from(100000000000000000000000)),
+        to: await wallet.getAddress()
+    });
 
     return wallet;
 };
