@@ -58,7 +58,7 @@ export const createWallet = async () => {
     const wallet = Wallet.createRandom().connect(waffle.provider);
     const deployer = (await ethers.getSigners())[0];
     await deployer.sendTransaction({
-        value: toWei(BigNumber.from(100000000000000000000000)),
+        value: toWei(BigNumber.from(1_000_000_000)),
         to: await wallet.getAddress()
     });
 
