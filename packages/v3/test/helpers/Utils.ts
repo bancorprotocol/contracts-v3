@@ -53,6 +53,15 @@ export const transfer = async (
         .transfer(targetAddress, amount);
 };
 
+export const createWallet = async () => {
+    // create a random wallet, connect it to a test provider, and fund it
+    const wallet = Wallet.createRandom().connect(waffle.provider);
+    const deployer = (await ethers.getSigners())[0];
+    await deployer.sendTransaction({ value: toWei(BigNumber.from(1000)), to: await wallet.getAddress() });
+
+    return wallet;
+};
+
 export const createTokenBySymbol = async (
     symbol: string,
     networkToken: TestERC20Token | NetworkToken
@@ -74,15 +83,6 @@ export const createTokenBySymbol = async (
     }
 };
 
-export const createWallet = async () => {
-    // create a random wallet, connect it to a test provider, and fund it
-    const wallet = Wallet.createRandom().connect(waffle.provider);
-    const deployer = (await ethers.getSigners())[0];
-    await deployer.sendTransaction({ value: toWei(BigNumber.from(1000)), to: await wallet.getAddress() });
-
-    return wallet;
-};
-
 export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
     switch (symbol) {
         case 'BNT':
@@ -92,6 +92,8 @@ export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
             return 'ERR_UNDERFLOW';
 
         case 'TKN':
+        case 'TKN1':
+        case 'TKN2':
             return 'ERC20: transfer amount exceeds allowance';
 
         default:
@@ -111,6 +113,8 @@ export const errorMessageTokenExceedsBalance = (symbol: string): string => {
             return '';
 
         case 'TKN':
+        case 'TKN1':
+        case 'TKN2':
             return 'ERC20: transfer amount exceeds balance';
 
         default:

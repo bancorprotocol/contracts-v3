@@ -1227,7 +1227,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary,
         uint256 deadline
     ) private {
-        require(deadline == MAX_UINT256 || deadline <= _time(), "ERR_EXPIRED_DEADLINE");
+        require(deadline >= _time(), "ERR_EXPIRED_DEADLINE");
 
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
