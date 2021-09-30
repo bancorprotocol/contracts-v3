@@ -987,7 +987,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         require(token != IReserveToken(address(_networkToken)) && !token.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call of the inner safeTransferFrom will revert
+        // EIP2612 permit - either this call or the inner safeTransferFrom will revert
         IERC20Permit(address(token)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
     }
 
