@@ -37,21 +37,21 @@ describe('DefaultFormula', () => {
                 if (BigNumber.from(b).add(BigNumber.from(c)).gte(BigNumber.from(e))) {
                     it(`surplus(${[a, b, c, e, n, x]})`, async () => {
                         const actual = await formula.surplus(a, b, c, e, n, x);
-                        expect(actual.p).to.almostEqual(new Decimal(p), new Decimal(1), new Decimal(0));
-                        expect(actual.q).to.almostEqual(new Decimal(q), new Decimal(1), new Decimal(0));
-                        expect(actual.r).to.almostEqual(new Decimal(r), new Decimal(1), new Decimal(0));
-                        expect(actual.s).to.almostEqual(new Decimal(s), new Decimal(1), new Decimal(0));
-                        expect(actual.t).to.almostEqual(new Decimal(t), new Decimal(1), new Decimal(0));
+                        expect(actual.p).to.almostEqual(new Decimal(p), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.q).to.almostEqual(new Decimal(q), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.r).to.almostEqual(new Decimal(r), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.s).to.almostEqual(new Decimal(s), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.t).to.almostEqual(new Decimal(t), { maxAbsoluteError: new Decimal(1) });
                     });
                 }
                 else {
                     it(`deficit(${[a, b, c, e, n, x]})`, async () => {
                         const actual = await formula.deficit(a, b, c, e, n, x);
-                        expect(actual.p).to.almostEqual(new Decimal(p), new Decimal(1), new Decimal(0));
-                        expect(actual.q).to.almostEqual(new Decimal(q), new Decimal(1), new Decimal(0));
-                        expect(actual.r).to.almostEqual(new Decimal(r), new Decimal(1), new Decimal(0));
-                        expect(actual.s).to.almostEqual(new Decimal(s), new Decimal(1), new Decimal(0));
-                        expect(actual.t).to.almostEqual(new Decimal(t), new Decimal(1), new Decimal(0));
+                        expect(actual.p).to.almostEqual(new Decimal(p), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.q).to.almostEqual(new Decimal(q), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.r).to.almostEqual(new Decimal(r), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.s).to.almostEqual(new Decimal(s), { maxAbsoluteError: new Decimal(1) });
+                        expect(actual.t).to.almostEqual(new Decimal(t), { maxAbsoluteError: new Decimal(1) });
                     });
                 }
             }

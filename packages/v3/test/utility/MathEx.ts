@@ -51,7 +51,7 @@ describe('MathEx', () => {
         it(`productRatio(${toString(x)}, ${toString(y)}`, async () => {
             const expected = productRatio(x, y);
             const actual = await mathContract.productRatio(toBigNumber(x), toBigNumber(y));
-            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
 
@@ -59,7 +59,7 @@ describe('MathEx', () => {
         it(`reducedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = reducedRatio(r, scale);
             const actual = await mathContract.reducedRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
 
@@ -67,7 +67,7 @@ describe('MathEx', () => {
         it(`normalizedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = normalizedRatio(r, scale);
             const actual = await mathContract.normalizedRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
 
@@ -75,7 +75,7 @@ describe('MathEx', () => {
         it(`accurateRatio(${toString(r)}, ${scale.toString()}})`, async () => {
             const expected = accurateRatio(r, scale);
             const actual = await mathContract.accurateRatio(toBigNumber(r), toBigNumber(scale));
-            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, maxAbsoluteError, maxRelativeError);
+            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
 

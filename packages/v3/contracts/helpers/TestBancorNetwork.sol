@@ -16,7 +16,7 @@ import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
-import { IPoolCollection, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool, DepositAmounts as NetworkTokenPoolDepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
@@ -117,6 +117,24 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint8 feeType
     ) external {
         _networkTokenPool.onFeesCollected(pool, amount, feeType);
+    }
+
+    function onPoolCollectionFeesCollectedT(
+        IPoolCollection poolCollection,
+        IReserveToken pool,
+        uint256 amount
+    ) external {
+        poolCollection.onFeesCollected(pool, amount);
+    }
+
+    function tradePoolCollectionT(
+        IPoolCollection poolCollection,
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount
+    ) external returns (TradeAmounts memory) {
+        return poolCollection.trade(sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
     function approveT(

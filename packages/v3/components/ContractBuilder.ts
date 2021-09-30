@@ -3,7 +3,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { ContractFactory } from '@ethersproject/contracts';
 import { ethers } from 'hardhat';
 
-type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
+export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
     : T extends (...args: any) => infer U
     ? U
