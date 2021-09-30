@@ -1886,8 +1886,8 @@ describe('BancorNetwork', () => {
         interface TradeOverrides {
             value?: BigNumber;
             minReturnAmount?: BigNumber;
-            beneficiary?: string;
             deadline?: BigNumber;
+            beneficiary?: string;
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
         }
@@ -1896,8 +1896,8 @@ describe('BancorNetwork', () => {
             let {
                 value,
                 minReturnAmount = MIN_RETURN_AMOUNT,
-                beneficiary = ZERO_ADDRESS,
                 deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
                 targetTokenAddress = targetToken.address
             } = overrides;
@@ -1911,15 +1911,15 @@ describe('BancorNetwork', () => {
 
             return network
                 .connect(trader)
-                .trade(sourceTokenAddress, targetTokenAddress, amount, minReturnAmount, beneficiary, deadline, {
+                .trade(sourceTokenAddress, targetTokenAddress, amount, minReturnAmount, deadline, beneficiary, {
                     value
                 });
         };
 
         interface TradePermittedOverrides {
-            beneficiary?: string;
             minReturnAmount?: BigNumber;
             deadline?: BigNumber;
+            beneficiary?: string;
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
             approvedAmount?: BigNumber;
@@ -1928,8 +1928,8 @@ describe('BancorNetwork', () => {
         const tradePermitted = async (amount: BigNumber, overrides: TradePermittedOverrides = {}) => {
             const {
                 minReturnAmount = MIN_RETURN_AMOUNT,
-                beneficiary = ZERO_ADDRESS,
                 deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
                 targetTokenAddress = targetToken.address,
                 approvedAmount = amount
@@ -1950,8 +1950,8 @@ describe('BancorNetwork', () => {
                     targetTokenAddress,
                     amount,
                     minReturnAmount,
-                    beneficiary,
                     deadline,
+                    beneficiary,
                     v,
                     r,
                     s

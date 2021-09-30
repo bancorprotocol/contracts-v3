@@ -679,8 +679,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        address beneficiary,
-        uint256 deadline
+        uint256 deadline,
+        address beneficiary
     )
         external
         payable
@@ -690,7 +690,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
     {
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline, msg.sender);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
     }
 
     /**
@@ -701,8 +701,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        address beneficiary,
         uint256 deadline,
+        address beneficiary,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -718,7 +718,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _permit(sourceToken, sourceAmount, deadline, v, r, s, trader);
 
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline, trader);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, trader);
     }
 
     /**
@@ -1187,8 +1187,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
-        address beneficiary,
         uint256 deadline,
+        address beneficiary,
         address trader
     ) private {
         require(deadline >= _time(), "ERR_DEADLINE_EXPIRED");
