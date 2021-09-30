@@ -1806,7 +1806,7 @@ describe('BancorNetwork', () => {
         }
     });
 
-    describe('trade', () => {
+    describe.only('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: NetworkToken;
@@ -1837,78 +1837,41 @@ describe('BancorNetwork', () => {
             tradingFeePPM?: number;
         }
 
-        const setup = async (source: Spec, target: Spec) => {
-            const isSourceETH = source.symbol === 'ETH';
-            const isTargetETH = target.symbol === 'ETH';
-            const isSourceNetworkToken = source.symbol === 'BNT';
-            const isTargetNetworkToken = target.symbol === 'BNT';
+        const setupPool = async (spec: Spec) => {
+            const isETH = spec.symbol === 'ETH';
+            const isNetworkToken = spec.symbol === 'BNT';
 
+            const token = await createTokenBySymbol(spec.symbol, networkToken);
+            if (isNetworkToken) {
+                return token;
+            }
+
+            await createPool(token, network, networkSettings, poolCollection);
+
+            await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+            await poolCollection.setDepositLimit(token.address, MAX_UINT256);
+            await poolCollection.setInitialRate(token.address, INITIAL_RATE);
+            await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
+
+            // deposit the token liquidity
+            let value = BigNumber.from(0);
+            if (isETH) {
+                value = spec.balance;
+            } else {
+                const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                await reserveToken.approve(network.address, spec.balance);
+            }
+
+            await network.deposit(token.address, spec.balance, { value });
+
+            return token;
+        };
+
+        const setup = async (source: Spec, target: Spec) => {
             trader = await createWallet();
 
-            let requestedLiquidity = false;
-
-            sourceToken = await createTokenBySymbol(source.symbol, networkToken);
-            if (!isSourceNetworkToken) {
-                // create and configure the source pool
-                await createPool(sourceToken, network, networkSettings, poolCollection);
-
-                await networkSettings.setPoolMintingLimit(sourceToken.address, MAX_UINT256);
-                await poolCollection.setDepositLimit(sourceToken.address, MAX_UINT256);
-                await poolCollection.setInitialRate(sourceToken.address, INITIAL_RATE);
-                await poolCollection.setTradingFeePPM(sourceToken.address, source.tradingFeePPM ?? BigNumber.from(0));
-
-                // deposit the source token liquidity
-                let sourceValue = BigNumber.from(0);
-                if (isSourceETH) {
-                    sourceValue = source.balance;
-                } else {
-                    const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                    await reserveToken.approve(network.address, source.balance);
-                }
-
-                await network.deposit(sourceToken.address, source.balance, { value: sourceValue });
-
-                requestedLiquidity = true;
-            }
-
-            targetToken = await createTokenBySymbol(target.symbol, networkToken);
-            if (!isTargetNetworkToken) {
-                // create and configure the target pool
-                await createPool(targetToken, network, networkSettings, poolCollection);
-
-                await networkSettings.setPoolMintingLimit(targetToken.address, MAX_UINT256);
-                await poolCollection.setDepositLimit(targetToken.address, MAX_UINT256);
-                await poolCollection.setInitialRate(targetToken.address, INITIAL_RATE);
-                await poolCollection.setTradingFeePPM(targetToken.address, target.tradingFeePPM ?? BigNumber.from(0));
-
-                // deposit the target token liquidity
-                let targetValue = BigNumber.from(0);
-                if (isTargetETH) {
-                    targetValue = target.balance;
-                } else {
-                    const reserveToken = await Contracts.TestERC20Token.attach(targetToken.address);
-                    await reserveToken.approve(network.address, target.balance);
-                }
-
-                await network.deposit(targetToken.address, target.balance, { value: targetValue });
-
-                requestedLiquidity = true;
-            }
-
-            // deposit some large enough network token liquidity
-            if (!requestedLiquidity) {
-                const tempBalance = toWei(BigNumber.from(1_000_000));
-                const reserveToken = await Contracts.TestERC20Token.deploy('TKN2', 'TKN2', tempBalance);
-
-                await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
-                await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-                await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
-
-                await reserveToken.approve(network.address, tempBalance);
-                await network.deposit(reserveToken.address, tempBalance);
-            }
+            sourceToken = await setupPool(source);
+            targetToken = await setupPool(target);
 
             await networkToken.approve(network.address, NETWORK_TOKEN_LIQUIDITY);
             await network.deposit(networkToken.address, NETWORK_TOKEN_LIQUIDITY);
