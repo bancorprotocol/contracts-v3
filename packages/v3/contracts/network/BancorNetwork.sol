@@ -717,38 +717,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @inheritdoc IBancorNetwork
+     * @dev returns the target amount by specifying the source amount
      */
     function tradeTargetAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 sourceAmount
-    )
-        external
-        view
-        override
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(sourceAmount)
-        returns (uint256)
-    {
+    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(sourceAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, sourceAmount, true);
     }
 
     /**
-     * @inheritdoc IBancorNetwork
+     * @dev returns the source amount by specifying the target amount
      */
     function tradeSourceAmount(
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 targetAmount
-    )
-        external
-        view
-        override
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(targetAmount)
-        returns (uint256)
-    {
+    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, targetAmount, false);
     }
 

@@ -212,22 +212,4 @@ interface IBancorNetwork is IUpgradeable {
         bytes32 r,
         bytes32 s
     ) external;
-
-    /**
-     * @dev returns the target amount by specifying the source amount
-     */
-    function tradeTargetAmount(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
-        uint256 sourceAmount
-    ) external view returns (uint256);
-
-    /**
-     * @dev returns the source amount by specifying the target amount
-     */
-    function tradeSourceAmount(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
-        uint256 targetAmount
-    ) external view returns (uint256);
 }
