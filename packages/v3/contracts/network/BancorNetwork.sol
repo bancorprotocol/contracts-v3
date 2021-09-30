@@ -891,18 +891,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the sender to the vault
-        if (msg.value > 0) {
-            require(pool.isNativeToken(), "ERR_INVALID_POOL");
-            require(msg.value == baseTokenAmount, "ERR_ETH_AMOUNT_MISMATCH");
-
-            // send the deposited amount of ETH to the vault
-            _depositETHToVault(baseTokenAmount);
-        } else {
-            require(!pool.isNativeToken(), "ERR_INVALID_POOL");
-
-            // transfer the deposited amount of base tokens to the vault
-            pool.safeTransferFrom(sender, address(_vault), baseTokenAmount);
-        }
+        _depositToVault(pool, sender, baseTokenAmount);
 
         // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
@@ -1167,15 +1156,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev deposits ETH to the vault
-     */
-    function _depositETHToVault(uint256 value) private {
-        // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
-        // call instead (via sendValue), which the 2300 gas limit does not apply for
-        payable(_vault).sendValue(value);
-    }
-
-    /**
      * @dev performs a trade and returns the target amount and fee
      *
      * requirements:
@@ -1221,18 +1201,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
         }
 
-        if (msg.value > 0) {
-            require(sourceToken.isNativeToken(), "ERR_INVALID_POOL");
-            require(msg.value == sourceAmount, "ERR_ETH_AMOUNT_MISMATCH");
-
-            // send the source amount of ETH to the vault
-            _depositETHToVault(sourceAmount);
-        } else {
-            require(!sourceToken.isNativeToken(), "ERR_INVALID_POOL");
-
-            // transfer the source amount of base tokens to the vault
-            sourceToken.safeTransferFrom(trader, address(_vault), sourceAmount);
-        }
+        // transfer the tokens from the trader to the vault
+        _depositToVault(sourceToken, trader, sourceAmount);
 
         // transfer the target tokens/ETH to the beneficiary
         _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
@@ -1363,6 +1333,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                     targetAmount
                 )
                 .amount;
+    }
+
+    /**
+     * @dev deposits reserve tokens to the vault and verifies that msg.value corresponds to its type
+     */
+    function _depositToVault(
+        IReserveToken reserveToken,
+        address sender,
+        uint256 amount
+    ) private {
+        if (msg.value > 0) {
+            require(reserveToken.isNativeToken(), "ERR_INVALID_POOL");
+            require(msg.value == amount, "ERR_ETH_AMOUNT_MISMATCH");
+
+            // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
+            // call instead (via sendValue), which the 2300 gas limit does not apply for
+            payable(_vault).sendValue(amount);
+        } else {
+            require(!reserveToken.isNativeToken(), "ERR_INVALID_POOL");
+
+            reserveToken.safeTransferFrom(sender, address(_vault), amount);
+        }
     }
 
     /**
