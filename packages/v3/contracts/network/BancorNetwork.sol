@@ -909,7 +909,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
-            // transfer the deposited amount of baske tokens to the vault
+            // transfer the deposited amount of base tokens to the vault
             pool.safeTransferFrom(sender, address(_vault), baseTokenAmount);
         }
 
@@ -1229,7 +1229,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             require(!sourceToken.isNativeToken(), "ERR_INVALID_POOL");
 
-            // transfer the source amount of baske tokens to the vault
+            // transfer the source amount of base tokens to the vault
             sourceToken.safeTransferFrom(trader, address(_vault), sourceAmount);
         }
 
