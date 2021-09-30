@@ -2329,7 +2329,7 @@ describe('BancorNetwork', () => {
                             const deadline = (await latest()).sub(BigNumber.from(1000));
 
                             await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                permitted ? 'ERC20Permit: expired deadline' : 'ERR_EXPIRED_DEADLINE'
+                                permitted ? 'ERC20Permit: expired deadline' : 'ERR_DEADLINE_EXPIRED'
                             );
                         });
 
