@@ -135,8 +135,8 @@ describe('ArbitrageFormula', () => {
                 'ArbitrageFormulaCoverage8', {
                     p: { absolute: new Decimal(2), relative: new Decimal('0.009') },
                     q: { absolute: new Decimal(2), relative: new Decimal('0.009') },
-                    r: { absolute: new Decimal(1), relative: new Decimal('0.00000003') },
-                    s: { absolute: new Decimal(1), relative: new Decimal('0.00000003') },
+                    r: { absolute: new Decimal(1), relative: new Decimal('0') },
+                    s: { absolute: new Decimal(1), relative: new Decimal('0') },
                 }
             );
         };
