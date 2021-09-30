@@ -22,6 +22,7 @@ export class Engine {
 
     // basics
     readonly signer: Signer;
+    readonly signerAddress: string;
     readonly contracts: ContractsType;
     readonly legacyContracts: LegacyContractsType;
     readonly executionSettings: ExecutionSettings;
@@ -68,6 +69,7 @@ export class Engine {
 
         // init basics
         this.signer = signer;
+        this.signerAddress = signerAddress;
         this.contracts = Contracts.connect(signer);
         this.legacyContracts = LegacyContracts.connect(signer);
         this.executionSettings = {
