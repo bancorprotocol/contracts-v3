@@ -603,7 +603,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(provider, pool, tokenAmount);
+        _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -617,7 +617,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(msg.sender, pool, tokenAmount);
+        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -653,8 +653,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc IBancorNetwork
      */
     function withdraw(uint256 id) external override nonReentrant {
-        bytes32 contextId = _withdrawContextId(id);
         address provider = msg.sender;
+        bytes32 contextId = _withdrawContextId(id, provider);
 
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
@@ -685,7 +685,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
     {
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline);
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline, msg.sender);
     }
 
     /**
@@ -709,9 +709,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
     {
-        _permit(sourceToken, sourceAmount, deadline, v, r, s);
+        address trader = msg.sender;
 
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline);
+        _permit(sourceToken, sourceAmount, deadline, v, r, s, trader);
+
+        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, beneficiary, deadline, trader);
     }
 
     /**
@@ -788,16 +790,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositContextId(
         address provider,
         IReserveToken pool,
-        uint256 tokenAmount
+        uint256 tokenAmount,
+        address sender
     ) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(msg.sender, _time(), provider, pool, tokenAmount));
+        return keccak256(abi.encodePacked(sender, _time(), provider, pool, tokenAmount));
     }
 
     /**
      * @dev generates context ID for a withdraw request
      */
-    function _withdrawContextId(uint256 id) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(msg.sender, _time(), id));
+    function _withdrawContextId(uint256 id, address sender) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(sender, _time(), id));
     }
 
     /**
@@ -810,14 +813,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositFor(
         address provider,
         IReserveToken pool,
-        uint256 tokenAmount
+        uint256 tokenAmount,
+        address sender
     ) private {
-        bytes32 contextId = _depositContextId(provider, pool, tokenAmount);
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool == IReserveToken(address(_networkToken))) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
         }
     }
 
@@ -831,12 +835,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _depositNetworkTokenFor(
         bytes32 contextId,
         address provider,
-        uint256 networkTokenAmount
+        uint256 networkTokenAmount,
+        address sender
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
         // transfer the tokens from the sender to the network token pool
-        _networkToken.transferFrom(msg.sender, address(cachedNetworkTokenPool), networkTokenAmount);
+        _networkToken.transferFrom(sender, address(cachedNetworkTokenPool), networkTokenAmount);
 
         // process network token pool deposit
         NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
@@ -874,7 +879,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         IReserveToken pool,
-        uint256 baseTokenAmount
+        uint256 baseTokenAmount,
+        address sender
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -904,7 +910,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             require(!pool.isNativeToken(), "ERR_INVALID_POOL");
 
             // transfer the deposited amount of baske tokens to the vault
-            pool.safeTransferFrom(msg.sender, address(_vault), baseTokenAmount);
+            pool.safeTransferFrom(sender, address(_vault), baseTokenAmount);
         }
 
         // process deposit to the base token pool (taking into account the ETH pool)
@@ -974,14 +980,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         uint8 v,
         bytes32 r,
-        bytes32 s
+        bytes32 s,
+        address sender
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
         require(token != IReserveToken(address(_networkToken)) && !token.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call of the inner safeTransferFrom will revert
-        IERC20Permit(address(token)).permit(msg.sender, address(this), tokenAmount, deadline, v, r, s);
+        IERC20Permit(address(token)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
     }
 
     /**
@@ -1001,9 +1008,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) private {
-        _permit(pool, tokenAmount, deadline, v, r, s);
+        address sender = msg.sender;
 
-        _depositBaseTokenFor(_depositContextId(provider, pool, tokenAmount), provider, pool, tokenAmount);
+        _permit(pool, tokenAmount, deadline, v, r, s, sender);
+
+        _depositBaseTokenFor(
+            _depositContextId(provider, pool, tokenAmount, sender),
+            provider,
+            pool,
+            tokenAmount,
+            sender
+        );
     }
 
     /**
@@ -1182,18 +1197,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 sourceAmount,
         uint256 minReturnAmount,
         address beneficiary,
-        uint256 deadline
+        uint256 deadline,
+        address trader
     ) private {
         require(deadline >= _time(), "ERR_EXPIRED_DEADLINE");
 
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
-            beneficiary = msg.sender;
+            beneficiary = trader;
         }
 
         bytes32 contextId = keccak256(
             abi.encodePacked(
-                msg.sender,
+                trader,
                 _time(),
                 sourceToken,
                 targetToken,
@@ -1214,17 +1230,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             require(!sourceToken.isNativeToken(), "ERR_INVALID_POOL");
 
             // transfer the source amount of baske tokens to the vault
-            sourceToken.safeTransferFrom(msg.sender, address(_vault), sourceAmount);
+            sourceToken.safeTransferFrom(trader, address(_vault), sourceAmount);
         }
 
         // perform either a single or double hop trade, based on the source and the target pool
         uint256 tradeAmount;
         if (address(sourceToken) == address(_networkToken)) {
-            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount, trader);
         } else if (address(targetToken) == address(_networkToken)) {
-            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount, trader);
         } else {
-            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
+            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
         }
 
         // transfer the transfer target tokens/ETH to the beneficiary
@@ -1238,9 +1254,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         IReserveToken pool,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        address trader
     ) private returns (uint256) {
-        return _tradeNetworkToken(contextId, pool, true, sourceAmount, minReturnAmount);
+        return _tradeNetworkToken(contextId, pool, true, sourceAmount, minReturnAmount, trader);
     }
 
     /**
@@ -1250,9 +1267,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         IReserveToken pool,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        address trader
     ) private returns (uint256) {
-        return _tradeNetworkToken(contextId, pool, false, sourceAmount, minReturnAmount);
+        return _tradeNetworkToken(contextId, pool, false, sourceAmount, minReturnAmount, trader);
     }
 
     /**
@@ -1263,14 +1281,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken pool,
         bool isSourceNetworkToken,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        address trader
     ) private returns (uint256) {
-        IPoolCollection poolCollection = _poolCollection(pool);
-
         IReserveToken networkPool = IReserveToken(address(_networkToken));
         IReserveToken sourceToken = isSourceNetworkToken ? networkPool : pool;
         IReserveToken targetToken = isSourceNetworkToken ? pool : networkPool;
-        TradeAmountsWithLiquidity memory tradeAmounts = poolCollection.trade(
+        TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
             sourceToken,
             targetToken,
             sourceAmount,
@@ -1291,7 +1308,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             targetToken: targetToken,
             sourceAmount: sourceAmount,
             targetAmount: tradeAmounts.amount,
-            trader: msg.sender
+            trader: trader
         });
 
         emit FeesCollected({
@@ -1329,14 +1346,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IReserveToken sourceToken,
         IReserveToken targetToken,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        address trader
     ) private returns (uint256) {
         // trade the source token to the network token (while accepting any return amount)
-        uint256 tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, 1);
+        uint256 tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, 1, trader);
 
         // trade the received network token target amount to the target token (while respecting the minimum return
         // amount)
-        return _tradeFromNetworkToken(contextId, targetToken, tradeAmount, minReturnAmount);
+        return _tradeFromNetworkToken(contextId, targetToken, tradeAmount, minReturnAmount, trader);
     }
 
     /**
