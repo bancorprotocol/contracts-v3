@@ -435,7 +435,6 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // increase the staked balance by the given amount
         _stakedBalance = _stakedBalance.add(networkTokenAmount);
 
-        // type 0: trading fee
         if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
             _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
