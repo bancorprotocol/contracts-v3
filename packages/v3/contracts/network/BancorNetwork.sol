@@ -1223,9 +1223,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // perform either a single or double hop trade, based on the source and the target pool
         uint256 tradeAmount;
         if (address(sourceToken) == address(_networkToken)) {
-            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount, trader);
+            tradeAmount = _tradeNetworkToken(contextId, targetToken, true, sourceAmount, minReturnAmount, trader);
         } else if (address(targetToken) == address(_networkToken)) {
-            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount, trader);
+            tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, minReturnAmount, trader);
         } else {
             tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
         }
@@ -1245,32 +1245,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // transfer the target tokens/ETH to the beneficiary
         _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
-    }
-
-    /**
-     * @dev performs a network token to base token single hop trade
-     */
-    function _tradeFromNetworkToken(
-        bytes32 contextId,
-        IReserveToken pool,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        address trader
-    ) private returns (uint256) {
-        return _tradeNetworkToken(contextId, pool, true, sourceAmount, minReturnAmount, trader);
-    }
-
-    /**
-     * @dev performs a base token trade to network token single hop trade
-     */
-    function _tradeToNetworkToken(
-        bytes32 contextId,
-        IReserveToken pool,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        address trader
-    ) private returns (uint256) {
-        return _tradeNetworkToken(contextId, pool, false, sourceAmount, minReturnAmount, trader);
     }
 
     /**
@@ -1350,11 +1324,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address trader
     ) private returns (uint256) {
         // trade the source token to the network token (while accepting any return amount)
-        uint256 tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, 1, trader);
+        uint256 tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, 1, trader);
 
         // trade the received network token target amount to the target token (while respecting the minimum return
         // amount)
-        return _tradeFromNetworkToken(contextId, targetToken, tradeAmount, minReturnAmount, trader);
+        return _tradeNetworkToken(contextId, targetToken, true, tradeAmount, minReturnAmount, trader);
     }
 
     /**
