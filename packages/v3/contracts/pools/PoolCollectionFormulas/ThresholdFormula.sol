@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import { SafeMath, MAX_UINT128, MAX_UINT256, M } from "./Common.sol";
 
 /**
- * @dev this library provides mathematical support for TKN withdrawal
+ * @dev this library provides mathematical support for base token withdrawal
  */
 library ThresholdFormula {
     using SafeMath for uint256;

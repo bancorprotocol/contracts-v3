@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import { SafeMath, SafeCast, SignedSafeMath, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
 
 /**
- * @dev this library provides mathematical support for TKN withdrawal
+ * @dev this library provides mathematical support for base token withdrawal
  */
 library ArbitrageFormula {
     using SafeMath for uint256;
@@ -12,10 +12,10 @@ library ArbitrageFormula {
     using SignedSafeMath for int256;
 
     struct Data {
-        uint256 f; // BNT tentative pool balance
-        uint256 g; // TKN new pool balance
-        uint256 h; // TKN amount to buy or sell 
-        uint256 k; // BNT amount to mint or burn
+        uint256 f; // network token tentative pool balance
+        uint256 g; // base token new pool balance
+        uint256 h; // base token amount to buy or sell 
+        uint256 k; // network token amount to mint or burn
     }
 
     function surplus(

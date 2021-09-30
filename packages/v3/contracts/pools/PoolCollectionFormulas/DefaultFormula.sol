@@ -4,7 +4,7 @@ pragma solidity 0.7.6;
 import { SafeMath, SafeCast, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
 
 /**
- * @dev this library provides mathematical support for TKN withdrawal
+ * @dev this library provides mathematical support for base token withdrawal
  */
 library DefaultFormula {
     using SafeMath for uint256;
