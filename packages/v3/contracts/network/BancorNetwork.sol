@@ -238,7 +238,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when a flash-loan is completed
      */
-    event FlashLoaned(bytes32 indexed contextId, IReserveToken indexed token, address indexed borrower, uint256 amount);
+    event FlashloanCompleted(
+        bytes32 indexed contextId,
+        IReserveToken indexed token,
+        address indexed borrower,
+        uint256 amount
+    );
 
     /**
      * @dev triggered when trading/flash-loan fees are collected
