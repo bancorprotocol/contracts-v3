@@ -1243,7 +1243,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             sourceToken.safeTransferFrom(trader, address(_vault), sourceAmount);
         }
 
-        // transfer the transfer target tokens/ETH to the beneficiary
+        // transfer the target tokens/ETH to the beneficiary
         _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
     }
 
