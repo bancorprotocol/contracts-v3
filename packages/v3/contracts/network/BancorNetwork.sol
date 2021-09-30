@@ -1270,7 +1270,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
-        // if the target token is the network token, notify the network token pool on collected feeds
+        // if the target token is the network token, notify the network token pool on collected fees
         if (!isSourceNetworkToken) {
             cachedNetworkTokenPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
         }
