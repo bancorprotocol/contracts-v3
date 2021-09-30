@@ -643,43 +643,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function targetAmountAndFee(
+    function tradeAmountAndFee(
         IReserveToken sourceToken,
         IReserveToken targetToken,
-        uint256 sourceAmount
+        uint256 amount,
+        bool targetAmount
     )
         external
         view
         override
         validAddress(address(sourceToken))
         validAddress(address(targetToken))
-        greaterThanZero(sourceAmount)
+        greaterThanZero(amount)
         returns (TradeAmounts memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function sourceAmountAndFee(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
-        uint256 targetAmount
-    )
-        external
-        view
-        override
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
-        greaterThanZero(targetAmount)
-        returns (TradeAmounts memory)
-    {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
+        return
+            targetAmount
+                ? _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount)
+                : _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount);
     }
 
     /**

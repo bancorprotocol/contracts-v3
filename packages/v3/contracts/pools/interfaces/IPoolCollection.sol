@@ -180,21 +180,14 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmountsWithLiquidity memory);
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're
+     * interested in the target or source amount
      */
-    function targetAmountAndFee(
+    function tradeAmountAndFee(
         IReserveToken sourceToken,
         IReserveToken targetToken,
-        uint256 sourceAmount
-    ) external view returns (TradeAmounts memory);
-
-    /**
-     * @dev returns the source amount and fee by specifying the target amount
-     */
-    function sourceAmountAndFee(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
-        uint256 targetAmount
+        uint256 amount,
+        bool targetAmount
     ) external view returns (TradeAmounts memory);
 
     /**
