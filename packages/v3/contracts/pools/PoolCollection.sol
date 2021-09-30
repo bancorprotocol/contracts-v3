@@ -615,7 +615,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             newNetworkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
             newBaseTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
 
-            // if the target token is a base token, make sure add the fee to the staked balance
+            // if the target token is a base token, make sure to add the fee to the staked balance
             stakedBalance = stakedBalance.add(tradeAmounts.feeAmount);
         } else {
             newBaseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
