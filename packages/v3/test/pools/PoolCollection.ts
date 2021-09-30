@@ -1935,7 +1935,7 @@ describe('PoolCollection', () => {
                                 }
 
                                 expect(liquidity.tradingLiquidityProduct).to.equal(
-                                    liquidity.networkTokenTradingLiquidity.mul(liquidity.baseTokenTradingLiquidity)
+                                    prevLiquidity.tradingLiquidityProduct
                                 );
 
                                 // verify that the average rate has been updated

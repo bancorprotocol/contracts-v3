@@ -626,7 +626,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         PoolLiquidity memory liquidity = PoolLiquidity({
             networkTokenTradingLiquidity: newNetworkTokenTradingLiquidity,
             baseTokenTradingLiquidity: newBaseTokenTradingLiquidity,
-            tradingLiquidityProduct: newNetworkTokenTradingLiquidity.mul(newBaseTokenTradingLiquidity),
+            tradingLiquidityProduct: params.liquidity.tradingLiquidityProduct,
             stakedBalance: stakedBalance
         });
 
