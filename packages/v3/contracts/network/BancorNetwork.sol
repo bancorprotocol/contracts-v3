@@ -1220,6 +1220,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             )
         );
 
+        // perform either a single or double hop trade, based on the source and the target pool
+        uint256 tradeAmount;
+        if (address(sourceToken) == address(_networkToken)) {
+            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount, trader);
+        } else if (address(targetToken) == address(_networkToken)) {
+            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount, trader);
+        } else {
+            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
+        }
+
         if (msg.value > 0) {
             require(sourceToken.isNativeToken(), "ERR_INVALID_POOL");
             require(msg.value == sourceAmount, "ERR_ETH_AMOUNT_MISMATCH");
@@ -1231,16 +1241,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // transfer the source amount of base tokens to the vault
             sourceToken.safeTransferFrom(trader, address(_vault), sourceAmount);
-        }
-
-        // perform either a single or double hop trade, based on the source and the target pool
-        uint256 tradeAmount;
-        if (address(sourceToken) == address(_networkToken)) {
-            tradeAmount = _tradeFromNetworkToken(contextId, targetToken, sourceAmount, minReturnAmount, trader);
-        } else if (address(targetToken) == address(_networkToken)) {
-            tradeAmount = _tradeToNetworkToken(contextId, sourceToken, sourceAmount, minReturnAmount, trader);
-        } else {
-            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
         }
 
         // transfer the transfer target tokens/ETH to the beneficiary
