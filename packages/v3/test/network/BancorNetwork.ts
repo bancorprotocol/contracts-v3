@@ -1806,7 +1806,7 @@ describe('BancorNetwork', () => {
         }
     });
 
-    describe.only('trade', () => {
+    describe('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: NetworkToken;
