@@ -1170,8 +1170,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev deposits ETH to the vault
      */
     function _depositETHToVault(uint256 value) private {
-        // using a regular transfer here would revert due to exceeding the 2,300 gas limit which is why we're using
-        // call instead (via sendValue), which the 2,300 gas limit does not apply for
+        // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
+        // call instead (via sendValue), which the 2300 gas limit does not apply for
         payable(_vault).sendValue(value);
     }
 
