@@ -1,4 +1,5 @@
 import Contracts, { ContractsType } from '../../components/Contracts';
+import LegacyContracts, { LegacyContractsType } from '../../components/LegacyContracts';
 import { CONFIG } from '../../hardhat.extended.config';
 import { defaultMigration, MIGRATION_DATA_DIR, MIGRATION_DEPLOYMENTS_DIR, MIGRATION_DIR } from './Constants';
 import { initExecutionFunctions } from './Execution';
@@ -22,6 +23,7 @@ export class Engine {
     // basics
     readonly signer: Signer;
     readonly contracts: ContractsType;
+    readonly legacyContracts: LegacyContractsType;
     readonly executionSettings: ExecutionSettings;
     readonly overrides: Overrides;
 
@@ -67,6 +69,7 @@ export class Engine {
         // init basics
         this.signer = signer;
         this.contracts = Contracts.connect(signer);
+        this.legacyContracts = LegacyContracts.connect(signer);
         this.executionSettings = {
             confirmationToWait: args.minBlockConfirmations
         };
