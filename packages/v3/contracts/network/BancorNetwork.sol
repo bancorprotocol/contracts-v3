@@ -1248,7 +1248,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev records a network token to base token single hop trade
+     * @dev performs a network token to base token single hop trade
      */
     function _tradeFromNetworkToken(
         bytes32 contextId,
@@ -1261,7 +1261,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev records a base token trade to network token single hop trade
+     * @dev performs a base token trade to network token single hop trade
      */
     function _tradeToNetworkToken(
         bytes32 contextId,
@@ -1274,7 +1274,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev records a single hop trade between the network token and a base token
+     * @dev performs a single hop trade between the network token and a base token
      */
     function _tradeNetworkToken(
         bytes32 contextId,
@@ -1339,7 +1339,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev records a double hop trade between two base tokens
+     * @dev performs a double hop trade between two base tokens
      */
     function _tradeBaseTokens(
         bytes32 contextId,
