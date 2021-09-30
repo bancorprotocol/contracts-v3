@@ -1250,8 +1250,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address trader
     ) private returns (uint256) {
         IReserveToken networkPool = IReserveToken(address(_networkToken));
-        IReserveToken sourceToken = isSourceNetworkToken ? networkPool : pool;
-        IReserveToken targetToken = isSourceNetworkToken ? pool : networkPool;
+        (IReserveToken sourceToken, IReserveToken targetToken) = isSourceNetworkToken
+            ? (networkPool, pool)
+            : (pool, networkPool);
         TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
             sourceToken,
             targetToken,
