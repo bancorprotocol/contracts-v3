@@ -11,7 +11,6 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { MAX_UINT256 } from "../utility/Constants.sol";
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
