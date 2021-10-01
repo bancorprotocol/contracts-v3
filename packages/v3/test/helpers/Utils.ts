@@ -65,19 +65,6 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const destroyWallet = async (wallet: Wallet) => {
-    const extraFactor = BigNumber.from(10);
-    const estimatedTransferCost = BigNumber.from(21000)
-        .mul(await wallet.getGasPrice())
-        .mul(extraFactor);
-
-    const deployer = (await ethers.getSigners())[0];
-    await wallet.sendTransaction({
-        value: (await wallet.getBalance()).sub(estimatedTransferCost),
-        to: deployer.address
-    });
-};
-
 export const createTokenBySymbol = async (
     symbol: string,
     networkToken: TestERC20Token | NetworkToken

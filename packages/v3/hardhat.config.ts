@@ -16,7 +16,7 @@ import 'solidity-coverage';
 const hardhatDefaultConfig: NetworkUserConfig = {
     accounts: {
         count: 10,
-        accountsBalance: '10000000000000000000000000000'
+        accountsBalance: '10000000000000000000000000000000000000000000000'
     },
     allowUnlimitedContractSize: true
 };

@@ -14,7 +14,7 @@ import { createPool, createSystem } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createTokenBySymbol, createWallet, destroyWallet, TokenWithAddress } from '../helpers/Utils';
+import { createTokenBySymbol, createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';
@@ -195,10 +195,6 @@ describe('PendingWithdrawals', () => {
                         provider = await createWallet();
                         providerAddress = await provider.getAddress();
                         providerNonce = BigNumber.from(0);
-                    });
-
-                    afterEach(async () => {
-                        await destroyWallet(provider);
                     });
 
                     const initWithdrawal = async (poolToken: PoolToken, amount: BigNumber) => {
