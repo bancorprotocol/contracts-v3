@@ -1014,13 +1014,13 @@ describe('NetworkTokenPool', () => {
             await expect(
                 networkTokenPool
                     .connect(nonNetwork)
-                    .onFeesCollected(reserveToken.address, BigNumber.from(1), FEE_TYPES.trading)
+                    .onFeesCollected(reserveToken.address, BigNumber.from(1), FEE_TYPES.Trading)
             ).to.be.revertedWith('ERR_ACCESS_DENIED');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
-                network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, BigNumber.from(1), FEE_TYPES.trading)
+                network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, BigNumber.from(1), FEE_TYPES.Trading)
             ).to.be.revertedWith('ERR_INVALID_ADDRESS');
         });
 
@@ -1030,7 +1030,7 @@ describe('NetworkTokenPool', () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
                     const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
-                    const expectedMintedAmount = type === FEE_TYPES.trading ? feeAmount : 0;
+                    const expectedMintedAmount = type === FEE_TYPES.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 

@@ -2060,7 +2060,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FEE_TYPES.trading,
+                        FEE_TYPES.Trading,
                         tradeAmounts.feeAmount,
                         poolLiquidity.stakedBalance
                     );
@@ -2102,7 +2102,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FEE_TYPES.trading,
+                        FEE_TYPES.Trading,
                         tradeAmounts.feeAmount,
                         networkTokenPoolStakedBalance
                     );
@@ -2149,7 +2149,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         networkToken.address,
-                        FEE_TYPES.trading,
+                        FEE_TYPES.Trading,
                         sourceTradeAmounts.feeAmount,
                         networkTokenPoolStakedBalance
                     );
@@ -2193,7 +2193,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FEE_TYPES.trading,
+                        FEE_TYPES.Trading,
                         tradeAmounts.feeAmount,
                         targetPoolLiquidity.stakedBalance
                     );
