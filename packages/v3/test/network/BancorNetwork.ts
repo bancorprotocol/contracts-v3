@@ -2487,11 +2487,10 @@ describe('BancorNetwork', () => {
             const isSourceNetworkToken = source.symbol === 'BNT';
 
             context(
-                `trade permitted ${amount} tokens from (${[
-                    source.symbol,
-                    source.balance,
-                    source.tradingFeePPM
-                ]}) to (${[target.symbol, target.balance, target.tradingFeePPM]})`,
+                `trade permitted ${amount} tokens from (${[source.symbol, source.balance]}) to (${[
+                    target.symbol,
+                    target.balance
+                ]})`,
                 () => {
                     const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
 
