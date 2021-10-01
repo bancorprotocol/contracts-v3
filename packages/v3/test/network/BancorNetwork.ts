@@ -1837,6 +1837,13 @@ describe('BancorNetwork', () => {
             tradingFeePPM?: number;
         }
 
+        const specToString = (spec: Spec) => {
+            const feeDesc = spec.tradingFeePPM
+                ? `, fee=${BigNumber.from(spec.tradingFeePPM).mul(BigNumber.from(100)).div(PPM_RESOLUTION)}%`
+                : '';
+            return `${spec.symbol} (balance=${spec.balance}${feeDesc})}`;
+        };
+
         const setupPool = async (spec: Spec) => {
             const isETH = spec.symbol === 'ETH';
             const isNetworkToken = spec.symbol === 'BNT';
@@ -2442,84 +2449,71 @@ describe('BancorNetwork', () => {
         const testTrades = (source: Spec, target: Spec, amount: BigNumber) => {
             const isSourceETH = source.symbol === 'ETH';
 
-            context(
-                `trade ${amount} tokens from (${[source.symbol, source.balance, source.tradingFeePPM]}) to (${[
-                    target.symbol,
-                    target.balance,
-                    target.tradingFeePPM
-                ]})`,
-                () => {
-                    const TRADES_COUNT = 2;
+            context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+                const TRADES_COUNT = 2;
 
-                    const test = async () => {
-                        if (!isSourceETH) {
-                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                            await reserveToken.connect(trader).approve(network.address, amount);
-                        }
+                const test = async () => {
+                    if (!isSourceETH) {
+                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                        await reserveToken.connect(trader).approve(network.address, amount);
+                    }
 
-                        await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
-                    };
+                    await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
+                };
 
-                    beforeEach(async () => {
-                        await setup(source, target);
+                beforeEach(async () => {
+                    await setup(source, target);
 
-                        if (!isSourceETH) {
-                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                            await reserveToken.transfer(trader.address, amount.mul(BigNumber.from(TRADES_COUNT)));
-                        }
-                    });
+                    if (!isSourceETH) {
+                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                        await reserveToken.transfer(trader.address, amount.mul(BigNumber.from(TRADES_COUNT)));
+                    }
+                });
 
-                    afterEach(async () => {
-                        await tearDownSetup();
-                    });
+                afterEach(async () => {
+                    await tearDownSetup();
+                });
 
-                    it('should complete multiple trades', async () => {
-                        for (let i = 0; i < TRADES_COUNT; i++) {
-                            await test();
-                        }
-                    });
-                }
-            );
+                it('should complete multiple trades', async () => {
+                    for (let i = 0; i < TRADES_COUNT; i++) {
+                        await test();
+                    }
+                });
+            });
         };
 
         const testPermittedTrades = (source: Spec, target: Spec, amount: BigNumber) => {
             const isSourceETH = source.symbol === 'ETH';
             const isSourceNetworkToken = source.symbol === 'BNT';
 
-            context(
-                `trade permitted ${amount} tokens from (${[source.symbol, source.balance]}) to (${[
-                    target.symbol,
-                    target.balance
-                ]})`,
-                () => {
-                    const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
+            context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+                const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
 
-                    beforeEach(async () => {
-                        await setup(source, target);
+                beforeEach(async () => {
+                    await setup(source, target);
 
-                        if (!isSourceETH) {
-                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                            await reserveToken.transfer(trader.address, amount);
-                        }
-                    });
-
-                    afterEach(async () => {
-                        await tearDownSetup();
-                    });
-
-                    if (isSourceNetworkToken || isSourceETH) {
-                        it('should revert when attempting to trade', async () => {
-                            await expect(tradePermitted(amount)).to.be.revertedWith('ERR_PERMIT_UNSUPPORTED');
-                        });
-
-                        return;
+                    if (!isSourceETH) {
+                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                        await reserveToken.transfer(trader.address, amount);
                     }
+                });
 
-                    it('should complete a trade', async () => {
-                        await test();
+                afterEach(async () => {
+                    await tearDownSetup();
+                });
+
+                if (isSourceNetworkToken || isSourceETH) {
+                    it('should revert when attempting to trade', async () => {
+                        await expect(tradePermitted(amount)).to.be.revertedWith('ERR_PERMIT_UNSUPPORTED');
                     });
+
+                    return;
                 }
-            );
+
+                it('should complete a trade', async () => {
+                    await test();
+                });
+            });
         };
 
         for (const [sourceSymbol, targetSymbol] of [
@@ -2543,24 +2537,46 @@ describe('BancorNetwork', () => {
                 }
             );
 
-            for (const sourceBalance of [1_000_000, 50_000_000]) {
-                for (const targetBalance of [1_000_000, 50_000_000]) {
-                    for (const sourceTradingFeePPM of [0, 10_000]) {
-                        for (const targetTradingFeePPM of [0, 100_000]) {
-                            for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
+            for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
+                for (const targetBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
+                    for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
+                        const TRADING_FEES = [0, 10_000];
+                        for (const tradingFeePPM of TRADING_FEES) {
+                            const isSourceNetworkToken = sourceSymbol === 'BNT';
+                            const isTargetNetworkToken = targetSymbol === 'BNT';
+
+                            // if either the source or the target token is the network token - only test fee in one of
+                            // the directions
+                            if (isSourceNetworkToken || isTargetNetworkToken) {
                                 testTrades(
                                     {
                                         symbol: sourceSymbol,
-                                        balance: toWei(BigNumber.from(sourceBalance)),
-                                        tradingFeePPM: sourceTradingFeePPM
+                                        balance: sourceBalance,
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM
                                     },
                                     {
                                         symbol: targetSymbol,
-                                        balance: toWei(BigNumber.from(targetBalance)),
-                                        tradingFeePPM: targetTradingFeePPM
+                                        balance: targetBalance,
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM
                                     },
                                     amount
                                 );
+                            } else {
+                                for (const tradingFeePPM2 of TRADING_FEES) {
+                                    testTrades(
+                                        {
+                                            symbol: sourceSymbol,
+                                            balance: sourceBalance,
+                                            tradingFeePPM
+                                        },
+                                        {
+                                            symbol: targetSymbol,
+                                            balance: targetBalance,
+                                            tradingFeePPM: tradingFeePPM2
+                                        },
+                                        amount
+                                    );
+                                }
                             }
                         }
                     }
