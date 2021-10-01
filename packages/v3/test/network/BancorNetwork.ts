@@ -2449,7 +2449,7 @@ describe('BancorNetwork', () => {
                     target.tradingFeePPM
                 ]})`,
                 () => {
-                    const TRADES_COUNT = 3;
+                    const TRADES_COUNT = 2;
 
                     const test = async () => {
                         if (!isSourceETH) {
@@ -2548,11 +2548,7 @@ describe('BancorNetwork', () => {
                 for (const targetBalance of [1_000_000, 50_000_000]) {
                     for (const sourceTradingFeePPM of [0, 10_000]) {
                         for (const targetTradingFeePPM of [0, 100_000]) {
-                            for (const amount of [
-                                BigNumber.from(10_000),
-                                toWei(BigNumber.from(100_000)),
-                                toWei(BigNumber.from(500_000))
-                            ]) {
+                            for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
                                 testTrades(
                                     {
                                         symbol: sourceSymbol,
