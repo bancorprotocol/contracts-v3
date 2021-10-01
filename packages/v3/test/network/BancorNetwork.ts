@@ -1838,9 +1838,10 @@ describe('BancorNetwork', () => {
         }
 
         const specToString = (spec: Spec) => {
-            const feeDesc = spec.tradingFeePPM
-                ? `, fee=${BigNumber.from(spec.tradingFeePPM).mul(BigNumber.from(100)).div(PPM_RESOLUTION)}%`
-                : '';
+            const feeDesc =
+                spec.tradingFeePPM !== undefined
+                    ? `, fee=${BigNumber.from(spec.tradingFeePPM).mul(BigNumber.from(100)).div(PPM_RESOLUTION)}%`
+                    : '';
             return `${spec.symbol} (balance=${spec.balance}${feeDesc})}`;
         };
 
