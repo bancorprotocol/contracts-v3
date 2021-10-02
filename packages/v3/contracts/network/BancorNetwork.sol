@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -15,6 +14,7 @@ import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
+import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -50,7 +50,6 @@ import { TRADING_FEE } from "./FeeTypes.sol";
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using Address for address payable;
-    using SafeMath for uint256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveToken for IReserveToken;
 
@@ -527,7 +526,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function poolCollections() external view override returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         IPoolCollection[] memory list = new IPoolCollection[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
@@ -546,7 +545,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function liquidityPools() external view override returns (IReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
         IReserveToken[] memory list = new IReserveToken[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             list[i] = IReserveToken(_liquidityPools.at(i));
         }
         return list;
@@ -1120,9 +1119,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider.add(
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
-            ),
+            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider +
+                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
             poolTokenAmount: completedRequest.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,

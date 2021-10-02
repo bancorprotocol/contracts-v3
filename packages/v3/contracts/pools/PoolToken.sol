@@ -18,17 +18,18 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     IReserveToken private immutable _reserveToken;
 
+    uint8 private _decimals;
+
     /**
      * @dev initializes a new PoolToken contract
      */
     constructor(
         string memory name,
         string memory symbol,
-        uint8 decimals,
+        uint8 initDecimals,
         IReserveToken initReserveToken
     ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
-        _setupDecimals(decimals);
-
+        _decimals = initDecimals;
         _reserveToken = initReserveToken;
     }
 
@@ -37,6 +38,13 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
      */
     function version() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @dev returns the number of decimals used to get its user representation
+     */
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
     }
 
     /**

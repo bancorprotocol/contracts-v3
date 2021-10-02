@@ -5,8 +5,7 @@ pragma abicoder v2;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -16,7 +15,7 @@ import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
-import { MathEx } from "../utility/MathEx.sol";
+import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -45,7 +44,6 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Time, Utils {
-    using SafeMath for uint256;
     using SafeCast for uint256;
     using ReserveToken for IReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
@@ -63,7 +61,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 baseTokenTradingLiquidity;
         uint256 basePoolTokenTotalSupply;
         uint256 baseTokenStakedAmount;
-        uint256 tradeFeePPM;
+        uint32 tradeFeePPM;
     }
 
     // deposit-related output data
@@ -230,7 +228,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     function pools() external view override returns (IReserveToken[] memory) {
         uint256 length = _pools.length();
         IReserveToken[] memory list = new IReserveToken[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             list[i] = IReserveToken(_pools.at(i));
         }
         return list;
@@ -488,7 +486,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
             if (
                 poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading &&
-                poolData.liquidity.networkTokenTradingLiquidity.add(depositParams.baseTokenDeltaAmount) >=
+                poolData.liquidity.networkTokenTradingLiquidity + depositParams.baseTokenDeltaAmount >=
                 minLiquidityForTrading
             ) {
                 emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
@@ -496,15 +494,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         // calculate and update the new trading liquidity based on the provided network token amount
-        poolData.liquidity.networkTokenTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity.add(
-            depositParams.networkTokenDeltaAmount
-        );
-        poolData.liquidity.baseTokenTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity.add(
-            depositParams.baseTokenDeltaAmount
-        );
-        poolData.liquidity.tradingLiquidityProduct = poolData.liquidity.networkTokenTradingLiquidity.mul(
-            poolData.liquidity.baseTokenTradingLiquidity
-        );
+        poolData.liquidity.networkTokenTradingLiquidity += depositParams.networkTokenDeltaAmount;
+        poolData.liquidity.baseTokenTradingLiquidity += depositParams.baseTokenDeltaAmount;
+        poolData.liquidity.tradingLiquidityProduct =
+            poolData.liquidity.networkTokenTradingLiquidity *
+            poolData.liquidity.baseTokenTradingLiquidity;
 
         // calculate the pool token amount to mint
         IPoolToken poolToken = poolData.poolToken;
@@ -512,7 +506,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 poolTokenAmount = _calcPoolTokenAmount(poolToken, baseTokenAmount, currentStakedBalance);
 
         // update the staked balance with the full base token amount
-        poolData.liquidity.stakedBalance = currentStakedBalance.add(baseTokenAmount);
+        poolData.liquidity.stakedBalance = currentStakedBalance + baseTokenAmount;
 
         _poolData[pool] = poolData;
 
@@ -611,14 +605,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 newBaseTokenTradingLiquidity;
         uint256 stakedBalance = params.liquidity.stakedBalance;
         if (params.isSourceNetworkToken) {
-            newNetworkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
-            newBaseTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
+            newNetworkTokenTradingLiquidity = params.sourceBalance + sourceAmount;
+            newBaseTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
 
             // if the target token is a base token, make sure to add the fee to the staked balance
-            stakedBalance = stakedBalance.add(tradeAmounts.feeAmount);
+            stakedBalance += tradeAmounts.feeAmount;
         } else {
-            newBaseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
-            newNetworkTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
+            newBaseTokenTradingLiquidity = params.sourceBalance + sourceAmount;
+            newNetworkTokenTradingLiquidity = params.targetBalance + tradeAmounts.amount;
         }
 
         // update the liquidity in the pool
@@ -680,7 +674,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         Pool storage poolData = _poolStorage(pool);
 
         // increase the staked balance by the given amount
-        poolData.liquidity.stakedBalance = poolData.liquidity.stakedBalance.add(baseTokenAmount);
+        poolData.liquidity.stakedBalance += baseTokenAmount;
     }
 
     /**
@@ -700,7 +694,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
         require(
-            poolData.liquidity.stakedBalance.add(baseTokenAmount) <= poolData.depositLimit,
+            poolData.liquidity.stakedBalance + baseTokenAmount <= poolData.depositLimit,
             "ERR_DEPOSIT_LIMIT_EXCEEDED"
         );
 
@@ -731,11 +725,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // if most of network token liquidity is allocated - we'll use as much as we can and the remaining base token
         // liquidity will be treated as excess
         if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
-            uint256 unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount -
-                unallocatedNetworkTokenLiquidity;
-
             depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
-            depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
+            unchecked {
+                depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(
+                    depositParams.networkTokenDeltaAmount - unallocatedNetworkTokenLiquidity,
+                    rate.d,
+                    rate.n
+                );
+            }
         }
 
         // base token amount is guaranteed to be larger than the excess liquidity
@@ -774,9 +771,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
-        uint256 prod = poolData.liquidity.networkTokenTradingLiquidity.mul(
-            poolData.liquidity.baseTokenTradingLiquidity
-        );
+        uint256 prod = poolData.liquidity.networkTokenTradingLiquidity * poolData.liquidity.baseTokenTradingLiquidity;
 
         return
             PoolWithdrawalParams({
@@ -817,20 +812,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity.sub(baseTokenTradingLiquidityDelta);
-        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity.sub(
-            networkTokenTradingLiquidityDelta
-        );
+        uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta;
+        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta;
 
         poolData.poolToken.burnFrom(address(_network), basePoolTokenAmount);
-        poolData.liquidity.stakedBalance = MathEx.mulDivF(
-            poolData.liquidity.stakedBalance,
-            totalSupply - basePoolTokenAmount,
-            totalSupply
-        );
+
+        unchecked {
+            poolData.liquidity.stakedBalance = MathEx.mulDivF(
+                poolData.liquidity.stakedBalance,
+                totalSupply - basePoolTokenAmount,
+                totalSupply
+            );
+        }
         poolData.liquidity.baseTokenTradingLiquidity = baseTokenNewTradingLiquidity;
         poolData.liquidity.networkTokenTradingLiquidity = networkTokenNewTradingLiquidity;
-        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity.mul(networkTokenNewTradingLiquidity);
+        poolData.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
 
         // ensure that the average rate is reset when the pool is being emptied
         if (baseTokenNewTradingLiquidity == 0) {
@@ -858,19 +854,22 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
         uint256 baseTokenExternalProtectionWalletBalance,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
+        uint32 tradeFeePPM,
+        uint32 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
-        uint256 baseTokenVaultBalance = baseTokenLiquidity.add(baseTokenExcessAmount);
+        uint256 baseTokenVaultBalance = baseTokenLiquidity + baseTokenExcessAmount;
 
         if (baseTokenStakedAmount > baseTokenVaultBalance) {
-            uint256 baseTokenOffsetAmount = _deductFee(
-                baseTokenStakedAmount - baseTokenVaultBalance,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                withdrawalFeePPM
-            );
+            uint256 baseTokenOffsetAmount;
+            unchecked {
+                baseTokenOffsetAmount = _deductFee(
+                    baseTokenStakedAmount - baseTokenVaultBalance,
+                    basePoolTokenWithdrawalAmount,
+                    basePoolTokenTotalSupply,
+                    withdrawalFeePPM
+                );
+            }
 
             amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = baseTokenOffsetAmount <
                 baseTokenExternalProtectionWalletBalance
@@ -886,7 +885,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             );
         }
 
-        uint256 baseTokenShare = baseTokenStakedAmount.mul(basePoolTokenWithdrawalAmount);
+        uint256 baseTokenShare = baseTokenStakedAmount * basePoolTokenWithdrawalAmount;
 
         amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
             1,
@@ -898,14 +897,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
             baseTokenLiquidity,
             baseTokenShare,
-            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
+            basePoolTokenTotalSupply * baseTokenVaultBalance,
             withdrawalFeePPM
         );
 
         amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
             networkTokenLiquidity,
             baseTokenShare,
-            basePoolTokenTotalSupply.mul(baseTokenVaultBalance),
+            basePoolTokenTotalSupply * baseTokenVaultBalance,
             0
         );
 
@@ -929,20 +928,22 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             );
 
             if (
-                networkTokenArbitrageAmount.add(amounts.networkTokenAmountToDeductFromLiquidity) <=
-                networkTokenLiquidity
+                networkTokenArbitrageAmount + amounts.networkTokenAmountToDeductFromLiquidity <= networkTokenLiquidity
             ) {
                 amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
             }
         } else {
             // the pool is in a base token deficit
             if (amounts.baseTokenAmountToTransferFromVaultToProvider <= baseTokenVaultBalance) {
-                uint256 baseTokenOffsetAmount = _deductFee(
-                    baseTokenStakedAmount - baseTokenVaultBalance,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
+                uint256 baseTokenOffsetAmount;
+                unchecked {
+                    baseTokenOffsetAmount = _deductFee(
+                        baseTokenStakedAmount - baseTokenVaultBalance,
+                        basePoolTokenWithdrawalAmount,
+                        basePoolTokenTotalSupply,
+                        withdrawalFeePPM
+                    );
+                }
 
                 amounts.networkTokenArbitrageAmount = _negArbitrage(
                     MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
@@ -957,15 +958,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
             if (amounts.networkTokenArbitrageAmount == 0) {
                 // the withdrawal amount is larger than the vault's balance
-                uint256 aMx = networkTokenLiquidity.mul(basePoolTokenWithdrawalAmount);
-                uint256 bMd = baseTokenLiquidity.mul(basePoolTokenTotalSupply);
+                uint256 aMx = networkTokenLiquidity * basePoolTokenWithdrawalAmount;
+                uint256 bMd = baseTokenLiquidity * basePoolTokenTotalSupply;
 
-                amounts.networkTokenAmountToMintForProvider = _deductFee(
-                    baseTokenStakedAmount - baseTokenVaultBalance,
-                    aMx,
-                    bMd,
-                    withdrawalFeePPM
-                );
+                unchecked {
+                    amounts.networkTokenAmountToMintForProvider = _deductFee(
+                        baseTokenStakedAmount - baseTokenVaultBalance,
+                        aMx,
+                        bMd,
+                        withdrawalFeePPM
+                    );
+                }
 
                 amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
                     baseTokenVaultBalance,
@@ -1001,9 +1004,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 x,
         uint256 y,
         uint256 z,
-        uint256 n
+        uint32 n
     ) internal pure returns (uint256) {
-        return MathEx.mulDivF(x, y.mul(PPM_RESOLUTION - n), z.mul(PPM_RESOLUTION));
+        uint32 remainingPPM;
+        unchecked {
+            remainingPPM = PPM_RESOLUTION - n;
+        }
+        return MathEx.mulDivF(x, y * remainingPPM, z * PPM_RESOLUTION);
     }
 
     /**
@@ -1026,7 +1033,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 basePoolTokenWithdrawalAmount,
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
-        uint256 withdrawalFeePPM
+        uint32 withdrawalFeePPM
     )
         internal
         pure
@@ -1036,24 +1043,24 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             uint256
         )
     {
-        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee = MathEx.mulDivF(
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
-            PPM_RESOLUTION,
-            PPM_RESOLUTION - withdrawalFeePPM
-        );
+        uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee;
+        unchecked {
+            baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee = MathEx.mulDivF(
+                baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                PPM_RESOLUTION,
+                PPM_RESOLUTION - withdrawalFeePPM
+            );
+        }
         uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio = MathEx.mulDivF(
             baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee,
             basePoolTokenTotalSupply,
             baseTokenStakedAmount
         );
         return (
-            basePoolTokenWithdrawalAmount.sub(
-                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
-            ),
-            basePoolTokenTotalSupply.sub(
-                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio
-            ),
-            baseTokenStakedAmount.sub(baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee)
+            basePoolTokenWithdrawalAmount -
+                baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio,
+            basePoolTokenTotalSupply - baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFeeMulRatio,
+            baseTokenStakedAmount - baseTokenAmountToTransferFromExternalProtectionWalletToProviderPlusFee
         );
     }
 
@@ -1081,8 +1088,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 baseTokenLiquidity,
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
+        uint32 tradeFeePPM,
+        uint32 withdrawalFeePPM,
         uint256 baseTokenShare
     ) internal pure returns (uint256) {
         return
@@ -1121,8 +1128,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 baseTokenLiquidity,
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
+        uint32 tradeFeePPM,
+        uint32 withdrawalFeePPM,
         uint256 baseTokenShare
     ) internal pure returns (uint256) {
         return
@@ -1152,15 +1159,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     function _posArbitrage(
         uint256 baseTokenLiquidity,
         uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM
+        uint32 tradeFeePPM
     ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity.mul(tradeFeePPM);
-        uint256 fm = baseTokenOffsetAmount.mul(tradeFeePPM);
-        uint256 bM = baseTokenLiquidity.mul(PPM_RESOLUTION);
-        uint256 fM = baseTokenOffsetAmount.mul(PPM_RESOLUTION);
+        uint256 bm = baseTokenLiquidity * tradeFeePPM;
+        uint256 fm = baseTokenOffsetAmount * tradeFeePPM;
+        uint256 bM = baseTokenLiquidity * PPM_RESOLUTION;
+        uint256 fM = baseTokenOffsetAmount * PPM_RESOLUTION;
+        uint32 remainingPPM;
+        unchecked {
+            remainingPPM = 2 * PPM_RESOLUTION - tradeFeePPM;
+        }
         return [
-            Quotient({ n1: fM.add(bm), n2: fm.mul(2), d1: bM, d2: fm }),
-            Quotient({ n1: baseTokenLiquidity.mul(2 * PPM_RESOLUTION - tradeFeePPM), n2: fM, d1: bM, d2: fm })
+            Quotient({ n1: fM + bm, n2: 2 * fm, d1: bM, d2: fm }),
+            Quotient({ n1: baseTokenLiquidity * remainingPPM, n2: fM, d1: bM, d2: fm })
         ];
     }
 
@@ -1179,20 +1190,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     function _negArbitrage(
         uint256 baseTokenLiquidity,
         uint256 baseTokenOffsetAmount,
-        uint256 tradeFeePPM
+        uint32 tradeFeePPM
     ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity.mul(tradeFeePPM);
-        uint256 fm = baseTokenOffsetAmount.mul(tradeFeePPM);
-        uint256 bM = baseTokenLiquidity.mul(PPM_RESOLUTION);
-        uint256 fM = baseTokenOffsetAmount.mul(PPM_RESOLUTION);
+        uint256 bm = baseTokenLiquidity * tradeFeePPM;
+        uint256 fm = baseTokenOffsetAmount * tradeFeePPM;
+        uint256 bM = baseTokenLiquidity * PPM_RESOLUTION;
+        uint256 fM = baseTokenOffsetAmount * PPM_RESOLUTION;
+        uint32 remainingPPM;
+        unchecked {
+            remainingPPM = 2 * PPM_RESOLUTION - tradeFeePPM;
+        }
         return [
-            Quotient({ n1: fM, n2: bm.add(fm.mul(2)), d1: bM.add(fm), d2: 0 }),
-            Quotient({
-                n1: baseTokenLiquidity.mul(2 * PPM_RESOLUTION - tradeFeePPM).add(fM),
-                n2: 0,
-                d1: bM.add(fm),
-                d2: 0
-            })
+            Quotient({ n1: fM, n2: bm + 2 * fm, d1: bM + fm, d2: 0 }),
+            Quotient({ n1: baseTokenLiquidity * remainingPPM + fM, n2: 0, d1: bM + fm, d2: 0 })
         ];
     }
 
@@ -1212,10 +1222,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         if (
             MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
-            MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply.mul(PPM_RESOLUTION))
+            MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply * PPM_RESOLUTION)
         ) {
             Fraction memory z = _subMax0(quotients[1]);
-            return MathEx.mulDivF(networkTokenLiquidity.mul(baseTokenOffsetAmount), z.n, baseTokenLiquidity.mul(z.d));
+            return MathEx.mulDivF(networkTokenLiquidity * baseTokenOffsetAmount, z.n, baseTokenLiquidity * z.d);
         }
         return 0;
     }
@@ -1224,23 +1234,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
      */
     function _subMax0(Quotient memory q) internal pure returns (Fraction memory) {
-        if (q.n1 > q.n2 && q.d1 > q.d2) {
-            // the quotient is finite and positive
-            return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
-        }
+        unchecked {
+            if (q.n1 > q.n2 && q.d1 > q.d2) {
+                // the quotient is finite and positive
+                return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
+            }
 
-        if (q.n2 > q.n1 && q.d2 > q.d1) {
-            // the quotient is finite and positive
-            return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
-        }
+            if (q.n2 > q.n1 && q.d2 > q.d1) {
+                // the quotient is finite and positive
+                return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
+            }
 
-        if (q.n2 == q.n1 && q.d2 == q.d1) {
-            // the quotient is 1
-            return Fraction({ n: 1, d: 1 });
-        }
+            if (q.n2 == q.n1 && q.d2 == q.d1) {
+                // the quotient is 1
+                return Fraction({ n: 1, d: 1 });
+            }
 
-        // the quotient is not finite or not positive
-        return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
+            // the quotient is not finite or not positive
+            return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
+        }
     }
 
     /**
@@ -1364,7 +1376,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     ) private pure returns (TradeAmounts memory) {
         require(sourceBalance > 0 && targetBalance > 0, "ERR_INVALID_POOL_BALANCE");
 
-        uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance.add(sourceAmount));
+        uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
 
         return TradeAmounts({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
@@ -1382,9 +1394,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         require(sourceBalance > 0, "ERR_INVALID_POOL_BALANCE");
 
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
-        uint256 fullTargetAmount = targetAmount.add(feeAmount);
+        uint256 fullTargetAmount = targetAmount + feeAmount;
         require(fullTargetAmount < targetBalance, "ERR_INVALID_AMOUNT");
-        uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
+        uint256 sourceAmount;
+        unchecked {
+            sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
+        }
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
     }

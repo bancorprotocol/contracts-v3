@@ -3,8 +3,7 @@ pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Math } from "@openzeppelin/contracts/math/Math.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
@@ -33,8 +32,6 @@ import { PoolToken } from "./PoolToken.sol";
  * @dev Network Token Pool contract
  */
 contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgradeable, Utils {
-    using SafeMath for uint256;
-
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -290,8 +287,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // the provider should receive pool tokens and gov tokens in equal amounts. since the provider might already
         // have some gov tokens during migration, the contract only mints the delta between the full amount and the
         // amount the provider already has
-        if (isMigrating) {
-            govTokenAmount = govTokenAmount > originalGovTokenAmount ? govTokenAmount - originalGovTokenAmount : 0;
+        unchecked {
+            if (isMigrating) {
+                govTokenAmount = govTokenAmount > originalGovTokenAmount ? govTokenAmount - originalGovTokenAmount : 0;
+            }
         }
 
         // mint governance tokens to the provider
@@ -343,7 +342,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 mintingLimit = _settings.poolMintingLimit(pool);
-        uint256 newMintedAmount = currentMintedAmount.add(networkTokenAmount);
+        uint256 newMintedAmount = currentMintedAmount + networkTokenAmount;
 
         // verify that the new minted amount doesn't exceed the limit
         require(newMintedAmount <= mintingLimit, "ERR_MINTING_LIMIT_EXCEEDED");
@@ -362,7 +361,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         }
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance.add(networkTokenAmount);
+        _stakedBalance = currentStakedBalance + networkTokenAmount;
 
         // update the current minted amount
         _mintedAmounts[pool] = newMintedAmount;
@@ -400,10 +399,12 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
         // request shouldn’t fail (and the minted amount cannot get negative)
-        _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
+        unchecked {
+            _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
+        }
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance.sub(renouncedAmount);
+        _stakedBalance = currentStakedBalance - renouncedAmount;
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
@@ -433,11 +434,11 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         }
 
         // increase the staked balance by the given amount
-        _stakedBalance = _stakedBalance.add(networkTokenAmount);
+        _stakedBalance += networkTokenAmount;
 
         if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
-            _mintedAmounts[pool] = _mintedAmounts[pool].add(networkTokenAmount);
+            _mintedAmounts[pool] += networkTokenAmount;
         }
     }
 
@@ -450,7 +451,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
 
         // deduct the exit fee from the network token amount
         uint256 withdrawalFeeAmount = MathEx.mulDivF(networkTokenAmount, _settings.withdrawalFeePPM(), PPM_RESOLUTION);
-        networkTokenAmount = networkTokenAmount - withdrawalFeeAmount;
+        unchecked {
+            networkTokenAmount -= withdrawalFeeAmount;
+        }
 
         return
             WithdrawalAmounts({
