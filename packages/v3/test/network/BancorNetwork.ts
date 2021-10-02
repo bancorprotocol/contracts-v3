@@ -1135,8 +1135,7 @@ describe('BancorNetwork', () => {
                             for (const amount of [
                                 BigNumber.from(10),
                                 BigNumber.from(10_000),
-                                toWei(BigNumber.from(1_000_000)),
-                                toWei(BigNumber.from(500_000))
+                                toWei(BigNumber.from(1_000_000))
                             ]) {
                                 testDepositAmount(amount);
                             }
@@ -1377,8 +1376,7 @@ describe('BancorNetwork', () => {
                             for (const amount of [
                                 BigNumber.from(10),
                                 BigNumber.from(10_000),
-                                toWei(BigNumber.from(1_000_000)),
-                                toWei(BigNumber.from(500_000))
+                                toWei(BigNumber.from(1_000_000))
                             ]) {
                                 testDepositAmount(amount);
                             }

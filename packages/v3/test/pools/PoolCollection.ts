@@ -1128,8 +1128,7 @@ describe('PoolCollection', () => {
                                     for (const amount of [
                                         BigNumber.from(1),
                                         BigNumber.from(10_000),
-                                        toWei(BigNumber.from(1_000_000)),
-                                        toWei(BigNumber.from(500_000))
+                                        toWei(BigNumber.from(1_000_000))
                                     ]) {
                                         await testDepositFor(amount);
                                     }
@@ -1168,8 +1167,7 @@ describe('PoolCollection', () => {
                                 for (const amount of [
                                     BigNumber.from(1),
                                     BigNumber.from(10_000),
-                                    toWei(BigNumber.from(1_000_000)),
-                                    toWei(BigNumber.from(500_000))
+                                    toWei(BigNumber.from(1_000_000))
                                 ]) {
                                     await testDepositFor(amount);
                                 }
@@ -1966,16 +1964,16 @@ describe('PoolCollection', () => {
                 });
 
                 describe('@stress tests', () => {
-                    for (const sourceBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
-                        for (const targetBalance of [1_000_000, 5_000_000, 50_000_000, 100_000_000]) {
-                            for (const tradingFeePPM of [0, 10_000, 100_000, 500_000]) {
+                    for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
+                        for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
+                            for (const tradingFeePPM of [0, 10_000, 100_000]) {
                                 for (const amount of [1_000, 10_000, 100_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
                                         tradingFeePPM,
                                         amount: toWei(BigNumber.from(amount)),
-                                        intervals: [0, 1, 2, 3, 10, 100, 200, 300, 400, 500]
+                                        intervals: [0, 1, 2, 10, 100, 200, 400, 500]
                                     });
                                 }
                             }
