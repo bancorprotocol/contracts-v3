@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/math/Math.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 

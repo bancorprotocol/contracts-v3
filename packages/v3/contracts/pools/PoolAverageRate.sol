@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { MathEx } from "../utility/MathEx.sol";
-import { MAX_UINT112, PPM_RESOLUTION } from "../utility/Constants.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
 
 struct AverageRate {
@@ -54,7 +54,7 @@ library PoolAverageRate {
         // if the previous average rate was calculated a while ago (or never), the average rate should be equal to the
         // spot rate
         if (timeElapsed >= AVERAGE_RATE_PERIOD || averageRate.time == 0) {
-            return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, MAX_UINT112) });
+            return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, type(uint112).max) });
         }
 
         // calculate the new average rate

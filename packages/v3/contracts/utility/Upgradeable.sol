@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import { IUpgradeable } from "./interfaces/IUpgradeable.sol";

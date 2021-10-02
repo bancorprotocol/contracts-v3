@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
@@ -12,7 +12,7 @@ import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
-import { MAX_UINT128, PPM_RESOLUTION } from "../utility/Constants.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -813,7 +813,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         Pool storage poolData = _poolData[pool];
         uint256 totalSupply = poolData.poolToken.totalSupply();
 
-        // all of these are at most MAX_UINT128, but we store them as uint256 in order to avoid 128-bit multiplication
+        // all of these are at most 128 bits, but we store them as uint256 in order to avoid 128-bit multiplication
         // overflows
         uint256 baseTokenCurrTradingLiquidity = poolData.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = poolData.liquidity.networkTokenTradingLiquidity;

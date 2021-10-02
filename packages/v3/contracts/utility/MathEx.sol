@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { MAX_UINT256 } from "./Constants.sol";
 import { Fraction } from "./Types.sol";
 
 /**
@@ -33,8 +32,8 @@ library MathEx {
      * @dev computes the product of two given ratios
      */
     function productRatio(Fraction memory x, Fraction memory y) internal pure returns (Fraction memory) {
-        uint256 n = mulDivC(x.n, y.n, MAX_UINT256);
-        uint256 d = mulDivC(x.d, y.d, MAX_UINT256);
+        uint256 n = mulDivC(x.n, y.n, type(uint256).max);
+        uint256 d = mulDivC(x.d, y.d, type(uint256).max);
         uint256 z = n > d ? n : d;
         if (z > 1) {
             return Fraction({ n: mulDivC(x.n, y.n, z), d: mulDivC(x.d, y.d, z) });
@@ -73,7 +72,7 @@ library MathEx {
      * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)", assuming that "r.n <= r.d".
      */
     function accurateRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
-        uint256 maxVal = MAX_UINT256 / scale;
+        uint256 maxVal = type(uint256).max / scale;
         Fraction memory ratio = r;
         if (r.n > maxVal) {
             uint256 c = r.n / (maxVal + 1) + 1;
@@ -97,11 +96,11 @@ library MathEx {
             }
 
             if (newRatio.n < ratio.d - (ratio.d - ratio.n) / 2) {
-                // `ratio.n * scale < (ratio.n + ratio.d) / 2 < MAX_UINT256 < ratio.n + ratio.d`
+                // `ratio.n * scale < (ratio.n + ratio.d) / 2 < type(uint256).max < ratio.n + ratio.d`
                 return Fraction({ n: 0, d: scale });
             }
 
-            // `(ratio.n + ratio.d) / 2 < ratio.n * scale < MAX_UINT256 < ratio.n + ratio.d`
+            // `(ratio.n + ratio.d) / 2 < ratio.n * scale < type(uint256).max < ratio.n + ratio.d`
             return Fraction({ n: 1, d: scale - 1 });
         }
 
@@ -158,7 +157,7 @@ library MathEx {
     ) internal pure returns (uint256) {
         uint256 w = mulDivF(x, y, z);
         if (_mulMod(x, y, z) > 0) {
-            require(w < MAX_UINT256, "ERR_OVERFLOW");
+            require(w < type(uint256).max, "ERR_OVERFLOW");
             return w + 1;
         }
         return w;
@@ -246,7 +245,7 @@ library MathEx {
      * @dev returns `x * y % (2 ^ 256 - 1)`
      */
     function _mulModMax(uint256 x, uint256 y) private pure returns (uint256) {
-        return mulmod(x, y, MAX_UINT256);
+        return mulmod(x, y, type(uint256).max);
     }
 
     /**

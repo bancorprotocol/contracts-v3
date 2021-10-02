@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
