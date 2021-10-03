@@ -2,14 +2,14 @@
 pragma solidity 0.8.9;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 
 import { IUpgradeable } from "./interfaces/IUpgradeable.sol";
 
 /**
  * @dev this contract provides common utilities for upgradeable contracts
  */
-abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlUpgradeable {
+abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnumerableUpgradeable {
     // the owner role is used for migrations during upgrades
     bytes32 public constant ROLE_OWNER = keccak256("ROLE_OWNER");
 
