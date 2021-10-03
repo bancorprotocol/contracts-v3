@@ -1721,7 +1721,9 @@ describe('PoolCollection', () => {
                                             targetAmount
                                         )
                                     ).to.be.revertedWith(
-                                        targetAmount ? 'ERR_INVALID_POOL_BALANCE' : 'ERR_INVALID_AMOUNT'
+                                        targetAmount
+                                            ? 'ERR_INVALID_POOL_BALANCE'
+                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
                                     );
                                 }
                             });
