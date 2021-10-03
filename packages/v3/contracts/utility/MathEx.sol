@@ -256,21 +256,27 @@ library MathEx {
      * @dev returns `(x + y) % 2 ^ 256`
      */
     function _unsafeAdd(uint256 x, uint256 y) private pure returns (uint256) {
-        return x + y;
+        unchecked {
+            return x + y;
+        }
     }
 
     /**
      * @dev returns `(x - y) % 2 ^ 256`
      */
     function _unsafeSub(uint256 x, uint256 y) private pure returns (uint256) {
-        return x - y;
+        unchecked {
+            return x - y;
+        }
     }
 
     /**
      * @dev returns `(x * y) % 2 ^ 256`
      */
     function _unsafeMul(uint256 x, uint256 y) private pure returns (uint256) {
-        return x * y;
+        unchecked {
+            return x * y;
+        }
     }
 
     /**
