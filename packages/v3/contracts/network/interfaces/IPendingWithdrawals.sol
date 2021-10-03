@@ -4,8 +4,6 @@ pragma abicoder v2;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
-
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";

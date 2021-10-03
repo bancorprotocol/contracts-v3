@@ -7,7 +7,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -63,7 +63,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
      */
     event WithdrawalInitiated(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount
@@ -73,7 +73,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider cancels a liquidity withdrawal request
      */
     event WithdrawalCancelled(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -84,7 +84,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider requests to reinitiate a liquidity withdrawal
      */
     event WithdrawalReinitiated(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -96,7 +96,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     event WithdrawalCompleted(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 requestId,
         uint256 poolTokenAmount,
@@ -369,7 +369,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         uint256 poolTokenAmount
     ) private {
         // make sure that the pool is valid
-        IReserveToken pool = poolToken.reserveToken();
+        ReserveToken pool = poolToken.reserveToken();
         require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
 
         // record the current withdrawal request alongside previous pending withdrawal requests

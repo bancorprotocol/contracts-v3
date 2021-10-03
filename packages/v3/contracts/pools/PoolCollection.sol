@@ -7,8 +7,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { Fraction } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
@@ -45,7 +44,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Time, Utils {
     using SafeCast for uint256;
-    using ReserveToken for IReserveToken;
+    using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
@@ -85,7 +84,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 sourceBalance;
         uint256 targetBalance;
         PoolLiquidity liquidity;
-        IReserveToken pool;
+        ReserveToken pool;
         bool isSourceNetworkToken;
         uint32 tradingFeePPM;
     }
@@ -103,7 +102,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     IPoolTokenFactory private immutable _poolTokenFactory;
 
     // a mapping between reserve tokens and their pools
-    mapping(IReserveToken => Pool) internal _poolData;
+    mapping(ReserveToken => Pool) internal _poolData;
 
     // the set of all pools which are managed by this pool collection
     EnumerableSetUpgradeable.AddressSet private _pools;
@@ -114,7 +113,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev triggered when a pool is created
      */
-    event PoolCreated(IPoolToken indexed poolToken, IReserveToken indexed reserveToken);
+    event PoolCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -124,27 +123,27 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev triggered when a specific pool's trading fee is updated
      */
-    event TradingFeePPMUpdated(IReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
+    event TradingFeePPMUpdated(ReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(IReserveToken indexed pool, bool newStatus, uint8 reason);
+    event TradingEnabled(ReserveToken indexed pool, bool newStatus, uint8 reason);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
      */
-    event DepositingEnabled(IReserveToken indexed pool, bool newStatus);
+    event DepositingEnabled(ReserveToken indexed pool, bool newStatus);
 
     /**
      * @dev triggered when a pool's initial rate is updated
      */
-    event InitialRateUpdated(IReserveToken indexed pool, Fraction prevRate, Fraction newRate);
+    event InitialRateUpdated(ReserveToken indexed pool, Fraction prevRate, Fraction newRate);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
      */
-    event DepositLimitUpdated(IReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
+    event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -225,11 +224,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function pools() external view override returns (IReserveToken[] memory) {
+    function pools() external view override returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
-        IReserveToken[] memory list = new IReserveToken[](length);
+        ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
-            list[i] = IReserveToken(_pools.at(i));
+            list[i] = ReserveToken.wrap(_pools.at(i));
         }
         return list;
     }
@@ -259,9 +258,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(IReserveToken reserveToken) external override only(address(_network)) nonReentrant {
+    function createPool(ReserveToken reserveToken) external override only(address(_network)) nonReentrant {
         require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
-        require(_pools.add(address(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
+        require(_pools.add(ReserveToken.unwrap(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
 
         IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
 
@@ -304,14 +303,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolValid(IReserveToken reserveToken) external view override returns (bool) {
+    function isPoolValid(ReserveToken reserveToken) external view override returns (bool) {
         return _validPool(_poolData[reserveToken]);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateStable(IReserveToken reserveToken) external view override returns (bool) {
+    function isPoolRateStable(ReserveToken reserveToken) external view override returns (bool) {
         Pool memory pool = _poolData[reserveToken];
         if (!_validPool(pool)) {
             return false;
@@ -332,7 +331,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolLiquidity(IReserveToken reserveToken) external view override returns (PoolLiquidity memory) {
+    function poolLiquidity(ReserveToken reserveToken) external view override returns (PoolLiquidity memory) {
         return _poolData[reserveToken].liquidity;
     }
 
@@ -343,7 +342,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      *
      * - the caller must be the owner of the contract
      */
-    function setTradingFeePPM(IReserveToken pool, uint32 newTradingFeePPM)
+    function setTradingFeePPM(ReserveToken pool, uint32 newTradingFeePPM)
         external
         onlyOwner
         validFee(newTradingFeePPM)
@@ -367,7 +366,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(IReserveToken pool, bool status) external onlyOwner {
+    function enableTrading(ReserveToken pool, bool status) external onlyOwner {
         Pool storage poolData = _poolStorage(pool);
 
         if (poolData.tradingEnabled == status) {
@@ -386,7 +385,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      *
      * - the caller must be the owner of the contract
      */
-    function enableDepositing(IReserveToken pool, bool status) external onlyOwner {
+    function enableDepositing(ReserveToken pool, bool status) external onlyOwner {
         Pool storage poolData = _poolStorage(pool);
 
         if (poolData.depositingEnabled == status) {
@@ -405,7 +404,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      *
      * - the caller must be the owner of the contract
      */
-    function setInitialRate(IReserveToken pool, Fraction memory newInitialRate)
+    function setInitialRate(ReserveToken pool, Fraction memory newInitialRate)
         external
         onlyOwner
         validRate(newInitialRate)
@@ -429,7 +428,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      *
      * - the caller must be the owner of the contract
      */
-    function setDepositLimit(IReserveToken pool, uint256 newDepositLimit) external onlyOwner {
+    function setDepositLimit(ReserveToken pool, uint256 newDepositLimit) external onlyOwner {
         Pool storage poolData = _poolStorage(pool);
 
         uint256 prevDepositLimit = poolData.depositLimit;
@@ -447,7 +446,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function depositFor(
         address provider,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 baseTokenAmount,
         uint256 unallocatedNetworkTokenLiquidity
     )
@@ -455,7 +454,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         override
         only(address(_network))
         validAddress(provider)
-        validAddress(address(pool))
+        validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(baseTokenAmount)
         nonReentrant
         returns (DepositAmounts memory)
@@ -526,7 +525,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function withdraw(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
@@ -534,7 +533,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         external
         override
         only(address(_network))
-        validAddress(address(pool))
+        validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(basePoolTokenAmount)
         nonReentrant
         returns (WithdrawalAmounts memory amounts)
@@ -560,16 +559,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function trade(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
+        ReserveToken sourceToken,
+        ReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     )
         external
         override
         only(address(_network))
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validAddress(ReserveToken.unwrap(sourceToken))
+        validAddress(ReserveToken.unwrap(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
         returns (TradeAmountsWithLiquidity memory)
@@ -637,16 +636,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function tradeAmountAndFee(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
+        ReserveToken sourceToken,
+        ReserveToken targetToken,
         uint256 amount,
         bool targetAmount
     )
         external
         view
         override
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
+        validAddress(ReserveToken.unwrap(sourceToken))
+        validAddress(ReserveToken.unwrap(targetToken))
         greaterThanZero(amount)
         returns (TradeAmounts memory)
     {
@@ -661,11 +660,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function onFeesCollected(IReserveToken pool, uint256 baseTokenAmount)
+    function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount)
         external
         override
         only(address(_network))
-        validAddress(address(pool))
+        validAddress(ReserveToken.unwrap(pool))
     {
         if (baseTokenAmount == 0) {
             return;
@@ -681,7 +680,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev returns deposit-related output data
      */
     function _poolDepositParams(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 baseTokenAmount,
         uint256 unallocatedNetworkTokenLiquidity
     ) private view returns (PoolDepositParams memory depositParams) {
@@ -743,7 +742,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev returns withdrawal amounts
      */
     function _poolWithdrawalAmounts(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
@@ -767,7 +766,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev returns withdrawal-related input which can be retrieved from the pool
      */
-    function _poolWithdrawalParams(IReserveToken pool) private view returns (PoolWithdrawalParams memory) {
+    function _poolWithdrawalParams(ReserveToken pool) private view returns (PoolWithdrawalParams memory) {
         Pool memory poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
@@ -800,7 +799,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * or below it)
      */
     function _postWithdrawal(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenTradingLiquidityDelta,
         uint256 networkTokenTradingLiquidityDelta
@@ -1272,7 +1271,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev returns a storage reference to pool data
      */
-    function _poolStorage(IReserveToken pool) private view returns (Pool storage) {
+    function _poolStorage(ReserveToken pool) private view returns (Pool storage) {
         Pool storage poolData = _poolData[pool];
         require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
 
@@ -1322,14 +1321,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev returns trading params
      */
-    function _tradeParams(IReserveToken sourceToken, IReserveToken targetToken)
+    function _tradeParams(ReserveToken sourceToken, ReserveToken targetToken)
         private
         view
         returns (TradingParams memory params)
     {
         // ensure that the network token is either the source or the target pool
-        bool isSourceNetworkToken = address(sourceToken) == address(_networkToken);
-        bool isTargetNetworkToken = address(targetToken) == address(_networkToken);
+        bool isSourceNetworkToken = sourceToken.toIERC20() == _networkToken;
+        bool isTargetNetworkToken = targetToken.toIERC20() == _networkToken;
         if (isSourceNetworkToken && !isTargetNetworkToken) {
             params.isSourceNetworkToken = true;
             params.pool = targetToken;

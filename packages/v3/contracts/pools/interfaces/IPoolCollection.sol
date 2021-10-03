@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../../utility/Types.sol";
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
@@ -102,7 +102,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns all the pools which are managed by this pool collection
      */
-    function pools() external view returns (IReserveToken[] memory);
+    function pools() external view returns (ReserveToken[] memory);
 
     /**
      * @dev returns the number of all the pools which are managed by this pool collection
@@ -112,17 +112,17 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns whether a pool is valid
      */
-    function isPoolValid(IReserveToken reserveToken) external view returns (bool);
+    function isPoolValid(ReserveToken reserveToken) external view returns (bool);
 
     /**
      * @dev returns whether a pool's rate is stable
      */
-    function isPoolRateStable(IReserveToken reserveToken) external view returns (bool);
+    function isPoolRateStable(ReserveToken reserveToken) external view returns (bool);
 
     /**
      * @dev returns the overall liquidity in the pool
      */
-    function poolLiquidity(IReserveToken reserveToken) external view returns (PoolLiquidity memory);
+    function poolLiquidity(ReserveToken reserveToken) external view returns (PoolLiquidity memory);
 
     /**
      * @dev creates a new pool
@@ -133,7 +133,7 @@ interface IPoolCollection is IVersioned {
      * - the pool should have been whitelisted
      * - the pool isn't already defined in the collection
      */
-    function createPool(IReserveToken reserveToken) external;
+    function createPool(ReserveToken reserveToken) external;
 
     /**
      * @dev deposits base token liquidity on behalf of a specific provider
@@ -145,7 +145,7 @@ interface IPoolCollection is IVersioned {
      */
     function depositFor(
         address provider,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 baseTokenAmount,
         uint256 unallocatedNetworkTokenLiquidity
     ) external returns (DepositAmounts memory);
@@ -159,7 +159,7 @@ interface IPoolCollection is IVersioned {
      * - the caller must have approved the collection to transfer/burn the pool token amount on its behal
      */
     function withdraw(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
@@ -173,8 +173,8 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the network contract
      */
     function trade(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
+        ReserveToken sourceToken,
+        ReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmountsWithLiquidity memory);
@@ -184,8 +184,8 @@ interface IPoolCollection is IVersioned {
      * interested in the target or source amount
      */
     function tradeAmountAndFee(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
+        ReserveToken sourceToken,
+        ReserveToken targetToken,
         uint256 amount,
         bool targetAmount
     ) external view returns (TradeAmounts memory);
@@ -197,5 +197,5 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function onFeesCollected(IReserveToken pool, uint256 baseTokenAmount) external;
+    function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount) external;
 }

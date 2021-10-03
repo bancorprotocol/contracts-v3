@@ -8,7 +8,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 
@@ -22,7 +22,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token minting limits per pool
-    mapping(IReserveToken => uint256) private _poolMintingLimits;
+    mapping(ReserveToken => uint256) private _poolMintingLimits;
 
     // below that amount, trading is disabled and co-investments use the initial rate
     uint256 private _minLiquidityForTrading;
@@ -46,17 +46,17 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev triggered when a token is added to the protection whitelist
      */
-    event TokenAddedToWhitelist(IReserveToken indexed token);
+    event TokenAddedToWhitelist(ReserveToken indexed token);
 
     /**
      * @dev triggered when a token is removed from the protection whitelist
      */
-    event TokenRemovedFromWhitelist(IReserveToken indexed token);
+    event TokenRemovedFromWhitelist(ReserveToken indexed token);
 
     /**
      * @dev triggered when a per-pool minting limit is updated
      */
-    event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event PoolMintingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the minimum liquidity for trading is updated
@@ -123,11 +123,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
+    function protectedTokenWhitelist() external view override returns (ReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
-        IReserveToken[] memory list = new IReserveToken[](length);
+        ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
-            list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
+            list[i] = ReserveToken.wrap(_protectedTokenWhitelist.at(i));
         }
         return list;
     }
@@ -139,8 +139,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function addTokenToWhitelist(IReserveToken token) external onlyOwner validExternalAddress(address(token)) {
-        require(_protectedTokenWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
+    function addTokenToWhitelist(ReserveToken token) external onlyOwner validExternalAddress(ReserveToken.unwrap(token)) {
+        require(_protectedTokenWhitelist.add(ReserveToken.unwrap(token)), "ERR_ALREADY_WHITELISTED");
 
         emit TokenAddedToWhitelist({ token: token });
     }
@@ -152,8 +152,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function removeTokenFromWhitelist(IReserveToken token) external onlyOwner {
-        require(_protectedTokenWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
+    function removeTokenFromWhitelist(ReserveToken token) external onlyOwner {
+        require(_protectedTokenWhitelist.remove(ReserveToken.unwrap(token)), "ERR_NOT_WHITELISTED");
 
         emit TokenRemovedFromWhitelist({ token: token });
     }
@@ -161,14 +161,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function isTokenWhitelisted(IReserveToken token) external view override returns (bool) {
-        return _protectedTokenWhitelist.contains(address(token));
+    function isTokenWhitelisted(ReserveToken token) external view override returns (bool) {
+        return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function poolMintingLimit(IReserveToken pool) external view override returns (uint256) {
+    function poolMintingLimit(ReserveToken pool) external view override returns (uint256) {
         return _poolMintingLimits[pool];
     }
 
@@ -179,7 +179,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(IReserveToken pool, uint256 amount) external onlyOwner validAddress(address(pool)) {
+    function setPoolMintingLimit(ReserveToken pool, uint256 amount) external onlyOwner validAddress(ReserveToken.unwrap(pool)) {
         uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
         if (prevPoolMintingLimit == amount) {
             return;
