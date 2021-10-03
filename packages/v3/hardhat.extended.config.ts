@@ -41,13 +41,17 @@ export const CONFIG = (() => {
 
     const hardhatForkConfig = (() => {
         // if it's not a migration, return undefined
-        if (!getEnvKey('MIGRATION')) return undefined;
+        if (!getEnvKey('MIGRATION')) {
+            return undefined;
+        }
 
         // check if it's a fork
         const networkToFork: string = getEnvKey('FORK');
 
         // if it's not a fork, returns
-        if (!networkToFork) return undefined;
+        if (!networkToFork) {
+            return undefined;
+        }
 
         // if it is a fork, populate with the proper fork config
         const networkConfig = loadConfigFileNetwork(networkToFork);
@@ -61,9 +65,13 @@ export const CONFIG = (() => {
         // get the default account of the forked network
         const defaultAccount = (() => {
             const networkConfig = configFile.networks[networkToFork];
-            if (!networkConfig) return undefined;
+            if (!networkConfig) {
+                return undefined;
+            }
 
-            if (!networkConfig.defaultAccount) return undefined;
+            if (!networkConfig.defaultAccount) {
+                return undefined;
+            }
 
             return [{ privateKey: networkConfig.defaultAccount, balance: '10000000000000000000000000000' }];
         })();

@@ -3,6 +3,7 @@ import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
+import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
