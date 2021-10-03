@@ -612,7 +612,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             stakedBalance += tradeAmounts.feeAmount;
         } else {
             newBaseTokenTradingLiquidity = params.sourceBalance + sourceAmount;
-            newNetworkTokenTradingLiquidity = params.targetBalance + tradeAmounts.amount;
+            newNetworkTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
         }
 
         // update the liquidity in the pool
@@ -725,14 +725,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // if most of network token liquidity is allocated - we'll use as much as we can and the remaining base token
         // liquidity will be treated as excess
         if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
-            depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
+            uint256 unavailableNetworkTokenAmount;
             unchecked {
-                depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(
-                    depositParams.networkTokenDeltaAmount - unallocatedNetworkTokenLiquidity,
-                    rate.d,
-                    rate.n
-                );
+                unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount - unallocatedNetworkTokenLiquidity;
             }
+
+            depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
+            depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
+
         }
 
         // base token amount is guaranteed to be larger than the excess liquidity
