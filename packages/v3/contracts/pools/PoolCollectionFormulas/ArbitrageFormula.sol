@@ -12,10 +12,10 @@ library ArbitrageFormula {
     using SignedSafeMath for int256;
 
     struct Data {
-        uint256 f; // network token tentative pool balance
-        uint256 g; // base token new pool balance
-        uint256 h; // base token amount to buy or sell 
-        uint256 k; // network token amount to mint or burn
+        uint256 f;
+        uint256 g;
+        uint256 h;
+        uint256 k;
     }
 
     function surplus(
@@ -59,11 +59,11 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) {
-        data.f = MathEx.mulDivF(a, y.sub(z), y);
-        data.g = MathEx.mulDivF(b, y.sub(z), y);
-        data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M);
-        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m)));
-        assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M));
+        data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
+        data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
+        data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M); // x(b+c-e(1-n))/e
+        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m))); // fh(g(2-m)-h)/(gg-ggm)
+        assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M)); // axn+bk > 2ah
     }
 
     function deficit(
@@ -77,11 +77,11 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) {
-        data.f = MathEx.mulDivF(a, y.sub(z), y);
-        data.g = MathEx.mulDivF(b, y.sub(z), y);
-        data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M);
-        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
-        assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M));
+        data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
+        data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
+        data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M); // x(e(1-n)-b-c)/e
+        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m)); // fh(g(2-m)+h)/(gg+ghm)
+        assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M)); // axn+2ah > bk
     }
 
     function surplus(
@@ -91,10 +91,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) {
-        output.p = surplus(a, y, z, data.k);
-        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g));
-        output.r = MathEx.mulDivF(b, z, y);
-        output.s = z / M;
+        output.p = surplus(a, y, z, data.k);                                 // f+k
+        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // f+hf/g
+        output.r = MathEx.mulDivF(b, z, y);                                  // b-g
+        output.s = z / M;                                                    // x(1-n)
     }
 
     function deficit(
@@ -104,10 +104,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) {
-        output.p = deficit(a, y, z, data.k);
-        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g));
-        output.r = MathEx.mulDivF(b, z, y);
-        output.s = z / M;
+        output.p = deficit(a, y, z, data.k);                                 // f-k
+        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // f-hf/g
+        output.r = MathEx.mulDivF(b, z, y);                                  // b-g
+        output.s = z / M;                                                    // x(1-n)
     }
 
     function surplus(

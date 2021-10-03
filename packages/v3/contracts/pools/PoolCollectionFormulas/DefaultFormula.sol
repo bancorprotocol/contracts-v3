@@ -21,11 +21,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y).toInt256();
-        output.r = MathEx.mulDivF(b, z, y);
-        output.s = z / M;
-        output.t = 0;
-        output.q = output.p;
+        output.p = MathEx.mulDivF(a, z, y).toInt256(); // ax(1-n)/(b+c)
+        output.r = MathEx.mulDivF(b, z, y);            // bx(1-n)/(b+c)
+        output.s = z / M;                              // x(1-n)
+        output.t = 0;                                  // 0
+        output.q = output.p;                           // ax(1-n)/(b+c)
     }
 
     function deficit(
@@ -39,11 +39,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y).toInt256();
-        output.r = MathEx.mulDivF(b, z, y);
-        output.s = MathEx.mulDivF(z, b + c, y);
-        output.t = MathEx.mulDivF(a.mul(z), e - b - c, b.mul(y));
-        output.q = output.p;
+        output.p = MathEx.mulDivF(a, z, y).toInt256();            // ax(1-n)/e
+        output.r = MathEx.mulDivF(b, z, y);                       // bx(1-n)/e
+        output.s = MathEx.mulDivF(b + c, z, y);                   // x(1-n)(b+c)/e
+        output.t = MathEx.mulDivF(e - b - c, a.mul(z), b.mul(y)); // ax(1-n)(e-b-c)/be
+        output.q = output.p;                                      // ax(1-n)/e
     }
 
     function validate(
