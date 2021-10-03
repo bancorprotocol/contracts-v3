@@ -59,8 +59,8 @@ library DefaultFormula {
         assert(b <= MAX_UINT128);
         assert(c <= MAX_UINT128);
         assert(e <= MAX_UINT128);
-        assert(x <= MAX_UINT128);
         assert(n <= M);
+        assert(x <= e);
         assert((b + c < e) == isDeficit);
     }
 }

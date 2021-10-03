@@ -72,9 +72,9 @@ library ThresholdFormula {
         assert(b <= MAX_UINT128);
         assert(c <= MAX_UINT128);
         assert(e <= MAX_UINT128);
-        assert(x <= MAX_UINT128);
         assert(m <= M / 2);
         assert(n <= M / 2);
+        assert(x <= e);
         assert((b + c < e) == isDeficit);
     }
 
