@@ -91,9 +91,9 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) {
-        output.p = surplus(a, y, z, data.k);                                 // f+k
-        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // f+hf/g
-        output.r = MathEx.mulDivF(b, z, y);                                  // b-g
+        output.p = surplus(a, y, z, data.k);                                 // ax(1-n)/(b+c)+k
+        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // ax(1-n)/(b+c)+hf/g
+        output.r = MathEx.mulDivF(b, z, y);                                  // bx(1-n)/(b+c)
         output.s = z / M;                                                    // x(1-n)
     }
 
@@ -104,9 +104,9 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) {
-        output.p = deficit(a, y, z, data.k);                                 // f-k
-        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // f-hf/g
-        output.r = MathEx.mulDivF(b, z, y);                                  // b-g
+        output.p = deficit(a, y, z, data.k);                                 // ax(1-n)/(b+c)-k
+        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // ax(1-n)/(b+c)-hf/g
+        output.r = MathEx.mulDivF(b, z, y);                                  // bx(1-n)/(b+c)
         output.s = z / M;                                                    // x(1-n)
     }
 
