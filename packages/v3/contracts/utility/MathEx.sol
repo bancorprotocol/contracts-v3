@@ -6,6 +6,7 @@ import { Fraction } from "./Types.sol";
 /**
  * @dev an unchecked version of i++
  */
+// solhint-disable-next-line func-visibility
 function uncheckedInc(uint256 i) pure returns (uint256) {
     unchecked {
         return i + 1;
