@@ -42,7 +42,7 @@
         "hardhat": "2.6.4"
     },
     "devDependencies": {
-        "@bancor/token-governance": "^0.1.4",
+        "@bancor/token-governance": "^0.1.5",
         "@ethersproject/hardware-wallets": "^5.4.0",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-etherscan": "^2.1.6",
