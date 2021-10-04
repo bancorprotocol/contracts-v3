@@ -30,7 +30,7 @@ library ArbitrageFormula {
         validate(a, b, c, e, m, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        return surplus(surplus(a, b, c, e, m, n, x, y, z), a, b, y, z);
+        return surplus(surplus(a, b, e, m, n, x, y, z), a, b, y, z);
     }
 
     function deficit(
@@ -45,13 +45,12 @@ library ArbitrageFormula {
         validate(a, b, c, e, m, n, x, true);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        return deficit(deficit(a, b, c, e, m, n, x, y, z), a, b, y, z);
+        return deficit(deficit(a, b, e, m, n, x, y, z), a, b, y, z);
     }
 
     function surplus(
         uint256 a,
         uint256 b,
-        uint256 c,
         uint256 e,
         uint256 m,
         uint256 n,
@@ -59,9 +58,9 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) {
-        data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
-        data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
-        data.h = MathEx.mulDivF(x, (b + c - e) * M + e * n, e * M); // x(b+c-e(1-n))/e
+        data.f = MathEx.mulDivF(a, y - z, y); // a(b+c-x(1-n))/(b+c)
+        data.g = MathEx.mulDivF(b, y - z, y); // b(b+c-x(1-n))/(b+c)
+        data.h = MathEx.mulDivF(x, y - e * (M - n), e * M); // x(b+c-e(1-n))/e
         data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m))); // fh(g(2-m)-h)/(gg-ggm)
         assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M)); // axn+bk > 2ah
     }
@@ -69,7 +68,6 @@ library ArbitrageFormula {
     function deficit(
         uint256 a,
         uint256 b,
-        uint256 c,
         uint256 e,
         uint256 m,
         uint256 n,
@@ -79,7 +77,7 @@ library ArbitrageFormula {
     ) private pure returns (Data memory data) {
         data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
         data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
-        data.h = MathEx.mulDivF(x, (e - b - c) * M - e * n, e * M); // x(e(1-n)-b-c)/e
+        data.h = MathEx.mulDivF(x, (e * (M - n)).sub(y), e * M); // x(e(1-n)-b-c)/e
         data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m)); // fh(g(2-m)+h)/(gg+ghm)
         assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M)); // axn+2ah > bk
     }
