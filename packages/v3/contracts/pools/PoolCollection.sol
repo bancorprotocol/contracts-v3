@@ -736,7 +736,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         // base token amount is guaranteed to be larger than the excess liquidity
-        depositParams.baseTokenDeltaAmount = baseTokenAmount - depositParams.baseTokenExcessLiquidity;
+        unchecked {
+            depositParams.baseTokenDeltaAmount = baseTokenAmount - depositParams.baseTokenExcessLiquidity;
+        }
     }
 
     /**
