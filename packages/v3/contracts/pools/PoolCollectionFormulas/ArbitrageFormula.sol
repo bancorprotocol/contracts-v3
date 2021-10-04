@@ -18,6 +18,19 @@ library ArbitrageFormula {
         uint256 k;
     }
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/(b+c)+k`
+     * `q = ax(1-n)/(b+c)+hf/g`
+     * `r = bx(1-n)/(b+c)`
+     * `s = x(1-n)`
+     * after computing:
+     * `f = a(b+c-x(1-n))/(b+c)`
+     * `g = b(b+c-x(1-n))/(b+c)`
+     * `h = x(b+c-e(1-n))/e`
+     * `k = fh(g(2-m)-h)/(gg-ggm)`
+     * and asserting that `axn+bk > 2ah`
+     */
     function surplus(
         uint256 a,
         uint256 b,
@@ -33,6 +46,19 @@ library ArbitrageFormula {
         return surplus(surplus(a, b, e, m, n, x, y, z), a, b, y, z);
     }
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/(b+c)-k`
+     * `q = ax(1-n)/(b+c)-hf/g`
+     * `r = bx(1-n)/(b+c)`
+     * `s = x(1-n)`
+     * after computing:
+     * `f = a(b+c-x(1-n))/(b+c)`
+     * `g = b(b+c-x(1-n))/(b+c)`
+     * `h = x(e(1-n)-b-c)/e`
+     * `k = fh(g(2-m)+h)/(gg+ghm)`
+     * and asserting that `axn+2ah > bk`
+     */
     function deficit(
         uint256 a,
         uint256 b,
@@ -48,6 +74,14 @@ library ArbitrageFormula {
         return deficit(deficit(a, b, e, m, n, x, y, z), a, b, y, z);
     }
 
+    /**
+     * @dev returns:
+     * `f = a(b+c-x(1-n))/(b+c)`
+     * `g = b(b+c-x(1-n))/(b+c)`
+     * `h = x(b+c-e(1-n))/e`
+     * `k = fh(g(2-m)-h)/(gg-ggm)`
+     * after asserting that `axn+bk > 2ah`
+     */
     function surplus(
         uint256 a,
         uint256 b,
@@ -65,6 +99,14 @@ library ArbitrageFormula {
         assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M)); // axn+bk > 2ah
     }
 
+    /**
+     * @dev returns:
+     * `f = a(b+c-x(1-n))/(b+c)`
+     * `g = b(b+c-x(1-n))/(b+c)`
+     * `h = x(e(1-n)-b-c)/e`
+     * `k = fh(g(2-m)+h)/(gg+ghm)`
+     * after asserting that `axn+2ah > bk`
+     */
     function deficit(
         uint256 a,
         uint256 b,
@@ -82,6 +124,13 @@ library ArbitrageFormula {
         assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M)); // axn+2ah > bk
     }
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/(b+c)+k`
+     * `q = ax(1-n)/(b+c)+hf/g`
+     * `r = bx(1-n)/(b+c)`
+     * `s = x(1-n)`
+     */
     function surplus(
         Data memory data,
         uint256 a,
@@ -95,6 +144,13 @@ library ArbitrageFormula {
         output.s = z / M;                                                    // x(1-n)
     }
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/(b+c)-k`
+     * `q = ax(1-n)/(b+c)-hf/g`
+     * `r = bx(1-n)/(b+c)`
+     * `s = x(1-n)`
+     */
     function deficit(
         Data memory data,
         uint256 a,
@@ -108,6 +164,9 @@ library ArbitrageFormula {
         output.s = z / M;                                                    // x(1-n)
     }
 
+    /**
+     * @dev returns `az/y+w`
+     */
     function surplus(
         uint256 a,
         uint256 y,
@@ -119,6 +178,9 @@ library ArbitrageFormula {
         return u.add(v).div(y.toInt256());
     }
 
+    /**
+     * @dev returns `az/y-w`
+     */
     function deficit(
         uint256 a,
         uint256 y,

@@ -10,6 +10,14 @@ library DefaultFormula {
     using SafeMath for uint256;
     using SafeCast for uint256;
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/(b+c)`
+     * `q = ax(1-n)/(b+c)`
+     * `r = bx(1-n)/(b+c)`
+     * `s = x(1-n)`
+     * `t = 0`
+     */
     function surplus(
         uint256 a,
         uint256 b,
@@ -28,6 +36,14 @@ library DefaultFormula {
         output.q = output.p;                           // ax(1-n)/(b+c)
     }
 
+    /**
+     * @dev returns:
+     * `p = ax(1-n)/e`
+     * `q = ax(1-n)/e`
+     * `r = bx(1-n)/e`
+     * `s = x(1-n)(b+c)/e`
+     * `t = ax(1-n)(e-b-c)/be`
+     */
     function deficit(
         uint256 a,
         uint256 b,
