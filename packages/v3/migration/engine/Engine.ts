@@ -20,7 +20,6 @@ export class Engine {
 
     readonly networkSettings: NetworkSettings;
 
-    // basics
     readonly signer: Signer;
     readonly signerAddress: string;
     readonly contracts: ContractsType;
@@ -28,30 +27,24 @@ export class Engine {
     readonly executionSettings: ExecutionSettings;
     readonly overrides: Overrides;
 
-    // needed paths
     readonly pathToRoot: string;
     readonly pathToNetworkDir: string;
     readonly pathToMigrationsDir: string;
     readonly pathToNetworkDeploymentsDir: string;
 
-    // init additional functionalities
     readonly IO = initIO(this);
     readonly executionFunctions = initExecutionFunctions(this);
 
-    // main functions
     readonly migrate = () => migrate(this);
 
-    // secondary functions
     readonly migrateOneUp = migrateOneUp;
     readonly migrateOneDown = migrateOneDown;
 
-    // migration info
     migration = defaultMigration;
 
     constructor(hre: HardhatRuntimeEnvironment, args: defaultArgs, signer: Signer, signerAddress: string) {
         this.hre = hre;
 
-        // init network settings
         const { hardhatForkConfig } = CONFIG;
 
         const networkName = hardhatForkConfig?.networkName || network.name;
@@ -61,13 +54,11 @@ export class Engine {
             isFork: hardhatForkConfig?.isFork || false
         };
 
-        // init paths
         this.pathToRoot = path.resolve(__dirname, '../../');
         this.pathToMigrationsDir = path.join(this.pathToRoot, MIGRATION_DIR);
         this.pathToNetworkDir = path.join(this.pathToRoot, MIGRATION_DATA_DIR, this.networkSettings.networkName);
         this.pathToNetworkDeploymentsDir = path.join(this.pathToNetworkDir, MIGRATION_DEPLOYMENTS_DIR);
 
-        // init basics
         this.signer = signer;
         this.signerAddress = signerAddress;
         this.contracts = Contracts.connect(signer);
@@ -90,7 +81,6 @@ export class Engine {
         this.init();
     }
 
-    // engine health-check
     checkForFailures = () => {
         // some configuration should only reserve for forked network or hardhat networks
         const isForkOrHardhat = this.networkSettings.isFork || this.networkSettings.networkName === 'hardhat';
