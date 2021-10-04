@@ -2,13 +2,13 @@ import { ContractBuilder, Contract } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import LegacyContracts from '../../components/LegacyContracts';
 import {
-    BancorNetwork,
     BancorVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
-    TestPoolCollection
+    TestPoolCollection,
+    TestBancorNetwork
 } from '../../typechain';
 import { roles } from './AccessControl';
 import { DEFAULT_DECIMALS } from './Constants';
@@ -125,7 +125,7 @@ export const createPoolCollection = async (network: string | BaseContract, poolT
     Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
 
 const createNetworkTokenPoolUninitialized = async (
-    network: BancorNetwork,
+    network: TestBancorNetwork,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
@@ -213,13 +213,16 @@ export const createSystem = async () => {
 
 export const createPool = async (
     reserveToken: TokenWithAddress,
-    network: BancorNetwork,
+    network: TestBancorNetwork,
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-    await network.addPoolCollection(poolCollection.address);
+    const poolCollections = await network.poolCollections();
+    if (!poolCollections.includes(poolCollection.address)) {
+        await network.addPoolCollection(poolCollection.address);
+    }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
     const pool = await poolCollection.poolData(reserveToken.address);

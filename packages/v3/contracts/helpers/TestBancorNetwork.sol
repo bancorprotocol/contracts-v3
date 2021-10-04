@@ -16,9 +16,21 @@ import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
-import { IPoolCollection, DepositAmounts as PoolCollectionDepositAmounts, WithdrawalAmounts as PoolCollectionWithdrawalAmounts, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
+// prettier-ignore
+import { IPoolCollection,
+    DepositAmounts as PoolCollectionDepositAmounts,
+    WithdrawalAmounts as PoolCollectionWithdrawalAmounts,
+    TradeAmountsWithLiquidity
+} from "../pools/interfaces/IPoolCollection.sol";
+
+// prettier-ignore
+import {
+    INetworkTokenPool,
+    DepositAmounts as NetworkTokenPoolDepositAmounts,
+    WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts
+} from "../pools/interfaces/INetworkTokenPool.sol";
+
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool, DepositAmounts as NetworkTokenPoolDepositAmounts, WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -133,7 +145,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         IReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmounts memory) {
+    ) external returns (TradeAmountsWithLiquidity memory) {
         return poolCollection.trade(sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
