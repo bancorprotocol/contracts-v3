@@ -18,7 +18,7 @@ library ReserveTokenLibrary {
     using SafeERC20Ex for IERC20;
 
     // the address that represents the native token reserve
-    ReserveToken public constant NATIVE_TOKEN_ADDRESS = ReserveToken.wrap(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+    address public constant NATIVE_TOKEN_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // the symbol that represents the native token
     string private constant NATIVE_TOKEN_SYMBOL = "ETH";
@@ -30,7 +30,7 @@ library ReserveTokenLibrary {
      * @dev returns whether the provided token represents an ERC20 or ETH reserve
      */
     function isNativeToken(ReserveToken reserveToken) internal pure returns (bool) {
-        return ReserveToken.unwrap(reserveToken) == ReserveToken.unwrap(NATIVE_TOKEN_ADDRESS);
+        return ReserveToken.unwrap(reserveToken) == NATIVE_TOKEN_ADDRESS;
     }
 
     /**
