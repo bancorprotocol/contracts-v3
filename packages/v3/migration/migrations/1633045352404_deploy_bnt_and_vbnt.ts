@@ -41,20 +41,20 @@ const migration: Migration = {
 
         // verifies ownership
         if ((await networkToken.owner()) !== signerAddress) {
-            throw new Error("Owner isn't correct");
+            throw new Error('Invalid owner');
         }
 
         if ((await govToken.owner()) !== signerAddress) {
-            throw new Error("Owner isn't correct");
+            throw new Error('Invalid owner');
         }
 
         // verifies supply
         if (!(await networkToken.totalSupply()).eq(TOTAL_SUPPLY)) {
-            throw new Error("Total supply isn't correct");
+            throw new Error('Invalid total supply');
         }
 
         if (!(await govToken.totalSupply()).eq(TOTAL_SUPPLY)) {
-            throw new Error("Total supply isn't correct");
+            throw new Error('Invalid total supply');
         }
     },
 
