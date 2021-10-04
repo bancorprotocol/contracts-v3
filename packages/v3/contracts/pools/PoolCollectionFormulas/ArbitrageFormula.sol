@@ -95,7 +95,7 @@ library ArbitrageFormula {
         data.f = MathEx.mulDivF(a, y - z, y); // a(b+c-x(1-n))/(b+c)
         data.g = MathEx.mulDivF(b, y - z, y); // b(b+c-x(1-n))/(b+c)
         data.h = MathEx.mulDivF(x, y - e * (M - n), e * M); // x(b+c-e(1-n))/e
-        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) - data.h * M, data.g.mul(data.g * (M - m))); // fh(g(2-m)-h)/(gg-ggm)
+        data.k = MathEx.mulDivF(data.f.mul(data.h), (data.g * (2 * M - m)).sub(data.h * M), data.g.mul(data.g * (M - m))); // fh(g(2-m)-h)/(gg-ggm)
         assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M)); // axn+bk > 2ah
     }
 
@@ -120,7 +120,7 @@ library ArbitrageFormula {
         data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
         data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
         data.h = MathEx.mulDivF(x, (e * (M - n)).sub(y), e * M); // x(e(1-n)-b-c)/e
-        data.k = MathEx.mulDivF(data.f.mul(data.h), data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m)); // fh(g(2-m)+h)/(gg+ghm)
+        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m)); // fh(g(2-m)+h)/(gg+ghm)
         assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M)); // axn+2ah > bk
     }
 
