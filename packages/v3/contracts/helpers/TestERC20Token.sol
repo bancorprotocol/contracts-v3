@@ -19,7 +19,7 @@ contract TestERC20Token is ERC20Permit {
         return _decimals;
     }
 
-    function setupDecimals(uint8 newDecimals) external {
+    function updateDecimals(uint8 newDecimals) external {
         _decimals = newDecimals;
     }
 }

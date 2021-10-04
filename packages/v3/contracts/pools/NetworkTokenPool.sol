@@ -289,7 +289,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         // amount the provider already has
         unchecked {
             if (isMigrating) {
-                govTokenAmount = govTokenAmount > originalGovTokenAmount ? govTokenAmount - originalGovTokenAmount : 0;
+                govTokenAmount = MathEx.subMax0(govTokenAmount, originalGovTokenAmount);
             }
         }
 

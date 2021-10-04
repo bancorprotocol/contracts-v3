@@ -18,7 +18,7 @@ import { createPool, createPoolCollection, createSystem, createTokenHolder } fro
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
+import { toDecimal, toWei } from '../helpers/Types';
 import {
     createTokenBySymbol,
     createWallet,
@@ -1827,7 +1827,7 @@ describe('BancorNetwork', () => {
         const specToString = (spec: Spec) => {
             const feeDesc =
                 spec.tradingFeePPM !== undefined
-                    ? `, fee=${BigNumber.from(spec.tradingFeePPM).mul(BigNumber.from(100)).div(PPM_RESOLUTION)}%`
+                    ? `, fee=${toDecimal(spec.tradingFeePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`
                     : '';
             return `${spec.symbol} (balance=${spec.balance}${feeDesc})}`;
         };
@@ -2390,7 +2390,7 @@ describe('BancorNetwork', () => {
                         );
                     });
                 } else {
-                    it('should revert when attempting to trade ETH into a non ETH pool', async () => {
+                    it('should revert when passing ETH with a non ETH trade', async () => {
                         await expect(trade(testAmount, { value: BigNumber.from(1) })).to.be.revertedWith(
                             'ERR_INVALID_POOL'
                         );
