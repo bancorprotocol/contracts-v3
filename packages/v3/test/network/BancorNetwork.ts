@@ -2390,7 +2390,7 @@ describe('BancorNetwork', () => {
                         );
                     });
                 } else {
-                    it('should revert when attempting to trade ETH into a non ETH pool', async () => {
+                    it('should revert when passing ETH with a non ETH trade', async () => {
                         await expect(trade(testAmount, { value: BigNumber.from(1) })).to.be.revertedWith(
                             'ERR_INVALID_POOL'
                         );
