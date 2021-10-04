@@ -130,6 +130,9 @@ library ArbitrageFormula {
         return u.sub(v).div(y.toInt256());
     }
 
+    /**
+     * @dev validates the input values
+     */
     function validate(
         uint256 a,
         uint256 b,

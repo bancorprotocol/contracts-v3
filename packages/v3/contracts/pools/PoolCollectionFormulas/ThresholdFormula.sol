@@ -14,6 +14,9 @@ library ThresholdFormula {
         uint256 lo;
     }
 
+    /**
+     * @dev returns the value of `hMaxN / hMaxD > x`
+     */
     function surplus(
         uint256 b,
         uint256 c,
@@ -37,6 +40,9 @@ library ThresholdFormula {
         return gt512(hMaxN, mul512(hMaxD, x));
     }
 
+    /**
+     * @dev returns the value of `hMaxN / hMaxD > x`
+     */
     function deficit(
         uint256 b,
         uint256 c,
@@ -60,6 +66,9 @@ library ThresholdFormula {
         return gt512(hMaxN, mul512(hMaxD, x));
     }
 
+    /**
+     * @dev validates the input values
+     */
     function validate(
         uint256 b,
         uint256 c,

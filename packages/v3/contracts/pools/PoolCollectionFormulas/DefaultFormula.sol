@@ -46,6 +46,9 @@ library DefaultFormula {
         output.q = output.p;                                      // ax(1-n)/e
     }
 
+    /**
+     * @dev validates the input values
+     */
     function validate(
         uint256 a,
         uint256 b,
