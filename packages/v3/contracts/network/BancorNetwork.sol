@@ -3,8 +3,6 @@ pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { SignedSafeMath } from "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -51,8 +49,6 @@ import { TRADING_FEE } from "./FeeTypes.sol";
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using Address for address payable;
-    using SafeMath for uint256;
-    using SignedSafeMath for int256;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -1094,9 +1090,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             );
         }
 
-        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol.sub(
-            amounts.networkTokenAmountToDeductFromLiquidity
-        );
+        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol - amounts.networkTokenAmountToDeductFromLiquidity;
         if (networkTokenArbitrageAmount > 0) {
             cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
         } else if (networkTokenArbitrageAmount < 0) {
