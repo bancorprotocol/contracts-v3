@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestReserveToken } from '../../typechain';
-import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS } from '../helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS, ETH, TKN } from '../helpers/Constants';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -26,9 +26,9 @@ describe('ReserveToken', () => {
         sender = reserveToken.address;
     });
 
-    for (const symbol of ['ETH', 'TKN']) {
+    for (const symbol of [ETH, TKN]) {
         let token: any;
-        const isETH = symbol === 'ETH';
+        const isETH = symbol === ETH;
 
         context(`${symbol} reserve token`, () => {
             beforeEach(async () => {

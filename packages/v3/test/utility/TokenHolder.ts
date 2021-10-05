@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, TokenHolder } from '../../typechain';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createTokenHolder } from '../helpers/Factory';
 import { getBalance, getBalances, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -42,7 +42,7 @@ describe('TokenHolder', () => {
 
     describe('withdraw asset', () => {
         for (const isETH of [true, false]) {
-            context(isETH ? 'ETH' : 'ERC20', async () => {
+            context(isETH ? ETH : TKN, async () => {
                 let asset: TokenWithAddress;
 
                 beforeEach(async () => {

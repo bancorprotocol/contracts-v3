@@ -1,6 +1,9 @@
 {
     "migrationState": {
-        "latestMigration": -1
+        "latestMigration": 1633045352404
     },
-    "networkState": {}
+    "networkState": {
+        "networkToken": "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
+        "govToken": "0x48fb253446873234f2febbf9bdeaa72d9d387f94"
+    }
 }

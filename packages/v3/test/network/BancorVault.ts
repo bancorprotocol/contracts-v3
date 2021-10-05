@@ -2,10 +2,16 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, getBalance, transfer, errorMessageTokenExceedsBalance } from '../helpers/Utils';
+import {
+    TokenWithAddress,
+    getBalance,
+    transfer,
+    errorMessageTokenExceedsBalance,
+    createTokenBySymbol
+} from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -28,7 +34,7 @@ describe('BancorVault', () => {
     });
 
     beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
     });
 
     describe('construction', () => {
@@ -76,24 +82,8 @@ describe('BancorVault', () => {
             );
         });
 
-        for (const symbol of ['BNT', 'ETH', 'TKN']) {
+        for (const symbol of [BNT, ETH, TKN]) {
             context(symbol, () => {
-                const getToken = (): TokenWithAddress => {
-                    switch (symbol) {
-                        case 'BNT':
-                            return networkToken;
-
-                        case 'ETH':
-                            return { address: NATIVE_TOKEN_ADDRESS };
-
-                        case 'TKN':
-                            return reserveToken;
-
-                        default:
-                            throw new Error(`Unsupported type ${symbol}`);
-                    }
-                };
-
                 const testWithdraw = () => {
                     it('should revert when trying to withdraw more tokens than the vault holds', async () => {
                         const amountToWithdraw = amount.add(BigNumber.from(100));
@@ -158,7 +148,11 @@ describe('BancorVault', () => {
                 let token: TokenWithAddress;
 
                 beforeEach(async () => {
-                    token = getToken();
+                    if (symbol === BNT) {
+                        token = networkToken;
+                    } else {
+                        token = await createTokenBySymbol(symbol);
+                    }
 
                     await transfer(deployer, token, vault.address, amount);
                 });
@@ -204,7 +198,7 @@ describe('BancorVault', () => {
                             .grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
                     });
 
-                    if (symbol !== 'BNT') {
+                    if (symbol !== BNT) {
                         testWithdrawRestricted();
                     } else {
                         testWithdraw();
