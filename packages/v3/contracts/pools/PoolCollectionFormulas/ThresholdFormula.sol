@@ -34,9 +34,9 @@ library ThresholdFormula {
         hMaxD = add512(hMaxD, mul256(b * e, e * (M - n) * (M - m)));     // + bee(1-n)(1-m)
         hMaxD = add512(hMaxD, mul256(c * c, c * M * M));                 // + ccc
         hMaxD = add512(hMaxD, mul256(c * e, e * (M - n) * (M - n)));     // + cee(1-n)(1-n)
-        hMaxD = sub512(hMaxD, mul256(b * b, e * (M - n) * (2 * M - m))); // - bbe(1-n)(2-m)
-        hMaxD = sub512(hMaxD, mul256(b * c, e * (M - n) * (4 * M - m))); // - bce(1-n)(4-m)
-        hMaxD = sub512(hMaxD, mul256(c * c, e * (M - n) * 2 * M));       // - 2cce(1-n)
+        hMaxD = sub512(hMaxD, mul256(b * b, e * (M - n) * (M * 2 - m))); // - bbe(1-n)(2-m)
+        hMaxD = sub512(hMaxD, mul256(b * c, e * (M - n) * (M * 4 - m))); // - bce(1-n)(4-m)
+        hMaxD = sub512(hMaxD, mul256(c * c, e * (M - n) * M * 2));       // - 2cce(1-n)
         return gt512(hMaxN, mul512(hMaxD, x));
     }}
 
@@ -54,15 +54,15 @@ library ThresholdFormula {
         validate(b, c, e, m, n, x, true);
         Uint512 memory hMaxD;
         Uint512 memory hMaxN = mul512(mul256(b * e, b + c), e * n * (M - m) + (e - b - c) * m * M); // be(b+c)(en(1-m)+(e-b-c)m)
-        hMaxD = add512(hMaxD, mul256(b * b, b * (M - 2 * m) * M));                           // + bbb(1-2m)
-        hMaxD = add512(hMaxD, mul256(b * b, c * (M - 2 * m) * M * 3));                       // + 3bbc(1-2m)
-        hMaxD = add512(hMaxD, mul256(b * c, c * (M - 2 * m) * M * 3));                       // + 3bcc(1-2m)
+        hMaxD = add512(hMaxD, mul256(b * b, b * (M - m * 2) * M));                           // + bbb(1-2m)
+        hMaxD = add512(hMaxD, mul256(b * b, c * (M - m * 2) * M * 3));                       // + 3bbc(1-2m)
+        hMaxD = add512(hMaxD, mul256(b * c, c * (M - m * 2) * M * 3));                       // + 3bcc(1-2m)
         hMaxD = add512(hMaxD, mul256(b * e, e * (M - n) * (M - m)));                         // + bee(1-n)(1-m)
-        hMaxD = add512(hMaxD, mul256(c * c, c * (M - 2 * m) * M));                           // + ccc(1-2m)
+        hMaxD = add512(hMaxD, mul256(c * c, c * (M - m * 2) * M));                           // + ccc(1-2m)
         hMaxD = add512(hMaxD, mul256(c * e, e * (M - n) * ((M - n) * (M - m) - m * M) / M)); // + cee(1-n)((1-n)(1-m)-m)
-        hMaxD = sub512(hMaxD, mul256(b * b, e * (2 * (M - n) * (M - m) - m * M)));           // - bbe(2(1-n)(1-m)-m)
-        hMaxD = sub512(hMaxD, mul256(b * c, e * (4 * (M - n) * (M - m) - m * (3 * M - n)))); // - bce(4(1-n)(1-m)-m(3-n))
-        hMaxD = sub512(hMaxD, mul256(c * c, e * (2 * (M - n) * (M - m) - m * (2 * M - n)))); // - cce(2(1-n)(1-m)-m(2-n))
+        hMaxD = sub512(hMaxD, mul256(b * b, e * ((M - n) * (M - m) * 2 - m * M)));           // - bbe(2(1-n)(1-m)-m)
+        hMaxD = sub512(hMaxD, mul256(b * c, e * ((M - n) * (M - m) * 4 - m * (M * 3 - n)))); // - bce(4(1-n)(1-m)-m(3-n))
+        hMaxD = sub512(hMaxD, mul256(c * c, e * ((M - n) * (M - m) * 2 - m * (M * 2 - n)))); // - cce(2(1-n)(1-m)-m(2-n))
         return gt512(hMaxN, mul512(hMaxD, x));
     }}
 
