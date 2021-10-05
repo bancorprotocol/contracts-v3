@@ -1,6 +1,13 @@
 {
-    "extends": "../../tsconfig.json",
     "compilerOptions": {
+        "target": "es2018",
+        "lib": ["es2018", "dom", "esnext"],
+        "module": "commonjs",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "strict": true,
+        "esModuleInterop": true,
         "baseUrl": "./",
         "paths": {
             "*": ["node_modules/*"]
