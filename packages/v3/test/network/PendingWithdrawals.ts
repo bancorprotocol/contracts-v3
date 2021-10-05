@@ -685,7 +685,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('Errors.WithdrawalNotAllowed');
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
                         });
                     });
 
@@ -699,7 +699,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('Errors.WithdrawalNotAllowed');
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
                         });
                     });
 

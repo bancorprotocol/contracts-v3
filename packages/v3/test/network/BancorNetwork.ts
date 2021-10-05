@@ -1528,9 +1528,7 @@ describe('BancorNetwork', () => {
                     });
 
                     it('should revert when attempting to withdraw', async () => {
-                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                            'Errors.WithdrawalNotAllowed()'
-                        );
+                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith('WithdrawalNotAllowed');
                     });
 
                     context('after the withdrawal window duration', () => {
@@ -1543,7 +1541,7 @@ describe('BancorNetwork', () => {
 
                         it('should revert when attempting to withdraw', async () => {
                             await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                'Errors.WithdrawalNotAllowed()'
+                                'WithdrawalNotAllowed'
                             );
                         });
                     });
