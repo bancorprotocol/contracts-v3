@@ -7,7 +7,7 @@ import { ERC20Permit } from "@openzeppelin/contracts/drafts/ERC20Permit.sol";
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ERC20Burnable } from "../token/ERC20Burnable.sol";
 
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
+import { Owned } from "../utility/Owned.sol";
 import { Utils } from "../utility/Utils.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
@@ -15,7 +15,7 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 /**
  * @dev Pool Token contract
  */
-contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, Utils {
+contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     IReserveToken private immutable _reserveToken;
 
     /**
@@ -24,11 +24,12 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, OwnedUpgradeable, 
     constructor(
         string memory name,
         string memory symbol,
+        uint8 decimals,
         IReserveToken initReserveToken
     ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
-        _reserveToken = initReserveToken;
+        _setupDecimals(decimals);
 
-        __Owned_init();
+        _reserveToken = initReserveToken;
     }
 
     /**

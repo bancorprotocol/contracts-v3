@@ -1,61 +1,55 @@
+import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
+import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@typechain/hardhat';
-import fs from 'fs';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import 'hardhat-gas-reporter';
 import { HardhatUserConfig } from 'hardhat/config';
-import path from 'path';
+import { NetworkUserConfig } from 'hardhat/types';
 import 'solidity-coverage';
 
-const configPath = path.join(__dirname, '/config.json');
-const configFile = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
-
-const loadAPIKey = (apiKeyName: string) => {
-    return configFile.apiKeys ? (configFile.apiKeys[apiKeyName] ? configFile.apiKeys[apiKeyName] : '') : '';
+const hardhatDefaultConfig: NetworkUserConfig = {
+    accounts: {
+        count: 10,
+        accountsBalance: '10000000000000000000000000000000000000000000000'
+    },
+    allowUnlimitedContractSize: true
 };
 
-// casting to unknown assume the good type is provided
-const loadENVKey = <T>(envKeyName: string) => {
-    return process.env[envKeyName] as unknown as T;
-};
-
-const configNetworks = configFile.networks || {};
-
-const ci = loadENVKey<boolean>('CI');
+const ci = getEnvKey<boolean>('CI');
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: {
-            accounts: {
-                count: 10,
-                accountsBalance: '10000000000000000000000000000'
-            }
-        },
+        hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
 
-        ...configNetworks
+        ...CONFIG.networks
     },
 
     solidity: {
-        version: '0.7.6',
-        settings: {
-            optimizer: {
-                enabled: true,
-                runs: 200
-            },
-            metadata: {
-                bytecodeHash: 'none'
-            },
-            outputSelection: {
-                '*': {
-                    '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
+        compilers: [
+            {
+                version: '0.7.6',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200
+                    },
+                    metadata: {
+                        bytecodeHash: 'none'
+                    },
+                    outputSelection: {
+                        '*': {
+                            '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
+                        }
+                    }
                 }
             }
-        }
+        ]
     },
 
     dependencyCompiler: {
@@ -66,7 +60,7 @@ const config: HardhatUserConfig = {
     },
 
     etherscan: {
-        apiKey: loadAPIKey('etherscan')
+        apiKey: loadConfigFileKey('etherscan')
     },
 
     contractSizer: {
@@ -82,15 +76,15 @@ const config: HardhatUserConfig = {
 
     gasReporter: {
         currency: 'USD',
-        enabled: loadENVKey('PROFILE')
+        enabled: getEnvKey('PROFILE')
     },
 
     mocha: {
         timeout: 600000,
         color: true,
-        bail: loadENVKey('BAIL'),
+        bail: getEnvKey('BAIL'),
         grep: ci ? '' : '@stress',
-        invert: ci ? false : true
+        invert: !ci
     }
 };
 

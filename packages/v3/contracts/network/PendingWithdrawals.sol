@@ -10,28 +10,19 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
  * @dev Pending Withdrawals contract
  */
-contract PendingWithdrawals is
-    IPendingWithdrawals,
-    Upgradeable,
-    OwnedUpgradeable,
-    ReentrancyGuardUpgradeable,
-    Time,
-    Utils
-{
+contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using SafeMath for uint32;
     using SafeMath for uint256;
     using SafeERC20 for IPoolToken;
@@ -45,9 +36,6 @@ contract PendingWithdrawals is
 
     // the network contract
     IBancorNetwork private immutable _network;
-
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -120,13 +108,9 @@ contract PendingWithdrawals is
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
-    {
+    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
         _networkToken = initNetwork.networkToken();
         _network = initNetwork;
-        _networkTokenPool = initNetworkTokenPool;
     }
 
     /**
@@ -142,8 +126,8 @@ contract PendingWithdrawals is
      * @dev initializes the contract and its parents
      */
     function __PendingWithdrawals_init() internal initializer {
+        __Upgradeable_init();
         __ReentrancyGuard_init();
-        __Owned_init();
 
         __PendingWithdrawals_init_unchained();
     }
@@ -157,7 +141,6 @@ contract PendingWithdrawals is
     }
 
     // solhint-enable func-name-mixedcase
-
     /**
      * @dev returns the current version of the contract
      */
@@ -170,13 +153,6 @@ contract PendingWithdrawals is
      */
     function network() external view override returns (IBancorNetwork) {
         return _network;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function networkTokenPool() external view override returns (INetworkTokenPool) {
-        return _networkTokenPool;
     }
 
     /**
@@ -266,18 +242,17 @@ contract PendingWithdrawals is
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawalDelegated(
+    function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
-        address provider,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external override validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
-        poolToken.permit(provider, address(this), poolTokenAmount, deadline, v, r, s);
+        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
-        _initWithdrawal(provider, poolToken, poolTokenAmount);
+        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
 
     /**
@@ -301,13 +276,13 @@ contract PendingWithdrawals is
 
         uint32 currentTime = _time();
 
-        emit WithdrawalReinitiated(
-            request.poolToken.reserveToken(),
-            provider,
-            id,
-            request.amount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalReinitiated({
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
         request.createdAt = currentTime;
     }
@@ -319,19 +294,9 @@ contract PendingWithdrawals is
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override returns (uint256) {
+    ) external override only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         require(provider == request.provider, "ERR_ACCESS_DENIED");
-
-        // verify the caller:
-        // - in order to complete a network token withdrawal, the caller must be the network token pool
-        // - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
-        IReserveToken reserveToken = request.poolToken.reserveToken();
-        if (address(reserveToken) == address(_networkToken)) {
-            require(msg.sender == address(_networkTokenPool), "ERR_ACCESS_DENIED");
-        } else {
-            require(msg.sender == address(_network.collectionByPool(reserveToken)), "ERR_ACCESS_DENIED");
-        }
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
@@ -343,18 +308,18 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, request.amount);
+        request.poolToken.safeTransfer(msg.sender, request.poolTokenAmount);
 
-        emit WithdrawalCompleted(
-            contextId,
-            reserveToken,
-            provider,
-            id,
-            request.amount,
-            uint32(currentTime.sub(request.createdAt))
-        );
+        emit WithdrawalCompleted({
+            contextId: contextId,
+            pool: request.poolToken.reserveToken(),
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(currentTime.sub(request.createdAt))
+        });
 
-        return request.amount;
+        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
     }
 
     /**
@@ -373,7 +338,7 @@ contract PendingWithdrawals is
 
         _lockDuration = newLockDuration;
 
-        emit LockDurationUpdated(prevLockDuration, newLockDuration);
+        emit LockDurationUpdated({ prevLockDuration: prevLockDuration, newLockDuration: newLockDuration });
     }
 
     /**
@@ -391,7 +356,10 @@ contract PendingWithdrawals is
 
         _withdrawalWindowDuration = newWithdrawalWindowDuration;
 
-        emit WithdrawalWindowDurationUpdated(prevWithdrawalWindowDuration, newWithdrawalWindowDuration);
+        emit WithdrawalWindowDurationUpdated({
+            prevWithdrawalWindowDuration: prevWithdrawalWindowDuration,
+            newWithdrawalWindowDuration: newWithdrawalWindowDuration
+        });
     }
 
     /**
@@ -410,10 +378,9 @@ contract PendingWithdrawals is
         uint256 id = _nextWithdrawalRequestId++;
 
         _withdrawalRequests[id] = WithdrawalRequest({
-            version: 1,
             provider: provider,
             poolToken: poolToken,
-            amount: poolTokenAmount,
+            poolTokenAmount: poolTokenAmount,
             createdAt: _time()
         });
 
@@ -423,7 +390,7 @@ contract PendingWithdrawals is
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
-        emit WithdrawalInitiated(pool, provider, id, poolTokenAmount);
+        emit WithdrawalInitiated({ pool: pool, provider: provider, requestId: id, poolTokenAmount: poolTokenAmount });
     }
 
     /**
@@ -434,15 +401,15 @@ contract PendingWithdrawals is
         _removeWithdrawalRequest(request, id);
 
         // transfer the locked pool tokens back to the provider
-        request.poolToken.safeTransfer(request.provider, request.amount);
+        request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
 
-        emit WithdrawalCancelled(
-            request.poolToken.reserveToken(),
-            request.provider,
-            id,
-            request.amount,
-            uint32(_time().sub(request.createdAt))
-        );
+        emit WithdrawalCancelled({
+            pool: request.poolToken.reserveToken(),
+            provider: request.provider,
+            requestId: id,
+            poolTokenAmount: request.poolTokenAmount,
+            timeElapsed: uint32(_time().sub(request.createdAt))
+        });
     }
 
     /**

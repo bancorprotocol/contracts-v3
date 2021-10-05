@@ -1,13 +1,14 @@
 import { AccessControlUpgradeable } from '../../typechain';
 import { expect } from 'chai';
-import { ethers } from 'ethers';
-import { BigNumber } from 'ethers';
+import { utils, BigNumber } from 'ethers';
 
-const {
-    utils: { id }
-} = ethers;
+const { id } = utils;
 
 export const roles = {
+    Upgradeable: {
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+
     BancorVault: {
         ROLE_ADMIN: id('ROLE_ADMIN'),
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),

@@ -21,12 +21,13 @@ interface INetworkSettings is IUpgradeable {
     function isTokenWhitelisted(IReserveToken pool) external view returns (bool);
 
     /**
-     * @dev returns the network token minting limit for a given token
+     * @dev returns the network token minting limit for a given pool
      */
     function poolMintingLimit(IReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns the minimum network token liquidity required before the system enables trading in the relevant pool
+     * @dev returns the minimum network token trading liquidity required before the system enables trading in the
+     * relevant pool
      */
     function minLiquidityForTrading() external view returns (uint256);
 

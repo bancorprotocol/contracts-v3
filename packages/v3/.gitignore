@@ -7,10 +7,10 @@
 yarn-debug.log*
 yarn-error.log*
 
-cache
-artifacts
-data
-typechain
+/cache
+/artifacts
+/typechain
+/data
 
 .coverage_artifacts
 .coverage_contracts
@@ -23,3 +23,11 @@ scTopics
 contracts/hardhat-dependency-compiler
 
 config.json
+
+migration/data/hardhat
+migration/data/localhost
+migration/data/fork*
+
+migration/test/migration/data/hardhat
+migration/test/migration/data/localhost
+migration/test/migration/data/fork*

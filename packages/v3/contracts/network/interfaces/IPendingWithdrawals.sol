@@ -3,7 +3,6 @@ pragma solidity 0.7.6;
 pragma abicoder v2;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
@@ -13,31 +12,31 @@ import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
+ * @dev the data struct representing a pending withdrawal request
+ */
+struct WithdrawalRequest {
+    address provider; // the liquidity provider
+    IPoolToken poolToken; // the locked pool token
+    uint32 createdAt; // the time when the request was created (Unix timestamp))
+    uint256 poolTokenAmount; // the locked pool token amount
+}
+
+/**
+ * @dev the data struct representing a completed withdrawal request
+ */
+struct CompletedWithdrawal {
+    IPoolToken poolToken; // the transferred pool token
+    uint256 poolTokenAmount; // the transferred pool token amount
+}
+
+/**
  * @dev Pending Withdrawals interface
  */
 interface IPendingWithdrawals is IUpgradeable {
-    struct WithdrawalRequest {
-        // the version of the struct
-        uint16 version;
-        // the liquidity provider
-        address provider;
-        // the address of the locked pool token
-        IPoolToken poolToken;
-        // the time when the request was created (Unix timestamp))
-        uint32 createdAt;
-        // the locked pool token amount
-        uint256 amount;
-    }
-
     /**
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token pool contract
-     */
-    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the lock duration
@@ -80,10 +79,9 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function initWithdrawalDelegated(
+    function initWithdrawalPermitted(
         IPoolToken poolToken,
         uint256 poolTokenAmount,
-        address provider,
         uint256 deadline,
         uint8 v,
         bytes32 r,
@@ -109,17 +107,17 @@ interface IPendingWithdrawals is IUpgradeable {
     function reinitWithdrawal(uint256 id) external;
 
     /**
-     * @dev completes a withdrawal request and return the amount of pool tokens transferred
+     * @dev completes a withdrawal request and returns the pool token and its transferred amount
      *
      * requirements:
      *
+     * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - in order to complete a network token withdrawal, the caller must be the network token pool
-     * - in order to complete a base token withdrawal, the caller must be the pool collection that manages the pool
+     * - the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
      */
     function completeWithdrawal(
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external returns (uint256);
+    ) external returns (CompletedWithdrawal memory);
 }

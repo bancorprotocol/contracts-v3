@@ -1,16 +1,17 @@
 import Contracts from '../../components/Contracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, getBalance, transfer } from '../helpers/Utils';
+import { TokenWithAddress, getBalance, transfer, errorMessageTokenExceedsBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
-const { BancorVault: BancorVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
 
 let deployer: SignerWithAddress;
 let sender: SignerWithAddress;
@@ -42,10 +43,12 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
-            const { vault } = await createSystem();
+            const vault = await Contracts.BancorVault.deploy(reserveToken.address);
+            await vault.initialize();
 
             expect(await vault.version()).to.equal(1);
 
+            await expectRole(vault, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ADMIN, BancorVaultRoles.ROLE_ADMIN, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
                 deployer.address
@@ -55,7 +58,7 @@ describe('BancorVault', () => {
     });
 
     describe('asset management', () => {
-        let networkToken: TestERC20Token;
+        let networkToken: NetworkToken;
         let vault: BancorVault;
 
         beforeEach(async () => {
@@ -97,7 +100,7 @@ describe('BancorVault', () => {
 
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
-                        ).to.be.revertedWith(symbol !== 'ETH' ? 'ERC20: transfer amount exceeds balance' : '');
+                        ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
                     });
 
                     it('should be able to withdraw any tokens', async () => {
@@ -113,8 +116,8 @@ describe('BancorVault', () => {
                             .to.emit(vault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, partialAmount);
 
-                        let targetBalance = await getBalance(token, target.address);
-                        let vaultBalance = await getBalance(token, vault.address);
+                        const targetBalance = await getBalance(token, target.address);
+                        const vaultBalance = await getBalance(token, vault.address);
 
                         expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
                         expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
@@ -143,7 +146,7 @@ describe('BancorVault', () => {
                     });
                 };
 
-                const testWithdrawRestricted = (reason: string = 'ERR_ACCESS_DENIED') => {
+                const testWithdrawRestricted = (reason = 'ERR_ACCESS_DENIED') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amount)

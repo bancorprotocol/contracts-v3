@@ -35,3 +35,6 @@ jobs:
 
       - name: Test
         run: CI=1 yarn test
+
+      - name: Test Migration
+        run: CI=1 yarn test-migration

@@ -1,13 +1,24 @@
-import Contracts, { Contract, ContractBuilder } from '../../components/Contracts';
-import { BancorNetwork, PoolCollection, NetworkSettings, ProxyAdmin, TestERC20Token } from '../../typechain';
+import { ContractBuilder, Contract } from '../../components/ContractBuilder';
+import Contracts from '../../components/Contracts';
+import LegacyContracts from '../../components/LegacyContracts';
+import {
+    BancorVault,
+    NetworkSettings,
+    PoolToken,
+    PoolTokenFactory,
+    ProxyAdmin,
+    TestPoolCollection,
+    TestBancorNetwork
+} from '../../typechain';
 import { roles } from './AccessControl';
-import { NETWORK_TOKEN_POOL_TOKEN_SYMBOL, NETWORK_TOKEN_POOL_TOKEN_NAME } from './Constants';
-import { toAddress } from './Utils';
+import { DEFAULT_DECIMALS } from './Constants';
+import { toAddress, TokenWithAddress } from './Utils';
+import { TokenGovernance } from '@bancor/token-governance';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 import { isEqual } from 'lodash';
 
-const { TokenGovernance: TokenGovernanceRoles } = roles;
+const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 
@@ -25,7 +36,7 @@ interface Logic {
     contract: BaseContract;
 }
 
-let logicContractsCache: Record<string, Logic> = {};
+const logicContractsCache: Record<string, Logic> = {};
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -38,20 +49,21 @@ export const proxyAdmin = async () => {
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
     // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
-    const cached = logicContractsCache[factory.contractName];
+    const cached = logicContractsCache[factory.metadata.contractName];
     if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
         return cached.contract;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
-    logicContractsCache[factory.contractName] = { ctorArgs, contract: logicContract };
+    logicContractsCache[factory.metadata.contractName] = { ctorArgs, contract: logicContract };
 
     return logicContract;
 };
 
 const createTransparentProxy = async (
     logicContract: BaseContract,
-    skipInitialization: boolean = false,
+    skipInitialization = false,
     initArgs: InitArgs = []
 ) => {
     const admin = await proxyAdmin();
@@ -69,11 +81,17 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
-const createGovernedToken = async (name: string, symbol: string, totalSupply: BigNumber) => {
+const createGovernedToken = async <F extends ContractFactory>(
+    legacyFactory: ContractBuilder<F>,
+    totalSupply: BigNumber,
+    ...args: Parameters<F['deploy']>
+) => {
     const deployer = (await ethers.getSigners())[0];
 
-    const token = await Contracts.TestSystemToken.deploy(name, symbol, totalSupply);
-    const tokenGovernance = await Contracts.TestTokenGovernance.deploy(token.address);
+    const token = await legacyFactory.deploy(...args);
+    await token.issue(deployer.address, totalSupply);
+
+    const tokenGovernance = await LegacyContracts.TokenGovernance.deploy(token.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
     await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
     await token.transferOwnership(tokenGovernance.address);
@@ -84,58 +102,98 @@ const createGovernedToken = async (name: string, symbol: string, totalSupply: Bi
 
 export const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
+        LegacyContracts.NetworkToken,
+        TOTAL_SUPPLY,
         'BNT',
         'BNT',
-        TOTAL_SUPPLY
+        DEFAULT_DECIMALS
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
+        LegacyContracts.GovToken,
+        TOTAL_SUPPLY,
         'vBNT',
         'vBNT',
-        TOTAL_SUPPLY
+        DEFAULT_DECIMALS
     );
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
 
-export const createTokenHolder = async () => {
-    const tokenHolder = await Contracts.TokenHolderUpgradeable.deploy();
-    await tokenHolder.initialize();
+export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 
-    return tokenHolder;
+export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
+    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
+
+const createNetworkTokenPoolUninitialized = async (
+    network: TestBancorNetwork,
+    vault: BancorVault,
+    networkPoolToken: PoolToken,
+    networkTokenGovernance: TokenGovernance,
+    govTokenGovernance: TokenGovernance
+) => {
+    const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
+        skipInitialization: true,
+        ctorArgs: [network.address, networkPoolToken.address]
+    });
+
+    await networkPoolToken.acceptOwnership();
+    await networkPoolToken.transferOwnership(networkTokenPool.address);
+
+    await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
+    await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
+
+    await vault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, networkTokenPool.address);
+
+    return networkTokenPool;
 };
 
-export const createPoolCollection = async (network: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network));
+export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
+    const poolTokenAddress = await poolTokenFactory.callStatic.createPoolToken(toAddress(reserveToken));
+
+    await poolTokenFactory.createPoolToken(toAddress(reserveToken));
+
+    return Contracts.PoolToken.attach(poolTokenAddress);
+};
 
 export const createSystem = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
+    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+
+    const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
+    const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
+
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
-        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address, networkSettings.address]
+        ctorArgs: [
+            networkTokenGovernance.address,
+            govTokenGovernance.address,
+            networkSettings.address,
+            vault.address,
+            networkPoolToken.address
+        ]
     });
-
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
-    const networkTokenPoolToken = await Contracts.PoolToken.deploy(
-        NETWORK_TOKEN_POOL_TOKEN_NAME,
-        NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
-        networkToken.address
-    );
-    const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
-        skipInitialization: true,
-        ctorArgs: [network.address, vault.address, networkTokenPoolToken.address]
-    });
-    await networkTokenPoolToken.transferOwnership(networkTokenPool.address);
-    await networkTokenPool.initialize();
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address, networkTokenPool.address]
+        ctorArgs: [network.address]
     });
-    const poolCollection = await createPoolCollection(network);
+    const networkTokenPool = await createNetworkTokenPoolUninitialized(
+        network,
+        vault,
+        networkPoolToken,
+        networkTokenGovernance,
+        govTokenGovernance
+    );
 
-    await network.initialize(pendingWithdrawals.address);
+    await networkTokenPool.initialize();
+
+    const poolCollection = await createPoolCollection(network, poolTokenFactory);
+
+    await network.initialize(networkTokenPool.address, pendingWithdrawals.address);
+
+    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,
@@ -144,23 +202,27 @@ export const createSystem = async () => {
         networkTokenGovernance,
         govToken,
         govTokenGovernance,
-        networkTokenPoolToken,
+        networkPoolToken,
         vault,
         networkTokenPool,
         pendingWithdrawals,
+        poolTokenFactory,
         poolCollection
     };
 };
 
 export const createPool = async (
-    reserveToken: TestERC20Token,
-    network: BancorNetwork,
+    reserveToken: TokenWithAddress,
+    network: TestBancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: PoolCollection
+    poolCollection: TestPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
-    await network.addPoolCollection(poolCollection.address);
+    const poolCollections = await network.poolCollections();
+    if (!poolCollections.includes(poolCollection.address)) {
+        await network.addPoolCollection(poolCollection.address);
+    }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
     const pool = await poolCollection.poolData(reserveToken.address);

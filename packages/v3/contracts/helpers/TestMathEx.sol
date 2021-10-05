@@ -1,66 +1,37 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.7.6;
+pragma abicoder v2;
 
 import { MathEx } from "../utility/MathEx.sol";
+import { Fraction } from "../utility/Types.sol";
 
 contract TestMathEx {
-    using MathEx for *;
-
-    function floorSqrtTest(uint256 num) external pure returns (uint256) {
+    function floorSqrt(uint256 num) external pure returns (uint256) {
         return MathEx.floorSqrt(num);
     }
 
-    function ceilSqrtTest(uint256 num) external pure returns (uint256) {
+    function ceilSqrt(uint256 num) external pure returns (uint256) {
         return MathEx.ceilSqrt(num);
     }
 
-    function productRatioTest(
-        uint256 xn,
-        uint256 yn,
-        uint256 xd,
-        uint256 yd
-    ) external pure returns (uint256, uint256) {
-        return MathEx.productRatio(xn, yn, xd, yd);
+    function productRatio(Fraction memory x, Fraction memory y) external pure returns (Fraction memory) {
+        return MathEx.productRatio(x, y);
     }
 
-    function reducedRatioTest(
-        uint256 n,
-        uint256 d,
-        uint256 max
-    ) external pure returns (uint256, uint256) {
-        return MathEx.reducedRatio(n, d, max);
+    function reducedRatio(Fraction memory r, uint256 max) external pure returns (Fraction memory) {
+        return MathEx.reducedRatio(r, max);
     }
 
-    function normalizedRatioTest(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) external pure returns (uint256, uint256) {
-        return MathEx.normalizedRatio(a, b, scale);
+    function normalizedRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
+        return MathEx.normalizedRatio(r, scale);
     }
 
-    function accurateRatioTest(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) external pure returns (uint256, uint256) {
-        return MathEx.accurateRatio(a, b, scale);
+    function accurateRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
+        return MathEx.accurateRatio(r, scale);
     }
 
-    function roundDivTest(uint256 n, uint256 d) external pure returns (uint256) {
+    function roundDiv(uint256 n, uint256 d) external pure returns (uint256) {
         return MathEx.roundDiv(n, d);
-    }
-
-    function geometricMeanTest(uint256[] calldata values) external pure returns (uint256) {
-        return MathEx.geometricMean(values);
-    }
-
-    function decimalLengthTest(uint256 x) external pure returns (uint256) {
-        return MathEx.decimalLength(x);
-    }
-
-    function roundDivUnsafeTest(uint256 n, uint256 d) external pure returns (uint256) {
-        return MathEx.roundDivUnsafe(n, d);
     }
 
     function mulDivF(
@@ -77,5 +48,9 @@ contract TestMathEx {
         uint256 z
     ) external pure returns (uint256) {
         return MathEx.mulDivC(x, y, z);
+    }
+
+    function subMax0(uint256 n1, uint256 n2) external pure returns (uint256) {
+        return MathEx.subMax0(n1, n2);
     }
 }

@@ -15,13 +15,12 @@ In order to use some plugins, API keys or custom network with secret config we n
 
 ```json
 {
-    "apiKeys": {
-        "etherscan": ""
+    "keys": {
+        "etherscan": "XYZ"
     },
-
     "networks": {
         "mainnet": {
-            "url": ""
+            "url": "https://eth-mainnet.alchemyapi.io/v2/supersecretkey"
         }
     }
 }

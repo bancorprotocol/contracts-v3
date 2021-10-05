@@ -1,10 +1,18 @@
 {
-    "extends": ["standard", "prettier"],
+    "extends": ["standard", "prettier", "plugin:@typescript-eslint/recommended"],
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
     "env": {
         "mocha": true
     },
     "rules": {
         "max-len": ["error", 150, 2],
+        "camelcase": [
+            "error",
+            {
+                "ignoreImports": true
+            }
+        ],
         "indent": [
             "error",
             4,
@@ -19,7 +27,9 @@
         "no-continue": "off",
         "arrow-body-style": "off",
         "no-loop-func": "off",
-        "no-unused-expressions": "off"
+        "no-unused-expressions": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-explicit-any": "off"
     },
     "globals": {
         "assert": true,

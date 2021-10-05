@@ -6,11 +6,11 @@ import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers } from 'hardhat';
 
-let burnable: TestERC20Burnable;
-let owner: SignerWithAddress;
-let burner: SignerWithAddress;
-
 describe('ERC20Burnable', () => {
+    let burnable: TestERC20Burnable;
+    let owner: SignerWithAddress;
+    let burner: SignerWithAddress;
+
     before(async () => {
         [owner, burner] = await ethers.getSigners();
     });
@@ -108,7 +108,6 @@ describe('ERC20Burnable', () => {
         });
 
         it('should revert when the given amount is greater than the allowance', async () => {
-            const initialBalance = await burnable.balanceOf(owner.address);
             const allowance = BigNumber.from(100);
 
             await burnable.connect(owner).approve(burner.address, allowance);

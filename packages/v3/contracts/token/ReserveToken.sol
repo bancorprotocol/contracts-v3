@@ -3,6 +3,7 @@ pragma solidity 0.7.6;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import { IReserveToken } from "./interfaces/IReserveToken.sol";
@@ -16,14 +17,42 @@ library ReserveToken {
     using SafeERC20 for IERC20;
     using SafeERC20Ex for IERC20;
 
-    // the address that represents an ETH reserve
+    // the address that represents the native token reserve
     IReserveToken public constant NATIVE_TOKEN_ADDRESS = IReserveToken(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+    // the symbol that represents the native token
+    string private constant NATIVE_TOKEN_SYMBOL = "ETH";
+
+    // the ‏decimals for the native token
+    uint8 private constant NATIVE_TOKEN_DECIMALS = 18;
 
     /**
      * @dev returns whether the provided token represents an ERC20 or ETH reserve
      */
     function isNativeToken(IReserveToken reserveToken) internal pure returns (bool) {
         return reserveToken == NATIVE_TOKEN_ADDRESS;
+    }
+
+    /**
+     * @dev returns the symbol of the reserve token
+     */
+    function symbol(IReserveToken reserveToken) internal view returns (string memory) {
+        if (isNativeToken(reserveToken)) {
+            return NATIVE_TOKEN_SYMBOL;
+        }
+
+        return toERC20(reserveToken).symbol();
+    }
+
+    /**
+     * @dev returns the decimals of the reserve token
+     */
+    function decimals(IReserveToken reserveToken) internal view returns (uint8) {
+        if (isNativeToken(reserveToken)) {
+            return NATIVE_TOKEN_DECIMALS;
+        }
+
+        return toERC20(reserveToken).decimals();
     }
 
     /**
@@ -96,5 +125,12 @@ library ReserveToken {
      */
     function toIERC20(IReserveToken reserveToken) private pure returns (IERC20) {
         return IERC20(address(reserveToken));
+    }
+
+    /**
+     * @dev utility function that converts an IReserveToken to an ERC20
+     */
+    function toERC20(IReserveToken reserveToken) private pure returns (ERC20) {
+        return ERC20(address(reserveToken));
     }
 }

@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
@@ -19,14 +18,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
 /**
  * @dev Bancor Vault contract
  */
-contract BancorVault is
-    IBancorVault,
-    Upgradeable,
-    AccessControlUpgradeable,
-    PausableUpgradeable,
-    ReentrancyGuardUpgradeable,
-    Utils
-{
+contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeERC20 for IERC20;
     using ReserveToken for IReserveToken;
 
@@ -70,7 +62,7 @@ contract BancorVault is
      * @dev initializes the contract and its parents
      */
     function __BancorVault_init() internal initializer {
-        __AccessControl_init();
+        __Upgradeable_init();
         __Pausable_init();
         __ReentrancyGuard_init();
 
@@ -97,10 +89,6 @@ contract BancorVault is
         _hasRole(ROLE_ADMIN, msg.sender);
 
         _;
-    }
-
-    function _hasRole(bytes32 role, address account) internal view {
-        require(hasRole(role, account), "ERR_ACCESS_DENIED");
     }
 
     receive() external payable override {}
@@ -149,6 +137,6 @@ contract BancorVault is
 
         reserveToken.safeTransfer(target, amount);
 
-        emit TokensWithdrawn(reserveToken, msg.sender, target, amount);
+        emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
     }
 }

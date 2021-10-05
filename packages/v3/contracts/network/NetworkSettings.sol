@@ -4,7 +4,6 @@ pragma solidity 0.7.6;
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
-import { OwnedUpgradeable } from "../utility/OwnedUpgradeable.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 
@@ -15,7 +14,7 @@ import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 /**
  * @dev Network Settings contract
  */
-contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Utils {
+contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a set of tokens which are eligeble for protection
@@ -59,9 +58,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     event PoolMintingLimitUpdated(IReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
-     * @dev triggered when the minimum liquidity for trading amount is updated
+     * @dev triggered when the minimum liquidity for trading is updated
      */
-    event MinLiquidityForTradingUpdated(uint256 prevAmount, uint256 newAmount);
+    event MinLiquidityForTradingUpdated(uint256 prevLiquidity, uint256 newLiquidity);
 
     /**
      * @dev triggered when the network fee is updated
@@ -101,7 +100,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
      * @dev initializes the contract and its parents
      */
     function __NetworkSettings_init() internal initializer {
-        __Owned_init();
+        __Upgradeable_init();
 
         __NetworkSettings_init_unchained();
     }
@@ -142,7 +141,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     function addTokenToWhitelist(IReserveToken token) external onlyOwner validExternalAddress(address(token)) {
         require(_protectedTokenWhitelist.add(address(token)), "ERR_ALREADY_WHITELISTED");
 
-        emit TokenAddedToWhitelist(token);
+        emit TokenAddedToWhitelist({ token: token });
     }
 
     /**
@@ -155,7 +154,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
     function removeTokenFromWhitelist(IReserveToken token) external onlyOwner {
         require(_protectedTokenWhitelist.remove(address(token)), "ERR_NOT_WHITELISTED");
 
-        emit TokenRemovedFromWhitelist(token);
+        emit TokenRemovedFromWhitelist({ token: token });
     }
 
     /**
@@ -187,7 +186,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _poolMintingLimits[pool] = amount;
 
-        emit PoolMintingLimitUpdated(pool, prevPoolMintingLimit, amount);
+        emit PoolMintingLimitUpdated({ pool: pool, prevLimit: prevPoolMintingLimit, newLimit: amount });
     }
 
     /**
@@ -212,7 +211,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _minLiquidityForTrading = amount;
 
-        emit MinLiquidityForTradingUpdated(prevMinLiquidityForTrading, amount);
+        emit MinLiquidityForTradingUpdated({ prevLiquidity: prevMinLiquidityForTrading, newLiquidity: amount });
     }
 
     /**
@@ -255,7 +254,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _networkFeeWallet = newNetworkFeeWallet;
 
-        emit NetworkFeeWalletUpdated(prevNetworkFeeWallet, newNetworkFeeWallet);
+        emit NetworkFeeWalletUpdated({ prevWallet: prevNetworkFeeWallet, newWallet: newNetworkFeeWallet });
     }
 
     /**
@@ -273,7 +272,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _networkFeePPM = newNetworkFeePPM;
 
-        emit NetworkFeePPMUpdated(prevNetworkFeePPM, newNetworkFeePPM);
+        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
     }
 
     /**
@@ -298,7 +297,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _withdrawalFeePPM = newWithdrawalFeePPM;
 
-        emit WithdrawalFeePPMUpdated(prevWithdrawalFeePPM, newWithdrawalFeePPM);
+        emit WithdrawalFeePPMUpdated({ prevFeePPM: prevWithdrawalFeePPM, newFeePPM: newWithdrawalFeePPM });
     }
 
     /**
@@ -323,7 +322,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _flashLoanFeePPM = newFlashLoanFeePPM;
 
-        emit FlashLoanFeePPMUpdated(prevFlashLoanFeePPM, newFlashLoanFeePPM);
+        emit FlashLoanFeePPMUpdated({ prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
     }
 
     /**
@@ -352,6 +351,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, OwnedUpgradeable, Uti
 
         _averageRateMaxDeviationPPM = newAverageRateMaxDeviationPPM;
 
-        emit AverageRateMaxDeviationPPMUpdated(prevAverageRateMaxDeviationPPM, newAverageRateMaxDeviationPPM);
+        emit AverageRateMaxDeviationPPMUpdated({
+            prevDeviationPPM: prevAverageRateMaxDeviationPPM,
+            newDeviationPPM: newAverageRateMaxDeviationPPM
+        });
     }
 }
