@@ -15,7 +15,8 @@ import {
     NETWORK_TOKEN_POOL_TOKEN_NAME,
     NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
     PPM_RESOLUTION,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
@@ -195,7 +196,7 @@ describe('NetworkTokenPool', () => {
         beforeEach(async () => {
             ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         it('should return false for an invalid pool', async () => {
@@ -307,7 +308,7 @@ describe('NetworkTokenPool', () => {
             ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -489,7 +490,7 @@ describe('NetworkTokenPool', () => {
             ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -613,7 +614,7 @@ describe('NetworkTokenPool', () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         it('should revert when attempting to deposit from a non-network', async () => {
@@ -803,7 +804,7 @@ describe('NetworkTokenPool', () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         it('should revert when attempting to withdraw from a non-network', async () => {
@@ -1003,7 +1004,7 @@ describe('NetworkTokenPool', () => {
         beforeEach(async () => {
             ({ networkSettings, networkTokenPool, network } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
             await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
         });

@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from '../helpers/Constants';
+import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createTokenHolder, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -29,7 +29,7 @@ describe('NetworkSettings', () => {
     beforeEach(async () => {
         networkFeeWallet = await createTokenHolder();
 
-        reserveToken = await Contracts.TestERC20Token.deploy('TKN', 'TKN', TOTAL_SUPPLY);
+        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
 
     describe('construction', async () => {
@@ -117,7 +117,7 @@ describe('NetworkSettings', () => {
                     'ERR_NOT_WHITELISTED'
                 );
 
-                const reserveToken2 = await Contracts.TestERC20Token.deploy('TKN2', 'TKN2', TOTAL_SUPPLY);
+                const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
                 await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
                     'ERR_NOT_WHITELISTED'
                 );
