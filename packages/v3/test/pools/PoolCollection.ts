@@ -1464,7 +1464,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+                    ).to.be.revertedWith('InvalidPoo');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1474,7 +1474,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith('ERR_INVALID_POOLS');
+                        ).to.be.revertedWith('InvalidPoo');
                     }
                 });
 
@@ -1487,7 +1487,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith('ERR_INVALID_POOLS');
+                    ).to.be.revertedWith('InvalidPoo');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1497,7 +1497,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith('ERR_INVALID_POOLS');
+                        ).to.be.revertedWith('InvalidPoo');
                     }
                 });
 
