@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { SafeMath, SafeCast, SignedSafeMath, MathEx, Output, isDeficit, M } from "./Common.sol";
+import { SafeCast, SafeMath, SignedSafeMath, MathEx, Output, isDeficit, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for base token withdrawal
  */
 library ArbitrageFormula {
-    using SafeMath for uint256;
     using SafeCast for uint256;
+    using SafeMath for uint256;
     using SignedSafeMath for int256;
 
     struct Data {
