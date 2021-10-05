@@ -55,11 +55,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y).toInt256();            // ax(1-n)/e
-        output.r = MathEx.mulDivF(b, z, y);                       // bx(1-n)/e
-        output.s = MathEx.mulDivF(b + c, z, y);                   // x(1-n)(b+c)/e
-        output.t = MathEx.mulDivF(e - b - c, a.mul(z), b.mul(y)); // ax(1-n)(e-b-c)/be
-        output.q = output.p;                                      // ax(1-n)/e
+        output.p = MathEx.mulDivF(a, z, y).toInt256();           // ax(1-n)/e
+        output.r = MathEx.mulDivF(b, z, y);                      // bx(1-n)/e
+        output.s = MathEx.mulDivF(b + c, z, y);                  // x(1-n)(b+c)/e
+        output.t = MathEx.mulDivF(a * (e - b - c), z, b.mul(y)); // ax(1-n)(e-b-c)/be
+        output.q = output.p;                                     // ax(1-n)/e
     }
 
     /**
