@@ -55,7 +55,7 @@ const getContracts = (signer?: Signer) => ({
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
-    TestStakingRewards: deployOrAttach<TestStakingRewards__factory>('TestStakingRewards', signer),
+    TestStakingRewards: deployOrAttach('TestStakingRewards', TestStakingRewards__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
