@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
+import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 
@@ -125,7 +126,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     function protectedTokenWhitelist() external view override returns (IReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
         IReserveToken[] memory list = new IReserveToken[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             list[i] = IReserveToken(_protectedTokenWhitelist.at(i));
         }
         return list;

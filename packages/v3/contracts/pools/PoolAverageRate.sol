@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-
 import { MathEx } from "../utility/MathEx.sol";
-import { MAX_UINT112, PPM_RESOLUTION } from "../utility/Constants.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
 
 struct AverageRate {
@@ -17,8 +15,6 @@ struct AverageRate {
  * @dev Pool average-rate calculation helper library
  */
 library PoolAverageRate {
-    using SafeMath for uint256;
-
     // the average rate (TWA) window length
     uint256 private constant AVERAGE_RATE_PERIOD = 10 minutes;
 
@@ -44,7 +40,10 @@ library PoolAverageRate {
         uint32 currentTime
     ) internal pure returns (AverageRate memory) {
         // get the elapsed time since the previous average rate was calculated
-        uint256 timeElapsed = currentTime - averageRate.time;
+        uint256 timeElapsed;
+        unchecked {
+            timeElapsed = currentTime - averageRate.time;
+        }
 
         // if the previous average rate was calculated in the current block, the average rate remains unchanged
         if (timeElapsed == 0) {
@@ -54,20 +53,24 @@ library PoolAverageRate {
         // if the previous average rate was calculated a while ago (or never), the average rate should be equal to the
         // spot rate
         if (timeElapsed >= AVERAGE_RATE_PERIOD || averageRate.time == 0) {
-            return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, MAX_UINT112) });
+            return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, type(uint112).max) });
         }
 
         // calculate the new average rate
-        uint256 x = averageRate.rate.d.mul(spotRate.n);
-        uint256 y = averageRate.rate.n.mul(spotRate.d);
+        uint256 x = averageRate.rate.d * spotRate.n;
+        uint256 y = averageRate.rate.n * spotRate.d;
 
-        // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid using SafeMath:
+        // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
+        uint256 remainingWindow;
+        unchecked {
+            remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
+        }
         Fraction memory newRate = Fraction({
-            n: y.mul(AVERAGE_RATE_PERIOD - timeElapsed).add(x.mul(timeElapsed)),
-            d: averageRate.rate.d.mul(spotRate.d).mul(AVERAGE_RATE_PERIOD)
+            n: (y * remainingWindow) + x * timeElapsed,
+            d: averageRate.rate.d * spotRate.d * AVERAGE_RATE_PERIOD
         });
 
-        newRate = MathEx.reducedRatio(newRate, MAX_UINT112);
+        newRate = MathEx.reducedRatio(newRate, type(uint112).max);
 
         return AverageRate({ time: currentTime, rate: newRate });
     }
@@ -88,10 +91,16 @@ library PoolAverageRate {
         AverageRate memory averageRate,
         uint32 maxDeviation
     ) internal pure returns (bool) {
-        uint256 d = averageRate.rate.d.mul(spotRate.n);
-        uint256 min = MathEx.mulDivC(d, PPM_RESOLUTION - maxDeviation, PPM_RESOLUTION);
-        uint256 mid = averageRate.rate.n.mul(spotRate.d);
-        uint256 max = MathEx.mulDivF(d, PPM_RESOLUTION + maxDeviation, PPM_RESOLUTION);
+        uint256 lowerBound;
+        uint256 upperBound;
+        unchecked {
+            lowerBound = PPM_RESOLUTION - maxDeviation;
+            upperBound = PPM_RESOLUTION + maxDeviation;
+        }
+        uint256 d = averageRate.rate.d * spotRate.n;
+        uint256 min = MathEx.mulDivC(d, lowerBound, PPM_RESOLUTION);
+        uint256 mid = averageRate.rate.n * spotRate.d;
+        uint256 max = MathEx.mulDivF(d, upperBound, PPM_RESOLUTION);
 
         return min <= mid && mid <= max;
     }
@@ -100,6 +109,6 @@ library PoolAverageRate {
      * @dev compares two average rates
      */
     function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) internal pure returns (bool) {
-        return averageRate1.rate.n.mul(averageRate2.rate.d) == averageRate2.rate.n.mul(averageRate1.rate.d);
+        return averageRate1.rate.n * averageRate2.rate.d == averageRate2.rate.n * averageRate1.rate.d;
     }
 }

@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.7.6',
+                version: '0.8.9',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -54,8 +54,8 @@ const config: HardhatUserConfig = {
 
     dependencyCompiler: {
         paths: [
-            '@openzeppelin/contracts/proxy/ProxyAdmin.sol',
-            '@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol'
+            '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
+            '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol'
         ]
     },
 

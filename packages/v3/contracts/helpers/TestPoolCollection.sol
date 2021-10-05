@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -62,8 +62,8 @@ contract TestPoolCollection is PoolCollection, TestTime {
         uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
         uint256 baseTokenWalletBalance,
-        uint256 tradeFeePPM,
-        uint256 withdrawalFeePPM,
+        uint32 tradeFeePPM,
+        uint32 withdrawalFeePPM,
         uint256 basePoolTokenWithdrawalAmount
     ) external pure returns (WithdrawalAmounts memory) {
         return

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
