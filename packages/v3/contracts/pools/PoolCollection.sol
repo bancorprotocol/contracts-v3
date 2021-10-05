@@ -177,10 +177,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         require(_isFractionValid(rate), "ERR_INVALID_RATE");
     }
 
-    function _isUint128(uint256 amount) internal pure {
-        require(amount <= type(uint128).max, "ERR_INVALID_AMOUNT");
-    }
-
     /**
      * @dev returns the current version of the contract
      */
@@ -868,13 +864,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint32 n, // withdrawalFeePPM
         uint256 x // baseTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) { unchecked {
-        _isUint128(a);
-        _isUint128(b);
-        _isUint128(c);
-        _isUint128(e);
-        _isUint128(x);
-        _validFee(m);
-        _validFee(n);
+        require(
+            a <= type(uint128).max &&
+            b <= type(uint128).max &&
+            c <= type(uint128).max &&
+            e <= type(uint128).max &&
+            m <= PPM_RESOLUTION / 2 &&
+            n <= PPM_RESOLUTION / 2 &&
+            x <= e, "ERR_INVALID_WITHDRAWAL_INPUT"
+        );
 
         Output memory output;
 
