@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Burnable } from '../../typechain';
-import { Errors, ZERO_ADDRESS } from '../helpers/Constants';
+import { ZERO_ADDRESS } from '../helpers/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
@@ -103,7 +103,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, amount);
             await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWith(
-                Errors.InsufficientAllowance()
+                'InsufficientAllowance'
             );
         });
 
@@ -112,7 +112,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, allowance);
             await expect(burnable.connect(owner).burnFrom(owner.address, allowance.add(1))).to.be.revertedWith(
-                Errors.InsufficientAllowance()
+                'InsufficientAllowance'
             );
         });
     });

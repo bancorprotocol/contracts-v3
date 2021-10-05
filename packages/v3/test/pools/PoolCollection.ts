@@ -10,7 +10,6 @@ import {
     TestPoolAverageRate
 } from '../../typechain';
 import {
-    Errors,
     INVALID_FRACTION,
     MAX_UINT256,
     PPM_RESOLUTION,
@@ -52,7 +51,7 @@ describe('PoolCollection', () => {
             const { poolTokenFactory } = await createSystem();
 
             await expect(Contracts.PoolCollection.deploy(ZERO_ADDRESS, poolTokenFactory.address)).to.be.revertedWith(
-                Errors.InvalidAddress()
+                'InvalidAddress()'
             );
         });
 
@@ -60,7 +59,7 @@ describe('PoolCollection', () => {
             const { network } = await createSystem();
 
             await expect(Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                Errors.InvalidAddress()
+                'InvalidAddress()'
             );
         });
 
@@ -105,13 +104,13 @@ describe('PoolCollection', () => {
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
             await expect(
                 poolCollection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFree)
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
             await expect(
                 poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith(Errors.InvalidFee());
+            ).to.be.revertedWith('InvalidFee');
         });
 
         it('should ignore updating to the same default trading fee', async () => {
@@ -169,13 +168,13 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                    Errors.AccessDenied()
+                    'AccessDenied()'
                 );
             });
 
             it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
                 await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                    Errors.NotWhitelisted()
+                    'NotWhitelisted()'
                 );
             });
 
@@ -188,7 +187,7 @@ describe('PoolCollection', () => {
                     await network.createPoolT(poolCollection.address, reserveToken.address);
 
                     await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                        Errors.AlreadyExists()
+                        'AlreadyExists()'
                     );
                 });
 
@@ -283,7 +282,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the initial rate', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setInitialRate(reserveToken.address, newInitialRate)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when setting an invalid rate', async () => {
@@ -292,19 +291,19 @@ describe('PoolCollection', () => {
                         n: BigNumber.from(1000),
                         d: BigNumber.from(0)
                     })
-                ).to.be.revertedWith(Errors.InvalidRate());
+                ).to.be.revertedWith('InvalidRate');
 
                 await expect(
                     poolCollection.setInitialRate(reserveToken.address, {
                         n: BigNumber.from(0),
                         d: BigNumber.from(1000)
                     })
-                ).to.be.revertedWith(Errors.InvalidRate());
+                ).to.be.revertedWith('InvalidRate');
             });
 
             it('should revert when setting the initial rate of a non-existing pool', async () => {
                 await expect(poolCollection.setInitialRate(newReserveToken.address, newInitialRate)).to.be.revertedWith(
-                    Errors.DoesNotExist()
+                    'DoesNotExist()'
                 );
             });
 
@@ -347,19 +346,19 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the trading fee', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setTradingFeePPM(reserveToken.address, newTradingFee)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when setting an invalid trading fee', async () => {
                 await expect(
                     poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION.add(BigNumber.from(1)))
-                ).to.be.revertedWith(Errors.InvalidFee());
+                ).to.be.revertedWith('InvalidFee');
             });
 
             it('should revert when setting the trading fee of a non-existing pool', async () => {
                 await expect(
                     poolCollection.setTradingFeePPM(newReserveToken.address, newTradingFee)
-                ).to.be.revertedWith(Errors.DoesNotExist());
+                ).to.be.revertedWith('DoesNotExist');
             });
 
             it('should ignore updating to the same trading fee', async () => {
@@ -399,12 +398,12 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to enable trading', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableTrading(reserveToken.address, true)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when enabling trading for a non-existing pool', async () => {
                 await expect(poolCollection.enableTrading(newReserveToken.address, true)).to.be.revertedWith(
-                    Errors.DoesNotExist()
+                    'DoesNotExist()'
                 );
             });
 
@@ -444,12 +443,12 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to enable depositing', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableDepositing(reserveToken.address, true)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when enabling depositing for a non-existing pool', async () => {
                 await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWith(
-                    Errors.DoesNotExist()
+                    'DoesNotExist()'
                 );
             });
 
@@ -487,13 +486,13 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the deposit limit', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setDepositLimit(reserveToken.address, newDepositLimit)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when setting the deposit limit of a non-existing pool', async () => {
                 await expect(
                     poolCollection.setDepositLimit(newReserveToken.address, newDepositLimit)
-                ).to.be.revertedWith(Errors.DoesNotExist());
+                ).to.be.revertedWith('DoesNotExist');
             });
 
             it('should ignore updating to the same deposit limit', async () => {
@@ -897,7 +896,7 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonNetwork)
                         .depositFor(provider.address, reserveToken.address, BigNumber.from(1), BigNumber.from(2))
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when attempting to deposit for an invalid provider', async () => {
@@ -909,7 +908,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(1),
                         BigNumber.from(2)
                     )
-                ).to.be.revertedWith(Errors.InvalidAddress());
+                ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to deposit for an invalid pool', async () => {
@@ -921,7 +920,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(1),
                         BigNumber.from(2)
                     )
-                ).to.be.revertedWith(Errors.InvalidAddress());
+                ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to deposit into a pool that does not exist', async () => {
@@ -933,7 +932,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(1),
                         BigNumber.from(2)
                     )
-                ).to.be.revertedWith(Errors.DoesNotExist());
+                ).to.be.revertedWith('DoesNotExist');
             });
 
             it('should revert when attempting to deposit an invalid amount', async () => {
@@ -945,7 +944,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(0),
                         BigNumber.from(2)
                     )
-                ).to.be.revertedWith(Errors.ZeroValue());
+                ).to.be.revertedWith('ZeroValue');
             });
 
             context('with a registered pool', () => {
@@ -982,7 +981,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 MAX_UINT256
                             )
-                        ).to.be.revertedWith(Errors.DepositLimitExceeded());
+                        ).to.be.revertedWith('DepositLimitExceeded');
                     });
                 });
 
@@ -1101,7 +1100,7 @@ describe('PoolCollection', () => {
                                     BigNumber.from(1),
                                     MAX_UINT256
                                 )
-                            ).to.be.revertedWith(Errors.MinLiquidityNotSet());
+                            ).to.be.revertedWith('MinLiquidityNotSet');
                         });
                     });
 
@@ -1123,7 +1122,7 @@ describe('PoolCollection', () => {
                                             BigNumber.from(1),
                                             MAX_UINT256
                                         )
-                                    ).to.be.revertedWith(Errors.NoInitialRate());
+                                    ).to.be.revertedWith('NoInitialRate');
                                 });
                             });
 
@@ -1240,7 +1239,7 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonNetwork)
                         .withdraw(reserveToken.address, BigNumber.from(1), BigNumber.from(1), BigNumber.from(1))
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when attempting to withdraw from an invalid pool', async () => {
@@ -1252,7 +1251,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(1),
                         BigNumber.from(1)
                     )
-                ).to.be.revertedWith(Errors.InvalidAddress());
+                ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to withdraw an invalid amount', async () => {
@@ -1264,7 +1263,7 @@ describe('PoolCollection', () => {
                         BigNumber.from(1),
                         BigNumber.from(1)
                     )
-                ).to.be.revertedWith(Errors.ZeroValue());
+                ).to.be.revertedWith('ZeroValue');
             });
 
             it('should reset the average rate when the pool is emptied', async () => {
@@ -1355,7 +1354,7 @@ describe('PoolCollection', () => {
                         poolCollection
                             .connect(nonNetwork)
                             .trade(sourceToken.address, targetToken.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
-                    ).to.be.revertedWith(Errors.AccessDenied());
+                    ).to.be.revertedWith('AccessDenied');
                 });
 
                 it('should revert when attempting to trade or query using an invalid source pool', async () => {
@@ -1367,7 +1366,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith(Errors.InvalidAddress());
+                    ).to.be.revertedWith('InvalidAddress');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1377,7 +1376,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith(Errors.InvalidAddress());
+                        ).to.be.revertedWith('InvalidAddress');
                     }
                 });
 
@@ -1390,7 +1389,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith(Errors.InvalidAddress());
+                    ).to.be.revertedWith('InvalidAddress');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1400,7 +1399,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith(Errors.InvalidAddress());
+                        ).to.be.revertedWith('InvalidAddress');
                     }
                 });
 
@@ -1415,7 +1414,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith(Errors.DoesNotExist());
+                    ).to.be.revertedWith('DoesNotExist');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1425,7 +1424,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith(Errors.DoesNotExist());
+                        ).to.be.revertedWith('DoesNotExist');
                     }
                 });
 
@@ -1440,7 +1439,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith(Errors.DoesNotExist());
+                    ).to.be.revertedWith('DoesNotExist');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1450,7 +1449,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 targetAmount
                             )
-                        ).to.be.revertedWith(Errors.DoesNotExist());
+                        ).to.be.revertedWith('DoesNotExist');
                     }
                 });
 
@@ -1511,7 +1510,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(0),
                             MIN_RETURN_AMOUNT
                         )
-                    ).to.be.revertedWith(Errors.ZeroValue());
+                    ).to.be.revertedWith('ZeroValue');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
@@ -1521,7 +1520,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(0),
                                 targetAmount
                             )
-                        ).to.be.revertedWith(Errors.ZeroValue());
+                        ).to.be.revertedWith('ZeroValue');
                     }
                 });
 
@@ -1534,7 +1533,7 @@ describe('PoolCollection', () => {
                             BigNumber.from(1),
                             BigNumber.from(0)
                         )
-                    ).to.be.revertedWith(Errors.ZeroValue());
+                    ).to.be.revertedWith('ZeroValue');
                 });
 
                 context('when trading is disabled', () => {
@@ -1551,7 +1550,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith(Errors.TradingDisabled());
+                        ).to.be.revertedWith('TradingDisabled');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1561,7 +1560,7 @@ describe('PoolCollection', () => {
                                     BigNumber.from(1),
                                     targetAmount
                                 )
-                            ).to.be.revertedWith(Errors.TradingDisabled());
+                            ).to.be.revertedWith('TradingDisabled');
                         }
                     });
                 });
@@ -1576,7 +1575,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith(Errors.NetworkLiquidityTooLow());
+                        ).to.be.revertedWith('NetworkLiquidityTooLow');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1586,7 +1585,7 @@ describe('PoolCollection', () => {
                                     BigNumber.from(1),
                                     targetAmount
                                 )
-                            ).to.be.revertedWith(Errors.NetworkLiquidityTooLow());
+                            ).to.be.revertedWith('NetworkLiquidityTooLow');
                         }
                     });
                 });
@@ -1618,7 +1617,7 @@ describe('PoolCollection', () => {
                                     BigNumber.from(1),
                                     MIN_RETURN_AMOUNT
                                 )
-                            ).to.be.revertedWith(Errors.ZeroTargetAmount());
+                            ).to.be.revertedWith('ZeroTargetAmount');
                         });
 
                         it('should revert when the trade result is below the minimum return amount', async () => {
@@ -1630,7 +1629,7 @@ describe('PoolCollection', () => {
                                     toWei(BigNumber.from(12345)),
                                     MAX_UINT256
                                 )
-                            ).to.be.revertedWith(Errors.ReturnAmountTooLow());
+                            ).to.be.revertedWith('ReturnAmountTooLow');
                         });
                     });
                 });
@@ -1664,7 +1663,7 @@ describe('PoolCollection', () => {
                                         amount,
                                         MIN_RETURN_AMOUNT
                                     )
-                                ).to.be.revertedWith(Errors.InvalidPoolBalance());
+                                ).to.be.revertedWith('InvalidPoolBalance');
 
                                 for (const targetAmount of [true, false]) {
                                     await expect(
@@ -1674,7 +1673,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             targetAmount
                                         )
-                                    ).to.be.revertedWith(Errors.InvalidPoolBalance());
+                                    ).to.be.revertedWith('InvalidPoolBalance');
                                 }
                             });
                         });
@@ -1706,7 +1705,7 @@ describe('PoolCollection', () => {
                                         amount,
                                         MIN_RETURN_AMOUNT
                                     )
-                                ).to.be.revertedWith(Errors.InvalidPoolBalance());
+                                ).to.be.revertedWith('InvalidPoolBalance');
 
                                 for (const targetAmount of [true, false]) {
                                     await expect(
@@ -1718,7 +1717,7 @@ describe('PoolCollection', () => {
                                         )
                                     ).to.be.revertedWith(
                                         targetAmount
-                                            ? Errors.InvalidPoolBalance()
+                                            ? 'InvalidPoolBalance'
                                             : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
                                     );
                                 }
@@ -2009,13 +2008,13 @@ describe('PoolCollection', () => {
 
             await expect(
                 poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
                 network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, BigNumber.from(1))
-            ).to.be.revertedWith(Errors.InvalidAddress());
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to notify about collected fee from a non-existing pool', async () => {
@@ -2023,7 +2022,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, BigNumber.from(1))
-            ).to.be.revertedWith(Errors.DoesNotExist());
+            ).to.be.revertedWith('DoesNotExist');
         });
 
         for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {

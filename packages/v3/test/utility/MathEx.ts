@@ -97,7 +97,7 @@ describe('MathEx', () => {
                 const actual = await mathContract[methodName](a, b, c);
                 expect(actual).to.equal(expected);
             } else {
-                await expect(mathContract[methodName](a, b, c)).to.be.revertedWith('Overflow()');
+                await expect(mathContract[methodName](a, b, c)).to.be.revertedWith('Overflow');
             }
         });
     };

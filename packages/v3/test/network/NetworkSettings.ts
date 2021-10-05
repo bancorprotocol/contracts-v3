@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { Errors, ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createTokenHolder, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -75,19 +75,19 @@ describe('NetworkSettings', () => {
             it('should revert when a non-owner attempts to add a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).addTokenToWhitelist(reserveToken.address)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when adding an invalid address', async () => {
                 await expect(networkSettings.addTokenToWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
-                    Errors.InvalidExternalAddress()
+                    'InvalidExternalAddress()'
                 );
             });
 
             it('should revert when adding an already whitelisted token', async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
                 await expect(networkSettings.addTokenToWhitelist(reserveToken.address)).to.be.revertedWith(
-                    Errors.AlreadyExists()
+                    'AlreadyExists()'
                 );
             });
 
@@ -109,17 +109,17 @@ describe('NetworkSettings', () => {
             it('should revert when a non-owner attempts to remove a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).removeTokenFromWhitelist(reserveToken.address)
-                ).to.be.revertedWith(Errors.AccessDenied());
+                ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when removing a non-whitelisted token', async () => {
                 await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
-                    Errors.DoesNotExist()
+                    'DoesNotExist()'
                 );
 
                 const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
                 await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
-                    Errors.DoesNotExist()
+                    'DoesNotExist()'
                 );
             });
 
@@ -145,12 +145,12 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set a pool limit', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setPoolMintingLimit(reserveToken.address, poolMintingLimit)
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when setting a pool limit of an invalid address token', async () => {
             await expect(networkSettings.setPoolMintingLimit(ZERO_ADDRESS, poolMintingLimit)).to.be.revertedWith(
-                Errors.InvalidAddress()
+                'InvalidAddress()'
             );
         });
 
@@ -191,7 +191,7 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setMinLiquidityForTrading(minLiquidityForTrading)
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should ignore setting to the same minimum liquidity for trading', async () => {
@@ -246,19 +246,19 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the network fee params', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setNetworkFeeWallet(newNetworkFeeWallet.address)
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
             await expect(networkSettings.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWith(
-                Errors.AccessDenied()
+                'AccessDenied()'
             );
         });
 
         it('should revert when setting the network wallet to an invalid address', async () => {
-            await expect(networkSettings.setNetworkFeeWallet(ZERO_ADDRESS)).to.be.revertedWith(Errors.InvalidAddress());
+            await expect(networkSettings.setNetworkFeeWallet(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when setting the network fee to an invalid value', async () => {
             await expect(networkSettings.setNetworkFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                Errors.InvalidFee()
+                'InvalidFee()'
             );
         });
 
@@ -316,13 +316,13 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
             await expect(networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
-                Errors.AccessDenied()
+                'AccessDenied()'
             );
         });
 
         it('should revert when setting the withdrawal fee to an invalid value', async () => {
             await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                Errors.InvalidFee()
+                'InvalidFee()'
             );
         });
 
@@ -362,13 +362,13 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
             await expect(networkSettings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
-                Errors.AccessDenied()
+                'AccessDenied()'
             );
         });
 
         it('should revert when setting the flash-loan fee to an invalid value', async () => {
             await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                Errors.InvalidFee()
+                'InvalidFee()'
             );
         });
 
@@ -409,17 +409,17 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the maximum deviation', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setAverageRateMaxDeviationPPM(newMaxDeviation)
-            ).to.be.revertedWith(Errors.AccessDenied());
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when setting the maximum deviation to an invalid value', async () => {
             await expect(networkSettings.setAverageRateMaxDeviationPPM(BigNumber.from(0))).to.be.revertedWith(
-                Errors.InvalidPortion()
+                'InvalidPortion()'
             );
 
             await expect(
                 networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith(Errors.InvalidPortion());
+            ).to.be.revertedWith('InvalidPortion');
         });
 
         it('should ignore updating to the same maximum deviation', async () => {

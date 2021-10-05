@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { Errors, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
@@ -45,7 +45,7 @@ describe('BancorVault', () => {
         });
 
         it('should revert when initialized with an invalid network token', async () => {
-            await expect(Contracts.BancorVault.deploy(ZERO_ADDRESS)).to.be.revertedWith(Errors.InvalidAddress());
+            await expect(Contracts.BancorVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -136,7 +136,7 @@ describe('BancorVault', () => {
                     });
                 };
 
-                const testWithdrawRestricted = (reason = Errors.AccessDenied()) => {
+                const testWithdrawRestricted = (reason = 'AccessDenied()') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amount)
@@ -159,7 +159,7 @@ describe('BancorVault', () => {
 
                 it('should revert when withdrawing tokens to an invalid address', async () => {
                     await expect(vault.withdrawTokens(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
-                        Errors.InvalidAddress()
+                        'InvalidAddress()'
                     );
                 });
 
@@ -240,7 +240,7 @@ describe('BancorVault', () => {
 
         const testPauseRestricted = () => {
             it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(vault.connect(sender).pause()).to.be.revertedWith(Errors.AccessDenied());
+                await expect(vault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
             });
 
             context('when paused', () => {
@@ -252,7 +252,7 @@ describe('BancorVault', () => {
                 });
 
                 it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(vault.connect(sender).unpause()).to.be.revertedWith(Errors.AccessDenied());
+                    await expect(vault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
                 });
             });
         };
