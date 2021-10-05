@@ -6,6 +6,8 @@ import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgr
 
 import { IUpgradeable } from "./interfaces/IUpgradeable.sol";
 
+import { AccessDenied } from "./Utils.sol";
+
 /**
  * @dev this contract provides common utilities for upgradeable contracts
  */
@@ -46,6 +48,8 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
     }
 
     function _hasRole(bytes32 role, address account) internal view {
-        require(hasRole(role, account), "ERR_ACCESS_DENIED");
+        if (!hasRole(role, account)) {
+            revert AccessDenied();
+        }
     }
 }

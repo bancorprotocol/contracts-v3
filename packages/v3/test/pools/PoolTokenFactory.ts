@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
+import { Errors, ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
@@ -61,7 +61,7 @@ describe('PoolTokenFactory', () => {
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
             await expect(
                 poolTokenFactory.connect(nonOwner).setTokenSymbolOverride(reserveToken.address, newSymbol)
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith(Errors.AccessDenied());
         });
 
         it('should be able to set and update a token symbol override', async () => {
@@ -93,7 +93,7 @@ describe('PoolTokenFactory', () => {
         it('should revert when a non-owner attempts to set a token decimal override', async () => {
             await expect(
                 poolTokenFactory.connect(nonOwner).setTokenDecimalsOverride(reserveToken.address, newDecimals)
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith(Errors.AccessDenied());
         });
 
         it('should be able to set and update a token decimal override', async () => {
@@ -126,7 +126,9 @@ describe('PoolTokenFactory', () => {
             });
 
             it('should revert when attempting to create a pool for an invalid token', async () => {
-                await expect(createPoolToken(poolTokenFactory, ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                await expect(createPoolToken(poolTokenFactory, ZERO_ADDRESS)).to.be.revertedWith(
+                    Errors.InvalidAddress()
+                );
             });
 
             it('should create a pool token and transfer ownership', async () => {

@@ -8,7 +8,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, AccessDenied } from "../utility/Utils.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
@@ -128,11 +128,12 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         address payable target,
         uint256 amount
     ) external override validAddress(target) nonReentrant whenNotPaused {
-        require(
-            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
-                hasRole(ROLE_ASSET_MANAGER, msg.sender),
-            "ERR_ACCESS_DENIED"
-        );
+        if (
+            (reserveToken.toIERC20() != _networkToken || !hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) &&
+            !hasRole(ROLE_ASSET_MANAGER, msg.sender)
+        ) {
+            revert AccessDenied();
+        }
 
         reserveToken.safeTransfer(target, amount);
 

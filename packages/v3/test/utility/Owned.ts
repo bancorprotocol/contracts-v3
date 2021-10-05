@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestOwned } from '../../typechain';
+import { Errors } from '../helpers/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -52,7 +53,7 @@ describe('Owned', () => {
 
     it('verifies that only the owner can initiate ownership transfer', async () => {
         await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith(
-            'ERR_ACCESS_DENIED'
+            Errors.AccessDenied()
         );
     });
 
@@ -63,7 +64,7 @@ describe('Owned', () => {
         expect(await contract.newOwner()).to.equal(ethers.constants.AddressZero);
     });
 
-    it("verifies that it's not possible to transfer ownership to the same owner", async () => {
-        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith('ERR_SAME_OWNER');
+    it.only("verifies that it's not possible to transfer ownership to the same owner", async () => {
+        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith(Errors.SameOwner());
     });
 });

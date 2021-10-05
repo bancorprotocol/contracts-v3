@@ -18,8 +18,52 @@ export const ZERO_FRACTION = { n: BigNumber.from(0), d: BigNumber.from(1) };
 export const PPM_RESOLUTION = BigNumber.from(1_000_000);
 export const NETWORK_TOKEN_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
 export const NETWORK_TOKEN_POOL_TOKEN_SYMBOL = `bn${BNT}`;
-export const FEE_TYPES = {
+export const FeeTypes = {
     Trading: 0,
     Withdrawal: 1,
     FlashLoan: 2
 };
+
+// TODO: Common, BancorNetwork, etc.
+// move to errors
+enum CustomError {
+    AccessDenied,
+    AlreadyExists,
+    DeadlineExpired,
+    DepositLimitExceeded,
+    EthAmountMismatch,
+    InsufficientAllowance,
+    InvalidAddress,
+    InvalidExternalAddress,
+    InvalidFee,
+    InvalidPool,
+    InvalidPoolBalance,
+    InvalidPortion,
+    InvalidRate,
+    InvalidToken,
+    InvalidTokens,
+    InvalidType,
+    MintingLimitExceeded,
+    MinLiquidityNotSet,
+    NetworkLiquidityDisabled,
+    NetworkLiquidityTooLow,
+    NoInitialRate,
+    NotWhitelisted,
+    PermitUnsupported,
+    ReturnAmountTooLow,
+    SameOwner,
+    TradingDisabled,
+    WithdrawalNotAllowed,
+    ZeroTargetAmount,
+    ZeroValue
+}
+
+// export all the errors as functors such that it'd be possible to write parametrized expectations such
+// as: revertedWith(Errors.SomeError(1, "Error"))
+const ErrorTypes = Object.keys(CustomError).filter((x) => !(parseInt(x) >= 0));
+type CustomErrors = {
+    [key: typeof ErrorTypes[number]]: (...args: any[]) => string;
+};
+export const Errors: CustomErrors = Object.fromEntries(
+    ErrorTypes.map((err: string) => [err, (...args: any[]) => `${err}(${args.join(', ')})`])
+);

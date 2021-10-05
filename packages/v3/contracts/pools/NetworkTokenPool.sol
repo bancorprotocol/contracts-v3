@@ -11,7 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, InvalidStakedBalance } from "../utility/Utils.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
 import { MathEx } from "../utility/MathEx.sol";
@@ -27,6 +27,8 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+
+error MintingLimitExceeded();
 
 /**
  * @dev Network Token Pool contract
@@ -339,13 +341,21 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external override only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(ReserveToken.unwrap(pool))
+        greaterThanZero(networkTokenAmount)
+    {
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 mintingLimit = _settings.poolMintingLimit(pool);
         uint256 newMintedAmount = currentMintedAmount + networkTokenAmount;
 
         // verify that the new minted amount doesn't exceed the limit
-        require(newMintedAmount <= mintingLimit, "ERR_MINTING_LIMIT_EXCEEDED");
+        if (newMintedAmount > mintingLimit) {
+            revert MintingLimitExceeded();
+        }
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = _stakedBalance;
@@ -353,7 +363,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
             // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
-            require(currentStakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+            if (currentStakedBalance > 0) {
+                revert InvalidStakedBalance();
+            }
 
             poolTokenAmount = networkTokenAmount;
         } else {
@@ -387,7 +399,13 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external override only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
+    )
+        external
+        override
+        only(address(_network))
+        validAddress(ReserveToken.unwrap(pool))
+        greaterThanZero(networkTokenAmount)
+    {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the renounced amount to deduct from both the staked balance and pool minted amount
