@@ -6,7 +6,6 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { Math } from "@openzeppelin/contracts/math/Math.sol";
 
 import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -23,7 +22,17 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
-import { IPoolCollection, PoolLiquidity, Pool, DepositAmounts, WithdrawalAmounts, TradeAmounts } from "./interfaces/IPoolCollection.sol";
+
+// prettier-ignore
+import {
+    IPoolCollection,
+    PoolLiquidity,
+    Pool,
+    DepositAmounts,
+    WithdrawalAmounts,
+    TradeAmountsWithLiquidity,
+    TradeAmounts
+} from "./interfaces/IPoolCollection.sol";
 
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
@@ -576,7 +585,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         validAddress(address(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmounts memory)
+        returns (TradeAmountsWithLiquidity memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
@@ -607,64 +616,59 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // sync the reserve balances
         uint256 newNetworkTokenTradingLiquidity;
         uint256 newBaseTokenTradingLiquidity;
+        uint256 stakedBalance = params.liquidity.stakedBalance;
         if (params.isSourceNetworkToken) {
             newNetworkTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
             newBaseTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
 
-            // if the target token is a base token, make sure add the fee to the staked balance
-            poolData.liquidity.stakedBalance = params.liquidity.stakedBalance.add(tradeAmounts.feeAmount);
+            // if the target token is a base token, make sure to add the fee to the staked balance
+            stakedBalance = stakedBalance.add(tradeAmounts.feeAmount);
         } else {
             newBaseTokenTradingLiquidity = params.sourceBalance.add(sourceAmount);
             newNetworkTokenTradingLiquidity = params.targetBalance.sub(tradeAmounts.amount);
         }
 
-        poolData.liquidity.networkTokenTradingLiquidity = newNetworkTokenTradingLiquidity;
-        poolData.liquidity.baseTokenTradingLiquidity = newBaseTokenTradingLiquidity;
-        poolData.liquidity.tradingLiquidityProduct = newNetworkTokenTradingLiquidity.mul(newBaseTokenTradingLiquidity);
+        // update the liquidity in the pool
+        PoolLiquidity memory liquidity = PoolLiquidity({
+            networkTokenTradingLiquidity: newNetworkTokenTradingLiquidity,
+            baseTokenTradingLiquidity: newBaseTokenTradingLiquidity,
+            tradingLiquidityProduct: params.liquidity.tradingLiquidityProduct,
+            stakedBalance: stakedBalance
+        });
 
-        return tradeAmounts;
+        poolData.liquidity = liquidity;
+
+        return
+            TradeAmountsWithLiquidity({
+                amount: tradeAmounts.amount,
+                feeAmount: tradeAmounts.feeAmount,
+                liquidity: liquidity
+            });
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function targetAmountAndFee(
+    function tradeAmountAndFee(
         IReserveToken sourceToken,
         IReserveToken targetToken,
-        uint256 sourceAmount
+        uint256 amount,
+        bool targetAmount
     )
         external
         view
         override
         validAddress(address(sourceToken))
         validAddress(address(targetToken))
-        greaterThanZero(sourceAmount)
+        greaterThanZero(amount)
         returns (TradeAmounts memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function sourceAmountAndFee(
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
-        uint256 targetAmount
-    )
-        external
-        view
-        override
-        validAddress(address(sourceToken))
-        validAddress(address(targetToken))
-        greaterThanZero(targetAmount)
-        returns (TradeAmounts memory)
-    {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
+        return
+            targetAmount
+                ? _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount)
+                : _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount);
     }
 
     /**

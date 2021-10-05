@@ -10,7 +10,7 @@ import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
 
 import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
-import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmounts } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
 
@@ -174,4 +174,41 @@ interface IBancorNetwork is IUpgradeable {
      * withdrawing network token liquidity
      */
     function withdraw(uint256 id) external;
+
+    /**
+     * @dev performs a trade and returns the target amount and fee
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     */
+    function trade(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable;
+
+    /**
+     * @dev performs a trade by providing an EIP712 typed signature for an EIP2612 permit request and returns the target
+     * amount and fee
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+
+    function tradePermitted(
+        IReserveToken sourceToken,
+        IReserveToken targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }
