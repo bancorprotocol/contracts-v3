@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { SafeMath, M } from "./Common.sol";
+import { SafeMath, isDeficit, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for base token withdrawal
@@ -76,7 +76,7 @@ library ThresholdFormula {
         uint256 m,
         uint256 n,
         uint256 x,
-        bool isDeficit
+        bool state
     ) private pure {
         assert(b <= type(uint128).max);
         assert(c <= type(uint128).max);
@@ -84,7 +84,7 @@ library ThresholdFormula {
         assert(m <= M / 2);
         assert(n <= M / 2);
         assert(x <= e);
-        assert((b + c < e) == isDeficit);
+        assert(isDeficit(b, c, e) == state);
     }
 
     /**

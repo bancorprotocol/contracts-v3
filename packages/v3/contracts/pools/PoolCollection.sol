@@ -38,7 +38,7 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 import { ThresholdFormula } from "./PoolCollectionFormulas/ThresholdFormula.sol";
 import { ArbitrageFormula } from "./PoolCollectionFormulas/ArbitrageFormula.sol";
 import { DefaultFormula } from "./PoolCollectionFormulas/DefaultFormula.sol";
-import { Output } from "./PoolCollectionFormulas/Common.sol";
+import { Output, isDeficit } from "./PoolCollectionFormulas/Common.sol";
 
 /**
  * @dev Pool Collection contract
@@ -876,7 +876,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         Output memory output;
 
-        if (b + c >= e) {
+        if (!isDeficit(b, c, e)) {
             if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
                 output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
             } else {

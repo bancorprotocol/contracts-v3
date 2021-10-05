@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { SafeMath, SafeCast, MathEx, Output, M } from "./Common.sol";
+import { SafeMath, SafeCast, MathEx, Output, isDeficit, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for base token withdrawal
@@ -72,7 +72,7 @@ library DefaultFormula {
         uint256 e,
         uint256 n,
         uint256 x,
-        bool isDeficit
+        bool state
     ) private pure {
         assert(a <= type(uint128).max);
         assert(b <= type(uint128).max);
@@ -80,6 +80,6 @@ library DefaultFormula {
         assert(e <= type(uint128).max);
         assert(n <= M);
         assert(x <= e);
-        assert((b + c < e) == isDeficit);
+        assert(isDeficit(b, c, e) == state);
     }
 }
