@@ -1,7 +1,6 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token } from '../../typechain';
-import { NATIVE_TOKEN_ADDRESS } from './Constants';
+import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from './Constants';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
@@ -65,20 +64,14 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const createTokenBySymbol = async (
-    symbol: string,
-    networkToken: TestERC20Token | NetworkToken
-): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddress> => {
     switch (symbol) {
-        case 'BNT':
-            return networkToken as NetworkToken;
-
-        case 'ETH':
+        case ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
 
-        case 'TKN':
-        case 'TKN1':
-        case 'TKN2':
+        case TKN:
+        case `${TKN}1`:
+        case `${TKN}2`:
             return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(BigNumber.from(1_000_000_000)));
 
         default:
@@ -88,15 +81,15 @@ export const createTokenBySymbol = async (
 
 export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
     switch (symbol) {
-        case 'BNT':
+        case BNT:
             return '';
 
-        case 'vBNT':
+        case vBNT:
             return 'ERR_UNDERFLOW';
 
-        case 'TKN':
-        case 'TKN1':
-        case 'TKN2':
+        case TKN:
+        case `${TKN}1`:
+        case `${TKN}2`:
             return 'ERC20: transfer amount exceeds allowance';
 
         default:
@@ -106,18 +99,18 @@ export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
 
 export const errorMessageTokenExceedsBalance = (symbol: string): string => {
     switch (symbol) {
-        case 'BNT':
+        case BNT:
             return 'SafeERC20: low-level call failed';
 
-        case 'vBNT':
+        case vBNT:
             return 'ERR_UNDERFLOW';
 
-        case 'ETH':
+        case ETH:
             return '';
 
-        case 'TKN':
-        case 'TKN1':
-        case 'TKN2':
+        case TKN:
+        case `${TKN}1`:
+        case `${TKN}2`:
             return 'ERC20: transfer amount exceeds balance';
 
         default:

@@ -9,7 +9,7 @@ import {
     TestPoolCollection
 } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, ZERO_ADDRESS } from '../helpers/Constants';
+import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -167,7 +167,7 @@ describe('PendingWithdrawals', () => {
         let poolCollection: TestPoolCollection;
 
         const testWithdrawals = async (symbol: string) => {
-            const isNetworkToken = symbol === 'BNT';
+            const isNetworkToken = symbol === BNT;
 
             beforeEach(async () => {
                 ({
@@ -180,7 +180,11 @@ describe('PendingWithdrawals', () => {
                     poolCollection
                 } = await createSystem());
 
-                reserveToken = await createTokenBySymbol(symbol, networkToken);
+                if (isNetworkToken) {
+                    reserveToken = networkToken;
+                } else {
+                    reserveToken = await createTokenBySymbol(symbol);
+                }
 
                 await pendingWithdrawals.setTime(await latest());
             });
@@ -723,7 +727,7 @@ describe('PendingWithdrawals', () => {
             });
         };
 
-        for (const symbol of ['BNT', 'ETH', 'TKN']) {
+        for (const symbol of [BNT, ETH, TKN]) {
             context(symbol, () => {
                 testWithdrawals(symbol);
             });
