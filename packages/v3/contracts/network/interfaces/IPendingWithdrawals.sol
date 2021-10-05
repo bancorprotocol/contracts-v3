@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 

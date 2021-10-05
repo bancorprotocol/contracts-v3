@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
@@ -32,7 +32,7 @@ import {
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { TestTime } from "./TestTime.sol";
 
@@ -50,7 +50,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault, initNetworkPoolToken)
     {}
 
-    function createPoolT(IPoolCollection poolCollection, IReserveToken reserveToken) external {
+    function createPoolT(IPoolCollection poolCollection, ReserveToken reserveToken) external {
         poolCollection.createPool(reserveToken);
     }
 
@@ -82,7 +82,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function depositToPoolCollectionForT(
         IPoolCollection poolCollection,
         address provider,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 baseTokenAmount,
         uint256 unallocatedNetworkTokenLiquidity
     ) external returns (PoolCollectionDepositAmounts memory) {
@@ -98,7 +98,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function withdrawFromPoolCollectionT(
         IPoolCollection poolCollection,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionWalletBalance
@@ -109,7 +109,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function requestLiquidityT(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
     ) external {
         _networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount);
@@ -117,14 +117,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function renounceLiquidityT(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
     ) external {
         _networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 amount,
         uint8 feeType
     ) external {
@@ -133,7 +133,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function onPoolCollectionFeesCollectedT(
         IPoolCollection poolCollection,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 amount
     ) external {
         poolCollection.onFeesCollected(pool, amount);
@@ -141,8 +141,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function tradePoolCollectionT(
         IPoolCollection poolCollection,
-        IReserveToken sourceToken,
-        IReserveToken targetToken,
+        ReserveToken sourceToken,
+        ReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmountsWithLiquidity memory) {

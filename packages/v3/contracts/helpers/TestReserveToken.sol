@@ -1,32 +1,31 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 contract TestReserveToken {
-    using ReserveToken for IReserveToken;
+    using ReserveTokenLibrary for ReserveToken;
 
     receive() external payable {}
 
-    function isNativeToken(IReserveToken reserveToken) external pure returns (bool) {
+    function isNativeToken(ReserveToken reserveToken) external pure returns (bool) {
         return reserveToken.isNativeToken();
     }
 
-    function symbol(IReserveToken reserveToken) external view returns (string memory) {
+    function symbol(ReserveToken reserveToken) external view returns (string memory) {
         return reserveToken.symbol();
     }
 
-    function decimals(IReserveToken reserveToken) external view returns (uint8) {
+    function decimals(ReserveToken reserveToken) external view returns (uint8) {
         return reserveToken.decimals();
     }
 
-    function balanceOf(IReserveToken reserveToken, address account) external view returns (uint256) {
+    function balanceOf(ReserveToken reserveToken, address account) external view returns (uint256) {
         return reserveToken.balanceOf(account);
     }
 
     function safeTransfer(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address to,
         uint256 amount
     ) external {
@@ -34,7 +33,7 @@ contract TestReserveToken {
     }
 
     function safeTransferFrom(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address from,
         address to,
         uint256 amount
@@ -43,7 +42,7 @@ contract TestReserveToken {
     }
 
     function ensureApprove(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address spender,
         uint256 amount
     ) external {

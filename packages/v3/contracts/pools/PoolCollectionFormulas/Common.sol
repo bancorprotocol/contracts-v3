@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/SafeCast.sol";
-import { SignedSafeMath } from "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SignedSafeMath } from "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import { MathEx } from "../../utility/MathEx.sol";
-import { MAX_UINT128, MAX_UINT256, PPM_RESOLUTION } from "../../utility/Constants.sol";
+import { PPM_RESOLUTION } from "../../utility/Constants.sol";
 
 uint256 constant M = PPM_RESOLUTION;
 

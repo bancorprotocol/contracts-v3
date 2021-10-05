@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { SafeMath, SafeCast, MathEx, Output, MAX_UINT128, M } from "./Common.sol";
+import { SafeMath, SafeCast, MathEx, Output, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for base token withdrawal
@@ -25,7 +25,7 @@ library DefaultFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) internal pure returns (Output memory output) {
+    ) internal pure returns (Output memory output) { unchecked {
         validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
@@ -34,7 +34,7 @@ library DefaultFormula {
         output.s = z / M;                              // x(1-n)
         output.t = 0;                                  // 0
         output.q = output.p;                           // ax(1-n)/(b+c)
-    }
+    }}
 
     /**
      * @dev returns:
@@ -51,7 +51,7 @@ library DefaultFormula {
         uint256 e,
         uint256 n,
         uint256 x
-    ) internal pure returns (Output memory output) {
+    ) internal pure returns (Output memory output) { unchecked {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
@@ -60,7 +60,7 @@ library DefaultFormula {
         output.s = MathEx.mulDivF(b + c, z, y);                  // x(1-n)(b+c)/e
         output.t = MathEx.mulDivF(a * (e - b - c), z, b.mul(y)); // ax(1-n)(e-b-c)/be
         output.q = output.p;                                     // ax(1-n)/e
-    }
+    }}
 
     /**
      * @dev validates the input values
@@ -74,10 +74,10 @@ library DefaultFormula {
         uint256 x,
         bool isDeficit
     ) private pure {
-        assert(a <= MAX_UINT128);
-        assert(b <= MAX_UINT128);
-        assert(c <= MAX_UINT128);
-        assert(e <= MAX_UINT128);
+        assert(a <= type(uint128).max);
+        assert(b <= type(uint128).max);
+        assert(c <= type(uint128).max);
+        assert(e <= type(uint128).max);
         assert(n <= M);
         assert(x <= e);
         assert((b + c < e) == isDeficit);

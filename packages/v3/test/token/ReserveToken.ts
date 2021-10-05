@@ -62,7 +62,7 @@ describe('ReserveToken', () => {
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals);
 
                     const decimals2 = BigNumber.from(4);
-                    await token.setupDecimals(decimals2);
+                    await token.updateDecimals(decimals2);
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals2);
                 }
             });

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 /**
  * @dev Bancor Vault interface
@@ -45,7 +45,7 @@ interface IBancorVault is IUpgradeable {
      *   - for any other reserve token or ETH: the ROLE_ASSET_MANAGER role
      */
     function withdrawTokens(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address payable target,
         uint256 amount
     ) external;

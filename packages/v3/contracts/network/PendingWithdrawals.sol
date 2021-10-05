@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
+import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -23,8 +23,6 @@ import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./i
  * @dev Pending Withdrawals contract
  */
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
-    using SafeMath for uint32;
-    using SafeMath for uint256;
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
 
@@ -65,7 +63,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
      */
     event WithdrawalInitiated(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount
@@ -75,7 +73,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider cancels a liquidity withdrawal request
      */
     event WithdrawalCancelled(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -86,7 +84,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      * @dev triggered when a provider requests to reinitiate a liquidity withdrawal
      */
     event WithdrawalReinitiated(
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -98,7 +96,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     event WithdrawalCompleted(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         address indexed provider,
         uint256 requestId,
         uint256 poolTokenAmount,
@@ -213,7 +211,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         EnumerableSetUpgradeable.UintSet storage providerRequests = _withdrawalRequestIdsByProvider[provider];
         uint256 length = providerRequests.length();
         uint256[] memory list = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             list[i] = providerRequests.at(i);
         }
         return list;
@@ -281,7 +279,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
-            timeElapsed: uint32(currentTime.sub(request.createdAt))
+            timeElapsed: currentTime - request.createdAt
         });
 
         request.createdAt = currentTime;
@@ -300,8 +298,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
-        uint32 withdrawalStartTime = uint32(request.createdAt.add(_lockDuration));
-        uint32 withdrawalEndTime = uint32(withdrawalStartTime.add(_withdrawalWindowDuration));
+        uint32 withdrawalStartTime = request.createdAt + _lockDuration;
+        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
         require(currentTime >= withdrawalStartTime && currentTime <= withdrawalEndTime, "ERR_WITHDRAWAL_NOT_ALLOWED");
 
         // remove the withdrawal request and its id from the storage
@@ -316,7 +314,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
-            timeElapsed: uint32(currentTime.sub(request.createdAt))
+            timeElapsed: currentTime - request.createdAt
         });
 
         return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
@@ -371,11 +369,12 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         uint256 poolTokenAmount
     ) private {
         // make sure that the pool is valid
-        IReserveToken pool = poolToken.reserveToken();
+        ReserveToken pool = poolToken.reserveToken();
         require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        uint256 id = _nextWithdrawalRequestId++;
+        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
+        uint256 id = _nextWithdrawalRequestId;
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
@@ -408,7 +407,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: request.provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
-            timeElapsed: uint32(_time().sub(request.createdAt))
+            timeElapsed: _time() - request.createdAt
         });
     }
 

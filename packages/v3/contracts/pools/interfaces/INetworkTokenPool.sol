@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,7 +9,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolCollection } from "./IPoolCollection.sol";
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -81,17 +81,17 @@ interface INetworkTokenPool is IUpgradeable {
     /**
      * @dev returns the total minted amount for a given pool
      */
-    function mintedAmount(IReserveToken pool) external view returns (uint256);
+    function mintedAmount(ReserveToken pool) external view returns (uint256);
 
     /**
      * @dev returns whether network token liquidity minting is enabled for the provided pool
      */
-    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+    function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
 
     /**
      * @dev returns the unallocated co-investment network token liquidity for a given pool
      */
-    function unallocatedLiquidity(IReserveToken pool) external view returns (uint256);
+    function unallocatedLiquidity(ReserveToken pool) external view returns (uint256);
 
     /**
      * @dev mints network tokens to the recipient
@@ -149,7 +149,7 @@ interface INetworkTokenPool is IUpgradeable {
      */
     function requestLiquidity(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
     ) external;
 
@@ -164,7 +164,7 @@ interface INetworkTokenPool is IUpgradeable {
      */
     function renounceLiquidity(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
     ) external;
 
@@ -176,7 +176,7 @@ interface INetworkTokenPool is IUpgradeable {
      * - the caller must be the network contract
      */
     function onFeesCollected(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount,
         uint8 feeType
     ) external;
