@@ -10,8 +10,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
@@ -20,7 +19,7 @@ import { IBancorVault } from "./interfaces/IBancorVault.sol";
  */
 contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using SafeERC20 for IERC20;
-    using ReserveToken for IReserveToken;
+    using ReserveTokenLibrary for ReserveToken;
 
     // the admin role is used to pause/unpause the vault
     bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
@@ -40,7 +39,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
     /**
      * @dev triggered when tokens have been withdrawn from the vault
      */
-    event TokensWithdrawn(IReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
+    event TokensWithdrawn(ReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -125,12 +124,12 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
      * @inheritdoc IBancorVault
      */
     function withdrawTokens(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address payable target,
         uint256 amount
     ) external override validAddress(target) nonReentrant whenNotPaused {
         require(
-            (address(reserveToken) == address(_networkToken) && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
+            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
                 hasRole(ROLE_ASSET_MANAGER, msg.sender),
             "ERR_ACCESS_DENIED"
         );

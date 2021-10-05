@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IOwned } from "./IOwned.sol";
 
@@ -19,7 +19,7 @@ interface ITokenHolder is IOwned {
      * - the caller must be the owner of the contract
      */
     function withdrawTokens(
-        IReserveToken reserveToken,
+        ReserveToken reserveToken,
         address payable to,
         uint256 amount
     ) external;
@@ -32,7 +32,7 @@ interface ITokenHolder is IOwned {
      * - the caller must be the owner of the contract
      */
     function withdrawTokensMultiple(
-        IReserveToken[] calldata reserveTokens,
+        ReserveToken[] calldata reserveTokens,
         address payable to,
         uint256[] calldata amounts
     ) external;

@@ -8,7 +8,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IReserveToken } from "../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -60,7 +60,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     uint256 internal _stakedBalance;
 
     // a mapping between pools and their total minted amounts
-    mapping(IReserveToken => uint256) private _mintedAmounts;
+    mapping(ReserveToken => uint256) private _mintedAmounts;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 2] private __gap;
@@ -70,7 +70,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     event LiquidityRequested(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
@@ -80,7 +80,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     event LiquidityRenounced(
         bytes32 indexed contextId,
-        IReserveToken indexed pool,
+        ReserveToken indexed pool,
         uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
@@ -202,21 +202,21 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function mintedAmount(IReserveToken pool) external view override returns (uint256) {
+    function mintedAmount(ReserveToken pool) external view override returns (uint256) {
         return _mintedAmounts[pool];
     }
 
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function isNetworkLiquidityEnabled(IReserveToken pool, IPoolCollection poolCollection)
+    function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection)
         external
         view
         override
         returns (bool)
     {
         return
-            address(pool) != address(0x0) &&
+            ReserveToken.unwrap(pool) != address(0x0) &&
             address(poolCollection) != address(0x0) &&
             _settings.isTokenWhitelisted(pool) &&
             poolCollection.isPoolRateStable(pool);
@@ -225,7 +225,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function unallocatedLiquidity(IReserveToken pool) external view override returns (uint256) {
+    function unallocatedLiquidity(ReserveToken pool) external view override returns (uint256) {
         return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 
@@ -251,7 +251,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
 
         _networkTokenGovernance.burn(networkTokenAmount);
     }
@@ -337,9 +337,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function requestLiquidity(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
-    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
+    ) external override only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentMintedAmount = _mintedAmounts[pool];
         uint256 mintingLimit = _settings.poolMintingLimit(pool);
         uint256 newMintedAmount = currentMintedAmount + networkTokenAmount;
@@ -385,9 +385,9 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function renounceLiquidity(
         bytes32 contextId,
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount
-    ) external override only(address(_network)) validAddress(address(pool)) greaterThanZero(networkTokenAmount) {
+    ) external override only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the renounced amount to deduct from both the staked balance and pool minted amount
@@ -410,7 +410,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken.burn(poolTokenAmount);
 
         // withdraw network tokens from the vault and burn them
-        _vault.withdrawTokens(IReserveToken(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced({
@@ -425,10 +425,10 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      * @inheritdoc INetworkTokenPool
      */
     function onFeesCollected(
-        IReserveToken pool,
+        ReserveToken pool,
         uint256 networkTokenAmount,
         uint8 feeType
-    ) external override only(address(_network)) validAddress(address(pool)) {
+    ) external override only(address(_network)) validAddress(ReserveToken.unwrap(pool)) {
         if (networkTokenAmount == 0) {
             return;
         }
