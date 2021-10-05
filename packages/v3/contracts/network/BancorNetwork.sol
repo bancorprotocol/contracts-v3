@@ -810,7 +810,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev verifies that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
      */
     function _verifyLatestPoolCollectionCandidate(IPoolCollection poolCollection) private view {
-        if (address(poolCollection) != address(0) && _poolCollections.contains(address(poolCollection))) {
+        if (address(poolCollection) != address(0) && !_poolCollections.contains(address(poolCollection))) {
             revert DoesNotExist();
         }
     }
