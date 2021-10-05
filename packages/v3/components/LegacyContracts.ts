@@ -17,10 +17,10 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
-    NetworkToken: deployOrAttach('BNTToken', NetworkToken__factory, signer),
-    GovToken: deployOrAttach('vBNTToken', GovToken__factory, signer)
+    NetworkToken: deployOrAttach('NetworkToken', NetworkToken__factory, signer),
+    GovToken: deployOrAttach('GovToken', GovToken__factory, signer)
 });
 
-export type ContractsType = ReturnType<typeof getContracts>;
+export type LegacyContractsType = ReturnType<typeof getContracts>;
 
 export default getContracts();
