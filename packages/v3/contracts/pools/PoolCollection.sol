@@ -876,17 +876,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         Output memory output;
 
-        if (!isDeficit(b, c, e)) {
-            if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
-                output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
-            } else {
-                output = DefaultFormula.surplus(a, b, c, e, n, x);
-            }
-        } else {
+        if (isDeficit(b, c, e)) {
             if (ThresholdFormula.deficit(b, c, e, m, n, x)) {
                 output = ArbitrageFormula.deficit(a, b, c, e, m, n, x);
             } else {
                 output = DefaultFormula.deficit(a, b, c, e, n, x);
+            }
+        } else {
+            if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
+                output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
+            } else {
+                output = DefaultFormula.surplus(a, b, c, e, n, x);
             }
         }
 

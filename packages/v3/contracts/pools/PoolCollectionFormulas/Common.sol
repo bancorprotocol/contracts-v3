@@ -23,5 +23,6 @@ function isDeficit(
     uint256 c, // base token excess amount
     uint256 e // base token staked amount
 ) pure returns (bool) {
-    unchecked {return b + c < e;} // assuming `b + c` does not overflow
+    // assuming that the input has been validated
+    unchecked {return b + c < e;}
 }
