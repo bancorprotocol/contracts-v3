@@ -892,7 +892,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             }
         }
 
-        // if the user is receiving BNT and the external wallet holds TKN
+        // if the user is receiving network tokens and the external wallet holds base tokens
         if (output.t > 0 && w > 0) {
             uint256 tb = output.t.mul(b);
             uint256 wa = w.mul(a);
