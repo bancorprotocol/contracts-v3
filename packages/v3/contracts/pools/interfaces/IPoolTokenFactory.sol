@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.7.6;
+pragma solidity 0.8.9;
 
-import { IReserveToken } from "../../token/interfaces/IReserveToken.sol";
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -14,15 +14,15 @@ interface IPoolTokenFactory is IUpgradeable {
     /**
      * @dev returns the custom symbol override for a given reserve token
      */
-    function tokenSymbolOverride(IReserveToken reserveToken) external view returns (string memory);
+    function tokenSymbolOverride(ReserveToken reserveToken) external view returns (string memory);
 
     /**
      * @dev returns the custom decimals override for a given reserve token
      */
-    function tokenDecimalsOverride(IReserveToken reserveToken) external view returns (uint8);
+    function tokenDecimalsOverride(ReserveToken reserveToken) external view returns (uint8);
 
     /**
      * @dev creates a pool token for the specified token
      */
-    function createPoolToken(IReserveToken reserveToken) external returns (IPoolToken);
+    function createPoolToken(ReserveToken reserveToken) external returns (IPoolToken);
 }

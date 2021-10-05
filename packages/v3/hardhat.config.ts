@@ -3,6 +3,8 @@ import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
+import '@nomiclabs/hardhat-solhint';
+import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
@@ -33,7 +35,7 @@ const config: HardhatUserConfig = {
     solidity: {
         compilers: [
             {
-                version: '0.7.6',
+                version: '0.8.9',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -54,8 +56,8 @@ const config: HardhatUserConfig = {
 
     dependencyCompiler: {
         paths: [
-            '@openzeppelin/contracts/proxy/ProxyAdmin.sol',
-            '@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol'
+            '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
+            '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol'
         ]
     },
 
