@@ -15,7 +15,7 @@ library ThresholdFormula {
     }
 
     /**
-     * @dev returns the value of `hMaxN / hMaxD > x`
+     * @dev returns true if and only if `hMax(b, c, e, m, n) > x` when in surplus
      */
     function surplus(
         uint256 b,
@@ -41,7 +41,7 @@ library ThresholdFormula {
     }
 
     /**
-     * @dev returns the value of `hMaxN / hMaxD > x`
+     * @dev returns true if and only if `hMax(b, c, e, m, n) > x` when in deficit
      */
     function deficit(
         uint256 b,
