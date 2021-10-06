@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { SafeCast, SafeMath, MathEx, Output, isDeficit, M } from "./Common.sol";
+import { SafeMath, MathEx, Output, isDeficit, M } from "./Common.sol";
 
 /**
  * @dev this library provides mathematical support for base token withdrawal
  */
 library DefaultFormula {
-    using SafeCast for uint256;
     using SafeMath for uint256;
 
     /**
@@ -29,11 +28,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y).toInt256(); // ax(1-n)/(b+c)
-        output.r = MathEx.mulDivF(b, z, y);            // bx(1-n)/(b+c)
-        output.s = z / M;                              // x(1-n)
-        output.t = 0;                                  // 0
-        output.q = output.p;                           // ax(1-n)/(b+c)
+        output.p = int256(MathEx.mulDivF(a, z, y)); // ax(1-n)/(b+c)
+        output.r = MathEx.mulDivF(b, z, y);         // bx(1-n)/(b+c)
+        output.s = z / M;                           // x(1-n)
+        output.t = 0;                               // 0
+        output.q = output.p;                        // ax(1-n)/(b+c)
     }}
 
     /**
@@ -55,7 +54,7 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
-        output.p = MathEx.mulDivF(a, z, y).toInt256();           // ax(1-n)/e
+        output.p = int256(MathEx.mulDivF(a, z, y));              // ax(1-n)/e
         output.r = MathEx.mulDivF(b, z, y);                      // bx(1-n)/e
         output.s = MathEx.mulDivF(b + c, z, y);                  // x(1-n)(b+c)/e
         output.t = MathEx.mulDivF(a * (e - b - c), z, b.mul(y)); // ax(1-n)(e-b-c)/be
