@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     defaults:
       run:
         shell: bash
@@ -20,12 +20,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
-
-      - name: Update Package Information
-        run: sudo apt-get update
-
-      - name: Install Packages
-        run: sudo apt-get install libusb-1.0-0-dev libudev-dev
 
       - name: Install NPM Dependencies
         run: yarn install
