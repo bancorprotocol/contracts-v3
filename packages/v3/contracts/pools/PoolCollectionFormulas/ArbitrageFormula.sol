@@ -92,11 +92,11 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) { unchecked {
-        data.f = MathEx.mulDivF(a, y - z, y); // a(b+c-x(1-n))/(b+c)
-        data.g = MathEx.mulDivF(b, y - z, y); // b(b+c-x(1-n))/(b+c)
-        data.h = MathEx.mulDivF(x, y - e * (M - n), e * M); // x(b+c-e(1-n))/e
-        data.k = MathEx.mulDivF(data.f.mul(data.h), (data.g * (2 * M - m)).sub(data.h * M), data.g.mul(data.g * (M - m))); // fh(g(2-m)-h)/(gg-ggm)
-        assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M)); // axn+bk > 2ah
+        data.f = MathEx.mulDivF(a, y - z, y);
+        data.g = MathEx.mulDivF(b, y - z, y);
+        data.h = MathEx.mulDivF(x, y - e * (M - n), e * M);
+        data.k = MathEx.mulDivF(data.f.mul(data.h), (data.g * (2 * M - m)).sub(data.h * M), data.g.mul(data.g * (M - m)));
+        assert(x.mul(a * n).add(data.k.mul(b * M)) > data.h.mul(a * 2 * M));
     }}
 
     /**
@@ -117,11 +117,11 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Data memory data) { unchecked {
-        data.f = MathEx.mulDivF(a, y.sub(z), y); // a(b+c-x(1-n))/(b+c)
-        data.g = MathEx.mulDivF(b, y.sub(z), y); // b(b+c-x(1-n))/(b+c)
-        data.h = MathEx.mulDivF(x, (e * (M - n)).sub(y), e * M); // x(e(1-n)-b-c)/e
-        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m)); // fh(g(2-m)+h)/(gg+ghm)
-        assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M)); // axn+2ah > bk
+        data.f = MathEx.mulDivF(a, y.sub(z), y);
+        data.g = MathEx.mulDivF(b, y.sub(z), y);
+        data.h = MathEx.mulDivF(x, (e * (M - n)).sub(y), e * M);
+        data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
+        assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M));
     }}
 
     /**
@@ -138,10 +138,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) { unchecked {
-        output.p = surplus(a, y, z, data.k);                                 // ax(1-n)/(b+c)+k
-        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // ax(1-n)/(b+c)+hf/g
-        output.r = MathEx.mulDivF(b, z, y);                                  // bx(1-n)/(b+c)
-        output.s = z / M;                                                    // x(1-n)
+        output.p = surplus(a, y, z, data.k);
+        output.q = surplus(a, y, z, MathEx.mulDivF(data.h, data.f, data.g));
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = z / M;
     }}
 
     /**
@@ -158,10 +158,10 @@ library ArbitrageFormula {
         uint256 y,
         uint256 z
     ) private pure returns (Output memory output) { unchecked {
-        output.p = deficit(a, y, z, data.k);                                 // ax(1-n)/(b+c)-k
-        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g)); // ax(1-n)/(b+c)-hf/g
-        output.r = MathEx.mulDivF(b, z, y);                                  // bx(1-n)/(b+c)
-        output.s = z / M;                                                    // x(1-n)
+        output.p = deficit(a, y, z, data.k);
+        output.q = deficit(a, y, z, MathEx.mulDivF(data.h, data.f, data.g));
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = z / M;
     }}
 
     /**

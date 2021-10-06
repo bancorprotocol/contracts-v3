@@ -28,11 +28,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, false);
         uint256 y = (b + c) * M;
         uint256 z = x * (M - n);
-        output.p = int256(MathEx.mulDivF(a, z, y)); // ax(1-n)/(b+c)
-        output.q = output.p;                        // ax(1-n)/(b+c)
-        output.r = MathEx.mulDivF(b, z, y);         // bx(1-n)/(b+c)
-        output.s = z / M;                           // x(1-n)
-        output.t = 0;                               // 0
+        output.p = int256(MathEx.mulDivF(a, z, y));
+        output.q = output.p;
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = z / M;
+        output.t = 0;
     }}
 
     /**
@@ -54,11 +54,11 @@ library DefaultFormula {
         validate(a, b, c, e, n, x, true);
         uint256 y = e * M;
         uint256 z = x * (M - n);
-        output.p = int256(MathEx.mulDivF(a, z, y));              // ax(1-n)/e
-        output.q = output.p;                                     // ax(1-n)/e
-        output.r = MathEx.mulDivF(b, z, y);                      // bx(1-n)/e
-        output.s = MathEx.mulDivF(b + c, z, y);                  // x(1-n)(b+c)/e
-        output.t = MathEx.mulDivF(a * (e - b - c), z, b.mul(y)); // ax(1-n)(e-b-c)/be
+        output.p = int256(MathEx.mulDivF(a, z, y));
+        output.q = output.p;
+        output.r = MathEx.mulDivF(b, z, y);
+        output.s = MathEx.mulDivF(b + c, z, y);
+        output.t = MathEx.mulDivF(a * (e - b - c), z, b.mul(y));
     }}
 
     /**
