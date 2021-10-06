@@ -1575,7 +1575,7 @@ describe('PoolCollection', () => {
                                 BigNumber.from(1),
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('NetworkLiquidityTooLow');
+                        ).to.be.revertedWith('LiquidityTooLow');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1585,7 +1585,7 @@ describe('PoolCollection', () => {
                                     BigNumber.from(1),
                                     targetAmount
                                 )
-                            ).to.be.revertedWith('NetworkLiquidityTooLow');
+                            ).to.be.revertedWith('LiquidityTooLow');
                         }
                     });
                 });

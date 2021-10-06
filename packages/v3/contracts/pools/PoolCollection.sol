@@ -52,7 +52,7 @@ error MinLiquidityNotSet();
 error DepositLimitExceeded();
 error NoInitialRate();
 error TradingDisabled();
-error NetworkLiquidityTooLow();
+error LiquidityTooLow();
 
 /**
  * @dev Pool Collection contract
@@ -1399,7 +1399,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         // verify that liquidity is above the minimum network token liquidity for trading
         if (params.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
-            revert NetworkLiquidityTooLow();
+            revert LiquidityTooLow();
         }
 
         if (params.isSourceNetworkToken) {
