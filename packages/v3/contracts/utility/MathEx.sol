@@ -3,6 +3,8 @@ pragma solidity 0.8.9;
 
 import { Fraction } from "./Types.sol";
 
+error Overflow();
+
 /**
  * @dev an unchecked version of i++
  */
@@ -152,7 +154,9 @@ library MathEx {
             }
 
             // assert `x * y / z < 2 ^ 256`
-            require(xyh < z, "ERR_OVERFLOW");
+            if (xyh >= z) {
+                revert Overflow();
+            }
 
             uint256 m = _mulMod(x, y, z); // `m = x * y % z`
             (uint256 nh, uint256 nl) = _sub512(xyh, xyl, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
@@ -180,7 +184,9 @@ library MathEx {
         unchecked {
             uint256 w = mulDivF(x, y, z);
             if (_mulMod(x, y, z) > 0) {
-                require(w < type(uint256).max, "ERR_OVERFLOW");
+                if (w >= type(uint256).max) {
+                    revert Overflow();
+                }
 
                 return w + 1;
             }

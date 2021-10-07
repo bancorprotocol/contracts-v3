@@ -10,6 +10,8 @@ import { Owned } from "./Owned.sol";
 import { Utils } from "./Utils.sol";
 import { uncheckedInc } from "./MathEx.sol";
 
+error InvalidLength();
+
 /**
  * @dev this contract provides an owned token and ETH wallet
  */
@@ -45,7 +47,9 @@ contract TokenHolder is IVersioned, ITokenHolder, Owned, Utils {
         uint256[] calldata amounts
     ) external virtual override onlyOwner validAddress(to) {
         uint256 length = reserveTokens.length;
-        require(length == amounts.length, "ERR_INVALID_LENGTH");
+        if (length != amounts.length) {
+            revert InvalidLength();
+        }
 
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             reserveTokens[i].safeTransfer(to, amounts[i]);

@@ -41,7 +41,7 @@ describe('PoolToken', () => {
 
         it('should revert when initialized with an invalid base reserve token', async () => {
             await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
     });
@@ -53,19 +53,19 @@ describe('PoolToken', () => {
 
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
             await expect(poolToken.mint(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_INVALID_EXTERNAL_ADDRESS'
+                'InvalidExternalAddress()'
             );
         });
 
         it('should revert when the owner attempts to issue tokens to the token address', async () => {
             await expect(poolToken.mint(poolToken.address, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_INVALID_EXTERNAL_ADDRESS'
+                'InvalidExternalAddress()'
             );
         });
 
         it('should revert when a non owner attempts to issue tokens', async () => {
             await expect(poolToken.connect(nonOwner).mint(owner.address, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
+                'AccessDenied()'
             );
         });
     });

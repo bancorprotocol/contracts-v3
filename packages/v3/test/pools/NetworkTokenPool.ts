@@ -11,7 +11,7 @@ import {
     TestPoolCollection
 } from '../../typechain';
 import {
-    FEE_TYPES,
+    FeeTypes,
     NETWORK_TOKEN_POOL_TOKEN_NAME,
     NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
     PPM_RESOLUTION,
@@ -45,7 +45,7 @@ describe('NetworkTokenPool', () => {
             const { networkPoolToken } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
 
@@ -53,7 +53,7 @@ describe('NetworkTokenPool', () => {
             const { network } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
 
@@ -116,15 +116,15 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).mint(recipient.address, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to mint to an invalid address', async () => {
-            await expect(network.mintT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(network.mintT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to mint an invalid amount', async () => {
-            await expect(network.mintT(recipient.address, BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
+            await expect(network.mintT(recipient.address, BigNumber.from(0))).to.be.revertedWith('ZeroValue');
         });
 
         it('should mint to the recipient', async () => {
@@ -158,12 +158,12 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
+                'AccessDenied()'
             );
         });
 
         it('should revert when attempting to burn an invalid amount', async () => {
-            await expect(network.burnFromVaultT(BigNumber.from(0))).to.be.revertedWith('ERR_ZERO_VALUE');
+            await expect(network.burnFromVaultT(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
         });
 
         it('should revert when attempting to burn more than balance of the vault', async () => {
@@ -372,19 +372,19 @@ describe('NetworkTokenPool', () => {
                 networkTokenPool
                     .connect(nonNetwork)
                     .requestLiquidity(contextId, reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
             await expect(network.requestLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
 
         it('should revert when attempting to request a zero liquidity amount', async () => {
             await expect(
                 network.requestLiquidityT(contextId, reserveToken.address, BigNumber.from(0))
-            ).to.be.revertedWith('ERR_ZERO_VALUE');
+            ).to.be.revertedWith('ZeroValue');
         });
 
         it('should allow requesting liquidity', async () => {
@@ -424,7 +424,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(2_000_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_MINTING_LIMIT_EXCEEDED'
+                        'MintingLimitExceeded()'
                     );
                 }
             });
@@ -445,7 +445,7 @@ describe('NetworkTokenPool', () => {
                     ]) {
                         await expect(
                             network.requestLiquidityT(contextId, reserveToken.address, amount)
-                        ).to.be.revertedWith('ERR_MINTING_LIMIT_EXCEEDED');
+                        ).to.be.revertedWith('MintingLimitExceeded');
                     }
                 });
             });
@@ -464,7 +464,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(1_500_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'ERR_MINTING_LIMIT_EXCEEDED'
+                        'MintingLimitExceeded()'
                     );
                 }
             });
@@ -505,19 +505,19 @@ describe('NetworkTokenPool', () => {
                 networkTokenPool
                     .connect(nonNetwork)
                     .renounceLiquidity(contextId, reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
             await expect(network.renounceLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
 
         it('should revert when attempting to renounce a zero liquidity amount', async () => {
             await expect(
                 network.renounceLiquidityT(contextId, reserveToken.address, BigNumber.from(0))
-            ).to.be.revertedWith('ERR_ZERO_VALUE');
+            ).to.be.revertedWith('ZeroValue');
         });
 
         it('should revert when attempting to renounce liquidity when no liquidity was ever requested', async () => {
@@ -623,7 +623,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to deposit a zero amount', async () => {
@@ -631,7 +631,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 network.depositToNetworkPoolForT(provider.address, amount, false, BigNumber.from(0))
-            ).to.be.revertedWith('ERR_ZERO_VALUE');
+            ).to.be.revertedWith('ZeroValue');
         });
 
         it('should revert when attempting to deposit for an invalid provider', async () => {
@@ -639,7 +639,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 network.depositToNetworkPoolForT(ZERO_ADDRESS, amount, false, BigNumber.from(0))
-            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to deposit when no liquidity was requested', async () => {
@@ -812,18 +812,18 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).withdraw(provider.address, BigNumber.from(1))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
             await expect(network.withdrawFromNetworkPoolT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'ERR_INVALID_ADDRESS'
+                'InvalidAddress()'
             );
         });
 
         it('should revert when attempting to withdraw a zero amount', async () => {
             await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(0))).to.be.revertedWith(
-                'ERR_ZERO_VALUE'
+                'ZeroValue()'
             );
         });
 
@@ -1015,23 +1015,23 @@ describe('NetworkTokenPool', () => {
             await expect(
                 networkTokenPool
                     .connect(nonNetwork)
-                    .onFeesCollected(reserveToken.address, BigNumber.from(1), FEE_TYPES.Trading)
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    .onFeesCollected(reserveToken.address, BigNumber.from(1), FeeTypes.Trading)
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
-                network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, BigNumber.from(1), FEE_TYPES.Trading)
-            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, BigNumber.from(1), FeeTypes.Trading)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
-        for (const [name, type] of Object.entries(FEE_TYPES)) {
+        for (const [name, type] of Object.entries(FeeTypes)) {
             for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await networkTokenPool.stakedBalance();
                     const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
                     const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
-                    const expectedMintedAmount = type === FEE_TYPES.Trading ? feeAmount : 0;
+                    const expectedMintedAmount = type === FeeTypes.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 
