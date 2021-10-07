@@ -13,8 +13,19 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
-import { Utils } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
+
+// prettier-ignore
+import {
+    Utils,
+    AlreadyExists,
+    DoesNotExist,
+    InvalidPool,
+    InvalidToken,
+    InvalidType,
+    NotEmpty,
+    NotWhitelisted
+ } from "../utility/Utils.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
@@ -43,6 +54,12 @@ import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "./FeeTypes.sol";
+
+error DeadlineExpired();
+error EthAmountMismatch();
+error InvalidTokens();
+error NetworkLiquidityDisabled();
+error PermitUnsupported();
 
 /**
  * @dev Bancor Network contract
@@ -329,7 +346,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
         _validAddress(ReserveToken.unwrap(sourceToken));
         _validAddress(ReserveToken.unwrap(targetToken));
-        require(ReserveToken.unwrap(sourceToken) != ReserveToken.unwrap(targetToken), "ERR_INVALID_TOKENS");
+
+        if (ReserveToken.unwrap(sourceToken) == ReserveToken.unwrap(targetToken)) {
+            revert InvalidTokens();
+        }
     }
 
     /**
@@ -461,7 +481,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         onlyOwner
     {
-        require(_poolCollections.add(address(poolCollection)), "ERR_COLLECTION_ALREADY_EXISTS");
+        if (!_poolCollections.add(address(poolCollection))) {
+            revert AlreadyExists();
+        }
 
         uint16 poolType = poolCollection.poolType();
         _setLatestPoolCollection(poolType, poolCollection);
@@ -486,14 +508,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
 
         // verify that no pools are associated with the specified pool collection
-        require(poolCollection.poolCount() == 0, "ERR_COLLECTION_IS_NOT_EMPTY");
+        if (poolCollection.poolCount() != 0) {
+            revert NotEmpty();
+        }
 
-        require(_poolCollections.remove(address(poolCollection)), "ERR_COLLECTION_DOES_NOT_EXIST");
+        if (!_poolCollections.remove(address(poolCollection))) {
+            revert DoesNotExist();
+        }
 
         uint16 poolType = poolCollection.poolType();
         if (address(newLatestPoolCollection) != address(0)) {
             uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
-            require(poolType == newLatestPoolCollectionType, "ERR_WRONG_COLLECTION_TYPE");
+            if (poolType != newLatestPoolCollectionType) {
+                revert InvalidType();
+            }
         }
 
         _setLatestPoolCollection(poolType, newLatestPoolCollection);
@@ -561,7 +589,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc IBancorNetwork
      */
     function isPoolValid(ReserveToken pool) external view override returns (bool) {
-        return ReserveToken.unwrap(pool) == address(_networkToken) || _liquidityPools.contains( ReserveToken.unwrap(pool));
+        return
+            ReserveToken.unwrap(pool) == address(_networkToken) || _liquidityPools.contains(ReserveToken.unwrap(pool));
     }
 
     /**
@@ -573,13 +602,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         validAddress(ReserveToken.unwrap(reserveToken))
     {
-        require(reserveToken.toIERC20() != _networkToken, "ERR_UNSUPPORTED_TOKEN");
-        require(_liquidityPools.add(ReserveToken.unwrap(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
+        if (reserveToken.toIERC20() == _networkToken) {
+            revert InvalidToken();
+        }
+
+        if (!_liquidityPools.add(ReserveToken.unwrap(reserveToken))) {
+            revert AlreadyExists();
+        }
 
         // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
         // pool
         IPoolCollection poolCollection = _latestPoolCollections[poolType];
-        require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TYPE");
+        if (address(poolCollection) == address(0)) {
+            revert InvalidType();
+        }
 
         // this is where the magic happens...
         poolCollection.createPool(reserveToken);
@@ -634,7 +670,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override validAddress(provider) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    )
+        external
+        override
+        validAddress(provider)
+        validAddress(ReserveToken.unwrap(pool))
+        greaterThanZero(tokenAmount)
+        nonReentrant
+    {
         _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, v, r, s);
     }
 
@@ -767,10 +810,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev verifies that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
      */
     function _verifyLatestPoolCollectionCandidate(IPoolCollection poolCollection) private view {
-        require(
-            address(poolCollection) == address(0) || _poolCollections.contains(address(poolCollection)),
-            "ERR_COLLECTION_DOES_NOT_EXIST"
-        );
+        if (address(poolCollection) != address(0) && !_poolCollections.contains(address(poolCollection))) {
+            revert DoesNotExist();
+        }
     }
 
     /**
@@ -879,13 +921,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the network token pool is able to provide network liquidity
         uint256 unallocatedNetworkTokenLiquidity = cachedNetworkTokenPool.unallocatedLiquidity(pool);
-        if (unallocatedNetworkTokenLiquidity == 0) {
-            require(_settings.isTokenWhitelisted(pool), "ERR_POOL_NOT_WHITELISTED");
-        } else {
-            require(
-                cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection),
-                "ERR_NETWORK_LIQUIDITY_DISABLED"
-            );
+        if (unallocatedNetworkTokenLiquidity == 0 && !_settings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        } else if (!cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+            revert NetworkLiquidityDisabled();
         }
 
         // transfer the tokens from the sender to the vault
@@ -962,7 +1001,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address sender
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
-        require(token.toIERC20() != _networkToken && !token.isNativeToken(), "ERR_PERMIT_UNSUPPORTED");
+        if (token.toIERC20() == _networkToken || token.isNativeToken()) {
+            revert PermitUnsupported();
+        }
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner safeTransferFrom will revert
@@ -1058,10 +1099,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // ensure that network token liquidity is enabled
-        require(
-            cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection),
-            "ERR_NETWORK_LIQUIDITY_DISABLED"
-        );
+        if (!cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+            revert NetworkLiquidityDisabled();
+        }
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -1168,7 +1208,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary,
         address trader
     ) private {
-        require(deadline >= _time(), "ERR_DEADLINE_EXPIRED");
+        if (deadline < _time()) {
+            revert DeadlineExpired();
+        }
 
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
@@ -1341,14 +1383,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount
     ) private {
         if (msg.value > 0) {
-            require(reserveToken.isNativeToken(), "ERR_INVALID_POOL");
-            require(msg.value == amount, "ERR_ETH_AMOUNT_MISMATCH");
+            if (!reserveToken.isNativeToken()) {
+                revert InvalidPool();
+            }
+
+            if (msg.value != amount) {
+                revert EthAmountMismatch();
+            }
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(_vault).sendValue(amount);
         } else {
-            require(!reserveToken.isNativeToken(), "ERR_INVALID_POOL");
+            if (reserveToken.isNativeToken()) {
+                revert InvalidPool();
+            }
 
             reserveToken.safeTransferFrom(sender, address(_vault), amount);
         }
@@ -1360,7 +1409,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _poolCollection(ReserveToken token) private view returns (IPoolCollection) {
         // verify that the pool is managed by a valid pool collection
         IPoolCollection poolCollection = _collectionByPool[token];
-        require(address(poolCollection) != address(0), "ERR_UNSUPPORTED_TOKEN");
+        if (address(poolCollection) == address(0)) {
+            revert InvalidToken();
+        }
 
         return poolCollection;
     }

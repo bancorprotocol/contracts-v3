@@ -3,6 +3,22 @@ pragma solidity 0.8.9;
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
+error AccessDenied();
+error AlreadyExists();
+error DoesNotExist();
+error InvalidAddress();
+error InvalidExternalAddress();
+error InvalidFee();
+error InvalidPool();
+error InvalidPoolBalance();
+error InvalidPortion();
+error InvalidStakedBalance();
+error InvalidToken();
+error InvalidType();
+error NotEmpty();
+error NotWhitelisted();
+error ZeroValue();
+
 /**
  * @dev common utilities
  */
@@ -15,7 +31,9 @@ contract Utils {
     }
 
     function _only(address sender) internal view {
-        require(msg.sender == sender, "ERR_ACCESS_DENIED");
+        if (msg.sender != sender) {
+            revert AccessDenied();
+        }
     }
 
     // verifies that a value is greater than zero
@@ -27,7 +45,9 @@ contract Utils {
 
     // error message binary size optimization
     function _greaterThanZero(uint256 value) internal pure {
-        require(value > 0, "ERR_ZERO_VALUE");
+        if (value == 0) {
+            revert ZeroValue();
+        }
     }
 
     // validates an address - currently only checks that it isn't null
@@ -39,7 +59,9 @@ contract Utils {
 
     // error message binary size optimization
     function _validAddress(address addr) internal pure {
-        require(addr != address(0), "ERR_INVALID_ADDRESS");
+        if (addr == address(0)) {
+            revert InvalidAddress();
+        }
     }
 
     // ensures that the portion is valid
@@ -51,7 +73,9 @@ contract Utils {
 
     // error message binary size optimization
     function _validPortion(uint32 _portion) internal pure {
-        require(_portion > 0 && _portion <= PPM_RESOLUTION, "ERR_INVALID_PORTION");
+        if (_portion == 0 || _portion > PPM_RESOLUTION) {
+            revert InvalidPortion();
+        }
     }
 
     // validates an external address - currently only checks that it isn't null or this
@@ -63,7 +87,9 @@ contract Utils {
 
     // error message binary size optimization
     function _validExternalAddress(address addr) internal view {
-        require(addr != address(0) && addr != address(this), "ERR_INVALID_EXTERNAL_ADDRESS");
+        if (addr == address(0) || addr == address(this)) {
+            revert InvalidExternalAddress();
+        }
     }
 
     // ensures that the fee is valid
@@ -75,6 +101,8 @@ contract Utils {
 
     // error message binary size optimization
     function _validFee(uint32 fee) internal pure {
-        require(fee <= PPM_RESOLUTION, "ERR_INVALID_FEE");
+        if (fee > PPM_RESOLUTION) {
+            revert InvalidFee();
+        }
     }
 }

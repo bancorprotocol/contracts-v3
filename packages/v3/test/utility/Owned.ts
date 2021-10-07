@@ -52,7 +52,7 @@ describe('Owned', () => {
 
     it('verifies that only the owner can initiate ownership transfer', async () => {
         await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith(
-            'ERR_ACCESS_DENIED'
+            'AccessDenied()'
         );
     });
 
@@ -64,6 +64,6 @@ describe('Owned', () => {
     });
 
     it("verifies that it's not possible to transfer ownership to the same owner", async () => {
-        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith('ERR_SAME_OWNER');
+        await expect(contract.transferOwnership(owner.address)).to.be.revertedWith('SameOwner');
     });
 });
