@@ -2,6 +2,9 @@
 pragma solidity 0.8.9;
 
 import { IOwned } from "./interfaces/IOwned.sol";
+import { AccessDenied } from "./Utils.sol";
+
+error SameOwner();
 
 /**
  * @dev this contract provides support and utilities for contract ownership
@@ -35,7 +38,9 @@ abstract contract Owned is IOwned {
 
     // error message binary size optimization
     function _onlyOwner() private view {
-        require(msg.sender == _owner, "ERR_ACCESS_DENIED");
+        if (msg.sender != _owner) {
+            revert AccessDenied();
+        }
     }
 
     /**
@@ -49,7 +54,9 @@ abstract contract Owned is IOwned {
      * @inheritdoc IOwned
      */
     function transferOwnership(address ownerCandidate) public virtual override onlyOwner {
-        require(ownerCandidate != _owner, "ERR_SAME_OWNER");
+        if (ownerCandidate == _owner) {
+            revert SameOwner();
+        }
 
         _newOwner = ownerCandidate;
     }
@@ -58,7 +65,9 @@ abstract contract Owned is IOwned {
      * @inheritdoc IOwned
      */
     function acceptOwnership() public virtual override {
-        require(msg.sender == _newOwner, "ERR_ACCESS_DENIED");
+        if (msg.sender != _newOwner) {
+            revert AccessDenied();
+        }
 
         _setOwner(_newOwner);
     }

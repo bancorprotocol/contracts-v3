@@ -5,7 +5,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -139,8 +139,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function addTokenToWhitelist(ReserveToken token) external onlyOwner validExternalAddress(ReserveToken.unwrap(token)) {
-        require(_protectedTokenWhitelist.add(ReserveToken.unwrap(token)), "ERR_ALREADY_WHITELISTED");
+    function addTokenToWhitelist(ReserveToken token)
+        external
+        onlyOwner
+        validExternalAddress(ReserveToken.unwrap(token))
+    {
+        if (!_protectedTokenWhitelist.add(ReserveToken.unwrap(token))) {
+            revert AlreadyExists();
+        }
 
         emit TokenAddedToWhitelist({ token: token });
     }
@@ -153,7 +159,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the owner of the contract
      */
     function removeTokenFromWhitelist(ReserveToken token) external onlyOwner {
-        require(_protectedTokenWhitelist.remove(ReserveToken.unwrap(token)), "ERR_NOT_WHITELISTED");
+        if (!_protectedTokenWhitelist.remove(ReserveToken.unwrap(token))) {
+            revert DoesNotExist();
+        }
 
         emit TokenRemovedFromWhitelist({ token: token });
     }
@@ -179,7 +187,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function setPoolMintingLimit(ReserveToken pool, uint256 amount) external onlyOwner validAddress(ReserveToken.unwrap(pool)) {
+    function setPoolMintingLimit(ReserveToken pool, uint256 amount)
+        external
+        onlyOwner
+        validAddress(ReserveToken.unwrap(pool))
+    {
         uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
         if (prevPoolMintingLimit == amount) {
             return;

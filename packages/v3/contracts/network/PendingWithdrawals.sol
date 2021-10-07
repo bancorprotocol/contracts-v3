@@ -10,7 +10,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 
@@ -18,6 +18,8 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
+
+error WithdrawalNotAllowed();
 
 /**
  * @dev Pending Withdrawals contract
@@ -259,7 +261,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     function cancelWithdrawal(uint256 id) external override nonReentrant {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         address provider = request.provider;
-        require(provider == msg.sender, "ERR_ACCESS_DENIED");
+        if (provider != msg.sender) {
+            revert AccessDenied();
+        }
 
         _cancelWithdrawal(request, id);
     }
@@ -270,7 +274,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     function reinitWithdrawal(uint256 id) external override nonReentrant {
         WithdrawalRequest storage request = _withdrawalRequests[id];
         address provider = request.provider;
-        require(provider == msg.sender, "ERR_ACCESS_DENIED");
+        if (provider != msg.sender) {
+            revert AccessDenied();
+        }
 
         uint32 currentTime = _time();
 
@@ -294,13 +300,18 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         uint256 id
     ) external override only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
-        require(provider == request.provider, "ERR_ACCESS_DENIED");
+
+        if (provider != request.provider) {
+            revert AccessDenied();
+        }
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
         uint32 withdrawalStartTime = request.createdAt + _lockDuration;
         uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
-        require(currentTime >= withdrawalStartTime && currentTime <= withdrawalEndTime, "ERR_WITHDRAWAL_NOT_ALLOWED");
+        if (currentTime < withdrawalStartTime || currentTime > withdrawalEndTime) {
+            revert WithdrawalNotAllowed();
+        }
 
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(request, id);
@@ -370,7 +381,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     ) private {
         // make sure that the pool is valid
         ReserveToken pool = poolToken.reserveToken();
-        require(_network.isPoolValid(pool), "ERR_INVALID_POOL");
+        if (!_network.isPoolValid(pool)) {
+            revert InvalidPool();
+        }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
         _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
@@ -383,7 +396,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             createdAt: _time()
         });
 
-        require(_withdrawalRequestIdsByProvider[provider].add(id), "ERR_WITHDRAWAL_ALREADY_EXISTS");
+        if (!_withdrawalRequestIdsByProvider[provider].add(id)) {
+            revert AlreadyExists();
+        }
 
         // transfer the pool tokens from the provider. Note, that the provider should have either previously
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
@@ -417,6 +432,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     function _removeWithdrawalRequest(WithdrawalRequest memory request, uint256 id) private {
         delete _withdrawalRequests[id];
 
-        require(_withdrawalRequestIdsByProvider[request.provider].remove(id), "ERR_WITHDRAWAL_DOES_NOT_EXIST");
+        if (!_withdrawalRequestIdsByProvider[request.provider].remove(id)) {
+            revert DoesNotExist();
+        }
     }
 }

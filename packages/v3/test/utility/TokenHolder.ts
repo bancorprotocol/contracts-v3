@@ -71,7 +71,7 @@ describe('TokenHolder', () => {
                 it('should revert when a non-owner attempts to withdraw', async () => {
                     await expect(
                         holder.connect(nonOwner).withdrawTokens(asset.address, receiver.address, BigNumber.from(1))
-                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    ).to.be.revertedWith('AccessDenied');
                 });
 
                 it('should revert when attempting to withdraw with an invalid asset address', async () => {
@@ -83,7 +83,7 @@ describe('TokenHolder', () => {
                 it('should revert when attempting to withdraw tokens to an invalid account address', async () => {
                     await expect(
                         holder.withdrawTokens(asset.address, ZERO_ADDRESS, BigNumber.from(1))
-                    ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                    ).to.be.revertedWith('InvalidAddress');
                 });
 
                 it('should revert when attempting to withdraw an amount greater than the holder balance', async () => {
@@ -129,7 +129,7 @@ describe('TokenHolder', () => {
                 holder
                     .connect(nonOwner)
                     .withdrawTokensMultiple(assetAddresses, receiver.address, Object.values(amounts))
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to withdraw with an invalid asset address', async () => {
@@ -151,7 +151,7 @@ describe('TokenHolder', () => {
         it('should revert when attempting to withdraw tokens to an invalid account address', async () => {
             await expect(
                 holder.withdrawTokensMultiple(assetAddresses, ZERO_ADDRESS, Object.values(amounts))
-            ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to withdraw an amount greater than the holder balance', async () => {

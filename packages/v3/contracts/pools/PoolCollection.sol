@@ -13,8 +13,18 @@ import { Fraction } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
-import { Utils } from "../utility/Utils.sol";
 import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+
+// prettier-ignore
+import {
+    Utils,
+    AlreadyExists,
+    DoesNotExist,
+    InvalidPool,
+    InvalidPoolBalance,
+    InvalidStakedBalance,
+    NotWhitelisted
+} from "../utility/Utils.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -39,6 +49,15 @@ import { ThresholdFormula } from "./PoolCollectionFormulas/ThresholdFormula.sol"
 import { ArbitrageFormula } from "./PoolCollectionFormulas/ArbitrageFormula.sol";
 import { DefaultFormula } from "./PoolCollectionFormulas/DefaultFormula.sol";
 import { Output, isDeficit } from "./PoolCollectionFormulas/Common.sol";
+
+error InvalidRate();
+error ZeroTargetAmount();
+error ReturnAmountTooLow();
+error MinLiquidityNotSet();
+error DepositLimitExceeded();
+error NoInitialRate();
+error TradingDisabled();
+error LiquidityTooLow();
 
 /**
  * @dev Pool Collection contract
@@ -174,7 +193,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        require(_isFractionValid(rate), "ERR_INVALID_RATE");
+        if (!_isFractionValid(rate)) {
+            revert InvalidRate();
+        }
     }
 
     /**
@@ -264,8 +285,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function createPool(ReserveToken reserveToken) external override only(address(_network)) nonReentrant {
-        require(_settings.isTokenWhitelisted(reserveToken), "ERR_TOKEN_NOT_WHITELISTED");
-        require(_pools.add(ReserveToken.unwrap(reserveToken)), "ERR_POOL_ALREADY_EXISTS");
+        if (!_settings.isTokenWhitelisted(reserveToken)) {
+            revert NotWhitelisted();
+        }
+
+        if (!_pools.add(ReserveToken.unwrap(reserveToken))) {
+            revert AlreadyExists();
+        }
 
         IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
 
@@ -588,10 +614,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         );
 
         // ensure that the trade gives something in return
-        require(tradeAmounts.amount != 0, "ERR_ZERO_TARGET_AMOUNT");
+        if (tradeAmounts.amount == 0) {
+            revert ZeroTargetAmount();
+        }
 
         // ensure that the target amount is above the requested minimum return amount
-        require(tradeAmounts.amount >= minReturnAmount, "ERR_RETURN_TOO_LOW");
+        if (tradeAmounts.amount < minReturnAmount) {
+            revert ReturnAmountTooLow();
+        }
 
         Pool storage poolData = _poolData[params.pool];
 
@@ -690,24 +720,29 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 unallocatedNetworkTokenLiquidity
     ) private view returns (PoolDepositParams memory depositParams) {
         Pool memory poolData = _poolData[pool];
-        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+        if (!_validPool(poolData)) {
+            revert DoesNotExist();
+        }
 
         // get the effective rate to use when calculating the matching network token trading liquidity amount
         uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
-        require(minLiquidityForTrading > 0, "ERR_MIN_LIQUIDITY_NOT_SET");
+        if (minLiquidityForTrading == 0) {
+            revert MinLiquidityNotSet();
+        }
 
         // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
-        require(
-            poolData.liquidity.stakedBalance + baseTokenAmount <= poolData.depositLimit,
-            "ERR_DEPOSIT_LIMIT_EXCEEDED"
-        );
+        if (poolData.liquidity.stakedBalance + baseTokenAmount > poolData.depositLimit) {
+            revert DepositLimitExceeded();
+        }
 
         Fraction memory rate;
         depositParams.useInitialRate = poolData.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading;
         if (depositParams.useInitialRate) {
             // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
             // actually set)
-            require(_isFractionValid(poolData.initialRate), "ERR_NO_INITIAL_RATE");
+            if (!_isFractionValid(poolData.initialRate)) {
+                revert NoInitialRate();
+            }
 
             rate = poolData.initialRate;
         } else {
@@ -731,12 +766,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
             uint256 unavailableNetworkTokenAmount;
             unchecked {
-                unavailableNetworkTokenAmount = depositParams.networkTokenDeltaAmount - unallocatedNetworkTokenLiquidity;
+                unavailableNetworkTokenAmount =
+                    depositParams.networkTokenDeltaAmount -
+                    unallocatedNetworkTokenLiquidity;
             }
 
             depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
             depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
-
         }
 
         // base token amount is guaranteed to be larger than the excess liquidity
@@ -774,7 +810,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function _poolWithdrawalParams(ReserveToken pool) private view returns (PoolWithdrawalParams memory) {
         Pool memory poolData = _poolData[pool];
-        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+        if (!_validPool(poolData)) {
+            revert DoesNotExist();
+        }
 
         uint256 prod = poolData.liquidity.networkTokenTradingLiquidity * poolData.liquidity.baseTokenTradingLiquidity;
 
@@ -931,7 +969,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function _poolStorage(ReserveToken pool) private view returns (Pool storage) {
         Pool storage poolData = _poolData[pool];
-        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+        if (!_validPool(poolData)) {
+            revert DoesNotExist();
+        }
 
         return poolData;
     }
@@ -968,7 +1008,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 poolTokenTotalSupply = poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
             // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
-            require(stakedBalance == 0, "ERR_INVALID_STAKED_BALANCE");
+            if (stakedBalance > 0) {
+                revert InvalidStakedBalance();
+            }
 
             return baseTokenAmount;
         }
@@ -995,23 +1037,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             params.pool = sourceToken;
         } else {
             // the network token isn't one of the pools or is both of them
-            revert("ERR_INVALID_POOLS");
+            revert InvalidPool();
         }
 
         Pool memory poolData = _poolData[params.pool];
-        require(_validPool(poolData), "ERR_POOL_DOES_NOT_EXIST");
+        if (!_validPool(poolData)) {
+            revert DoesNotExist();
+        }
 
         params.liquidity = poolData.liquidity;
         params.tradingFeePPM = poolData.tradingFeePPM;
 
         // verify that trading is enabled
-        require(poolData.tradingEnabled, "ERR_TRADING_DISABLED");
+        if (!poolData.tradingEnabled) {
+            revert TradingDisabled();
+        }
 
         // verify that liquidity is above the minimum network token liquidity for trading
-        require(
-            params.liquidity.networkTokenTradingLiquidity >= _settings.minLiquidityForTrading(),
-            "ERR_NETWORK_LIQUIDITY_TOO_LOW"
-        );
+        if (params.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
+            revert LiquidityTooLow();
+        }
 
         if (params.isSourceNetworkToken) {
             params.sourceBalance = params.liquidity.networkTokenTradingLiquidity;
@@ -1031,7 +1076,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint32 tradingFeePPM,
         uint256 sourceAmount
     ) private pure returns (TradeAmounts memory) {
-        require(sourceBalance > 0 && targetBalance > 0, "ERR_INVALID_POOL_BALANCE");
+        if (sourceBalance == 0 || targetBalance == 0) {
+            revert InvalidPoolBalance();
+        }
 
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
@@ -1048,7 +1095,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint32 tradingFeePPM,
         uint256 targetAmount
     ) private pure returns (TradeAmounts memory) {
-        require(sourceBalance > 0, "ERR_INVALID_POOL_BALANCE");
+        if (sourceBalance == 0) {
+            revert InvalidPoolBalance();
+        }
 
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
         uint256 fullTargetAmount = targetAmount + feeAmount;

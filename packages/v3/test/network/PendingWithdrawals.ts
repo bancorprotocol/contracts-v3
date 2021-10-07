@@ -46,7 +46,7 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('ERR_INVALID_ADDRESS');
+            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -88,7 +88,7 @@ describe('PendingWithdrawals', () => {
 
         it('should revert when a non-owner attempts to set the lock duration', async () => {
             await expect(pendingWithdrawals.connect(nonOwner).setLockDuration(newLockDuration)).to.be.revertedWith(
-                'ERR_ACCESS_DENIED'
+                'AccessDenied()'
             );
         });
 
@@ -129,7 +129,7 @@ describe('PendingWithdrawals', () => {
         it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
             await expect(
                 pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
-            ).to.be.revertedWith('ERR_ACCESS_DENIED');
+            ).to.be.revertedWith('AccessDenied');
         });
 
         it('should ignore updating to the same withdrawal window duration', async () => {
@@ -266,11 +266,11 @@ describe('PendingWithdrawals', () => {
                             if (!permitted) {
                                 await expect(
                                     pendingWithdrawals.initWithdrawal(ZERO_ADDRESS, amount)
-                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                ).to.be.revertedWith('InvalidAddress');
 
                                 await expect(
                                     pendingWithdrawals.initWithdrawal(poolToken.address, amount)
-                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                ).to.be.revertedWith('InvalidPool');
                             } else {
                                 const { v, r, s } = await permitSignature(
                                     provider as Wallet,
@@ -286,7 +286,7 @@ describe('PendingWithdrawals', () => {
                                     pendingWithdrawals
                                         .connect(provider)
                                         .initWithdrawalPermitted(ZERO_ADDRESS, BigNumber.from(1), MAX_UINT256, v, r, s)
-                                ).to.be.revertedWith('ERR_INVALID_ADDRESS');
+                                ).to.be.revertedWith('InvalidAddress');
 
                                 await expect(
                                     pendingWithdrawals
@@ -299,7 +299,7 @@ describe('PendingWithdrawals', () => {
                                             r,
                                             s
                                         )
-                                ).to.be.revertedWith('ERR_INVALID_POOL');
+                                ).to.be.revertedWith('InvalidPool');
                             }
                         });
                     }
@@ -317,7 +317,7 @@ describe('PendingWithdrawals', () => {
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
                             await expect(initWithdrawal(poolToken, BigNumber.from(0))).to.be.revertedWith(
-                                'ERR_ZERO_VALUE'
+                                'ZeroValue()'
                             );
                         });
 
@@ -392,7 +392,7 @@ describe('PendingWithdrawals', () => {
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
                     await expect(pendingWithdrawals.cancelWithdrawal(BigNumber.from(1))).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
+                        'AccessDenied()'
                     );
                 });
 
@@ -459,13 +459,13 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(provider1).cancelWithdrawal(provider2Id)
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                        ).to.be.revertedWith('AccessDenied');
                     });
 
                     it('should revert when cancelling a withdrawal request twice', async () => {
                         await pendingWithdrawals.connect(provider1).cancelWithdrawal(id1);
                         await expect(pendingWithdrawals.connect(provider1).cancelWithdrawal(id1)).to.be.revertedWith(
-                            'ERR_ACCESS_DENIED'
+                            'AccessDenied()'
                         );
                     });
 
@@ -502,7 +502,7 @@ describe('PendingWithdrawals', () => {
 
                 it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
                     await expect(pendingWithdrawals.reinitWithdrawal(BigNumber.from(1))).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
+                        'AccessDenied()'
                     );
                 });
 
@@ -573,7 +573,7 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(provider1).reinitWithdrawal(provider2Id)
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                        ).to.be.revertedWith('AccessDenied');
                     });
 
                     it('should reinitiate withdrawal requests', async () => {
@@ -609,7 +609,7 @@ describe('PendingWithdrawals', () => {
                 it('should revert when attempting to complete a non-existing withdrawal request', async () => {
                     await expect(
                         pendingWithdrawals.completeWithdrawal(contextId, provider.address, BigNumber.from(100))
-                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    ).to.be.revertedWith('AccessDenied');
                 });
 
                 context('with an initiated withdrawal request', () => {
@@ -676,7 +676,7 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(nonNetwork).completeWithdrawal(contextId, provider.address, id)
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                        ).to.be.revertedWith('AccessDenied');
                     });
 
                     context('during the lock duration', () => {
@@ -685,7 +685,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('ERR_WITHDRAWAL_NOT_ALLOWED');
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
                         });
                     });
 
@@ -699,7 +699,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('ERR_WITHDRAWAL_NOT_ALLOWED');
+                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
                         });
                     });
 
@@ -719,7 +719,7 @@ describe('PendingWithdrawals', () => {
                             await network.completeWithdrawalT(contextId, provider.address, id);
 
                             await expect(pendingWithdrawals.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
-                                'ERR_ACCESS_DENIED'
+                                'AccessDenied()'
                             );
                         });
                     });
