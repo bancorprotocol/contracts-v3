@@ -129,14 +129,14 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         uint256 amount
     ) external override validAddress(target) nonReentrant whenNotPaused {
         if (
-            (reserveToken.toIERC20() != _networkToken || !hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) &&
-            !hasRole(ROLE_ASSET_MANAGER, msg.sender)
+            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
+            hasRole(ROLE_ASSET_MANAGER, msg.sender)
         ) {
+            reserveToken.safeTransfer(target, amount);
+
+            emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
+        } else {
             revert AccessDenied();
         }
-
-        reserveToken.safeTransfer(target, amount);
-
-        emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
     }
 }
