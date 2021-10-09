@@ -173,9 +173,9 @@ library ArbitrageFormula {
         uint256 z,
         uint256 w
     ) private pure returns (int256) { unchecked {
-        int256 u = a.mul(z).toInt256();
-        int256 v = w.mul(y).toInt256();
-        return u.add(v).div(y.toInt256());
+        uint256 u = a.mul(z);
+        uint256 v = w.mul(y);
+        return (u.add(v) / y).toInt256();
     }}
 
     /**
@@ -187,9 +187,9 @@ library ArbitrageFormula {
         uint256 z,
         uint256 w
     ) private pure returns (int256) { unchecked {
-        int256 u = a.mul(z).toInt256();
-        int256 v = w.mul(y).toInt256();
-        return u.sub(v).div(y.toInt256());
+        uint256 u = a.mul(z);
+        uint256 v = w.mul(y);
+        return u > v ? ((u - v) / y).toInt256() : -((v - u) / y).toInt256();
     }}
 
     /**
