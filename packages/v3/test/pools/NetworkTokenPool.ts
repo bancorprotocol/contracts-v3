@@ -46,7 +46,7 @@ describe('NetworkTokenPool', () => {
             const { networkPoolToken } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -54,7 +54,7 @@ describe('NetworkTokenPool', () => {
             const { network } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -159,7 +159,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
@@ -384,7 +384,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
             await expect(network.requestLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -431,7 +431,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(2_000_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'MintingLimitExceeded()'
+                        'MintingLimitExceeded'
                     );
                 }
             });
@@ -471,7 +471,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(1_500_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'MintingLimitExceeded()'
+                        'MintingLimitExceeded'
                     );
                 }
             });
@@ -517,7 +517,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
             await expect(network.renounceLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -824,13 +824,13 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
             await expect(network.withdrawFromNetworkPoolT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
         it('should revert when attempting to withdraw a zero amount', async () => {
             await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(0))).to.be.revertedWith(
-                'ZeroValue()'
+                'ZeroValue'
             );
         });
 
