@@ -39,6 +39,8 @@ import {
     TradeAmounts
 } from "../pools/interfaces/IPoolCollection.sol";
 
+import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+
 // prettier-ignore
 import {
     INetworkTokenPool,
@@ -96,6 +98,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
 
+    // the pool collection upgrader contract
+    IPoolCollectionUpgrader internal _poolCollectionUpgrader;
+
     // the address of the external protection wallet
     ITokenHolder private _externalProtectionWallet;
 
@@ -111,8 +116,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(ReserveToken => IPoolCollection) private _collectionByPool;
 
+    // a mapping between pool collections and the number of associated pools
+    mapping(IPoolCollection => uint256) private _collectionPoolCount;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 7] private __gap;
+    uint256[MAX_GAP - 8] private __gap;
 
     /**
      * @dev triggered when the external protection wallet is updated
@@ -142,18 +150,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev triggered when a new pool is added
      */
     event PoolAdded(uint16 indexed poolType, ReserveToken indexed pool, IPoolCollection indexed poolCollection);
-
-    /**
-     * @dev triggered when an existing pool is upgraded
-     */
-    event PoolUpgraded(
-        uint16 indexed poolType,
-        ReserveToken indexed pool,
-        IPoolCollection prevPoolCollection,
-        IPoolCollection newPoolCollection,
-        uint16 prevVersion,
-        uint16 newVersion
-    );
 
     /**
      * @dev triggered when base token liquidity is deposited
@@ -300,13 +296,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
+    function initialize(
+        INetworkTokenPool initNetworkTokenPool,
+        IPendingWithdrawals initPendingWithdrawals,
+        IPoolCollectionUpgrader initPoolCollectionUpgrader
+    )
         external
         validAddress(address(initNetworkTokenPool))
         validAddress(address(initPendingWithdrawals))
+        validAddress(address(initPoolCollectionUpgrader))
         initializer
     {
-        __BancorNetwork_init(initNetworkTokenPool, initPendingWithdrawals);
+        __BancorNetwork_init(initNetworkTokenPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     // solhint-disable func-name-mixedcase
@@ -314,14 +315,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetwork_init(INetworkTokenPool initNetworkTokenPool, IPendingWithdrawals initPendingWithdrawals)
-        internal
-        initializer
-    {
+    function __BancorNetwork_init(
+        INetworkTokenPool initNetworkTokenPool,
+        IPendingWithdrawals initPendingWithdrawals,
+        IPoolCollectionUpgrader initPoolCollectionUpgrader
+    ) internal initializer {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals);
+        __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     /**
@@ -329,10 +331,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function __BancorNetwork_init_unchained(
         INetworkTokenPool initNetworkTokenPool,
-        IPendingWithdrawals initPendingWithdrawals
+        IPendingWithdrawals initPendingWithdrawals,
+        IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal initializer {
         _networkTokenPool = initNetworkTokenPool;
         _pendingWithdrawals = initPendingWithdrawals;
+        _poolCollectionUpgrader = initPoolCollectionUpgrader;
     }
 
     // solhint-enable func-name-mixedcase
@@ -425,6 +429,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function poolCollectionUpgrader() external view override returns (IPoolCollectionUpgrader) {
+        return _poolCollectionUpgrader;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function externalProtectionWallet() external view override returns (ITokenHolder) {
         return _externalProtectionWallet;
     }
@@ -486,6 +497,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         uint16 poolType = poolCollection.poolType();
+        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
+        if (
+            address(prevLatestPoolCollection) != address(0) &&
+            prevLatestPoolCollection.version() == poolCollection.version()
+        ) {
+            revert AlreadyExists();
+        }
+
         _setLatestPoolCollection(poolType, poolCollection);
 
         emit PoolCollectionAdded({ poolType: poolType, poolCollection: poolCollection });
@@ -508,7 +527,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
 
         // verify that no pools are associated with the specified pool collection
-        if (poolCollection.poolCount() != 0) {
+        if (_collectionPoolCount[poolCollection] != 0) {
             revert NotEmpty();
         }
 
@@ -588,6 +607,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function collectionPoolCount(IPoolCollection poolCollection) external view override returns (uint256) {
+        return _collectionPoolCount[poolCollection];
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function isPoolValid(ReserveToken pool) external view override returns (bool) {
         return
             ReserveToken.unwrap(pool) == address(_networkToken) || _liquidityPools.contains(ReserveToken.unwrap(pool));
@@ -623,7 +649,36 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // add the pool to the reverse pool collection lookup
         _collectionByPool[reserveToken] = poolCollection;
 
+        unchecked {
+            _collectionPoolCount[poolCollection]++;
+        }
+
         emit PoolAdded({ poolType: poolType, pool: reserveToken, poolCollection: poolCollection });
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function upgradePools(ReserveToken[] calldata pools) external override nonReentrant {
+        uint256 length = pools.length;
+        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+            ReserveToken pool = pools[i];
+
+            // request the pool collection upgrader to upgrade the pool and get the new pool collection it exists in
+            IPoolCollection prevPoolCollection = _collectionByPool[pool];
+            IPoolCollection newPoolCollection = _poolCollectionUpgrader.upgradePool(pool);
+            if (newPoolCollection == IPoolCollection(address(0))) {
+                continue;
+            }
+
+            // update the mapping between pools and their respective pool collections
+            _collectionByPool[pool] = newPoolCollection;
+
+            unchecked {
+                _collectionPoolCount[newPoolCollection]++;
+                _collectionPoolCount[prevPoolCollection]--;
+            }
+        }
     }
 
     /**

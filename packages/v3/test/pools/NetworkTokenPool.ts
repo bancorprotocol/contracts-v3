@@ -8,7 +8,8 @@ import {
     TestBancorNetwork,
     TestERC20Token,
     TestNetworkTokenPool,
-    TestPoolCollection
+    TestPoolCollection,
+    TestPoolCollectionUpgrader
 } from '../../typechain';
 import {
     FeeTypes,
@@ -191,10 +192,12 @@ describe('NetworkTokenPool', () => {
         let networkTokenPool: TestNetworkTokenPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection } = await createSystem());
+            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
@@ -279,7 +282,11 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return false for another pool collection', async () => {
-                    const poolCollection2 = await createPoolCollection(network, poolTokenFactory);
+                    const poolCollection2 = await createPoolCollection(
+                        network,
+                        poolTokenFactory,
+                        poolCollectionUpgrader
+                    );
 
                     expect(
                         await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)

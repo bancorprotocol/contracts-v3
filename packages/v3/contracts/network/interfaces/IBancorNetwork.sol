@@ -13,6 +13,7 @@ import { ReserveToken } from "../../token/ReserveToken.sol";
 import { IPoolCollection, TradeAmounts } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
+import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IBancorVault } from "./IBancorVault.sol";
@@ -68,6 +69,11 @@ interface IBancorNetwork is IUpgradeable {
     function pendingWithdrawals() external view returns (IPendingWithdrawals);
 
     /**
+     * @dev returns the pool collection upgrader contract
+     */
+    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
+
+    /**
      * @dev returns the address of the external protection wallet
      */
     function externalProtectionWallet() external view returns (ITokenHolder);
@@ -93,6 +99,12 @@ interface IBancorNetwork is IUpgradeable {
     function collectionByPool(ReserveToken pool) external view returns (IPoolCollection);
 
     /**
+     * @dev returns the number of associated pools with the specified pool collection
+     */
+
+    function collectionPoolCount(IPoolCollection poolCollection) external view returns (uint256);
+
+    /**
      * @dev returns whether the pool is valid
      */
     function isPoolValid(ReserveToken pool) external view returns (bool);
@@ -105,6 +117,15 @@ interface IBancorNetwork is IUpgradeable {
      * - the pool doesn't exist
      */
     function createPool(uint16 poolType, ReserveToken reserveToken) external;
+
+    /**
+     * @dev upgrades a list of pools
+     *
+     * notes:
+     *
+     * - invalid or incompatible pools will be skipped gracefully
+     */
+    function upgradePools(ReserveToken[] calldata pools) external;
 
     /**
      * @dev deposits liquidity for the specified provider

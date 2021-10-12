@@ -218,8 +218,8 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         returns (bool)
     {
         return
-            ReserveToken.unwrap(pool) != address(0x0) &&
-            address(poolCollection) != address(0x0) &&
+            ReserveToken.unwrap(pool) != address(0) &&
+            address(poolCollection) != address(0) &&
             _settings.isTokenWhitelisted(pool) &&
             poolCollection.isPoolRateStable(pool);
     }
