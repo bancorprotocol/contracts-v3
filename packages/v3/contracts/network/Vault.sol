@@ -4,8 +4,9 @@ pragma solidity 0.8.9;
 import { IVault } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-abstract contract Vault is IVault, Upgradeable {
+abstract contract Vault is IVault, Upgradeable, ReentrancyGuardUpgradeable {
     // the admin role is used to pause/unpause the vault
     bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
 
@@ -31,6 +32,7 @@ abstract contract Vault is IVault, Upgradeable {
      */
     function __Vault_init() internal initializer {
         __Upgradeable_init();
+        __ReentrancyGuard_init();
 
         __Vault_init_unchained();
     }
@@ -60,7 +62,9 @@ abstract contract Vault is IVault, Upgradeable {
         ReserveToken token,
         uint256 amount,
         address target
-    ) public {}
+    ) public {
+        // TODO
+    }
 
     receive() external payable {}
 }
