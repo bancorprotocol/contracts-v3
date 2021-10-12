@@ -7,7 +7,6 @@ import {
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
-    TestERC20Token,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
@@ -34,7 +33,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
-import { camelCase, create } from 'lodash';
+import { camelCase } from 'lodash';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
