@@ -10,7 +10,6 @@ import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
-import 'hardhat-gas-reporter';
 import { HardhatUserConfig } from 'hardhat/config';
 import { NetworkUserConfig } from 'hardhat/types';
 import 'solidity-coverage';
@@ -74,11 +73,6 @@ const config: HardhatUserConfig = {
     abiExporter: {
         path: './data/abi',
         clear: true
-    },
-
-    gasReporter: {
-        currency: 'USD',
-        enabled: getEnvKey('PROFILE')
     },
 
     mocha: {
