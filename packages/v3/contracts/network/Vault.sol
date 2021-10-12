@@ -9,12 +9,6 @@ abstract contract Vault is IVault, Upgradeable {
     // the admin role is used to pause/unpause the vault
     bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
 
-    // the asset manager role is required to access all the reserves
-    bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
-
-    // the asset manager role is only required to access the network token reserve
-    bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
-
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
