@@ -496,6 +496,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert AlreadyExists();
         }
 
+        // ensure that we're not adding a pool collection with the same type and version
         uint16 poolType = poolCollection.poolType();
         IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
         if (
