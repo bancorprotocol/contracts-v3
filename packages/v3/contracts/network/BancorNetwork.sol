@@ -1130,7 +1130,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             );
         }
 
-        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol - amounts.networkTokenAmountToDeductFromLiquidity;
+        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol -
+            amounts.networkTokenAmountToDeductFromLiquidity;
         if (networkTokenArbitrageAmount > 0) {
             cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
         } else if (networkTokenArbitrageAmount < 0) {

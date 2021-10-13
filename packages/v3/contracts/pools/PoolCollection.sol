@@ -901,54 +901,57 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint32 m, // tradeFeePPM
         uint32 n, // withdrawalFeePPM
         uint256 x // baseTokenWithdrawalAmount
-    ) internal pure returns (WithdrawalAmounts memory amounts) { unchecked {
-        require(
-            a <= type(uint128).max &&
-            b <= type(uint128).max &&
-            c <= type(uint128).max &&
-            e <= type(uint128).max &&
-            m <= PPM_RESOLUTION / 2 &&
-            n <= PPM_RESOLUTION / 2 &&
-            x <= e, "ERR_INVALID_WITHDRAWAL_INPUT"
-        );
+    ) internal pure returns (WithdrawalAmounts memory amounts) {
+        unchecked {
+            require(
+                a <= type(uint128).max &&
+                    b <= type(uint128).max &&
+                    c <= type(uint128).max &&
+                    e <= type(uint128).max &&
+                    m <= PPM_RESOLUTION / 2 &&
+                    n <= PPM_RESOLUTION / 2 &&
+                    x <= e,
+                "ERR_INVALID_WITHDRAWAL_INPUT"
+            );
 
-        Output memory output;
+            Output memory output;
 
-        if (isDeficit(b, c, e)) {
-            if (ThresholdFormula.deficit(b, c, e, m, n, x)) {
-                output = ArbitrageFormula.deficit(a, b, c, e, m, n, x);
+            if (isDeficit(b, c, e)) {
+                if (ThresholdFormula.deficit(b, c, e, m, n, x)) {
+                    output = ArbitrageFormula.deficit(a, b, c, e, m, n, x);
+                } else {
+                    output = DefaultFormula.deficit(a, b, c, e, n, x);
+                }
             } else {
-                output = DefaultFormula.deficit(a, b, c, e, n, x);
+                if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
+                    output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
+                } else {
+                    output = DefaultFormula.surplus(a, b, c, e, n, x);
+                }
             }
-        } else {
-            if (ThresholdFormula.surplus(b, c, e, m, n, x)) {
-                output = ArbitrageFormula.surplus(a, b, c, e, m, n, x);
-            } else {
-                output = DefaultFormula.surplus(a, b, c, e, n, x);
+
+            // if the user is receiving network tokens and the external wallet holds base tokens
+            if (output.t > 0 && w > 0) {
+                uint256 tb = output.t.mul(b);
+                uint256 wa = w.mul(a);
+                if (tb > wa) {
+                    output.t = (tb - wa) / b;
+                    output.u = w;
+                } else {
+                    output.t = 0;
+                    output.u = tb / a;
+                }
             }
+
+            amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
+            amounts.networkTokenAmountToMintForProvider = output.t;
+            amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
+            amounts.baseTokenAmountToDeductFromLiquidity = output.r;
+            amounts.networkTokenAmountToDeductFromLiquidity = output.p;
+            amounts.networkTokenAmountToRenounceByProtocol = output.q;
+            amounts.baseTokenWithdrawalFeeAmount = (x * n) / PPM_RESOLUTION;
         }
-
-        // if the user is receiving network tokens and the external wallet holds base tokens
-        if (output.t > 0 && w > 0) {
-            uint256 tb = output.t.mul(b);
-            uint256 wa = w.mul(a);
-            if (tb > wa) {
-                output.t = (tb - wa) / b;
-                output.u = w;
-            } else {
-                output.t = 0;
-                output.u = tb / a;
-            }
-        }
-
-        amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
-        amounts.networkTokenAmountToMintForProvider = output.t;
-        amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
-        amounts.baseTokenAmountToDeductFromLiquidity = output.r;
-        amounts.networkTokenAmountToDeductFromLiquidity = output.p;
-        amounts.networkTokenAmountToRenounceByProtocol = output.q;
-        amounts.baseTokenWithdrawalFeeAmount = (x * n) / PPM_RESOLUTION;
-    }}
+    }
 
     /**
      * @dev sets the default trading fee (in units of PPM)
