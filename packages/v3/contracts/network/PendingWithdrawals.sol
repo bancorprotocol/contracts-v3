@@ -44,7 +44,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     uint32 private _withdrawalWindowDuration;
 
     // a mapping between accounts and their pending withdrawal requests
-    uint256 private _lastWithdrawalRequestId;
+    uint256 private _prevWithdrawalRequestId;
     mapping(address => EnumerableSetUpgradeable.UintSet) private _withdrawalRequestIdsByProvider;
     mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
@@ -386,8 +386,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        _lastWithdrawalRequestId = uncheckedInc(_lastWithdrawalRequestId);
-        uint256 id = _lastWithdrawalRequestId;
+        _prevWithdrawalRequestId = uncheckedInc(_prevWithdrawalRequestId);
+        uint256 id = _prevWithdrawalRequestId;
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
