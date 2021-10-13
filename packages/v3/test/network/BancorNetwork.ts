@@ -2629,8 +2629,8 @@ describe('BancorNetwork Flow', () => {
             expected: {
                 tknBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: user.tknBalance}), {vault: flow.pool.tknBalance}),
                 bntBalances: flow.users.reduce((bntBalances, user) => ({...bntBalances, [user.id]: user.bntBalance}), {vault: flow.pool.bntBalance}),
-                bntknBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {vault: '0'}),
-                bnbntBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {vault: '0'}),
+                bntknBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {}),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {}),
                 tknWalletBalance: flow.epwBalance,
                 tknStakedBalance: flow.pool.tknBalance,
                 tknTradingLiquidity: flow.pool.tknBalance,
@@ -2722,34 +2722,36 @@ describe('BancorNetwork Flow', () => {
         };
 
         const verifyState = async (expected: State) => {
+            const actual: State = {
+                tknBalances: {},
+                bntBalances: {},
+                bntknBalances: {},
+                bnbntBalances: {},
+                tknWalletBalance: '',
+                tknStakedBalance: '',
+                tknTradingLiquidity: '',
+                bntTradingLiquidity: ''
+            };
+
             const poolData = await poolCollection.poolData(baseToken.address);
             const tknWalletBalance = await baseToken.balanceOf(wallet.address);
 
-            const tknBalances  : any = {};
-            const bntBalances  : any = {};
-            const bntknBalances: any = {};
-            const bnbntBalances: any = {};
-
             for (const userId of Object.keys(users)) {
-                tknBalances  [userId] = integerToDecimal(await baseToken       .balanceOf(users[userId].address), tknDecimals  );
-                bntBalances  [userId] = integerToDecimal(await networkToken    .balanceOf(users[userId].address), bntDecimals  );
-                bntknBalances[userId] = integerToDecimal(await basePoolToken   .balanceOf(users[userId].address), bntknDecimals);
-                bnbntBalances[userId] = integerToDecimal(await networkPoolToken.balanceOf(users[userId].address), bnbntDecimals);
+                actual.tknBalances  [userId] = integerToDecimal(await baseToken       .balanceOf(users[userId].address), tknDecimals  );
+                actual.bntBalances  [userId] = integerToDecimal(await networkToken    .balanceOf(users[userId].address), bntDecimals  );
+                actual.bntknBalances[userId] = integerToDecimal(await basePoolToken   .balanceOf(users[userId].address), bntknDecimals);
+                actual.bnbntBalances[userId] = integerToDecimal(await networkPoolToken.balanceOf(users[userId].address), bnbntDecimals);
             }
 
-            tknBalances  ['vault'] = integerToDecimal(await baseToken       .balanceOf(vault.address), tknDecimals  );
-            bntBalances  ['vault'] = integerToDecimal(await networkToken    .balanceOf(vault.address), bntDecimals  );
-            bntknBalances['vault'] = integerToDecimal(await basePoolToken   .balanceOf(vault.address), bntknDecimals);
-            bnbntBalances['vault'] = integerToDecimal(await networkPoolToken.balanceOf(vault.address), bnbntDecimals);
+            actual.tknBalances['vault'] = integerToDecimal(await baseToken   .balanceOf(vault.address), tknDecimals);
+            actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(vault.address), bntDecimals);
 
-            expect(tknBalances  ).to.deep.equal(expected.tknBalances  );
-            expect(bntBalances  ).to.deep.equal(expected.bntBalances  );
-            expect(bntknBalances).to.deep.equal(expected.bntknBalances);
-            expect(bnbntBalances).to.deep.equal(expected.bnbntBalances);
-            expect(integerToDecimal(tknWalletBalance, tknDecimals)).to.equal(expected.tknWalletBalance);
-            expect(integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals)).to.equal(expected.tknStakedBalance);
-            expect(integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals)).to.equal(expected.tknTradingLiquidity);
-            expect(integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals)).to.equal(expected.bntTradingLiquidity);
+            actual.tknWalletBalance = integerToDecimal(tknWalletBalance, tknDecimals);
+            actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
+            actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
+            actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
+
+            expect(actual).to.deep.equal(expected);
         };
 
         before(async () => {
