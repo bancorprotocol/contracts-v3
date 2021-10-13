@@ -55,7 +55,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function upgradePoolT(IPoolCollectionUpgrader poolCollectionUpgrader, ReserveToken pool)
         external
-        returns (IPoolCollection)
+        returns (IPoolCollection, IPoolCollection)
     {
         return poolCollectionUpgrader.upgradePool(pool);
     }

@@ -666,8 +666,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             ReserveToken pool = pools[i];
 
             // request the pool collection upgrader to upgrade the pool and get the new pool collection it exists in
-            IPoolCollection prevPoolCollection = _collectionByPool[pool];
-            IPoolCollection newPoolCollection = _poolCollectionUpgrader.upgradePool(pool);
+            (IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection) = _poolCollectionUpgrader
+                .upgradePool(pool);
             if (newPoolCollection == IPoolCollection(address(0))) {
                 continue;
             }

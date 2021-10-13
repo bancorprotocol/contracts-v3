@@ -66,7 +66,11 @@ describe('PoolCollectionUpgrader', () => {
         });
 
         const testSkippedUpgrade = async (pool: string) => {
-            const newPoolCollection = await network.callStatic.upgradePoolT(poolCollectionUpgrader.address, pool);
+            const poolCollections = await network.callStatic.upgradePoolT(poolCollectionUpgrader.address, pool);
+            const prevPoolCollection = poolCollections[0];
+            const newPoolCollection = poolCollections[1];
+
+            expect(prevPoolCollection).to.equal(ZERO_ADDRESS);
             expect(newPoolCollection).to.equal(ZERO_ADDRESS);
 
             const res = await network.upgradePoolT(poolCollectionUpgrader.address, pool);
@@ -109,10 +113,14 @@ describe('PoolCollectionUpgrader', () => {
             });
 
             it('should upgrade', async () => {
-                const newPoolCollection = await network.callStatic.upgradePoolT(
+                const poolCollections = await network.callStatic.upgradePoolT(
                     poolCollectionUpgrader.address,
                     reserveToken.address
                 );
+                const prevPoolCollection = poolCollections[0];
+                const newPoolCollection = poolCollections[1];
+
+                expect(prevPoolCollection).to.equal(poolCollection.address);
                 expect(newPoolCollection).to.equal(targetPoolCollection.address);
 
                 const poolData = await poolCollection.poolData(reserveToken.address);

@@ -112,15 +112,19 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolCollectionUpgrader
      */
-    function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
+    function upgradePool(ReserveToken pool)
+        external
+        only(address(_network))
+        returns (IPoolCollection, IPoolCollection)
+    {
         if (ReserveToken.unwrap(pool) == address(0)) {
-            return INVALID_POOL_COLLECTION;
+            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
         }
 
         // get the pool collection that this pool exists in
         IPoolCollection prevPoolCollection = _network.collectionByPool(pool);
         if (address(prevPoolCollection) == address(0)) {
-            return INVALID_POOL_COLLECTION;
+            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
         }
 
         // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
@@ -128,7 +132,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {
-            return INVALID_POOL_COLLECTION;
+            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
@@ -144,10 +148,10 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
                 newVersion: newPoolCollection.version()
             });
 
-            return newPoolCollection;
+            return (prevPoolCollection, newPoolCollection);
         }
 
-        return INVALID_POOL_COLLECTION;
+        return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
     }
 
     /**
