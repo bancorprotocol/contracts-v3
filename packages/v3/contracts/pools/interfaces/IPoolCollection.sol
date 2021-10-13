@@ -218,4 +218,13 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the pool collection upgrader contract
      */
     function migratePoolData(ReserveToken pool, Pool calldata data) external;
+
+    /**
+     * @dev remove a pool from this pool collection
+     *
+     * requirements:
+     *
+     * - the caller must be the pool collection upgrader contract
+     */
+    function removePoolData(ReserveToken pool) external;
 }

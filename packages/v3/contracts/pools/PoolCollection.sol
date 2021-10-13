@@ -139,6 +139,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     event PoolCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
 
     /**
+     * @dev triggered when a pool is migrated
+     */
+    event PoolMigrated(ReserveToken indexed reserveToken);
+
+    /**
+     * @dev triggered when a pool is removed
+     */
+    event PoolRemoved(ReserveToken indexed reserveToken);
+
+    /**
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
@@ -301,10 +311,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert NotWhitelisted();
         }
 
-        if (!_pools.add(ReserveToken.unwrap(reserveToken))) {
-            revert AlreadyExists();
-        }
-
         IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
 
         newPoolToken.acceptOwnership();
@@ -325,7 +331,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             })
         });
 
-        _poolData[reserveToken] = newPool;
+        _addPool(reserveToken, newPool);
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
@@ -736,12 +742,45 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         validAddress(ReserveToken.unwrap(pool))
         only(address(_poolCollectionUpgrader))
     {
-        Pool memory prevData = _poolData[pool];
-        if (_validPool(prevData)) {
+        _addPool(pool, data);
+
+        emit PoolMigrated({ reserveToken: pool });
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function removePoolData(ReserveToken pool)
+        external
+        override
+        validAddress(ReserveToken.unwrap(pool))
+        only(address(_poolCollectionUpgrader))
+    {
+        _removePool(pool);
+
+        emit PoolRemoved({ reserveToken: pool });
+    }
+
+    /**
+     * @dev adds a pool
+     */
+    function _addPool(ReserveToken pool, Pool memory data) private {
+        if (!_pools.add(ReserveToken.unwrap(pool))) {
             revert AlreadyExists();
         }
 
         _poolData[pool] = data;
+    }
+
+    /**
+     * @dev removes a pool
+     */
+    function _removePool(ReserveToken pool) private {
+        if (!_pools.remove(ReserveToken.unwrap(pool))) {
+            revert DoesNotExist();
+        }
+
+        delete _poolData[pool];
     }
 
     /**

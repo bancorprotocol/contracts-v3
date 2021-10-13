@@ -18,7 +18,11 @@ import { Utils, InvalidPool } from "../utility/Utils.sol";
 error InvalidPoolCollection();
 error UnsupportedVersion();
 
-interface IPoolCollectionV1 {
+interface IPoolCollectionBase {
+    function removePoolData(ReserveToken pool) external;
+}
+
+interface IPoolCollectionV1 is IPoolCollectionBase {
     struct PoolLiquidityV1 {
         uint256 networkTokenTradingLiquidity; // the network token trading liquidity
         uint256 baseTokenTradingLiquidity; // the base token trading liquidity
@@ -113,11 +117,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolCollectionUpgrader
      */
-    function upgradePool(ReserveToken pool)
-        external
-        only(address(_network))
-        returns (IPoolCollection, IPoolCollection)
-    {
+    function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
         if (ReserveToken.unwrap(pool) == address(0)) {
             revert InvalidPool();
         }
@@ -149,7 +149,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
                 newVersion: newPoolCollection.version()
             });
 
-            return (prevPoolCollection, newPoolCollection);
+            return newPoolCollection;
         }
 
         revert UnsupportedVersion();
@@ -183,5 +183,6 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         });
 
         targetPoolCollection.migratePoolData(pool, newData);
+        sourcePoolCollection.removePoolData(pool);
     }
 }

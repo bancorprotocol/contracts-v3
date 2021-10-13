@@ -19,4 +19,8 @@ contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
     ) external {
         poolCollection.migratePoolData(pool, data);
     }
+
+    function removePoolDataT(IPoolCollection poolCollection, ReserveToken pool) external {
+        poolCollection.removePoolData(pool);
+    }
 }

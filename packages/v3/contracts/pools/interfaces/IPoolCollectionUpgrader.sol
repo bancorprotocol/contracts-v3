@@ -20,7 +20,7 @@ interface IPoolCollectionUpgrader is IVersioned {
     function network() external view returns (IBancorNetwork);
 
     /**
-     * @dev upgrades a pool and returns the previous and the new pool collection it exists in
+     * @dev upgrades a pool and returns the new pool collection it exists in
      *
      * notes:
      *
@@ -30,5 +30,5 @@ interface IPoolCollectionUpgrader is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function upgradePool(ReserveToken pool) external returns (IPoolCollection, IPoolCollection);
+    function upgradePool(ReserveToken pool) external returns (IPoolCollection);
 }

@@ -687,7 +687,6 @@ describe('BancorNetwork', () => {
                     it('should create a pool', async () => {
                         expect(await network.isPoolValid(reserveToken.address)).to.be.false;
                         expect(await network.collectionByPool(reserveToken.address)).to.equal(ZERO_ADDRESS);
-                        expect(await network.collectionPoolCount(poolCollection.address)).to.equal(BigNumber.from(0));
                         expect(await network.liquidityPools()).to.be.empty;
                         expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
 
@@ -698,7 +697,6 @@ describe('BancorNetwork', () => {
 
                         expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                         expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
-                        expect(await network.collectionPoolCount(poolCollection.address)).to.equal(BigNumber.from(1));
                         expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
                         expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                     });
@@ -765,10 +763,8 @@ describe('BancorNetwork', () => {
             prevPoolCollection: TestPoolCollection,
             newPoolCollection: TestPoolCollection
         ) => {
-            expect(await network.collectionPoolCount(prevPoolCollection.address)).to.equal(
-                reserveTokenAddresses.length
-            );
-            expect(await network.collectionPoolCount(newPoolCollection.address)).to.equal(BigNumber.from(0));
+            expect(await prevPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
+            expect(await newPoolCollection.poolCount()).to.equal(BigNumber.from(0));
 
             for (let i = 0; i < reserveTokenAddresses.length; i++) {
                 expect(await network.collectionByPool(reserveTokenAddresses[i])).to.equal(prevPoolCollection.address);
@@ -779,8 +775,8 @@ describe('BancorNetwork', () => {
             prevPoolCollection: TestPoolCollection,
             newPoolCollection: TestPoolCollection
         ) => {
-            expect(await network.collectionPoolCount(prevPoolCollection.address)).to.equal(BigNumber.from(0));
-            expect(await network.collectionPoolCount(newPoolCollection.address)).to.equal(reserveTokenAddresses.length);
+            expect(await prevPoolCollection.poolCount()).to.equal(BigNumber.from(0));
+            expect(await newPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (let i = 0; i < reserveTokenAddresses.length; i++) {
                 expect(await network.collectionByPool(reserveTokenAddresses[i])).to.equal(newPoolCollection.address);

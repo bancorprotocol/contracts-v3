@@ -99,12 +99,6 @@ interface IBancorNetwork is IUpgradeable {
     function collectionByPool(ReserveToken pool) external view returns (IPoolCollection);
 
     /**
-     * @dev returns the number of associated pools with the specified pool collection
-     */
-
-    function collectionPoolCount(IPoolCollection poolCollection) external view returns (uint256);
-
-    /**
      * @dev returns whether the pool is valid
      */
     function isPoolValid(ReserveToken pool) external view returns (bool);

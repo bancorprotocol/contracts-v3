@@ -2056,11 +2056,18 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('AccessDenied()');
         });
 
+        it('should revert when attempting to migrate pool data of an invalid pool', async () => {
+            const poolData = await poolCollection.poolData(reserveToken.address);
+            await expect(
+                poolCollectionUpgrader.migratePoolDataT(poolCollection.address, ZERO_ADDRESS, poolData)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
         it('should revert when attempting to migrate pool data of an already existing pool', async () => {
             const poolData = await poolCollection.poolData(reserveToken.address);
             await expect(
                 poolCollectionUpgrader.migratePoolDataT(poolCollection.address, reserveToken.address, poolData)
-            ).to.be.revertedWith('AlreadyExists()');
+            ).to.be.revertedWith('AlreadyExists');
         });
 
         it('should allow to migrate pool data', async () => {
@@ -2070,10 +2077,66 @@ describe('PoolCollection', () => {
             expect(newPoolData.poolToken).to.equal(ZERO_ADDRESS);
 
             const poolData = await poolCollection.poolData(reserveToken.address);
-            await poolCollectionUpgrader.migratePoolDataT(newPoolCollection.address, reserveToken.address, poolData);
+            const res = await poolCollectionUpgrader.migratePoolDataT(
+                newPoolCollection.address,
+                reserveToken.address,
+                poolData
+            );
+
+            await expect(res).to.emit(newPoolCollection, 'PoolMigrated').withArgs(reserveToken.address);
 
             newPoolData = await newPoolCollection.poolData(reserveToken.address);
             expect(newPoolData).to.deep.equal(poolData);
+        });
+    });
+
+    describe('pool data removal', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let poolCollection: TestPoolCollection;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let reserveToken: TestERC20Token;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, networkSettings, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+
+            await createPool(reserveToken, network, networkSettings, poolCollection);
+        });
+
+        it('should revert when attempting to remove pool data from a non-upgrader', async () => {
+            const nonUpgrader = deployer;
+
+            await expect(poolCollection.connect(nonUpgrader).removePoolData(reserveToken.address)).to.be.revertedWith(
+                'AccessDenied'
+            );
+        });
+
+        it('should revert when attempting to remove pool data of an invalid pool', async () => {
+            await expect(
+                poolCollectionUpgrader.removePoolDataT(poolCollection.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to remove pool data of a non-existing pool', async () => {
+            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            await expect(
+                poolCollectionUpgrader.removePoolDataT(poolCollection.address, reserveToken2.address)
+            ).to.be.revertedWith('DoesNotExist');
+        });
+
+        it('should allow to remove pool data', async () => {
+            let poolData = await poolCollection.poolData(reserveToken.address);
+            expect(poolData.poolToken).not.to.equal(ZERO_ADDRESS);
+
+            const res = await poolCollectionUpgrader.removePoolDataT(poolCollection.address, reserveToken.address);
+
+            await expect(res).to.emit(poolCollection, 'PoolRemoved').withArgs(reserveToken.address);
+
+            poolData = await poolCollection.poolData(reserveToken.address);
+            expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
         });
     });
 });

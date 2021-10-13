@@ -126,17 +126,14 @@ describe('PoolCollectionUpgrader', () => {
             });
 
             it('should upgrade', async () => {
-                const poolCollections = await network.callStatic.upgradePoolT(
+                const newPoolCollection = await network.callStatic.upgradePoolT(
                     poolCollectionUpgrader.address,
                     reserveToken.address
                 );
-                const prevPoolCollection = poolCollections[0];
-                const newPoolCollection = poolCollections[1];
 
-                expect(prevPoolCollection).to.equal(poolCollection.address);
                 expect(newPoolCollection).to.equal(targetPoolCollection.address);
 
-                const poolData = await poolCollection.poolData(reserveToken.address);
+                let poolData = await poolCollection.poolData(reserveToken.address);
                 let newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData.poolToken).to.equal(ZERO_ADDRESS);
 
@@ -154,6 +151,9 @@ describe('PoolCollectionUpgrader', () => {
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);
+
+                poolData = await poolCollection.poolData(reserveToken.address);
+                expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
             });
         });
     });
