@@ -2752,7 +2752,7 @@ describe('BancorNetwork Flow', () => {
             const poolData = await poolCollection.poolData(baseToken.address);
             const tknWalletBalance = await baseToken.balanceOf(wallet.address);
 
-            for (const userId of Object.keys(users)) {
+            for (const userId in users) {
                 actual.tknBalances[userId] = integerToDecimal(
                     await baseToken.balanceOf(users[userId].address),
                     tknDecimals
