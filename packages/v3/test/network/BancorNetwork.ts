@@ -2630,18 +2630,16 @@ describe('BancorNetwork Flow', () => {
             expected: {
                 tknBalances: flow.users.reduce(
                     (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
-                    { vault: flow.pool.tknBalance,  wallet: flow.epwBalance }
+                    { vault: flow.pool.tknBalance, wallet: flow.epwBalance }
                 ),
                 bntBalances: flow.users.reduce(
                     (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
                     { vault: flow.pool.bntBalance }
                 ),
-                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }),
-                    { }
-                ),
-                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }),
-                    { protocol: flow.pool.bntBalance }
-                ),
+                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
+                    protocol: flow.pool.bntBalance
+                }),
                 tknStakedBalance: flow.pool.tknBalance,
                 tknTradingLiquidity: flow.pool.tknBalance,
                 bntTradingLiquidity: flow.pool.bntBalance
@@ -2775,7 +2773,10 @@ describe('BancorNetwork Flow', () => {
             actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(vault.address), tknDecimals);
             actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(wallet.address), tknDecimals);
             actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(vault.address), bntDecimals);
-            actual.bnbntBalances['protocol'] = integerToDecimal(await networkPoolToken.balanceOf(networkTokenPool.address), bnbntDecimals);
+            actual.bnbntBalances['protocol'] = integerToDecimal(
+                await networkPoolToken.balanceOf(networkTokenPool.address),
+                bnbntDecimals
+            );
 
             actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
@@ -2879,8 +2880,8 @@ describe('BancorNetwork Flow', () => {
         }
     };
 
-    describe.only('quick tests', () => {
-        test();
+    describe('quick tests', () => {
+        test(100);
     });
 
     describe('@stress tests', () => {
