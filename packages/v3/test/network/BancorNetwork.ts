@@ -2594,7 +2594,6 @@ describe('BancorNetwork Flow', () => {
         bntBalances: any;
         bntknBalances: any;
         bnbntBalances: any;
-        tknWalletBalance: string;
         tknStakedBalance: string;
         tknTradingLiquidity: string;
         bntTradingLiquidity: string;
@@ -2631,15 +2630,18 @@ describe('BancorNetwork Flow', () => {
             expected: {
                 tknBalances: flow.users.reduce(
                     (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
-                    { vault: flow.pool.tknBalance }
+                    { vault: flow.pool.tknBalance,  wallet: flow.epwBalance }
                 ),
                 bntBalances: flow.users.reduce(
                     (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
                     { vault: flow.pool.bntBalance }
                 ),
-                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
-                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
-                tknWalletBalance: flow.epwBalance,
+                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }),
+                    { }
+                ),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }),
+                    { protocol: flow.pool.bntBalance }
+                ),
                 tknStakedBalance: flow.pool.tknBalance,
                 tknTradingLiquidity: flow.pool.tknBalance,
                 bntTradingLiquidity: flow.pool.bntBalance
@@ -2656,6 +2658,7 @@ describe('BancorNetwork Flow', () => {
         let network: TestBancorNetwork;
         let networkToken: NetworkToken;
         let networkSettings: NetworkSettings;
+        let networkTokenPool: TestNetworkTokenPool;
         let networkTokenGovernance: TokenGovernance;
         let pendingWithdrawals: PendingWithdrawals;
         let poolCollection: TestPoolCollection;
@@ -2743,14 +2746,12 @@ describe('BancorNetwork Flow', () => {
                 bntBalances: {},
                 bntknBalances: {},
                 bnbntBalances: {},
-                tknWalletBalance: '',
                 tknStakedBalance: '',
                 tknTradingLiquidity: '',
                 bntTradingLiquidity: ''
             };
 
             const poolData = await poolCollection.poolData(baseToken.address);
-            const tknWalletBalance = await baseToken.balanceOf(wallet.address);
 
             for (const userId in users) {
                 actual.tknBalances[userId] = integerToDecimal(
@@ -2772,9 +2773,10 @@ describe('BancorNetwork Flow', () => {
             }
 
             actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(vault.address), tknDecimals);
+            actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(wallet.address), tknDecimals);
             actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(vault.address), bntDecimals);
+            actual.bnbntBalances['protocol'] = integerToDecimal(await networkPoolToken.balanceOf(networkTokenPool.address), bnbntDecimals);
 
-            actual.tknWalletBalance = integerToDecimal(tknWalletBalance, tknDecimals);
             actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
             actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
@@ -2790,6 +2792,7 @@ describe('BancorNetwork Flow', () => {
                 network,
                 networkToken,
                 networkSettings,
+                networkTokenPool,
                 networkPoolToken,
                 networkTokenGovernance,
                 govToken,
@@ -2876,8 +2879,8 @@ describe('BancorNetwork Flow', () => {
         }
     };
 
-    describe('quick tests', () => {
-        test(100);
+    describe.only('quick tests', () => {
+        test();
     });
 
     describe('@stress tests', () => {
