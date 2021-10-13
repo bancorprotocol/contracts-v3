@@ -182,7 +182,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             })
         });
 
-        targetPoolCollection.migratePoolData(pool, newData);
+        targetPoolCollection.updatePoolData(pool, newData);
         sourcePoolCollection.removePoolData(pool);
     }
 }

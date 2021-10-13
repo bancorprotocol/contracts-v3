@@ -12,12 +12,12 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
     constructor(IBancorNetwork initNetwork) PoolCollectionUpgrader(initNetwork) {}
 
-    function migratePoolDataT(
+    function updatePoolDataT(
         IPoolCollection poolCollection,
         ReserveToken pool,
         Pool memory data
     ) external {
-        poolCollection.migratePoolData(pool, data);
+        poolCollection.updatePoolData(pool, data);
     }
 
     function removePoolDataT(IPoolCollection poolCollection, ReserveToken pool) external {

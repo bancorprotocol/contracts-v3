@@ -211,13 +211,13 @@ interface IPoolCollection is IVersioned {
     function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount) external;
 
     /**
-     * @dev migrates a pool to this pool collection
+     * @dev updates/inserts a pool to this pool collection
      *
      * requirements:
      *
      * - the caller must be the pool collection upgrader contract
      */
-    function migratePoolData(ReserveToken pool, Pool calldata data) external;
+    function updatePoolData(ReserveToken pool, Pool calldata data) external;
 
     /**
      * @dev remove a pool from this pool collection
