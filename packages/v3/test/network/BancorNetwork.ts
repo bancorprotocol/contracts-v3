@@ -2620,7 +2620,7 @@ describe('BancorNetwork Flow', () => {
 
     const test = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
         const flow: Flow = JSON.parse(
-            fs.readFileSync(path.join('test', 'data', 'FlowTest.json'), { encoding: 'utf8' })
+            fs.readFileSync(path.join('test', 'data', 'BancorNetworkFlowTest.json'), { encoding: 'utf8' })
         );
 
         flow.operations.unshift({
