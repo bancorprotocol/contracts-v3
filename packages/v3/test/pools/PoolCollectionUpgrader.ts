@@ -65,18 +65,6 @@ describe('PoolCollectionUpgrader', () => {
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
 
-        const testSkippedUpgrade = async (pool: string) => {
-            const poolCollections = await network.callStatic.upgradePoolT(poolCollectionUpgrader.address, pool);
-            const prevPoolCollection = poolCollections[0];
-            const newPoolCollection = poolCollections[1];
-
-            expect(prevPoolCollection).to.equal(ZERO_ADDRESS);
-            expect(newPoolCollection).to.equal(ZERO_ADDRESS);
-
-            const res = await network.upgradePoolT(poolCollectionUpgrader.address, pool);
-            await expect(res).not.to.emit(poolCollectionUpgrader, 'PoolUpgraded');
-        };
-
         it('should revert when attempting upgrade from a non-network', async () => {
             const nonNetwork = deployer;
 
@@ -85,17 +73,42 @@ describe('PoolCollectionUpgrader', () => {
             ).to.be.revertedWith('AccessDenied');
         });
 
-        it('should not upgrade an invalid pool', async () => {
-            await testSkippedUpgrade(ZERO_ADDRESS);
+        it('should revert when attempting upgrade an invalid pool', async () => {
+            await expect(network.upgradePoolT(poolCollectionUpgrader.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidPool'
+            );
         });
 
-        it('should not upgrade a non-existing pool', async () => {
+        it('should revert when attempting upgrade a non-existing pool', async () => {
             const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-            await testSkippedUpgrade(reserveToken2.address);
+            await expect(
+                network.upgradePoolT(poolCollectionUpgrader.address, reserveToken2.address)
+            ).to.be.revertedWith('InvalidPool');
         });
 
-        it('should not upgrade a pool already existing in the latest pool collection', async () => {
-            await testSkippedUpgrade(reserveToken.address);
+        it('should revert when attempting upgrade a pool already existing in the latest pool collection', async () => {
+            await expect(network.upgradePoolT(poolCollectionUpgrader.address, reserveToken.address)).to.be.revertedWith(
+                'InvalidPoolCollection'
+            );
+        });
+
+        it('should revert when attempting upgrade a pool with an unsupported version', async () => {
+            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            const poolCollection2 = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader, 1000);
+            await createPool(reserveToken2, network, networkSettings, poolCollection2);
+
+            const reserveToken3 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            const poolCollection3 = await createPoolCollection(
+                network,
+                poolTokenFactory,
+                poolCollectionUpgrader,
+                (await poolCollection2.version()) + 1
+            );
+            await createPool(reserveToken3, network, networkSettings, poolCollection3);
+
+            await expect(
+                network.upgradePoolT(poolCollectionUpgrader.address, reserveToken2.address)
+            ).to.be.revertedWith('UnsupportedVersion');
         });
 
         context('v1', () => {

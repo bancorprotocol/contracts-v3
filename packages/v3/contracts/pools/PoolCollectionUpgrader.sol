@@ -13,9 +13,10 @@ import { AverageRate } from "./PoolAverageRate.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
-import { Utils, DoesNotExist, InvalidType } from "../utility/Utils.sol";
+import { Utils, InvalidPool } from "../utility/Utils.sol";
 
 error InvalidPoolCollection();
+error UnsupportedVersion();
 
 interface IPoolCollectionV1 {
     struct PoolLiquidityV1 {
@@ -118,13 +119,13 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         returns (IPoolCollection, IPoolCollection)
     {
         if (ReserveToken.unwrap(pool) == address(0)) {
-            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
+            revert InvalidPool();
         }
 
         // get the pool collection that this pool exists in
         IPoolCollection prevPoolCollection = _network.collectionByPool(pool);
         if (address(prevPoolCollection) == address(0)) {
-            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
+            revert InvalidPool();
         }
 
         // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
@@ -132,7 +133,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {
-            return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
+            revert InvalidPoolCollection();
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
@@ -151,7 +152,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             return (prevPoolCollection, newPoolCollection);
         }
 
-        return (INVALID_POOL_COLLECTION, INVALID_POOL_COLLECTION);
+        revert UnsupportedVersion();
     }
 
     /**

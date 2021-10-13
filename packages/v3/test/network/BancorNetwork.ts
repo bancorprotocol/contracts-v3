@@ -795,26 +795,15 @@ describe('BancorNetwork', () => {
             await testAfterUpgrade(poolCollection, targetPoolCollection);
         });
 
-        it('should ignore already upgraded pools', async () => {
-            await testBeforeUpgrade(poolCollection, targetPoolCollection);
-
+        it('should revert when attempting to upgrade already upgraded pools', async () => {
             await network.upgradePools(reserveTokenAddresses);
 
-            await testAfterUpgrade(poolCollection, targetPoolCollection);
-
-            await network.upgradePools(reserveTokenAddresses);
-
-            await testAfterUpgrade(poolCollection, targetPoolCollection);
+            await expect(network.upgradePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');
         });
 
-        it('should ignore invalid pools', async () => {
+        it('should  revert when attempting to upgrade invalid pools', async () => {
             const reserveTokenAddresses2 = [ZERO_ADDRESS, ZERO_ADDRESS, ...reserveTokenAddresses, ZERO_ADDRESS];
-
-            await testBeforeUpgrade(poolCollection, targetPoolCollection);
-
-            await network.upgradePools(reserveTokenAddresses2);
-
-            await testAfterUpgrade(poolCollection, targetPoolCollection);
+            await expect(network.upgradePools(reserveTokenAddresses2)).to.be.revertedWith('InvalidPool');
         });
     });
 
