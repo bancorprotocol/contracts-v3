@@ -2594,6 +2594,7 @@ describe('BancorNetwork Flow', () => {
         bntBalances: any;
         bntknBalances: any;
         bnbntBalances: any;
+        bntStakedBalance: string;
         tknStakedBalance: string;
         tknTradingLiquidity: string;
         bntTradingLiquidity: string;
@@ -2645,6 +2646,7 @@ describe('BancorNetwork Flow', () => {
                 bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
                     protocol: flow.pool.bntBalance
                 }),
+                bntStakedBalance: flow.pool.bntBalance,
                 tknStakedBalance: flow.pool.tknBalance,
                 tknTradingLiquidity: flow.pool.tknBalance,
                 bntTradingLiquidity: flow.pool.bntBalance
@@ -2749,6 +2751,7 @@ describe('BancorNetwork Flow', () => {
                 bntBalances: {},
                 bntknBalances: {},
                 bnbntBalances: {},
+                bntStakedBalance: '',
                 tknStakedBalance: '',
                 tknTradingLiquidity: '',
                 bntTradingLiquidity: ''
@@ -2783,6 +2786,7 @@ describe('BancorNetwork Flow', () => {
                 bnbntDecimals
             );
 
+            actual.bntStakedBalance = integerToDecimal(await networkTokenPool.stakedBalance(), bntDecimals);
             actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
             actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
