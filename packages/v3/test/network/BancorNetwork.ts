@@ -2590,10 +2590,11 @@ describe('BancorNetwork Flow', () => {
     }
 
     interface State {
-        tknBalances: object,
-        bntBalances: object,
-        bntknBalances: object,
-        bnbntBalances: object,
+        tknBalances: any,
+        bntBalances: any,
+        bntknBalances: any,
+        bnbntBalances: any,
+        tknWalletBalance: string,
         tknStakedBalance: string,
         tknTradingLiquidity: string,
         bntTradingLiquidity: string
@@ -2604,7 +2605,7 @@ describe('BancorNetwork Flow', () => {
         userId: string;
         amount: string;
         elapsed: number;
-        expected?: State;
+        expected: State;
     }
 
     interface Flow {
@@ -2619,7 +2620,26 @@ describe('BancorNetwork Flow', () => {
 
     const test = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
         const flow: Flow = JSON.parse(fs.readFileSync(path.join('test', 'data', 'FlowTest.json'), { encoding: 'utf8' }));
-        flow.operations.unshift({ type: 'depositTKN', userId: flow.pool.tknProvider, elapsed: 0, amount: flow.pool.tknBalance });
+
+        flow.operations.unshift({
+            type: 'depositTKN',
+            userId: flow.pool.tknProvider,
+            elapsed: 0,
+            amount: flow.pool.tknBalance,
+            expected: {
+                tknBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: user.tknBalance}), {vault: flow.pool.tknBalance}),
+                bntBalances: flow.users.reduce((bntBalances, user) => ({...bntBalances, [user.id]: user.bntBalance}), {vault: flow.pool.bntBalance}),
+                bntknBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {vault: '0'}),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({...tknBalances, [user.id]: '0'}), {vault: '0'}),
+                tknWalletBalance: flow.epwBalance,
+                tknStakedBalance: flow.pool.tknBalance,
+                tknTradingLiquidity: flow.pool.tknBalance,
+                bntTradingLiquidity: flow.pool.bntBalance
+            }
+        });
+
+        flow.operations[0].expected.tknBalances[flow.pool.tknProvider] = new Decimal(flow.operations[0].expected.tknBalances[flow.pool.tknProvider]).sub(flow.pool.tknBalance).toFixed();
+        flow.operations[0].expected.bntknBalances[flow.pool.tknProvider] = flow.pool.tknBalance;
 
         let network: TestBancorNetwork;
         let networkToken: NetworkToken;
@@ -2667,10 +2687,6 @@ describe('BancorNetwork Flow', () => {
             return decimalToInteger(amount, decimals);
         };
 
-        const tokenBalance = async (userId: string, decimals: number, token: ERC20Token) => {
-            return integerToDecimal(await token.balanceOf(users[userId].address), decimals);
-        };
-
         const depositTKN = async (userId: string, amount: string) => {
             const wei = await toWei(userId, amount, tknDecimals, baseToken);
             await network.connect(users[userId]).deposit(baseToken.address, wei);
@@ -2707,6 +2723,7 @@ describe('BancorNetwork Flow', () => {
 
         const verifyState = async (expected: State) => {
             const poolData = await poolCollection.poolData(baseToken.address);
+            const tknWalletBalance = await baseToken.balanceOf(wallet.address);
 
             const tknBalances  : any = {};
             const bntBalances  : any = {};
@@ -2725,15 +2742,11 @@ describe('BancorNetwork Flow', () => {
             bntknBalances['vault'] = integerToDecimal(await basePoolToken   .balanceOf(vault.address), bntknDecimals);
             bnbntBalances['vault'] = integerToDecimal(await networkPoolToken.balanceOf(vault.address), bnbntDecimals);
 
-            tknBalances  ['wallet'] = integerToDecimal(await baseToken       .balanceOf(wallet.address), tknDecimals  );
-            bntBalances  ['wallet'] = integerToDecimal(await networkToken    .balanceOf(wallet.address), bntDecimals  );
-            bntknBalances['wallet'] = integerToDecimal(await basePoolToken   .balanceOf(wallet.address), bntknDecimals);
-            bnbntBalances['wallet'] = integerToDecimal(await networkPoolToken.balanceOf(wallet.address), bnbntDecimals);
-
             expect(tknBalances  ).to.deep.equal(expected.tknBalances  );
             expect(bntBalances  ).to.deep.equal(expected.bntBalances  );
             expect(bntknBalances).to.deep.equal(expected.bntknBalances);
             expect(bnbntBalances).to.deep.equal(expected.bnbntBalances);
+            expect(integerToDecimal(tknWalletBalance, tknDecimals)).to.equal(expected.tknWalletBalance);
             expect(integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals)).to.equal(expected.tknStakedBalance);
             expect(integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals)).to.equal(expected.tknTradingLiquidity);
             expect(integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals)).to.equal(expected.bntTradingLiquidity);
@@ -2812,9 +2825,7 @@ describe('BancorNetwork Flow', () => {
                     await tradeBNT(operation.userId, operation.amount);
                     break;
                 }
-                if (operation.expected) {
-                    await verifyState(operation.expected);
-                }
+                await verifyState(operation.expected);
             });
         }
     };
