@@ -647,7 +647,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // this is where the magic happens...
         poolCollection.createPool(reserveToken);
 
-        // add the pool to the reverse pool collection lookup
+        // add the pool collection to the reverse pool collection lookup
         _collectionByPool[reserveToken] = poolCollection;
 
         unchecked {
