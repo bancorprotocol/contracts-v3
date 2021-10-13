@@ -2630,11 +2630,16 @@ describe('BancorNetwork Flow', () => {
             expected: {
                 tknBalances: flow.users.reduce(
                     (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
-                    { vault: flow.pool.tknBalance, wallet: flow.epwBalance }
+                    {
+                        vault: flow.pool.tknBalance,
+                        wallet: flow.epwBalance
+                    }
                 ),
                 bntBalances: flow.users.reduce(
                     (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
-                    { vault: flow.pool.bntBalance }
+                    {
+                        vault: flow.pool.bntBalance
+                    }
                 ),
                 bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
                 bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
