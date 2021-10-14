@@ -111,6 +111,7 @@ describe('BancorNetwork', () => {
             value = amount;
         } else {
             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+            await reserveToken.transfer(provider.address, amount);
             await reserveToken.connect(provider).approve(network.address, amount);
         }
 
@@ -958,7 +959,6 @@ describe('BancorNetwork', () => {
                 let prevNetworkTokenBalance = await networkToken.balanceOf(deployer.address);
                 prevTokenBalance = await getBalance(token, deployer);
 
-                console.log('DDD');
                 let transactionCost = BigNumber.from(0);
                 const res = await trade(
                     deployer,
@@ -983,7 +983,6 @@ describe('BancorNetwork', () => {
                 prevNetworkTokenBalance = await networkToken.balanceOf(deployer.address);
                 prevTokenBalance = await getBalance(token, deployer);
 
-                console.log('EEE');
                 transactionCost = BigNumber.from(0);
                 const res2 = await trade(
                     deployer,
@@ -1867,6 +1866,8 @@ describe('BancorNetwork', () => {
                     }
 
                     await deposit(provider, token, amount, network);
+
+                    poolTokenAmount = await poolToken.balanceOf(provider.address);
 
                     ({ id, creationTime } = await initWithdraw(
                         provider,
