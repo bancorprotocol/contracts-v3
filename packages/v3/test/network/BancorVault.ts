@@ -54,7 +54,7 @@ describe('BancorVault', () => {
 
             expect(await vault.version()).to.equal(1);
 
-            await expectRole(vault, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
+            await expectRole(vault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ADMIN, BancorVaultRoles.ROLE_ADMIN, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
                 deployer.address

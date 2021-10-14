@@ -54,7 +54,7 @@ describe('PendingWithdrawals', () => {
 
             expect(await pendingWithdrawals.version()).to.equal(1);
 
-            await expectRole(pendingWithdrawals, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+            await expectRole(pendingWithdrawals, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
 

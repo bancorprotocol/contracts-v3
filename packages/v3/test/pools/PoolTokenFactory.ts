@@ -39,7 +39,7 @@ describe('PoolTokenFactory', () => {
 
             expect(await poolTokenFactory.version()).to.equal(1);
 
-            await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+            await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
         });
