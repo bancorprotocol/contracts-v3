@@ -13,7 +13,7 @@ import { AccessDenied } from "./Utils.sol";
  */
 abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnumerableUpgradeable {
     // the owner role is used for migrations during upgrades
-    bytes32 public constant ROLE_OWNER = keccak256("ROLE_OWNER");
+    bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
 
     uint32 internal constant MAX_GAP = 50;
 
@@ -33,16 +33,16 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
      */
     function __Upgradeable_init_unchained() internal initializer {
         // set up administrative roles
-        _setRoleAdmin(ROLE_OWNER, ROLE_OWNER);
+        _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
 
-        // allow the deployer to initially govern the contract
-        _setupRole(ROLE_OWNER, msg.sender);
+        // allow the deployer to initially be the admin of the contract
+        _setupRole(ROLE_ADMIN, msg.sender);
     }
 
     // solhint-enable func-name-mixedcase
 
-    modifier onlyOwner() {
-        _hasRole(ROLE_OWNER, msg.sender);
+    modifier onlyAdmin() {
+        _hasRole(ROLE_ADMIN, msg.sender);
 
         _;
     }

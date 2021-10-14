@@ -442,12 +442,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setExternalProtectionWallet(ITokenHolder newExternalProtectionWallet)
         external
         validAddress(address(newExternalProtectionWallet))
-        onlyOwner
+        onlyAdmin
     {
         ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
         if (prevExternalProtectionWallet == newExternalProtectionWallet) {
@@ -469,10 +469,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      * - the new owner needs to accept the transfer
      */
-    function transferExternalProtectionWalletOwnership(address newOwner) external onlyOwner {
+    function transferExternalProtectionWalletOwnership(address newOwner) external onlyAdmin {
         _externalProtectionWallet.transferOwnership(newOwner);
     }
 
@@ -481,13 +481,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function addPoolCollection(IPoolCollection poolCollection)
         external
         validAddress(address(poolCollection))
         nonReentrant
-        onlyOwner
+        onlyAdmin
     {
         if (!_poolCollections.add(address(poolCollection))) {
             revert AlreadyExists();
@@ -513,12 +513,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function removePoolCollection(IPoolCollection poolCollection, IPoolCollection newLatestPoolCollection)
         external
         validAddress(address(poolCollection))
-        onlyOwner
+        onlyAdmin
         nonReentrant
     {
         // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
@@ -551,13 +551,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setLatestPoolCollection(IPoolCollection poolCollection)
         external
         nonReentrant
         validAddress(address(poolCollection))
-        onlyOwner
+        onlyAdmin
     {
         _verifyLatestPoolCollectionCandidate(poolCollection);
 
@@ -825,7 +825,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
         IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
