@@ -2110,7 +2110,7 @@ describe('PoolCollection', () => {
                     poolData
                 );
 
-                await expect(res).to.emit(targetPoolCollection, 'PoolUpdated').withArgs(reserveToken.address);
+                await expect(res).to.emit(targetPoolCollection, 'PoolMigratedIn').withArgs(reserveToken.address);
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);
@@ -2178,7 +2178,7 @@ describe('PoolCollection', () => {
                     targetPoolCollection.address
                 );
 
-                await expect(res).to.emit(poolCollection, 'PoolRemoved').withArgs(reserveToken.address);
+                await expect(res).to.emit(poolCollection, 'PoolMigratedOut').withArgs(reserveToken.address);
 
                 poolData = await poolCollection.poolData(reserveToken.address);
                 expect(poolData.poolToken).to.equal(ZERO_ADDRESS);

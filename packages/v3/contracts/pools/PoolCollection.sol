@@ -141,14 +141,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     event PoolCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
 
     /**
-     * @dev triggered when a pool is migrated
+     * @dev triggered when a pool is migrated into a this pool collection
      */
-    event PoolUpdated(ReserveToken indexed reserveToken);
+    event PoolMigratedIn(ReserveToken indexed reserveToken);
 
     /**
-     * @dev triggered when a pool is removed
+     * @dev triggered when a pool is migrated from a this pool collection
      */
-    event PoolRemoved(ReserveToken indexed reserveToken);
+    event PoolMigratedOut(ReserveToken indexed reserveToken);
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -748,7 +748,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         data.poolToken.acceptOwnership();
 
-        emit PoolUpdated({ reserveToken: pool });
+        emit PoolMigratedIn({ reserveToken: pool });
     }
 
     /**
@@ -771,7 +771,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         poolToken.transferOwnership(address(targetPoolCollection));
 
-        emit PoolRemoved({ reserveToken: pool });
+        emit PoolMigratedOut({ reserveToken: pool });
     }
 
     /**
