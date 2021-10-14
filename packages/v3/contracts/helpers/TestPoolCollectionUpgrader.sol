@@ -20,7 +20,11 @@ contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
         poolCollection.migratePoolIn(pool, data);
     }
 
-    function migratePoolOutT(IPoolCollection poolCollection, ReserveToken pool) external {
-        poolCollection.migratePoolOut(pool);
+    function migratePoolOutT(
+        IPoolCollection poolCollection,
+        ReserveToken pool,
+        IPoolCollection targetPoolCollection
+    ) external {
+        poolCollection.migratePoolOut(pool, targetPoolCollection);
     }
 }

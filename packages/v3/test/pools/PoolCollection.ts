@@ -2035,6 +2035,8 @@ describe('PoolCollection', () => {
         let networkSettings: NetworkSettings;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
+        let poolToken: PoolToken;
+        let targetPoolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
@@ -2044,85 +2046,144 @@ describe('PoolCollection', () => {
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-            await createPool(reserveToken, network, networkSettings, poolCollection);
+            poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+            targetPoolCollection = await createPoolCollection(
+                network,
+                poolTokenFactory,
+                poolCollectionUpgrader,
+                (await poolCollection.version()) + 1
+            );
+            await network.addPoolCollection(targetPoolCollection.address);
+            await network.setLatestPoolCollection(targetPoolCollection.address);
         });
 
         describe('in', () => {
-            it('should revert when attempting to migrate pool data in from a non-upgrader', async () => {
+            it('should revert when attempting to migrate a pool into a pool collection from a non-upgrader', async () => {
                 const nonUpgrader = deployer;
 
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
-                    poolCollection.connect(nonUpgrader).migratePoolIn(reserveToken.address, poolData)
-                ).to.be.revertedWith('AccessDenied()');
+                    targetPoolCollection.connect(nonUpgrader).migratePoolIn(reserveToken.address, poolData)
+                ).to.be.revertedWith('AccessDenied');
             });
 
-            it('should revert when attempting to migrate pool data in of an invalid pool', async () => {
+            it('should revert when attempting to migrate an invalid pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
-                    poolCollectionUpgrader.migratePoolInT(poolCollection.address, ZERO_ADDRESS, poolData)
+                    poolCollectionUpgrader.migratePoolInT(targetPoolCollection.address, ZERO_ADDRESS, poolData)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
-            it('should revert when attempting to migrate pool data in of an already existing pool', async () => {
+            it('should revert when attempting to migrate an already existing pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
                     poolCollectionUpgrader.migratePoolInT(poolCollection.address, reserveToken.address, poolData)
                 ).to.be.revertedWith('AlreadyExists');
             });
 
-            it('should allow to migrate pool data in', async () => {
-                const newPoolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
+            it('should revert when attempting to migrate a pool that was not migrated out', async () => {
+                const poolData = await poolCollection.poolData(reserveToken.address);
 
-                let newPoolData = await newPoolCollection.poolData(reserveToken.address);
+                await expect(
+                    poolCollectionUpgrader.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData)
+                ).to.be.revertedWith('AccessDenied');
+            });
+
+            it('should allow to migrate a pool into a pool collection', async () => {
+                let newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData.poolToken).to.equal(ZERO_ADDRESS);
 
+                expect(await poolToken.owner()).to.equal(poolCollection.address);
+
                 const poolData = await poolCollection.poolData(reserveToken.address);
+
+                await poolCollectionUpgrader.migratePoolOutT(
+                    poolCollection.address,
+                    reserveToken.address,
+                    targetPoolCollection.address
+                );
+
                 const res = await poolCollectionUpgrader.migratePoolInT(
-                    newPoolCollection.address,
+                    targetPoolCollection.address,
                     reserveToken.address,
                     poolData
                 );
 
-                await expect(res).to.emit(newPoolCollection, 'PoolUpdated').withArgs(reserveToken.address);
+                await expect(res).to.emit(targetPoolCollection, 'PoolUpdated').withArgs(reserveToken.address);
 
-                newPoolData = await newPoolCollection.poolData(reserveToken.address);
+                newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);
+
+                expect(await poolToken.owner()).to.equal(targetPoolCollection.address);
             });
         });
 
-        describe('in', () => {
-            it('should revert when attempting to migrate pool data out from a non-upgrader', async () => {
+        describe('out', () => {
+            it('should revert when attempting to migrate a pool out of a pool collection from a non-upgrader', async () => {
                 const nonUpgrader = deployer;
 
                 await expect(
-                    poolCollection.connect(nonUpgrader).migratePoolOut(reserveToken.address)
+                    poolCollection
+                        .connect(nonUpgrader)
+                        .migratePoolOut(reserveToken.address, targetPoolCollection.address)
                 ).to.be.revertedWith('AccessDenied');
             });
 
-            it('should revert when attempting to migrate pool data out of an invalid pool', async () => {
+            it('should revert when attempting to migrate an invalid pool out of a pool collection', async () => {
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(poolCollection.address, ZERO_ADDRESS)
+                    poolCollectionUpgrader.migratePoolOutT(
+                        poolCollection.address,
+                        ZERO_ADDRESS,
+                        targetPoolCollection.address
+                    )
                 ).to.be.revertedWith('InvalidAddress');
             });
 
-            it('should revert when attempting to migrate pool data out of a non-existing pool', async () => {
+            it('should revert when attempting to migrate a pool out of a pool collection to an invalid pool collection', async () => {
+                await expect(
+                    poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
+                ).to.be.revertedWith('InvalidAddress');
+
+                const newPoolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
+                await expect(
+                    poolCollectionUpgrader.migratePoolOutT(
+                        poolCollection.address,
+                        reserveToken.address,
+                        newPoolCollection.address
+                    )
+                ).to.be.revertedWith('InvalidPoolCollection');
+            });
+
+            it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {
                 const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken2.address)
+                    poolCollectionUpgrader.migratePoolOutT(
+                        poolCollection.address,
+                        reserveToken2.address,
+                        targetPoolCollection.address
+                    )
                 ).to.be.revertedWith('DoesNotExist');
             });
 
-            it('should allow to migrate pool data out', async () => {
+            it('should allow to migrate a pool out of a pool collection', async () => {
                 let poolData = await poolCollection.poolData(reserveToken.address);
                 expect(poolData.poolToken).not.to.equal(ZERO_ADDRESS);
 
-                const res = await poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken.address);
+                expect(await poolToken.owner()).to.equal(poolCollection.address);
+
+                const res = await poolCollectionUpgrader.migratePoolOutT(
+                    poolCollection.address,
+                    reserveToken.address,
+                    targetPoolCollection.address
+                );
 
                 await expect(res).to.emit(poolCollection, 'PoolRemoved').withArgs(reserveToken.address);
 
                 poolData = await poolCollection.poolData(reserveToken.address);
                 expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
+
+                expect(await poolToken.newOwner()).to.equal(targetPoolCollection.address);
             });
         });
     });

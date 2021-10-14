@@ -13,13 +13,12 @@ import { AverageRate } from "./PoolAverageRate.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
-import { Utils, InvalidPool } from "../utility/Utils.sol";
+import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
-error InvalidPoolCollection();
 error UnsupportedVersion();
 
 interface IPoolCollectionBase {
-    function migratePoolOut(ReserveToken pool) external;
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
 }
 
 interface IPoolCollectionV1 is IPoolCollectionBase {
@@ -182,7 +181,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             })
         });
 
+        sourcePoolCollection.migratePoolOut(pool, targetPoolCollection);
         targetPoolCollection.migratePoolIn(pool, newData);
-        sourcePoolCollection.migratePoolOut(pool);
     }
 }

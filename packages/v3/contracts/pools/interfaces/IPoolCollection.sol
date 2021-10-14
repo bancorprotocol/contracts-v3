@@ -226,5 +226,5 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the pool collection upgrader contract
      */
-    function migratePoolOut(ReserveToken pool) external;
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
 }

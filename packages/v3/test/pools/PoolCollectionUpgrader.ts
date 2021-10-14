@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
 import {
     NetworkSettings,
+    PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
@@ -54,6 +55,7 @@ describe('PoolCollectionUpgrader', () => {
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolTokenFactory: PoolTokenFactory;
+        let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
@@ -62,7 +64,7 @@ describe('PoolCollectionUpgrader', () => {
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-            await createPool(reserveToken, network, networkSettings, poolCollection);
+            poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
         });
 
         it('should revert when attempting upgrade from a non-network', async () => {
@@ -137,6 +139,8 @@ describe('PoolCollectionUpgrader', () => {
                 let newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData.poolToken).to.equal(ZERO_ADDRESS);
 
+                expect(await poolToken.owner()).to.equal(poolCollection.address);
+
                 const res = await network.upgradePoolT(poolCollectionUpgrader.address, reserveToken.address);
                 await expect(res)
                     .to.emit(poolCollectionUpgrader, 'PoolUpgraded')
@@ -154,6 +158,8 @@ describe('PoolCollectionUpgrader', () => {
 
                 poolData = await poolCollection.poolData(reserveToken.address);
                 expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
+
+                expect(await poolToken.owner()).to.equal(targetPoolCollection.address);
             });
         });
     });
