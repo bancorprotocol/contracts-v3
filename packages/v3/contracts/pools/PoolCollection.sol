@@ -736,7 +736,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function updatePoolData(ReserveToken pool, Pool calldata data)
+    function migratePoolIn(ReserveToken pool, Pool calldata data)
         external
         override
         validAddress(ReserveToken.unwrap(pool))
@@ -750,7 +750,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function removePoolData(ReserveToken pool)
+    function migratePoolOut(ReserveToken pool)
         external
         override
         validAddress(ReserveToken.unwrap(pool))

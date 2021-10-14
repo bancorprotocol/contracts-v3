@@ -19,7 +19,7 @@ error InvalidPoolCollection();
 error UnsupportedVersion();
 
 interface IPoolCollectionBase {
-    function removePoolData(ReserveToken pool) external;
+    function migratePoolOut(ReserveToken pool) external;
 }
 
 interface IPoolCollectionV1 is IPoolCollectionBase {
@@ -182,7 +182,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             })
         });
 
-        targetPoolCollection.updatePoolData(pool, newData);
-        sourcePoolCollection.removePoolData(pool);
+        targetPoolCollection.migratePoolIn(pool, newData);
+        sourcePoolCollection.migratePoolOut(pool);
     }
 }
