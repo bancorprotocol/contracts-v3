@@ -10,7 +10,6 @@ export const roles = {
     },
 
     BancorVault: {
-        ROLE_ADMIN: id('ROLE_ADMIN'),
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
     },
