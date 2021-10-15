@@ -146,7 +146,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     event PoolMigratedIn(ReserveToken indexed reserveToken);
 
     /**
-     * @dev triggered when a pool is migrated from a this pool collection
+     * @dev triggered when a pool is migrated out of this pool collection
      */
     event PoolMigratedOut(ReserveToken indexed reserveToken);
 
