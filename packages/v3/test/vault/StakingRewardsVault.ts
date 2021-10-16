@@ -3,7 +3,7 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token, StakingRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
     TokenWithAddress,
@@ -39,7 +39,7 @@ describe('StakingRewardsVault', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
+            const { stakingRewardsVault } = await createSystem();
 
             await expect(stakingRewardsVault.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
@@ -69,8 +69,7 @@ describe('StakingRewardsVault', () => {
         let stakingRewardsVault: StakingRewardsVault;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-            stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
+            ({ networkToken, stakingRewardsVault } = await createSystem());
         });
 
         it('sucess if caller have ROLE_ASSET_MANAGER role', async () => {
@@ -101,8 +100,7 @@ describe('StakingRewardsVault', () => {
         let stakingRewardsVault: StakingRewardsVault;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-            stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
+            ({ networkToken, stakingRewardsVault } = await createSystem());
         });
 
         it('should be payable', async () => {
@@ -248,7 +246,7 @@ describe('StakingRewardsVault', () => {
         let stakingRewardsVault: StakingRewardsVault;
 
         beforeEach(async () => {
-            stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
+            ({ stakingRewardsVault } = await createSystem());
         });
 
         const testPause = () => {
