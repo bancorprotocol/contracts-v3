@@ -19,11 +19,6 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
-    /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor() {}
-
     // solhint-disable func-name-mixedcase
 
     /**

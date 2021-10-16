@@ -93,12 +93,8 @@ contract BancorVault is Vault {
         address,
         uint256
     ) public view override returns (bool) {
-        if (
+        return
             (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
-            hasRole(ROLE_ASSET_MANAGER, caller)
-        ) {
-            return true;
-        }
-        return false;
+            hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

@@ -53,7 +53,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IVault } from "./../vault/interfaces/IVault.sol";
+import { IBancorVault } from "./../vault/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "./FeeTypes.sol";
 
@@ -87,7 +87,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     INetworkSettings private immutable _settings;
 
     // the vault contract
-    IVault private immutable _vault;
+    IBancorVault private immutable _vault;
 
     // the network token pool token
     IPoolToken internal immutable _networkPoolToken;
@@ -271,7 +271,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
-        IVault initVault,
+        IBancorVault initVault,
         IPoolToken initNetworkPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
@@ -398,7 +398,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function vault() external view override returns (IVault) {
+    function vault() external view override returns (IBancorVault) {
         return _vault;
     }
 
