@@ -69,8 +69,7 @@ contract StakingRewardsVault is Vault {
      *
      * requirements:
      *
-     * - the caller must have the right privileges to withdraw this token:
-     *   - the ROLE_ASSET_MANAGER role
+     * - ROLE_ASSET_MANAGER
      */
     function authenticateWithdrawal(
         address caller,
