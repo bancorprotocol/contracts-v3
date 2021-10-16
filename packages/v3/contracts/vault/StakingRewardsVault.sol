@@ -78,9 +78,6 @@ contract StakingRewardsVault is Vault {
         address,
         uint256
     ) public view override returns (bool) {
-        if (hasRole(ROLE_ASSET_MANAGER, caller)) {
-            return true;
-        }
-        return false;
+        return hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }
