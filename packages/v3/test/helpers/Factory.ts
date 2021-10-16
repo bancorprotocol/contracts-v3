@@ -72,7 +72,7 @@ const createTransparentProxy = async (
     return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
 };
 
-const createProxy = async <F extends ContractFactory>(
+export const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
