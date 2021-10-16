@@ -18,6 +18,10 @@ export const roles = {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
+    StakingRewardsVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
     TokenGovernance: {
         ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
         ROLE_MINTER: id('ROLE_MINTER')
