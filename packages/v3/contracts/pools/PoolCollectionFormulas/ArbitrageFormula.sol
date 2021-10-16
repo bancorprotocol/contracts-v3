@@ -119,7 +119,7 @@ library ArbitrageFormula {
     ) private pure returns (Data memory data) { unchecked {
         data.f = MathEx.mulDivF(a, y.sub(z), y);
         data.g = MathEx.mulDivF(b, y.sub(z), y);
-        data.h = e * (M - n) > y ? MathEx.mulDivF(x, e * (M - n) - y, e * M) : 0;
+        data.h = MathEx.mulDivF(x, MathEx.subMax0(e * (M - n), y), e * M);
         data.k = MathEx.mulDivF(data.f * data.h, data.g * (2 * M - m) + data.h * M, data.g.mul(data.g * M + data.h * m));
         assert(x.mul(a * n).add(data.h.mul(a * 2 * M)) > data.k.mul(b * M));
     }}
