@@ -80,14 +80,14 @@ describe('NetworkSettings', () => {
 
             it('should revert when adding an invalid address', async () => {
                 await expect(networkSettings.addTokenToWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
-                    'InvalidExternalAddress()'
+                    'InvalidExternalAddress'
                 );
             });
 
             it('should revert when adding an already whitelisted token', async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
                 await expect(networkSettings.addTokenToWhitelist(reserveToken.address)).to.be.revertedWith(
-                    'AlreadyExists()'
+                    'AlreadyExists'
                 );
             });
 
@@ -113,13 +113,11 @@ describe('NetworkSettings', () => {
             });
 
             it('should revert when removing a non-whitelisted token', async () => {
-                await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
-                    'DoesNotExist()'
-                );
+                await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith('DoesNotExist');
 
                 const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
                 await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
-                    'DoesNotExist()'
+                    'DoesNotExist'
                 );
             });
 
@@ -150,7 +148,7 @@ describe('NetworkSettings', () => {
 
         it('should revert when setting a pool limit of an invalid address token', async () => {
             await expect(networkSettings.setPoolMintingLimit(ZERO_ADDRESS, poolMintingLimit)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -248,7 +246,7 @@ describe('NetworkSettings', () => {
                 networkSettings.connect(nonOwner).setNetworkFeeWallet(newNetworkFeeWallet.address)
             ).to.be.revertedWith('AccessDenied');
             await expect(networkSettings.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
@@ -258,7 +256,7 @@ describe('NetworkSettings', () => {
 
         it('should revert when setting the network fee to an invalid value', async () => {
             await expect(networkSettings.setNetworkFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee()'
+                'InvalidFee'
             );
         });
 
@@ -316,13 +314,13 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
             await expect(networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
         it('should revert when setting the withdrawal fee to an invalid value', async () => {
             await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee()'
+                'InvalidFee'
             );
         });
 
@@ -362,13 +360,13 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
             await expect(networkSettings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
         it('should revert when setting the flash-loan fee to an invalid value', async () => {
             await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee()'
+                'InvalidFee'
             );
         });
 
@@ -414,7 +412,7 @@ describe('NetworkSettings', () => {
 
         it('should revert when setting the maximum deviation to an invalid value', async () => {
             await expect(networkSettings.setAverageRateMaxDeviationPPM(BigNumber.from(0))).to.be.revertedWith(
-                'InvalidPortion()'
+                'InvalidPortion'
             );
 
             await expect(

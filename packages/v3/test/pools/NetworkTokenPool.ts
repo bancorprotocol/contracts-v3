@@ -8,7 +8,8 @@ import {
     TestBancorNetwork,
     TestERC20Token,
     TestNetworkTokenPool,
-    TestPoolCollection
+    TestPoolCollection,
+    TestPoolCollectionUpgrader
 } from '../../typechain';
 import {
     FeeTypes,
@@ -45,7 +46,7 @@ describe('NetworkTokenPool', () => {
             const { networkPoolToken } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -53,7 +54,7 @@ describe('NetworkTokenPool', () => {
             const { network } = await createSystem();
 
             await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -158,7 +159,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
@@ -191,10 +192,12 @@ describe('NetworkTokenPool', () => {
         let networkTokenPool: TestNetworkTokenPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection } = await createSystem());
+            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
@@ -279,7 +282,11 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return false for another pool collection', async () => {
-                    const poolCollection2 = await createPoolCollection(network, poolTokenFactory);
+                    const poolCollection2 = await createPoolCollection(
+                        network,
+                        poolTokenFactory,
+                        poolCollectionUpgrader
+                    );
 
                     expect(
                         await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)
@@ -377,7 +384,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
             await expect(network.requestLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -424,7 +431,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(2_000_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'MintingLimitExceeded()'
+                        'MintingLimitExceeded'
                     );
                 }
             });
@@ -464,7 +471,7 @@ describe('NetworkTokenPool', () => {
                     toWei(BigNumber.from(1_500_000))
                 ]) {
                     await expect(network.requestLiquidityT(contextId, reserveToken.address, amount)).to.be.revertedWith(
-                        'MintingLimitExceeded()'
+                        'MintingLimitExceeded'
                     );
                 }
             });
@@ -510,7 +517,7 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
             await expect(network.renounceLiquidityT(contextId, ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
@@ -817,13 +824,13 @@ describe('NetworkTokenPool', () => {
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
             await expect(network.withdrawFromNetworkPoolT(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
         it('should revert when attempting to withdraw a zero amount', async () => {
             await expect(network.withdrawFromNetworkPoolT(provider.address, BigNumber.from(0))).to.be.revertedWith(
-                'ZeroValue()'
+                'ZeroValue'
             );
         });
 

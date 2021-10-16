@@ -135,7 +135,7 @@ describe('BancorVault', () => {
                     });
                 };
 
-                const testWithdrawRestricted = (reason = 'AccessDenied()') => {
+                const testWithdrawRestricted = (reason = 'AccessDenied') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
                             vault.connect(sender).withdrawTokens(token.address, target.address, amount)
@@ -158,7 +158,7 @@ describe('BancorVault', () => {
 
                 it('should revert when withdrawing tokens to an invalid address', async () => {
                     await expect(vault.withdrawTokens(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
-                        'InvalidAddress()'
+                        'InvalidAddress'
                     );
                 });
 

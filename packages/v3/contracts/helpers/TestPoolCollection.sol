@@ -6,6 +6,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
+import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/PoolAverageRate.sol";
 
@@ -16,12 +17,19 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 import { TestTime } from "./TestTime.sol";
 
 contract TestPoolCollection is PoolCollection, TestTime {
-    constructor(IBancorNetwork initNetwork, IPoolTokenFactory initPoolTokenFactory)
-        PoolCollection(initNetwork, initPoolTokenFactory)
-    {}
+    uint16 private immutable _version;
 
-    function poolData(ReserveToken reserveToken) external view returns (Pool memory) {
-        return _poolData[reserveToken];
+    constructor(
+        uint16 initVersion,
+        IBancorNetwork initNetwork,
+        IPoolTokenFactory initPoolTokenFactory,
+        IPoolCollectionUpgrader initPoolCollectionUpgrader
+    ) PoolCollection(initNetwork, initPoolTokenFactory, initPoolCollectionUpgrader) {
+        _version = initVersion;
+    }
+
+    function version() external view override returns (uint16) {
+        return _version;
     }
 
     function mintT(
