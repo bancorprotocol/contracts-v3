@@ -22,11 +22,6 @@ contract StakingRewardsVault is Vault {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor() {}
-
-    /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
@@ -56,17 +51,17 @@ contract StakingRewardsVault is Vault {
     }
 
     /**
-     * @inheritdoc Vault
-     */
-    function isPayable() public pure override returns (bool) {
-        return true;
-    }
-
-    /**
      * @dev returns the current version of the contract
      */
     function version() external pure override returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @inheritdoc Vault
+     */
+    function isPayable() public pure override returns (bool) {
+        return true;
     }
 
     /**
