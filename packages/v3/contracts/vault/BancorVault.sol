@@ -4,20 +4,14 @@ pragma solidity 0.8.9;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-
-import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
-
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { IBancorVault } from "./interfaces/IBancorVault.sol";
+import { Vault } from "./Vault.sol";
 
 /**
  * @dev Bancor Vault contract
  */
-contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract BancorVault is Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -32,11 +26,6 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
-
-    /**
-     * @dev triggered when tokens have been withdrawn from the vault
-     */
-    event TokensWithdrawn(ReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -58,9 +47,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
      * @dev initializes the contract and its parents
      */
     function __BancorVault_init() internal initializer {
-        __Upgradeable_init();
-        __Pausable_init();
-        __ReentrancyGuard_init();
+        __Vault_init();
 
         __BancorVault_init_unchained();
     }
@@ -73,11 +60,16 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ASSET_MANAGER);
 
-        // allow the deployer to initially be the asset manager of the contract
+        // allow the deployer to initially manage the assets of the contract
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
-    receive() external payable override {}
+    /**
+     * @inheritdoc Vault
+     */
+    function isPayable() public pure override returns (bool) {
+        return true;
+    }
 
     /**
      * @dev returns the current version of the contract
@@ -87,43 +79,26 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
     }
 
     /**
-     * @inheritdoc IBancorVault
+     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
+     *
+     * requirements:
+     *
+     * - the caller must have the right privileges to withdraw this token:
+     *   - for the network token: the ROLE_NETWORK_TOKEN_MANAGER or the ROLE_ASSET_MANAGER role
+     *   - for any other reserve token or ETH: the ROLE_ASSET_MANAGER role
      */
-    function isPaused() external view override returns (bool) {
-        return paused();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function pause() external override onlyAdmin {
-        _pause();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function unpause() external override onlyAdmin {
-        _unpause();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function withdrawTokens(
+    function authenticateWithdrawal(
+        address caller,
         ReserveToken reserveToken,
-        address payable target,
-        uint256 amount
-    ) external override validAddress(target) nonReentrant whenNotPaused {
+        address,
+        uint256
+    ) public view override returns (bool) {
         if (
-            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
-            hasRole(ROLE_ASSET_MANAGER, msg.sender)
+            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
+            hasRole(ROLE_ASSET_MANAGER, caller)
         ) {
-            reserveToken.safeTransfer(target, amount);
-
-            emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
-        } else {
-            revert AccessDenied();
+            return true;
         }
+        return false;
     }
 }

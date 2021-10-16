@@ -18,7 +18,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+import { IVault } from "../vault/interfaces/IVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
@@ -53,7 +53,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     INetworkSettings private immutable _settings;
 
     // the vault contract
-    IBancorVault private immutable _vault;
+    IVault private immutable _vault;
 
     // the network token pool token
     IPoolToken internal immutable _poolToken;
@@ -183,7 +183,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function vault() external view override returns (IBancorVault) {
+    function vault() external view override returns (IVault) {
         return _vault;
     }
 
@@ -253,7 +253,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
 
         _networkTokenGovernance.burn(networkTokenAmount);
     }
@@ -428,7 +428,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken.burn(poolTokenAmount);
 
         // withdraw network tokens from the vault and burn them
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced({

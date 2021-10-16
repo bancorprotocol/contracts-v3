@@ -88,7 +88,7 @@ describe('BancorVault', () => {
                         const amountToWithdraw = amount.add(BigNumber.from(100));
 
                         await expect(
-                            vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
+                            vault.connect(sender).withdrawFunds(token.address, target.address, amountToWithdraw)
                         ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
                     });
 
@@ -100,7 +100,7 @@ describe('BancorVault', () => {
                         const partialAmount = amount.sub(remainder);
                         let res = await vault
                             .connect(sender)
-                            .withdrawTokens(token.address, target.address, partialAmount);
+                            .withdrawFunds(token.address, target.address, partialAmount);
                         await expect(res)
                             .to.emit(vault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, partialAmount);
@@ -111,7 +111,7 @@ describe('BancorVault', () => {
                         expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
                         expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
 
-                        res = await vault.connect(sender).withdrawTokens(token.address, target.address, remainder);
+                        res = await vault.connect(sender).withdrawFunds(token.address, target.address, remainder);
                         await expect(res)
                             .to.emit(vault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, remainder);
@@ -138,7 +138,7 @@ describe('BancorVault', () => {
                 const testWithdrawRestricted = (reason = 'AccessDenied') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
-                            vault.connect(sender).withdrawTokens(token.address, target.address, amount)
+                            vault.connect(sender).withdrawFunds(token.address, target.address, amount)
                         ).to.be.revertedWith(reason);
                     });
                 };
@@ -157,7 +157,7 @@ describe('BancorVault', () => {
                 });
 
                 it('should revert when withdrawing tokens to an invalid address', async () => {
-                    await expect(vault.withdrawTokens(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
+                    await expect(vault.withdrawFunds(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
                         'InvalidAddress'
                     );
                 });
@@ -165,7 +165,7 @@ describe('BancorVault', () => {
                 it('should allow withdrawing 0 tokens', async () => {
                     const prevVaultBalance = await getBalance(token, vault.address);
 
-                    await vault.withdrawTokens(token.address, target.address, BigNumber.from(0));
+                    await vault.withdrawFunds(token.address, target.address, BigNumber.from(0));
 
                     expect(await getBalance(token, vault.address)).to.equal(prevVaultBalance);
                 });

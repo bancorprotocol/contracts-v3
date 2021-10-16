@@ -53,7 +53,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IBancorVault } from "./interfaces/IBancorVault.sol";
+import { IVault } from "./../vault/interfaces/IVault.sol";
 
 import { TRADING_FEE } from "./FeeTypes.sol";
 
@@ -87,7 +87,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     INetworkSettings private immutable _settings;
 
     // the vault contract
-    IBancorVault private immutable _vault;
+    IVault private immutable _vault;
 
     // the network token pool token
     IPoolToken internal immutable _networkPoolToken;
@@ -271,7 +271,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
-        IBancorVault initVault,
+        IVault initVault,
         IPoolToken initNetworkPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
@@ -398,7 +398,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function vault() external view override returns (IBancorVault) {
+    function vault() external view override returns (IVault) {
         return _vault;
     }
 
@@ -1176,7 +1176,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // them to the provider
         if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
             // base token amount to transfer from the vault to the provider
-            _vault.withdrawTokens(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
         // if the provider should receive some base tokens from the external wallet - remove the tokens from the
@@ -1280,7 +1280,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _depositToVault(sourceToken, trader, sourceAmount);
 
         // transfer the target tokens/ETH to the beneficiary
-        _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
+        _vault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
     }
 
     /**
@@ -1429,7 +1429,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
-            payable(_vault).sendValue(amount);
+            payable(address(_vault)).sendValue(amount);
         } else {
             if (reserveToken.isNativeToken()) {
                 revert InvalidPool();

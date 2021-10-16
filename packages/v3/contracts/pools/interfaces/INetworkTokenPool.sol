@@ -15,7 +15,7 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
+import { IVault } from "../../vault/interfaces/IVault.sol";
 
 struct DepositAmounts {
     uint256 poolTokenAmount; // the minted pool token amount
@@ -66,7 +66,7 @@ interface INetworkTokenPool is IUpgradeable {
     /**
      * @dev returns the vault contract
      */
-    function vault() external view returns (IBancorVault);
+    function vault() external view returns (IVault);
 
     /**
      * @dev returns the network token pool token contract
