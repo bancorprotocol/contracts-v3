@@ -31,7 +31,7 @@ describe('TestVault', () => {
             const { testVault } = await createSystem();
 
             expect(await testVault.version()).to.equal(1);
-
+            expect(await testVault.isPayable()).to.be.true;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
     });
