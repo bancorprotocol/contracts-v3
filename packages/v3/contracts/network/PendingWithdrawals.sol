@@ -386,8 +386,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
         uint256 id = _nextWithdrawalRequestId;
+        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,

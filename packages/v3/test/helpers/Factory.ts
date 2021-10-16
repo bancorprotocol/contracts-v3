@@ -21,6 +21,7 @@ import { isEqual } from 'lodash';
 const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
+const V1 = 1;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -121,8 +122,18 @@ export const createGovernedTokens = async () => {
 
 export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 
-export const createPoolCollection = async (network: string | BaseContract, poolTokenFactory: string | BaseContract) =>
-    Contracts.TestPoolCollection.deploy(toAddress(network), toAddress(poolTokenFactory));
+export const createPoolCollection = async (
+    network: string | BaseContract,
+    poolTokenFactory: string | BaseContract,
+    poolCollectionUpgrader: string | BaseContract,
+    version: number = V1
+) =>
+    Contracts.TestPoolCollection.deploy(
+        version,
+        toAddress(network),
+        toAddress(poolTokenFactory),
+        toAddress(poolCollectionUpgrader)
+    );
 
 const createNetworkTokenPoolUninitialized = async (
     network: TestBancorNetwork,
@@ -189,9 +200,13 @@ export const createSystem = async () => {
 
     await networkTokenPool.initialize();
 
-    const poolCollection = await createPoolCollection(network, poolTokenFactory);
+    const poolCollectionUpgrader = await createProxy(Contracts.TestPoolCollectionUpgrader, {
+        ctorArgs: [network.address]
+    });
 
-    await network.initialize(networkTokenPool.address, pendingWithdrawals.address);
+    const poolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
+
+    await network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
     await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
@@ -207,7 +222,8 @@ export const createSystem = async () => {
         networkTokenPool,
         pendingWithdrawals,
         poolTokenFactory,
-        poolCollection
+        poolCollection,
+        poolCollectionUpgrader
     };
 };
 

@@ -2,8 +2,6 @@
 pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -23,6 +21,8 @@ import { IPoolCollection,
     TradeAmountsWithLiquidity
 } from "../pools/interfaces/IPoolCollection.sol";
 
+import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+
 // prettier-ignore
 import {
     INetworkTokenPool,
@@ -37,7 +37,6 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 import { TestTime } from "./TestTime.sol";
 
 contract TestBancorNetwork is BancorNetwork, TestTime {
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using SafeERC20 for IERC20;
 
     constructor(
@@ -52,6 +51,13 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function createPoolT(IPoolCollection poolCollection, ReserveToken reserveToken) external {
         poolCollection.createPool(reserveToken);
+    }
+
+    function upgradePoolT(IPoolCollectionUpgrader poolCollectionUpgrader, ReserveToken pool)
+        external
+        returns (IPoolCollection)
+    {
+        return poolCollectionUpgrader.upgradePool(pool);
     }
 
     function completeWithdrawalT(
