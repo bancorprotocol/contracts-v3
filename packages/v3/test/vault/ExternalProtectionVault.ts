@@ -3,7 +3,7 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token, ExternalProtectionVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
     TokenWithAddress,
@@ -24,8 +24,6 @@ let sender: SignerWithAddress;
 let target: SignerWithAddress;
 let admin: SignerWithAddress;
 
-let reserveToken: TestERC20Token;
-
 describe('ExternalProtectionVault', () => {
     shouldHaveGap('ExternalProtectionVault');
 
@@ -33,13 +31,9 @@ describe('ExternalProtectionVault', () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-    });
-
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            const { externalProtectionVault } = await createSystem();
 
             await expect(externalProtectionVault.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
@@ -69,8 +63,7 @@ describe('ExternalProtectionVault', () => {
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-            externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            ({ networkToken, externalProtectionVault } = await createSystem());
         });
 
         it('sucess if caller have ROLE_ASSET_MANAGER role', async () => {
@@ -101,8 +94,7 @@ describe('ExternalProtectionVault', () => {
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-            externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            ({ networkToken, externalProtectionVault } = await createSystem());
         });
 
         it('should be payable', async () => {
@@ -248,7 +240,7 @@ describe('ExternalProtectionVault', () => {
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            ({ externalProtectionVault } = await createSystem());
         });
 
         const testPause = () => {
