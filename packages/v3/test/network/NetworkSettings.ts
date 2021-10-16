@@ -46,7 +46,7 @@ describe('NetworkSettings', () => {
 
             expect(await networkSettings.version()).to.equal(1);
 
-            await expectRole(networkSettings, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+            await expectRole(networkSettings, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
 

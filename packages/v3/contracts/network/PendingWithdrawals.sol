@@ -44,7 +44,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     uint32 private _withdrawalWindowDuration;
 
     // a mapping between accounts and their pending withdrawal requests
-    uint256 private _lastWithdrawalRequestId;
+    uint256 private _nextWithdrawalRequestId;
     mapping(address => EnumerableSetUpgradeable.UintSet) private _withdrawalRequestIdsByProvider;
     mapping(uint256 => WithdrawalRequest) private _withdrawalRequests;
 
@@ -171,9 +171,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setLockDuration(uint32 newLockDuration) external onlyOwner {
+    function setLockDuration(uint32 newLockDuration) external onlyAdmin {
         _setLockDuration(newLockDuration);
     }
 
@@ -193,9 +193,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
+    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyAdmin {
         _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
@@ -386,8 +386,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        _lastWithdrawalRequestId = uncheckedInc(_lastWithdrawalRequestId);
-        uint256 id = _lastWithdrawalRequestId;
+        uint256 id = _nextWithdrawalRequestId;
+        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,

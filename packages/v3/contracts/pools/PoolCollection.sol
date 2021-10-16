@@ -22,6 +22,7 @@ import {
     DoesNotExist,
     InvalidPool,
     InvalidPoolBalance,
+    InvalidPoolCollection,
     InvalidStakedBalance,
     NotWhitelisted
 } from "../utility/Utils.sol";
@@ -67,6 +68,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
 
     // trading enabling/disabling reasons
@@ -137,6 +139,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev triggered when a pool is created
      */
     event PoolCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
+
+    /**
+     * @dev triggered when a pool is migrated into a this pool collection
+     */
+    event PoolMigratedIn(ReserveToken indexed reserveToken);
+
+    /**
+     * @dev triggered when a pool is migrated out of this pool collection
+     */
+    event PoolMigratedOut(ReserveToken indexed reserveToken);
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -214,7 +226,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function poolType() external pure override returns (uint16) {
-        return 1;
+        return POOL_TYPE;
     }
 
     /**
@@ -301,10 +313,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert NotWhitelisted();
         }
 
-        if (!_pools.add(ReserveToken.unwrap(reserveToken))) {
-            revert AlreadyExists();
-        }
-
         IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
 
         newPoolToken.acceptOwnership();
@@ -325,7 +333,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             })
         });
 
-        _poolData[reserveToken] = newPool;
+        _addPool(reserveToken, newPool);
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
@@ -730,18 +738,62 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function migratePoolData(ReserveToken pool, Pool memory data)
+    function migratePoolIn(ReserveToken pool, Pool calldata data)
         external
         override
         validAddress(ReserveToken.unwrap(pool))
         only(address(_poolCollectionUpgrader))
     {
-        Pool memory prevData = _poolData[pool];
-        if (_validPool(prevData)) {
+        _addPool(pool, data);
+
+        data.poolToken.acceptOwnership();
+
+        emit PoolMigratedIn({ reserveToken: pool });
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection)
+        external
+        override
+        validAddress(ReserveToken.unwrap(pool))
+        validAddress(address(targetPoolCollection))
+        only(address(_poolCollectionUpgrader))
+    {
+        if (_network.latestPoolCollection(POOL_TYPE) != targetPoolCollection) {
+            revert InvalidPoolCollection();
+        }
+
+        IPoolToken poolToken = _poolData[pool].poolToken;
+
+        _removePool(pool);
+
+        poolToken.transferOwnership(address(targetPoolCollection));
+
+        emit PoolMigratedOut({ reserveToken: pool });
+    }
+
+    /**
+     * @dev adds a pool
+     */
+    function _addPool(ReserveToken pool, Pool memory data) private {
+        if (!_pools.add(ReserveToken.unwrap(pool))) {
             revert AlreadyExists();
         }
 
         _poolData[pool] = data;
+    }
+
+    /**
+     * @dev removes a pool
+     */
+    function _removePool(ReserveToken pool) private {
+        if (!_pools.remove(ReserveToken.unwrap(pool))) {
+            revert DoesNotExist();
+        }
+
+        delete _poolData[pool];
     }
 
     /**

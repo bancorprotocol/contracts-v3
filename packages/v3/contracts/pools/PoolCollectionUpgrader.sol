@@ -13,11 +13,15 @@ import { AverageRate } from "./PoolAverageRate.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
-import { Utils, DoesNotExist, InvalidType } from "../utility/Utils.sol";
+import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
-error InvalidPoolCollection();
+error UnsupportedVersion();
 
-interface IPoolCollectionV1 {
+interface IPoolCollectionBase {
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
+}
+
+interface IPoolCollectionV1 is IPoolCollectionBase {
     struct PoolLiquidityV1 {
         uint256 networkTokenTradingLiquidity; // the network token trading liquidity
         uint256 baseTokenTradingLiquidity; // the base token trading liquidity
@@ -114,13 +118,13 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
      */
     function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
         if (ReserveToken.unwrap(pool) == address(0)) {
-            return INVALID_POOL_COLLECTION;
+            revert InvalidPool();
         }
 
         // get the pool collection that this pool exists in
         IPoolCollection prevPoolCollection = _network.collectionByPool(pool);
         if (address(prevPoolCollection) == address(0)) {
-            return INVALID_POOL_COLLECTION;
+            revert InvalidPool();
         }
 
         // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
@@ -128,7 +132,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {
-            return INVALID_POOL_COLLECTION;
+            revert InvalidPoolCollection();
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
@@ -147,7 +151,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             return newPoolCollection;
         }
 
-        return INVALID_POOL_COLLECTION;
+        revert UnsupportedVersion();
     }
 
     /**
@@ -177,6 +181,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             })
         });
 
-        targetPoolCollection.migratePoolData(pool, newData);
+        sourcePoolCollection.migratePoolOut(pool, targetPoolCollection);
+        targetPoolCollection.migratePoolIn(pool, newData);
     }
 }

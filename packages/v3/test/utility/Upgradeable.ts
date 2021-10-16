@@ -28,7 +28,7 @@ describe('Upgradeable', () => {
     });
 
     it('should be properly initialized', async () => {
-        await expectRole(upgradeable, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
+        await expectRole(upgradeable, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
     });
 
     it('should revert when a non-owner is attempting to call a restricted function', async () => {

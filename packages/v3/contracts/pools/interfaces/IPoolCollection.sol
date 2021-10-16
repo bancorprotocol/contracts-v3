@@ -217,5 +217,14 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the pool collection upgrader contract
      */
-    function migratePoolData(ReserveToken pool, Pool memory data) external;
+    function migratePoolIn(ReserveToken pool, Pool calldata data) external;
+
+    /**
+     * @dev migrates a pool from this pool collection
+     *
+     * requirements:
+     *
+     * - the caller must be the pool collection upgrader contract
+     */
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
 }

@@ -137,11 +137,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function addTokenToWhitelist(ReserveToken token)
         external
-        onlyOwner
+        onlyAdmin
         validExternalAddress(ReserveToken.unwrap(token))
     {
         if (!_protectedTokenWhitelist.add(ReserveToken.unwrap(token))) {
@@ -156,9 +156,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function removeTokenFromWhitelist(ReserveToken token) external onlyOwner {
+    function removeTokenFromWhitelist(ReserveToken token) external onlyAdmin {
         if (!_protectedTokenWhitelist.remove(ReserveToken.unwrap(token))) {
             revert DoesNotExist();
         }
@@ -185,11 +185,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setPoolMintingLimit(ReserveToken pool, uint256 amount)
         external
-        onlyOwner
+        onlyAdmin
         validAddress(ReserveToken.unwrap(pool))
     {
         uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
@@ -214,9 +214,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setMinLiquidityForTrading(uint256 amount) external onlyOwner {
+    function setMinLiquidityForTrading(uint256 amount) external onlyAdmin {
         uint256 prevMinLiquidityForTrading = _minLiquidityForTrading;
         if (_minLiquidityForTrading == amount) {
             return;
@@ -253,11 +253,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setNetworkFeeWallet(ITokenHolder newNetworkFeeWallet)
         external
-        onlyOwner
+        onlyAdmin
         validAddress(address(newNetworkFeeWallet))
     {
         ITokenHolder prevNetworkFeeWallet = _networkFeeWallet;
@@ -275,9 +275,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
+    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyAdmin validFee(newNetworkFeePPM) {
         uint32 prevNetworkFeePPM = _networkFeePPM;
         if (prevNetworkFeePPM == newNetworkFeePPM) {
             return;
@@ -300,9 +300,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyOwner validFee(newWithdrawalFeePPM) {
+    function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyAdmin validFee(newWithdrawalFeePPM) {
         uint32 prevWithdrawalFeePPM = _withdrawalFeePPM;
         if (prevWithdrawalFeePPM == newWithdrawalFeePPM) {
             return;
@@ -325,9 +325,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyOwner validFee(newFlashLoanFeePPM) {
+    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
         uint32 prevFlashLoanFeePPM = _flashLoanFeePPM;
         if (prevFlashLoanFeePPM == newFlashLoanFeePPM) {
             return;
@@ -350,11 +350,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setAverageRateMaxDeviationPPM(uint32 newAverageRateMaxDeviationPPM)
         external
-        onlyOwner
+        onlyAdmin
         validPortion(newAverageRateMaxDeviationPPM)
     {
         uint32 prevAverageRateMaxDeviationPPM = _averageRateMaxDeviationPPM;
