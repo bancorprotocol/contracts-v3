@@ -219,7 +219,7 @@ describe('BancorNetwork', () => {
 
             await expect(
                 network.initialize(ZERO_ADDRESS, pendingWithdrawals.address, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to initialize with an invalid pending withdrawals contract', async () => {
@@ -243,7 +243,7 @@ describe('BancorNetwork', () => {
 
             await expect(
                 network.initialize(networkTokenPool.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to initialize with an invalid pool collection upgrader contract', async () => {
@@ -267,7 +267,7 @@ describe('BancorNetwork', () => {
 
             await expect(
                 network.initialize(networkTokenPool.address, pendingWithdrawals.address, ZERO_ADDRESS)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
@@ -428,7 +428,7 @@ describe('BancorNetwork', () => {
 
         it('should revert when attempting to set the external protection wallet without transferring its ownership', async () => {
             await expect(network.setExternalProtectionWallet(newExternalProtectionWallet.address)).to.be.revertedWith(
-                'AccessDenied()'
+                'AccessDenied'
             );
         });
 
@@ -467,13 +467,13 @@ describe('BancorNetwork', () => {
         describe('adding new pool collection', () => {
             it('should revert when a non-owner attempts to add a new pool collection', async () => {
                 await expect(network.connect(nonOwner).addPoolCollection(poolCollection.address)).to.be.revertedWith(
-                    'AccessDenied()'
+                    'AccessDenied'
                 );
             });
 
             it('should revert when attempting to add an invalid pool collection', async () => {
                 await expect(network.connect(nonOwner).addPoolCollection(ZERO_ADDRESS)).to.be.revertedWith(
-                    'InvalidAddress()'
+                    'InvalidAddress'
                 );
             });
 
@@ -497,9 +497,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to add the same pool collection', async () => {
-                    await expect(network.addPoolCollection(poolCollection.address)).to.be.revertedWith(
-                        'AlreadyExists()'
-                    );
+                    await expect(network.addPoolCollection(poolCollection.address)).to.be.revertedWith('AlreadyExists');
                 });
 
                 it('should revert when attempting to add a pool collection with the same version', async () => {
@@ -511,7 +509,7 @@ describe('BancorNetwork', () => {
                     );
 
                     await expect(network.addPoolCollection(newPoolCollection.address)).to.be.revertedWith(
-                        'AlreadyExists()'
+                        'AlreadyExists'
                     );
                 });
 
@@ -708,7 +706,7 @@ describe('BancorNetwork', () => {
 
             it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
                 await expect(network.connect(nonOwner).setLatestPoolCollection(ZERO_ADDRESS)).to.be.revertedWith(
-                    'InvalidAddress()'
+                    'InvalidAddress'
                 );
 
                 const newPoolCollection2 = await createPoolCollection(
@@ -717,7 +715,7 @@ describe('BancorNetwork', () => {
                     poolCollectionUpgrader
                 );
                 await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWith(
-                    'DoesNotExist()'
+                    'DoesNotExist'
                 );
             });
 
@@ -775,7 +773,7 @@ describe('BancorNetwork', () => {
 
             it('should revert when attempting to create a pool for an unsupported type', async () => {
                 await expect(network.createPool(BigNumber.from(12345), reserveToken.address)).to.be.revertedWith(
-                    'InvalidType()'
+                    'InvalidType'
                 );
             });
 
@@ -809,7 +807,7 @@ describe('BancorNetwork', () => {
                     it('should revert when attempting to create a pool for the same reserve token twice', async () => {
                         await network.createPool(poolType, reserveToken.address);
                         await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
-                            'AlreadyExists()'
+                            'AlreadyExists'
                         );
                     });
                 });
@@ -826,7 +824,7 @@ describe('BancorNetwork', () => {
             const { network, networkToken } = await createSystem();
 
             await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
-                'InvalidToken()'
+                'InvalidToken'
             );
         });
     });
@@ -1393,7 +1391,7 @@ describe('BancorNetwork', () => {
                                                         const amount = BigNumber.from(1000);
 
                                                         await expect(deposit(amount)).to.be.revertedWith(
-                                                            'NotWhitelisted()'
+                                                            'NotWhitelisted'
                                                         );
                                                     });
                                                 });
@@ -1416,7 +1414,7 @@ describe('BancorNetwork', () => {
                                                         const amount = BigNumber.from(1000);
 
                                                         await expect(deposit(amount)).to.be.revertedWith(
-                                                            'NetworkLiquidityDisabled()'
+                                                            'NetworkLiquidityDisabled'
                                                         );
                                                     });
                                                 });
@@ -1450,7 +1448,7 @@ describe('BancorNetwork', () => {
                                                             const amount = BigNumber.from(1000);
 
                                                             await expect(deposit(amount)).to.be.revertedWith(
-                                                                'NetworkLiquidityDisabled()'
+                                                                'NetworkLiquidityDisabled'
                                                             );
                                                         });
                                                     });
@@ -1637,7 +1635,7 @@ describe('BancorNetwork', () => {
                                 context(`${amount} tokens`, () => {
                                     if (isNetworkToken || isETH) {
                                         it('should revert when attempting to deposit', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWith('PermitUnsupported()');
+                                            await expect(deposit(amount)).to.be.revertedWith('PermitUnsupported');
                                         });
 
                                         return;
@@ -1667,7 +1665,7 @@ describe('BancorNetwork', () => {
                                             it('should revert when attempting to deposit', async () => {
                                                 const amount = BigNumber.from(1000);
 
-                                                await expect(deposit(amount)).to.be.revertedWith('NotWhitelisted()');
+                                                await expect(deposit(amount)).to.be.revertedWith('NotWhitelisted');
                                             });
                                         });
                                     });
@@ -1686,7 +1684,7 @@ describe('BancorNetwork', () => {
                                                 const amount = BigNumber.from(1000);
 
                                                 await expect(deposit(amount)).to.be.revertedWith(
-                                                    'NetworkLiquidityDisabled()'
+                                                    'NetworkLiquidityDisabled'
                                                 );
                                             });
                                         });
@@ -1718,7 +1716,7 @@ describe('BancorNetwork', () => {
                                                     const amount = BigNumber.from(1000);
 
                                                     await expect(deposit(amount)).to.be.revertedWith(
-                                                        'NetworkLiquidityDisabled()'
+                                                        'NetworkLiquidityDisabled'
                                                     );
                                                 });
                                             });
@@ -2106,7 +2104,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'NetworkLiquidityDisabled()'
+                                            'NetworkLiquidityDisabled'
                                         );
                                     });
                                 });
@@ -2137,7 +2135,7 @@ describe('BancorNetwork', () => {
 
                                     it('should revert when attempting to withdraw', async () => {
                                         await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'NetworkLiquidityDisabled()'
+                                            'NetworkLiquidityDisabled'
                                         );
                                     });
                                 });
@@ -2629,14 +2627,14 @@ describe('BancorNetwork', () => {
                         it('should revert when attempting to trade using an invalid minimum return amount', async () => {
                             const minReturnAmount = BigNumber.from(0);
 
-                            await expect(tradeFunc(testAmount, { minReturnAmount })).to.be.revertedWith('ZeroValue()');
+                            await expect(tradeFunc(testAmount, { minReturnAmount })).to.be.revertedWith('ZeroValue');
                         });
 
                         it('should revert when attempting to trade using an expired deadline', async () => {
                             const deadline = (await latest()).sub(BigNumber.from(1000));
 
                             await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                permitted ? 'ERC20Permit: expired deadline' : 'DeadlineExpired()'
+                                permitted ? 'ERC20Permit: expired deadline' : 'DeadlineExpired'
                             );
                         });
 
@@ -2706,15 +2704,11 @@ describe('BancorNetwork', () => {
                             })
                         ).to.be.revertedWith('EthAmountMismatch');
 
-                        await expect(trade(testAmount, { value: BigNumber.from(0) })).to.be.revertedWith(
-                            'InvalidPool()'
-                        );
+                        await expect(trade(testAmount, { value: BigNumber.from(0) })).to.be.revertedWith('InvalidPool');
                     });
                 } else {
                     it('should revert when passing ETH with a non ETH trade', async () => {
-                        await expect(trade(testAmount, { value: BigNumber.from(1) })).to.be.revertedWith(
-                            'InvalidPool()'
-                        );
+                        await expect(trade(testAmount, { value: BigNumber.from(1) })).to.be.revertedWith('InvalidPool');
                     });
 
                     context('with an insufficient approval', () => {

@@ -54,7 +54,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 Contracts.PoolCollection.deploy(ZERO_ADDRESS, poolTokenFactory.address, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool token factory contract', async () => {
@@ -62,7 +62,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool collection upgrader contract', async () => {
@@ -70,7 +70,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 Contracts.PoolCollection.deploy(network.address, poolTokenFactory.address, ZERO_ADDRESS)
-            ).to.be.revertedWith('InvalidAddress()');
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -165,13 +165,13 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                    'AccessDenied()'
+                    'AccessDenied'
                 );
             });
 
             it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
                 await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                    'NotWhitelisted()'
+                    'NotWhitelisted'
                 );
             });
 
@@ -184,7 +184,7 @@ describe('PoolCollection', () => {
                     await network.createPoolT(poolCollection.address, reserveToken.address);
 
                     await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                        'AlreadyExists()'
+                        'AlreadyExists'
                     );
                 });
 
@@ -298,7 +298,7 @@ describe('PoolCollection', () => {
 
             it('should revert when setting the initial rate of a non-existing pool', async () => {
                 await expect(poolCollection.setInitialRate(newReserveToken.address, newInitialRate)).to.be.revertedWith(
-                    'DoesNotExist()'
+                    'DoesNotExist'
                 );
             });
 
@@ -398,7 +398,7 @@ describe('PoolCollection', () => {
 
             it('should revert when enabling trading for a non-existing pool', async () => {
                 await expect(poolCollection.enableTrading(newReserveToken.address, true)).to.be.revertedWith(
-                    'DoesNotExist()'
+                    'DoesNotExist'
                 );
             });
 
@@ -443,7 +443,7 @@ describe('PoolCollection', () => {
 
             it('should revert when enabling depositing for a non-existing pool', async () => {
                 await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWith(
-                    'DoesNotExist()'
+                    'DoesNotExist'
                 );
             });
 

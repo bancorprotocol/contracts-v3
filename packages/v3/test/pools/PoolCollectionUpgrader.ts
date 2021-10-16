@@ -28,7 +28,7 @@ describe('PoolCollectionUpgrader', () => {
     describe('construction', () => {
         it('should revert when attempting to initialize with an invalid network contract', async () => {
             await expect(Contracts.TestPoolCollectionUpgrader.deploy(ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress()'
+                'InvalidAddress'
             );
         });
 
