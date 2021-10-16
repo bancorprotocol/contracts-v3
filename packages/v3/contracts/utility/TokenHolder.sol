@@ -18,12 +18,12 @@ error InvalidLength();
 contract TokenHolder is IVersioned, ITokenHolder, Owned, Utils {
     using ReserveTokenLibrary for ReserveToken;
 
-    receive() external payable virtual override {}
+    receive() external payable virtual {}
 
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
@@ -34,7 +34,7 @@ contract TokenHolder is IVersioned, ITokenHolder, Owned, Utils {
         ReserveToken reserveToken,
         address payable to,
         uint256 amount
-    ) external virtual override onlyOwner validAddress(to) {
+    ) external virtual onlyOwner validAddress(to) {
         reserveToken.safeTransfer(to, amount);
     }
 
@@ -45,7 +45,7 @@ contract TokenHolder is IVersioned, ITokenHolder, Owned, Utils {
         ReserveToken[] calldata reserveTokens,
         address payable to,
         uint256[] calldata amounts
-    ) external virtual override onlyOwner validAddress(to) {
+    ) external virtual onlyOwner validAddress(to) {
         uint256 length = reserveTokens.length;
         if (length != amounts.length) {
             revert InvalidLength();
