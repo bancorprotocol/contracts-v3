@@ -22,11 +22,6 @@ contract ExternalProtectionVault is Vault {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor() {}
-
-    /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
@@ -83,9 +78,6 @@ contract ExternalProtectionVault is Vault {
         address,
         uint256
     ) public view override returns (bool) {
-        if (hasRole(ROLE_ASSET_MANAGER, caller)) {
-            return true;
-        }
-        return false;
+        return hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

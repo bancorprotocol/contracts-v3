@@ -72,7 +72,7 @@ const createTransparentProxy = async (
     return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
 };
 
-export const createProxy = async <F extends ContractFactory>(
+const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
@@ -172,6 +172,7 @@ export const createSystem = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+    const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
@@ -219,6 +220,7 @@ export const createSystem = async () => {
         govTokenGovernance,
         networkPoolToken,
         vault,
+        externalProtectionVault,
         networkTokenPool,
         pendingWithdrawals,
         poolTokenFactory,
