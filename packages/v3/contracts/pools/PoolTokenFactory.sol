@@ -78,9 +78,9 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setTokenSymbolOverride(ReserveToken reserveToken, string calldata symbol) external onlyOwner {
+    function setTokenSymbolOverride(ReserveToken reserveToken, string calldata symbol) external onlyAdmin {
         _tokenSymbolOverrides[reserveToken] = symbol;
     }
 
@@ -96,9 +96,9 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setTokenDecimalsOverride(ReserveToken reserveToken, uint8 decimals) external onlyOwner {
+    function setTokenDecimalsOverride(ReserveToken reserveToken, uint8 decimals) external onlyAdmin {
         _tokenDecimalsOverrides[reserveToken] = decimals;
     }
 

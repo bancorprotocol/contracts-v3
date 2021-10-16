@@ -171,9 +171,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setLockDuration(uint32 newLockDuration) external onlyOwner {
+    function setLockDuration(uint32 newLockDuration) external onlyAdmin {
         _setLockDuration(newLockDuration);
     }
 
@@ -193,9 +193,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
+    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyAdmin {
         _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 

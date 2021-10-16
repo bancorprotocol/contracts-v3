@@ -231,7 +231,7 @@ describe('BancorNetwork', () => {
 
             expect(await network.version()).to.equal(1);
 
-            await expectRole(network, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [deployer.address]);
+            await expectRole(network, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
 
             expect(await network.networkToken()).to.equal(networkToken.address);
             expect(await network.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
