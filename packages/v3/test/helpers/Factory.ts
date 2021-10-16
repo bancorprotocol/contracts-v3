@@ -171,6 +171,7 @@ export const createSystem = async () => {
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
+    const testVault = await createProxy(Contracts.TestVault);
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
@@ -218,6 +219,7 @@ export const createSystem = async () => {
         govToken,
         govTokenGovernance,
         networkPoolToken,
+        testVault,
         vault,
         networkTokenPool,
         pendingWithdrawals,
