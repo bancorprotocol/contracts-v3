@@ -18,7 +18,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IVault } from "../vault/interfaces/IVault.sol";
+import { IBancorVault } from "../vault/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
@@ -53,7 +53,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     INetworkSettings private immutable _settings;
 
     // the vault contract
-    IVault private immutable _vault;
+    IBancorVault private immutable _vault;
 
     // the network token pool token
     IPoolToken internal immutable _poolToken;
@@ -183,7 +183,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
     /**
      * @inheritdoc INetworkTokenPool
      */
-    function vault() external view override returns (IVault) {
+    function vault() external view override returns (IBancorVault) {
         return _vault;
     }
 

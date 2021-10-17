@@ -58,37 +58,6 @@ describe('ExternalProtectionVault', () => {
         });
     });
 
-    describe('authenticateWithdrawal', () => {
-        let networkToken: NetworkToken;
-        let externalProtectionVault: ExternalProtectionVault;
-
-        beforeEach(async () => {
-            ({ networkToken, externalProtectionVault } = await createSystem());
-        });
-
-        it('sucess if caller have ROLE_ASSET_MANAGER role', async () => {
-            expect(
-                await externalProtectionVault.authenticateWithdrawal(
-                    deployer.address,
-                    networkToken.address,
-                    target.address,
-                    0
-                )
-            ).to.be.true;
-        });
-
-        it("failure if caller doesn't have ROLE_ASSET_MANAGER role", async () => {
-            expect(
-                await externalProtectionVault.authenticateWithdrawal(
-                    sender.address,
-                    networkToken.address,
-                    target.address,
-                    0
-                )
-            ).to.be.false;
-        });
-    });
-
     describe('asset management', () => {
         let networkToken: NetworkToken;
         let externalProtectionVault: ExternalProtectionVault;
@@ -156,22 +125,6 @@ describe('ExternalProtectionVault', () => {
                             vaultBalance.sub(remainder)
                         );
                     });
-
-                    context('when paused', () => {
-                        beforeEach(async () => {
-                            await externalProtectionVault
-                                .connect(deployer)
-                                .grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-
-                            expect(await externalProtectionVault.isPaused()).to.be.false;
-
-                            await externalProtectionVault.connect(admin).pause();
-
-                            expect(await externalProtectionVault.isPaused()).to.be.true;
-                        });
-
-                        testWithdrawRestricted('Pausable: paused');
-                    });
                 };
 
                 const testWithdrawRestricted = (reason = 'AccessDenied()') => {
@@ -234,81 +187,5 @@ describe('ExternalProtectionVault', () => {
                 });
             });
         }
-    });
-
-    describe('pausing/unpausing', () => {
-        let externalProtectionVault: ExternalProtectionVault;
-
-        beforeEach(async () => {
-            ({ externalProtectionVault } = await createSystem());
-        });
-
-        const testPause = () => {
-            it('should pause the contract', async () => {
-                await externalProtectionVault.connect(sender).pause();
-
-                expect(await externalProtectionVault.isPaused()).to.be.true;
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await externalProtectionVault
-                        .connect(deployer)
-                        .grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await externalProtectionVault.connect(admin).pause();
-
-                    expect(await externalProtectionVault.isPaused()).to.be.true;
-                });
-
-                it('should unpause the contract', async () => {
-                    await externalProtectionVault.connect(sender).unpause();
-
-                    expect(await externalProtectionVault.isPaused()).to.be.false;
-                });
-            });
-        };
-
-        const testPauseRestricted = () => {
-            it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(externalProtectionVault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await externalProtectionVault
-                        .connect(deployer)
-                        .grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await externalProtectionVault.connect(admin).pause();
-
-                    expect(await externalProtectionVault.isPaused()).to.be.true;
-                });
-
-                it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(externalProtectionVault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
-                });
-            });
-        };
-
-        context('admin', () => {
-            beforeEach(async () => {
-                await externalProtectionVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
-            });
-
-            testPause();
-        });
-
-        context('regular account', () => {
-            testPauseRestricted();
-        });
-
-        context('asset manager', () => {
-            beforeEach(async () => {
-                await externalProtectionVault
-                    .connect(deployer)
-                    .grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, sender.address);
-            });
-
-            testPauseRestricted();
-        });
     });
 });
