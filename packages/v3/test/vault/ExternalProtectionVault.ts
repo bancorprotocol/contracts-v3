@@ -40,6 +40,12 @@ describe('ExternalProtectionVault', () => {
             );
         });
 
+        it('should be payable', async () => {
+            const { externalProtectionVault } = await createSystem();
+
+            expect(await externalProtectionVault.isPayable()).to.be.true;
+        });
+
         it('should be properly initialized', async () => {
             const externalProtectionVault = await Contracts.ExternalProtectionVault.deploy();
             await externalProtectionVault.initialize();
