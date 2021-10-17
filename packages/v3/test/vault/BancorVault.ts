@@ -44,6 +44,12 @@ describe('BancorVault', () => {
             await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
+        it('should be payable', async () => {
+            const { vault } = await createSystem();
+
+            expect(await vault.isPayable()).to.be.true;
+        });
+
         it('should revert when initialized with an invalid network token', async () => {
             await expect(Contracts.BancorVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
