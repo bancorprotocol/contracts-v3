@@ -21,6 +21,7 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
+import { prepare, prepareEach } from '../helpers/Fixture';
 import { roundDiv } from '../helpers/MathUtils';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
@@ -29,7 +30,7 @@ import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 import fs from 'fs';
-import { ethers, waffle } from 'hardhat';
+import { ethers } from 'hardhat';
 import path from 'path';
 
 describe('PoolCollection', () => {
@@ -105,14 +106,12 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
-            await waffle.loadFixture(async () => {
-                ({ network, networkSettings, poolCollection } = await createSystem());
+        prepareEach(async () => {
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
-                expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+            expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
 
-                reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-            });
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
@@ -157,12 +156,10 @@ describe('PoolCollection', () => {
         let reserveToken: TokenWithAddress;
 
         const testCreatePool = (symbol: string) => {
-            beforeEach(async () => {
-                await waffle.loadFixture(async () => {
-                    ({ network, networkSettings, poolCollection } = await createSystem());
+            prepareEach(async () => {
+                ({ network, networkSettings, poolCollection } = await createSystem());
 
-                    reserveToken = await createTokenBySymbol(symbol);
-                });
+                reserveToken = await createTokenBySymbol(symbol);
             });
 
             it('should revert when attempting to create a pool from a non-network', async () => {
@@ -180,10 +177,8 @@ describe('PoolCollection', () => {
             });
 
             context('with a whitelisted token', () => {
-                beforeEach(async () => {
-                    await waffle.loadFixture(async () => {
-                        await networkSettings.addTokenToWhitelist(reserveToken.address);
-                    });
+                prepareEach(async () => {
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
                 });
 
                 it('should not allow to create the same pool twice', async () => {
@@ -267,16 +262,14 @@ describe('PoolCollection', () => {
         let newReserveToken: TestERC20Token;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
-            await waffle.loadFixture(async () => {
-                ({ network, networkSettings, poolCollection } = await createSystem());
+        prepareEach(async () => {
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
-                reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-                await createPool(reserveToken, network, networkSettings, poolCollection);
+            await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                newReserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-            });
+            newReserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         describe('initial rate', () => {
@@ -568,7 +561,7 @@ describe('PoolCollection', () => {
         const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
             let poolCollection: TestPoolCollection;
 
-            before(async () => {
+            prepare(async () => {
                 ({ poolCollection } = await createSystem());
             });
 
@@ -883,12 +876,10 @@ describe('PoolCollection', () => {
                 [deployer, provider] = await ethers.getSigners();
             });
 
-            beforeEach(async () => {
-                await waffle.loadFixture(async () => {
-                    ({ network, networkSettings, poolCollection } = await createSystem());
+            prepareEach(async () => {
+                ({ network, networkSettings, poolCollection } = await createSystem());
 
-                    reserveToken = await createTokenBySymbol(symbol);
-                });
+                reserveToken = await createTokenBySymbol(symbol);
             });
 
             it('should revert when attempting to deposit from a non-network', async () => {
@@ -952,30 +943,26 @@ describe('PoolCollection', () => {
             context('with a registered pool', () => {
                 let poolToken: PoolToken;
 
-                beforeEach(async () => {
-                    await waffle.loadFixture(async () => {
-                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
-                    });
+                prepareEach(async () => {
+                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
                 });
 
                 context('when at the deposit limit', () => {
                     const DEPOSIT_LIMIT = toWei(BigNumber.from(12345));
 
-                    beforeEach(async () => {
-                        await waffle.loadFixture(async () => {
-                            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                    prepareEach(async () => {
+                        await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                            await poolCollection.setDepositLimit(reserveToken.address, DEPOSIT_LIMIT);
-                            await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+                        await poolCollection.setDepositLimit(reserveToken.address, DEPOSIT_LIMIT);
+                        await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
 
-                            await network.depositToPoolCollectionForT(
-                                poolCollection.address,
-                                provider.address,
-                                reserveToken.address,
-                                DEPOSIT_LIMIT,
-                                MAX_UINT256
-                            );
-                        });
+                        await network.depositToPoolCollectionForT(
+                            poolCollection.address,
+                            provider.address,
+                            reserveToken.address,
+                            DEPOSIT_LIMIT,
+                            MAX_UINT256
+                        );
                     });
 
                     it('should revert when attempting to deposit', async () => {
@@ -1093,10 +1080,8 @@ describe('PoolCollection', () => {
                     };
 
                     context('without the minimum network token trading liquidity setting', () => {
-                        beforeEach(async () => {
-                            await waffle.loadFixture(async () => {
-                                await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-                            });
+                        prepareEach(async () => {
+                            await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
                         });
 
                         it('should revert when attempting to deposit', async () => {
@@ -1113,12 +1098,10 @@ describe('PoolCollection', () => {
                     });
 
                     context('with the minimum network token trading liquidity setting', () => {
-                        beforeEach(async () => {
-                            await waffle.loadFixture(async () => {
-                                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                        prepareEach(async () => {
+                            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                                await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-                            });
+                            await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
                         });
 
                         context('when below the minimum network token trading liquidity', () => {
@@ -1137,10 +1120,8 @@ describe('PoolCollection', () => {
                             });
 
                             context('when initial rate was set', () => {
-                                beforeEach(async () => {
-                                    await waffle.loadFixture(async () => {
-                                        await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
-                                    });
+                                prepareEach(async () => {
+                                    await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
                                 });
 
                                 it('should deposit', async () => {
@@ -1168,20 +1149,18 @@ describe('PoolCollection', () => {
                         });
 
                         context('when above the minimum network token trading liquidity', () => {
-                            beforeEach(async () => {
-                                await waffle.loadFixture(async () => {
-                                    await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                            prepareEach(async () => {
+                                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                                    await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+                                await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
 
-                                    await network.depositToPoolCollectionForT(
-                                        poolCollection.address,
-                                        provider.address,
-                                        reserveToken.address,
-                                        MIN_LIQUIDITY_FOR_TRADING.mul(INITIAL_RATE.d).div(INITIAL_RATE.n),
-                                        MAX_UINT256
-                                    );
-                                });
+                                await network.depositToPoolCollectionForT(
+                                    poolCollection.address,
+                                    provider.address,
+                                    reserveToken.address,
+                                    MIN_LIQUIDITY_FOR_TRADING.mul(INITIAL_RATE.d).div(INITIAL_RATE.n),
+                                    MAX_UINT256
+                                );
                             });
 
                             it('should deposit', async () => {
@@ -1233,19 +1212,17 @@ describe('PoolCollection', () => {
                 [deployer, provider] = await ethers.getSigners();
             });
 
-            beforeEach(async () => {
-                await waffle.loadFixture(async () => {
-                    ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+            prepareEach(async () => {
+                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                    await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                    reserveToken = await createTokenBySymbol(symbol);
+                reserveToken = await createTokenBySymbol(symbol);
 
-                    poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                    await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-                    await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
-                });
+                await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+                await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
             });
 
             it('should revert when attempting to withdraw from a non-network', async () => {
@@ -1330,16 +1307,14 @@ describe('PoolCollection', () => {
 
         const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
-        beforeEach(async () => {
-            await waffle.loadFixture(async () => {
-                ({ network, networkToken, networkSettings, poolCollection } = await createSystem());
+        prepareEach(async () => {
+            ({ network, networkToken, networkSettings, poolCollection } = await createSystem());
 
-                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-                await createPool(reserveToken, network, networkSettings, poolCollection);
-            });
+            await createPool(reserveToken, network, networkSettings, poolCollection);
         });
 
         const testTrading = (isSourceNetworkToken: boolean) => {
@@ -1555,10 +1530,8 @@ describe('PoolCollection', () => {
                 });
 
                 context('when trading is disabled', () => {
-                    beforeEach(async () => {
-                        await waffle.loadFixture(async () => {
-                            await poolCollection.enableTrading(reserveToken.address, false);
-                        });
+                    prepareEach(async () => {
+                        await poolCollection.enableTrading(reserveToken.address, false);
                     });
 
                     it('should revert when attempting to trade or query', async () => {
@@ -1611,27 +1584,21 @@ describe('PoolCollection', () => {
                 });
 
                 context('with sufficient network token liquidity', () => {
-                    beforeEach(async () => {
-                        await waffle.loadFixture(async () => {
-                            await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, BigNumber.from(0));
-                        });
+                    prepareEach(async () => {
+                        await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, BigNumber.from(0));
                     });
 
                     context('with sufficient target and source pool balances', () => {
-                        beforeEach(async () => {
-                            await waffle.loadFixture(async () => {
-                                const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(
-                                    BigNumber.from(1000)
-                                );
+                        prepareEach(async () => {
+                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BigNumber.from(1000));
 
-                                // for the tests below, ensure that the source to target ratio above 1, such that a zero
-                                // trading result is possible
-                                const baseTokenTradingLiquidity = isSourceNetworkToken
-                                    ? networkTokenTradingLiquidity.div(BigNumber.from(2))
-                                    : networkTokenTradingLiquidity.mul(BigNumber.from(2));
+                            // for the tests below, ensure that the source to target ratio above 1, such that a zero
+                            // trading result is possible
+                            const baseTokenTradingLiquidity = isSourceNetworkToken
+                                ? networkTokenTradingLiquidity.div(BigNumber.from(2))
+                                : networkTokenTradingLiquidity.mul(BigNumber.from(2));
 
-                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
-                            });
+                            await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                         });
 
                         it('should revert when the trade result is zero', async () => {
@@ -1661,27 +1628,23 @@ describe('PoolCollection', () => {
                 });
 
                 context('with insufficient pool balances', () => {
-                    beforeEach(async () => {
-                        await waffle.loadFixture(async () => {
-                            await networkSettings.setMinLiquidityForTrading(BigNumber.from(0));
-                        });
+                    prepareEach(async () => {
+                        await networkSettings.setMinLiquidityForTrading(BigNumber.from(0));
                     });
 
                     context('source pool', () => {
                         const amount = BigNumber.from(12345);
 
                         context('empty', () => {
-                            beforeEach(async () => {
-                                await waffle.loadFixture(async () => {
-                                    const targetBalance = amount.mul(BigNumber.from(999999999999));
-                                    const networkTokenTradingLiquidity = isSourceNetworkToken
-                                        ? BigNumber.from(0)
-                                        : targetBalance;
-                                    const baseTokenTradingLiquidity = isSourceNetworkToken
-                                        ? targetBalance
-                                        : BigNumber.from(0);
-                                    await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
-                                });
+                            prepareEach(async () => {
+                                const targetBalance = amount.mul(BigNumber.from(999999999999));
+                                const networkTokenTradingLiquidity = isSourceNetworkToken
+                                    ? BigNumber.from(0)
+                                    : targetBalance;
+                                const baseTokenTradingLiquidity = isSourceNetworkToken
+                                    ? targetBalance
+                                    : BigNumber.from(0);
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                             });
 
                             it('should revert when attempting to trade or query', async () => {
@@ -1713,19 +1676,17 @@ describe('PoolCollection', () => {
                         context('empty', () => {
                             const amount = BigNumber.from(12345);
 
-                            beforeEach(async () => {
-                                await waffle.loadFixture(async () => {
-                                    const sourceBalance = BigNumber.from(12345);
-                                    const networkTokenTradingLiquidity = isSourceNetworkToken
-                                        ? sourceBalance
-                                        : BigNumber.from(0);
+                            prepareEach(async () => {
+                                const sourceBalance = BigNumber.from(12345);
+                                const networkTokenTradingLiquidity = isSourceNetworkToken
+                                    ? sourceBalance
+                                    : BigNumber.from(0);
 
-                                    const baseTokenTradingLiquidity = isSourceNetworkToken
-                                        ? BigNumber.from(0)
-                                        : sourceBalance;
+                                const baseTokenTradingLiquidity = isSourceNetworkToken
+                                    ? BigNumber.from(0)
+                                    : sourceBalance;
 
-                                    await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
-                                });
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                             });
 
                             it('should revert when attempting to trade or query', async () => {
@@ -1762,12 +1723,10 @@ describe('PoolCollection', () => {
 
                             let targetAmount: BigNumber;
 
-                            beforeEach(async () => {
-                                await waffle.loadFixture(async () => {
-                                    await setTradingLiquidity(sourceBalance, targetBalance);
+                            prepareEach(async () => {
+                                await setTradingLiquidity(sourceBalance, targetBalance);
 
-                                    targetAmount = targetBalance;
-                                });
+                                targetAmount = targetBalance;
                             });
 
                             it('should revert when attempting to query the source amount', async () => {
@@ -1784,24 +1743,22 @@ describe('PoolCollection', () => {
                             });
 
                             context('with a trading fee', () => {
-                                beforeEach(async () => {
-                                    await waffle.loadFixture(async () => {
-                                        const tradingFeePPM = BigNumber.from(100_000);
-                                        await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
+                                prepareEach(async () => {
+                                    const tradingFeePPM = BigNumber.from(100_000);
+                                    await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
-                                        // derive a target amount such that adding a fee to it will result in an amount
-                                        // greater than the target balance by solving the following two equations (left as an
-                                        // exercise for the reader):
-                                        // - feeAmount = targetAmount * tradingFee / (PPM - tradingFee)
-                                        // - targetAmount + feeAmount = targetBalance
-                                        const fee = new Decimal(tradingFeePPM.toString());
-                                        const factor = new Decimal(1).add(
-                                            fee.div(new Decimal(PPM_RESOLUTION.toString()).sub(fee))
-                                        );
-                                        targetAmount = BigNumber.from(
-                                            roundDiv(targetBalance, factor).add(new Decimal(1)).toFixed()
-                                        );
-                                    });
+                                    // derive a target amount such that adding a fee to it will result in an amount
+                                    // greater than the target balance by solving the following two equations (left as an
+                                    // exercise for the reader):
+                                    // - feeAmount = targetAmount * tradingFee / (PPM - tradingFee)
+                                    // - targetAmount + feeAmount = targetBalance
+                                    const fee = new Decimal(tradingFeePPM.toString());
+                                    const factor = new Decimal(1).add(
+                                        fee.div(new Decimal(PPM_RESOLUTION.toString()).sub(fee))
+                                    );
+                                    targetAmount = BigNumber.from(
+                                        roundDiv(targetBalance, factor).add(new Decimal(1)).toFixed()
+                                    );
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
@@ -1864,23 +1821,19 @@ describe('PoolCollection', () => {
 
                         let poolAverageRate: TestPoolAverageRate;
 
-                        beforeEach(async () => {
-                            await waffle.loadFixture(async () => {
-                                poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
+                        prepareEach(async () => {
+                            poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
 
-                                const networkTokenTradingLiquidity = isSourceNetworkToken
-                                    ? sourceBalance
-                                    : targetBalance;
-                                const baseTokenTradingLiquidity = isSourceNetworkToken ? targetBalance : sourceBalance;
-                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
+                            const networkTokenTradingLiquidity = isSourceNetworkToken ? sourceBalance : targetBalance;
+                            const baseTokenTradingLiquidity = isSourceNetworkToken ? targetBalance : sourceBalance;
+                            await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
 
-                                await poolCollection.setAverageRateT(reserveToken.address, {
-                                    time: 0,
-                                    rate: { n: networkTokenTradingLiquidity, d: baseTokenTradingLiquidity }
-                                });
-
-                                await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
+                            await poolCollection.setAverageRateT(reserveToken.address, {
+                                time: 0,
+                                rate: { n: networkTokenTradingLiquidity, d: baseTokenTradingLiquidity }
                             });
+
+                            await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                         });
 
                         it('should perform a trade', async () => {
@@ -2033,14 +1986,12 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
-            await waffle.loadFixture(async () => {
-                ({ network, networkSettings, poolCollection } = await createSystem());
+        prepareEach(async () => {
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
-                reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-                await createPool(reserveToken, network, networkSettings, poolCollection);
-            });
+            await createPool(reserveToken, network, networkSettings, poolCollection);
         });
 
         it('should revert when attempting to notify about collected fee from a non-network', async () => {
@@ -2088,30 +2039,22 @@ describe('PoolCollection', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
-            await waffle.loadFixture(async () => {
-                ({
-                    network,
-                    networkSettings,
-                    networkSettings,
-                    poolTokenFactory,
-                    poolCollection,
-                    poolCollectionUpgrader
-                } = await createSystem());
+        prepareEach(async () => {
+            ({ network, networkSettings, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
 
-                reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+            poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                targetPoolCollection = await createPoolCollection(
-                    network,
-                    poolTokenFactory,
-                    poolCollectionUpgrader,
-                    (await poolCollection.version()) + 1
-                );
-                await network.addPoolCollection(targetPoolCollection.address);
-                await network.setLatestPoolCollection(targetPoolCollection.address);
-            });
+            targetPoolCollection = await createPoolCollection(
+                network,
+                poolTokenFactory,
+                poolCollectionUpgrader,
+                (await poolCollection.version()) + 1
+            );
+            await network.addPoolCollection(targetPoolCollection.address);
+            await network.setLatestPoolCollection(targetPoolCollection.address);
         });
 
         describe('in', () => {
