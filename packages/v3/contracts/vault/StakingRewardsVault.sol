@@ -75,9 +75,9 @@ contract StakingRewardsVault is IStakingRewardsVault, Vault {
      */
     function authenticateWithdrawal(
         address caller,
-        ReserveToken,
-        address,
-        uint256
+        ReserveToken, /* reserveToken */
+        address, /* target */
+        uint256 /* amount */
     ) internal view override returns (bool) {
         return hasRole(ROLE_ASSET_MANAGER, caller);
     }
