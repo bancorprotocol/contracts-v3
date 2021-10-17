@@ -7,11 +7,13 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { Vault } from "./Vault.sol";
+import { IExternalProtectionVault } from "./interfaces/IExternalProtectionVault.sol";
+import { IVault } from "./interfaces/IVault.sol";
 
 /**
  * @dev Bancor Vault contract
  */
-contract ExternalProtectionVault is Vault {
+contract ExternalProtectionVault is IExternalProtectionVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -53,7 +55,7 @@ contract ExternalProtectionVault is Vault {
     /**
      * @inheritdoc Vault
      */
-    function isPayable() public pure override returns (bool) {
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
     }
 
@@ -69,15 +71,14 @@ contract ExternalProtectionVault is Vault {
      *
      * requirements:
      *
-     * - the caller must have the right privileges to withdraw this token:
-     *   - the ROLE_ASSET_MANAGER role
+     * - ROLE_ASSET_MANAGER
      */
     function authenticateWithdrawal(
         address caller,
         ReserveToken,
         address,
         uint256
-    ) public view override returns (bool) {
+    ) internal view override returns (bool) {
         return hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

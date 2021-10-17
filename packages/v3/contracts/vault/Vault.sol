@@ -82,14 +82,14 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     }
 
     /**
-     * @inheritdoc IVault
+     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
      */
     function authenticateWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address target,
         uint256 amount
-    ) public view virtual returns (bool);
+    ) internal view virtual returns (bool);
 
     /**
      * @inheritdoc IVault
