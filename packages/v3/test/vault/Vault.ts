@@ -1,3 +1,4 @@
+import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
@@ -95,6 +96,27 @@ describe('TestVault', () => {
 
         context('regular account', () => {
             testPauseRestricted();
+        });
+    });
+
+    describe('withdrawing funds', async () => {
+        let testVault: TestVault;
+        let networkToken: NetworkToken;
+
+        beforeEach(async () => {
+            ({ testVault, networkToken } = await createSystem());
+        });
+
+        it('should succeed when contract is not paused', async () => {
+            await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.not.reverted;
+        });
+
+        it('should fail when contract is paused', async () => {
+            await testVault.pause();
+
+            await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.revertedWith(
+                'Pausable: paused'
+            );
         });
     });
 });
