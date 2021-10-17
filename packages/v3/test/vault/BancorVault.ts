@@ -102,7 +102,7 @@ describe('BancorVault', () => {
                             .connect(sender)
                             .withdrawFunds(token.address, target.address, partialAmount);
                         await expect(res)
-                            .to.emit(vault, 'TokensWithdrawn')
+                            .to.emit(vault, 'FundsWithdrawn')
                             .withArgs(token.address, sender.address, target.address, partialAmount);
 
                         const targetBalance = await getBalance(token, target.address);
@@ -113,25 +113,11 @@ describe('BancorVault', () => {
 
                         res = await vault.connect(sender).withdrawFunds(token.address, target.address, remainder);
                         await expect(res)
-                            .to.emit(vault, 'TokensWithdrawn')
+                            .to.emit(vault, 'FundsWithdrawn')
                             .withArgs(token.address, sender.address, target.address, remainder);
 
                         expect(await getBalance(token, target.address)).to.equal(targetBalance.add(remainder));
                         expect(await getBalance(token, vault.address)).to.equal(vaultBalance.sub(remainder));
-                    });
-
-                    context('when paused', () => {
-                        beforeEach(async () => {
-                            await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-
-                            expect(await vault.isPaused()).to.be.false;
-
-                            await vault.connect(admin).pause();
-
-                            expect(await vault.isPaused()).to.be.true;
-                        });
-
-                        testWithdrawRestricted('Pausable: paused');
                     });
                 };
 
@@ -205,83 +191,5 @@ describe('BancorVault', () => {
                 });
             });
         }
-    });
-
-    describe('pausing/unpausing', () => {
-        let vault: BancorVault;
-
-        beforeEach(async () => {
-            ({ vault } = await createSystem());
-        });
-
-        const testPause = () => {
-            it('should pause the contract', async () => {
-                await vault.connect(sender).pause();
-
-                expect(await vault.isPaused()).to.be.true;
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await vault.connect(admin).pause();
-
-                    expect(await vault.isPaused()).to.be.true;
-                });
-
-                it('should unpause the contract', async () => {
-                    await vault.connect(sender).unpause();
-
-                    expect(await vault.isPaused()).to.be.false;
-                });
-            });
-        };
-
-        const testPauseRestricted = () => {
-            it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(vault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await vault.connect(admin).pause();
-
-                    expect(await vault.isPaused()).to.be.true;
-                });
-
-                it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(vault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
-                });
-            });
-        };
-
-        context('admin', () => {
-            beforeEach(async () => {
-                await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
-            });
-
-            testPause();
-        });
-
-        context('regular account', () => {
-            testPauseRestricted();
-        });
-
-        context('asset manager', () => {
-            beforeEach(async () => {
-                await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
-            });
-
-            testPauseRestricted();
-        });
-
-        context('network token manager', () => {
-            beforeEach(async () => {
-                await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
-            });
-
-            testPauseRestricted();
-        });
     });
 });
