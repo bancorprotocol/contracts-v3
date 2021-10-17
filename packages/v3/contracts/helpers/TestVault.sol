@@ -60,14 +60,14 @@ contract TestVault is Vault {
      *
      * requirements:
      *
-     * - ROLE_ADMIN
+     * - NONE
      */
     function authenticateWithdrawal(
-        address caller,
+        address,
         ReserveToken,
         address,
         uint256
-    ) public view override returns (bool) {
-        return hasRole(ROLE_ADMIN, caller);
+    ) internal pure override returns (bool) {
+        return true;
     }
 }

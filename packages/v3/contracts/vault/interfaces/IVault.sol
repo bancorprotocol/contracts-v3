@@ -26,16 +26,6 @@ interface IVault is IUpgradeable {
     ) external;
 
     /**
-     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
-     */
-    function authenticateWithdrawal(
-        address caller,
-        ReserveToken reserveToken,
-        address target,
-        uint256 amount
-    ) external view returns (bool);
-
-    /**
      * @dev returns whether withdrawals are currently paused
      */
     function isPaused() external view returns (bool);
