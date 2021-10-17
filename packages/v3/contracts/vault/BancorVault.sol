@@ -69,7 +69,7 @@ contract BancorVault is IBancorVault, Vault {
     /**
      * @inheritdoc Vault
      */
-    function isPayable() public pure override(Vault, IVault) returns (bool) {
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
     }
 
@@ -91,8 +91,8 @@ contract BancorVault is IBancorVault, Vault {
     function authenticateWithdrawal(
         address caller,
         ReserveToken reserveToken,
-        address,
-        uint256
+        address, /* target */
+        uint256 /* amount */
     ) internal view override returns (bool) {
         return
             (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
