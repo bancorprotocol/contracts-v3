@@ -64,37 +64,6 @@ describe('StakingRewardsVault', () => {
         });
     });
 
-    describe('authenticateWithdrawal', () => {
-        let networkToken: NetworkToken;
-        let stakingRewardsVault: StakingRewardsVault;
-
-        beforeEach(async () => {
-            ({ networkToken, stakingRewardsVault } = await createSystem());
-        });
-
-        it('sucess if caller have ROLE_ASSET_MANAGER role', async () => {
-            expect(
-                await stakingRewardsVault.authenticateWithdrawal(
-                    deployer.address,
-                    networkToken.address,
-                    target.address,
-                    0
-                )
-            ).to.be.true;
-        });
-
-        it("failure if caller doesn't have ROLE_ASSET_MANAGER role", async () => {
-            expect(
-                await stakingRewardsVault.authenticateWithdrawal(
-                    sender.address,
-                    networkToken.address,
-                    target.address,
-                    0
-                )
-            ).to.be.false;
-        });
-    });
-
     describe('asset management', () => {
         let networkToken: NetworkToken;
         let stakingRewardsVault: StakingRewardsVault;
@@ -240,77 +209,5 @@ describe('StakingRewardsVault', () => {
                 });
             });
         }
-    });
-
-    describe('pausing/unpausing', () => {
-        let stakingRewardsVault: StakingRewardsVault;
-
-        beforeEach(async () => {
-            ({ stakingRewardsVault } = await createSystem());
-        });
-
-        const testPause = () => {
-            it('should pause the contract', async () => {
-                await stakingRewardsVault.connect(sender).pause();
-
-                expect(await stakingRewardsVault.isPaused()).to.be.true;
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await stakingRewardsVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await stakingRewardsVault.connect(admin).pause();
-
-                    expect(await stakingRewardsVault.isPaused()).to.be.true;
-                });
-
-                it('should unpause the contract', async () => {
-                    await stakingRewardsVault.connect(sender).unpause();
-
-                    expect(await stakingRewardsVault.isPaused()).to.be.false;
-                });
-            });
-        };
-
-        const testPauseRestricted = () => {
-            it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(stakingRewardsVault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
-            });
-
-            context('when paused', () => {
-                beforeEach(async () => {
-                    await stakingRewardsVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await stakingRewardsVault.connect(admin).pause();
-
-                    expect(await stakingRewardsVault.isPaused()).to.be.true;
-                });
-
-                it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(stakingRewardsVault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
-                });
-            });
-        };
-
-        context('admin', () => {
-            beforeEach(async () => {
-                await stakingRewardsVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
-            });
-
-            testPause();
-        });
-
-        context('regular account', () => {
-            testPauseRestricted();
-        });
-
-        context('asset manager', () => {
-            beforeEach(async () => {
-                await stakingRewardsVault
-                    .connect(deployer)
-                    .grantRole(StakingRewardsVaultRoles.ROLE_ASSET_MANAGER, sender.address);
-            });
-
-            testPauseRestricted();
-        });
     });
 });
