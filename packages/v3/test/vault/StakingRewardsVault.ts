@@ -46,6 +46,12 @@ describe('StakingRewardsVault', () => {
             );
         });
 
+        it('should be payable', async () => {
+            const { stakingRewardsVault } = await createSystem();
+
+            expect(await stakingRewardsVault.isPayable()).to.be.true;
+        });
+
         it('should be properly initialized', async () => {
             const stakingRewardsVault = await Contracts.StakingRewardsVault.deploy();
             await stakingRewardsVault.initialize();
