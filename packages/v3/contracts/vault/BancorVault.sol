@@ -91,8 +91,8 @@ contract BancorVault is IBancorVault, Vault {
     function authenticateWithdrawal(
         address caller,
         ReserveToken reserveToken,
-        address,
-        uint256
+        address, /* target */
+        uint256 /* amount */
     ) internal view override returns (bool) {
         return
             (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
