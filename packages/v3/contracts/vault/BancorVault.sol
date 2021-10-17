@@ -69,7 +69,7 @@ contract BancorVault is IBancorVault, Vault {
     /**
      * @inheritdoc Vault
      */
-    function isPayable() public pure override(Vault, IVault) returns (bool) {
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
     }
 
