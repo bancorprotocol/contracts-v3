@@ -40,6 +40,10 @@ interface ILiquidityPoolConverter is IConverter {
     function recentAverageRate(IReserveToken reserveToken) external view returns (uint256, uint256);
 }
 
+interface IBancorNetworkV3 {
+    function migrateLiquidity(IReserveToken reserveToken, address provider, uint256 amount) external payable;
+}
+
 /**
  * @dev This contract implements the liquidity protection mechanism.
  */
@@ -76,6 +80,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     uint256 internal constant MAX_UINT128 = 2**128 - 1;
     uint256 internal constant MAX_UINT256 = uint256(-1);
 
+    IBancorNetworkV3 private immutable _network;
     ILiquidityProtectionSettings private immutable _settings;
     ILiquidityProtectionStore private immutable _store;
     ILiquidityProtectionStats private immutable _stats;
@@ -91,6 +96,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      * @dev initializes a new LiquidityProtection contract
      */
     constructor(
+        IBancorNetworkV3 network,
         ILiquidityProtectionSettings settings,
         ILiquidityProtectionStore store,
         ILiquidityProtectionStats stats,
@@ -101,6 +107,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         ICheckpointStore lastRemoveCheckpointStore
     )
         public
+        validAddress(address(network))
         validAddress(address(settings))
         validAddress(address(store))
         validAddress(address(stats))
@@ -108,6 +115,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         validAddress(address(wallet))
         validAddress(address(lastRemoveCheckpointStore))
     {
+        _network = network;
         _settings = settings;
         _store = store;
         _stats = stats;
@@ -509,14 +517,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // handle base token return
 
-        // calculate the amount of pool tokens required for liquidation
-        // note that the amount is doubled since it's not possible to liquidate one reserve only
-        Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
-        uint256 poolAmount = targetAmount.mul(poolRate.d).div(poolRate.n / 2);
-
-        // limit the amount of pool tokens by the amount the system/caller holds
-        uint256 availableBalance = _systemStore.systemBalance(pos.poolToken).add(pos.poolAmount);
-        poolAmount = poolAmount > availableBalance ? availableBalance : poolAmount;
+        // get the amount of pool tokens required for liquidation and the pool rate
+        (uint256 poolAmount, Fraction memory poolRate) = liquidationAmountAndPoolRate(pos, targetAmount, pos.poolAmount);
 
         // calculate the base token amount received by liquidating the pool tokens
         // note that the amount is divided by 2 since the pool amount represents both reserves
@@ -590,14 +592,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // remove base token liquidity
 
-        // calculate the amount of pool tokens required for liquidation
-        // note that the amount is doubled since it's not possible to liquidate one reserve only
-        Fraction memory poolRate = _poolTokenRate(removedPos.poolToken, removedPos.reserveToken);
-        uint256 poolAmount = targetAmount.mul(poolRate.d).div(poolRate.n / 2);
-
-        // limit the amount of pool tokens by the amount the system holds
-        uint256 systemBalance = _systemStore.systemBalance(removedPos.poolToken);
-        poolAmount = poolAmount > systemBalance ? systemBalance : poolAmount;
+        // get the amount of pool tokens required for liquidation
+        (uint256 poolAmount, ) = liquidationAmountAndPoolRate(removedPos, targetAmount, 0);
 
         // withdraw the pool tokens from the wallet
         IReserveToken poolToken = IReserveToken(address(removedPos.poolToken));
@@ -672,6 +668,68 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     }
 
     /**
+     * @dev migrates a position from v2.1 to v3
+     */
+    function _migrateLiquidity(address provider, uint256 id) internal {
+        // remove the position from the store and update the stats and the last removal checkpoint
+        Position memory removedPos = _removePosition(provider, id, PPM_RESOLUTION);
+
+        // add the pool tokens to the system
+        _systemStore.incSystemBalance(removedPos.poolToken, removedPos.poolAmount);
+
+        // get the various rates between the reserves upon adding liquidity and now
+        PackedRates memory packedRates =
+            _packRates(removedPos.poolToken, removedPos.reserveToken, removedPos.reserveRateN, removedPos.reserveRateD);
+
+        // get the target token amount
+        uint256 targetAmount =
+            _removeLiquidityTargetAmount(
+                removedPos.poolToken,
+                removedPos.reserveToken,
+                removedPos.poolAmount,
+                removedPos.reserveAmount,
+                packedRates,
+                removedPos.timestamp,
+                _time()
+            );
+
+        if (_isNetworkToken(removedPos.reserveToken)) {
+            // mint network tokens for the caller
+            _mintNetworkTokens(address(this), removedPos.poolToken, targetAmount);
+            _networkToken.ensureApprove(address(_network), targetAmount);
+            _network.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
+        } else {
+            // get the amount of pool tokens required for liquidation
+            (uint256 poolAmount, ) = liquidationAmountAndPoolRate(removedPos, targetAmount, 0);
+
+            // withdraw the pool tokens from the wallet
+            IReserveToken poolToken = IReserveToken(address(removedPos.poolToken));
+            _systemStore.decSystemBalance(removedPos.poolToken, poolAmount);
+            _wallet.withdrawTokens(poolToken, address(this), poolAmount);
+
+            // remove liquidity
+            _removeLiquidity(
+                removedPos.poolToken,
+                poolAmount,
+                removedPos.reserveToken,
+                IReserveToken(address(_networkToken))
+            );
+
+            // transfer the base tokens to the caller
+            uint256 baseBalance = removedPos.reserveToken.balanceOf(address(this));
+            removedPos.reserveToken.ensureApprove(address(_network), baseBalance);
+            uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
+            _network.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
+
+            // if the contract still holds network tokens, burn them
+            uint256 networkBalance = _networkToken.balanceOf(address(this));
+            if (networkBalance > 0) {
+                _burnNetworkTokens(removedPos.poolToken, networkBalance);
+            }
+        }
+    }
+
+    /**
      * @dev transfers a position to a new provider
      *
      * Requirements:
@@ -706,6 +764,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         callback.onTransferPosition(newId, msg.sender, data);
 
         return newId;
+    }
+
+    function migratePositions(uint256[] memory positionIds) external nonReentrant {
+        uint256 length = positionIds.length;
+        for (uint256 i = 0; i < length; i++) {
+            _migrateLiquidity(msg.sender, positionIds[i]);
+        }
     }
 
     /**
@@ -1250,5 +1315,24 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      */
     function _isNetworkToken(IReserveToken reserveToken) private view returns (bool) {
         return address(reserveToken) == address(_networkToken);
+    }
+
+    function liquidationAmountAndPoolRate(
+        Position memory pos,
+        uint256 targetAmount,
+        uint256 additionalAmount
+    )
+        private
+        view
+        returns (uint256, Fraction memory)
+    {
+        // calculate the amount of pool tokens required for liquidation
+        // note that the amount is doubled since it's not possible to liquidate one reserve only
+        Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
+        uint256 poolAmount = targetAmount.mul(poolRate.d).div(poolRate.n / 2);
+
+        // limit the amount of pool tokens by the amount the system holds
+        uint256 systemBalance = _systemStore.systemBalance(pos.poolToken).add(additionalAmount);
+        return (poolAmount < systemBalance ? poolAmount : systemBalance, poolRate);
     }
 }

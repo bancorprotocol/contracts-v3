@@ -6,11 +6,12 @@ import "../liquidity-protection/LiquidityProtection.sol";
 import "./TestTime.sol";
 
 contract TestLiquidityProtection is LiquidityProtection, TestTime {
-    bool private _poolTokenRateOverride;
-    uint256 private _poolTokenRateN;
-    uint256 private _poolTokenRateD;
+    //bool private _poolTokenRateOverride;
+    //uint256 private _poolTokenRateN;
+    //uint256 private _poolTokenRateD;
 
     constructor(
+        IBancorNetworkV3 network,
         ILiquidityProtectionSettings settings,
         ILiquidityProtectionStore store,
         ILiquidityProtectionStats stats,
@@ -22,6 +23,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
     )
         public
         LiquidityProtection(
+            network,
             settings,
             store,
             stats,
@@ -32,7 +34,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
             lastRemoveCheckpointStore
         )
     {}
-
+/*
     function protectedAmountPlusFeeTest(
         uint256 poolAmount,
         uint256 poolRateN,
@@ -132,7 +134,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         }
         return super._poolTokenRate(poolToken, reserveToken);
     }
-
+*/
     function _time() internal view override(Time, TestTime) returns (uint256) {
         return TestTime._time();
     }

@@ -63,7 +63,7 @@ contract TestBancorNetwork is BancorNetwork {
     OldConverter private _oldConverter;
     NewConverter private _newConverter;
 
-    constructor(uint256 amount, uint256 fee) public BancorNetwork(IContractRegistry(address(1))) {
+    constructor(IContractRegistry registry, uint256 amount, uint256 fee) public BancorNetwork(registry) {
         _oldConverter = new OldConverter(amount);
         _newConverter = new NewConverter(amount, fee);
     }
@@ -78,5 +78,16 @@ contract TestBancorNetwork is BancorNetwork {
 
     function getReturnNew() external view returns (uint256, uint256) {
         return _getReturn(IConverter(payable(address(_newConverter))), IReserveToken(0), IReserveToken(0), uint256(0));
+    }
+
+    function migrateLiquidity(IReserveToken reserveToken, address provider, uint256 amount) external payable {
+        if (reserveToken.isNativeToken()) {
+            assert(msg.value == amount);
+            reserveToken.safeTransfer(provider, amount);
+        }
+        else {
+            require(msg.value == 0);
+            reserveToken.safeTransferFrom(msg.sender, provider, amount);
+        }
     }
 }
