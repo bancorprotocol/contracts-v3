@@ -14,9 +14,6 @@ import { ethers } from 'hardhat';
 const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
 
 let deployer: SignerWithAddress;
-let sender: SignerWithAddress;
-let target: SignerWithAddress;
-let admin: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
 
@@ -24,7 +21,7 @@ describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
 
     before(async () => {
-        [deployer, sender, target, admin] = await ethers.getSigners();
+        [deployer] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
