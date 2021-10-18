@@ -11,6 +11,7 @@ import {
 import { expectRole, roles } from '../helpers/AccessControl';
 import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
@@ -80,7 +81,7 @@ describe('PendingWithdrawals', () => {
         const newLockDuration = duration.days(1);
         let pendingWithdrawals: TestPendingWithdrawals;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ pendingWithdrawals } = await createSystem());
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
@@ -120,7 +121,7 @@ describe('PendingWithdrawals', () => {
         const newWithdrawalWindowDuration = duration.weeks(2);
         let pendingWithdrawals: TestPendingWithdrawals;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ pendingWithdrawals } = await createSystem());
 
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
@@ -169,7 +170,7 @@ describe('PendingWithdrawals', () => {
         const testWithdrawals = async (symbol: string) => {
             const isNetworkToken = symbol === BNT;
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 ({
                     network,
                     networkSettings,
@@ -195,7 +196,7 @@ describe('PendingWithdrawals', () => {
                     let providerAddress: string;
                     let providerNonce: BigNumber;
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         provider = await createWallet();
                         providerAddress = await provider.getAddress();
                         providerNonce = BigNumber.from(0);
@@ -307,7 +308,7 @@ describe('PendingWithdrawals', () => {
                     context('with an associated collection and whitelisted token', () => {
                         let poolToken: PoolToken;
 
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             if (isNetworkToken) {
                                 poolToken = networkPoolToken;
                             } else {
@@ -329,7 +330,7 @@ describe('PendingWithdrawals', () => {
                         context('with a pool token balance', () => {
                             const amount = BigNumber.from(12345);
 
-                            beforeEach(async () => {
+                            prepareEach(async () => {
                                 if (isNetworkToken) {
                                     await networkTokenPool.mintT(providerAddress, amount);
                                 } else {
@@ -374,7 +375,7 @@ describe('PendingWithdrawals', () => {
                     [, provider1, provider2] = await ethers.getSigners();
                 });
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     if (isNetworkToken) {
                         poolToken = networkPoolToken;
 
@@ -431,7 +432,7 @@ describe('PendingWithdrawals', () => {
                     let id1: BigNumber;
                     let id2: BigNumber;
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await poolToken.connect(provider1).approve(pendingWithdrawals.address, amount);
 
                         const withdrawalAmount1 = BigNumber.from(1111);
@@ -484,7 +485,7 @@ describe('PendingWithdrawals', () => {
                     [, provider1, provider2] = await ethers.getSigners();
                 });
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     if (isNetworkToken) {
                         poolToken = networkPoolToken;
 
@@ -545,7 +546,7 @@ describe('PendingWithdrawals', () => {
                     let id1: BigNumber;
                     let id2: BigNumber;
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await poolToken.connect(provider1).approve(pendingWithdrawals.address, amount);
 
                         const withdrawalAmount1 = BigNumber.from(1111);
@@ -592,7 +593,7 @@ describe('PendingWithdrawals', () => {
                     [, provider] = await ethers.getSigners();
                 });
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     if (isNetworkToken) {
                         poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
 
@@ -659,7 +660,7 @@ describe('PendingWithdrawals', () => {
                         ]);
                     };
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
                         await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
 
@@ -678,7 +679,7 @@ describe('PendingWithdrawals', () => {
                     });
 
                     context('during the lock duration', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             await pendingWithdrawals.setTime(creationTime + 1000);
                         });
 
@@ -688,7 +689,7 @@ describe('PendingWithdrawals', () => {
                     });
 
                     context('after the withdrawal window duration', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             const withdrawalDuration =
                                 (await pendingWithdrawals.lockDuration()) +
                                 (await pendingWithdrawals.withdrawalWindowDuration());
@@ -702,7 +703,7 @@ describe('PendingWithdrawals', () => {
                     });
 
                     context('during the withdrawal window duration', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             const withdrawalDuration =
                                 (await pendingWithdrawals.lockDuration()) +
                                 (await pendingWithdrawals.withdrawalWindowDuration());
