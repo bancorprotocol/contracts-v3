@@ -4,9 +4,10 @@ import { expectRole, roles } from '../helpers/AccessControl';
 import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalance, createTokenBySymbol } from '../helpers/Utils';
+import { transfer, getBalance, createTokenBySymbol, errorMessageTokenExceedsBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
@@ -24,18 +25,31 @@ describe('TestVault', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { testVault } = await createSystem();
+        let testVault: TestVault;
 
+        beforeEach(async () => {
+            ({ testVault } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(testVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should be properly initialized', async () => {
-            const { testVault } = await createSystem();
-
             expect(await testVault.version()).to.equal(1);
             expect(await testVault.isPayable()).to.be.true;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+        });
+
+        it('should be able to receive ETH', async () => {
+            const prevBalance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address);
+
+            const amount = BigNumber.from(1000);
+            await deployer.sendTransaction({ value: amount, to: testVault.address });
+
+            expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address)).to.equal(
+                prevBalance.add(amount)
+            );
         });
     });
 
@@ -70,6 +84,20 @@ describe('TestVault', () => {
                     .withArgs(token.address, deployer.address, target.address, amount);
 
                 expect(await getBalance({ address: token.address }, target)).to.equal(currentBalance.add(amount));
+            });
+
+            context('errors', () => {
+                it('balance exceeded', async () => {
+                    const token = await createTokenBySymbol(symbol);
+
+                    await expect(
+                        testVault.withdrawFunds(
+                            token.address,
+                            target.address,
+                            (await getBalance({ address: token.address }, testVault.address)).add(1)
+                        )
+                    ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
+                });
             });
         };
 
