@@ -1,17 +1,11 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
+import LegacyContracts, { NetworkToken } from '../../components/LegacyContracts';
+import { withdrawFundsTest } from '../../test/helpers/Vault';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import {
-    TokenWithAddress,
-    getBalance,
-    transfer,
-    errorMessageTokenExceedsBalance,
-    createTokenBySymbol
-} from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -69,133 +63,78 @@ describe('BancorVault', () => {
     });
 
     describe('asset management', () => {
-        let networkToken: NetworkToken;
         let vault: BancorVault;
+        let networkToken: NetworkToken;
+        let tkn: TestERC20Token;
 
         beforeEach(async () => {
             ({ vault, networkToken } = await createSystem());
+            tkn = await Contracts.TestERC20Token.deploy('TKN', 'TKN', 1_000_000);
         });
 
-        it('should be able to receive ETH', async () => {
-            const prevBalance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, vault.address);
-
-            const amount = BigNumber.from(1000);
-            await deployer.sendTransaction({ value: amount, to: vault.address });
-
-            expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, vault.address)).to.equal(
-                prevBalance.add(amount)
-            );
-        });
-
-        for (const symbol of [BNT, ETH, TKN]) {
-            context(symbol, () => {
-                const testWithdraw = () => {
-                    it('should revert when trying to withdraw more tokens than the vault holds', async () => {
-                        const amountToWithdraw = amount.add(BigNumber.from(100));
-
-                        await expect(
-                            vault.connect(sender).withdrawFunds(token.address, target.address, amountToWithdraw)
-                        ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
-                    });
-
-                    it('should be able to withdraw any tokens', async () => {
-                        const prevTargetBalance = await getBalance(token, target.address);
-                        const prevVaultBalance = await getBalance(token, vault.address);
-
-                        const remainder = BigNumber.from(1);
-                        const partialAmount = amount.sub(remainder);
-                        let res = await vault
-                            .connect(sender)
-                            .withdrawFunds(token.address, target.address, partialAmount);
-                        await expect(res)
-                            .to.emit(vault, 'FundsWithdrawn')
-                            .withArgs(token.address, sender.address, target.address, partialAmount);
-
-                        const targetBalance = await getBalance(token, target.address);
-                        const vaultBalance = await getBalance(token, vault.address);
-
-                        expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
-                        expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
-
-                        res = await vault.connect(sender).withdrawFunds(token.address, target.address, remainder);
-                        await expect(res)
-                            .to.emit(vault, 'FundsWithdrawn')
-                            .withArgs(token.address, sender.address, target.address, remainder);
-
-                        expect(await getBalance(token, target.address)).to.equal(targetBalance.add(remainder));
-                        expect(await getBalance(token, vault.address)).to.equal(vaultBalance.sub(remainder));
-                    });
-                };
-
-                const testWithdrawRestricted = (reason = 'AccessDenied') => {
-                    it('should not be able to withdraw any tokens', async () => {
-                        await expect(
-                            vault.connect(sender).withdrawFunds(token.address, target.address, amount)
-                        ).to.be.revertedWith(reason);
-                    });
-                };
-
-                const amount = BigNumber.from(10000);
-                let token: TokenWithAddress;
-
-                beforeEach(async () => {
-                    if (symbol === BNT) {
-                        token = networkToken;
-                    } else {
-                        token = await createTokenBySymbol(symbol);
+        withdrawFundsTest(async () => {
+            return { vault, networkToken };
+        }, [
+            {
+                token: BNT,
+                roles: [
+                    {
+                        name: 'ROLE_ASSET_MANAGER',
+                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        isExpectedSuccessful: true
+                    },
+                    {
+                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
+                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        isExpectedSuccessful: true
+                    },
+                    {
+                        name: undefined,
+                        role: undefined,
+                        isExpectedSuccessful: false
                     }
-
-                    await transfer(deployer, token, vault.address, amount);
-                });
-
-                it('should revert when withdrawing tokens to an invalid address', async () => {
-                    await expect(vault.withdrawFunds(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
-                        'InvalidAddress'
-                    );
-                });
-
-                it('should allow withdrawing 0 tokens', async () => {
-                    const prevVaultBalance = await getBalance(token, vault.address);
-
-                    await vault.withdrawFunds(token.address, target.address, BigNumber.from(0));
-
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultBalance);
-                });
-
-                context('regular account', () => {
-                    testWithdrawRestricted();
-                });
-
-                context('admin', () => {
-                    beforeEach(async () => {
-                        await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
-                    });
-
-                    testWithdrawRestricted();
-                });
-
-                context('asset manager', () => {
-                    beforeEach(async () => {
-                        await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
-                    });
-
-                    testWithdraw();
-                });
-
-                context('network token manager', () => {
-                    beforeEach(async () => {
-                        await vault
-                            .connect(deployer)
-                            .grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
-                    });
-
-                    if (symbol !== BNT) {
-                        testWithdrawRestricted();
-                    } else {
-                        testWithdraw();
+                ]
+            },
+            {
+                token: ETH,
+                roles: [
+                    {
+                        name: 'ROLE_ASSET_MANAGER',
+                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        isExpectedSuccessful: true
+                    },
+                    {
+                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
+                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        isExpectedSuccessful: false
+                    },
+                    {
+                        name: undefined,
+                        role: undefined,
+                        isExpectedSuccessful: false
                     }
-                });
-            });
-        }
+                ]
+            },
+            {
+                token: TKN,
+                roles: [
+                    {
+                        name: 'ROLE_ASSET_MANAGER',
+                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        isExpectedSuccessful: true
+                    },
+                    {
+                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
+                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        isExpectedSuccessful: false
+                    },
+                    {
+                        name: undefined,
+                        role: undefined,
+                        isExpectedSuccessful: false
+                    }
+                ]
+            }
+        ]);
     });
 });
