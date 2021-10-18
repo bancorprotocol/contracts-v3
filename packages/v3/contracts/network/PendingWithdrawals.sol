@@ -257,6 +257,15 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
+    function readyForWithdrawal(uint256 id) external view returns (bool) {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+
+        return request.provider != address(0) && _readyForWithdrawal(request);
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
     function cancelWithdrawal(uint256 id) external nonReentrant {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         address provider = request.provider;
@@ -305,10 +314,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         }
 
         // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
-        uint32 currentTime = _time();
-        uint32 withdrawalStartTime = request.createdAt + _lockDuration;
-        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
-        if (currentTime < withdrawalStartTime || currentTime > withdrawalEndTime) {
+        if (!_readyForWithdrawal(request)) {
             revert WithdrawalNotAllowed();
         }
 
@@ -324,7 +330,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
-            timeElapsed: currentTime - request.createdAt
+            timeElapsed: _time() - request.createdAt
         });
 
         return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
@@ -434,5 +440,17 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         if (!_withdrawalRequestIdsByProvider[request.provider].remove(id)) {
             revert DoesNotExist();
         }
+    }
+
+    /**
+     * @dev returns whether the given request is ready for withdrawal
+     */
+    function _readyForWithdrawal(WithdrawalRequest memory request) private view returns (bool) {
+        // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
+        uint32 currentTime = _time();
+        uint32 withdrawalStartTime = request.createdAt + _lockDuration;
+        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
+
+        return withdrawalStartTime <= currentTime && currentTime <= withdrawalEndTime;
     }
 }
