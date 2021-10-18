@@ -1,10 +1,10 @@
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalance } from '../helpers/Utils';
+import { transfer, getBalance, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -47,23 +47,35 @@ describe('TestVault', () => {
             ({ testVault, networkToken } = await createSystem());
         });
 
-        const testWithdraw = async (token: string) => {
-            const amount = 1_000_000;
+        const testWithdraw = (symbol: string) => {
+            it('events', async () => {
+                const token = await createTokenBySymbol(symbol);
 
-            await transfer(deployer, { address: token }, testVault.address, amount);
+                await expect(testVault.withdrawFunds(token.address, target.address, 0))
+                    .to.emit(testVault, 'FundsWithdrawn')
+                    .withArgs(token.address, deployer.address, target.address, 0);
+            });
 
-            const currentBalance = await getBalance({ address: token }, target);
+            it('balance', async () => {
+                const token = await createTokenBySymbol(symbol);
 
-            await expect(testVault.withdrawFunds(token, target.address, amount))
-                .to.emit(testVault, 'FundsWithdrawn')
-                .withArgs(token, deployer.address, target.address, amount);
+                const amount = 1_000_000;
 
-            expect(await getBalance({ address: token }, target)).to.equal(currentBalance.add(amount));
+                await transfer(deployer, { address: token.address }, testVault.address, amount);
+
+                const currentBalance = await getBalance({ address: token.address }, target);
+
+                await expect(testVault.withdrawFunds(token.address, target.address, amount))
+                    .to.emit(testVault, 'FundsWithdrawn')
+                    .withArgs(token.address, deployer.address, target.address, amount);
+
+                expect(await getBalance({ address: token.address }, target)).to.equal(currentBalance.add(amount));
+            });
         };
 
-        it('with ETH', async () => await testWithdraw(NATIVE_TOKEN_ADDRESS));
-
-        it('with tokens', async () => await testWithdraw(networkToken.address));
+        for (const symbol of [BNT, ETH, TKN]) {
+            context(symbol, () => testWithdraw(symbol));
+        }
 
         context('when paused', () => {
             it('should succeed when contract is not paused', async () => {
