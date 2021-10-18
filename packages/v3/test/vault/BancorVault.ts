@@ -65,11 +65,9 @@ describe('BancorVault', () => {
     describe('asset management', () => {
         let vault: BancorVault;
         let networkToken: NetworkToken;
-        let tkn: TestERC20Token;
 
         beforeEach(async () => {
             ({ vault, networkToken } = await createSystem());
-            tkn = await Contracts.TestERC20Token.deploy('TKN', 'TKN', 1_000_000);
         });
 
         withdrawFundsTest(async () => {
