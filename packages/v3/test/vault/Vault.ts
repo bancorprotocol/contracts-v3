@@ -77,6 +77,12 @@ describe('TestVault', () => {
             context(symbol, () => testWithdraw(symbol));
         }
 
+        it('when not allowed', async () => {
+            await expect(
+                testVault.connect(target).withdrawFunds(networkToken.address, target.address, 0)
+            ).to.revertedWith('AccessDenied');
+        });
+
         context('when paused', () => {
             it('should succeed when contract is not paused', async () => {
                 await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.not.reverted;
