@@ -1,10 +1,16 @@
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalance, createTokenBySymbol, errorMessageTokenExceedsBalance } from '../helpers/Utils';
+import {
+    transfer,
+    getBalance,
+    createTokenBySymbol,
+    errorMessageTokenExceedsBalance,
+    TokenWithAddress
+} from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -62,19 +68,20 @@ describe('TestVault', () => {
         });
 
         const testWithdraw = (symbol: string) => {
-            it('events', async () => {
-                const token = await createTokenBySymbol(symbol);
+            let token: TokenWithAddress;
+            const amount = 1_000_000;
 
+            beforeEach(async () => {
+                token = await createTokenBySymbol(symbol);
+            });
+
+            it('events', async () => {
                 await expect(testVault.withdrawFunds(token.address, target.address, 0))
                     .to.emit(testVault, 'FundsWithdrawn')
                     .withArgs(token.address, deployer.address, target.address, 0);
             });
 
             it('balance', async () => {
-                const token = await createTokenBySymbol(symbol);
-
-                const amount = 1_000_000;
-
                 await transfer(deployer, { address: token.address }, testVault.address, amount);
 
                 const currentBalance = await getBalance({ address: token.address }, target);
@@ -87,9 +94,21 @@ describe('TestVault', () => {
             });
 
             context('errors', () => {
-                it('should revert when trying to withdraw more tokens than the vault holds', async () => {
-                    const token = await createTokenBySymbol(symbol);
+                it('should revert when withdrawing tokens to an invalid address', async () => {
+                    await expect(testVault.withdrawFunds(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
+                        'InvalidAddress'
+                    );
+                });
 
+                it('should allow withdrawing 0 tokens', async () => {
+                    const prevVaultBalance = await getBalance(token, testVault.address);
+
+                    await testVault.withdrawFunds(token.address, target.address, BigNumber.from(0));
+
+                    expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
+                });
+
+                it('should revert when trying to withdraw more tokens than the vault holds', async () => {
                     await expect(
                         testVault.withdrawFunds(
                             token.address,
