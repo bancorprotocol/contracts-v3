@@ -4,6 +4,7 @@ import { TestERC20Token, PoolTokenFactory } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -39,7 +40,7 @@ describe('PoolTokenFactory', () => {
 
             expect(await poolTokenFactory.version()).to.equal(1);
 
-            await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_OWNER, UpgradeableRoles.ROLE_OWNER, [
+            await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
         });
@@ -52,7 +53,7 @@ describe('PoolTokenFactory', () => {
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -84,7 +85,7 @@ describe('PoolTokenFactory', () => {
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -119,7 +120,7 @@ describe('PoolTokenFactory', () => {
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
 
         const testCreatePoolToken = (symbol: string) => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 ({ networkToken, poolTokenFactory } = await createSystem());
 
                 reserveToken = await createTokenBySymbol(symbol);
@@ -152,7 +153,7 @@ describe('PoolTokenFactory', () => {
             context('with a token symbol override', () => {
                 const newSymbol = 'TKN2';
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, newSymbol);
                 });
 
@@ -169,7 +170,7 @@ describe('PoolTokenFactory', () => {
             context('with a token decimals override', () => {
                 const newDecimals = 4;
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, newDecimals);
                 });
 

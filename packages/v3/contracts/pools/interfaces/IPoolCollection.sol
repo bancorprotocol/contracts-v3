@@ -16,6 +16,7 @@ import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
+import { IPoolCollectionUpgrader } from "./IPoolCollectionUpgrader.sol";
 
 struct PoolLiquidity {
     uint256 networkTokenTradingLiquidity; // the network token trading liquidity
@@ -95,6 +96,11 @@ interface IPoolCollection is IVersioned {
     function poolTokenFactory() external view returns (IPoolTokenFactory);
 
     /**
+     * @dev returns the pool collection upgrader contract
+     */
+    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
+
+    /**
      * @dev returns the default trading fee (in units of PPM)
      */
     function defaultTradingFeePPM() external view returns (uint32);
@@ -118,6 +124,11 @@ interface IPoolCollection is IVersioned {
      * @dev returns whether a pool's rate is stable
      */
     function isPoolRateStable(ReserveToken reserveToken) external view returns (bool);
+
+    /**
+     * @dev returns specific pool's data
+     */
+    function poolData(ReserveToken reserveToken) external view returns (Pool memory);
 
     /**
      * @dev returns the overall liquidity in the pool
@@ -198,4 +209,22 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the network contract
      */
     function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount) external;
+
+    /**
+     * @dev migrates a pool to this pool collection
+     *
+     * requirements:
+     *
+     * - the caller must be the pool collection upgrader contract
+     */
+    function migratePoolIn(ReserveToken pool, Pool calldata data) external;
+
+    /**
+     * @dev migrates a pool from this pool collection
+     *
+     * requirements:
+     *
+     * - the caller must be the pool collection upgrader contract
+     */
+    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
 }

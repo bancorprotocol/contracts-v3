@@ -21,9 +21,6 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
-    // the admin role is used to pause/unpause the vault
-    bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
-
     // the asset manager role is required to access all the reserves
     bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
@@ -73,50 +70,40 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
      */
     function __BancorVault_init_unchained() internal initializer {
         // set up administrative roles
-        _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ASSET_MANAGER);
 
-        // allow the deployer to initially govern the contract
-        _setupRole(ROLE_ADMIN, msg.sender);
+        // allow the deployer to initially be the asset manager of the contract
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
-    // solhint-enable func-name-mixedcase
-
-    modifier onlyAdmin() {
-        _hasRole(ROLE_ADMIN, msg.sender);
-
-        _;
-    }
-
-    receive() external payable override {}
+    receive() external payable {}
 
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function isPaused() external view override returns (bool) {
+    function isPaused() external view returns (bool) {
         return paused();
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function pause() external override onlyAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function unpause() external override onlyAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
@@ -127,7 +114,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         ReserveToken reserveToken,
         address payable target,
         uint256 amount
-    ) external override validAddress(target) nonReentrant whenNotPaused {
+    ) external validAddress(target) nonReentrant whenNotPaused {
         if (
             (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
             hasRole(ROLE_ASSET_MANAGER, msg.sender)

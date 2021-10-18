@@ -144,21 +144,21 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function network() external view override returns (IBancorNetwork) {
+    function network() external view returns (IBancorNetwork) {
         return _network;
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function lockDuration() external view override returns (uint32) {
+    function lockDuration() external view returns (uint32) {
         return _lockDuration;
     }
 
@@ -171,16 +171,16 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setLockDuration(uint32 newLockDuration) external onlyOwner {
+    function setLockDuration(uint32 newLockDuration) external onlyAdmin {
         _setLockDuration(newLockDuration);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function withdrawalWindowDuration() external view override returns (uint32) {
+    function withdrawalWindowDuration() external view returns (uint32) {
         return _withdrawalWindowDuration;
     }
 
@@ -193,23 +193,23 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyOwner {
+    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyAdmin {
         _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function withdrawalRequestCount(address provider) external view override returns (uint256) {
+    function withdrawalRequestCount(address provider) external view returns (uint256) {
         return _withdrawalRequestIdsByProvider[provider].length();
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function withdrawalRequestIds(address provider) external view override returns (uint256[] memory) {
+    function withdrawalRequestIds(address provider) external view returns (uint256[] memory) {
         EnumerableSetUpgradeable.UintSet storage providerRequests = _withdrawalRequestIdsByProvider[provider];
         uint256 length = providerRequests.length();
         uint256[] memory list = new uint256[](length);
@@ -222,7 +222,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function withdrawalRequest(uint256 id) external view override returns (WithdrawalRequest memory) {
+    function withdrawalRequest(uint256 id) external view returns (WithdrawalRequest memory) {
         return _withdrawalRequests[id];
     }
 
@@ -231,7 +231,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
         external
-        override
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
         nonReentrant
@@ -249,7 +248,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
         poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
         _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
@@ -258,7 +257,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function cancelWithdrawal(uint256 id) external override nonReentrant {
+    function cancelWithdrawal(uint256 id) external nonReentrant {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         address provider = request.provider;
         if (provider != msg.sender) {
@@ -271,7 +270,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function reinitWithdrawal(uint256 id) external override nonReentrant {
+    function reinitWithdrawal(uint256 id) external nonReentrant {
         WithdrawalRequest storage request = _withdrawalRequests[id];
         address provider = request.provider;
         if (provider != msg.sender) {
@@ -298,7 +297,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         bytes32 contextId,
         address provider,
         uint256 id
-    ) external override only(address(_network)) returns (CompletedWithdrawal memory) {
+    ) external only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         if (provider != request.provider) {
@@ -386,8 +385,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
         uint256 id = _nextWithdrawalRequestId;
+        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
 
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,

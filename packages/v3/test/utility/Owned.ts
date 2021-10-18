@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestOwned } from '../../typechain';
+import { prepareEach } from '../helpers/Fixture';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -15,7 +16,7 @@ describe('Owned', () => {
         [owner, nonOwner, newOwner] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         contract = await Contracts.TestOwned.deploy();
     });
 
@@ -51,9 +52,7 @@ describe('Owned', () => {
     });
 
     it('verifies that only the owner can initiate ownership transfer', async () => {
-        await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith(
-            'AccessDenied()'
-        );
+        await expect(contract.connect(nonOwner).transferOwnership(newOwner.address)).to.be.revertedWith('AccessDenied');
     });
 
     it('verifies that the owner can cancel ownership transfer before the new owner accepted it', async () => {

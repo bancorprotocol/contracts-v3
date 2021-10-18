@@ -6,11 +6,10 @@ const { id } = utils;
 
 export const roles = {
     Upgradeable: {
-        ROLE_OWNER: id('ROLE_OWNER')
+        ROLE_ADMIN: id('ROLE_ADMIN')
     },
 
     BancorVault: {
-        ROLE_ADMIN: id('ROLE_ADMIN'),
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
     },

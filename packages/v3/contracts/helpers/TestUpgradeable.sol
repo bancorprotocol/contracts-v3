@@ -18,9 +18,9 @@ contract TestUpgradeable is Upgradeable {
 
     function __TestUpgradeable_init_unchained() internal initializer {}
 
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
-    function restricted() external view onlyOwner {}
+    function restricted() external view onlyAdmin {}
 }

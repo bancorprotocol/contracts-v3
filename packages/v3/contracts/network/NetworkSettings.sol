@@ -116,14 +116,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelist() external view override returns (ReserveToken[] memory) {
+    function protectedTokenWhitelist() external view returns (ReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
@@ -137,11 +137,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function addTokenToWhitelist(ReserveToken token)
         external
-        onlyOwner
+        onlyAdmin
         validExternalAddress(ReserveToken.unwrap(token))
     {
         if (!_protectedTokenWhitelist.add(ReserveToken.unwrap(token))) {
@@ -156,9 +156,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function removeTokenFromWhitelist(ReserveToken token) external onlyOwner {
+    function removeTokenFromWhitelist(ReserveToken token) external onlyAdmin {
         if (!_protectedTokenWhitelist.remove(ReserveToken.unwrap(token))) {
             revert DoesNotExist();
         }
@@ -169,14 +169,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function isTokenWhitelisted(ReserveToken token) external view override returns (bool) {
+    function isTokenWhitelisted(ReserveToken token) external view returns (bool) {
         return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function poolMintingLimit(ReserveToken pool) external view override returns (uint256) {
+    function poolMintingLimit(ReserveToken pool) external view returns (uint256) {
         return _poolMintingLimits[pool];
     }
 
@@ -185,11 +185,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setPoolMintingLimit(ReserveToken pool, uint256 amount)
         external
-        onlyOwner
+        onlyAdmin
         validAddress(ReserveToken.unwrap(pool))
     {
         uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
@@ -205,7 +205,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function minLiquidityForTrading() external view override returns (uint256) {
+    function minLiquidityForTrading() external view returns (uint256) {
         return _minLiquidityForTrading;
     }
 
@@ -214,9 +214,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setMinLiquidityForTrading(uint256 amount) external onlyOwner {
+    function setMinLiquidityForTrading(uint256 amount) external onlyAdmin {
         uint256 prevMinLiquidityForTrading = _minLiquidityForTrading;
         if (_minLiquidityForTrading == amount) {
             return;
@@ -230,21 +230,21 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeParams() external view override returns (ITokenHolder, uint32) {
+    function networkFeeParams() external view returns (ITokenHolder, uint32) {
         return (_networkFeeWallet, _networkFeePPM);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeWallet() external view override returns (ITokenHolder) {
+    function networkFeeWallet() external view returns (ITokenHolder) {
         return _networkFeeWallet;
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeePPM() external view override returns (uint32) {
+    function networkFeePPM() external view returns (uint32) {
         return _networkFeePPM;
     }
 
@@ -253,11 +253,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setNetworkFeeWallet(ITokenHolder newNetworkFeeWallet)
         external
-        onlyOwner
+        onlyAdmin
         validAddress(address(newNetworkFeeWallet))
     {
         ITokenHolder prevNetworkFeeWallet = _networkFeeWallet;
@@ -275,9 +275,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
+    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyAdmin validFee(newNetworkFeePPM) {
         uint32 prevNetworkFeePPM = _networkFeePPM;
         if (prevNetworkFeePPM == newNetworkFeePPM) {
             return;
@@ -291,7 +291,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function withdrawalFeePPM() external view override returns (uint32) {
+    function withdrawalFeePPM() external view returns (uint32) {
         return _withdrawalFeePPM;
     }
 
@@ -300,9 +300,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyOwner validFee(newWithdrawalFeePPM) {
+    function setWithdrawalFeePPM(uint32 newWithdrawalFeePPM) external onlyAdmin validFee(newWithdrawalFeePPM) {
         uint32 prevWithdrawalFeePPM = _withdrawalFeePPM;
         if (prevWithdrawalFeePPM == newWithdrawalFeePPM) {
             return;
@@ -316,7 +316,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function flashLoanFeePPM() external view override returns (uint32) {
+    function flashLoanFeePPM() external view returns (uint32) {
         return _flashLoanFeePPM;
     }
 
@@ -325,9 +325,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
-    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyOwner validFee(newFlashLoanFeePPM) {
+    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
         uint32 prevFlashLoanFeePPM = _flashLoanFeePPM;
         if (prevFlashLoanFeePPM == newFlashLoanFeePPM) {
             return;
@@ -341,7 +341,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function averageRateMaxDeviationPPM() external view override returns (uint32) {
+    function averageRateMaxDeviationPPM() external view returns (uint32) {
         return _averageRateMaxDeviationPPM;
     }
 
@@ -350,11 +350,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setAverageRateMaxDeviationPPM(uint32 newAverageRateMaxDeviationPPM)
         external
-        onlyOwner
+        onlyAdmin
         validPortion(newAverageRateMaxDeviationPPM)
     {
         uint32 prevAverageRateMaxDeviationPPM = _averageRateMaxDeviationPPM;
