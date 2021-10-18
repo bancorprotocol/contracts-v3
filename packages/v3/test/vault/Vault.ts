@@ -87,7 +87,7 @@ describe('TestVault', () => {
             });
 
             context('errors', () => {
-                it('balance exceeded', async () => {
+                it('should revert when trying to withdraw more tokens than the vault holds', async () => {
                     const token = await createTokenBySymbol(symbol);
 
                     await expect(
