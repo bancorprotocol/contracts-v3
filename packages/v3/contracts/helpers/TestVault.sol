@@ -63,11 +63,11 @@ contract TestVault is Vault {
      * - NONE
      */
     function authenticateWithdrawal(
-        address, /* caller */
+        address caller,
         ReserveToken, /* reserverToken */
         address, /* target */
         uint256 /* amount */
-    ) internal pure override returns (bool) {
-        return true;
+    ) internal view override returns (bool) {
+        return hasRole(ROLE_ADMIN, caller);
     }
 }
