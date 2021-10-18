@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
 import { TestArbitrageFormula } from '../../../typechain';
+import { prepare } from '../../helpers/Fixture';
 import { AlmostEqualOptions } from '../../matchers';
 import fs from 'fs';
 import path from 'path';
@@ -10,7 +11,7 @@ import Decimal from 'decimal.js';
 describe('ArbitrageFormula', () => {
     let formula: TestArbitrageFormula;
 
-    before(async () => {
+    prepare(async () => {
         formula = await Contracts.TestArbitrageFormula.deploy();
     });
 

@@ -1,5 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
+import { prepareEach } from '../helpers/Fixture';
+import { prepare } from '../helpers/Fixture';
 import {
     floorSqrt,
     ceilSqrt,
@@ -25,7 +27,7 @@ const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 describe('MathEx', () => {
     let mathContract: TestMathEx;
 
-    before(async () => {
+    prepare(async () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
 

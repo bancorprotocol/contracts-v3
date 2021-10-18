@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
 import { TestThresholdFormula } from '../../../typechain';
+import { prepare } from '../../helpers/Fixture';
 import fs from 'fs';
 import path from 'path';
 import { BigNumber } from 'ethers';
@@ -8,7 +9,7 @@ import { BigNumber } from 'ethers';
 describe('ThresholdFormula', () => {
     let formula: TestThresholdFormula;
 
-    before(async () => {
+    prepare(async () => {
         formula = await Contracts.TestThresholdFormula.deploy();
     });
 

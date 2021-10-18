@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import Contracts from '../../../components/Contracts';
 import { TestDefaultFormula } from '../../../typechain';
+import { prepare } from '../../helpers/Fixture';
 import fs from 'fs';
 import path from 'path';
 import { BigNumber } from 'ethers';
@@ -9,7 +10,7 @@ import Decimal from 'decimal.js';
 describe('DefaultFormula', () => {
     let formula: TestDefaultFormula;
 
-    before(async () => {
+    prepare(async () => {
         formula = await Contracts.TestDefaultFormula.deploy();
     });
 

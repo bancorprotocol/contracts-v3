@@ -4,6 +4,7 @@ import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
     TokenWithAddress,
@@ -33,7 +34,7 @@ describe('BancorVault', () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
     });
 
@@ -66,7 +67,7 @@ describe('BancorVault', () => {
         let networkToken: NetworkToken;
         let vault: BancorVault;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ vault, networkToken } = await createSystem());
         });
 
@@ -121,7 +122,7 @@ describe('BancorVault', () => {
                     });
 
                     context('when paused', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
 
                             expect(await vault.isPaused()).to.be.false;
@@ -146,7 +147,7 @@ describe('BancorVault', () => {
                 const amount = BigNumber.from(10000);
                 let token: TokenWithAddress;
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     if (symbol === BNT) {
                         token = networkToken;
                     } else {
@@ -175,7 +176,7 @@ describe('BancorVault', () => {
                 });
 
                 context('admin', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
                     });
 
@@ -183,7 +184,7 @@ describe('BancorVault', () => {
                 });
 
                 context('asset manager', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
                     });
 
@@ -191,7 +192,7 @@ describe('BancorVault', () => {
                 });
 
                 context('network token manager', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await vault
                             .connect(deployer)
                             .grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
@@ -210,7 +211,7 @@ describe('BancorVault', () => {
     describe('pausing/unpausing', () => {
         let vault: BancorVault;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ vault } = await createSystem());
         });
 
@@ -222,7 +223,7 @@ describe('BancorVault', () => {
             });
 
             context('when paused', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await vault.connect(admin).pause();
 
@@ -243,7 +244,7 @@ describe('BancorVault', () => {
             });
 
             context('when paused', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await vault.connect(admin).pause();
 
@@ -257,7 +258,7 @@ describe('BancorVault', () => {
         };
 
         context('admin', () => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
             });
 
@@ -269,7 +270,7 @@ describe('BancorVault', () => {
         });
 
         context('asset manager', () => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
             });
 
@@ -277,7 +278,7 @@ describe('BancorVault', () => {
         });
 
         context('network token manager', () => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
             });
 

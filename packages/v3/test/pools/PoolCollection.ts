@@ -21,6 +21,7 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
+import { prepare, prepareEach } from '../helpers/Fixture';
 import { roundDiv } from '../helpers/MathUtils';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
@@ -106,7 +107,7 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -156,7 +157,7 @@ describe('PoolCollection', () => {
         let reserveToken: TokenWithAddress;
 
         const testCreatePool = (symbol: string) => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 ({ network, networkSettings, poolCollection } = await createSystem());
 
                 reserveToken = await createTokenBySymbol(symbol);
@@ -177,7 +178,7 @@ describe('PoolCollection', () => {
             });
 
             context('with a whitelisted token', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await networkSettings.addTokenToWhitelist(reserveToken.address);
                 });
 
@@ -262,7 +263,7 @@ describe('PoolCollection', () => {
         let newReserveToken: TestERC20Token;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -538,7 +539,7 @@ describe('PoolCollection', () => {
                 [deployer, provider] = await ethers.getSigners();
             });
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 ({ network, networkSettings, poolCollection } = await createSystem());
 
                 reserveToken = await createTokenBySymbol(symbol);
@@ -605,14 +606,14 @@ describe('PoolCollection', () => {
             context('with a registered pool', () => {
                 let poolToken: PoolToken;
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
                 });
 
                 context('when at the deposit limit', () => {
                     const DEPOSIT_LIMIT = toWei(BigNumber.from(12345));
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                         await poolCollection.setDepositLimit(reserveToken.address, DEPOSIT_LIMIT);
@@ -742,7 +743,7 @@ describe('PoolCollection', () => {
                     };
 
                     context('without the minimum network token trading liquidity setting', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
                         });
 
@@ -760,7 +761,7 @@ describe('PoolCollection', () => {
                     });
 
                     context('with the minimum network token trading liquidity setting', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                             await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
@@ -782,7 +783,7 @@ describe('PoolCollection', () => {
                             });
 
                             context('when initial rate was set', () => {
-                                beforeEach(async () => {
+                                prepareEach(async () => {
                                     await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
                                 });
 
@@ -811,7 +812,7 @@ describe('PoolCollection', () => {
                         });
 
                         context('when above the minimum network token trading liquidity', () => {
-                            beforeEach(async () => {
+                            prepareEach(async () => {
                                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                                 await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
@@ -874,7 +875,7 @@ describe('PoolCollection', () => {
                 [deployer, provider] = await ethers.getSigners();
             });
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -969,7 +970,7 @@ describe('PoolCollection', () => {
 
         const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkToken, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -1192,7 +1193,7 @@ describe('PoolCollection', () => {
                 });
 
                 context('when trading is disabled', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await poolCollection.enableTrading(reserveToken.address, false);
                     });
 
@@ -1246,12 +1247,12 @@ describe('PoolCollection', () => {
                 });
 
                 context('with sufficient network token liquidity', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, BigNumber.from(0));
                     });
 
                     context('with sufficient target and source pool balances', () => {
-                        beforeEach(async () => {
+                        prepareEach(async () => {
                             const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BigNumber.from(1000));
 
                             // for the tests below, ensure that the source to target ratio above 1, such that a zero
@@ -1290,7 +1291,7 @@ describe('PoolCollection', () => {
                 });
 
                 context('with insufficient pool balances', () => {
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         await networkSettings.setMinLiquidityForTrading(BigNumber.from(0));
                     });
 
@@ -1298,7 +1299,7 @@ describe('PoolCollection', () => {
                         const amount = BigNumber.from(12345);
 
                         context('empty', () => {
-                            beforeEach(async () => {
+                            prepareEach(async () => {
                                 const targetBalance = amount.mul(BigNumber.from(999999999999));
                                 const networkTokenTradingLiquidity = isSourceNetworkToken
                                     ? BigNumber.from(0)
@@ -1338,7 +1339,7 @@ describe('PoolCollection', () => {
                         context('empty', () => {
                             const amount = BigNumber.from(12345);
 
-                            beforeEach(async () => {
+                            prepareEach(async () => {
                                 const sourceBalance = BigNumber.from(12345);
                                 const networkTokenTradingLiquidity = isSourceNetworkToken
                                     ? sourceBalance
@@ -1385,7 +1386,7 @@ describe('PoolCollection', () => {
 
                             let targetAmount: BigNumber;
 
-                            beforeEach(async () => {
+                            prepareEach(async () => {
                                 await setTradingLiquidity(sourceBalance, targetBalance);
 
                                 targetAmount = targetBalance;
@@ -1405,7 +1406,7 @@ describe('PoolCollection', () => {
                             });
 
                             context('with a trading fee', () => {
-                                beforeEach(async () => {
+                                prepareEach(async () => {
                                     const tradingFeePPM = BigNumber.from(100_000);
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
@@ -1483,11 +1484,9 @@ describe('PoolCollection', () => {
 
                         let poolAverageRate: TestPoolAverageRate;
 
-                        before(async () => {
+                        prepareEach(async () => {
                             poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
-                        });
 
-                        beforeEach(async () => {
                             const networkTokenTradingLiquidity = isSourceNetworkToken ? sourceBalance : targetBalance;
                             const baseTokenTradingLiquidity = isSourceNetworkToken ? targetBalance : sourceBalance;
                             await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
@@ -1650,7 +1649,7 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -1703,7 +1702,7 @@ describe('PoolCollection', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkSettings, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
                 await createSystem());
 
@@ -1855,7 +1854,7 @@ describe('PoolCollection', () => {
 describe('PoolCollection.withdrawalAmounts', () => {
     let poolCollection: TestPoolCollection;
 
-    before(async () => {
+    prepare(async () => {
         ({ poolCollection } = await createSystem());
     });
 
