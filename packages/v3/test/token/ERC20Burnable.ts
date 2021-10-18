@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Burnable } from '../../typechain';
 import { ZERO_ADDRESS } from '../helpers/Constants';
+import { prepareEach } from '../helpers/Fixture';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
@@ -15,7 +16,7 @@ describe('ERC20Burnable', () => {
         [owner, burner] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         burnable = await Contracts.TestERC20Burnable.deploy('ERC', 'ERC1', 100000);
     });
 
@@ -24,7 +25,7 @@ describe('ERC20Burnable', () => {
             let res: ContractTransaction;
             let initialBalance: BigNumber;
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 initialBalance = await burnable.balanceOf(owner.address);
 
                 res = await burnable.connect(owner).burn(amount);
@@ -66,7 +67,7 @@ describe('ERC20Burnable', () => {
 
                 const originalAllowance = amount.mul(3);
 
-                beforeEach(async () => {
+                prepareEach(async () => {
                     initialBalance = await burnable.balanceOf(owner.address);
 
                     await burnable.connect(owner).approve(burner.address, originalAllowance);

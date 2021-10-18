@@ -20,6 +20,7 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
@@ -108,7 +109,7 @@ describe('NetworkTokenPool', () => {
             [deployer, recipient] = await ethers.getSigners();
         });
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkToken, networkTokenPool } = await createSystem());
         });
 
@@ -149,7 +150,7 @@ describe('NetworkTokenPool', () => {
 
         const amount = toWei(BigNumber.from(12345));
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkToken, networkTokenPool, vault } = await createSystem());
 
             await networkToken.transfer(vault.address, amount);
@@ -195,7 +196,7 @@ describe('NetworkTokenPool', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
                 await createSystem());
 
@@ -219,7 +220,7 @@ describe('NetworkTokenPool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
@@ -227,7 +228,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when spot rate is unstable', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
                     await poolCollection.setTradingLiquidityT(reserveToken.address, {
@@ -253,7 +254,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when spot rate is stable', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     const spotRate = {
                         n: toWei(BigNumber.from(1_000_000)),
                         d: toWei(BigNumber.from(10_000_000))
@@ -311,7 +312,7 @@ describe('NetworkTokenPool', () => {
 
         const contextId = formatBytes32String('CTX');
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
                 await createSystem());
 
@@ -408,7 +409,7 @@ describe('NetworkTokenPool', () => {
         context('when close to the minting limit', () => {
             const remaining = toWei(BigNumber.from(1_000_000));
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 const amount = MINTING_LIMIT.sub(remaining);
 
                 await testRequest(amount, amount);
@@ -437,7 +438,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when the minting limit is lowered retroactively', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await testRequest(BigNumber.from(100_000), BigNumber.from(100_000));
 
                     await networkSettings.setPoolMintingLimit(reserveToken.address, BigNumber.from(1));
@@ -459,7 +460,7 @@ describe('NetworkTokenPool', () => {
         });
 
         context('when at the minting limit', () => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await testRequest(MINTING_LIMIT, MINTING_LIMIT);
             });
 
@@ -493,7 +494,7 @@ describe('NetworkTokenPool', () => {
 
         const contextId = formatBytes32String('CTX');
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, network, networkToken, networkTokenPool, networkPoolToken, vault, poolCollection } =
                 await createSystem());
 
@@ -534,7 +535,7 @@ describe('NetworkTokenPool', () => {
         context('with requested liquidity', () => {
             const requestedAmount = toWei(BigNumber.from(1_000_000));
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await network.requestLiquidityT(contextId, reserveToken.address, requestedAmount);
             });
 
@@ -617,7 +618,7 @@ describe('NetworkTokenPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
@@ -660,7 +661,7 @@ describe('NetworkTokenPool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
@@ -668,7 +669,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('with requested liquidity', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     const requestedAmount = toWei(BigNumber.from(1_000_000));
                     const contextId = formatBytes32String('CTX');
 
@@ -807,7 +808,7 @@ describe('NetworkTokenPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
@@ -843,7 +844,7 @@ describe('NetworkTokenPool', () => {
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
             const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
@@ -852,7 +853,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('with requested liquidity', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     const requestedAmount = toWei(BigNumber.from(1_000_000));
                     const contextId = formatBytes32String('CTX');
 
@@ -865,7 +866,7 @@ describe('NetworkTokenPool', () => {
                         govTokenAmount: BigNumber;
                     };
 
-                    beforeEach(async () => {
+                    prepareEach(async () => {
                         // since this is only a unit test, we will simulate a proper transfer of the network token amount
                         // from the network to the network token pool
                         const depositAmount = toWei(BigNumber.from(1_000_000));
@@ -1008,7 +1009,7 @@ describe('NetworkTokenPool', () => {
 
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkSettings, networkTokenPool, network } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
