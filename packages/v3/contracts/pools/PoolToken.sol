@@ -36,7 +36,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
@@ -50,14 +50,14 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     /**
      * @inheritdoc IPoolToken
      */
-    function reserveToken() external view override returns (ReserveToken) {
+    function reserveToken() external view returns (ReserveToken) {
         return _reserveToken;
     }
 
     /**
      * @inheritdoc IPoolToken
      */
-    function mint(address recipient, uint256 amount) external override onlyOwner validExternalAddress(recipient) {
+    function mint(address recipient, uint256 amount) external onlyOwner validExternalAddress(recipient) {
         _mint(recipient, amount);
     }
 }

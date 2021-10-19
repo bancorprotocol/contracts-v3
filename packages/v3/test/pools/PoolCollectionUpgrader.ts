@@ -10,6 +10,7 @@ import {
 } from '../../typechain';
 import { ZERO_ADDRESS, TKN } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -58,7 +59,7 @@ describe('PoolCollectionUpgrader', () => {
         let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ network, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
                 await createSystem());
 
@@ -116,7 +117,7 @@ describe('PoolCollectionUpgrader', () => {
         context('v1', () => {
             let targetPoolCollection: TestPoolCollection;
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 targetPoolCollection = await createPoolCollection(
                     network,
                     poolTokenFactory,

@@ -15,7 +15,7 @@ import { DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
 import { toAddress, TokenWithAddress } from './Utils';
 import { TokenGovernance } from '@bancor/token-governance';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
-import { ethers } from 'hardhat';
+import { ethers, waffle } from 'hardhat';
 import { isEqual } from 'lodash';
 
 const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
@@ -101,7 +101,7 @@ const createGovernedToken = async <F extends ContractFactory>(
     return { token, tokenGovernance };
 };
 
-export const createGovernedTokens = async () => {
+const createGovernedTokensFixture = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
         TOTAL_SUPPLY,
@@ -119,6 +119,8 @@ export const createGovernedTokens = async () => {
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
+
+export const createGovernedTokens = async () => waffle.loadFixture(createGovernedTokensFixture);
 
 export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 
@@ -166,12 +168,29 @@ export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserv
     return Contracts.PoolToken.attach(poolTokenAddress);
 };
 
-export const createSystem = async () => {
+export const createPool = async (
+    reserveToken: TokenWithAddress,
+    network: TestBancorNetwork,
+    networkSettings: NetworkSettings,
+    poolCollection: TestPoolCollection
+) => {
+    await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+    const poolCollections = await network.poolCollections();
+    if (!poolCollections.includes(poolCollection.address)) {
+        await network.addPoolCollection(poolCollection.address);
+    }
+    await network.createPool(await poolCollection.poolType(), reserveToken.address);
+
+    const pool = await poolCollection.poolData(reserveToken.address);
+    return Contracts.PoolToken.attach(pool.poolToken);
+};
+
+const createSystemFixture = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
-    const testVault = await createProxy(Contracts.TestVault);
     const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
     const stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
@@ -221,7 +240,6 @@ export const createSystem = async () => {
         govToken,
         govTokenGovernance,
         networkPoolToken,
-        testVault,
         vault,
         externalProtectionVault,
         stakingRewardsVault,
@@ -233,20 +251,4 @@ export const createSystem = async () => {
     };
 };
 
-export const createPool = async (
-    reserveToken: TokenWithAddress,
-    network: TestBancorNetwork,
-    networkSettings: NetworkSettings,
-    poolCollection: TestPoolCollection
-) => {
-    await networkSettings.addTokenToWhitelist(reserveToken.address);
-
-    const poolCollections = await network.poolCollections();
-    if (!poolCollections.includes(poolCollection.address)) {
-        await network.addPoolCollection(poolCollection.address);
-    }
-    await network.createPool(await poolCollection.poolType(), reserveToken.address);
-
-    const pool = await poolCollection.poolData(reserveToken.address);
-    return Contracts.PoolToken.attach(pool.poolToken);
-};
+export const createSystem = async () => waffle.loadFixture(createSystemFixture);

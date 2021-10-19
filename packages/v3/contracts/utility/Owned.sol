@@ -46,14 +46,14 @@ abstract contract Owned is IOwned {
     /**
      * @inheritdoc IOwned
      */
-    function owner() public view virtual override returns (address) {
+    function owner() public view virtual returns (address) {
         return _owner;
     }
 
     /**
      * @inheritdoc IOwned
      */
-    function transferOwnership(address ownerCandidate) public virtual override onlyOwner {
+    function transferOwnership(address ownerCandidate) public virtual onlyOwner {
         if (ownerCandidate == _owner) {
             revert SameOwner();
         }
@@ -64,7 +64,7 @@ abstract contract Owned is IOwned {
     /**
      * @inheritdoc IOwned
      */
-    function acceptOwnership() public virtual override {
+    function acceptOwnership() public virtual {
         if (msg.sender != _newOwner) {
             revert AccessDenied();
         }
