@@ -84,6 +84,7 @@ describe('TestVault', () => {
 
             prepareEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                await transfer(deployer, token, testVault.address, amount);
             });
 
             it('withdrawing fund should emit event', async () => {
@@ -125,47 +126,69 @@ describe('TestVault', () => {
                     )
                 ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
             });
+
+            context('when paused', () => {
+                it('should succeed when contract is not paused', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                });
+
+                it('should fail when contract is paused', async () => {
+                    await testVault.pause();
+
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
+            });
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
             context(symbol, () => testWithdraw(symbol));
         }
-
-        context('when paused', () => {
-            it('should succeed when contract is not paused', async () => {
-                await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.not.reverted;
-            });
-
-            it('should fail when contract is paused', async () => {
-                await testVault.pause();
-
-                await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.revertedWith(
-                    'Pausable: paused'
-                );
-            });
-        });
     });
 
     describe('authenticated/unauthenticated', () => {
         let testVault: TestVault;
+        let networkToken: NetworkToken;
 
         prepareEach(async () => {
+            ({ networkToken } = await createSystem());
+
             testVault = await Contracts.TestVault.deploy();
             await testVault.initialize();
+            await testVault.setPayable(true);
         });
 
-        it('should allow when authenticated', async () => {
-            await testVault.setAuthenticateWithdrawal(true);
+        const testAuthentication = (symbol: string) => {
+            let token: TokenWithAddress;
+            const amount = 1_000_000;
 
-            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.not.reverted;
-        });
+            prepareEach(async () => {
+                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                await transfer(deployer, token, testVault.address, amount);
+            });
 
-        it('should revert when unauthenticated', async () => {
-            await testVault.setAuthenticateWithdrawal(false);
+            it('should allow when authenticated', async () => {
+                await testVault.setAuthenticateWithdrawal(true);
 
-            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.be.revertedWith(
-                'AccessDenied'
-            );
+                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+            });
+
+            it('should revert when unauthenticated', async () => {
+                await testVault.setAuthenticateWithdrawal(false);
+
+                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
+                    'AccessDenied'
+                );
+            });
+        };
+
+        context('when authenticated', () => {
+            for (const symbol of [BNT, ETH, TKN]) {
+                context(symbol, () => {
+                    return testAuthentication(symbol);
+                });
+            }
         });
     });
 
