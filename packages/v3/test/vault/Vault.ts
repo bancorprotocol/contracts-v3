@@ -2,8 +2,8 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { ETH, TKN, BNT, ZERO_ADDRESS } from '../helpers/Constants';
+import { createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
@@ -36,8 +36,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         prepareEach(async () => {
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -71,8 +70,7 @@ describe('TestVault', () => {
         prepareEach(async () => {
             ({ networkToken } = await createSystem());
 
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
 
             await testVault.setAuthenticateWithdrawal(true);
             await testVault.setPayable(true);
@@ -154,8 +152,8 @@ describe('TestVault', () => {
         prepareEach(async () => {
             ({ networkToken } = await createSystem());
 
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
+
             await testVault.setPayable(true);
         });
 
@@ -196,8 +194,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         prepareEach(async () => {
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
         });
 
         const testPause = () => {
