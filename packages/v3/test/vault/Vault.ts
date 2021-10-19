@@ -4,6 +4,7 @@ import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
     transfer,
@@ -34,7 +35,7 @@ describe('TestVault', () => {
     describe('construction', () => {
         let testVault: TestVault;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             testVault = await Contracts.TestVault.deploy();
             await testVault.initialize();
         });
@@ -61,26 +62,13 @@ describe('TestVault', () => {
                 );
             });
         });
-
-        context('authenticate withdrawal', () => {
-            it('should allow when authenticated', async () => {
-                await testVault.setAuthenticateWithdrawal(true);
-
-                await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.not.reverted;
-            });
-            it('should revert when not authenticated', async () => {
-                await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.be.revertedWith(
-                    'AccessDenied'
-                );
-            });
-        });
     });
 
     describe('withdrawing funds', async () => {
         let testVault: TestVault;
         let networkToken: NetworkToken;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ networkToken } = await createSystem());
 
             testVault = await Contracts.TestVault.deploy();
@@ -94,7 +82,7 @@ describe('TestVault', () => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
-            beforeEach(async () => {
+            prepareEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
             });
 
@@ -158,10 +146,33 @@ describe('TestVault', () => {
         });
     });
 
+    describe('authenticated/unauthenticated', () => {
+        let testVault: TestVault;
+
+        prepareEach(async () => {
+            testVault = await Contracts.TestVault.deploy();
+            await testVault.initialize();
+        });
+
+        it('should allow when authenticated', async () => {
+            await testVault.setAuthenticateWithdrawal(true);
+
+            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.not.reverted;
+        });
+
+        it('should revert when unauthenticated', async () => {
+            await testVault.setAuthenticateWithdrawal(false);
+
+            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.be.revertedWith(
+                'AccessDenied'
+            );
+        });
+    });
+
     describe('pausing/unpausing', () => {
         let testVault: TestVault;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             testVault = await Contracts.TestVault.deploy();
             await testVault.initialize();
         });
@@ -174,7 +185,7 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
@@ -195,7 +206,7 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                beforeEach(async () => {
+                prepareEach(async () => {
                     await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
@@ -209,7 +220,7 @@ describe('TestVault', () => {
         };
 
         context('admin', () => {
-            beforeEach(async () => {
+            prepareEach(async () => {
                 await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
             });
 
