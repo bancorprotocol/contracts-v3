@@ -260,7 +260,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     function readyForWithdrawal(uint256 id) external view returns (bool) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
-        return request.provider != address(0) && _readyForWithdrawal(request);
+        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
     }
 
     /**
@@ -313,7 +313,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             revert AccessDenied();
         }
 
-        if (!_readyForWithdrawal(request)) {
+        uint32 currentTime = _time();
+        if (!_canWithdrawAt(currentTime, request.createdAt)) {
             revert WithdrawalNotAllowed();
         }
 
@@ -329,7 +330,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
-            timeElapsed: _time() - request.createdAt
+            timeElapsed: currentTime - request.createdAt
         });
 
         return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
@@ -442,14 +443,13 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev returns whether the current time is older than the lock duration but not older than the lock duration +
-     * withdrawal window duration
+     * @dev returns whether it's possible to withdraw a request at the provided time (i.e., that it's older than the
+     * lock duration but not older than the lock duration + withdrawal window duration)
      */
-    function _readyForWithdrawal(WithdrawalRequest memory request) private view returns (bool) {
-        uint32 currentTime = _time();
-        uint32 withdrawalStartTime = request.createdAt + _lockDuration;
+    function _canWithdrawAt(uint32 time, uint32 createdAt) private view returns (bool) {
+        uint32 withdrawalStartTime = createdAt + _lockDuration;
         uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
 
-        return withdrawalStartTime <= currentTime && currentTime <= withdrawalEndTime;
+        return withdrawalStartTime <= time && time <= withdrawalEndTime;
     }
 }
