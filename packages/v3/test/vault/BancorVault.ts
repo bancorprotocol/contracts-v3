@@ -1,10 +1,11 @@
 import Contracts from '../../components/Contracts';
-import LegacyContracts, { NetworkToken } from '../../components/LegacyContracts';
+import { NetworkToken } from '../../components/LegacyContracts';
 import { withdrawFundsTest } from '../../test/helpers/Vault';
 import { BancorVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -24,7 +25,7 @@ describe('BancorVault', () => {
         [deployer] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
     });
 
@@ -63,7 +64,7 @@ describe('BancorVault', () => {
         let vault: BancorVault;
         let networkToken: NetworkToken;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ vault, networkToken } = await createSystem());
         });
 

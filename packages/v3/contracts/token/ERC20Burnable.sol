@@ -17,14 +17,14 @@ abstract contract ERC20Burnable is ERC20, IERC20Burnable {
     /**
      * @inheritdoc IERC20Burnable
      */
-    function burn(uint256 amount) external virtual override {
+    function burn(uint256 amount) external virtual {
         _burn(msg.sender, amount);
     }
 
     /**
      * @inheritdoc IERC20Burnable
      */
-    function burnFrom(address recipient, uint256 amount) external virtual override {
+    function burnFrom(address recipient, uint256 amount) external virtual {
         uint256 currentAllowance = allowance(recipient, msg.sender);
         if (currentAllowance < amount) {
             revert InsufficientAllowance();

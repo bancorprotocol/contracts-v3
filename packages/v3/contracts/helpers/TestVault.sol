@@ -8,21 +8,21 @@ import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { Vault } from "../vault/Vault.sol";
 
-/**
- * @dev Bancor Vault contract
- */
 contract TestVault is Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
+    bool private _authenticateWithdrawal;
+    bool private _payable;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 0] private __gap;
+    uint256[MAX_GAP - 1] private __gap;
 
     /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __StakingRewardsVault_init();
+        __TestVault_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -30,16 +30,27 @@ contract TestVault is Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __StakingRewardsVault_init() internal initializer {
+    function __TestVault_init() internal initializer {
         __Vault_init();
 
-        __StakingRewardsVault_init_unchained();
+        __TestVault_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __StakingRewardsVault_init_unchained() internal initializer {}
+    function __TestVault_init_unchained() internal initializer {
+        _authenticateWithdrawal = false;
+        _payable = false;
+    }
+
+    function setAuthenticateWithdrawal(bool state) external {
+        _authenticateWithdrawal = state;
+    }
+
+    function setPayable(bool state) external {
+        _payable = state;
+    }
 
     /**
      * @dev returns the current version of the contract
@@ -51,8 +62,8 @@ contract TestVault is Vault {
     /**
      * @inheritdoc Vault
      */
-    function isPayable() public pure override returns (bool) {
-        return true;
+    function isPayable() public view override returns (bool) {
+        return _payable;
     }
 
     /**
@@ -63,11 +74,11 @@ contract TestVault is Vault {
      * - NONE
      */
     function authenticateWithdrawal(
-        address caller,
+        address, /* caller */
         ReserveToken, /* reserverToken */
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return hasRole(ROLE_ADMIN, caller);
+        return _authenticateWithdrawal;
     }
 }

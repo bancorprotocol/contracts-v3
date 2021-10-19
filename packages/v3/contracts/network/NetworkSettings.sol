@@ -116,14 +116,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelist() external view override returns (ReserveToken[] memory) {
+    function protectedTokenWhitelist() external view returns (ReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
@@ -169,14 +169,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function isTokenWhitelisted(ReserveToken token) external view override returns (bool) {
+    function isTokenWhitelisted(ReserveToken token) external view returns (bool) {
         return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function poolMintingLimit(ReserveToken pool) external view override returns (uint256) {
+    function poolMintingLimit(ReserveToken pool) external view returns (uint256) {
         return _poolMintingLimits[pool];
     }
 
@@ -205,7 +205,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function minLiquidityForTrading() external view override returns (uint256) {
+    function minLiquidityForTrading() external view returns (uint256) {
         return _minLiquidityForTrading;
     }
 
@@ -230,21 +230,21 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeParams() external view override returns (ITokenHolder, uint32) {
+    function networkFeeParams() external view returns (ITokenHolder, uint32) {
         return (_networkFeeWallet, _networkFeePPM);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeWallet() external view override returns (ITokenHolder) {
+    function networkFeeWallet() external view returns (ITokenHolder) {
         return _networkFeeWallet;
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeePPM() external view override returns (uint32) {
+    function networkFeePPM() external view returns (uint32) {
         return _networkFeePPM;
     }
 
@@ -291,7 +291,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function withdrawalFeePPM() external view override returns (uint32) {
+    function withdrawalFeePPM() external view returns (uint32) {
         return _withdrawalFeePPM;
     }
 
@@ -316,7 +316,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function flashLoanFeePPM() external view override returns (uint32) {
+    function flashLoanFeePPM() external view returns (uint32) {
         return _flashLoanFeePPM;
     }
 
@@ -341,7 +341,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function averageRateMaxDeviationPPM() external view override returns (uint32) {
+    function averageRateMaxDeviationPPM() external view returns (uint32) {
         return _averageRateMaxDeviationPPM;
     }
 

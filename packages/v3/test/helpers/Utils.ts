@@ -69,14 +69,6 @@ export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddr
     switch (symbol) {
         case ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
-        case BNT:
-            const networkToken = await LegacyContracts.NetworkToken.deploy(BNT, BNT, 18);
-            await networkToken.issue((await ethers.getSigners())[0].address, toWei(BigNumber.from(1_000_000_000)));
-            return networkToken;
-        case vBNT:
-            const govToken = await LegacyContracts.GovToken.deploy(vBNT, vBNT, 18);
-            await govToken.issue((await ethers.getSigners())[0].address, toWei(BigNumber.from(1_000_000_000)));
-            return govToken;
 
         case TKN:
         case `${TKN}1`:

@@ -62,14 +62,14 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function tokenSymbolOverride(ReserveToken reserveToken) external view override returns (string memory) {
+    function tokenSymbolOverride(ReserveToken reserveToken) external view returns (string memory) {
         return _tokenSymbolOverrides[reserveToken];
     }
 
@@ -87,7 +87,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function tokenDecimalsOverride(ReserveToken reserveToken) external view override returns (uint8) {
+    function tokenDecimalsOverride(ReserveToken reserveToken) external view returns (uint8) {
         return _tokenDecimalsOverrides[reserveToken];
     }
 
@@ -107,7 +107,6 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      */
     function createPoolToken(ReserveToken reserveToken)
         external
-        override
         validAddress(ReserveToken.unwrap(reserveToken))
         returns (IPoolToken)
     {

@@ -102,14 +102,14 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IPoolCollectionUpgrader
      */
-    function network() external view override returns (IBancorNetwork) {
+    function network() external view returns (IBancorNetwork) {
         return _network;
     }
 
