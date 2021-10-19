@@ -2,6 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestERC20Token, TokenHolder } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createTokenHolder } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { getBalance, getBalances, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -23,7 +24,7 @@ describe('TokenHolder', () => {
         [, receiver, nonOwner] = accounts;
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         token1 = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', 100000);
         token2 = await Contracts.TestERC20Token.deploy('ERC', 'ERC2', 100000);
 
