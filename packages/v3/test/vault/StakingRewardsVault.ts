@@ -3,8 +3,9 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { withdrawFundsTest } from '../../test/helpers/Vault';
 import { StakingRewardsVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -24,7 +25,7 @@ describe('StakingRewardsVault', () => {
         [deployer] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
     });
 
@@ -61,7 +62,7 @@ describe('StakingRewardsVault', () => {
         let stakingRewardsVault: StakingRewardsVault;
         let networkToken: NetworkToken;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ stakingRewardsVault, networkToken } = await createSystem());
         });
 
