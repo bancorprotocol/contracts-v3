@@ -218,63 +218,63 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev returns the current version of the contract
      */
-    function version() external view virtual override returns (uint16) {
+    function version() external view virtual returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolType() external pure override returns (uint16) {
+    function poolType() external pure returns (uint16) {
         return POOL_TYPE;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function network() external view override returns (IBancorNetwork) {
+    function network() external view returns (IBancorNetwork) {
         return _network;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function networkToken() external view override returns (IERC20) {
+    function networkToken() external view returns (IERC20) {
         return _networkToken;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function settings() external view override returns (INetworkSettings) {
+    function settings() external view returns (INetworkSettings) {
         return _settings;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolTokenFactory() external view override returns (IPoolTokenFactory) {
+    function poolTokenFactory() external view returns (IPoolTokenFactory) {
         return _poolTokenFactory;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolCollectionUpgrader() external view override returns (IPoolCollectionUpgrader) {
+    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
         return _poolCollectionUpgrader;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function defaultTradingFeePPM() external view override returns (uint32) {
+    function defaultTradingFeePPM() external view returns (uint32) {
         return _defaultTradingFeePPM;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function pools() external view override returns (ReserveToken[] memory) {
+    function pools() external view returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
@@ -286,7 +286,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolCount() external view override returns (uint256) {
+    function poolCount() external view returns (uint256) {
         return _pools.length();
     }
 
@@ -308,7 +308,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(ReserveToken reserveToken) external override only(address(_network)) nonReentrant {
+    function createPool(ReserveToken reserveToken) external only(address(_network)) nonReentrant {
         if (!_settings.isTokenWhitelisted(reserveToken)) {
             revert NotWhitelisted();
         }
@@ -354,14 +354,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolValid(ReserveToken reserveToken) external view override returns (bool) {
+    function isPoolValid(ReserveToken reserveToken) external view returns (bool) {
         return _validPool(_poolData[reserveToken]);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateStable(ReserveToken reserveToken) external view override returns (bool) {
+    function isPoolRateStable(ReserveToken reserveToken) external view returns (bool) {
         Pool memory data = _poolData[reserveToken];
         if (!_validPool(data)) {
             return false;
@@ -389,7 +389,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolLiquidity(ReserveToken reserveToken) external view override returns (PoolLiquidity memory) {
+    function poolLiquidity(ReserveToken reserveToken) external view returns (PoolLiquidity memory) {
         return _poolData[reserveToken].liquidity;
     }
 
@@ -509,7 +509,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 unallocatedNetworkTokenLiquidity
     )
         external
-        override
         only(address(_network))
         validAddress(provider)
         validAddress(ReserveToken.unwrap(pool))
@@ -586,7 +585,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 externalProtectionWalletBalance
     )
         external
-        override
         only(address(_network))
         validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(basePoolTokenAmount)
@@ -620,7 +618,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint256 minReturnAmount
     )
         external
-        override
         only(address(_network))
         validAddress(ReserveToken.unwrap(sourceToken))
         validAddress(ReserveToken.unwrap(targetToken))
@@ -702,7 +699,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     )
         external
         view
-        override
         validAddress(ReserveToken.unwrap(sourceToken))
         validAddress(ReserveToken.unwrap(targetToken))
         greaterThanZero(amount)
@@ -721,7 +717,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount)
         external
-        override
         only(address(_network))
         validAddress(ReserveToken.unwrap(pool))
     {
@@ -740,7 +735,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function migratePoolIn(ReserveToken pool, Pool calldata data)
         external
-        override
         validAddress(ReserveToken.unwrap(pool))
         only(address(_poolCollectionUpgrader))
     {
@@ -756,7 +750,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection)
         external
-        override
         validAddress(ReserveToken.unwrap(pool))
         validAddress(address(targetPoolCollection))
         only(address(_poolCollectionUpgrader))

@@ -77,33 +77,33 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
-    receive() external payable override {}
+    receive() external payable {}
 
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function isPaused() external view override returns (bool) {
+    function isPaused() external view returns (bool) {
         return paused();
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function pause() external override onlyAdmin {
+    function pause() external onlyAdmin {
         _pause();
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function unpause() external override onlyAdmin {
+    function unpause() external onlyAdmin {
         _unpause();
     }
 
@@ -114,7 +114,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         ReserveToken reserveToken,
         address payable target,
         uint256 amount
-    ) external override validAddress(target) nonReentrant whenNotPaused {
+    ) external validAddress(target) nonReentrant whenNotPaused {
         if (
             (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
             hasRole(ROLE_ASSET_MANAGER, msg.sender)

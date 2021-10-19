@@ -356,84 +356,84 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure override returns (uint16) {
+    function version() external pure returns (uint16) {
         return 1;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function networkToken() external view override returns (IERC20) {
+    function networkToken() external view returns (IERC20) {
         return _networkToken;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function networkTokenGovernance() external view override returns (ITokenGovernance) {
+    function networkTokenGovernance() external view returns (ITokenGovernance) {
         return _networkTokenGovernance;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function govToken() external view override returns (IERC20) {
+    function govToken() external view returns (IERC20) {
         return _govToken;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function govTokenGovernance() external view override returns (ITokenGovernance) {
+    function govTokenGovernance() external view returns (ITokenGovernance) {
         return _govTokenGovernance;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function settings() external view override returns (INetworkSettings) {
+    function settings() external view returns (INetworkSettings) {
         return _settings;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function vault() external view override returns (IBancorVault) {
+    function vault() external view returns (IBancorVault) {
         return _vault;
     }
 
     /**
      * @dev IBancorNetwork
      */
-    function networkPoolToken() external view override returns (IPoolToken) {
+    function networkPoolToken() external view returns (IPoolToken) {
         return _networkPoolToken;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function networkTokenPool() external view override returns (INetworkTokenPool) {
+    function networkTokenPool() external view returns (INetworkTokenPool) {
         return _networkTokenPool;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function pendingWithdrawals() external view override returns (IPendingWithdrawals) {
+    function pendingWithdrawals() external view returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function poolCollectionUpgrader() external view override returns (IPoolCollectionUpgrader) {
+    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
         return _poolCollectionUpgrader;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function externalProtectionWallet() external view override returns (ITokenHolder) {
+    function externalProtectionWallet() external view returns (ITokenHolder) {
         return _externalProtectionWallet;
     }
 
@@ -567,7 +567,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function poolCollections() external view override returns (IPoolCollection[] memory) {
+    function poolCollections() external view returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         IPoolCollection[] memory list = new IPoolCollection[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
@@ -579,14 +579,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function latestPoolCollection(uint16 poolType) external view override returns (IPoolCollection) {
+    function latestPoolCollection(uint16 poolType) external view returns (IPoolCollection) {
         return _latestPoolCollections[poolType];
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function liquidityPools() external view override returns (ReserveToken[] memory) {
+    function liquidityPools() external view returns (ReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
@@ -598,14 +598,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function collectionByPool(ReserveToken pool) external view override returns (IPoolCollection) {
+    function collectionByPool(ReserveToken pool) external view returns (IPoolCollection) {
         return _collectionByPool[pool];
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function isPoolValid(ReserveToken pool) external view override returns (bool) {
+    function isPoolValid(ReserveToken pool) external view returns (bool) {
         return
             ReserveToken.unwrap(pool) == address(_networkToken) || _liquidityPools.contains(ReserveToken.unwrap(pool));
     }
@@ -615,7 +615,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function createPool(uint16 poolType, ReserveToken reserveToken)
         external
-        override
         nonReentrant
         validAddress(ReserveToken.unwrap(reserveToken))
     {
@@ -646,7 +645,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function upgradePools(ReserveToken[] calldata pools) external override nonReentrant {
+    function upgradePools(ReserveToken[] calldata pools) external nonReentrant {
         uint256 length = pools.length;
         for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
             ReserveToken pool = pools[i];
@@ -672,7 +671,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     )
         external
         payable
-        override
         validAddress(provider)
         validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(tokenAmount)
@@ -687,7 +685,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function deposit(ReserveToken pool, uint256 tokenAmount)
         external
         payable
-        override
         validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(tokenAmount)
         nonReentrant
@@ -708,7 +705,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 s
     )
         external
-        override
         validAddress(provider)
         validAddress(ReserveToken.unwrap(pool))
         greaterThanZero(tokenAmount)
@@ -727,14 +723,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override validAddress(ReserveToken.unwrap(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    ) external validAddress(ReserveToken.unwrap(pool)) greaterThanZero(tokenAmount) nonReentrant {
         _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, v, r, s);
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdraw(uint256 id) external override nonReentrant {
+    function withdraw(uint256 id) external nonReentrant {
         address provider = msg.sender;
         bytes32 contextId = _withdrawContextId(id, provider);
 
@@ -761,7 +757,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     )
         external
         payable
-        override
         nonReentrant
         validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
@@ -785,7 +780,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 s
     )
         external
-        override
         nonReentrant
         validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
