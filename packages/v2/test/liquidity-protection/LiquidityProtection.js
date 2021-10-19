@@ -2311,7 +2311,7 @@ describe('LiquidityProtection', () => {
                             expectAlmostEqual(balance, prevBalance.add(reserveAmount));
 
                             const govBalance = await govToken.balanceOf(owner.address);
-                            expect(govBalance).to.equal(prevGovBalance.sub(reserveAmount));
+                            expect(govBalance).to.equal(prevGovBalance);
 
                             const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
                             expect(protectionPoolBalance).to.equal(BigNumber.from(0));
