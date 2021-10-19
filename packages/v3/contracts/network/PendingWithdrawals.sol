@@ -313,7 +313,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             revert AccessDenied();
         }
 
-        // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         if (!_readyForWithdrawal(request)) {
             revert WithdrawalNotAllowed();
         }
@@ -443,10 +442,10 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev returns whether the given request is ready for withdrawal
+     * @dev returns whether the current time is older than the lock duration but not older than the lock duration +
+     * withdrawal window duration
      */
     function _readyForWithdrawal(WithdrawalRequest memory request) private view returns (bool) {
-        // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
         uint32 withdrawalStartTime = request.createdAt + _lockDuration;
         uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
