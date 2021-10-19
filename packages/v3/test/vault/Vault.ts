@@ -1,3 +1,4 @@
+import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
@@ -24,7 +25,7 @@ let target: SignerWithAddress;
 let admin: SignerWithAddress;
 
 describe('TestVault', () => {
-    shouldHaveGap('TestVault');
+    shouldHaveGap('TestVault', '_authenticateWithdrawal');
 
     before(async () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
@@ -34,7 +35,8 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
-            ({ testVault } = await createSystem());
+            testVault = await Contracts.TestVault.deploy();
+            await testVault.initialize();
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -43,19 +45,34 @@ describe('TestVault', () => {
 
         it('should be properly initialized', async () => {
             expect(await testVault.version()).to.equal(1);
-            expect(await testVault.isPayable()).to.be.true;
+            expect(await testVault.isPayable()).to.be.false;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
 
-        it('should be able to receive ETH', async () => {
-            const prevBalance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address);
+        context('receiving ETH', () => {
+            it('should allow when payable', async () => {
+                await testVault.setPayable(true);
 
-            const amount = BigNumber.from(1000);
-            await deployer.sendTransaction({ value: amount, to: testVault.address });
+                await deployer.sendTransaction({ value: 0, to: testVault.address });
+            });
+            it('should revert when not payable', async () => {
+                await expect(deployer.sendTransaction({ value: 0, to: testVault.address })).to.be.revertedWith(
+                    'NotPayable'
+                );
+            });
+        });
 
-            expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address)).to.equal(
-                prevBalance.add(amount)
-            );
+        context('authenticate withdrawal', () => {
+            it('should allow when authenticated', async () => {
+                await testVault.setAuthenticateWithdrawal(true);
+
+                await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.not.reverted;
+            });
+            it('should revert when not authenticated', async () => {
+                await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.be.revertedWith(
+                    'AccessDenied'
+                );
+            });
         });
     });
 
@@ -64,7 +81,13 @@ describe('TestVault', () => {
         let networkToken: NetworkToken;
 
         beforeEach(async () => {
-            ({ testVault, networkToken } = await createSystem());
+            ({ networkToken } = await createSystem());
+
+            testVault = await Contracts.TestVault.deploy();
+            await testVault.initialize();
+
+            await testVault.setAuthenticateWithdrawal(true);
+            await testVault.setPayable(true);
         });
 
         const testWithdraw = (symbol: string) => {
@@ -72,63 +95,53 @@ describe('TestVault', () => {
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = await createTokenBySymbol(symbol);
+                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
             });
 
-            it('events', async () => {
+            it('withdrawing fund should emit event', async () => {
                 await expect(testVault.withdrawFunds(token.address, target.address, 0))
                     .to.emit(testVault, 'FundsWithdrawn')
                     .withArgs(token.address, deployer.address, target.address, 0);
             });
 
-            it('balance', async () => {
+            it("withdrawing fund should change the target's balance", async () => {
                 await transfer(deployer, { address: token.address }, testVault.address, amount);
 
                 const currentBalance = await getBalance({ address: token.address }, target);
 
-                await expect(testVault.withdrawFunds(token.address, target.address, amount))
-                    .to.emit(testVault, 'FundsWithdrawn')
-                    .withArgs(token.address, deployer.address, target.address, amount);
+                await testVault.withdrawFunds(token.address, target.address, amount);
 
                 expect(await getBalance({ address: token.address }, target)).to.equal(currentBalance.add(amount));
             });
 
-            context('errors', () => {
-                it('should revert when withdrawing tokens to an invalid address', async () => {
-                    await expect(testVault.withdrawFunds(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
-                        'InvalidAddress'
-                    );
-                });
+            it('should revert when withdrawing tokens to an invalid address', async () => {
+                await expect(testVault.withdrawFunds(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
+                    'InvalidAddress'
+                );
+            });
 
-                it('should allow withdrawing 0 tokens', async () => {
-                    const prevVaultBalance = await getBalance(token, testVault.address);
+            it('should allow withdrawing 0 tokens', async () => {
+                const prevVaultBalance = await getBalance(token, testVault.address);
 
-                    await testVault.withdrawFunds(token.address, target.address, BigNumber.from(0));
+                await testVault.withdrawFunds(token.address, target.address, BigNumber.from(0));
 
-                    expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
-                });
+                expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
+            });
 
-                it('should revert when trying to withdraw more tokens than the vault holds', async () => {
-                    await expect(
-                        testVault.withdrawFunds(
-                            token.address,
-                            target.address,
-                            (await getBalance({ address: token.address }, testVault.address)).add(1)
-                        )
-                    ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
-                });
+            it('should revert when trying to withdraw more tokens than the vault holds', async () => {
+                await expect(
+                    testVault.withdrawFunds(
+                        token.address,
+                        target.address,
+                        (await getBalance({ address: token.address }, testVault.address)).add(1)
+                    )
+                ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
             });
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
             context(symbol, () => testWithdraw(symbol));
         }
-
-        it('when not allowed', async () => {
-            await expect(
-                testVault.connect(target).withdrawFunds(networkToken.address, target.address, 0)
-            ).to.revertedWith('AccessDenied');
-        });
 
         context('when paused', () => {
             it('should succeed when contract is not paused', async () => {
@@ -149,7 +162,8 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
-            ({ testVault } = await createSystem());
+            testVault = await Contracts.TestVault.deploy();
+            await testVault.initialize();
         });
 
         const testPause = () => {
