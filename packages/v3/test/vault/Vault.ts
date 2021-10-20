@@ -48,16 +48,27 @@ describe('TestVault', () => {
             expect(await testVault.isPayable()).to.be.false;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
+    });
 
-        context('payable/non-payable', () => {
-            const amount = 1_000_000;
+    describe('depositing ETH ', () => {
+        let testVault: TestVault;
+        const amount = 1_000_000;
 
-            it('should be able to receive ETH when payable', async () => {
+        prepareEach(async () => {
+            testVault = await createProxy(Contracts.TestVault);
+        });
+
+        context('payable', () => {
+            prepareEach(async () => {
                 await testVault.setPayable(true);
-
-                await deployer.sendTransaction({ value: amount, to: testVault.address });
             });
 
+            it('should be able to receive ETH when payable', async () => {
+                await deployer.sendTransaction({ value: amount, to: testVault.address });
+            });
+        });
+
+        context('non-payable', () => {
             it('should revert when sending ETH when non-payable', async () => {
                 await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'

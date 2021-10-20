@@ -68,7 +68,7 @@ contract TestVault is Vault {
      *
      * requirements:
      *
-     * - NONE
+     * - _authenticateWithdrawal to be true
      */
     function authenticateWithdrawal(
         address, /* caller */
