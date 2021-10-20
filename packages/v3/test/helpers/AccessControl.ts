@@ -20,13 +20,23 @@ export const roles = {
     }
 };
 
-const roleNames = Object.values(roles)
-    .map((contractRoles) => Object.values(contractRoles))
-    .flat(1);
+export const mapHashToRole = (() => {
+    const roleMap: { [roleCategory: string]: string } = {};
+
+    for (var roleCategory of Object.keys(roles)) {
+        const rolesInCategory = Object.keys((roles as any)[roleCategory]);
+
+        for (var roleInCategory of rolesInCategory) {
+            roleMap[id(roleInCategory)] = roleInCategory;
+        }
+    }
+
+    return roleMap;
+})();
 
 export const expectRole = async (
     contract: AccessControlEnumerableUpgradeable,
-    role: typeof roleNames[number],
+    role: string,
     adminRole: string,
     initialMembers: string[] = []
 ) => {
