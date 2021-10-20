@@ -29,7 +29,7 @@ jobs:
       #   run: yarn lint
 
       - name: Test
-        run: CI=1 yarn test
+        run: CI=1 yarn test test/vault/Vault.ts
 
       - name: Test Migration
         run: CI=1 yarn test-migration
