@@ -73,12 +73,10 @@ describe('StakingRewardsVault', () => {
                 token: BNT,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -88,12 +86,10 @@ describe('StakingRewardsVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -103,12 +99,10 @@ describe('StakingRewardsVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
