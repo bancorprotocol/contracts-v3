@@ -1445,4 +1445,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         return poolCollection;
     }
+
+    function migrateLiquidity(ReserveToken reserveToken, address provider, uint256 amount) external payable onlyAdmin {
+        _depositFor(provider, reserveToken, amount, provider);
+    }
 }
