@@ -67,7 +67,6 @@ export const createProxy = async <F extends ContractFactory>(
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
     const logicContract = await createLogic(factory, args?.ctorArgs);
-    console.log('logicContract', logicContract.address);
     const proxy = await createTransparentProxy(logicContract, args?.skipInitialization, args?.initArgs);
 
     return factory.attach(proxy.address);

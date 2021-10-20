@@ -134,16 +134,18 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                it('should succeed when contract is not paused', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
-                });
-
-                it('should fail when contract is paused', async () => {
+                it('should revert when contract is paused', async () => {
                     await testVault.pause();
 
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
                         'Pausable: paused'
                     );
+                });
+            });
+
+            context('when not paused', () => {
+                it('should not revert when contract is not paused', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
                 });
             });
         };
@@ -174,28 +176,30 @@ describe('TestVault', () => {
                 await transfer(deployer, token, testVault.address, amount);
             });
 
-            it('should allow when authenticated', async () => {
-                await testVault.setAuthenticateWithdrawal(true);
+            context('when authenticated', () => {
+                prepareEach(async () => {
+                    await testVault.setAuthenticateWithdrawal(true);
+                });
 
-                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                it('should allow when authenticated', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                });
             });
 
-            it('should revert when unauthenticated', async () => {
-                await testVault.setAuthenticateWithdrawal(false);
-
-                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
-                    'AccessDenied'
-                );
+            context('when unauthenticated', () => {
+                it('should revert when unauthenticated', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
+                        'AccessDenied'
+                    );
+                });
             });
         };
 
-        context('when authenticated', () => {
-            for (const symbol of [BNT, ETH, TKN]) {
-                context(symbol, () => {
-                    return testAuthentication(symbol);
-                });
-            }
-        });
+        for (const symbol of [BNT, ETH, TKN]) {
+            context(symbol, () => {
+                return testAuthentication(symbol);
+            });
+        }
     });
 
     describe('pausing/unpausing', () => {
