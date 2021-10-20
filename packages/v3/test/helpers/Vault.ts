@@ -19,7 +19,7 @@ export const withdrawFundsTest = (
     const ROLE_NONE = 'ROLE_NONE';
 
     for (let test of tests) {
-        context('withdraw funds ' + test.token, () => {
+        context('withdrawing ' + test.token, () => {
             for (let roleToTest of test.roles) {
                 const roleName = roleToTest.role ? mapHashToRole[roleToTest.role] : ROLE_NONE;
 
