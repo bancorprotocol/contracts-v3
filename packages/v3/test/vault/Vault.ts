@@ -134,9 +134,11 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                it('should revert when contract is paused', async () => {
+                prepareEach(async () => {
                     await testVault.pause();
+                });
 
+                it('should revert when contract is paused', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
                         'Pausable: paused'
                     );
@@ -181,7 +183,7 @@ describe('TestVault', () => {
                     await testVault.setAuthenticateWithdrawal(true);
                 });
 
-                it('should allow when authenticated', async () => {
+                it('should allow authenticated', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
                 });
             });
