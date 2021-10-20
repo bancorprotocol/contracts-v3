@@ -62,7 +62,7 @@ contract BancorVault is IBancorVault, Vault {
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ASSET_MANAGER);
 
-        // allow the deployer to initially manage the assets of the contract
+        // allow the deployer to initially be the asset manager of the contract
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 

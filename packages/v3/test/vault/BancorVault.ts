@@ -30,16 +30,22 @@ describe('BancorVault', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { vault } = await createSystem();
+        let vault: BancorVault;
 
+        prepareEach(async () => {
+            ({ vault } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should be payable', async () => {
-            const { vault } = await createSystem();
-
             expect(await vault.isPayable()).to.be.true;
+        });
+
+        it('should be correctly versioned', async () => {
+            expect(await vault.version()).to.equal(1);
         });
 
         it('should revert when initialized with an invalid network token', async () => {
@@ -49,8 +55,6 @@ describe('BancorVault', () => {
         it('should be properly initialized', async () => {
             const vault = await Contracts.BancorVault.deploy(reserveToken.address);
             await vault.initialize();
-
-            expect(await vault.version()).to.equal(1);
 
             await expectRole(vault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
             await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, BancorVaultRoles.ROLE_ASSET_MANAGER, [
@@ -75,17 +79,14 @@ describe('BancorVault', () => {
                 token: BNT,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.BancorVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
                         role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -95,17 +96,14 @@ describe('BancorVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.BancorVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
                         role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: false
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -115,17 +113,14 @@ describe('BancorVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.BancorVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: 'ROLE_NETWORK_TOKEN_MANAGER',
                         role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: false
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }

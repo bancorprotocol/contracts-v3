@@ -3,8 +3,9 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { withdrawFundsTest } from '../../test/helpers/Vault';
 import { ExternalProtectionVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
+import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -14,9 +15,6 @@ import { ethers } from 'hardhat';
 const { Upgradeable: UpgradeableRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
 
 let deployer: SignerWithAddress;
-let sender: SignerWithAddress;
-let target: SignerWithAddress;
-let admin: SignerWithAddress;
 
 let reserveToken: TestERC20Token;
 
@@ -24,10 +22,10 @@ describe('ExternalProtectionVault', () => {
     shouldHaveGap('ExternalProtectionVault');
 
     before(async () => {
-        [deployer, sender, target, admin] = await ethers.getSigners();
+        [deployer] = await ethers.getSigners();
     });
 
-    beforeEach(async () => {
+    prepareEach(async () => {
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
     });
 
@@ -64,7 +62,7 @@ describe('ExternalProtectionVault', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let networkToken: NetworkToken;
 
-        beforeEach(async () => {
+        prepareEach(async () => {
             ({ externalProtectionVault, networkToken } = await createSystem());
         });
 
@@ -75,12 +73,10 @@ describe('ExternalProtectionVault', () => {
                 token: BNT,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -90,12 +86,10 @@ describe('ExternalProtectionVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
@@ -105,12 +99,10 @@ describe('ExternalProtectionVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        name: 'ROLE_ASSET_MANAGER',
                         role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        name: undefined,
                         role: undefined,
                         isExpectedSuccessful: false
                     }
