@@ -63,13 +63,13 @@ describe('TestVault', () => {
                 await testVault.setPayable(true);
             });
 
-            it('should be able to receive ETH when payable', async () => {
+            it('should be able to receive ETH', async () => {
                 await deployer.sendTransaction({ value: amount, to: testVault.address });
             });
         });
 
         context('non-payable', () => {
-            it('should revert when sending ETH when non-payable', async () => {
+            it('should revert when sending ETH', async () => {
                 await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'
                 );
@@ -138,7 +138,7 @@ describe('TestVault', () => {
                     await testVault.pause();
                 });
 
-                it('should revert when contract is paused', async () => {
+                it('should revert', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
                         'Pausable: paused'
                     );
@@ -183,7 +183,7 @@ describe('TestVault', () => {
                     await testVault.setAuthenticateWithdrawal(true);
                 });
 
-                it('should allow authenticated', async () => {
+                it('should allow to withdraw', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
                 });
             });
