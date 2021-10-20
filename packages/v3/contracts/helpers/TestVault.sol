@@ -39,10 +39,7 @@ contract TestVault is Vault {
     /**
      * @dev performs contract-specific initialization
      */
-    function __TestVault_init_unchained() internal initializer {
-        _authenticateWithdrawal = false;
-        _payable = false;
-    }
+    function __TestVault_init_unchained() internal initializer {}
 
     function setAuthenticateWithdrawal(bool state) external {
         _authenticateWithdrawal = state;
@@ -71,7 +68,7 @@ contract TestVault is Vault {
      *
      * requirements:
      *
-     * - NONE
+     * - _authenticateWithdrawal to be true
      */
     function authenticateWithdrawal(
         address, /* caller */

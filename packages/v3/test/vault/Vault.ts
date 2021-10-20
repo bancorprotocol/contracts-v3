@@ -2,8 +2,8 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { ETH, TKN, BNT, ZERO_ADDRESS } from '../helpers/Constants';
+import { createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
@@ -36,8 +36,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         prepareEach(async () => {
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -49,15 +48,29 @@ describe('TestVault', () => {
             expect(await testVault.isPayable()).to.be.false;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
+    });
 
-        context('receiving ETH', () => {
-            it('should allow when payable', async () => {
+    describe('depositing ETH ', () => {
+        let testVault: TestVault;
+        const amount = 1_000_000;
+
+        prepareEach(async () => {
+            testVault = await createProxy(Contracts.TestVault);
+        });
+
+        context('payable', () => {
+            prepareEach(async () => {
                 await testVault.setPayable(true);
-
-                await deployer.sendTransaction({ value: 0, to: testVault.address });
             });
-            it('should revert when not payable', async () => {
-                await expect(deployer.sendTransaction({ value: 0, to: testVault.address })).to.be.revertedWith(
+
+            it('should be able to receive ETH when payable', async () => {
+                await deployer.sendTransaction({ value: amount, to: testVault.address });
+            });
+        });
+
+        context('non-payable', () => {
+            it('should revert when sending ETH when non-payable', async () => {
+                await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'
                 );
             });
@@ -71,8 +84,7 @@ describe('TestVault', () => {
         prepareEach(async () => {
             ({ networkToken } = await createSystem());
 
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
 
             await testVault.setAuthenticateWithdrawal(true);
             await testVault.setPayable(true);
@@ -84,12 +96,7 @@ describe('TestVault', () => {
 
             prepareEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
-            });
-
-            it('withdrawing fund should emit event', async () => {
-                await expect(testVault.withdrawFunds(token.address, target.address, 0))
-                    .to.emit(testVault, 'FundsWithdrawn')
-                    .withArgs(token.address, deployer.address, target.address, 0);
+                await transfer(deployer, token, testVault.address, amount);
             });
 
             it("withdrawing fund should change the target's balance", async () => {
@@ -125,47 +132,69 @@ describe('TestVault', () => {
                     )
                 ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
             });
+
+            context('when paused', () => {
+                it('should succeed when contract is not paused', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                });
+
+                it('should fail when contract is paused', async () => {
+                    await testVault.pause();
+
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
+            });
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
             context(symbol, () => testWithdraw(symbol));
         }
-
-        context('when paused', () => {
-            it('should succeed when contract is not paused', async () => {
-                await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.not.reverted;
-            });
-
-            it('should fail when contract is paused', async () => {
-                await testVault.pause();
-
-                await expect(testVault.withdrawFunds(networkToken.address, target.address, 0)).to.revertedWith(
-                    'Pausable: paused'
-                );
-            });
-        });
     });
 
     describe('authenticated/unauthenticated', () => {
         let testVault: TestVault;
+        let networkToken: NetworkToken;
 
         prepareEach(async () => {
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            ({ networkToken } = await createSystem());
+
+            testVault = await createProxy(Contracts.TestVault);
+
+            await testVault.setPayable(true);
         });
 
-        it('should allow when authenticated', async () => {
-            await testVault.setAuthenticateWithdrawal(true);
+        const testAuthentication = (symbol: string) => {
+            let token: TokenWithAddress;
+            const amount = 1_000_000;
 
-            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.not.reverted;
-        });
+            prepareEach(async () => {
+                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                await transfer(deployer, token, testVault.address, amount);
+            });
 
-        it('should revert when unauthenticated', async () => {
-            await testVault.setAuthenticateWithdrawal(false);
+            it('should allow when authenticated', async () => {
+                await testVault.setAuthenticateWithdrawal(true);
 
-            await expect(testVault.withdrawFunds(NATIVE_TOKEN_ADDRESS, target.address, 0)).to.be.revertedWith(
-                'AccessDenied'
-            );
+                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+            });
+
+            it('should revert when unauthenticated', async () => {
+                await testVault.setAuthenticateWithdrawal(false);
+
+                await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
+                    'AccessDenied'
+                );
+            });
+        };
+
+        context('when authenticated', () => {
+            for (const symbol of [BNT, ETH, TKN]) {
+                context(symbol, () => {
+                    return testAuthentication(symbol);
+                });
+            }
         });
     });
 
@@ -173,8 +202,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         prepareEach(async () => {
-            testVault = await Contracts.TestVault.deploy();
-            await testVault.initialize();
+            testVault = await createProxy(Contracts.TestVault);
         });
 
         const testPause = () => {
