@@ -37,7 +37,6 @@ interface Logic {
     contract: BaseContract;
 }
 
-const logicContractsCache: Record<string, Logic> = {};
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -49,17 +48,8 @@ export const proxyAdmin = async () => {
 };
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
-    // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
-    const cached = logicContractsCache[factory.metadata.contractName];
-    if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
-        return cached.contract;
-    }
-
     // eslint-disable-next-line @typescript-eslint/ban-types
-    const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
-    logicContractsCache[factory.metadata.contractName] = { ctorArgs, contract: logicContract };
-
-    return logicContract;
+    return (factory.deploy as Function)(...(ctorArgs || []));
 };
 
 const createTransparentProxy = async (
@@ -77,6 +67,7 @@ export const createProxy = async <F extends ContractFactory>(
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
     const logicContract = await createLogic(factory, args?.ctorArgs);
+    console.log('logicContract', logicContract.address);
     const proxy = await createTransparentProxy(logicContract, args?.skipInitialization, args?.initArgs);
 
     return factory.attach(proxy.address);
