@@ -49,7 +49,7 @@ describe('TestVault', () => {
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
 
-        context('when payable', () => {
+        context('payable/non-payable', () => {
             const amount = 1_000_000;
 
             it('should be able to receive ETH when payable', async () => {
@@ -58,7 +58,7 @@ describe('TestVault', () => {
                 await deployer.sendTransaction({ value: amount, to: testVault.address });
             });
 
-            it('should revert when sending ETH when not payable', async () => {
+            it('should revert when sending ETH when non-payable', async () => {
                 await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'
                 );
@@ -86,12 +86,6 @@ describe('TestVault', () => {
             prepareEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
                 await transfer(deployer, token, testVault.address, amount);
-            });
-
-            it('withdrawing fund should emit event', async () => {
-                await expect(testVault.withdrawFunds(token.address, target.address, 0))
-                    .to.emit(testVault, 'FundsWithdrawn')
-                    .withArgs(token.address, deployer.address, target.address, 0);
             });
 
             it("withdrawing fund should change the target's balance", async () => {
