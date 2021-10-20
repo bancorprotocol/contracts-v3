@@ -49,14 +49,17 @@ describe('TestVault', () => {
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
 
-        context('receiving ETH', () => {
-            it('should allow when payable', async () => {
+        context('when payable', () => {
+            const amount = 1_000_000;
+
+            it('should be able to receive ETH when payable', async () => {
                 await testVault.setPayable(true);
 
-                await deployer.sendTransaction({ value: 0, to: testVault.address });
+                await deployer.sendTransaction({ value: amount, to: testVault.address });
             });
-            it('should revert when not payable', async () => {
-                await expect(deployer.sendTransaction({ value: 0, to: testVault.address })).to.be.revertedWith(
+
+            it('should revert when sending ETH when not payable', async () => {
+                await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'
                 );
             });
