@@ -7,20 +7,13 @@ import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles, StakingRewardsVault: StakingRewardsVaultRoles } = roles;
 
 describe('StakingRewardsVault', () => {
-    let deployer: SignerWithAddress;
-
     shouldHaveGap('StakingRewardsVault');
-
-    before(async () => {
-        [deployer] = await ethers.getSigners();
-    });
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
@@ -38,6 +31,8 @@ describe('StakingRewardsVault', () => {
         });
 
         it('should be properly initialized', async () => {
+            const [deployer] = await ethers.getSigners();
+
             const stakingRewardsVault = await Contracts.StakingRewardsVault.deploy();
             await stakingRewardsVault.initialize();
 
