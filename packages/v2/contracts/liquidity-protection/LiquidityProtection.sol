@@ -563,13 +563,14 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             _packRates(removedPos.poolToken, removedPos.reserveToken, removedPos.reserveRateN, removedPos.reserveRateD);
 
         // verify rate deviation as early as possible in order to reduce gas-cost for failing transactions
-        if (normal)
-        _verifyRateDeviation(
-            packedRates.removeSpotRateN,
-            packedRates.removeSpotRateD,
-            packedRates.removeAverageRateN,
-            packedRates.removeAverageRateD
-        );
+        if (normal) {
+            _verifyRateDeviation(
+                packedRates.removeSpotRateN,
+                packedRates.removeSpotRateD,
+                packedRates.removeAverageRateN,
+                packedRates.removeAverageRateD
+            );
+        }
 
         // get the target token amount
         uint256 targetAmount =
@@ -587,11 +588,11 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         if (_isNetworkToken(removedPos.reserveToken)) {
             // mint network tokens for the caller and lock them
             _mintNetworkTokens(address(_wallet), removedPos.poolToken, targetAmount);
-            if (normal)
-            _lockTokens(provider, targetAmount);
-            else {
-            _networkToken.ensureApprove(address(_network), targetAmount);
-            _network.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
+            if (normal) {
+                _lockTokens(provider, targetAmount);
+            } else {
+                _networkToken.ensureApprove(address(_network), targetAmount);
+                _network.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
             }
             return;
         }
@@ -616,26 +617,26 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // transfer the base tokens to the caller
         uint256 baseBalance = removedPos.reserveToken.balanceOf(address(this));
-            if (normal){
-        removedPos.reserveToken.safeTransfer(provider, baseBalance);
+        if (normal) {
+            removedPos.reserveToken.safeTransfer(provider, baseBalance);
 
-        // compensate the caller with network tokens if still needed
-        uint256 delta = _networkCompensation(targetAmount, baseBalance, packedRates);
-        if (delta > 0) {
-            // check if there's enough network token balance, otherwise mint more
-            uint256 networkBalance = _networkToken.balanceOf(address(this));
-            if (networkBalance < delta) {
-                _networkTokenGovernance.mint(address(this), delta - networkBalance);
+            // compensate the caller with network tokens if still needed
+            uint256 delta = _networkCompensation(targetAmount, baseBalance, packedRates);
+            if (delta > 0) {
+                // check if there's enough network token balance, otherwise mint more
+                uint256 networkBalance = _networkToken.balanceOf(address(this));
+                if (networkBalance < delta) {
+                    _networkTokenGovernance.mint(address(this), delta - networkBalance);
+                }
+
+                // lock network tokens for the caller
+                _networkToken.safeTransfer(address(_wallet), delta);
+                _lockTokens(provider, delta);
             }
-
-            // lock network tokens for the caller
-            _networkToken.safeTransfer(address(_wallet), delta);
-            _lockTokens(provider, delta);
-        }}
-        else {
-        removedPos.reserveToken.ensureApprove(address(_network), baseBalance);
-        uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
-        _network.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
+        } else {
+            removedPos.reserveToken.ensureApprove(address(_network), baseBalance);
+            uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
+            _network.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
         }
 
         // if the contract still holds network tokens, burn them
