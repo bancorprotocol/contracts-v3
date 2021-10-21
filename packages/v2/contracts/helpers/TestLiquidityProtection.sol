@@ -6,9 +6,9 @@ import "../liquidity-protection/LiquidityProtection.sol";
 import "./TestTime.sol";
 
 contract TestLiquidityProtection is LiquidityProtection, TestTime {
-    //bool private _poolTokenRateOverride;
-    //uint256 private _poolTokenRateN;
-    //uint256 private _poolTokenRateD;
+    bool private _poolTokenRateOverride;
+    uint256 private _poolTokenRateN;
+    uint256 private _poolTokenRateD;
 
     constructor(
         IBancorNetworkV3 network,
@@ -34,7 +34,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
             lastRemoveCheckpointStore
         )
     {}
-/*
+
     function protectedAmountPlusFeeTest(
         uint256 poolAmount,
         uint256 poolRateN,
@@ -44,10 +44,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 removeRateN,
         uint256 removeRateD
     ) external pure returns (uint256) {
-        Fraction memory poolRate = Fraction({ n: poolRateN, d: poolRateD });
-        Fraction memory addRate = Fraction({ n: addRateN, d: addRateD });
-        Fraction memory removeRate = Fraction({ n: removeRateN, d: removeRateD });
-        return _protectedAmountPlusFee(poolAmount, poolRate, addRate, removeRate);
+        return _protectedAmountPlusFee(poolAmount, Fraction({ n: poolRateN, d: poolRateD }), Fraction({ n: addRateN, d: addRateD }), Fraction({ n: removeRateN, d: removeRateD }));
     }
 
     function impLossTest(
@@ -56,9 +53,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 currentRateN,
         uint256 currentRateD
     ) external pure returns (uint256, uint256) {
-        Fraction memory initialRate = Fraction({ n: initialRateN, d: initialRateD });
-        Fraction memory currentRate = Fraction({ n: currentRateN, d: currentRateD });
-        Fraction memory impLossRate = _impLoss(initialRate, currentRate);
+        Fraction memory impLossRate = _impLoss(Fraction({ n: initialRateN, d: initialRateD }), Fraction({ n: currentRateN, d: currentRateD }));
         return (impLossRate.n, impLossRate.d);
     }
 
@@ -70,9 +65,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 levelN,
         uint256 levelD
     ) external pure returns (uint256) {
-        Fraction memory loss = Fraction({ n: lossN, d: lossD });
-        Fraction memory level = Fraction({ n: levelN, d: levelD });
-        return _compensationAmount(amount, total, loss, level);
+        return _compensationAmount(amount, total, Fraction({ n: lossN, d: lossD }), Fraction({ n: levelN, d: levelD }));
     }
 
     function averageRateTest(IDSToken poolToken, IReserveToken reserveToken) external view returns (uint256, uint256) {
@@ -134,7 +127,7 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         }
         return super._poolTokenRate(poolToken, reserveToken);
     }
-*/
+
     function _time() internal view override(Time, TestTime) returns (uint256) {
         return TestTime._time();
     }
