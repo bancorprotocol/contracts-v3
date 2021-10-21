@@ -522,7 +522,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
         uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
 
-        // limit the amount of pool tokens by the amount the system holds
+        // limit the amount of pool tokens by the amount the system/caller holds
         poolAmount = Math.min(poolAmount, _systemStore.systemBalance(pos.poolToken).add(pos.poolAmount));
 
         // calculate the base token amount received by liquidating the pool tokens
@@ -729,6 +729,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         return newId;
     }
 
+    /**
+     * @dev migrates a list of positions to v3
+     *
+     * Requirements:
+     *
+     * - the caller must be the owner of all of the positions
+     */
     function migratePositions(uint256[] memory positionIds) external nonReentrant {
         uint256 length = positionIds.length;
         for (uint256 i = 0; i < length; i++) {
