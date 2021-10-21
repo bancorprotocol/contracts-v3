@@ -967,12 +967,12 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             _reserveTokenRates(poolToken, reserveToken);
 
         assert(
-            addSpotRateN <= MAX_UINT128 &&
-                addSpotRateD <= MAX_UINT128 &&
-                removeSpotRate.n <= MAX_UINT128 &&
-                removeSpotRate.d <= MAX_UINT128 &&
-                removeAverageRate.n <= MAX_UINT128 &&
-                removeAverageRate.d <= MAX_UINT128
+            (addSpotRateN |
+                addSpotRateD |
+                removeSpotRate.n |
+                removeSpotRate.d |
+                removeAverageRate.n |
+                removeAverageRate.d) <= MAX_UINT128
         );
 
         return
