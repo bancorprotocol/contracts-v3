@@ -174,6 +174,7 @@ module.exports = async (signer, deploy, deployed, execute, config) => {
     const liquidityProtection = await deploy(
         'liquidityProtection',
         'LiquidityProtection',
+        bancorNetwork.address,
         liquidityProtectionSettings.address,
         liquidityProtectionStore.address,
         liquidityProtectionStats.address,
