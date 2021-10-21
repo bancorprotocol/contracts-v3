@@ -3,4 +3,4 @@ pragma solidity 0.8.9;
 
 import { IVault } from "./IVault.sol";
 
-interface IStakingRewardsVault is IVault {}
+interface IExternalRewardsVault is IVault {}

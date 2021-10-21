@@ -1,71 +1,71 @@
 import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { withdrawFundsTest } from '../../test/helpers/Vault';
-import { StakingRewardsVault } from '../../typechain';
+import { ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
+import { withdrawFundsTest } from '../helpers/Vault';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-const { Upgradeable: UpgradeableRoles, StakingRewardsVault: StakingRewardsVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles, ExternalRewardsVault: ExternalRewardsVaultRoles } = roles;
 
-describe('StakingRewardsVault', () => {
-    shouldHaveGap('StakingRewardsVault');
+describe('ExternalRewardsVault', () => {
+    shouldHaveGap('ExternalRewardsVault');
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { stakingRewardsVault } = await createSystem();
+            const { externalRewardsVault } = await createSystem();
 
-            await expect(stakingRewardsVault.initialize()).to.be.revertedWith(
+            await expect(externalRewardsVault.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be payable', async () => {
-            const { stakingRewardsVault } = await createSystem();
+            const { externalRewardsVault } = await createSystem();
 
-            expect(await stakingRewardsVault.isPayable()).to.be.true;
+            expect(await externalRewardsVault.isPayable()).to.be.true;
         });
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
 
-            const stakingRewardsVault = await Contracts.StakingRewardsVault.deploy();
-            await stakingRewardsVault.initialize();
+            const externalRewardsVault = await Contracts.ExternalRewardsVault.deploy();
+            await externalRewardsVault.initialize();
 
-            expect(await stakingRewardsVault.version()).to.equal(1);
+            expect(await externalRewardsVault.version()).to.equal(1);
 
-            await expectRole(stakingRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(externalRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
             await expectRole(
-                stakingRewardsVault,
-                StakingRewardsVaultRoles.ROLE_ASSET_MANAGER,
-                StakingRewardsVaultRoles.ROLE_ASSET_MANAGER,
+                externalRewardsVault,
+                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
+                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                 [deployer.address]
             );
         });
     });
 
     describe('asset management', () => {
-        let stakingRewardsVault: StakingRewardsVault;
+        let externalRewardsVault: ExternalRewardsVault;
         let networkToken: NetworkToken;
 
         prepareEach(async () => {
-            ({ stakingRewardsVault, networkToken } = await createSystem());
+            ({ externalRewardsVault, networkToken } = await createSystem());
         });
 
         withdrawFundsTest(async () => {
-            return { vault: stakingRewardsVault, networkToken };
+            return { vault: externalRewardsVault, networkToken };
         }, [
             {
                 token: BNT,
                 roles: [
                     {
-                        role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
+                        role: ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
@@ -78,7 +78,7 @@ describe('StakingRewardsVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
+                        role: ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
@@ -91,7 +91,7 @@ describe('StakingRewardsVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        role: roles.StakingRewardsVault.ROLE_ASSET_MANAGER,
+                        role: ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {

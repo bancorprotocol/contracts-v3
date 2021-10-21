@@ -4,13 +4,13 @@ pragma solidity 0.8.9;
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Vault } from "./Vault.sol";
-import { IStakingRewardsVault } from "./interfaces/IStakingRewardsVault.sol";
+import { IExternalRewardsVault } from "./interfaces/IExternalRewardsVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
 
 /**
- * @dev Bancor Vault contract
+ * @dev External Rewards Vault contract
  */
-contract StakingRewardsVault is IStakingRewardsVault, Vault {
+contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     // the asset manager role is required to access all the reserves
     bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
@@ -21,7 +21,7 @@ contract StakingRewardsVault is IStakingRewardsVault, Vault {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __StakingRewardsVault_init();
+        __ExternalRewardsVault_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -29,16 +29,16 @@ contract StakingRewardsVault is IStakingRewardsVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __StakingRewardsVault_init() internal initializer {
+    function __ExternalRewardsVault_init() internal initializer {
         __Vault_init();
 
-        __StakingRewardsVault_init_unchained();
+        __ExternalRewardsVault_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __StakingRewardsVault_init_unchained() internal initializer {
+    function __ExternalRewardsVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ASSET_MANAGER);
 

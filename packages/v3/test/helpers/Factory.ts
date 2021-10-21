@@ -183,7 +183,7 @@ const createSystemFixture = async () => {
 
     const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
-    const stakingRewardsVault = await createProxy(Contracts.StakingRewardsVault);
+    const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
@@ -232,7 +232,7 @@ const createSystemFixture = async () => {
         networkPoolToken,
         bancorVault,
         externalProtectionVault,
-        stakingRewardsVault,
+        externalRewardsVault,
         networkTokenPool,
         pendingWithdrawals,
         poolTokenFactory,

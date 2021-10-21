@@ -18,7 +18,7 @@ export const roles = {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
-    StakingRewardsVault: {
+    ExternalRewardsVault: {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
