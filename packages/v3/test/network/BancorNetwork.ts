@@ -204,7 +204,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance,
                 govTokenGovernance,
                 networkSettings,
-                vault,
+                bancorVault,
                 networkPoolToken,
                 pendingWithdrawals,
                 poolCollectionUpgrader
@@ -214,7 +214,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
+                bancorVault.address,
                 networkPoolToken.address
             );
 
@@ -228,7 +228,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance,
                 govTokenGovernance,
                 networkSettings,
-                vault,
+                bancorVault,
                 networkPoolToken,
                 networkTokenPool,
                 poolCollectionUpgrader
@@ -238,7 +238,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
+                bancorVault.address,
                 networkPoolToken.address
             );
 
@@ -252,7 +252,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance,
                 govTokenGovernance,
                 networkSettings,
-                vault,
+                bancorVault,
                 networkPoolToken,
                 networkTokenPool,
                 pendingWithdrawals
@@ -262,7 +262,7 @@ describe('BancorNetwork', () => {
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
+                bancorVault.address,
                 networkPoolToken.address
             );
 
@@ -272,42 +272,42 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            const { govTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
+            const { govTokenGovernance, networkSettings, bancorVault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     ZERO_ADDRESS,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    vault.address,
+                    bancorVault.address,
                     networkPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            const { networkTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
+            const { networkTokenGovernance, networkSettings, bancorVault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    vault.address,
+                    bancorVault.address,
                     networkPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, vault, networkPoolToken } = await createSystem();
+            const { networkTokenGovernance, govTokenGovernance, bancorVault, networkPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
-                    vault.address,
+                    bancorVault.address,
                     networkPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -329,14 +329,14 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when initialized with an invalid network pool token contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    vault.address,
+                    bancorVault.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -350,7 +350,7 @@ describe('BancorNetwork', () => {
                 govToken,
                 govTokenGovernance,
                 networkSettings,
-                vault,
+                bancorVault,
                 networkPoolToken,
                 networkTokenPool,
                 pendingWithdrawals,
@@ -366,7 +366,7 @@ describe('BancorNetwork', () => {
             expect(await network.govToken()).to.equal(govToken.address);
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
-            expect(await network.vault()).to.equal(vault.address);
+            expect(await network.vault()).to.equal(bancorVault.address);
             expect(await network.networkPoolToken()).to.equal(networkPoolToken.address);
             expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
@@ -1013,7 +1013,7 @@ describe('BancorNetwork', () => {
         let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
         let externalProtectionWallet: TokenHolder;
@@ -1032,7 +1032,7 @@ describe('BancorNetwork', () => {
                 govToken,
                 networkTokenPool,
                 poolCollection,
-                vault,
+                bancorVault,
                 pendingWithdrawals,
                 networkPoolToken
             } = await createSystem());
@@ -1098,10 +1098,10 @@ describe('BancorNetwork', () => {
 
                 const prevProviderTokenBalance = await getBalance(token, providerAddress);
                 const prevSenderTokenBalance = await getBalance(token, senderAddress);
-                const prevVaultTokenBalance = await getBalance(token, vault.address);
+                const prevVaultTokenBalance = await getBalance(token, bancorVault.address);
 
                 const prevNetworkTokenTotalSupply = await networkToken.totalSupply();
-                const prevVaultNetworkTokenBalance = await networkToken.balanceOf(vault.address);
+                const prevVaultNetworkTokenBalance = await networkToken.balanceOf(bancorVault.address);
 
                 const prevGovTotalSupply = await govToken.totalSupply();
                 const prevProviderGovTokenBalance = await govToken.balanceOf(providerAddress);
@@ -1128,12 +1128,12 @@ describe('BancorNetwork', () => {
                             token.address,
                             await poolToken.totalSupply(),
                             await networkTokenPool.stakedBalance(),
-                            await getBalance(token, vault.address)
+                            await getBalance(token, bancorVault.address)
                         );
 
                     expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
 
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultTokenBalance);
+                    expect(await getBalance(token, bancorVault.address)).to.equal(prevVaultTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevNetworkTokenTotalSupply.sub(amount));
 
@@ -1178,7 +1178,7 @@ describe('BancorNetwork', () => {
                             token.address,
                             await poolToken.totalSupply(),
                             poolLiquidity.stakedBalance,
-                            await getBalance(token, vault.address)
+                            await getBalance(token, bancorVault.address)
                         );
 
                     await expect(res)
@@ -1188,7 +1188,7 @@ describe('BancorNetwork', () => {
                             networkToken.address,
                             await networkPoolToken.totalSupply(),
                             await networkTokenPool.stakedBalance(),
-                            await networkToken.balanceOf(vault.address)
+                            await networkToken.balanceOf(bancorVault.address)
                         );
 
                     await expect(res)
@@ -1208,11 +1208,11 @@ describe('BancorNetwork', () => {
                         prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                     );
 
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultTokenBalance.add(amount));
+                    expect(await getBalance(token, bancorVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
                     // expect a few network tokens to be minted to the vault
                     expect(await networkToken.totalSupply()).to.be.gte(prevNetworkTokenTotalSupply);
-                    expect(await networkToken.balanceOf(vault.address)).to.be.gte(prevVaultNetworkTokenBalance);
+                    expect(await networkToken.balanceOf(bancorVault.address)).to.be.gte(prevVaultNetworkTokenBalance);
 
                     expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply);
                     expect(await govToken.balanceOf(providerAddress)).to.equal(prevProviderGovTokenBalance);
@@ -1778,7 +1778,7 @@ describe('BancorNetwork', () => {
         let govToken: GovToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
         let externalProtectionWallet: TokenHolder;
@@ -1801,7 +1801,7 @@ describe('BancorNetwork', () => {
                 govToken,
                 networkTokenPool,
                 poolCollection,
-                vault,
+                bancorVault,
                 pendingWithdrawals,
                 networkPoolToken
             } = await createSystem());
@@ -1984,7 +1984,7 @@ describe('BancorNetwork', () => {
                                             token.address,
                                             await poolToken.totalSupply(),
                                             await networkTokenPool.stakedBalance(),
-                                            await getBalance(token, vault.address)
+                                            await getBalance(token, bancorVault.address)
                                         );
 
                                     expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
@@ -2003,7 +2003,7 @@ describe('BancorNetwork', () => {
                                     const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
                                         token.address,
                                         poolTokenAmount,
-                                        await getBalance(token, vault.address),
+                                        await getBalance(token, bancorVault.address),
                                         await getBalance(token, externalProtectionWallet.address)
                                     );
 
@@ -2038,7 +2038,7 @@ describe('BancorNetwork', () => {
                                             token.address,
                                             await poolToken.totalSupply(),
                                             poolLiquidity.stakedBalance,
-                                            await getBalance(token, vault.address)
+                                            await getBalance(token, bancorVault.address)
                                         );
 
                                     await expect(res)
@@ -2166,7 +2166,7 @@ describe('BancorNetwork', () => {
         let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
@@ -2178,7 +2178,7 @@ describe('BancorNetwork', () => {
         let trader: Wallet;
 
         prepareEach(async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, vault } =
+            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -2304,14 +2304,14 @@ describe('BancorNetwork', () => {
             );
 
             const prevTraderSourceTokenAmount = await getBalance(sourceToken, traderAddress);
-            const prevVaultSourceTokenAmount = await getBalance(sourceToken, vault.address);
+            const prevVaultSourceTokenAmount = await getBalance(sourceToken, bancorVault.address);
 
             const prevBeneficiaryTargetTokenAmount = await getBalance(targetToken, beneficiary);
-            const prevVaultTargetTokenAmount = await getBalance(targetToken, vault.address);
+            const prevVaultTargetTokenAmount = await getBalance(targetToken, bancorVault.address);
 
             const prevTraderNetworkTokenAmount = await getBalance(networkToken, traderAddress);
             const prevBeneficiaryNetworkTokenAmount = await getBalance(networkToken, beneficiary);
-            const prevVaultNetworkTokenAmount = await getBalance(networkToken, vault.address);
+            const prevVaultNetworkTokenAmount = await getBalance(networkToken, bancorVault.address);
 
             const prevNetworkTokenPoolStakedBalance = await networkTokenPool.stakedBalance();
 
@@ -2532,21 +2532,23 @@ describe('BancorNetwork', () => {
             expect(await getBalance(sourceToken, traderAddress)).to.equal(
                 prevTraderSourceTokenAmount.sub(amount.add(isSourceETH ? transactionCost : BigNumber.from(0)))
             );
-            expect(await getBalance(sourceToken, vault.address)).to.equal(prevVaultSourceTokenAmount.add(amount));
+            expect(await getBalance(sourceToken, bancorVault.address)).to.equal(prevVaultSourceTokenAmount.add(amount));
 
             expect(await getBalance(targetToken, beneficiary)).to.equal(
                 prevBeneficiaryTargetTokenAmount.add(
                     targetAmount.sub(traderAddress === beneficiary && isTargetETH ? transactionCost : BigNumber.from(0))
                 )
             );
-            expect(await getBalance(targetToken, vault.address)).to.equal(prevVaultTargetTokenAmount.sub(targetAmount));
+            expect(await getBalance(targetToken, bancorVault.address)).to.equal(
+                prevVaultTargetTokenAmount.sub(targetAmount)
+            );
 
             // if neither the source or the target tokens are the network token - ensure that no network
             // token amount has left the system
             if (!isSourceNetworkToken && !isTargetNetworkToken) {
                 expect(await getBalance(networkToken, traderAddress)).to.equal(prevTraderNetworkTokenAmount);
                 expect(await getBalance(networkToken, beneficiary)).to.equal(prevBeneficiaryNetworkTokenAmount);
-                expect(await getBalance(networkToken, vault.address)).to.equal(prevVaultNetworkTokenAmount);
+                expect(await getBalance(networkToken, bancorVault.address)).to.equal(prevVaultNetworkTokenAmount);
             }
         };
 
