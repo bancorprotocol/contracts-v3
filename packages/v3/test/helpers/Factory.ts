@@ -181,7 +181,7 @@ const createSystemFixture = async () => {
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+    const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
@@ -193,7 +193,7 @@ const createSystemFixture = async () => {
             networkTokenGovernance.address,
             govTokenGovernance.address,
             networkSettings.address,
-            vault.address,
+            bancorVault.address,
             networkPoolToken.address
         ]
     });
@@ -203,7 +203,7 @@ const createSystemFixture = async () => {
     });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
-        vault,
+        bancorVault,
         networkPoolToken,
         networkTokenGovernance,
         govTokenGovernance
@@ -219,7 +219,7 @@ const createSystemFixture = async () => {
 
     await network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,
@@ -229,7 +229,7 @@ const createSystemFixture = async () => {
         govToken,
         govTokenGovernance,
         networkPoolToken,
-        vault,
+        bancorVault,
         externalProtectionVault,
         networkTokenPool,
         pendingWithdrawals,

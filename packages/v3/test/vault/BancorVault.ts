@@ -30,22 +30,22 @@ describe('BancorVault', () => {
     });
 
     describe('construction', () => {
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
 
         prepareEach(async () => {
-            ({ vault } = await createSystem());
+            ({ bancorVault } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(bancorVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should be payable', async () => {
-            expect(await vault.isPayable()).to.be.true;
+            expect(await bancorVault.isPayable()).to.be.true;
         });
 
         it('should be correctly versioned', async () => {
-            expect(await vault.version()).to.equal(1);
+            expect(await bancorVault.version()).to.equal(1);
         });
 
         it('should revert when initialized with an invalid network token', async () => {
@@ -65,15 +65,15 @@ describe('BancorVault', () => {
     });
 
     describe('asset management', () => {
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let networkToken: NetworkToken;
 
         prepareEach(async () => {
-            ({ vault, networkToken } = await createSystem());
+            ({ bancorVault, networkToken } = await createSystem());
         });
 
         withdrawFundsTest(async () => {
-            return { vault, networkToken };
+            return { vault: bancorVault, networkToken };
         }, [
             {
                 token: BNT,
