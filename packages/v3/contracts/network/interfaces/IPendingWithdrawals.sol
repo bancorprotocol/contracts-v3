@@ -87,6 +87,11 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external;
 
     /**
+     * @dev returns whether the given request is ready for withdrawal
+     */
+    function readyForWithdrawal(uint256 id) external view returns (bool);
+
+    /**
      * @dev cancels a withdrawal request
      *
      * requirements:

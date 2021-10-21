@@ -31,26 +31,30 @@ describe('ExternalProtectionVault', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { vault } = await createSystem();
+            const { externalProtectionVault } = await createSystem();
 
-            await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(externalProtectionVault.initialize()).to.be.revertedWith(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should be payable', async () => {
-            const { vault } = await createSystem();
+            const { externalProtectionVault } = await createSystem();
 
-            expect(await vault.isPayable()).to.be.true;
+            expect(await externalProtectionVault.isPayable()).to.be.true;
         });
 
         it('should be properly initialized', async () => {
-            const vault = await Contracts.ExternalProtectionVault.deploy();
-            await vault.initialize();
+            const externalProtectionVault = await Contracts.ExternalProtectionVault.deploy();
+            await externalProtectionVault.initialize();
 
-            expect(await vault.version()).to.equal(1);
+            expect(await externalProtectionVault.version()).to.equal(1);
 
-            await expectRole(vault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(externalProtectionVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+                deployer.address
+            ]);
             await expectRole(
-                vault,
+                externalProtectionVault,
                 ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                 ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                 [deployer.address]
