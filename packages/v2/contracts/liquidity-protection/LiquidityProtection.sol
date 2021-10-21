@@ -966,12 +966,12 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             _reserveTokenRates(poolToken, reserveToken);
 
         assert(
-            (addSpotRateN |
-                addSpotRateD |
-                removeSpotRate.n |
-                removeSpotRate.d |
-                removeAverageRate.n |
-                removeAverageRate.d) <= MAX_UINT128
+            addSpotRateN <= MAX_UINT128 &&
+                addSpotRateD <= MAX_UINT128 &&
+                removeSpotRate.n <= MAX_UINT128 &&
+                removeSpotRate.d <= MAX_UINT128 &&
+                removeAverageRate.n <= MAX_UINT128 &&
+                removeAverageRate.d <= MAX_UINT128
         );
 
         return
@@ -997,9 +997,9 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         uint256 averageRateD
     ) internal view {
         uint256 ppmDelta = PPM_RESOLUTION - _settings.averageRateMaxDeviation();
-        uint256 min = mulmulmul(spotRateN, averageRateD, ppmDelta, ppmDelta);
-        uint256 mid = mulmulmul(spotRateD, averageRateN, ppmDelta, PPM_RESOLUTION);
-        uint256 max = mulmulmul(spotRateN, averageRateD, PPM_RESOLUTION, PPM_RESOLUTION);
+        uint256 min = spotRateN.mul(averageRateD).mul(ppmDelta).mul(ppmDelta);
+        uint256 mid = spotRateD.mul(averageRateN).mul(ppmDelta).mul(PPM_RESOLUTION);
+        uint256 max = spotRateN.mul(averageRateD).mul(PPM_RESOLUTION).mul(PPM_RESOLUTION);
         require(min <= mid && mid <= max, "ERR_INVALID_RATE");
     }
 
@@ -1133,10 +1133,11 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         Fraction memory loss,
         Fraction memory level
     ) internal pure returns (uint256) {
-        (uint256 lossN, uint256 lossD) = MathEx.reducedRatio(loss.n, loss.d, MAX_UINT256 / level.d);
-        return MathEx.mulDivF(total, lossD.sub(lossN), lossD).add(
-            MathEx.mulDivF(lossN, level.n.mul(amount), lossD * level.d)
-        );
+        uint256 levelN = level.n.mul(amount);
+        uint256 levelD = level.d;
+        uint256 maxVal = Math.max(Math.max(levelN, levelD), total);
+        (uint256 lossN, uint256 lossD) = MathEx.reducedRatio(loss.n, loss.d, MAX_UINT256 / maxVal);
+        return total.mul(lossD.sub(lossN)).div(lossD).add(lossN.mul(levelN).div(lossD.mul(levelD)));
     }
 
     function _networkCompensation(
@@ -1283,9 +1284,5 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // limit the amount of pool tokens by the amount the system holds
         uint256 systemBalance = _systemStore.systemBalance(pos.poolToken).add(additionalAmount);
         return (poolAmount < systemBalance ? poolAmount : systemBalance, poolRate);
-    }
-
-    function mulmulmul(uint256 x256, uint256 y256, uint256 x32, uint256 y32) private pure returns (uint256) {
-        return x256.mul(y256).mul(x32 * y32);
     }
 }

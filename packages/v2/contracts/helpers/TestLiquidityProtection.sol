@@ -44,7 +44,10 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 removeRateN,
         uint256 removeRateD
     ) external pure returns (uint256) {
-        return _protectedAmountPlusFee(poolAmount, Fraction({ n: poolRateN, d: poolRateD }), Fraction({ n: addRateN, d: addRateD }), Fraction({ n: removeRateN, d: removeRateD }));
+        Fraction memory poolRate = Fraction({ n: poolRateN, d: poolRateD });
+        Fraction memory addRate = Fraction({ n: addRateN, d: addRateD });
+        Fraction memory removeRate = Fraction({ n: removeRateN, d: removeRateD });
+        return _protectedAmountPlusFee(poolAmount, poolRate, addRate, removeRate);
     }
 
     function impLossTest(
@@ -53,7 +56,9 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 currentRateN,
         uint256 currentRateD
     ) external pure returns (uint256, uint256) {
-        Fraction memory impLossRate = _impLoss(Fraction({ n: initialRateN, d: initialRateD }), Fraction({ n: currentRateN, d: currentRateD }));
+        Fraction memory initialRate = Fraction({ n: initialRateN, d: initialRateD });
+        Fraction memory currentRate = Fraction({ n: currentRateN, d: currentRateD });
+        Fraction memory impLossRate = _impLoss(initialRate, currentRate);
         return (impLossRate.n, impLossRate.d);
     }
 
@@ -65,7 +70,9 @@ contract TestLiquidityProtection is LiquidityProtection, TestTime {
         uint256 levelN,
         uint256 levelD
     ) external pure returns (uint256) {
-        return _compensationAmount(amount, total, Fraction({ n: lossN, d: lossD }), Fraction({ n: levelN, d: levelD }));
+        Fraction memory loss = Fraction({ n: lossN, d: lossD });
+        Fraction memory level = Fraction({ n: levelN, d: levelD });
+        return _compensationAmount(amount, total, loss, level);
     }
 
     function averageRateTest(IDSToken poolToken, IReserveToken reserveToken) external view returns (uint256, uint256) {
