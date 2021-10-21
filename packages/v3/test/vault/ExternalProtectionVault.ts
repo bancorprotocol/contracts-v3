@@ -67,7 +67,7 @@ describe('ExternalProtectionVault', () => {
                 token: BNT,
                 roles: [
                     {
-                        role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
+                        role: ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
@@ -80,7 +80,7 @@ describe('ExternalProtectionVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
+                        role: ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
@@ -93,7 +93,7 @@ describe('ExternalProtectionVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        role: roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
+                        role: ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {

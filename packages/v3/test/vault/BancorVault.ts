@@ -69,11 +69,11 @@ describe('BancorVault', () => {
                 token: BNT,
                 roles: [
                     {
-                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        role: BancorVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        role: BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
@@ -86,11 +86,11 @@ describe('BancorVault', () => {
                 token: ETH,
                 roles: [
                     {
-                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        role: BancorVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        role: BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: false
                     },
                     {
@@ -103,11 +103,11 @@ describe('BancorVault', () => {
                 token: TKN,
                 roles: [
                     {
-                        role: roles.BancorVault.ROLE_ASSET_MANAGER,
+                        role: BancorVaultRoles.ROLE_ASSET_MANAGER,
                         isExpectedSuccessful: true
                     },
                     {
-                        role: roles.BancorVault.ROLE_NETWORK_TOKEN_MANAGER,
+                        role: BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER,
                         isExpectedSuccessful: false
                     },
                     {
