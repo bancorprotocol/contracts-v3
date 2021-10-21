@@ -257,6 +257,15 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
+    function readyForWithdrawal(uint256 id) external view returns (bool) {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+
+        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
     function cancelWithdrawal(uint256 id) external nonReentrant {
         WithdrawalRequest memory request = _withdrawalRequests[id];
         address provider = request.provider;
@@ -304,11 +313,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             revert AccessDenied();
         }
 
-        // verify that the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
         uint32 currentTime = _time();
-        uint32 withdrawalStartTime = request.createdAt + _lockDuration;
-        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
-        if (currentTime < withdrawalStartTime || currentTime > withdrawalEndTime) {
+        if (!_canWithdrawAt(currentTime, request.createdAt)) {
             revert WithdrawalNotAllowed();
         }
 
@@ -434,5 +440,16 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         if (!_withdrawalRequestIdsByProvider[request.provider].remove(id)) {
             revert DoesNotExist();
         }
+    }
+
+    /**
+     * @dev returns whether it's possible to withdraw a request at the provided time (i.e., that it's older than the
+     * lock duration but not older than the lock duration + withdrawal window duration)
+     */
+    function _canWithdrawAt(uint32 time, uint32 createdAt) private view returns (bool) {
+        uint32 withdrawalStartTime = createdAt + _lockDuration;
+        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
+
+        return withdrawalStartTime <= time && time <= withdrawalEndTime;
     }
 }
