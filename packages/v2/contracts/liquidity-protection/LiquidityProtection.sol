@@ -517,8 +517,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // handle base token return
 
-        // get the amount of pool tokens required for liquidation and the pool rate
-        (uint256 poolAmount, Fraction memory poolRate) = liquidationAmountAndPoolRate(pos, targetAmount, pos.poolAmount);
+        // calculate the amount of pool tokens required for liquidation
+        // note that the amount is doubled since it's not possible to liquidate one reserve only
+        Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
+        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
+
+        // limit the amount of pool tokens by the amount the system holds
+        poolAmount = Math.min(poolAmount, _systemStore.systemBalance(pos.poolToken).add(pos.poolAmount));
 
         // calculate the base token amount received by liquidating the pool tokens
         // note that the amount is divided by 2 since the pool amount represents both reserves
@@ -601,8 +606,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // remove base token liquidity
 
-        // get the amount of pool tokens required for liquidation
-        (uint256 poolAmount, ) = liquidationAmountAndPoolRate(removedPos, targetAmount, 0);
+        // calculate the amount of pool tokens required for liquidation
+        // note that the amount is doubled since it's not possible to liquidate one reserve only
+        Fraction memory poolRate = _poolTokenRate(removedPos.poolToken, removedPos.reserveToken);
+        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
+
+        // limit the amount of pool tokens by the amount the system holds
+        poolAmount = Math.min(poolAmount, _systemStore.systemBalance(removedPos.poolToken));
 
         // withdraw the pool tokens from the wallet
         IReserveToken poolToken = IReserveToken(address(removedPos.poolToken));
@@ -1267,24 +1277,5 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      */
     function _isNetworkToken(IReserveToken reserveToken) private view returns (bool) {
         return address(reserveToken) == address(_networkToken);
-    }
-
-    function liquidationAmountAndPoolRate(
-        Position memory pos,
-        uint256 targetAmount,
-        uint256 additionalAmount
-    )
-        private
-        view
-        returns (uint256, Fraction memory)
-    {
-        // calculate the amount of pool tokens required for liquidation
-        // note that the amount is doubled since it's not possible to liquidate one reserve only
-        Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
-        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
-
-        // limit the amount of pool tokens by the amount the system holds
-        uint256 systemBalance = _systemStore.systemBalance(pos.poolToken).add(additionalAmount);
-        return (poolAmount < systemBalance ? poolAmount : systemBalance, poolRate);
     }
 }
