@@ -71,6 +71,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
 
+    // the migration manager role is required for executing function `migrateLiquidity`
+    bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
+
     // the address of the network token
     IERC20 private immutable _networkToken;
 
@@ -334,6 +337,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _networkTokenPool = initNetworkTokenPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
+
+        // set up administrative roles
+        _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
     }
 
     // solhint-enable func-name-mixedcase
@@ -1446,7 +1452,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         return poolCollection;
     }
 
-    function migrateLiquidity(ReserveToken reserveToken, address provider, uint256 amount) external payable onlyAdmin {
+    function migrateLiquidity(ReserveToken reserveToken, address provider, uint256 amount) external payable onlyRole(ROLE_MIGRATION_MANAGER) {
         _depositFor(provider, reserveToken, amount, provider);
     }
 }
