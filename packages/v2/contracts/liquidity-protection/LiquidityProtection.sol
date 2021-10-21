@@ -460,7 +460,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         Fraction memory poolRate = _poolTokenRate(poolToken, networkToken);
 
         // return the maximum amount of network token liquidity that can be single-sided staked in the pool
-        return MathEx.mulDivC(_systemStore.systemBalance(poolToken), poolRate.n, poolRate.d);
+        return _systemStore.systemBalance(poolToken).mul(poolRate.n).add(poolRate.n).sub(1).div(poolRate.d);
     }
 
     /**
