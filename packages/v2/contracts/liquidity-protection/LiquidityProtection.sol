@@ -1134,11 +1134,10 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         Fraction memory loss,
         Fraction memory level
     ) internal pure returns (uint256) {
-        uint256 levelN = level.n.mul(amount);
-        uint256 levelD = level.d;
-        uint256 maxVal = Math.max(Math.max(levelN, levelD), total);
-        (uint256 lossN, uint256 lossD) = MathEx.reducedRatio(loss.n, loss.d, MAX_UINT256 / maxVal);
-        return total.mul(lossD.sub(lossN)).div(lossD).add(lossN.mul(levelN).div(lossD.mul(levelD)));
+        (loss.n, loss.d) = MathEx.reducedRatio(loss.n, loss.d, MAX_UINT256 / Math.max(level.n, level.d));
+        uint256 term1 = MathEx.mulDivF(total, loss.d.sub(loss.n), loss.d);
+        uint256 term2 = MathEx.mulDivF(amount, loss.n * level.n, loss.d * level.d);
+        return term1.add(term2);
     }
 
     function _networkCompensation(
