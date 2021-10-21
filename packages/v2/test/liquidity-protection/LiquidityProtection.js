@@ -3389,7 +3389,7 @@ describe('LiquidityProtection', () => {
                         const deviation = '0.75';
                         const range = {
                             maxAbsoluteError: '0.0',
-                            maxRelativeError: '0.0000000000000000007'
+                            maxRelativeError: '0.00000007'
                         };
                         removeLiquidityTargetAmountTest(amounts, durations, deviation, range);
                     });
@@ -3426,7 +3426,7 @@ describe('LiquidityProtection', () => {
                         const removeRateDs = [23, 47, 95].map((x) => BigNumber.from(x).pow(BigNumber.from(18)));
                         const range = {
                             maxAbsoluteError: '1.0',
-                            maxRelativeError: '0.0000000005'
+                            maxRelativeError: '0.0'
                         };
                         protectedAmountPlusFeeTest(
                             poolAmounts,
@@ -3447,9 +3447,9 @@ describe('LiquidityProtection', () => {
                         const currentRateDs = [11, 23, 47, 95].map((x) => BigNumber.from(x).pow(BigNumber.from(18)));
                         const range = {
                             maxAbsoluteError:
-                                '0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006',
+                                '0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007',
                             maxRelativeError:
-                                '0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000174'
+                                '0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000186'
                         };
                         impLossTest(initialRateNs, initialRateDs, currentRateNs, currentRateDs, range);
                     });
