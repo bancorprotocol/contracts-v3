@@ -1,33 +1,20 @@
 import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { withdrawFundsTest } from '../../test/helpers/Vault';
-import { BancorVault, TestERC20Token } from '../../typechain';
+import { BancorVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
 
-let deployer: SignerWithAddress;
-
-let reserveToken: TestERC20Token;
-
 describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
-
-    before(async () => {
-        [deployer] = await ethers.getSigners();
-    });
-
-    prepareEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-    });
 
     describe('construction', () => {
         let bancorVault: BancorVault;
@@ -53,6 +40,9 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
+            const [deployer] = await ethers.getSigners();
+            const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+
             const vault = await Contracts.BancorVault.deploy(reserveToken.address);
             await vault.initialize();
 
