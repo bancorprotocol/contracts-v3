@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Vault } from "../vault/Vault.sol";
 
 contract TestVault is Vault {
-    using SafeERC20 for IERC20;
-    using ReserveTokenLibrary for ReserveToken;
-
     bool private _authenticateWithdrawal;
     bool private _payable;
 
