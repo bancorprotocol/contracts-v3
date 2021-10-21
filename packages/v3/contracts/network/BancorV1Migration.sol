@@ -18,7 +18,7 @@ interface IBancorConverterV2 {
     ) external returns (uint256[] memory);
 }
 
-contract LiquidityMigration is Upgradeable, ReentrancyGuardUpgradeable {
+contract BancorV1Migration is Upgradeable, ReentrancyGuardUpgradeable {
     using ReserveTokenLibrary for ReserveToken;
 
     BancorNetwork private immutable _network;
@@ -37,7 +37,7 @@ contract LiquidityMigration is Upgradeable, ReentrancyGuardUpgradeable {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __LiquidityMigration_init();
+        __BancorV1Migration_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -45,17 +45,17 @@ contract LiquidityMigration is Upgradeable, ReentrancyGuardUpgradeable {
     /**
      * @dev initializes the contract and its parents
      */
-    function __LiquidityMigration_init() internal initializer {
+    function __BancorV1Migration_init() internal initializer {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
-        __LiquidityMigration_init_unchained();
+        __BancorV1Migration_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __LiquidityMigration_init_unchained() internal initializer {
+    function __BancorV1Migration_init_unchained() internal initializer {
     }
 
     // solhint-enable func-name-mixedcase
