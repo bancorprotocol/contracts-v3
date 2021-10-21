@@ -14,20 +14,8 @@ import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
 
-let deployer: SignerWithAddress;
-
-let reserveToken: TestERC20Token;
-
 describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
-
-    before(async () => {
-        [deployer] = await ethers.getSigners();
-    });
-
-    prepareEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-    });
 
     describe('construction', () => {
         let bancorVault: BancorVault;
@@ -53,6 +41,9 @@ describe('BancorVault', () => {
         });
 
         it('should be properly initialized', async () => {
+            const [deployer] = await ethers.getSigners();
+            const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+
             const vault = await Contracts.BancorVault.deploy(reserveToken.address);
             await vault.initialize();
 
