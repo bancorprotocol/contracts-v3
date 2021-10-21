@@ -2069,7 +2069,7 @@ describe('LiquidityProtection', () => {
                     }
                 });
 
-                describe.only('migrate liquidity', () => {
+                describe('migrate liquidity', () => {
                     for (let isETHReserve = 0; isETHReserve < 2; isETHReserve++) {
                         describe(`base token (${isETHReserve ? 'ETH' : 'ERC20'})`, () => {
                             beforeEach(async () => {
