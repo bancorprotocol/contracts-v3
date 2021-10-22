@@ -10,10 +10,11 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -52,16 +53,17 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
-import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
+import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
 
-import { TRADING_FEE } from "./FeeTypes.sol";
+import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
 
 error DeadlineExpired();
 error EthAmountMismatch();
 error InvalidTokens();
 error NetworkLiquidityDisabled();
 error PermitUnsupported();
+error InsufficientFlashLoanReturn();
 
 /**
  * @dev Bancor Network contract
@@ -812,6 +814,68 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 targetAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, targetAmount, false);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function flashLoan(
+        ReserveToken token,
+        uint256 amount,
+        IFlashLoanRecipient recipient,
+        bytes memory data
+    )
+        external
+        nonReentrant
+        validAddress(ReserveToken.unwrap(token))
+        greaterThanZero(amount)
+        validAddress(address(recipient))
+    {
+        uint256 feeAmount = MathEx.mulDivF(amount, _settings.flashLoanFeePPM(), PPM_RESOLUTION);
+
+        // save the current balance
+        address payable vaultAddress = payable(address(_vault));
+        uint256 prevBalance = token.balanceOf(vaultAddress);
+
+        // transfer the amount from the vault to the recipient
+        _vault.withdrawTokens(token, payable(address(recipient)), amount);
+
+        // invoke the recipient's callback
+        recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, vaultAddress, data);
+
+        // ensure that the tokens + fee have been depositted back to the vault
+        if (token.balanceOf(vaultAddress) < prevBalance + feeAmount) {
+            revert InsufficientFlashLoanReturn();
+        }
+
+        uint256 stakedBalance;
+
+        // notify the pool of accrued fees
+        if (token.toIERC20() == _networkToken) {
+            INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+            cachedNetworkTokenPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
+
+            stakedBalance = cachedNetworkTokenPool.stakedBalance();
+        } else {
+            // get the pool and verify that it exists
+            IPoolCollection poolCollection = _poolCollection(token);
+            poolCollection.onFeesCollected(token, feeAmount);
+
+            stakedBalance = poolCollection.poolLiquidity(token).stakedBalance;
+        }
+
+        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
+
+        emit FlashLoanCompleted({ contextId: contextId, token: token, borrower: msg.sender, amount: amount });
+
+        emit FeesCollected({
+            contextId: contextId,
+            token: token,
+            feeType: FLASH_LOAN_FEE,
+            amount: feeAmount,
+            stakedBalance: stakedBalance
+        });
     }
 
     /**
