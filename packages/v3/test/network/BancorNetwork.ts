@@ -2882,7 +2882,7 @@ describe('BancorNetwork', () => {
         let networkToken: NetworkToken;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
@@ -2893,7 +2893,7 @@ describe('BancorNetwork', () => {
         const ZERO_BYTES32 = formatBytes32String('');
 
         prepareEach(async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, vault } =
+            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -2986,7 +2986,7 @@ describe('BancorNetwork', () => {
             });
 
             const test = async () => {
-                const prevVaultBalance = await getBalance(token, vault.address);
+                const prevVaultBalance = await getBalance(token, bancorVault.address);
                 const prevNetworkBalance = await getBalance(token, network.address);
 
                 let prevStakedBalance;
@@ -3023,11 +3023,11 @@ describe('BancorNetwork', () => {
                 expect(callbackData.token).to.equal(token.address);
                 expect(callbackData.amount).to.equal(amount);
                 expect(callbackData.feeAmount).to.equal(feeAmount);
-                expect(callbackData.returnAddress).to.equal(vault.address);
+                expect(callbackData.returnAddress).to.equal(bancorVault.address);
                 expect(callbackData.data).to.equal(data);
                 expect(callbackData.receivedAmount).to.equal(amount);
 
-                expect(await getBalance(token, vault.address)).to.be.gte(prevVaultBalance.add(feeAmount));
+                expect(await getBalance(token, bancorVault.address)).to.be.gte(prevVaultBalance.add(feeAmount));
                 expect(await getBalance(token, network.address)).to.equal(prevNetworkBalance);
             };
 
