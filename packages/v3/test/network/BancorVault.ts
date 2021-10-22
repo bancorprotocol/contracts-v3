@@ -40,9 +40,9 @@ describe('BancorVault', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { vault } = await createSystem();
+            const { bancorVault } = await createSystem();
 
-            await expect(vault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(bancorVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should revert when initialized with an invalid network token', async () => {
@@ -65,19 +65,19 @@ describe('BancorVault', () => {
 
     describe('asset management', () => {
         let networkToken: NetworkToken;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
 
         prepareEach(async () => {
-            ({ vault, networkToken } = await createSystem());
+            ({ bancorVault, networkToken } = await createSystem());
         });
 
         it('should be able to receive ETH', async () => {
-            const prevBalance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, vault.address);
+            const prevBalance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, bancorVault.address);
 
             const amount = BigNumber.from(1000);
-            await deployer.sendTransaction({ value: amount, to: vault.address });
+            await deployer.sendTransaction({ value: amount, to: bancorVault.address });
 
-            expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, vault.address)).to.equal(
+            expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, bancorVault.address)).to.equal(
                 prevBalance.add(amount)
             );
         });
@@ -89,47 +89,49 @@ describe('BancorVault', () => {
                         const amountToWithdraw = amount.add(BigNumber.from(100));
 
                         await expect(
-                            vault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
+                            bancorVault.connect(sender).withdrawTokens(token.address, target.address, amountToWithdraw)
                         ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
                     });
 
                     it('should be able to withdraw any tokens', async () => {
                         const prevTargetBalance = await getBalance(token, target.address);
-                        const prevVaultBalance = await getBalance(token, vault.address);
+                        const prevVaultBalance = await getBalance(token, bancorVault.address);
 
                         const remainder = BigNumber.from(1);
                         const partialAmount = amount.sub(remainder);
-                        let res = await vault
+                        let res = await bancorVault
                             .connect(sender)
                             .withdrawTokens(token.address, target.address, partialAmount);
                         await expect(res)
-                            .to.emit(vault, 'TokensWithdrawn')
+                            .to.emit(bancorVault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, partialAmount);
 
                         const targetBalance = await getBalance(token, target.address);
-                        const vaultBalance = await getBalance(token, vault.address);
+                        const vaultBalance = await getBalance(token, bancorVault.address);
 
                         expect(targetBalance).to.equal(prevTargetBalance.add(partialAmount));
                         expect(vaultBalance).to.equal(prevVaultBalance.sub(partialAmount));
 
-                        res = await vault.connect(sender).withdrawTokens(token.address, target.address, remainder);
+                        res = await bancorVault
+                            .connect(sender)
+                            .withdrawTokens(token.address, target.address, remainder);
                         await expect(res)
-                            .to.emit(vault, 'TokensWithdrawn')
+                            .to.emit(bancorVault, 'TokensWithdrawn')
                             .withArgs(token.address, sender.address, target.address, remainder);
 
                         expect(await getBalance(token, target.address)).to.equal(targetBalance.add(remainder));
-                        expect(await getBalance(token, vault.address)).to.equal(vaultBalance.sub(remainder));
+                        expect(await getBalance(token, bancorVault.address)).to.equal(vaultBalance.sub(remainder));
                     });
 
                     context('when paused', () => {
                         prepareEach(async () => {
-                            await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                            await bancorVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
 
-                            expect(await vault.isPaused()).to.be.false;
+                            expect(await bancorVault.isPaused()).to.be.false;
 
-                            await vault.connect(admin).pause();
+                            await bancorVault.connect(admin).pause();
 
-                            expect(await vault.isPaused()).to.be.true;
+                            expect(await bancorVault.isPaused()).to.be.true;
                         });
 
                         testWithdrawRestricted('Pausable: paused');
@@ -139,7 +141,7 @@ describe('BancorVault', () => {
                 const testWithdrawRestricted = (reason = 'AccessDenied') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
-                            vault.connect(sender).withdrawTokens(token.address, target.address, amount)
+                            bancorVault.connect(sender).withdrawTokens(token.address, target.address, amount)
                         ).to.be.revertedWith(reason);
                     });
                 };
@@ -154,21 +156,21 @@ describe('BancorVault', () => {
                         token = await createTokenBySymbol(symbol);
                     }
 
-                    await transfer(deployer, token, vault.address, amount);
+                    await transfer(deployer, token, bancorVault.address, amount);
                 });
 
                 it('should revert when withdrawing tokens to an invalid address', async () => {
-                    await expect(vault.withdrawTokens(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
+                    await expect(bancorVault.withdrawTokens(token.address, ZERO_ADDRESS, amount)).to.be.revertedWith(
                         'InvalidAddress'
                     );
                 });
 
                 it('should allow withdrawing 0 tokens', async () => {
-                    const prevVaultBalance = await getBalance(token, vault.address);
+                    const prevVaultBalance = await getBalance(token, bancorVault.address);
 
-                    await vault.withdrawTokens(token.address, target.address, BigNumber.from(0));
+                    await bancorVault.withdrawTokens(token.address, target.address, BigNumber.from(0));
 
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultBalance);
+                    expect(await getBalance(token, bancorVault.address)).to.equal(prevVaultBalance);
                 });
 
                 context('regular account', () => {
@@ -177,7 +179,7 @@ describe('BancorVault', () => {
 
                 context('admin', () => {
                     prepareEach(async () => {
-                        await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
+                        await bancorVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
                     });
 
                     testWithdrawRestricted();
@@ -185,7 +187,9 @@ describe('BancorVault', () => {
 
                 context('asset manager', () => {
                     prepareEach(async () => {
-                        await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
+                        await bancorVault
+                            .connect(deployer)
+                            .grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
                     });
 
                     testWithdraw();
@@ -193,7 +197,7 @@ describe('BancorVault', () => {
 
                 context('network token manager', () => {
                     prepareEach(async () => {
-                        await vault
+                        await bancorVault
                             .connect(deployer)
                             .grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
                     });
@@ -209,57 +213,57 @@ describe('BancorVault', () => {
     });
 
     describe('pausing/unpausing', () => {
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
 
         prepareEach(async () => {
-            ({ vault } = await createSystem());
+            ({ bancorVault } = await createSystem());
         });
 
         const testPause = () => {
             it('should pause the contract', async () => {
-                await vault.connect(sender).pause();
+                await bancorVault.connect(sender).pause();
 
-                expect(await vault.isPaused()).to.be.true;
+                expect(await bancorVault.isPaused()).to.be.true;
             });
 
             context('when paused', () => {
                 prepareEach(async () => {
-                    await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await vault.connect(admin).pause();
+                    await bancorVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await bancorVault.connect(admin).pause();
 
-                    expect(await vault.isPaused()).to.be.true;
+                    expect(await bancorVault.isPaused()).to.be.true;
                 });
 
                 it('should unpause the contract', async () => {
-                    await vault.connect(sender).unpause();
+                    await bancorVault.connect(sender).unpause();
 
-                    expect(await vault.isPaused()).to.be.false;
+                    expect(await bancorVault.isPaused()).to.be.false;
                 });
             });
         };
 
         const testPauseRestricted = () => {
             it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(vault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
+                await expect(bancorVault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
             });
 
             context('when paused', () => {
                 prepareEach(async () => {
-                    await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
-                    await vault.connect(admin).pause();
+                    await bancorVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await bancorVault.connect(admin).pause();
 
-                    expect(await vault.isPaused()).to.be.true;
+                    expect(await bancorVault.isPaused()).to.be.true;
                 });
 
                 it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(vault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
+                    await expect(bancorVault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
                 });
             });
         };
 
         context('admin', () => {
             prepareEach(async () => {
-                await vault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
+                await bancorVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
             });
 
             testPause();
@@ -271,7 +275,7 @@ describe('BancorVault', () => {
 
         context('asset manager', () => {
             prepareEach(async () => {
-                await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
+                await bancorVault.connect(deployer).grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, sender.address);
             });
 
             testPauseRestricted();
@@ -279,7 +283,9 @@ describe('BancorVault', () => {
 
         context('network token manager', () => {
             prepareEach(async () => {
-                await vault.connect(deployer).grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
+                await bancorVault
+                    .connect(deployer)
+                    .grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, sender.address);
             });
 
             testPauseRestricted();
