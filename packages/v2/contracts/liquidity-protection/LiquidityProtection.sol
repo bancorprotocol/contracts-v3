@@ -520,14 +520,14 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // calculate the amount of pool tokens required for liquidation
         // note that the amount is doubled since it's not possible to liquidate one reserve only
         Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
-        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
+        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d.mul(2), poolRate.n);
 
         // limit the amount of pool tokens by the amount the system/caller holds
         poolAmount = Math.min(poolAmount, _systemStore.systemBalance(pos.poolToken).add(pos.poolAmount));
 
         // calculate the base token amount received by liquidating the pool tokens
         // note that the amount is divided by 2 since the pool amount represents both reserves
-        uint256 baseAmount = MathEx.mulDivF(poolAmount, poolRate.n / 2, poolRate.d);
+        uint256 baseAmount = MathEx.mulDivF(poolAmount, poolRate.n, poolRate.d.mul(2));
         uint256 networkAmount = _networkCompensation(targetAmount, baseAmount, packedRates);
 
         return (targetAmount, baseAmount, networkAmount);
@@ -609,7 +609,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // calculate the amount of pool tokens required for liquidation
         // note that the amount is doubled since it's not possible to liquidate one reserve only
         Fraction memory poolRate = _poolTokenRate(removedPos.poolToken, removedPos.reserveToken);
-        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d, poolRate.n / 2);
+        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d.mul(2), poolRate.n);
 
         // limit the amount of pool tokens by the amount the system holds
         poolAmount = Math.min(poolAmount, _systemStore.systemBalance(removedPos.poolToken));
