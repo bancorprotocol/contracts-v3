@@ -1,4 +1,3 @@
-import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork as LegacyBancorNetwork,
     BancorNetwork__factory,
@@ -16,7 +15,8 @@ import {
     StandardPoolConverter,
     StandardPoolConverterFactory__factory,
     StandardPoolConverterFactory
-} from '@bancor-v2/typechain';
+} from '../../v2/typechain';
+import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-disable camelcase */
 import {

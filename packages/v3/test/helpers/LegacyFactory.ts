@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 
 const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS }
-} = require('@bancor-v2/test/helpers/Constants');
+} = require('../../../v2/test/helpers/Constants');
 
 export const createLegacySystem = async () => {
     const deployer = (await ethers.getSigners())[0];

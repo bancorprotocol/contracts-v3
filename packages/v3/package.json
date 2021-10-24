@@ -86,8 +86,5 @@
         "typechain": "^5.1.2",
         "typescript": "^4.4.3"
     },
-    "_moduleAliases": {
-        "@bancor-v2": "../v2"
-    },
     "snyk": true
 }
