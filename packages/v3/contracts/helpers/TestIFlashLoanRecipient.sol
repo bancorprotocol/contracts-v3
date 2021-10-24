@@ -21,7 +21,6 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
         IERC20 token;
         uint256 amount;
         uint256 feeAmount;
-        address payable returnAddress;
         bytes data;
         uint256 receivedAmount;
     }
@@ -61,7 +60,6 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
         IERC20 token,
         uint256 amount,
         uint256 feeAmount,
-        address payable returnAddress,
         bytes memory data
     ) external {
         ReserveToken reserveToken = ReserveToken.wrap(address(token));
@@ -71,7 +69,6 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
             token: token,
             amount: amount,
             feeAmount: feeAmount,
-            returnAddress: returnAddress,
             data: data,
             receivedAmount: reserveToken.balanceOf(address(this)) - _snapshots[token]
         });
@@ -82,9 +79,9 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
 
         uint256 returnAmount = _amountToReturn != 0 ? _amountToReturn : amount + feeAmount;
         if (reserveToken.isNativeToken()) {
-            returnAddress.sendValue(returnAmount);
+            payable(msg.sender).sendValue(returnAmount);
         } else {
-            reserveToken.safeTransfer(returnAddress, returnAmount);
+            reserveToken.safeTransfer(msg.sender, returnAmount);
         }
     }
 }

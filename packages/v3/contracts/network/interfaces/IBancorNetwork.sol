@@ -31,7 +31,6 @@ interface IFlashLoanRecipient {
         IERC20 token,
         uint256 amount,
         uint256 feeAmount,
-        address payable returnAddress,
         bytes memory data
     ) external;
 }

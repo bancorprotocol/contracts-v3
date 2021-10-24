@@ -340,6 +340,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     // solhint-enable func-name-mixedcase
 
+    receive() external payable {}
+
     modifier validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) {
         _validTokensForTrade(sourceToken, targetToken);
 
@@ -620,7 +622,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         validAddress(ReserveToken.unwrap(reserveToken))
     {
-        if (reserveToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(reserveToken)) {
             revert InvalidToken();
         }
 
@@ -831,31 +833,38 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(amount)
         validAddress(address(recipient))
     {
-        if (!_settings.isTokenWhitelisted(token)) {
+        if (!_isNetworkToken(token) && !_settings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
         uint256 feeAmount = MathEx.mulDivF(amount, _settings.flashLoanFeePPM(), PPM_RESOLUTION);
 
         // save the current balance
-        address payable vaultAddress = payable(address(_vault));
-        uint256 prevBalance = token.balanceOf(vaultAddress);
+        uint256 prevBalance = token.balanceOf(address(this));
 
         // transfer the amount from the vault to the recipient
         _vault.withdrawTokens(token, payable(address(recipient)), amount);
 
         // invoke the recipient's callback
-        recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, vaultAddress, data);
+        recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, data);
 
-        // ensure that the tokens + fee have been depositted back to the vault
-        if (token.balanceOf(vaultAddress) < prevBalance + feeAmount) {
+        // ensure that the tokens + fee have been depositted back to the network
+        uint256 returnedAmount = token.balanceOf(address(this)) - prevBalance;
+        if (returnedAmount < amount + feeAmount) {
             revert InsufficientFlashLoanReturn();
+        }
+
+        // transfer the amount and the fee back to the vault
+        if (token.isNativeToken()) {
+            payable(_vault).sendValue(returnedAmount);
+        } else {
+            token.safeTransfer(payable(_vault), returnedAmount);
         }
 
         uint256 stakedBalance;
 
         // notify the pool of accrued fees
-        if (token.toIERC20() == _networkToken) {
+        if (_isNetworkToken(token)) {
             INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
             cachedNetworkTokenPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
@@ -947,7 +956,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
-        if (pool.toIERC20() == _networkToken) {
+        if (_isNetworkToken(pool)) {
             _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
@@ -1099,7 +1108,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address sender
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
-        if (token.toIERC20() == _networkToken || token.isNativeToken()) {
+        if (_isNetworkToken(token) || token.isNativeToken()) {
             revert PermitUnsupported();
         }
 
@@ -1330,9 +1339,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // perform either a single or double hop trade, based on the source and the target pool
         uint256 tradeAmount;
-        if (sourceToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(sourceToken)) {
             tradeAmount = _tradeNetworkToken(contextId, targetToken, true, sourceAmount, minReturnAmount, trader);
-        } else if (targetToken.toIERC20() == _networkToken) {
+        } else if (_isNetworkToken(targetToken)) {
             tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, minReturnAmount, trader);
         } else {
             tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
@@ -1441,13 +1450,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool targetAmount
     ) private view returns (uint256) {
         // return the trade amount and fee when trading the network token to the base token
-        if (sourceToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(sourceToken)) {
             return
                 _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
         // return the trade amount and fee when trading the bsase token to the network token
-        if (targetToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(targetToken)) {
             return
                 _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
@@ -1512,5 +1521,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         return poolCollection;
+    }
+
+    /**
+     * @dev returns whether the specified token is the network token
+     */
+    function _isNetworkToken(ReserveToken token) private view returns (bool) {
+        return token.toIERC20() == _networkToken;
     }
 }

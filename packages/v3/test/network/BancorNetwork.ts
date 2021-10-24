@@ -3030,7 +3030,6 @@ describe('BancorNetwork', () => {
                 expect(callbackData.token).to.equal(token.address);
                 expect(callbackData.amount).to.equal(amount);
                 expect(callbackData.feeAmount).to.equal(feeAmount);
-                expect(callbackData.returnAddress).to.equal(bancorVault.address);
                 expect(callbackData.data).to.equal(data);
                 expect(callbackData.receivedAmount).to.equal(amount);
 
