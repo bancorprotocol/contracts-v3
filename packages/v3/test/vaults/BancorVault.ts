@@ -141,7 +141,7 @@ describe('BancorVault', () => {
 
         context(`withdrawing ${TKN}`, () => {
             prepareEach(async () => {
-                token = await Contracts.TestERC20Token.deploy('TKN', 'TKN', amount);
+                token = await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, bancorVault.address, amount);
             });
