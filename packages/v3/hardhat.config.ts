@@ -12,6 +12,7 @@ import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
 import { NetworkUserConfig } from 'hardhat/types';
+import 'module-alias/register';
 import 'solidity-coverage';
 
 const hardhatDefaultConfig: NetworkUserConfig = {

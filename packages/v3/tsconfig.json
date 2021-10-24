@@ -10,7 +10,8 @@
         "esModuleInterop": true,
         "baseUrl": "./",
         "paths": {
-            "*": ["node_modules/*"]
+            "*": ["node_modules/*"],
+            "@bancor-v2/*": ["../v2/*"]
         }
     },
     "include": ["./test", "./tasks", "./components", "./migration"],
