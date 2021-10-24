@@ -371,11 +371,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // calculate and mint the required amount of network tokens for adding liquidity
         uint256 newNetworkLiquidityAmount = MathEx.mulDivF(amount, reserveBalanceNetwork, reserveBalanceBase);
 
-        // verify network token minting limit
-        uint256 mintingLimit = _settings.networkTokenMintingLimits(poolAnchor);
-        if (mintingLimit == 0) {
-            mintingLimit = _settings.defaultNetworkTokenMintingLimit();
-        }
+        // get network token minting limit
+        uint256 mintingLimit = _networkTokenMintingLimit(poolAnchor);
 
         uint256 newNetworkTokensMinted = _systemStore.networkTokensMinted(poolAnchor).add(newNetworkLiquidityAmount);
         require(newNetworkTokensMinted <= mintingLimit, "ERR_MAX_AMOUNT_REACHED");
@@ -433,10 +430,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             _converterReserveBalances(converter, baseToken, networkToken);
 
         // get the network token minting limit
-        uint256 mintingLimit = _settings.networkTokenMintingLimits(poolAnchor);
-        if (mintingLimit == 0) {
-            mintingLimit = _settings.defaultNetworkTokenMintingLimit();
-        }
+        uint256 mintingLimit = _networkTokenMintingLimit(poolAnchor);
 
         // get the amount of network tokens already minted for the pool
         uint256 networkTokensMinted = _systemStore.networkTokensMinted(poolAnchor);
@@ -491,8 +485,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // calculate the portion of the liquidity to remove
         if (portion != PPM_RESOLUTION) {
-            pos.poolAmount = MathEx.mulDivF(pos.poolAmount, portion, PPM_RESOLUTION);
-            pos.reserveAmount = MathEx.mulDivF(pos.reserveAmount, portion, PPM_RESOLUTION);
+            (pos.poolAmount, pos.reserveAmount) = _portionAmounts(pos.poolAmount, pos.reserveAmount, portion);
         }
 
         // get the various rates between the reserves upon adding liquidity and now
@@ -744,34 +737,32 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     }
 
     /**
-     * @dev migrates the system pool tokens on a given pool to v3
+     * @dev migrates system pool tokens to v3
      *
      * Requirements:
      *
      * - the caller must be the owner of all of this contract
      */
-    function migrateSystemPoolTokens(
-        IConverterAnchor poolAnchor,
-        uint256 poolAmount,
-        address bancorVault
-    )
-        external
-        ownerOnly
-    {
-        IDSToken poolToken = IDSToken(address(poolAnchor));
+    function migrateSystemPoolTokens(IConverterAnchor[] memory poolAnchors, address bancorVault) external ownerOnly {
+        uint256 length = poolAnchors.length;
+        for (uint256 i = 0; i < length; i++) {
+            IDSToken poolToken = IDSToken(address(poolAnchors[i]));
+            uint256 poolAmount = _systemStore.systemBalance(poolToken);
 
-        _systemStore.decSystemBalance(poolToken, poolAmount);
-        _wallet.withdrawTokens(IReserveToken(address(poolToken)), address(this), poolAmount);
+            _systemStore.decSystemBalance(poolToken, poolAmount);
+            _wallet.withdrawTokens(IReserveToken(address(poolToken)), address(this), poolAmount);
 
-        ILiquidityPoolConverter converter = ILiquidityPoolConverter(payable(_ownedBy(poolToken)));
-        (IReserveToken[] memory reserveTokens, uint256[] memory minReturns) = _removeLiquidityInput(
-            IReserveToken(address(_networkToken)),
-            _converterOtherReserve(converter, IReserveToken(address(_networkToken)))
-        );
-        uint256[] memory reserveAmounts = converter.removeLiquidity(poolAmount, reserveTokens, minReturns);
+            ILiquidityPoolConverter converter = ILiquidityPoolConverter(payable(_ownedBy(poolToken)));
+            (IReserveToken[] memory reserveTokens, uint256[] memory minReturns) = _removeLiquidityInput(
+                IReserveToken(address(_networkToken)),
+                _converterOtherReserve(converter, IReserveToken(address(_networkToken)))
+            );
 
-        _burnNetworkTokens(poolAnchor, reserveAmounts[0]);
-        reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+            uint256[] memory reserveAmounts = converter.removeLiquidity(poolAmount, reserveTokens, minReturns);
+
+            _burnNetworkTokens(poolAnchors[i], reserveAmounts[0]);
+            reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+        }
     }
 
     /**
@@ -931,8 +922,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             // remove a portion of the position from the provider
             uint256 fullPoolAmount = pos.poolAmount;
             uint256 fullReserveAmount = pos.reserveAmount;
-            pos.poolAmount = MathEx.mulDivF(pos.poolAmount, portion, PPM_RESOLUTION);
-            pos.reserveAmount = MathEx.mulDivF(pos.reserveAmount, portion, PPM_RESOLUTION);
+            (pos.poolAmount, pos.reserveAmount) = _portionAmounts(pos.poolAmount, pos.reserveAmount, portion);
 
             _notifyEventSubscribersOnRemovingLiquidity(
                 id,
@@ -1332,5 +1322,35 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         minReturns[0] = 1;
         minReturns[1] = 1;
         return (reserveTokens, minReturns);
+    }
+
+    /**
+     * @dev returns the relative position amounts
+     */
+    function _portionAmounts(
+        uint256 poolAmount,
+        uint256 reserveAmount,
+        uint256 portion
+    )
+        private
+        pure
+        returns (uint256, uint256)
+    {
+        return (
+            MathEx.mulDivF(poolAmount, portion, PPM_RESOLUTION),
+            MathEx.mulDivF(reserveAmount, portion, PPM_RESOLUTION)
+        );
+    }
+
+    /**
+     * @dev returns the network token minting limit
+     */
+    function _networkTokenMintingLimit(IConverterAnchor poolAnchor) private view returns (uint256) {
+        // verify network token minting limit
+        uint256 mintingLimit = _settings.networkTokenMintingLimits(poolAnchor);
+        if (mintingLimit == 0) {
+            mintingLimit = _settings.defaultNetworkTokenMintingLimit();
+        }
+        return mintingLimit;
     }
 }
