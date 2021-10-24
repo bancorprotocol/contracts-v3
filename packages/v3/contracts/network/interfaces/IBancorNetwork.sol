@@ -16,7 +16,7 @@ import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol"
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorVault } from "./../../vault/interfaces/IBancorVault.sol";
+import { IBancorVault } from "./../../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
