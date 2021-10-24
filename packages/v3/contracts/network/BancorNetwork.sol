@@ -53,7 +53,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IBancorVault } from "./../vault/interfaces/IBancorVault.sol";
+import { IBancorVault } from "./../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "./FeeTypes.sol";
 

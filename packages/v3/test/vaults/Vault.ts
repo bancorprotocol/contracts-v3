@@ -189,7 +189,7 @@ describe('TestVault', () => {
             });
 
             context('when unauthenticated', () => {
-                it('should revert when unauthenticated', async () => {
+                it('should revert', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
                         'AccessDenied'
                     );

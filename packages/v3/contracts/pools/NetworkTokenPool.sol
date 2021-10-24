@@ -18,7 +18,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../vault/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
