@@ -2922,6 +2922,13 @@ describe('BancorNetwork', () => {
                 );
             });
 
+            it('should revert when attempting to request a flash-loan of a non-whitelisted token', async () => {
+                const reserveToken = await createTokenBySymbol(TKN);
+                await expect(
+                    network.flashLoan(reserveToken.address, amount, recipient.address, ZERO_BYTES)
+                ).to.be.revertedWith('NotWhitelisted');
+            });
+
             it('should revert when attempting to request a flash-loan of an invalid amount', async () => {
                 await expect(
                     network.flashLoan(token.address, BigNumber.from(0), recipient.address, ZERO_BYTES)
