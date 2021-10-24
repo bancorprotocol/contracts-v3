@@ -35,7 +35,7 @@ interface ILiquidityPoolConverter is IConverter {
         uint256 amount,
         IReserveToken[] memory reserveTokens,
         uint256[] memory reserveMinReturnAmounts
-    ) external;
+    ) external returns (uint256[] memory);
 
     function recentAverageRate(IReserveToken reserveToken) external view returns (uint256, uint256);
 }
@@ -744,6 +744,37 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     }
 
     /**
+     * @dev migrates the system pool tokens on a given pool to v3
+     *
+     * Requirements:
+     *
+     * - the caller must be the owner of all of this contract
+     */
+    function migrateSystemPoolTokens(
+        IConverterAnchor poolAnchor,
+        uint256 poolAmount,
+        address bancorVault
+    )
+        external
+        ownerOnly
+    {
+        IDSToken poolToken = IDSToken(address(poolAnchor));
+
+        _systemStore.decSystemBalance(poolToken, poolAmount);
+        _wallet.withdrawTokens(IReserveToken(address(poolToken)), address(this), poolAmount);
+
+        ILiquidityPoolConverter converter = ILiquidityPoolConverter(payable(_ownedBy(poolToken)));
+        (IReserveToken[] memory reserveTokens, uint256[] memory minReturns) = _removeLiquidityInput(
+            IReserveToken(address(_networkToken)),
+            _converterOtherReserve(converter, IReserveToken(address(_networkToken)))
+        );
+        uint256[] memory reserveAmounts = converter.removeLiquidity(poolAmount, reserveTokens, minReturns);
+
+        _burnNetworkTokens(poolAnchor, reserveAmounts[0]);
+        reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+    }
+
+    /**
      * @dev transfers a position to a new provider
      */
     function _transferPosition(
@@ -1053,13 +1084,10 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         IReserveToken reserveToken2
     ) internal {
         ILiquidityPoolConverter converter = ILiquidityPoolConverter(payable(_ownedBy(poolToken)));
-
-        IReserveToken[] memory reserveTokens = new IReserveToken[](2);
-        uint256[] memory minReturns = new uint256[](2);
-        reserveTokens[0] = reserveToken1;
-        reserveTokens[1] = reserveToken2;
-        minReturns[0] = 1;
-        minReturns[1] = 1;
+        (IReserveToken[] memory reserveTokens, uint256[] memory minReturns) = _removeLiquidityInput(
+            reserveToken1,
+            reserveToken2
+        );
         converter.removeLiquidity(poolAmount, reserveTokens, minReturns);
     }
 
@@ -1284,5 +1312,25 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      */
     function _isNetworkToken(IReserveToken reserveToken) private view returns (bool) {
         return address(reserveToken) == address(_networkToken);
+    }
+
+    /**
+     * @dev returns custom input for the `removeLiquidity` converter function
+     */
+    function _removeLiquidityInput(
+        IReserveToken reserveToken1,
+        IReserveToken reserveToken2
+    )
+        private
+        pure
+        returns (IReserveToken[] memory, uint256[] memory)
+    {
+        IReserveToken[] memory reserveTokens = new IReserveToken[](2);
+        uint256[] memory minReturns = new uint256[](2);
+        reserveTokens[0] = reserveToken1;
+        reserveTokens[1] = reserveToken2;
+        minReturns[0] = 1;
+        minReturns[1] = 1;
+        return (reserveTokens, minReturns);
     }
 }
