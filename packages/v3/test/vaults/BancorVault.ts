@@ -83,88 +83,42 @@ describe('BancorVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        context(`withdrawing ${ETH}`, () => {
+        for (const symbol of [BNT, ETH, TKN]) {
             prepareEach(async () => {
-                token = await createTokenBySymbol(ETH);
+                token = symbol === BNT ? { address: networkToken.address } : await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, bancorVault.address, amount);
             });
 
-            context('when role asset manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
+            context(`withdrawing ${symbol}`, () => {
+                context('when regular user', () => {
+                    testWithdrawFundsRestricted();
                 });
 
-                testWithdrawFunds();
-            });
+                context('when admin', () => {
+                    prepareEach(async () => {
+                        await bancorVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                    });
 
-            context('when network token manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                    testWithdrawFundsRestricted();
                 });
 
-                testWithdrawFundsRestricted();
-            });
+                context('when role asset manager', () => {
+                    prepareEach(async () => {
+                        await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                    });
 
-            context('when regular user', () => {
-                testWithdrawFundsRestricted();
-            });
-        });
-
-        context(`withdrawing ${BNT}`, () => {
-            prepareEach(async () => {
-                token = networkToken;
-
-                transfer(deployer, token, bancorVault.address, amount);
-            });
-
-            context('when role asset manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                    testWithdrawFunds();
                 });
 
-                testWithdrawFunds();
-            });
+                context('when network token manager', () => {
+                    prepareEach(async () => {
+                        await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                    });
 
-            context('when network token manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                    symbol === BNT ? testWithdrawFunds : testWithdrawFundsRestricted();
                 });
-
-                testWithdrawFunds();
             });
-
-            context('when regular user', () => {
-                testWithdrawFundsRestricted();
-            });
-        });
-
-        context(`withdrawing ${TKN}`, () => {
-            prepareEach(async () => {
-                token = await createTokenBySymbol(TKN);
-
-                transfer(deployer, token, bancorVault.address, amount);
-            });
-
-            context('when role asset manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
-                });
-
-                testWithdrawFunds();
-            });
-
-            context('when network token manager', () => {
-                prepareEach(async () => {
-                    await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
-                });
-
-                testWithdrawFundsRestricted();
-            });
-
-            context('when regular user', () => {
-                testWithdrawFundsRestricted();
-            });
-        });
+        }
     });
 });
