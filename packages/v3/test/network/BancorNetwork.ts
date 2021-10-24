@@ -96,8 +96,11 @@ describe('BancorNetwork', () => {
     }
 
     const specToString = (spec: PoolSpec) => {
-        const feeDesc = spec.tradingFeePPM !== undefined ? `fee=${feeToString(spec.tradingFeePPM)}` : '';
-        return `${spec.symbol} (balance=${spec.balance}${feeDesc})}`;
+        if (spec.tradingFeePPM !== undefined) {
+            return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
+        }
+
+        return `${spec.symbol} (balance=${spec.balance})`;
     };
 
     const deposit = async (
