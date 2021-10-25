@@ -80,7 +80,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     uint256 internal constant MAX_UINT128 = 2**128 - 1;
     uint256 internal constant MAX_UINT256 = uint256(-1);
 
-    IBancorNetworkV3 private immutable _network;
+    IBancorNetworkV3 private immutable _networkV3;
     ILiquidityProtectionSettings private immutable _settings;
     ILiquidityProtectionStore private immutable _store;
     ILiquidityProtectionStats private immutable _stats;
@@ -96,7 +96,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      * @dev initializes a new LiquidityProtection contract
      */
     constructor(
-        IBancorNetworkV3 network,
+        IBancorNetworkV3 networkV3,
         ILiquidityProtectionSettings settings,
         ILiquidityProtectionStore store,
         ILiquidityProtectionStats stats,
@@ -107,7 +107,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         ICheckpointStore lastRemoveCheckpointStore
     )
         public
-        validAddress(address(network))
+        validAddress(address(networkV3))
         validAddress(address(settings))
         validAddress(address(store))
         validAddress(address(stats))
@@ -115,7 +115,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         validAddress(address(wallet))
         validAddress(address(lastRemoveCheckpointStore))
     {
-        _network = network;
+        _networkV3 = networkV3;
         _settings = settings;
         _store = store;
         _stats = stats;
@@ -588,8 +588,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             } else {
                 // mint network tokens for this contract and migrate them
                 _mintNetworkTokens(address(this), removedPos.poolToken, targetAmount);
-                _networkToken.ensureApprove(address(_network), targetAmount);
-                _network.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
+                _networkToken.ensureApprove(address(_networkV3), targetAmount);
+                _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
             }
             return;
         }
@@ -631,9 +631,9 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
                 _lockTokens(provider, delta);
             }
         } else {
-            removedPos.reserveToken.ensureApprove(address(_network), baseBalance);
+            removedPos.reserveToken.ensureApprove(address(_networkV3), baseBalance);
             uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
-            _network.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
+            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
         }
 
         // if the contract still holds network tokens, burn them
