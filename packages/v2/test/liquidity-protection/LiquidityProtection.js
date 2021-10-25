@@ -2244,6 +2244,75 @@ describe('LiquidityProtection', () => {
                                     liquidityProtection.migratePositions([protectionId])
                                 ).to.be.revertedWith('ERR_POOL_NOT_WHITELISTED');
                             });
+
+                            it('verifies that the owner can migrate system pool tokens', async () => {
+                                const vault = accounts[9];
+                                const reserveAmount = BigNumber.from(1000);
+                                await addProtectedLiquidity(
+                                    poolToken.address,
+                                    baseToken,
+                                    baseTokenAddress,
+                                    reserveAmount,
+                                    isETHReserve
+                                );
+                                let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                                const protectionId = protectionIds[0];
+                                let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                                protection = getProtection(protection);
+
+                                const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(
+                                    poolToken.address
+                                );
+
+                                await govToken.approve(liquidityProtection.address, protection.reserveAmount);
+
+                                await liquidityProtection.setTime(now.add(duration.seconds(1)));
+
+                                const prevGovBalance = await govToken.balanceOf(owner.address);
+
+                                await liquidityProtection.migrateSystemPoolTokens([poolToken.address], vault.address);
+
+                                // verify balances
+                                const systemBalance = await liquidityProtectionSystemStore.systemBalance(
+                                    poolToken.address
+                                );
+                                expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
+
+                                const govBalance = await govToken.balanceOf(owner.address);
+                                expect(govBalance).to.equal(prevGovBalance);
+
+                                const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
+                                expect(protectionPoolBalance).to.equal(BigNumber.from(0));
+
+                                const protectionBaseBalance = await getBalance(
+                                    baseToken,
+                                    baseTokenAddress,
+                                    liquidityProtection.address
+                                );
+                                expect(protectionBaseBalance).to.equal(BigNumber.from(0));
+
+                                const protectionNetworkBalance = await networkToken.balanceOf(
+                                    liquidityProtection.address
+                                );
+                                expect(protectionNetworkBalance).to.equal(BigNumber.from(0));
+                            });
+
+                            it('verifies that a non-owner cannot migrate system pool tokens', async () => {
+                                const nonOwner = accounts[8];
+                                const vault = accounts[9];
+                                const reserveAmount = BigNumber.from(1000);
+                                await addProtectedLiquidity(
+                                    poolToken.address,
+                                    baseToken,
+                                    baseTokenAddress,
+                                    reserveAmount,
+                                    isETHReserve
+                                );
+
+                                await expect(
+                                    liquidityProtection.connect(nonOwner).migrateSystemPoolTokens([poolToken.address], vault.address)
+                                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                                });
                         });
                     }
 
