@@ -80,16 +80,18 @@ describe('ExternalProtectionVault', () => {
             });
         };
 
-        prepareEach(async () => {
-            ({ externalProtectionVault, networkToken } = await createSystem());
+        before(async () => {
             [deployer, user] = await ethers.getSigners();
         });
 
         for (const symbol of [BNT, ETH, TKN]) {
-            prepareEach(async () => {
-                token = symbol === BNT ? { address: networkToken.address } : await createTokenBySymbol(TKN);
+            const isNetworkToken = symbol === BNT;
 
-                transfer(deployer, token, externalProtectionVault.address, amount);
+            prepareEach(async () => {
+                ({ externalProtectionVault, networkToken } = await createSystem());
+                token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
+
+                await transfer(deployer, token, externalProtectionVault.address, amount);
             });
 
             context(`withdrawing ${symbol}`, () => {
