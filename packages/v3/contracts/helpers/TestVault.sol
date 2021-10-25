@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { Vault } from "../vault/Vault.sol";
+import { Vault } from "../vaults/Vault.sol";
 
 contract TestVault is Vault {
     bool private _authenticateWithdrawal;
