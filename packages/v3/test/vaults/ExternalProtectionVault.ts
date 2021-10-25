@@ -56,7 +56,7 @@ describe('ExternalProtectionVault', () => {
     describe('asset management', () => {
         let amount = 1_000_000;
 
-        let bancorVault: ExternalProtectionVault;
+        let externalProtectionVault: ExternalProtectionVault;
         let networkToken: NetworkToken;
 
         let deployer: SignerWithAddress;
@@ -66,8 +66,8 @@ describe('ExternalProtectionVault', () => {
 
         const testWithdrawFunds = () => {
             it('should withdraw', async () => {
-                await expect(bancorVault.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(bancorVault, 'FundsWithdrawn')
+                await expect(externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(externalProtectionVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -75,13 +75,13 @@ describe('ExternalProtectionVault', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    bancorVault.connect(user).withdrawFunds(token.address, user.address, amount)
+                    externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
 
         prepareEach(async () => {
-            ({ bancorVault, networkToken } = await createSystem());
+            ({ externalProtectionVault, networkToken } = await createSystem());
             [deployer, user] = await ethers.getSigners();
         });
 
@@ -89,7 +89,7 @@ describe('ExternalProtectionVault', () => {
             prepareEach(async () => {
                 token = symbol === BNT ? { address: networkToken.address } : await createTokenBySymbol(TKN);
 
-                transfer(deployer, token, bancorVault.address, amount);
+                transfer(deployer, token, externalProtectionVault.address, amount);
             });
 
             context(`withdrawing ${symbol}`, () => {
@@ -99,7 +99,7 @@ describe('ExternalProtectionVault', () => {
 
                 context('when admin', () => {
                     prepareEach(async () => {
-                        await bancorVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -107,7 +107,10 @@ describe('ExternalProtectionVault', () => {
 
                 context('when role asset manager', () => {
                     prepareEach(async () => {
-                        await bancorVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                        await externalProtectionVault.grantRole(
+                            ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
+                            user.address
+                        );
                     });
 
                     testWithdrawFunds();
