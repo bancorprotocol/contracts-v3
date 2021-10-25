@@ -8,27 +8,7 @@ on:
   pull_request:
 
 jobs:
-  build-v2:
-    runs-on: self-hosted
-    defaults:
-      run:
-        shell: bash
-        working-directory: packages/v2
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-
-      - name: Install NPM Dependencies
-        run: yarn install
-
-      - name: Build
-        run: yarn build
-
   test:
-    needs: build-v2
     runs-on: self-hosted
     defaults:
       run:
@@ -36,6 +16,19 @@ jobs:
         working-directory: packages/v3
 
     steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install V2 NPM Dependencies
+        run: yarn install
+        working-directory: ../v2
+
+      - name: Build V2
+        run: yarn build
+        working-directory: ../v2
+
       - name: Install NPM Dependencies
         run: yarn install
 
