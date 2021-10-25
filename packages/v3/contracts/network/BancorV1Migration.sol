@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
 import { BancorNetwork } from "./BancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
@@ -18,53 +18,13 @@ interface IBancorConverterV2 {
     ) external returns (uint256[] memory);
 }
 
-contract BancorV1Migration is Upgradeable, ReentrancyGuardUpgradeable {
+contract BancorV1Migration is ReentrancyGuard, Utils {
     using ReserveTokenLibrary for ReserveToken;
 
     BancorNetwork private immutable _network;
 
-    // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 0] private __gap;
-
-    /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor(BancorNetwork network) {
+    constructor(BancorNetwork network) validAddress(address(network)) {
         _network = network;
-    }
-
-    /**
-     * @dev fully initializes the contract and its parents
-     */
-    function initialize() external initializer {
-        __BancorV1Migration_init();
-    }
-
-    // solhint-disable func-name-mixedcase
-
-    /**
-     * @dev initializes the contract and its parents
-     */
-    function __BancorV1Migration_init() internal initializer {
-        __Upgradeable_init();
-        __ReentrancyGuard_init();
-
-        __BancorV1Migration_init_unchained();
-    }
-
-    /**
-     * @dev performs contract-specific initialization
-     */
-    function __BancorV1Migration_init_unchained() internal initializer {
-    }
-
-    // solhint-enable func-name-mixedcase
-
-    /**
-     * @dev returns the current version of the contract
-     */
-    function version() external pure returns (uint16) {
-        return 1;
     }
 
     function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
