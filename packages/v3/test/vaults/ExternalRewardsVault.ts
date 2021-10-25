@@ -54,7 +54,7 @@ describe('ExternalRewardsVault', () => {
     describe('asset management', () => {
         let amount = 1_000_000;
 
-        let externalProtectionVault: ExternalRewardsVault;
+        let externalRewardsVault: ExternalRewardsVault;
         let networkToken: NetworkToken;
 
         let deployer: SignerWithAddress;
@@ -64,8 +64,8 @@ describe('ExternalRewardsVault', () => {
 
         const testWithdrawFunds = () => {
             it('should withdraw', async () => {
-                await expect(externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(externalProtectionVault, 'FundsWithdrawn')
+                await expect(externalRewardsVault.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(externalRewardsVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -73,21 +73,23 @@ describe('ExternalRewardsVault', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount)
+                    externalRewardsVault.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
 
-        prepareEach(async () => {
-            ({ externalProtectionVault, networkToken } = await createSystem());
+        before(async () => {
             [deployer, user] = await ethers.getSigners();
         });
 
         for (const symbol of [BNT, ETH, TKN]) {
-            prepareEach(async () => {
-                token = symbol === BNT ? { address: networkToken.address } : await createTokenBySymbol(TKN);
+            const isNetworkToken = symbol === BNT;
 
-                transfer(deployer, token, externalProtectionVault.address, amount);
+            prepareEach(async () => {
+                ({ externalRewardsVault, networkToken } = await createSystem());
+                token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
+
+                transfer(deployer, token, externalRewardsVault.address, amount);
             });
 
             context(`withdrawing ${symbol}`, () => {
@@ -97,7 +99,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('when admin', () => {
                     prepareEach(async () => {
-                        await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalRewardsVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -105,7 +107,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('when role asset manager', () => {
                     prepareEach(async () => {
-                        await externalProtectionVault.grantRole(
+                        await externalRewardsVault.grantRole(
                             ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                             user.address
                         );
