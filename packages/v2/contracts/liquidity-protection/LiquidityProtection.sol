@@ -510,13 +510,10 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // handle base token return
 
-        // calculate the amount of pool tokens required for liquidation
+        // get the amount of pool tokens required for liquidation
         // note that the amount is doubled since it's not possible to liquidate one reserve only
         Fraction memory poolRate = _poolTokenRate(pos.poolToken, pos.reserveToken);
-        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d.mul(2), poolRate.n);
-
-        // limit the amount of pool tokens by the amount the system/caller holds
-        poolAmount = Math.min(poolAmount, _systemStore.systemBalance(pos.poolToken).add(pos.poolAmount));
+        uint256 poolAmount = _liquidationAmount(targetAmount, poolRate, pos.poolToken, pos.poolAmount);
 
         // calculate the base token amount received by liquidating the pool tokens
         // note that the amount is divided by 2 since the pool amount represents both reserves
@@ -599,18 +596,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // remove base token liquidity
 
-        // calculate the amount of pool tokens required for liquidation
+        // get the amount of pool tokens required for liquidation
         // note that the amount is doubled since it's not possible to liquidate one reserve only
         Fraction memory poolRate = _poolTokenRate(removedPos.poolToken, removedPos.reserveToken);
-        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d.mul(2), poolRate.n);
-
-        // limit the amount of pool tokens by the amount the system holds
-        poolAmount = Math.min(poolAmount, _systemStore.systemBalance(removedPos.poolToken));
+        uint256 poolAmount = _liquidationAmount(targetAmount, poolRate, removedPos.poolToken, 0);
 
         // withdraw the pool tokens from the wallet
-        IReserveToken poolToken = IReserveToken(address(removedPos.poolToken));
-        _systemStore.decSystemBalance(removedPos.poolToken, poolAmount);
-        _wallet.withdrawTokens(poolToken, address(this), poolAmount);
+        _withdrawPoolTokens(removedPos.poolToken, poolAmount);
 
         // remove liquidity
         _removeLiquidity(
@@ -749,8 +741,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             IDSToken poolToken = IDSToken(address(poolAnchors[i]));
             uint256 poolAmount = _systemStore.systemBalance(poolToken);
 
-            _systemStore.decSystemBalance(poolToken, poolAmount);
-            _wallet.withdrawTokens(IReserveToken(address(poolToken)), address(this), poolAmount);
+            _withdrawPoolTokens(poolToken, poolAmount);
 
             ILiquidityPoolConverter converter = ILiquidityPoolConverter(payable(_ownedBy(poolToken)));
             (IReserveToken[] memory reserveTokens, uint256[] memory minReturns) = _removeLiquidityInput(
@@ -1352,5 +1343,32 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             mintingLimit = _settings.defaultNetworkTokenMintingLimit();
         }
         return mintingLimit;
+    }
+
+    /**
+     * @dev returns the amount of pool tokens required for liquidation
+     */
+    function _liquidationAmount(
+        uint256 targetAmount,
+        Fraction memory poolRate,
+        IDSToken poolToken,
+        uint256 additionalAmount
+    )
+        private
+        view
+        returns (uint256)
+    {
+        // note that the amount is doubled since it's not possible to liquidate one reserve only
+        uint256 poolAmount = MathEx.mulDivF(targetAmount, poolRate.d.mul(2), poolRate.n);
+        // limit the amount of pool tokens by the amount the system/caller holds
+        return Math.min(poolAmount, _systemStore.systemBalance(poolToken).add(additionalAmount));
+    }
+
+    /**
+     * @dev withdraw pool tokens from the wallet
+     */
+    function _withdrawPoolTokens(IDSToken poolToken, uint256 poolAmount) private {
+        _systemStore.decSystemBalance(poolToken, poolAmount);
+        _wallet.withdrawTokens(IReserveToken(address(poolToken)), address(this), poolAmount);
     }
 }
