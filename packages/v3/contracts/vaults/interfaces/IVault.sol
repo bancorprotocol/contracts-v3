@@ -24,27 +24,4 @@ interface IVault is IUpgradeable {
         address payable target,
         uint256 amount
     ) external;
-
-    /**
-     * @dev returns whether withdrawals are currently paused
-     */
-    function isPaused() external view returns (bool);
-
-    /**
-     * @dev pauses withdrawals
-     *
-     * requirements:
-     *
-     * - the caller must have the ROLE_ADMIN privileges
-     */
-    function pause() external;
-
-    /**
-     * @dev unpauses withdrawals
-     *
-     * requirements:
-     *
-     * - the caller must have the ROLE_ADMIN privileges
-     */
-    function unpause() external;
 }
