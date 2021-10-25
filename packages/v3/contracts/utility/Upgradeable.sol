@@ -6,7 +6,7 @@ import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgr
 
 import { IUpgradeable } from "./interfaces/IUpgradeable.sol";
 
-import { AccessDenied } from "./Utils.sol";
+import { AccessControl } from "./Utils.sol";
 
 /**
  * @dev this contract provides common utilities for upgradeable contracts
@@ -37,19 +37,5 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
 
         // allow the deployer to initially be the admin of the contract
         _setupRole(ROLE_ADMIN, msg.sender);
-    }
-
-    // solhint-enable func-name-mixedcase
-
-    modifier onlyAdmin() {
-        _hasRole(ROLE_ADMIN, msg.sender);
-
-        _;
-    }
-
-    function _hasRole(bytes32 role, address account) internal view {
-        if (!hasRole(role, account)) {
-            revert AccessDenied();
-        }
     }
 }

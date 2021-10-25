@@ -64,7 +64,7 @@ describe('PoolToken', () => {
 
         it('should revert when a non owner attempts to issue tokens', async () => {
             await expect(poolToken.connect(nonOwner).mint(owner.address, BigNumber.from(1))).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
     });

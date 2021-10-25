@@ -8,7 +8,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
+import { Utils, AccessControl } from "../utility/Utils.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
@@ -96,14 +96,14 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
     /**
      * @inheritdoc IBancorVault
      */
-    function pause() external onlyAdmin {
+    function pause() external onlyRole(ROLE_ADMIN) {
         _pause();
     }
 
     /**
      * @inheritdoc IBancorVault
      */
-    function unpause() external onlyAdmin {
+    function unpause() external onlyRole(ROLE_ADMIN) {
         _unpause();
     }
 
@@ -123,7 +123,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
 
             emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
         } else {
-            revert AccessDenied();
+            revert AccessControl();
         }
     }
 }

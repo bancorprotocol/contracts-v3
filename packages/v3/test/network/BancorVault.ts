@@ -138,7 +138,7 @@ describe('BancorVault', () => {
                     });
                 };
 
-                const testWithdrawRestricted = (reason = 'AccessDenied') => {
+                const testWithdrawRestricted = (reason = 'AccessControl') => {
                     it('should not be able to withdraw any tokens', async () => {
                         await expect(
                             bancorVault.connect(sender).withdrawTokens(token.address, target.address, amount)
@@ -244,7 +244,7 @@ describe('BancorVault', () => {
 
         const testPauseRestricted = () => {
             it('should revert when a non-admin is attempting to pause', async () => {
-                await expect(bancorVault.connect(sender).pause()).to.be.revertedWith('AccessDenied');
+                await expect(bancorVault.connect(sender).pause()).to.be.revertedWith('AccessControl');
             });
 
             context('when paused', () => {
@@ -256,7 +256,7 @@ describe('BancorVault', () => {
                 });
 
                 it('should revert when a non-admin is attempting unpause', async () => {
-                    await expect(bancorVault.connect(sender).unpause()).to.be.revertedWith('AccessDenied');
+                    await expect(bancorVault.connect(sender).unpause()).to.be.revertedWith('AccessControl');
                 });
             });
         };

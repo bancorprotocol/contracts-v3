@@ -447,7 +447,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function setExternalProtectionWallet(ITokenHolder newExternalProtectionWallet)
         external
         validAddress(address(newExternalProtectionWallet))
-        onlyAdmin
+        onlyRole(ROLE_ADMIN)
     {
         ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
         if (prevExternalProtectionWallet == newExternalProtectionWallet) {
@@ -472,7 +472,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * - the caller must be the admin of the contract
      * - the new owner needs to accept the transfer
      */
-    function transferExternalProtectionWalletOwnership(address newOwner) external onlyAdmin {
+    function transferExternalProtectionWalletOwnership(address newOwner) external onlyRole(ROLE_ADMIN) {
         _externalProtectionWallet.transferOwnership(newOwner);
     }
 
@@ -487,7 +487,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         validAddress(address(poolCollection))
         nonReentrant
-        onlyAdmin
+        onlyRole(ROLE_ADMIN)
     {
         if (!_poolCollections.add(address(poolCollection))) {
             revert AlreadyExists();
@@ -518,7 +518,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function removePoolCollection(IPoolCollection poolCollection, IPoolCollection newLatestPoolCollection)
         external
         validAddress(address(poolCollection))
-        onlyAdmin
+        onlyRole(ROLE_ADMIN)
         nonReentrant
     {
         // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
@@ -557,7 +557,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         nonReentrant
         validAddress(address(poolCollection))
-        onlyAdmin
+        onlyRole(ROLE_ADMIN)
     {
         _verifyLatestPoolCollectionCandidate(poolCollection);
 

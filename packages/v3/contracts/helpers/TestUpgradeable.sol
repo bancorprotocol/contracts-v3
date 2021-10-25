@@ -22,5 +22,5 @@ contract TestUpgradeable is Upgradeable {
         return 1;
     }
 
-    function restricted() external view onlyAdmin {}
+    function restricted() external view onlyRole(ROLE_ADMIN) {}
 }

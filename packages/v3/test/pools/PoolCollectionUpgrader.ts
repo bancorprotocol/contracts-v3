@@ -73,7 +73,7 @@ describe('PoolCollectionUpgrader', () => {
 
             await expect(
                 poolCollectionUpgrader.connect(nonNetwork).upgradePool(reserveToken.address)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting upgrade an invalid pool', async () => {

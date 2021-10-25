@@ -118,7 +118,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).mint(recipient.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to mint to an invalid address', async () => {
@@ -160,7 +160,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
@@ -389,7 +389,7 @@ describe('NetworkTokenPool', () => {
                 networkTokenPool
                     .connect(nonNetwork)
                     .requestLiquidity(contextId, reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to request liquidity for an invalid pool', async () => {
@@ -529,7 +529,7 @@ describe('NetworkTokenPool', () => {
                 networkTokenPool
                     .connect(nonNetwork)
                     .renounceLiquidity(contextId, reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to renounce liquidity for an invalid pool', async () => {
@@ -647,7 +647,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to deposit a zero amount', async () => {
@@ -836,7 +836,7 @@ describe('NetworkTokenPool', () => {
 
             await expect(
                 networkTokenPool.connect(nonNetwork).withdraw(provider.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
@@ -1040,7 +1040,7 @@ describe('NetworkTokenPool', () => {
                 networkTokenPool
                     .connect(nonNetwork)
                     .onFeesCollected(reserveToken.address, BigNumber.from(1), FeeTypes.Trading)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {

@@ -89,7 +89,7 @@ describe('PendingWithdrawals', () => {
 
         it('should revert when a non-owner attempts to set the lock duration', async () => {
             await expect(pendingWithdrawals.connect(nonOwner).setLockDuration(newLockDuration)).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
@@ -130,7 +130,7 @@ describe('PendingWithdrawals', () => {
         it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
             await expect(
                 pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should ignore updating to the same withdrawal window duration', async () => {
@@ -393,7 +393,7 @@ describe('PendingWithdrawals', () => {
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
                     await expect(pendingWithdrawals.cancelWithdrawal(BigNumber.from(1))).to.be.revertedWith(
-                        'AccessDenied'
+                        'AccessControl'
                     );
                 });
 
@@ -462,13 +462,13 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(provider1).cancelWithdrawal(provider2Id)
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWith('AccessControl');
                     });
 
                     it('should revert when cancelling a withdrawal request twice', async () => {
                         await pendingWithdrawals.connect(provider1).cancelWithdrawal(id1);
                         await expect(pendingWithdrawals.connect(provider1).cancelWithdrawal(id1)).to.be.revertedWith(
-                            'AccessDenied'
+                            'AccessControl'
                         );
                     });
 
@@ -505,7 +505,7 @@ describe('PendingWithdrawals', () => {
 
                 it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
                     await expect(pendingWithdrawals.reinitWithdrawal(BigNumber.from(1))).to.be.revertedWith(
-                        'AccessDenied'
+                        'AccessControl'
                     );
                 });
 
@@ -578,7 +578,7 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(provider1).reinitWithdrawal(provider2Id)
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWith('AccessControl');
                     });
 
                     it('should reinitiate withdrawal requests', async () => {
@@ -614,7 +614,7 @@ describe('PendingWithdrawals', () => {
                 it('should revert when attempting to complete a non-existing withdrawal request', async () => {
                     await expect(
                         pendingWithdrawals.completeWithdrawal(contextId, provider.address, BigNumber.from(100))
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWith('AccessControl');
                 });
 
                 context('with an initiated withdrawal request', () => {
@@ -683,7 +683,7 @@ describe('PendingWithdrawals', () => {
 
                         await expect(
                             pendingWithdrawals.connect(nonNetwork).completeWithdrawal(contextId, provider.address, id)
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWith('AccessControl');
                     });
 
                     context('during the lock duration', () => {
@@ -738,7 +738,7 @@ describe('PendingWithdrawals', () => {
                             await network.completeWithdrawalT(contextId, provider.address, id);
 
                             await expect(pendingWithdrawals.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
-                                'AccessDenied'
+                                'AccessControl'
                             );
                         });
                     });

@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
-error AccessDenied();
+error AccessControl();
 error AlreadyExists();
 error DoesNotExist();
 error InvalidAddress();
@@ -33,7 +33,7 @@ contract Utils {
 
     function _only(address sender) internal view {
         if (msg.sender != sender) {
-            revert AccessDenied();
+            revert AccessControl();
         }
     }
 

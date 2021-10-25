@@ -33,6 +33,6 @@ describe('Upgradeable', () => {
     });
 
     it('should revert when a non-owner is attempting to call a restricted function', async () => {
-        await expect(upgradeable.connect(nonOwner).restricted()).to.be.revertedWith('AccessDenied');
+        await expect(upgradeable.connect(nonOwner).restricted()).to.be.revertedWith('AccessControl');
     });
 });

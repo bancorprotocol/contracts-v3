@@ -117,7 +117,7 @@ describe('PoolCollection', () => {
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
             await expect(
                 poolCollection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFree)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
@@ -166,7 +166,7 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                    'AccessDenied'
+                    'AccessControl'
                 );
             });
 
@@ -278,7 +278,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the initial rate', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setInitialRate(reserveToken.address, newInitialRate)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when setting an invalid rate', async () => {
@@ -342,7 +342,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the trading fee', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setTradingFeePPM(reserveToken.address, newTradingFee)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when setting an invalid trading fee', async () => {
@@ -394,7 +394,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to enable trading', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableTrading(reserveToken.address, true)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when enabling trading for a non-existing pool', async () => {
@@ -439,7 +439,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to enable depositing', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableDepositing(reserveToken.address, true)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when enabling depositing for a non-existing pool', async () => {
@@ -482,7 +482,7 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the deposit limit', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setDepositLimit(reserveToken.address, newDepositLimit)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when setting the deposit limit of a non-existing pool', async () => {
@@ -889,7 +889,7 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonNetwork)
                         .depositFor(provider.address, reserveToken.address, BigNumber.from(1), BigNumber.from(2))
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when attempting to deposit for an invalid provider', async () => {
@@ -1232,7 +1232,7 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonNetwork)
                         .withdraw(reserveToken.address, BigNumber.from(1), BigNumber.from(1), BigNumber.from(1))
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when attempting to withdraw from an invalid pool', async () => {
@@ -1347,7 +1347,7 @@ describe('PoolCollection', () => {
                         poolCollection
                             .connect(nonNetwork)
                             .trade(sourceToken.address, targetToken.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWith('AccessControl');
                 });
 
                 it('should revert when attempting to trade or query using an invalid source pool', async () => {
@@ -1999,7 +1999,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
@@ -2064,7 +2064,7 @@ describe('PoolCollection', () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
                     targetPoolCollection.connect(nonUpgrader).migratePoolIn(reserveToken.address, poolData)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when attempting to migrate an invalid pool into a pool collection', async () => {
@@ -2086,7 +2086,7 @@ describe('PoolCollection', () => {
 
                 await expect(
                     poolCollectionUpgrader.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should allow to migrate a pool into a pool collection', async () => {
@@ -2126,7 +2126,7 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonUpgrader)
                         .migratePoolOut(reserveToken.address, targetPoolCollection.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when attempting to migrate an invalid pool out of a pool collection', async () => {

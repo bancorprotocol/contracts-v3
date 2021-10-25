@@ -62,7 +62,7 @@ describe('PoolTokenFactory', () => {
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
             await expect(
                 poolTokenFactory.connect(nonOwner).setTokenSymbolOverride(reserveToken.address, newSymbol)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should be able to set and update a token symbol override', async () => {
@@ -94,7 +94,7 @@ describe('PoolTokenFactory', () => {
         it('should revert when a non-owner attempts to set a token decimal override', async () => {
             await expect(
                 poolTokenFactory.connect(nonOwner).setTokenDecimalsOverride(reserveToken.address, newDecimals)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should be able to set and update a token decimal override', async () => {

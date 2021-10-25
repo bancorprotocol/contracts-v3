@@ -72,7 +72,7 @@ describe('TokenHolder', () => {
                 it('should revert when a non-owner attempts to withdraw', async () => {
                     await expect(
                         holder.connect(nonOwner).withdrawTokens(asset.address, receiver.address, BigNumber.from(1))
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWith('AccessControl');
                 });
 
                 it('should revert when attempting to withdraw with an invalid asset address', async () => {
@@ -130,7 +130,7 @@ describe('TokenHolder', () => {
                 holder
                     .connect(nonOwner)
                     .withdrawTokensMultiple(assetAddresses, receiver.address, Object.values(amounts))
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when attempting to withdraw with an invalid asset address', async () => {

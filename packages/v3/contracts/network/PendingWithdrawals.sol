@@ -10,7 +10,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
+import { Utils, AccessControl, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 
@@ -173,7 +173,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * - the caller must be the admin of the contract
      */
-    function setLockDuration(uint32 newLockDuration) external onlyAdmin {
+    function setLockDuration(uint32 newLockDuration) external onlyRole(ROLE_ADMIN) {
         _setLockDuration(newLockDuration);
     }
 
@@ -195,7 +195,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      *
      * - the caller must be the admin of the contract
      */
-    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyAdmin {
+    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyRole(ROLE_ADMIN) {
         _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
@@ -270,7 +270,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         WithdrawalRequest memory request = _withdrawalRequests[id];
         address provider = request.provider;
         if (provider != msg.sender) {
-            revert AccessDenied();
+            revert AccessControl();
         }
 
         _cancelWithdrawal(request, id);
@@ -283,7 +283,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         WithdrawalRequest storage request = _withdrawalRequests[id];
         address provider = request.provider;
         if (provider != msg.sender) {
-            revert AccessDenied();
+            revert AccessControl();
         }
 
         uint32 currentTime = _time();
@@ -310,7 +310,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         if (provider != request.provider) {
-            revert AccessDenied();
+            revert AccessControl();
         }
 
         uint32 currentTime = _time();

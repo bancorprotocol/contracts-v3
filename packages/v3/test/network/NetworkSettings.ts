@@ -76,7 +76,7 @@ describe('NetworkSettings', () => {
             it('should revert when a non-owner attempts to add a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).addTokenToWhitelist(reserveToken.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when adding an invalid address', async () => {
@@ -110,7 +110,7 @@ describe('NetworkSettings', () => {
             it('should revert when a non-owner attempts to remove a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).removeTokenFromWhitelist(reserveToken.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when removing a non-whitelisted token', async () => {
@@ -144,7 +144,7 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set a pool limit', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setPoolMintingLimit(reserveToken.address, poolMintingLimit)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when setting a pool limit of an invalid address token', async () => {
@@ -190,7 +190,7 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setMinLiquidityForTrading(minLiquidityForTrading)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should ignore setting to the same minimum liquidity for trading', async () => {
@@ -245,9 +245,9 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the network fee params', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setNetworkFeeWallet(newNetworkFeeWallet.address)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
             await expect(networkSettings.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
@@ -315,7 +315,7 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
             await expect(networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
@@ -361,7 +361,7 @@ describe('NetworkSettings', () => {
 
         it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
             await expect(networkSettings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
@@ -408,7 +408,7 @@ describe('NetworkSettings', () => {
         it('should revert when a non-owner attempts to set the maximum deviation', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setAverageRateMaxDeviationPPM(newMaxDeviation)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when setting the maximum deviation to an invalid value', async () => {

@@ -391,7 +391,7 @@ describe('BancorNetwork', () => {
         it('should revert when a non-owner attempts to set the external protection wallet', async () => {
             await expect(
                 network.connect(nonOwner).setExternalProtectionWallet(newExternalProtectionWallet.address)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should revert when setting external protection wallet to an invalid address', async () => {
@@ -429,14 +429,14 @@ describe('BancorNetwork', () => {
 
         it('should revert when attempting to set the external protection wallet without transferring its ownership', async () => {
             await expect(network.setExternalProtectionWallet(newExternalProtectionWallet.address)).to.be.revertedWith(
-                'AccessDenied'
+                'AccessControl'
             );
         });
 
         it('should revert when a non-owner attempts to transfer the ownership of the protection wallet', async () => {
             await expect(
                 network.connect(newOwner).transferExternalProtectionWalletOwnership(newOwner.address)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWith('AccessControl');
         });
 
         it('should allow explicitly transferring the ownership', async () => {
@@ -468,7 +468,7 @@ describe('BancorNetwork', () => {
         describe('adding new pool collection', () => {
             it('should revert when a non-owner attempts to add a new pool collection', async () => {
                 await expect(network.connect(nonOwner).addPoolCollection(poolCollection.address)).to.be.revertedWith(
-                    'AccessDenied'
+                    'AccessControl'
                 );
             });
 
@@ -608,7 +608,7 @@ describe('BancorNetwork', () => {
                         network
                             .connect(nonOwner)
                             .removePoolCollection(poolCollection.address, newPoolCollection.address)
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWith('AccessControl');
                 });
 
                 it('should revert when attempting to remove a non-existing pool collection', async () => {
@@ -702,7 +702,7 @@ describe('BancorNetwork', () => {
             it('should revert when a non-owner attempts to set the latest pool collection', async () => {
                 await expect(
                     network.connect(nonOwner).setLatestPoolCollection(poolCollection.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWith('AccessControl');
             });
 
             it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
@@ -1818,7 +1818,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when attempting to withdraw a non-existing withdrawal request', async () => {
-            await expect(network.withdraw(BigNumber.from(12345))).to.be.revertedWith('AccessDenied');
+            await expect(network.withdraw(BigNumber.from(12345))).to.be.revertedWith('AccessControl');
         });
 
         const testWithdraw = async (symbol: string) => {
@@ -1877,7 +1877,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to withdraw from a different provider', async () => {
-                    await expect(network.connect(deployer).withdraw(id)).to.be.revertedWith('AccessDenied');
+                    await expect(network.connect(deployer).withdraw(id)).to.be.revertedWith('AccessControl');
                 });
 
                 context('during the lock duration', () => {

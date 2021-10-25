@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import { IOwned } from "./interfaces/IOwned.sol";
-import { AccessDenied } from "./Utils.sol";
+import { AccessControl } from "./Utils.sol";
 
 error SameOwner();
 
@@ -39,7 +39,7 @@ abstract contract Owned is IOwned {
     // error message binary size optimization
     function _onlyOwner() private view {
         if (msg.sender != _owner) {
-            revert AccessDenied();
+            revert AccessControl();
         }
     }
 
@@ -66,7 +66,7 @@ abstract contract Owned is IOwned {
      */
     function acceptOwnership() public virtual {
         if (msg.sender != _newOwner) {
-            revert AccessDenied();
+            revert AccessControl();
         }
 
         _setOwner(_newOwner);
