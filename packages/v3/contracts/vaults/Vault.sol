@@ -38,21 +38,29 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     function __Vault_init_unchained() internal initializer {}
 
     /**
-     * @inheritdoc IVault
+     * @dev returns whether withdrawals are currently paused
      */
     function isPaused() external view returns (bool) {
         return paused();
     }
 
     /**
-     * @inheritdoc IVault
+     * @dev pauses withdrawals
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_ADMIN privileges
      */
     function pause() external onlyAdmin {
         _pause();
     }
 
     /**
-     * @inheritdoc IVault
+     * @dev unpauses withdrawals
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_ADMIN privileges
      */
     function unpause() external onlyAdmin {
         _unpause();
