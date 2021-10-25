@@ -78,19 +78,21 @@ describe('BancorVault', () => {
             });
         };
 
-        prepareEach(async () => {
-            ({ bancorVault, networkToken } = await createSystem());
+        before(async () => {
             [deployer, user] = await ethers.getSigners();
         });
 
         for (const symbol of [BNT, ETH, TKN]) {
-            prepareEach(async () => {
-                token = symbol === BNT ? { address: networkToken.address } : await createTokenBySymbol(TKN);
-
-                transfer(deployer, token, bancorVault.address, amount);
-            });
+            const isNetworkToken = symbol === BNT;
 
             context(`withdrawing ${symbol}`, () => {
+                prepareEach(async () => {
+                    ({ bancorVault, networkToken } = await createSystem());
+                    token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
+
+                    await transfer(deployer, token, bancorVault.address, amount);
+                });
+
                 context('when regular user', () => {
                     testWithdrawFundsRestricted();
                 });
@@ -116,7 +118,7 @@ describe('BancorVault', () => {
                         await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });
 
-                    symbol === BNT ? testWithdrawFunds : testWithdrawFundsRestricted();
+                    isNetworkToken ? testWithdrawFunds() : testWithdrawFundsRestricted();
                 });
             });
         }
