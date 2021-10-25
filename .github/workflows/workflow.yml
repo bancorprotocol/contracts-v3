@@ -35,6 +35,7 @@ jobs:
         shell: bash
         working-directory: packages/v3
 
+    steps:
       - name: Install NPM Dependencies
         run: yarn install
 
