@@ -721,7 +721,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      *
      * - the caller must be the owner of all of the positions
      */
-    function migratePositions(uint256[] memory positionIds) external nonReentrant {
+    function migratePositions(uint256[] calldata positionIds) external nonReentrant {
         uint256 length = positionIds.length;
         for (uint256 i = 0; i < length; i++) {
             _removeLiquidity(msg.sender, positionIds[i], PPM_RESOLUTION, false);
@@ -735,7 +735,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      *
      * - the caller must be the owner of all of this contract
      */
-    function migrateSystemPoolTokens(IConverterAnchor[] memory poolAnchors, address bancorVault) external ownerOnly {
+    function migrateSystemPoolTokens(IConverterAnchor[] calldata poolAnchors, address bancorVault) external ownerOnly {
         uint256 length = poolAnchors.length;
         for (uint256 i = 0; i < length; i++) {
             IDSToken poolToken = IDSToken(address(poolAnchors[i]));
