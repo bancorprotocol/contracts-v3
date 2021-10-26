@@ -1,6 +1,5 @@
 /* eslint-enable camelcase */
-import { Signer } from '@ethersproject/abstract-signer';
-import { ContractFactory } from '@ethersproject/contracts';
+import { Signer, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 
 export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
@@ -36,7 +35,7 @@ export const deployOrAttach = <F extends ContractFactory>(
 ): ContractBuilder<F> => {
     return {
         metadata: {
-            contractName: contractName,
+            contractName,
             abi: FactoryConstructor.abi,
             bytecode: FactoryConstructor.bytecode
         },
