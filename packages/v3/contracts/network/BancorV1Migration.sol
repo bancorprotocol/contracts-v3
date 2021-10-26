@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { Utils } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
@@ -20,6 +21,7 @@ interface IBancorConverterV2 {
 }
 
 contract BancorV1Migration is ReentrancyGuard, Utils {
+    using SafeERC20 for IPoolToken;
     using ReserveTokenLibrary for ReserveToken;
 
     BancorNetwork private immutable _network;
@@ -29,7 +31,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
     }
 
     function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
-        poolToken.transferFrom(msg.sender, address(this), amount);
+        poolToken.safeTransferFrom(msg.sender, address(this), amount);
 
         IBancorConverterV2 converter = IBancorConverterV2(payable(poolToken.owner()));
 
