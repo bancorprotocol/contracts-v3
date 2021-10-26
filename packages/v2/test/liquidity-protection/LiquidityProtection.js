@@ -2166,7 +2166,7 @@ describe('LiquidityProtection', () => {
                                 expect(protectionNetworkBalance).to.equal(BigNumber.from(0));
                             });
 
-                            it('verifies that migrating positions updates the removal checkpoint', async () => {
+                            it('verifies that migrating positions does not update the removal checkpoint', async () => {
                                 const reserveAmount = BigNumber.from(100000);
                                 await addProtectedLiquidity(
                                     poolToken.address,
@@ -2187,7 +2187,7 @@ describe('LiquidityProtection', () => {
 
                                 await liquidityProtection.migratePositions([protectionId]);
 
-                                expect(await checkpointStore.checkpoint(owner.address)).to.equal(now);
+                                expect(await checkpointStore.checkpoint(owner.address)).to.equal(BigNumber.from(0));
                             });
 
                             it('should revert when attempting to migrate a position that does not exist', async () => {

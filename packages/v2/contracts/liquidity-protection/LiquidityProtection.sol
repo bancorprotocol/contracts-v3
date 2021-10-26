@@ -541,7 +541,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         bool isMigrating
     ) internal {
         // remove the position from the store and update the stats and the last removal checkpoint
-        Position memory removedPos = _removePosition(provider, id, portion);
+        Position memory removedPos = _removePosition(provider, id, portion, isMigrating);
 
         // add the pool tokens to the system
         _systemStore.incSystemBalance(removedPos.poolToken, removedPos.poolAmount);
@@ -763,7 +763,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         address newProvider
     ) internal returns (uint256) {
         // remove the position from the store and update the stats and the last removal checkpoint
-        Position memory removedPos = _removePosition(provider, id, PPM_RESOLUTION);
+        Position memory removedPos = _removePosition(provider, id, PPM_RESOLUTION, false);
 
         // add the position to the store, update the stats, and return the new id
         return
@@ -885,7 +885,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     function _removePosition(
         address provider,
         uint256 id,
-        uint32 portion
+        uint32 portion,
+        bool isMigrating
     ) private returns (Position memory) {
         Position memory pos = _providerPosition(id, provider);
 
@@ -932,8 +933,10 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // update the statistics
         _stats.decreaseTotalAmounts(pos.provider, pos.poolToken, pos.reserveToken, pos.poolAmount, pos.reserveAmount);
 
-        // update last liquidity removal checkpoint
-        _lastRemoveCheckpointStore.addCheckpoint(provider);
+        if (!isMigrating) {
+            // update last liquidity removal checkpoint
+            _lastRemoveCheckpointStore.addCheckpoint(provider);
+        }
 
         return pos;
     }
