@@ -3,7 +3,7 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
@@ -17,25 +17,25 @@ describe('ExternalRewardsVault', () => {
     shouldHaveGap('ExternalRewardsVault');
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { externalRewardsVault } = await createSystem();
+        let externalRewardsVault: ExternalRewardsVault;
 
+        prepareEach(async () => {
+            ({ externalRewardsVault } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(externalRewardsVault.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be payable', async () => {
-            const { externalRewardsVault } = await createSystem();
-
             expect(await externalRewardsVault.isPayable()).to.be.true;
         });
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-
-            const externalRewardsVault = await Contracts.ExternalRewardsVault.deploy();
-            await externalRewardsVault.initialize();
+            const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
             expect(await externalRewardsVault.version()).to.equal(1);
 
