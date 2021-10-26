@@ -53,15 +53,7 @@ describe('TestVault', () => {
     it('should be able to send ETH to a transparent upgradeable proxy', async () => {
         const amount = 1_000_000;
 
-        const admin = await Contracts.ProxyAdmin.deploy();
-        const logicContract = await Contracts.TestVault.deploy();
-        const proxy = await Contracts.TransparentUpgradeableProxy.deploy(
-            logicContract.address,
-            admin.address,
-            logicContract.interface.encodeFunctionData('initialize')
-        );
-        const transparentUpgradeableProxy = logicContract.attach(proxy.address);
-
+        const transparentUpgradeableProxy = await createProxy(Contracts.TestVault);
         await transparentUpgradeableProxy.setPayable(true);
 
         const balance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, transparentUpgradeableProxy.address);
