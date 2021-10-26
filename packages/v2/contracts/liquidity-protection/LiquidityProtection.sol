@@ -574,7 +574,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
                 removedPos.reserveAmount,
                 packedRates,
                 removedPos.timestamp,
-                _time()
+                isMigrating ? MAX_UINT256 : _time()
             );
 
         // remove network token liquidity
