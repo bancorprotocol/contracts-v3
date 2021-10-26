@@ -731,7 +731,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      *
      * Requirements:
      *
-     * - the caller must be the owner of all of this contract
+     * - the caller must be the owner of this contract
      */
     function migrateSystemPoolTokens(IConverterAnchor[] calldata poolAnchors, address bancorVault) external ownerOnly {
         uint256 length = poolAnchors.length;
