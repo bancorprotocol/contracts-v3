@@ -2102,8 +2102,6 @@ describe('LiquidityProtection', () => {
                                     poolToken.address
                                 );
 
-                                await govToken.approve(liquidityProtection.address, protection.reserveAmount);
-
                                 await liquidityProtection.setTime(now.add(duration.seconds(1)));
 
                                 const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
@@ -2264,8 +2262,6 @@ describe('LiquidityProtection', () => {
                                     poolToken.address
                                 );
 
-                                await govToken.approve(liquidityProtection.address, protection.reserveAmount);
-
                                 await liquidityProtection.setTime(now.add(duration.seconds(1)));
 
                                 const prevGovBalance = await govToken.balanceOf(owner.address);
@@ -2350,7 +2346,6 @@ describe('LiquidityProtection', () => {
                             const prevBalance = await getBalance(networkToken, networkToken.address, owner.address);
                             const prevGovBalance = await govToken.balanceOf(owner.address);
 
-                            await govToken.approve(liquidityProtection.address, protection.reserveAmount);
                             await liquidityProtection.setTime(now.add(duration.seconds(1)));
                             await liquidityProtection.migratePositions([protectionId]);
                             protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
