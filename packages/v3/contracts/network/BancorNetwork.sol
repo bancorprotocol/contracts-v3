@@ -71,7 +71,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
 
-    // the migration manager role is required for executing function `migrateLiquidity`
+    // the migration manager role is required for migrating liquidity
     bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
 
     // the address of the network token
