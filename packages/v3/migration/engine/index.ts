@@ -1,7 +1,7 @@
 import { Engine } from './Engine';
 import { defaultArgs } from './Types';
-import { Signer } from '@ethersproject/abstract-signer';
 import { LedgerSigner } from '@ethersproject/hardware-wallets';
+import { Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { HardhatRuntimeEnvironment as hre } from 'hardhat/types';
 
