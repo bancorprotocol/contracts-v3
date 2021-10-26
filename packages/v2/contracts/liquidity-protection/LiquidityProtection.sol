@@ -528,7 +528,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      * removes network tokens
      */
     function removeLiquidity(uint256 id, uint32 portion) external override nonReentrant validPortion(portion) {
-        _removeLiquidity(msg.sender, id, portion, true);
+        _removeLiquidity(msg.sender, id, portion, false);
     }
 
     /**
@@ -538,7 +538,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         address payable provider,
         uint256 id,
         uint32 portion,
-        bool normal
+        bool isMigrating
     ) internal {
         // remove the position from the store and update the stats and the last removal checkpoint
         Position memory removedPos = _removePosition(provider, id, portion);
@@ -548,7 +548,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // if removing network token liquidity, burn the governance tokens from the caller. we need to transfer the
         // tokens to the contract itself, since only token holders can burn their tokens
-        if (normal && _isNetworkToken(removedPos.reserveToken)) {
+        if (!isMigrating && _isNetworkToken(removedPos.reserveToken)) {
             _govToken.safeTransferFrom(provider, address(this), removedPos.reserveAmount);
             _govTokenGovernance.burn(removedPos.reserveAmount);
         }
@@ -558,14 +558,12 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             _packRates(removedPos.poolToken, removedPos.reserveToken, removedPos.reserveRateN, removedPos.reserveRateD);
 
         // verify rate deviation as early as possible in order to reduce gas-cost for failing transactions
-        if (normal) {
-            _verifyRateDeviation(
-                packedRates.removeSpotRateN,
-                packedRates.removeSpotRateD,
-                packedRates.removeAverageRateN,
-                packedRates.removeAverageRateD
-            );
-        }
+        _verifyRateDeviation(
+            packedRates.removeSpotRateN,
+            packedRates.removeSpotRateD,
+            packedRates.removeAverageRateN,
+            packedRates.removeAverageRateD
+        );
 
         // get the target token amount
         uint256 targetAmount =
@@ -581,15 +579,15 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // remove network token liquidity
         if (_isNetworkToken(removedPos.reserveToken)) {
-            if (normal) {
-                // mint network tokens for the caller and lock them
-                _mintNetworkTokens(address(_wallet), removedPos.poolToken, targetAmount);
-                _lockTokens(provider, targetAmount);
-            } else {
+            if (isMigrating) {
                 // mint network tokens for this contract and migrate them
                 _mintNetworkTokens(address(this), removedPos.poolToken, targetAmount);
                 _networkToken.ensureApprove(address(_networkV3), targetAmount);
                 _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
+            } else {
+                // mint network tokens for the caller and lock them
+                _mintNetworkTokens(address(_wallet), removedPos.poolToken, targetAmount);
+                _lockTokens(provider, targetAmount);
             }
             return;
         }
@@ -614,7 +612,11 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
         // transfer the base tokens to the caller
         uint256 baseBalance = removedPos.reserveToken.balanceOf(address(this));
-        if (normal) {
+        if (isMigrating) {
+            removedPos.reserveToken.ensureApprove(address(_networkV3), baseBalance);
+            uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
+            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
+        } else {
             removedPos.reserveToken.safeTransfer(provider, baseBalance);
 
             // compensate the caller with network tokens if still needed
@@ -630,10 +632,6 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
                 _networkToken.safeTransfer(address(_wallet), delta);
                 _lockTokens(provider, delta);
             }
-        } else {
-            removedPos.reserveToken.ensureApprove(address(_networkV3), baseBalance);
-            uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
-            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
         }
 
         // if the contract still holds network tokens, burn them
@@ -724,7 +722,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     function migratePositions(uint256[] calldata positionIds) external nonReentrant {
         uint256 length = positionIds.length;
         for (uint256 i = 0; i < length; i++) {
-            _removeLiquidity(msg.sender, positionIds[i], PPM_RESOLUTION, false);
+            _removeLiquidity(msg.sender, positionIds[i], PPM_RESOLUTION, true);
         }
     }
 
