@@ -49,7 +49,7 @@ import {
     TokenGovernance__factory,
     TokenHolder__factory,
     VortexBurner__factory
-} from 'typechain';
+} from '../typechain';
 
 // Replace the type of the last param of a function
 type LastIndex<T extends readonly any[]> = ((...t: T) => void) extends (x: any, ...r: infer R) => void
