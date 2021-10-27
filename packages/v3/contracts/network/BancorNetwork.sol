@@ -886,9 +886,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool.toIERC20() == _networkToken) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, false);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, false, 0);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender, tokenAmount);
         }
     }
 
@@ -904,7 +904,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         uint256 networkTokenAmount,
         address sender,
-        bool isMigrating
+        bool isMigrating,
+        uint256 originalAmount
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -916,7 +917,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider,
             networkTokenAmount,
             isMigrating,
-            0
+            originalAmount
         );
 
         emit NetworkTokenDeposited({
@@ -948,7 +949,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 baseTokenAmount,
-        address sender
+        address sender,
+        uint256 availableTokens
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -965,7 +967,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the sender to the vault
-        _depositToVault(pool, sender, baseTokenAmount);
+        _depositToVault(pool, sender, availableTokens);
 
         // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
@@ -1073,7 +1075,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider,
             pool,
             tokenAmount,
-            sender
+            sender,
+            tokenAmount
         );
     }
 
@@ -1477,9 +1480,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         if (reserveToken.toIERC20() == _networkToken) {
-            _depositNetworkTokenFor(contextId, provider, amount, provider, true);
+            _depositNetworkTokenFor(contextId, provider, amount, provider, true, originalAmount);
         } else {
-            _depositBaseTokenFor(contextId, provider, reserveToken, amount, provider);
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, provider, availableTokens);
         }
 
         emit FundsMigrated(
