@@ -2074,6 +2074,7 @@ describe('LiquidityProtection', () => {
                         describe(`base token (${isETHReserve ? 'ETH' : 'ERC20'})`, () => {
                             beforeEach(async () => {
                                 await initPool(isETHReserve);
+                                await bancorNetwork.setNetworkToken(networkToken.address);
                             });
 
                             it('verifies that the caller can migrate positions', async () => {
@@ -2314,6 +2315,8 @@ describe('LiquidityProtection', () => {
 
                     describe('network token', () => {
                         it('verifies that the caller can migrate positions', async () => {
+                            await bancorNetwork.setNetworkToken(networkToken.address);
+
                             let reserveAmount = BigNumber.from(5000);
                             await baseToken.transfer(accounts[1].address, 5000);
                             await addProtectedLiquidity(

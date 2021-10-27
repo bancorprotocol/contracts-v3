@@ -587,9 +587,9 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         if (_isNetworkToken(removedPos.reserveToken)) {
             if (isMigrating) {
                 // mint network tokens for this contract and migrate them
-                _mintNetworkTokens(address(this), removedPos.poolToken, targetAmount);
-                _networkToken.ensureApprove(address(_networkV3), targetAmount);
-                _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount, 0, 0);
+                _mintNetworkTokens(address(this), removedPos.poolToken, removedPos.reserveAmount);
+                _networkToken.ensureApprove(address(_networkV3), removedPos.reserveAmount);
+                _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount, targetAmount, removedPos.reserveAmount);
             } else {
                 // mint network tokens for the caller and lock them
                 _mintNetworkTokens(address(_wallet), removedPos.poolToken, targetAmount);
@@ -621,7 +621,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         if (isMigrating) {
             removedPos.reserveToken.ensureApprove(address(_networkV3), baseBalance);
             uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
-            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance, 0, 0);
+            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, targetAmount, baseBalance, removedPos.reserveAmount);
         } else {
             removedPos.reserveToken.safeTransfer(provider, baseBalance);
 
