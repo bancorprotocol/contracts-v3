@@ -46,7 +46,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
 
         for (uint256 i = 0; i < 2; i = uncheckedInc(i)) {
             reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
-            _network.migrateLiquidity(reserveTokens[i], msg.sender, reserveAmounts[i], 0, 0);
+            _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
         }
     }
 }
