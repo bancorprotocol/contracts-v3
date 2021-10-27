@@ -682,7 +682,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(provider, pool, tokenAmount, msg.sender, false);
+        _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -695,7 +695,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(msg.sender, pool, tokenAmount, msg.sender, false);
+        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -881,13 +881,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 tokenAmount,
-        address sender,
-        bool isMigrating
+        address sender
     ) private {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool.toIERC20() == _networkToken) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, isMigrating);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, false);
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
         }
@@ -1465,8 +1464,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         payable
         onlyRole(ROLE_MIGRATION_MANAGER)
     {
-        _depositFor(provider, reserveToken, amount, provider, true);
-
         bytes32 contextId = keccak256(
             abi.encodePacked(
                 msg.sender,
@@ -1478,6 +1475,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 originalAmount
             )
         );
+
+        if (reserveToken.toIERC20() == _networkToken) {
+            _depositNetworkTokenFor(contextId, provider, amount, provider, true);
+        } else {
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, provider);
+        }
 
         emit FundsMigrated(
             contextId,
