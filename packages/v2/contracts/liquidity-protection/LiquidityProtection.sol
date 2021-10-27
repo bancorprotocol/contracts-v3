@@ -41,7 +41,13 @@ interface ILiquidityPoolConverter is IConverter {
 }
 
 interface IBancorNetworkV3 {
-    function migrateLiquidity(IReserveToken reserveToken, address provider, uint256 amount) external payable;
+    function migrateLiquidity(
+        IReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableTokens,
+        uint256 originalAmount
+    ) external payable;
 }
 
 /**
@@ -583,7 +589,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
                 // mint network tokens for this contract and migrate them
                 _mintNetworkTokens(address(this), removedPos.poolToken, targetAmount);
                 _networkToken.ensureApprove(address(_networkV3), targetAmount);
-                _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount);
+                _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount, 0, 0);
             } else {
                 // mint network tokens for the caller and lock them
                 _mintNetworkTokens(address(_wallet), removedPos.poolToken, targetAmount);
@@ -615,7 +621,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         if (isMigrating) {
             removedPos.reserveToken.ensureApprove(address(_networkV3), baseBalance);
             uint256 value = removedPos.reserveToken.isNativeToken() ? baseBalance : 0;
-            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance);
+            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, baseBalance, 0, 0);
         } else {
             removedPos.reserveToken.safeTransfer(provider, baseBalance);
 

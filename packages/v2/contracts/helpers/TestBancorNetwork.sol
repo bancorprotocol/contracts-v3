@@ -80,7 +80,13 @@ contract TestBancorNetwork is BancorNetwork {
         return _getReturn(IConverter(payable(address(_newConverter))), IReserveToken(0), IReserveToken(0), uint256(0));
     }
 
-    function migrateLiquidity(IReserveToken reserveToken, address provider, uint256 amount) external payable {
+    function migrateLiquidity(
+        IReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 /* availableTokens */,
+        uint256 /* originalAmount */
+    ) external payable {
         if (reserveToken.isNativeToken()) {
             assert(msg.value == amount);
             reserveToken.safeTransfer(provider, amount);

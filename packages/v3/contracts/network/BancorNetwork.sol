@@ -682,7 +682,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(provider, pool, tokenAmount, msg.sender);
+        _depositFor(provider, pool, tokenAmount, msg.sender, false);
     }
 
     /**
@@ -695,7 +695,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         nonReentrant
     {
-        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
+        _depositFor(msg.sender, pool, tokenAmount, msg.sender, false);
     }
 
     /**
@@ -881,12 +881,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 tokenAmount,
-        address sender
+        address sender,
+        bool isMigrating
     ) private {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (pool.toIERC20() == _networkToken) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, isMigrating);
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
         }
@@ -903,7 +904,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
-        address sender
+        address sender,
+        bool isMigrating
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -914,7 +916,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
             provider,
             networkTokenAmount,
-            false,
+            isMigrating,
             0
         );
 
@@ -1452,7 +1454,37 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         return poolCollection;
     }
 
-    function migrateLiquidity(ReserveToken reserveToken, address provider, uint256 amount) external payable onlyRole(ROLE_MIGRATION_MANAGER) {
-        _depositFor(provider, reserveToken, amount, provider);
+    function migrateLiquidity(
+        ReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableTokens,
+        uint256 originalAmount
+    )
+        external
+        payable
+        onlyRole(ROLE_MIGRATION_MANAGER)
+    {
+        _depositFor(provider, reserveToken, amount, provider, true);
+
+        bytes32 contextId = keccak256(
+            abi.encodePacked(
+                msg.sender,
+                _time(),
+                reserveToken,
+                provider,
+                amount,
+                availableTokens,
+                originalAmount
+            )
+        );
+
+        emit FundsMigrated(
+            contextId,
+            reserveToken,
+            provider,
+            amount,
+            availableTokens
+        );
     }
 }
