@@ -1,6 +1,8 @@
 import {
     BancorNetwork as LegacyBancorNetwork,
     BancorNetwork__factory,
+    CheckpointStore__factory,
+    CheckpointStore,
     ConverterFactory__factory,
     ConverterFactory,
     ContractRegistry__factory,
@@ -24,7 +26,9 @@ import {
     StandardPoolConverter__factory,
     StandardPoolConverter,
     StandardPoolConverterFactory__factory,
-    StandardPoolConverterFactory
+    StandardPoolConverterFactory,
+    TokenHolder__factory,
+    TokenHolder as LegacyTokenHolder
 } from '../../v2/typechain';
 import { deployOrAttach } from './ContractBuilder';
 
@@ -43,12 +47,14 @@ import { Signer } from 'ethers';
 export { NetworkToken, GovToken };
 
 export {
+    CheckpointStore,
     ConverterFactory,
     ContractRegistry,
     ConverterRegistry,
     ConverterRegistryData,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
+    LegacyTokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -65,12 +71,14 @@ const getContracts = (signer?: Signer) => ({
     NetworkToken: deployOrAttach('NetworkToken', NetworkToken__factory, signer),
     GovToken: deployOrAttach('GovToken', GovToken__factory, signer),
 
+    CheckpointStore: deployOrAttach('CheckpointStore', CheckpointStore__factory, signer),
     ConverterFactory: deployOrAttach('ConverterFactory', ConverterFactory__factory, signer),
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
     ConverterRegistryData: deployOrAttach('ConverterRegistryData', ConverterRegistryData__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
+    LegacyTokenHolder: deployOrAttach('LegacyTokenHolder', TokenHolder__factory, signer),
     LiquidityProtectionSettings: deployOrAttach('LiquidityProtectionSettings', LiquidityProtectionSettings__factory, signer),
     LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
     LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
