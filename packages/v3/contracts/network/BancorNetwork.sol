@@ -1462,21 +1462,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         uint256 availableTokens,
         uint256 originalAmount
-    )
-        external
-        payable
-        onlyRole(ROLE_MIGRATION_MANAGER)
-    {
+    ) external payable onlyRole(ROLE_MIGRATION_MANAGER) {
         bytes32 contextId = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                _time(),
-                reserveToken,
-                provider,
-                amount,
-                availableTokens,
-                originalAmount
-            )
+            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableTokens, originalAmount)
         );
 
         if (reserveToken.toIERC20() == _networkToken) {
@@ -1485,12 +1473,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             _depositBaseTokenFor(contextId, provider, reserveToken, amount, provider, availableTokens);
         }
 
-        emit FundsMigrated(
-            contextId,
-            reserveToken,
-            provider,
-            amount,
-            availableTokens
-        );
+        emit FundsMigrated(contextId, reserveToken, provider, amount, availableTokens);
     }
 }
