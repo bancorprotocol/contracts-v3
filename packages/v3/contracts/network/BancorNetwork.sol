@@ -848,7 +848,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // invoke the recipient's callback
         recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, data);
 
-        // ensure that the tokens + fee have been depositted back to the network
+        // ensure that the tokens + fee have been deposited back to the network
         uint256 returnedAmount = token.balanceOf(address(this)) - prevBalance;
         if (returnedAmount < amount + feeAmount) {
             revert InsufficientFlashLoanReturn();
