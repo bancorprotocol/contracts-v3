@@ -7,16 +7,19 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
+
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
 error WithdrawalNotAllowed();
@@ -27,15 +30,19 @@ error WithdrawalNotAllowed();
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
+    using ReserveTokenLibrary for ReserveToken;
 
     uint32 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint32 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
+    // the network contract
+    IBancorNetwork private immutable _network;
+
     // the network token contract
     IERC20 private immutable _networkToken;
 
-    // the network contract
-    IBancorNetwork private immutable _network;
+    // the network token pool contract
+    INetworkTokenPool private immutable _networkTokenPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -68,7 +75,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         ReserveToken indexed pool,
         address indexed provider,
         uint256 indexed requestId,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount
     );
 
     /**
@@ -79,6 +87,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
+        uint256 reserveTokenAmount,
         uint32 timeElapsed
     );
 
@@ -90,6 +99,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
+        uint256 reserveTokenAmount,
         uint32 timeElapsed
     );
 
@@ -102,15 +112,20 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         address indexed provider,
         uint256 requestId,
         uint256 poolTokenAmount,
+        uint256 reserveTokenAmount,
         uint32 timeElapsed
     );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
-        _networkToken = initNetwork.networkToken();
+    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkTokenPool))
+    {
         _network = initNetwork;
+        _networkToken = initNetwork.networkToken();
+        _networkTokenPool = initNetworkTokenPool;
     }
 
     /**
@@ -153,6 +168,20 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     function network() external view returns (IBancorNetwork) {
         return _network;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function networkToken() external view returns (IERC20) {
+        return _networkToken;
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function networkTokenPool() external view returns (INetworkTokenPool) {
+        return _networkTokenPool;
     }
 
     /**
@@ -293,6 +322,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
+            reserveTokenAmount: request.reserveTokenAmount,
             timeElapsed: currentTime - request.createdAt
         });
 
@@ -321,19 +351,42 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(request, id);
 
+        // get the pool token value in reserve tokens
+        uint256 currentReserveTokenAmount = _poolTokenUnderlying(
+            request.poolToken,
+            request.poolTokenAmount,
+            request.reserveToken
+        );
+
+        // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
+        // of the request
+        assert(currentReserveTokenAmount >= request.reserveTokenAmount);
+
+        // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
+        uint256 currentPoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
+            ? request.poolTokenAmount
+            : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
+
+        // since pool token value can only go up, there’s always burning
+        uint256 extraPoolTokenAmount = request.poolTokenAmount - currentPoolTokenAmount;
+        if (extraPoolTokenAmount > 0) {
+            request.poolToken.burn(extraPoolTokenAmount);
+        }
+
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, request.poolTokenAmount);
+        request.poolToken.safeTransfer(msg.sender, currentPoolTokenAmount);
 
         emit WithdrawalCompleted({
             contextId: contextId,
             pool: request.poolToken.reserveToken(),
             provider: provider,
             requestId: id,
-            poolTokenAmount: request.poolTokenAmount,
+            poolTokenAmount: currentPoolTokenAmount,
+            reserveTokenAmount: currentReserveTokenAmount,
             timeElapsed: currentTime - request.createdAt
         });
 
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: request.poolTokenAmount });
+        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
     }
 
     /**
@@ -394,10 +447,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         uint256 id = _nextWithdrawalRequestId;
         _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
 
+        // get the pool token value in reserve tokens
+        uint256 reserveTokenAmount = _poolTokenUnderlying(poolToken, poolTokenAmount, pool);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
+            reserveToken: pool,
             poolTokenAmount: poolTokenAmount,
+            reserveTokenAmount: reserveTokenAmount,
             createdAt: _time()
         });
 
@@ -409,7 +466,32 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         // approved the pool token amount or provided a EIP712 typed signture for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
 
-        emit WithdrawalInitiated({ pool: pool, provider: provider, requestId: id, poolTokenAmount: poolTokenAmount });
+        emit WithdrawalInitiated({
+            pool: pool,
+            provider: provider,
+            requestId: id,
+            poolTokenAmount: poolTokenAmount,
+            reserveTokenAmount: reserveTokenAmount
+        });
+    }
+
+    /**
+     * @dev returns the pool token value in reserve tokens
+     */
+    function _poolTokenUnderlying(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        ReserveToken reserveToken
+    ) private view returns (uint256) {
+        uint256 stakedBalance;
+        if (_networkToken == reserveToken.toIERC20()) {
+            stakedBalance = _networkTokenPool.stakedBalance();
+        } else {
+            // note that we don't need to verify that the pool exists, since it has been already checked before this call
+            stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
+        }
+
+        return MathEx.mulDivF(poolTokenAmount, stakedBalance, poolToken.totalSupply());
     }
 
     /**
@@ -427,6 +509,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             provider: request.provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
+            reserveTokenAmount: request.reserveTokenAmount,
             timeElapsed: _time() - request.createdAt
         });
     }
