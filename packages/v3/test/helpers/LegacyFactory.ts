@@ -13,7 +13,7 @@ export const createLegacySystem = async () => {
     const converterRegistryData = await LegacyContracts.ConverterRegistryData.deploy(contractRegistry.address);
     const legacyNetwork = await LegacyContracts.LegacyBancorNetwork.deploy(contractRegistry.address);
     const legacyNetworkSettings = await LegacyContracts.LegacyNetworkSettings.deploy(deployer.address, 0);
-    const standardPoolConverterFactory = await LegacyContracts.StandardPoolConverterFactory.deploy();
+    const standardPoolConverterFactory = await LegacyContracts.TestStandardPoolConverterFactory.deploy();
     const converterFactory = await LegacyContracts.ConverterFactory.deploy();
 
     await converterFactory.registerTypedConverterFactory(standardPoolConverterFactory.address);

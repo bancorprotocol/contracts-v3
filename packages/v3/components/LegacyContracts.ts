@@ -1,8 +1,8 @@
 import {
     BancorNetwork as LegacyBancorNetwork,
     BancorNetwork__factory,
-    CheckpointStore__factory,
-    CheckpointStore,
+    TestCheckpointStore__factory,
+    TestCheckpointStore,
     ConverterFactory__factory,
     ConverterFactory,
     ContractRegistry__factory,
@@ -19,14 +19,14 @@ import {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore__factory,
     LiquidityProtectionSystemStore,
-    LiquidityProtection__factory,
-    LiquidityProtection,
+    TestLiquidityProtection__factory,
+    TestLiquidityProtection,
     NetworkSettings__factory,
     NetworkSettings as LegacyNetworkSettings,
-    StandardPoolConverter__factory,
-    StandardPoolConverter,
-    StandardPoolConverterFactory__factory,
-    StandardPoolConverterFactory,
+    TestStandardPoolConverter__factory,
+    TestStandardPoolConverter,
+    TestStandardPoolConverterFactory__factory,
+    TestStandardPoolConverterFactory,
     TokenHolder__factory,
     TokenHolder as LegacyTokenHolder
 } from '../../v2/typechain';
@@ -48,7 +48,7 @@ import { Signer } from 'ethers';
 export { NetworkToken, GovToken };
 
 export {
-    CheckpointStore,
+    TestCheckpointStore,
     ConverterFactory,
     ContractRegistry,
     ConverterRegistry,
@@ -60,9 +60,9 @@ export {
     LiquidityProtectionStats,
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
-    LiquidityProtection,
-    StandardPoolConverter,
-    StandardPoolConverterFactory,
+    TestLiquidityProtection,
+    TestStandardPoolConverter,
+    TestStandardPoolConverterFactory,
     TokenGovernance
 };
 
@@ -73,7 +73,7 @@ const getContracts = (signer?: Signer) => ({
     NetworkToken: deployOrAttach('NetworkToken', NetworkToken__factory, signer),
     GovToken: deployOrAttach('GovToken', GovToken__factory, signer),
 
-    CheckpointStore: deployOrAttach('CheckpointStore', CheckpointStore__factory, signer),
+    TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     ConverterFactory: deployOrAttach('ConverterFactory', ConverterFactory__factory, signer),
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
@@ -85,11 +85,11 @@ const getContracts = (signer?: Signer) => ({
     LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
     LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
     LiquidityProtectionSystemStore: deployOrAttach('LiquidityProtectionSystemStore', LiquidityProtectionSystemStore__factory, signer),
-    LiquidityProtection: deployOrAttach('LiquidityProtection', LiquidityProtection__factory, signer),
-    StandardPoolConverter: deployOrAttach('StandardPoolConverter', StandardPoolConverter__factory, signer),
-    StandardPoolConverterFactory: deployOrAttach(
-        'StandardPoolConverterFactory',
-        StandardPoolConverterFactory__factory,
+    TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
+    TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),
+    TestStandardPoolConverterFactory: deployOrAttach(
+        'TestStandardPoolConverterFactory',
+        TestStandardPoolConverterFactory__factory,
         signer
     )
 });
