@@ -367,10 +367,11 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             ? request.poolTokenAmount
             : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
 
-        // since pool token value can only go up, there’s always burning
-        uint256 extraPoolTokenAmount = request.poolTokenAmount - currentPoolTokenAmount;
-        if (extraPoolTokenAmount > 0) {
-            request.poolToken.burn(extraPoolTokenAmount);
+        // since pool token value can only go up, there’s usually burning
+        if (request.poolTokenAmount > currentPoolTokenAmount) {
+            unchecked {
+                request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
+            }
         }
 
         // transfer the locked pool tokens back to the caller
