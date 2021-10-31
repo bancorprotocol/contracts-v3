@@ -2401,7 +2401,7 @@ describe('LiquidityProtection', () => {
                             expect(walletBalance).to.equal(prevWalletBalance);
 
                             const balance = await getBalance(networkToken, networkToken.address, owner.address);
-                            expectAlmostEqual(balance, prevBalance.add(reserveAmount));
+                            expectAlmostEqual(balance, prevBalance.add(reserveAmount), '0.0000000000000000000002');
 
                             const govBalance = await govToken.balanceOf(owner.address);
                             expect(govBalance).to.equal(prevGovBalance);
