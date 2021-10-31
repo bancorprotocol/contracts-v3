@@ -423,19 +423,19 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) {
-        if (networkTokenAmount == 0) {
+        if (feeAmount == 0) {
             return;
         }
 
         // increase the staked balance by the given amount
-        _stakedBalance += networkTokenAmount;
+        _stakedBalance += feeAmount;
 
         if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
-            _mintedAmounts[pool] += networkTokenAmount;
+            _mintedAmounts[pool] += feeAmount;
         }
     }
 
