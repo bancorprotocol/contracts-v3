@@ -239,10 +239,22 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
     }
 
     /**
-     * @dev stakes specific pending rewards from all participating pools
+     * @dev stakes all pending rewards into another participating pool
      */
-    function stakeRewards(uint256 maxAmount, IDSToken poolToken) external override returns (uint256, uint256) {
-        return _stakeRewards(msg.sender, maxAmount, poolToken, _liquidityProtectionStats());
+    function stakeRewards(uint256 maxAmount, IDSToken newPoolToken) external override returns (uint256, uint256) {
+        return _stakeRewards(msg.sender, maxAmount, newPoolToken, _liquidityProtectionStats());
+    }
+
+    /**
+     * @dev stakes specific pending rewards into another participating pool
+     */
+    function stakeReserveRewards(
+        IDSToken poolToken,
+        IReserveToken reserveToken,
+        uint256 maxAmount,
+        IDSToken newPoolToken
+    ) external override returns (uint256, uint256) {
+        return _stakeRewards(msg.sender, poolToken, reserveToken, maxAmount, newPoolToken, _liquidityProtectionStats());
     }
 
     /**
@@ -348,8 +360,15 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         providerRewards.rewardPerToken = poolRewardsData.rewardPerToken;
 
         // get full rewards and the respective rewards multiplier
-        (uint256 fullReward, ) =
-            _fullRewards(provider, poolToken, reserveToken, poolRewardsData, providerRewards, program, lpStats);
+        (uint256 fullReward, ) = _fullRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            providerRewards,
+            program,
+            lpStats
+        );
 
         return fullReward;
     }
@@ -393,16 +412,15 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         PoolProgram memory program = _poolProgram(poolToken);
 
         for (uint256 i = 0; i < program.reserveTokens.length && maxAmount > 0; ++i) {
-            uint256 reserveReward =
-                _claimPendingRewards(
-                    provider,
-                    poolToken,
-                    program.reserveTokens[i],
-                    program,
-                    maxAmount,
-                    lpStats,
-                    resetStakingTime
-                );
+            uint256 reserveReward = _claimPendingRewards(
+                provider,
+                poolToken,
+                program.reserveTokens[i],
+                program,
+                maxAmount,
+                lpStats,
+                resetStakingTime
+            );
             reward = reward.add(reserveReward);
 
             if (maxAmount != MAX_UINT256) {
@@ -426,12 +444,24 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         bool resetStakingTime
     ) private returns (uint256) {
         // update all provider's pending rewards, in order to apply retroactive reward multipliers
-        (PoolRewards memory poolRewardsData, ProviderRewards memory providerRewards) =
-            _updateRewards(provider, poolToken, reserveToken, program, lpStats);
+        (PoolRewards memory poolRewardsData, ProviderRewards memory providerRewards) = _updateRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            program,
+            lpStats
+        );
 
         // get full rewards and the respective rewards multiplier
-        (uint256 fullReward, uint32 multiplier) =
-            _fullRewards(provider, poolToken, reserveToken, poolRewardsData, providerRewards, program, lpStats);
+        (uint256 fullReward, uint32 multiplier) = _fullRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            providerRewards,
+            program,
+            lpStats
+        );
 
         // mark any debt as repaid.
         providerRewards.baseRewardsDebt = 0;
@@ -520,7 +550,7 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
     }
 
     /**
-     * @dev claims and stakes specific provider's pending rewards for a specific list of participating pools
+     * @dev claims and stakes specific provider's pending rewards from a specific list of participating pools
      */
     function _stakeRewards(
         address provider,
@@ -534,6 +564,44 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
             return (amount, 0);
         }
 
+        return (amount, _stakeClaimedRewards(amount, provider, newPoolToken));
+    }
+
+    /**
+     * @dev claims and stakes specific provider's pending rewards from a specific list of participating pools
+     */
+    function _stakeRewards(
+        address provider,
+        IDSToken poolToken,
+        IReserveToken reserveToken,
+        uint256 maxAmount,
+        IDSToken newPoolToken,
+        ILiquidityProtectionStats lpStats
+    ) private returns (uint256, uint256) {
+        uint256 amount = _claimPendingRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            _poolProgram(poolToken),
+            maxAmount,
+            lpStats,
+            false
+        );
+        if (amount == 0) {
+            return (amount, 0);
+        }
+
+        return (amount, _stakeClaimedRewards(amount, provider, newPoolToken));
+    }
+
+    /**
+     * @dev stakes claimed rewards into another participating pool
+     */
+    function _stakeClaimedRewards(
+        uint256 amount,
+        address provider,
+        IDSToken newPoolToken
+    ) private returns (uint256) {
         // approve the LiquidityProtection contract to pull the rewards
         ILiquidityProtection liquidityProtection = _liquidityProtection();
         address liquidityProtectionAddress = address(liquidityProtection);
@@ -543,15 +611,19 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         // rewards and attribute them to the provider
         _networkTokenGovernance.mint(address(this), amount);
 
-        uint256 newId =
-            liquidityProtection.addLiquidityFor(provider, newPoolToken, IReserveToken(address(_networkToken)), amount);
+        uint256 newId = liquidityProtection.addLiquidityFor(
+            provider,
+            newPoolToken,
+            IReserveToken(address(_networkToken)),
+            amount
+        );
 
         // please note, that in order to incentivize staking, we won't be updating the time of the last claim, thus
         // preserving the rewards bonus multiplier
 
         emit RewardsStaked(provider, newPoolToken, amount, newId);
 
-        return (amount, newId);
+        return newId;
     }
 
     /**
@@ -588,12 +660,24 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         }
 
         // update all provider's pending rewards, in order to apply retroactive reward multipliers
-        (PoolRewards memory poolRewardsData, ProviderRewards memory providerRewards) =
-            _updateRewards(provider, poolToken, reserveToken, program, lpStats);
+        (PoolRewards memory poolRewardsData, ProviderRewards memory providerRewards) = _updateRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            program,
+            lpStats
+        );
 
         // get full rewards and the respective rewards multiplier
-        (uint256 fullReward, uint32 multiplier) =
-            _fullRewards(provider, poolToken, reserveToken, poolRewardsData, providerRewards, program, lpStats);
+        (uint256 fullReward, uint32 multiplier) = _fullRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            providerRewards,
+            program,
+            lpStats
+        );
 
         // get the amount of the actual base rewards that were claimed
         providerRewards.baseRewardsDebt = _removeMultiplier(fullReward, multiplier);
@@ -683,8 +767,15 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         }
 
         // pendingBaseRewards must be calculated with the previous value of providerRewards.rewardPerToken
-        uint256 rewards =
-            _baseRewards(provider, poolToken, reserveToken, poolRewardsData, providerRewards, program, lpStats);
+        uint256 rewards = _baseRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            providerRewards,
+            program,
+            lpStats
+        );
         if (rewards != 0) {
             providerRewards.pendingBaseRewards = providerRewards.pendingBaseRewards.add(rewards);
 
@@ -725,8 +816,14 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         ILiquidityProtectionStats lpStats
     ) private returns (PoolRewards memory, ProviderRewards memory) {
         PoolRewards memory poolRewardsData = _updateReserveRewards(poolToken, reserveToken, program, lpStats);
-        ProviderRewards memory providerRewards =
-            _updateProviderRewards(provider, poolToken, reserveToken, poolRewardsData, program, lpStats);
+        ProviderRewards memory providerRewards = _updateProviderRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            program,
+            lpStats
+        );
 
         return (poolRewardsData, providerRewards);
     }
@@ -765,7 +862,7 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         return
             poolRewardsData.rewardPerToken.add( // the aggregated reward rate
                 stakingEndTime
-                    .sub(stakingStartTime) // the duration of the staking
+                .sub(stakingStartTime) // the duration of the staking
                     .mul(program.rewardRate) // multiplied by the rate
                     .mul(REWARD_RATE_FACTOR) // and factored to increase precision
                     .mul(_rewardShare(reserveToken, program)) // and applied the specific token share of the whole reward
@@ -788,10 +885,7 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         uint256 totalProviderAmount = lpStats.totalProviderAmount(provider, poolToken, reserveToken);
         uint256 newRewardPerToken = _rewardPerToken(poolToken, reserveToken, poolRewardsData, program, lpStats);
 
-        return
-            totalProviderAmount // the protected tokens amount held by the provider
-                .mul(newRewardPerToken.sub(providerRewards.rewardPerToken)) // multiplied by the difference between the previous and the current rate
-                .div(REWARD_RATE_FACTOR); // and factored back
+        return totalProviderAmount.mul(newRewardPerToken.sub(providerRewards.rewardPerToken)).div(REWARD_RATE_FACTOR); // the protected tokens amount held by the provider // multiplied by the difference between the previous and the current rate // and factored back
     }
 
     /**
@@ -807,8 +901,15 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         ILiquidityProtectionStats lpStats
     ) private view returns (uint256, uint32) {
         // calculate the claimable base rewards (since the last claim)
-        uint256 newBaseRewards =
-            _baseRewards(provider, poolToken, reserveToken, poolRewardsData, providerRewards, program, lpStats);
+        uint256 newBaseRewards = _baseRewards(
+            provider,
+            poolToken,
+            reserveToken,
+            poolRewardsData,
+            providerRewards,
+            program,
+            lpStats
+        );
 
         // make sure that we aren't exceeding the reward rate for any reason
         _verifyBaseReward(newBaseRewards, providerRewards.effectiveStakingTime, reserveToken, program);
@@ -852,11 +953,10 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         PoolProgram memory program
     ) private view returns (uint32) {
         uint256 effectiveStakingEndTime = Math.min(_time(), program.endTime);
-        uint256 effectiveStakingStartTime =
-            Math.max( // take the latest of actual staking start time and the latest multiplier reset
-                Math.max(stakingStartTime, program.startTime), // don't count staking before the start of the program
-                Math.max(_lastRemoveTimes.checkpoint(provider), _store.providerLastClaimTime(provider)) // get the latest multiplier reset timestamp
-            );
+        uint256 effectiveStakingStartTime = Math.max( // take the latest of actual staking start time and the latest multiplier reset
+            Math.max(stakingStartTime, program.startTime), // don't count staking before the start of the program
+            Math.max(_lastRemoveTimes.checkpoint(provider), _store.providerLastClaimTime(provider)) // get the latest multiplier reset timestamp
+        );
 
         // check that the staking range is valid. for example, it can be invalid when calculating the multiplier when
         // the staking has started before the start of the program, in which case the effective staking start time will
@@ -994,16 +1094,14 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
         PoolRewards memory poolRewardsData,
         PoolProgram memory program
     ) private pure {
-        uint256 maxClaimableReward =
-            (
-                (program.rewardRate * REWARDS_HALVING_FACTOR)
-                    .mul(program.endTime.sub(program.startTime))
-                    .mul(_rewardShare(reserveToken, program))
-                    .mul(MAX_MULTIPLIER)
-                    .div(PPM_RESOLUTION)
-                    .div(PPM_RESOLUTION)
-            )
-                .sub(poolRewardsData.totalClaimedRewards);
+        uint256 maxClaimableReward = (
+            (program.rewardRate * REWARDS_HALVING_FACTOR)
+                .mul(program.endTime.sub(program.startTime))
+                .mul(_rewardShare(reserveToken, program))
+                .mul(MAX_MULTIPLIER)
+                .div(PPM_RESOLUTION)
+                .div(PPM_RESOLUTION)
+        ).sub(poolRewardsData.totalClaimedRewards);
 
         // make sure that we aren't exceeding the full reward rate for any reason
         require(fullReward <= maxClaimableReward, "ERR_REWARD_RATE_TOO_HIGH");

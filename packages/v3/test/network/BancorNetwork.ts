@@ -18,7 +18,15 @@ import {
 import { expectRole, roles } from '../helpers/AccessControl';
 import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
+import {
+    createPool,
+    createPoolCollection,
+    createSystem,
+    createTokenHolder,
+    depositToPool,
+    setupSimplePool,
+    PoolSpec
+} from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { ROLE_OWNER, createLegacySystem } from '../helpers/LegacyFactory';
 import { permitSignature } from '../helpers/Permit';
@@ -92,63 +100,12 @@ describe('BancorNetwork', () => {
         );
     };
 
-    interface PoolSpec {
-        symbol: string;
-        balance: BigNumber;
-        tradingFeePPM?: number;
-    }
-
     const specToString = (spec: PoolSpec) => {
         if (spec.tradingFeePPM !== undefined) {
             return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
         }
 
         return `${spec.symbol} (balance=${spec.balance})`;
-    };
-
-    const deposit = async (
-        provider: SignerWithAddress,
-        token: TokenWithAddress,
-        amount: BigNumber,
-        network: TestBancorNetwork
-    ) => {
-        let value = BigNumber.from(0);
-        if (token.address === NATIVE_TOKEN_ADDRESS) {
-            value = amount;
-        } else {
-            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-            await reserveToken.transfer(provider.address, amount);
-            await reserveToken.connect(provider).approve(network.address, amount);
-        }
-
-        await network.connect(provider).deposit(token.address, amount, { value });
-    };
-
-    const setupPool = async (
-        spec: PoolSpec,
-        network: TestBancorNetwork,
-        networkSettings: NetworkSettings,
-        networkToken: NetworkToken,
-        poolCollection: TestPoolCollection
-    ) => {
-        const isNetworkToken = spec.symbol === BNT;
-
-        if (isNetworkToken) {
-            return networkToken;
-        }
-
-        const token = await createTokenBySymbol(spec.symbol);
-
-        await createPool(token, network, networkSettings, poolCollection);
-
-        await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
-        await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-        await poolCollection.setInitialRate(token.address, INITIAL_RATE);
-        await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
-
-        await deposit(deployer, token, spec.balance, network);
-
-        return token;
     };
 
     const initWithdraw = async (
@@ -874,14 +831,15 @@ describe('BancorNetwork', () => {
             reserveTokenAddresses = [];
 
             for (const symbol of reserveTokenSymbols) {
-                const token = await setupPool(
+                const { token } = await setupSimplePool(
                     {
                         symbol,
-                        balance: toWei(BigNumber.from(50_000_000))
+                        balance: toWei(BigNumber.from(50_000_000)),
+                        initialRate: INITIAL_RATE
                     },
+                    deployer,
                     network,
                     networkSettings,
-                    networkToken,
                     poolCollection
                 );
 
@@ -898,7 +856,7 @@ describe('BancorNetwork', () => {
             await network.addPoolCollection(targetPoolCollection.address);
             await network.setLatestPoolCollection(targetPoolCollection.address);
 
-            await deposit(deployer, networkToken, toWei(BigNumber.from(100_000)), network);
+            await depositToPool(deployer, networkToken, toWei(BigNumber.from(100_000)), network);
 
             await network.setTime(await latest());
         });
@@ -938,7 +896,7 @@ describe('BancorNetwork', () => {
                 const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
 
                 const prevPoolTokenBalance = await poolToken.balanceOf(deployer.address);
-                await deposit(deployer, token, toWei(BigNumber.from(1_000_000)), network);
+                await depositToPool(deployer, token, toWei(BigNumber.from(1_000_000)), network);
                 expect(await poolToken.balanceOf(deployer.address)).to.be.gte(prevPoolTokenBalance);
 
                 const poolTokenAmount = await toWei(BigNumber.from(1));
@@ -1438,11 +1396,14 @@ describe('BancorNetwork', () => {
                                                             d: toWei(BigNumber.from(10_000_000))
                                                         };
 
+                                                        const { stakedBalance } = await poolCollection.poolLiquidity(
+                                                            token.address
+                                                        );
                                                         await poolCollection.setTradingLiquidityT(token.address, {
                                                             networkTokenTradingLiquidity: spotRate.n,
                                                             baseTokenTradingLiquidity: spotRate.d,
                                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                            stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                            stakedBalance
                                                         });
                                                         await poolCollection.setAverageRateT(token.address, {
                                                             rate: {
@@ -1708,11 +1669,14 @@ describe('BancorNetwork', () => {
                                                     d: toWei(BigNumber.from(10_000_000))
                                                 };
 
+                                                const { stakedBalance } = await poolCollection.poolLiquidity(
+                                                    token.address
+                                                );
                                                 await poolCollection.setTradingLiquidityT(token.address, {
                                                     networkTokenTradingLiquidity: spotRate.n,
                                                     baseTokenTradingLiquidity: spotRate.d,
                                                     tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                    stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                    stakedBalance
                                                 });
                                                 await poolCollection.setAverageRateT(token.address, {
                                                     rate: {
@@ -2296,7 +2260,7 @@ describe('BancorNetwork', () => {
                         await poolCollection.setInitialRate(token.address, INITIAL_RATE);
                     }
 
-                    await deposit(provider, token, amount, network);
+                    await depositToPool(provider, token, amount, network);
 
                     poolTokenAmount = await poolToken.balanceOf(provider.address);
 
@@ -2549,11 +2513,12 @@ describe('BancorNetwork', () => {
                                             d: toWei(BigNumber.from(10_000_000))
                                         };
 
+                                        const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
                                         await poolCollection.setTradingLiquidityT(token.address, {
                                             networkTokenTradingLiquidity: spotRate.n,
                                             baseTokenTradingLiquidity: spotRate.d,
                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                            stakedBalance: toWei(BigNumber.from(1_000_000))
+                                            stakedBalance
                                         });
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
@@ -2619,10 +2584,22 @@ describe('BancorNetwork', () => {
         const setup = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
-            sourceToken = await setupPool(source, network, networkSettings, networkToken, poolCollection);
-            targetToken = await setupPool(target, network, networkSettings, networkToken, poolCollection);
+            ({ token: sourceToken } = await setupSimplePool(
+                source,
+                deployer,
+                network,
+                networkSettings,
+                poolCollection
+            ));
+            ({ token: targetToken } = await setupSimplePool(
+                target,
+                deployer,
+                network,
+                networkSettings,
+                poolCollection
+            ));
 
-            await deposit(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
+            await depositToPool(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
 
             await network.setTime(await latest());
         };
@@ -3251,11 +3228,13 @@ describe('BancorNetwork', () => {
             testTradesBasic(
                 {
                     symbol: sourceSymbol,
-                    balance: toWei(BigNumber.from(1_000_000))
+                    balance: toWei(BigNumber.from(1_000_000)),
+                    initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
-                    balance: toWei(BigNumber.from(5_000_000))
+                    balance: toWei(BigNumber.from(5_000_000)),
+                    initialRate: INITIAL_RATE
                 }
             );
 
@@ -3274,12 +3253,14 @@ describe('BancorNetwork', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM,
+                                        initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM,
+                                        initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
@@ -3289,12 +3270,14 @@ describe('BancorNetwork', () => {
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM
+                                            tradingFeePPM,
+                                            initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: tradingFeePPM2
+                                            tradingFeePPM: tradingFeePPM2,
+                                            initialRate: INITIAL_RATE
                                         },
                                         amount
                                     );
@@ -3335,16 +3318,17 @@ describe('BancorNetwork', () => {
 
         describe('basic tests', () => {
             prepareEach(async () => {
-                token = await setupPool(
+                ({ token } = await setupSimplePool(
                     {
                         symbol: TKN,
-                        balance: amount
+                        balance: amount,
+                        initialRate: INITIAL_RATE
                     },
+                    deployer,
                     network,
                     networkSettings,
-                    networkToken,
                     poolCollection
-                );
+                ));
             });
 
             it('should revert when attempting to request a flash-loan of an invalid token', async () => {
@@ -3403,18 +3387,19 @@ describe('BancorNetwork', () => {
                     await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
                     await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
 
-                    await deposit(deployer, networkToken, amount, network);
+                    await depositToPool(deployer, networkToken, amount, network);
                 } else {
-                    token = await setupPool(
+                    ({ token } = await setupSimplePool(
                         {
                             symbol,
-                            balance: amount
+                            balance: amount,
+                            initialRate: INITIAL_RATE
                         },
+                        deployer,
                         network,
                         networkSettings,
-                        networkToken,
                         poolCollection
-                    );
+                    ));
                 }
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);

@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, ZERO_ADDRESS } from '../helpers/Constants';
+import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -48,6 +48,21 @@ describe('TestVault', () => {
             expect(await testVault.isPayable()).to.be.false;
             await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
         });
+    });
+
+    it('should be able to send ETH to a transparent upgradeable proxy', async () => {
+        const amount = 1_000_000;
+
+        const transparentUpgradeableProxy = await createProxy(Contracts.TestVault);
+        await transparentUpgradeableProxy.setPayable(true);
+
+        const balance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, transparentUpgradeableProxy.address);
+
+        await expect(deployer.sendTransaction({ to: transparentUpgradeableProxy.address, value: amount })).to.not
+            .reverted;
+        expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, transparentUpgradeableProxy.address)).to.equal(
+            balance.add(amount)
+        );
     });
 
     describe('depositing ETH ', () => {
