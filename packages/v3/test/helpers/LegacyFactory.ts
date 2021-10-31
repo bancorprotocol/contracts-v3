@@ -1,6 +1,8 @@
 import LegacyContracts from '../../components/LegacyContracts';
 import { ethers } from 'hardhat';
 
+export const ROLE_OWNER = require('../../../v2/test/helpers/Constants').roles.ROLE_OWNER;
+
 const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS }
 } = require('../../../v2/test/helpers/Constants');

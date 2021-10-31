@@ -20,7 +20,7 @@ import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRE
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
-import { createLegacySystem } from '../helpers/LegacyFactory';
+import { ROLE_OWNER, createLegacySystem } from '../helpers/LegacyFactory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
@@ -41,7 +41,7 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const { Upgradeable: UpgradeableRoles } = roles;
+const { Upgradeable: UpgradeableRoles, BancorNetwork: BancorNetworkRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -1912,11 +1912,11 @@ describe('BancorNetwork', () => {
                     checkpointStore.address
                 );
 
-                await liquidityProtectionSettings.grantRole(utils.id('ROLE_OWNER'), liquidityProtection.address);
-                await liquidityProtectionStats.grantRole(utils.id('ROLE_OWNER'), liquidityProtection.address);
-                await liquidityProtectionSystemStore.grantRole(utils.id('ROLE_OWNER'), liquidityProtection.address);
-                await checkpointStore.grantRole(utils.id('ROLE_OWNER'), liquidityProtection.address);
-                await network.grantRole(utils.id('ROLE_MIGRATION_MANAGER'), liquidityProtection.address);
+                await liquidityProtectionSettings.grantRole(ROLE_OWNER, liquidityProtection.address);
+                await liquidityProtectionStats.grantRole(ROLE_OWNER, liquidityProtection.address);
+                await liquidityProtectionSystemStore.grantRole(ROLE_OWNER, liquidityProtection.address);
+                await checkpointStore.grantRole(ROLE_OWNER, liquidityProtection.address);
+                await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
                 await liquidityProtectionStore.transferOwnership(liquidityProtection.address);
                 await liquidityProtection.acceptStoreOwnership();
                 await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
