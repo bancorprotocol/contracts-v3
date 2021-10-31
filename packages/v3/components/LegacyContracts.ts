@@ -45,9 +45,9 @@ import { Signer } from 'ethers';
 
 /* eslint-enable camelcase */
 
-export { NetworkToken, GovToken };
-
 export {
+    NetworkToken,
+    GovToken,
     TestCheckpointStore,
     ConverterFactory,
     ContractRegistry,
