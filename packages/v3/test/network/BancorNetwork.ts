@@ -2016,6 +2016,9 @@ describe('BancorNetwork', () => {
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
+                        const prevVaultBaseBalance = await getBalance(baseToken, baseToken.address, bancorVault.address);
+                        const prevVaultNetworkBalance = await getBalance(networkToken, networkToken.address, bancorVault.address);
+
                         await liquidityProtection.setTime(now.add(duration.seconds(1)));
 
                         const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
@@ -2049,6 +2052,11 @@ describe('BancorNetwork', () => {
                         // verify balances
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
                         expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
+
+                        const vaultBaseBalance = await getBalance(baseToken, baseToken.address, bancorVault.address);
+                        const vaultNetworkBalance = await getBalance(networkToken, networkToken.address, bancorVault.address);
+                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount));
+                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(reserveAmount.div(2)));
 
                         const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
 
@@ -2092,6 +2100,9 @@ describe('BancorNetwork', () => {
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
+                        const prevVaultBaseBalance = await getBalance(baseToken, baseToken.address, vault.address);
+                        const prevVaultNetworkBalance = await getBalance(networkToken, networkToken.address, vault.address);
+
                         await liquidityProtection.setTime(now.add(duration.seconds(1)));
 
                         const prevGovBalance = await govToken.balanceOf(owner.address);
@@ -2101,6 +2112,11 @@ describe('BancorNetwork', () => {
                         // verify balances
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
                         expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
+
+                        const vaultBaseBalance = await getBalance(baseToken, baseToken.address, vault.address);
+                        const vaultNetworkBalance = await getBalance(networkToken, networkToken.address, vault.address);
+                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount.div(2)));
+                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
 
                         const govBalance = await govToken.balanceOf(owner.address);
                         expect(govBalance).to.equal(prevGovBalance);
