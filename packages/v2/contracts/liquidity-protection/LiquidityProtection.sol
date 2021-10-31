@@ -61,6 +61,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     using SafeERC20 for IERC20;
     using SafeERC20 for IDSToken;
     using SafeERC20Ex for IERC20;
+    using Address for address payable;
 
     struct Position {
         address provider; // liquidity provider
@@ -756,7 +757,11 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             uint256[] memory reserveAmounts = converter.removeLiquidity(poolAmount, reserveTokens, minReturns);
 
             _burnNetworkTokens(poolAnchors[i], reserveAmounts[0]);
-            reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+            if (reserveTokens[1].isNativeToken()) {
+                payable(bancorVault).sendValue(reserveAmounts[1]);
+            } else {
+                reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+            }
         }
     }
 
