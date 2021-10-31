@@ -2079,7 +2079,10 @@ describe('BancorNetwork', () => {
             describe('network token', () => {
                 prepareEach(async () => {
                     await initLiquidityProtection(false);
-                    await deposit(provider, baseToken, BigNumber.from(100_000), network);
+                    const amount = BigNumber.from(100_000);
+                    await baseToken.transfer(provider.address, amount);
+                    await baseToken.connect(provider).approve(network.address, amount);
+                    await network.connect(provider).deposit(baseToken.address, amount);
                 });
                 it('verifies that the caller can migrate positions', async () => {
                     let reserveAmount = BigNumber.from(5000);
