@@ -1468,9 +1468,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         if (reserveToken.toIERC20() == _networkToken) {
-            _depositNetworkTokenFor(contextId, provider, amount, provider, true, originalAmount);
+            _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
-            _depositBaseTokenFor(contextId, provider, reserveToken, amount, provider, availableTokens);
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableTokens);
         }
 
         emit FundsMigrated(contextId, reserveToken, provider, amount, availableTokens);
