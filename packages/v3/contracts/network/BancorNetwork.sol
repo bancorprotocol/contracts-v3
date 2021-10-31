@@ -1551,7 +1551,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableTokens, originalAmount)
         );
 
-        if (reserveToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(reserveToken)) {
             _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
             _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableTokens);
