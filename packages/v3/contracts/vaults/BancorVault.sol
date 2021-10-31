@@ -4,20 +4,16 @@ pragma solidity 0.8.9;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-
-import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
-
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
+import { Vault } from "./Vault.sol";
 import { IBancorVault } from "./interfaces/IBancorVault.sol";
+import { IVault } from "./interfaces/IVault.sol";
 
 /**
  * @dev Bancor Vault contract
  */
-contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
+contract BancorVault is IBancorVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -32,11 +28,6 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
-
-    /**
-     * @dev triggered when tokens have been withdrawn from the vault
-     */
-    event TokensWithdrawn(ReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -58,9 +49,7 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
      * @dev initializes the contract and its parents
      */
     function __BancorVault_init() internal initializer {
-        __Upgradeable_init();
-        __Pausable_init();
-        __ReentrancyGuard_init();
+        __Vault_init();
 
         __BancorVault_init_unchained();
     }
@@ -77,53 +66,36 @@ contract BancorVault is IBancorVault, Upgradeable, PausableUpgradeable, Reentran
         _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
-    receive() external payable {}
+    /**
+     * @inheritdoc Vault
+     */
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
+        return true;
+    }
 
     /**
      * @dev returns the current version of the contract
      */
-    function version() external pure returns (uint16) {
+    function version() external pure override returns (uint16) {
         return 1;
     }
 
     /**
-     * @inheritdoc IBancorVault
+     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
+     *
+     * requirements:
+     *
+     *   - network token: ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER
+     *   - other reserve token or ETH: ROLE_ASSET_MANAGER
      */
-    function isPaused() external view returns (bool) {
-        return paused();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function pause() external onlyAdmin {
-        _pause();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function unpause() external onlyAdmin {
-        _unpause();
-    }
-
-    /**
-     * @inheritdoc IBancorVault
-     */
-    function withdrawTokens(
+    function authenticateWithdrawal(
+        address caller,
         ReserveToken reserveToken,
-        address payable target,
-        uint256 amount
-    ) external validAddress(target) nonReentrant whenNotPaused {
-        if (
-            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, msg.sender)) ||
-            hasRole(ROLE_ASSET_MANAGER, msg.sender)
-        ) {
-            reserveToken.safeTransfer(target, amount);
-
-            emit TokensWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
-        } else {
-            revert AccessDenied();
-        }
+        address, /* target */
+        uint256 /* amount */
+    ) internal view override returns (bool) {
+        return
+            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
+            hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }
