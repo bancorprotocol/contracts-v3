@@ -825,7 +825,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ReserveToken token,
         uint256 amount,
         IFlashLoanRecipient recipient,
-        bytes memory data
+        bytes calldata data
     )
         external
         nonReentrant
