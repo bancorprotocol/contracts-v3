@@ -1858,13 +1858,6 @@ describe('BancorNetwork', () => {
                 return BigNumber.from(txResult.gasPrice).mul(BigNumber.from(cumulativeGasUsed));
             };
 
-            const expectAlmostEqual = (amount1: any, amount2: any, maxError = '0.01') => {
-                if (!amount1.eq(amount2)) {
-                    const error = new Decimal(amount1.toString()).div(amount2.toString()).sub(1).abs();
-                    expect(error.lte(maxError)).to.equal(true, `error = ${error.toFixed(maxError.length)}`);
-                }
-            };
-
             const getPoolStats = async (poolToken: any, reserveToken: any, isETH: boolean) => {
                 const poolTokenAddress = poolToken.address;
                 const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
@@ -2243,7 +2236,9 @@ describe('BancorNetwork', () => {
                     expect(walletBalance).to.equal(prevWalletBalance);
 
                     const balance = await getBalance(networkToken, networkToken.address, owner.address);
-                    expectAlmostEqual(balance, prevBalance.add(reserveAmount));
+                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(reserveAmount).toString()), {
+                        maxRelativeError: new Decimal('0.000000000000000000000001')
+                    });
 
                     const govBalance = await govToken.balanceOf(owner.address);
                     expect(govBalance).to.equal(prevGovBalance);
