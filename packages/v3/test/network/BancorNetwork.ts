@@ -1876,14 +1876,11 @@ describe('BancorNetwork', () => {
                 await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
                 await govTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
 
-                await setTime(await latest());
-
                 await createPool(baseToken, network, networkSettings, poolCollection);
                 await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
                 await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
 
-                await setTime(now);
                 await networkToken.approve(converter.address, RESERVE2_AMOUNT);
 
                 let value = BigNumber.from(0);
@@ -1903,6 +1900,8 @@ describe('BancorNetwork', () => {
                 );
 
                 await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
+
+                await setTime(await latest());
             };
 
             for (const isETH of [false, true]) {
