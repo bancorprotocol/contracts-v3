@@ -8,7 +8,7 @@ import { IExternalProtectionVault } from "./interfaces/IExternalProtectionVault.
 import { IVault } from "./interfaces/IVault.sol";
 
 /**
- * @dev Bancor Vault contract
+ * @dev External Protection Vault contract
  */
 contract ExternalProtectionVault is IExternalProtectionVault, Vault {
     // the asset manager role is required to access all the reserves
