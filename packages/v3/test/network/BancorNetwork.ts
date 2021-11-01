@@ -1769,22 +1769,13 @@ describe('BancorNetwork', () => {
                 tokenAddress: any,
                 amount: any,
                 isETH: boolean,
-                from: any = owner,
-                recipient: any = undefined,
-                value: any = 0
+                from: any
             ) => {
+                let value = BigNumber.from(0);
                 if (isETH) {
                     value = amount;
                 } else {
                     await token.connect(from).approve(liquidityProtection.address, amount);
-                }
-
-                if (recipient) {
-                    return liquidityProtection
-                        .connect(from)
-                        .addLiquidityFor(recipient.address, poolTokenAddress, tokenAddress, amount, {
-                            value: value
-                        });
                 }
 
                 return liquidityProtection
@@ -1846,7 +1837,6 @@ describe('BancorNetwork', () => {
                 baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
 
                 ({
-                    converterRegistry,
                     checkpointStore,
                     liquidityProtectionStore,
                     liquidityProtectionStats,
@@ -1915,7 +1905,8 @@ describe('BancorNetwork', () => {
                             baseToken,
                             baseToken.address,
                             reserveAmount,
-                            isETH
+                            isETH,
+                            owner
                         );
                         let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         const protectionId = protectionIds[0];
@@ -1998,7 +1989,8 @@ describe('BancorNetwork', () => {
                             baseToken,
                             baseToken.address,
                             reserveAmount,
-                            isETH
+                            isETH,
+                            owner
                         );
                         let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         const protectionId = protectionIds[0];
@@ -2066,7 +2058,8 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkToken.address,
                         reserveAmount,
-                        false
+                        false,
+                        owner
                     );
                     let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                     const protectionId = protectionIds[0];
