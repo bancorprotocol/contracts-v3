@@ -29,15 +29,12 @@ describe('ExternalProtectionVault', () => {
             );
         });
 
-        it('should be payable', async () => {
-            expect(await externalProtectionVault.isPayable()).to.be.true;
-        });
-
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
             const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
 
             expect(await externalProtectionVault.version()).to.equal(1);
+            expect(await externalProtectionVault.isPayable()).to.be.true;
 
             await expectRole(externalProtectionVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
