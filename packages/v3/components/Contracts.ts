@@ -15,6 +15,7 @@ import {
     TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
+    TestFlashLoanRecipient__factory,
     TestMathEx__factory,
     TestNetworkTokenPool__factory,
     TestOwned__factory,
@@ -32,7 +33,7 @@ import {
 import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-enable camelcase */
-import { Signer } from '@ethersproject/abstract-signer';
+import { Signer } from 'ethers';
 
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
@@ -50,8 +51,9 @@ const getContracts = (signer?: Signer) => ({
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
-    TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
+    TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
+    TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
     TestPoolAverageRate: deployOrAttach('TestPoolAverageRate', TestPoolAverageRate__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
     TestPoolCollectionUpgrader: deployOrAttach(

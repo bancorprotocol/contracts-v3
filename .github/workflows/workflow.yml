@@ -21,6 +21,14 @@ jobs:
         with:
           node-version: '16'
 
+      - name: Install V2 NPM Dependencies
+        run: yarn install
+        working-directory: packages/v2
+
+      - name: Build V2
+        run: yarn build
+        working-directory: packages/v2
+
       - name: Install NPM Dependencies
         run: yarn install
 
