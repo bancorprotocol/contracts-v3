@@ -18,7 +18,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
@@ -246,7 +246,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
 
         _networkTokenGovernance.burn(networkTokenAmount);
     }
@@ -407,7 +407,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken.burn(poolTokenAmount);
 
         // withdraw network tokens from the vault and burn them
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced({
@@ -423,19 +423,19 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) {
-        if (networkTokenAmount == 0) {
+        if (feeAmount == 0) {
             return;
         }
 
         // increase the staked balance by the given amount
-        _stakedBalance += networkTokenAmount;
+        _stakedBalance += feeAmount;
 
         if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
-            _mintedAmounts[pool] += networkTokenAmount;
+            _mintedAmounts[pool] += feeAmount;
         }
     }
 

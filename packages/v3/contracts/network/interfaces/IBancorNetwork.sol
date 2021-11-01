@@ -16,8 +16,24 @@ import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol"
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorVault } from "./IBancorVault.sol";
+import { IBancorVault } from "./../../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
+
+/**
+ * @dev Flash-loan recipient interface
+ */
+interface IFlashLoanRecipient {
+    /**
+     * @dev a flash-loan recipient callback after each the caller must return the borrowed amount and an additional fee
+     */
+    function onFlashLoan(
+        address sender,
+        IERC20 token,
+        uint256 amount,
+        uint256 feeAmount,
+        bytes memory data
+    ) external;
+}
 
 /**
  * @dev Bancor Network interface
@@ -225,5 +241,19 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
+    ) external;
+
+    /**
+     * @dev provides a flash-loan
+     *
+     * requirements:
+     *
+     * - the recipient's callback must return *at least* the borrowed amount and fee back to the specified return address
+     */
+    function flashLoan(
+        ReserveToken token,
+        uint256 amount,
+        IFlashLoanRecipient recipient,
+        bytes calldata data
     ) external;
 }

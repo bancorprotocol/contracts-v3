@@ -15,7 +15,7 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../../vaults/interfaces/IBancorVault.sol";
 
 struct DepositAmounts {
     uint256 poolTokenAmount; // the minted pool token amount
@@ -177,7 +177,7 @@ interface INetworkTokenPool is IUpgradeable {
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external;
 }

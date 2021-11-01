@@ -32,14 +32,6 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _version;
     }
 
-    function mintT(
-        address recipient,
-        IPoolToken poolToken,
-        uint256 amount
-    ) external {
-        poolToken.mint(recipient, amount);
-    }
-
     function setTradingLiquidityT(ReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
         _poolData[reserveToken].liquidity = liquidity;
     }

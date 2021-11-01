@@ -11,12 +11,13 @@ import {
     TestBancorNetwork
 } from '../../typechain';
 import { roles } from './AccessControl';
-import { DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { toAddress, TokenWithAddress } from './Utils';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
+import { Fraction } from './Types';
+import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { TokenGovernance } from '@bancor/token-governance';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers, waffle } from 'hardhat';
-import { isEqual } from 'lodash';
 
 const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
 
@@ -37,7 +38,6 @@ interface Logic {
     contract: BaseContract;
 }
 
-const logicContractsCache: Record<string, Logic> = {};
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -49,17 +49,8 @@ export const proxyAdmin = async () => {
 };
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
-    // check if we can reuse a previously cached exact logic contract (e.g., the same contract and constructor arguments)
-    const cached = logicContractsCache[factory.metadata.contractName];
-    if (cached && isEqual(cached.ctorArgs, ctorArgs)) {
-        return cached.contract;
-    }
-
     // eslint-disable-next-line @typescript-eslint/ban-types
-    const logicContract = await (factory.deploy as Function)(...(ctorArgs || []));
-    logicContractsCache[factory.metadata.contractName] = { ctorArgs, contract: logicContract };
-
-    return logicContract;
+    return (factory.deploy as Function)(...(ctorArgs || []));
 };
 
 const createTransparentProxy = async (
@@ -72,7 +63,7 @@ const createTransparentProxy = async (
     return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
 };
 
-const createProxy = async <F extends ContractFactory>(
+export const createProxy = async <F extends ContractFactory>(
     factory: ContractBuilder<F>,
     args?: ProxyArguments
 ): Promise<Contract<F>> => {
@@ -82,12 +73,14 @@ const createProxy = async <F extends ContractFactory>(
     return factory.attach(proxy.address);
 };
 
+const getDeployer = async () => (await ethers.getSigners())[0];
+
 const createGovernedToken = async <F extends ContractFactory>(
     legacyFactory: ContractBuilder<F>,
     totalSupply: BigNumber,
     ...args: Parameters<F['deploy']>
 ) => {
-    const deployer = (await ethers.getSigners())[0];
+    const deployer = await getDeployer();
 
     const token = await legacyFactory.deploy(...args);
     await token.issue(deployer.address, totalSupply);
@@ -191,7 +184,7 @@ const createSystemFixture = async () => {
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
-    const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+    const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
@@ -202,23 +195,24 @@ const createSystemFixture = async () => {
             networkTokenGovernance.address,
             govTokenGovernance.address,
             networkSettings.address,
-            vault.address,
+            bancorVault.address,
             networkPoolToken.address
         ]
     });
 
-    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address]
-    });
     const networkTokenPool = await createNetworkTokenPoolUninitialized(
         network,
-        vault,
+        bancorVault,
         networkPoolToken,
         networkTokenGovernance,
         govTokenGovernance
     );
 
     await networkTokenPool.initialize();
+
+    const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
+        ctorArgs: [network.address, networkTokenPool.address]
+    });
 
     const poolCollectionUpgrader = await createProxy(Contracts.TestPoolCollectionUpgrader, {
         ctorArgs: [network.address]
@@ -228,7 +222,7 @@ const createSystemFixture = async () => {
 
     await network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await vault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,
@@ -238,7 +232,7 @@ const createSystemFixture = async () => {
         govToken,
         govTokenGovernance,
         networkPoolToken,
-        vault,
+        bancorVault,
         networkTokenPool,
         pendingWithdrawals,
         poolTokenFactory,
@@ -248,3 +242,58 @@ const createSystemFixture = async () => {
 };
 
 export const createSystem = async () => waffle.loadFixture(createSystemFixture);
+
+export const depositToPool = async (
+    provider: SignerWithAddress,
+    token: TokenWithAddress,
+    amount: BigNumber,
+    network: TestBancorNetwork
+) => {
+    let value = BigNumber.from(0);
+    if (token.address === NATIVE_TOKEN_ADDRESS) {
+        value = amount;
+    } else {
+        const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+        await reserveToken.transfer(provider.address, amount);
+        await reserveToken.connect(provider).approve(network.address, amount);
+    }
+
+    await network.connect(provider).deposit(token.address, amount, { value });
+};
+
+export interface PoolSpec {
+    symbol: string;
+    balance: BigNumber;
+    initialRate: Fraction<BigNumber>;
+    tradingFeePPM?: number;
+}
+
+export const setupSimplePool = async (
+    spec: PoolSpec,
+    provider: SignerWithAddress,
+    network: TestBancorNetwork,
+    networkSettings: NetworkSettings,
+    poolCollection: TestPoolCollection
+) => {
+    const isNetworkToken = spec.symbol === BNT;
+
+    if (isNetworkToken) {
+        const poolToken = await Contracts.PoolToken.attach(await network.networkPoolToken());
+        const networkToken = await LegacyContracts.NetworkToken.attach(await network.networkToken());
+
+        return { poolToken, token: networkToken };
+    }
+
+    const token = await createTokenBySymbol(spec.symbol);
+
+    const poolToken = await createPool(token, network, networkSettings, poolCollection);
+
+    await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
+    await poolCollection.setInitialRate(token.address, spec.initialRate);
+    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
+
+    await depositToPool(provider, token, spec.balance, network);
+
+    return { poolToken, token };
+};

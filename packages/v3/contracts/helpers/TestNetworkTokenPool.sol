@@ -14,12 +14,4 @@ contract TestNetworkTokenPool is NetworkTokenPool {
     function withdrawalAmountsT(uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory) {
         return _withdrawalAmounts(poolTokenAmount);
     }
-
-    function mintT(address recipient, uint256 amount) external {
-        _poolToken.mint(recipient, amount);
-    }
-
-    function setStakedBalanceT(uint256 amount) external {
-        _stakedBalance = amount;
-    }
 }

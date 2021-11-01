@@ -2,7 +2,12 @@
 pragma solidity 0.8.9;
 pragma abicoder v2;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
+import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
+
+import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -15,8 +20,10 @@ import { IBancorNetwork } from "./IBancorNetwork.sol";
 struct WithdrawalRequest {
     address provider; // the liquidity provider
     IPoolToken poolToken; // the locked pool token
+    ReserveToken reserveToken; // the reserve token to withdraw
     uint32 createdAt; // the time when the request was created (Unix timestamp))
     uint256 poolTokenAmount; // the locked pool token amount
+    uint256 reserveTokenAmount; // the expected reserve token amount to withdraw
 }
 
 /**
@@ -35,6 +42,16 @@ interface IPendingWithdrawals is IUpgradeable {
      * @dev returns the network contract
      */
     function network() external view returns (IBancorNetwork);
+
+    /**
+     * @dev returns the network token contract
+     */
+    function networkToken() external view returns (IERC20);
+
+    /**
+     * @dev returns the network token pool contract
+     */
+    function networkTokenPool() external view returns (INetworkTokenPool);
 
     /**
      * @dev returns the lock duration
@@ -85,6 +102,11 @@ interface IPendingWithdrawals is IUpgradeable {
         bytes32 r,
         bytes32 s
     ) external;
+
+    /**
+     * @dev returns whether the given request is ready for withdrawal
+     */
+    function readyForWithdrawal(uint256 id) external view returns (bool);
 
     /**
      * @dev cancels a withdrawal request

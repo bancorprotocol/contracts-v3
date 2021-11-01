@@ -720,19 +720,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function onFeesCollected(ReserveToken pool, uint256 baseTokenAmount)
+    function onFeesCollected(ReserveToken pool, uint256 feeAmount)
         external
         only(address(_network))
         validAddress(ReserveToken.unwrap(pool))
     {
-        if (baseTokenAmount == 0) {
+        if (feeAmount == 0) {
             return;
         }
 
         Pool storage data = _poolStorage(pool);
 
         // increase the staked balance by the given amount
-        data.liquidity.stakedBalance += baseTokenAmount;
+        data.liquidity.stakedBalance += feeAmount;
     }
 
     /**
