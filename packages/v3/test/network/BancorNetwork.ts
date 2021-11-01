@@ -28,7 +28,7 @@ import {
     PoolSpec
 } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
-import { ROLE_OWNER, createLegacySystem } from '../helpers/LegacyFactory';
+import { createLegacySystem } from '../helpers/LegacyFactory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
@@ -1752,17 +1752,16 @@ describe('BancorNetwork', () => {
             const STANDARD_CONVERTER_TYPE = 3;
 
             let now: any;
-            let contractRegistry: any;
             let converterRegistry: any;
             let checkpointStore: any;
-            let poolToken: any;
-            let converter: any;
             let liquidityProtectionSettings: any;
             let liquidityProtectionStore: any;
             let liquidityProtectionStats: any;
             let liquidityProtectionSystemStore: any;
             let liquidityProtectionWallet: any;
             let liquidityProtection: any;
+            let converter: any;
+            let poolToken: any;
             let baseToken: any;
             let owner: any;
             let provider: any;
@@ -1847,45 +1846,23 @@ describe('BancorNetwork', () => {
             const initLiquidityProtection = async (isETH: boolean, whitelist = true) => {
                 [owner, provider] = await ethers.getSigners();
 
-                ({ contractRegistry, converterRegistry } = await createLegacySystem());
+                ({
+                    converterRegistry,
+                    checkpointStore,
+                    liquidityProtectionStore,
+                    liquidityProtectionStats,
+                    liquidityProtectionSystemStore,
+                    liquidityProtectionWallet,
+                    liquidityProtectionSettings,
+                    liquidityProtection
+                } = await createLegacySystem(network, networkToken, networkTokenGovernance, govTokenGovernance));
 
                 await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY);
 
-                // initialize liquidity protection
-                checkpointStore = await LegacyContracts.TestCheckpointStore.deploy();
-                liquidityProtectionSettings = await LegacyContracts.LiquidityProtectionSettings.deploy(
-                    networkToken.address,
-                    contractRegistry.address
-                );
                 await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(BigNumber.from(100));
                 await liquidityProtectionSettings.setMinNetworkCompensation(BigNumber.from(3));
 
-                liquidityProtectionStore = await LegacyContracts.LiquidityProtectionStore.deploy();
-                liquidityProtectionStats = await LegacyContracts.LiquidityProtectionStats.deploy();
-                liquidityProtectionSystemStore = await LegacyContracts.LiquidityProtectionSystemStore.deploy();
-                liquidityProtectionWallet = await LegacyContracts.LegacyTokenHolder.deploy();
-                liquidityProtection = await LegacyContracts.TestLiquidityProtection.deploy(
-                    network.address,
-                    liquidityProtectionSettings.address,
-                    liquidityProtectionStore.address,
-                    liquidityProtectionStats.address,
-                    liquidityProtectionSystemStore.address,
-                    liquidityProtectionWallet.address,
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    checkpointStore.address
-                );
-
-                await liquidityProtectionSettings.grantRole(ROLE_OWNER, liquidityProtection.address);
-                await liquidityProtectionStats.grantRole(ROLE_OWNER, liquidityProtection.address);
-                await liquidityProtectionSystemStore.grantRole(ROLE_OWNER, liquidityProtection.address);
-                await checkpointStore.grantRole(ROLE_OWNER, liquidityProtection.address);
                 await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
-                await liquidityProtectionStore.transferOwnership(liquidityProtection.address);
-                await liquidityProtection.acceptStoreOwnership();
-                await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
-                await liquidityProtection.acceptWalletOwnership();
-
                 await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
                 await govTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
 
