@@ -7,18 +7,17 @@ const {
 } = require('../../../v2/test/helpers/Constants');
 
 export const createLegacySystem = async (
+    owner: any,
     network: any,
     networkToken: any,
     networkTokenGovernance: any,
     govTokenGovernance: any
 ) => {
-    const deployer = (await ethers.getSigners())[0];
-
     const contractRegistry = await LegacyContracts.ContractRegistry.deploy();
     const converterRegistry = await LegacyContracts.ConverterRegistry.deploy(contractRegistry.address);
     const converterRegistryData = await LegacyContracts.ConverterRegistryData.deploy(contractRegistry.address);
     const legacyNetwork = await LegacyContracts.LegacyBancorNetwork.deploy(contractRegistry.address);
-    const legacyNetworkSettings = await LegacyContracts.LegacyNetworkSettings.deploy(deployer.address, 0);
+    const legacyNetworkSettings = await LegacyContracts.LegacyNetworkSettings.deploy(owner.address, 0);
     const standardPoolConverterFactory = await LegacyContracts.TestStandardPoolConverterFactory.deploy();
     const converterFactory = await LegacyContracts.ConverterFactory.deploy();
 

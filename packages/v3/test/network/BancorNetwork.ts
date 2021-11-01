@@ -1855,7 +1855,7 @@ describe('BancorNetwork', () => {
                     liquidityProtectionWallet,
                     liquidityProtectionSettings,
                     liquidityProtection
-                } = await createLegacySystem(network, networkToken, networkTokenGovernance, govTokenGovernance));
+                } = await createLegacySystem(owner, network, networkToken, networkTokenGovernance, govTokenGovernance));
 
                 await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY);
 
@@ -1883,6 +1883,7 @@ describe('BancorNetwork', () => {
                     [baseToken.address, networkToken.address],
                     [PPM_RESOLUTION.div(2), PPM_RESOLUTION.div(2)]
                 );
+
                 const anchorCount = await converterRegistry.getAnchorCount();
                 const poolTokenAddress = await converterRegistry.getAnchor(anchorCount - 1);
                 poolToken = await LegacyContracts.GovToken.attach(poolTokenAddress);
