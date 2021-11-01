@@ -1843,7 +1843,7 @@ describe('BancorNetwork', () => {
                 }
             };
 
-            const initLiquidityProtection = async (isETH: boolean, whitelist = true) => {
+            const initLiquidityProtection = async (isETH: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
                 ({
@@ -1869,7 +1869,7 @@ describe('BancorNetwork', () => {
                 await setTime(await latest());
 
                 baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
-                poolToken = await createPool(baseToken, network, networkSettings, poolCollection);
+                await createPool(baseToken, network, networkSettings, poolCollection);
                 await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
                 await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
@@ -1909,10 +1909,7 @@ describe('BancorNetwork', () => {
                     }
                 );
 
-                // whitelist pool
-                if (whitelist) {
-                    await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
-                }
+                await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
             };
 
             for (const isETH of [false, true]) {
