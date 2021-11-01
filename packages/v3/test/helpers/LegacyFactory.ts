@@ -3,7 +3,8 @@ import { ethers } from 'hardhat';
 
 const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS },
-    roles: { ROLE_OWNER }
+    roles: { ROLE_OWNER },
+    PPM_RESOLUTION
 } = require('../../../v2/test/helpers/Constants');
 
 export const createLegacySystem = async (
@@ -11,7 +12,8 @@ export const createLegacySystem = async (
     network: any,
     networkToken: any,
     networkTokenGovernance: any,
-    govTokenGovernance: any
+    govTokenGovernance: any,
+    baseToken: any
 ) => {
     const contractRegistry = await LegacyContracts.ContractRegistry.deploy();
     const converterRegistry = await LegacyContracts.ConverterRegistry.deploy(contractRegistry.address);
@@ -59,6 +61,24 @@ export const createLegacySystem = async (
     await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
     await liquidityProtection.acceptWalletOwnership();
 
+    await converterRegistry.newConverter(
+        3, /* Standard Pool Converter Type */
+        'PT',
+        'PT',
+        18,
+        PPM_RESOLUTION,
+        [baseToken.address, networkToken.address],
+        [PPM_RESOLUTION.div(2), PPM_RESOLUTION.div(2)]
+    );
+
+    const anchorCount = await converterRegistry.getAnchorCount();
+    const poolTokenAddress = await converterRegistry.getAnchor(anchorCount.sub(1));
+    const poolToken = await LegacyContracts.GovToken.attach(poolTokenAddress);
+    const converterAddress = await poolToken.owner();
+    const converter = await LegacyContracts.TestStandardPoolConverter.attach(converterAddress);
+
+    await converter.acceptOwnership();
+
     return {
         converterFactory,
         contractRegistry,
@@ -73,6 +93,8 @@ export const createLegacySystem = async (
         liquidityProtectionSystemStore,
         liquidityProtectionWallet,
         liquidityProtectionSettings,
-        liquidityProtection
+        liquidityProtection,
+        poolToken,
+        converter
     };
 };

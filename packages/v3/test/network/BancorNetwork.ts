@@ -1,6 +1,5 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import LegacyContracts from '../../components/LegacyContracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
@@ -1843,8 +1842,10 @@ describe('BancorNetwork', () => {
                 }
             };
 
-            const initLiquidityProtection = async (isETH: boolean) => {
+            const initLegacySystem = async (isETH: boolean) => {
                 [owner, provider] = await ethers.getSigners();
+
+                baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
 
                 ({
                     converterRegistry,
@@ -1854,8 +1855,17 @@ describe('BancorNetwork', () => {
                     liquidityProtectionSystemStore,
                     liquidityProtectionWallet,
                     liquidityProtectionSettings,
-                    liquidityProtection
-                } = await createLegacySystem(owner, network, networkToken, networkTokenGovernance, govTokenGovernance));
+                    liquidityProtection,
+                    poolToken,
+                    converter
+                } = await createLegacySystem(
+                    owner,
+                    network,
+                    networkToken,
+                    networkTokenGovernance,
+                    govTokenGovernance,
+                    baseToken
+                ));
 
                 await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY);
 
@@ -1868,30 +1878,12 @@ describe('BancorNetwork', () => {
 
                 await setTime(await latest());
 
-                baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
                 await createPool(baseToken, network, networkSettings, poolCollection);
                 await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
                 await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
 
-                await converterRegistry.newConverter(
-                    STANDARD_CONVERTER_TYPE,
-                    'PT',
-                    'PT',
-                    18,
-                    PPM_RESOLUTION,
-                    [baseToken.address, networkToken.address],
-                    [PPM_RESOLUTION.div(2), PPM_RESOLUTION.div(2)]
-                );
-
-                const anchorCount = await converterRegistry.getAnchorCount();
-                const poolTokenAddress = await converterRegistry.getAnchor(anchorCount - 1);
-                poolToken = await LegacyContracts.GovToken.attach(poolTokenAddress);
-                const converterAddress = await poolToken.owner();
-                converter = await LegacyContracts.TestStandardPoolConverter.attach(converterAddress);
-
                 await setTime(now);
-                await converter.acceptOwnership();
                 await networkToken.approve(converter.address, RESERVE2_AMOUNT);
 
                 let value = BigNumber.from(0);
@@ -1916,7 +1908,7 @@ describe('BancorNetwork', () => {
             for (const isETH of [false, true]) {
                 describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
                     prepareEach(async () => {
-                        await initLiquidityProtection(isETH);
+                        await initLegacySystem(isETH);
                     });
 
                     it('verifies that the caller can migrate positions', async () => {
@@ -2053,7 +2045,7 @@ describe('BancorNetwork', () => {
 
             describe('network token', () => {
                 prepareEach(async () => {
-                    await initLiquidityProtection(false);
+                    await initLegacySystem(false);
                     const amount = BigNumber.from(100_000);
                     await baseToken.transfer(provider.address, amount);
                     await baseToken.connect(provider).approve(network.address, amount);
