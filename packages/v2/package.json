@@ -20,7 +20,6 @@
     ],
     "scripts": {
         "build": "hardhat compile",
-        "rebuild": "yarn clean && yarn build",
         "test": "NODE_OPTIONS='--max-old-space-size=6144' hardhat test",
         "testb": "BAIL=1 yarn test",
         "profile": "PROFILE=1 yarn test",
