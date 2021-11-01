@@ -1748,10 +1748,8 @@ describe('BancorNetwork', () => {
             const TOTAL_SUPPLY = BigNumber.from(10).pow(BigNumber.from(25));
             const RESERVE1_AMOUNT = BigNumber.from(1000000);
             const RESERVE2_AMOUNT = BigNumber.from(2500000);
-            const STANDARD_CONVERTER_TYPE = 3;
 
             let now: any;
-            let converterRegistry: any;
             let checkpointStore: any;
             let liquidityProtectionSettings: any;
             let liquidityProtectionStore: any;
