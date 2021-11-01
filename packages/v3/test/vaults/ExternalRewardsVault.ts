@@ -29,15 +29,12 @@ describe('ExternalRewardsVault', () => {
             );
         });
 
-        it('should be payable', async () => {
-            expect(await externalRewardsVault.isPayable()).to.be.true;
-        });
-
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
             const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
             expect(await externalRewardsVault.version()).to.equal(1);
+            expect(await externalRewardsVault.isPayable()).to.be.true;
 
             await expectRole(externalRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
