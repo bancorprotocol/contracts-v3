@@ -62,7 +62,7 @@ export const createLegacySystem = async (
     await liquidityProtection.acceptWalletOwnership();
 
     await converterRegistry.newConverter(
-        3, /* Standard Pool Converter Type */
+        3 /* Standard Pool Converter Type */,
         'PT',
         'PT',
         18,
