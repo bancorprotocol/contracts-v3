@@ -9,13 +9,14 @@ import {
     TestPoolCollection
 } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
-import { createPool, createSystem } from '../helpers/Factory';
+import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes } from '../helpers/Constants';
+import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createTokenBySymbol, createWallet, TokenWithAddress } from '../helpers/Utils';
+import { toWei } from '../helpers/Types';
+import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';
@@ -47,11 +48,21 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+            const { networkTokenPool } = await createSystem();
+            await expect(
+                Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, networkTokenPool.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network token pool contract', async () => {
+            const { network } = await createSystem();
+            await expect(Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should be properly initialized', async () => {
-            const { pendingWithdrawals, network } = await createSystem();
+            const { pendingWithdrawals, network, networkToken, networkTokenPool } = await createSystem();
 
             expect(await pendingWithdrawals.version()).to.equal(1);
 
@@ -60,13 +71,18 @@ describe('PendingWithdrawals', () => {
             ]);
 
             expect(await pendingWithdrawals.network()).to.equal(network.address);
+            expect(await pendingWithdrawals.networkToken()).to.equal(networkToken.address);
+            expect(await pendingWithdrawals.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should emit events on initialization', async () => {
-            const { network } = await createSystem();
-            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(network.address);
+            const { network, networkTokenPool } = await createSystem();
+            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
+                network.address,
+                networkTokenPool.address
+            );
             const res = await pendingWithdrawals.initialize();
             await expect(res)
                 .to.emit(pendingWithdrawals, 'LockDurationUpdated')
@@ -158,6 +174,7 @@ describe('PendingWithdrawals', () => {
     });
 
     describe('withdrawals', () => {
+        let poolToken: PoolToken;
         let reserveToken: TokenWithAddress;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
@@ -166,6 +183,8 @@ describe('PendingWithdrawals', () => {
         let networkPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
 
         const testWithdrawals = async (symbol: string) => {
             const isNetworkToken = symbol === BNT;
@@ -181,14 +200,22 @@ describe('PendingWithdrawals', () => {
                     poolCollection
                 } = await createSystem());
 
-                if (isNetworkToken) {
-                    reserveToken = networkToken;
-                } else {
-                    reserveToken = await createTokenBySymbol(symbol);
-                }
+                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
 
                 await pendingWithdrawals.setTime(await latest());
             });
+
+            const poolTokenUnderlying = async (poolToken: PoolToken, amount: BigNumber) => {
+                let stakedBalance: BigNumber;
+                if (networkPoolToken.address === poolToken.address) {
+                    stakedBalance = await networkTokenPool.stakedBalance();
+                } else {
+                    ({ stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address));
+                }
+
+                return amount.mul(stakedBalance).div(await poolToken.totalSupply());
+            };
 
             describe('initiation', () => {
                 const test = (permitted = false) => {
@@ -234,10 +261,11 @@ describe('PendingWithdrawals', () => {
                         const res = await initWithdrawal(poolToken, amount);
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(providerAddress);
                         const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                        const reserveTokenAmount = await poolTokenUnderlying(poolToken, amount);
 
                         await expect(res)
                             .to.emit(pendingWithdrawals, 'WithdrawalInitiated')
-                            .withArgs(reserveToken.address, providerAddress, id, amount);
+                            .withArgs(reserveToken.address, providerAddress, id, amount, reserveTokenAmount);
 
                         expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
 
@@ -252,7 +280,9 @@ describe('PendingWithdrawals', () => {
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
                         expect(withdrawalRequest.provider).to.equal(providerAddress);
                         expect(withdrawalRequest.poolToken).to.equal(poolToken.address);
+                        expect(withdrawalRequest.reserveToken).to.equal(reserveToken.address);
                         expect(withdrawalRequest.poolTokenAmount).to.equal(amount);
+                        expect(withdrawalRequest.reserveTokenAmount).to.equal(reserveTokenAmount);
                         expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
                     };
 
@@ -307,19 +337,33 @@ describe('PendingWithdrawals', () => {
                         });
                     }
 
-                    context('with an associated collection and whitelisted token', () => {
-                        let poolToken: PoolToken;
+                    context('with provided liquidity', () => {
+                        let poolTokenAmount: BigNumber;
 
                         prepareEach(async () => {
-                            if (isNetworkToken) {
-                                poolToken = networkPoolToken;
-                            } else {
-                                poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
-                            }
+                            ({ poolToken, token: reserveToken } = await setupSimplePool(
+                                {
+                                    symbol: TKN,
+                                    balance: toWei(BigNumber.from(1_000_000)),
+                                    initialRate: { n: BigNumber.from(1), d: BigNumber.from(2) }
+                                },
+                                provider as any as SignerWithAddress,
+                                network,
+                                networkSettings,
+                                poolCollection
+                            ));
+
+                            poolTokenAmount = await poolToken.balanceOf(provider.address);
+                        });
+
+                        it('should revert when attempting to withdraw a zero amount of pool tokens', async () => {
+                            await expect(initWithdrawal(poolToken, BigNumber.from(0))).to.be.revertedWith('ZeroValue');
                         });
 
                         it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
-                            await expect(initWithdrawal(poolToken, BigNumber.from(0))).to.be.revertedWith('ZeroValue');
+                            await expect(
+                                initWithdrawal(poolToken, poolTokenAmount.add(BigNumber.from(1)))
+                            ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                         });
 
                         it('should revert when attempting to withdraw an insufficient amount of pool tokens', async () => {
@@ -329,33 +373,18 @@ describe('PendingWithdrawals', () => {
                             ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                         });
 
-                        context('with a pool token balance', () => {
-                            const amount = BigNumber.from(12345);
+                        it('should init a withdraw', async () => {
+                            await testInitWithdrawal(poolToken, poolTokenAmount);
+                        });
 
-                            prepareEach(async () => {
-                                if (isNetworkToken) {
-                                    await networkTokenPool.mintT(providerAddress, amount);
-                                } else {
-                                    await poolCollection.mintT(providerAddress, poolToken.address, amount);
-                                }
-                            });
-
-                            it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
-                                await expect(
-                                    initWithdrawal(poolToken, amount.add(BigNumber.from(1)))
-                                ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
-                            });
-
-                            it('should init a withdraw', async () => {
-                                await testInitWithdrawal(poolToken, amount);
-                            });
-
-                            it('should init multiple withdraws', async () => {
-                                const withdrawals = 3;
-                                for (let i = 0; i < withdrawals; i++) {
-                                    await testInitWithdrawal(poolToken, amount.div(BigNumber.from(withdrawals + i)));
-                                }
-                            });
+                        it('should init multiple withdraws', async () => {
+                            const withdrawals = 3;
+                            for (let i = 0; i < withdrawals; i++) {
+                                await testInitWithdrawal(
+                                    poolToken,
+                                    poolTokenAmount.div(BigNumber.from(withdrawals + i))
+                                );
+                            }
                         });
                     });
                 };
@@ -369,26 +398,26 @@ describe('PendingWithdrawals', () => {
 
             describe('cancellation', () => {
                 let provider1: SignerWithAddress;
-                let provider2: SignerWithAddress;
-                let poolToken: PoolToken;
-                const amount = BigNumber.from(9999999);
+                let poolTokenAmount: BigNumber;
 
                 before(async () => {
-                    [, provider1, provider2] = await ethers.getSigners();
+                    [, provider1] = await ethers.getSigners();
                 });
 
                 prepareEach(async () => {
-                    if (isNetworkToken) {
-                        poolToken = networkPoolToken;
+                    ({ poolToken, token: reserveToken } = await setupSimplePool(
+                        {
+                            symbol: TKN,
+                            balance: toWei(BigNumber.from(1_000_000)),
+                            initialRate: { n: BigNumber.from(1), d: BigNumber.from(2) }
+                        },
+                        provider1,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
 
-                        await networkTokenPool.mintT(provider1.address, amount);
-                        await networkTokenPool.mintT(provider2.address, amount);
-                    } else {
-                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
-                    }
+                    poolTokenAmount = await poolToken.balanceOf(provider1.address);
                 });
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
@@ -414,6 +443,7 @@ describe('PendingWithdrawals', () => {
                                 provider.address,
                                 id,
                                 withdrawalRequest.poolTokenAmount,
+                                withdrawalRequest.reserveTokenAmount,
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
@@ -437,7 +467,7 @@ describe('PendingWithdrawals', () => {
                     let id2: BigNumber;
 
                     prepareEach(async () => {
-                        await poolToken.connect(provider1).approve(pendingWithdrawals.address, amount);
+                        await poolToken.connect(provider1).approve(pendingWithdrawals.address, poolTokenAmount);
 
                         const withdrawalAmount1 = BigNumber.from(1111);
                         await pendingWithdrawals
@@ -446,7 +476,7 @@ describe('PendingWithdrawals', () => {
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
                         id1 = withdrawalRequestIds[withdrawalRequestIds.length - 1];
 
-                        const withdrawalAmount2 = amount.sub(withdrawalAmount1);
+                        const withdrawalAmount2 = poolTokenAmount.sub(withdrawalAmount1);
                         await pendingWithdrawals
                             .connect(provider1)
                             .initWithdrawal(poolToken.address, withdrawalAmount2);
@@ -455,8 +485,13 @@ describe('PendingWithdrawals', () => {
                     });
 
                     it("should revert when attempting to cancel another provider's request", async () => {
-                        await poolToken.connect(provider2).approve(pendingWithdrawals.address, amount);
-                        await pendingWithdrawals.connect(provider2).initWithdrawal(poolToken.address, amount);
+                        const provider2 = (await ethers.getSigners())[5];
+
+                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
+
+                        await poolToken.connect(provider2).approve(pendingWithdrawals.address, poolTokenAmount2);
+                        await pendingWithdrawals.connect(provider2).initWithdrawal(poolToken.address, poolTokenAmount2);
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider2.address);
                         const provider2Id = withdrawalRequestIds[0];
 
@@ -481,26 +516,26 @@ describe('PendingWithdrawals', () => {
 
             describe('reinitiation', () => {
                 let provider1: SignerWithAddress;
-                let provider2: SignerWithAddress;
-                let poolToken: PoolToken;
-                const amount = BigNumber.from(9999999);
+                let poolTokenAmount: BigNumber;
 
                 before(async () => {
-                    [, provider1, provider2] = await ethers.getSigners();
+                    [, provider1] = await ethers.getSigners();
                 });
 
                 prepareEach(async () => {
-                    if (isNetworkToken) {
-                        poolToken = networkPoolToken;
+                    ({ poolToken, token: reserveToken } = await setupSimplePool(
+                        {
+                            symbol: TKN,
+                            balance: toWei(BigNumber.from(1_000_000)),
+                            initialRate: { n: BigNumber.from(1), d: BigNumber.from(2) }
+                        },
+                        provider1,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
 
-                        await networkTokenPool.mintT(provider1.address, amount);
-                        await networkTokenPool.mintT(provider2.address, amount);
-                    } else {
-                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                        await poolCollection.mintT(provider1.address, poolToken.address, amount);
-                        await poolCollection.mintT(provider2.address, poolToken.address, amount);
-                    }
+                    poolTokenAmount = await poolToken.balanceOf(provider1.address);
                 });
 
                 it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
@@ -528,6 +563,7 @@ describe('PendingWithdrawals', () => {
                                 provider.address,
                                 id,
                                 withdrawalRequest.poolTokenAmount,
+                                withdrawalRequest.reserveTokenAmount,
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
@@ -553,7 +589,7 @@ describe('PendingWithdrawals', () => {
                     let id2: BigNumber;
 
                     prepareEach(async () => {
-                        await poolToken.connect(provider1).approve(pendingWithdrawals.address, amount);
+                        await poolToken.connect(provider1).approve(pendingWithdrawals.address, poolTokenAmount);
 
                         const withdrawalAmount1 = BigNumber.from(1111);
                         await pendingWithdrawals
@@ -562,7 +598,7 @@ describe('PendingWithdrawals', () => {
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
                         id1 = withdrawalRequestIds[withdrawalRequestIds.length - 1];
 
-                        const withdrawalAmount2 = amount.sub(withdrawalAmount1);
+                        const withdrawalAmount2 = poolTokenAmount.sub(withdrawalAmount1);
                         await pendingWithdrawals
                             .connect(provider1)
                             .initWithdrawal(poolToken.address, withdrawalAmount2);
@@ -571,8 +607,13 @@ describe('PendingWithdrawals', () => {
                     });
 
                     it("should revert when attempting to reinitiate another provider's request", async () => {
-                        await poolToken.connect(provider2).approve(pendingWithdrawals.address, amount);
-                        await pendingWithdrawals.connect(provider2).initWithdrawal(poolToken.address, amount);
+                        const provider2 = (await ethers.getSigners())[5];
+
+                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
+
+                        await poolToken.connect(provider2).approve(pendingWithdrawals.address, poolTokenAmount2);
+                        await pendingWithdrawals.connect(provider2).initWithdrawal(poolToken.address, poolTokenAmount2);
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider2.address);
                         const provider2Id = withdrawalRequestIds[0];
 
@@ -592,7 +633,7 @@ describe('PendingWithdrawals', () => {
                 let provider: SignerWithAddress;
 
                 let poolToken: PoolToken;
-                const poolTokenAmount = BigNumber.from(9889898923324);
+                let poolTokenAmount: BigNumber;
                 const contextId = formatBytes32String('CTX');
 
                 before(async () => {
@@ -600,15 +641,19 @@ describe('PendingWithdrawals', () => {
                 });
 
                 prepareEach(async () => {
-                    if (isNetworkToken) {
-                        poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
+                    ({ poolToken, token: reserveToken } = await setupSimplePool(
+                        {
+                            symbol: TKN,
+                            balance: toWei(BigNumber.from(1_000_000)),
+                            initialRate: { n: BigNumber.from(1), d: BigNumber.from(2) }
+                        },
+                        provider,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
 
-                        await networkTokenPool.mintT(provider.address, poolTokenAmount);
-                    } else {
-                        poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                        await poolCollection.mintT(provider.address, poolToken.address, poolTokenAmount);
-                    }
+                    poolTokenAmount = await poolToken.balanceOf(provider.address);
                 });
 
                 it('should revert when attempting to complete a non-existing withdrawal request', async () => {
@@ -625,10 +670,19 @@ describe('PendingWithdrawals', () => {
                         const providerBalance = await poolToken.balanceOf(provider.address);
                         const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
                         const networkBalance = await poolToken.balanceOf(network.address);
+                        const prevTotalSupply = await poolToken.totalSupply();
                         const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(
                             provider.address
                         );
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+
+                        const currentReserveTokenAmount = await poolTokenUnderlying(
+                            poolToken,
+                            withdrawalRequest.poolTokenAmount
+                        );
+                        const currentPoolTokenAmount = withdrawalRequest.poolTokenAmount
+                            .mul(withdrawalRequest.reserveTokenAmount)
+                            .div(currentReserveTokenAmount);
 
                         const completedRequest = await network.callStatic.completeWithdrawalT(
                             contextId,
@@ -636,7 +690,7 @@ describe('PendingWithdrawals', () => {
                             id
                         );
                         expect(completedRequest.poolToken).to.equal(withdrawalRequest.poolToken);
-                        expect(completedRequest.poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
+                        expect(completedRequest.poolTokenAmount).to.equal(currentPoolTokenAmount);
 
                         const res = await network.completeWithdrawalT(contextId, provider.address, id);
 
@@ -644,21 +698,30 @@ describe('PendingWithdrawals', () => {
                             .to.emit(pendingWithdrawals, 'WithdrawalCompleted')
                             .withArgs(
                                 contextId,
-                                isNetworkToken ? await network.networkToken() : reserveToken.address,
+                                reserveToken.address,
                                 provider.address,
                                 id,
-                                withdrawalRequest.poolTokenAmount,
+                                currentPoolTokenAmount,
+                                currentReserveTokenAmount,
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
+                        const extraPoolTokenAmount = withdrawalRequest.poolTokenAmount.sub(currentPoolTokenAmount);
+                        if (extraPoolTokenAmount.gt(BigNumber.from(0))) {
+                            await expect(res)
+                                .to.emit(poolToken, 'Transfer')
+                                .withArgs(pendingWithdrawals.address, ZERO_ADDRESS, extraPoolTokenAmount);
+                        }
+
                         expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
 
+                        expect(await poolToken.totalSupply()).to.equal(prevTotalSupply.sub(extraPoolTokenAmount));
                         expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
                         expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
                             pendingWithdrawalsBalance.sub(withdrawalRequest.poolTokenAmount)
                         );
                         expect(await poolToken.balanceOf(network.address)).to.equal(
-                            networkBalance.add(withdrawalRequest.poolTokenAmount)
+                            networkBalance.add(currentPoolTokenAmount)
                         );
                         expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
                             withdrawalRequestCount.sub(BigNumber.from(1))
@@ -730,16 +793,40 @@ describe('PendingWithdrawals', () => {
                             expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.true;
                         });
 
-                        it('should complete a withdrawal request', async () => {
-                            await testCompleteWithdrawal();
-                        });
-
                         it('should revert when attempting to cancel a completed withdrawal request', async () => {
                             await network.completeWithdrawalT(contextId, provider.address, id);
 
                             await expect(pendingWithdrawals.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
                                 'AccessDenied'
                             );
+                        });
+
+                        it('should complete a withdrawal request', async () => {
+                            await testCompleteWithdrawal();
+                        });
+
+                        context('with increased pool token value', () => {
+                            prepareEach(async () => {
+                                const feeAmount = toWei(BigNumber.from(100_000));
+
+                                if (isNetworkToken) {
+                                    await network.onNetworkTokenFeesCollectedT(
+                                        reserveToken.address,
+                                        feeAmount,
+                                        FeeTypes.Trading
+                                    );
+                                } else {
+                                    await network.onPoolCollectionFeesCollectedT(
+                                        poolCollection.address,
+                                        reserveToken.address,
+                                        feeAmount
+                                    );
+                                }
+                            });
+
+                            it('should complete a withdrawal request', async () => {
+                                await testCompleteWithdrawal();
+                            });
                         });
                     });
                 });

@@ -177,7 +177,7 @@ interface INetworkTokenPool is IUpgradeable {
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external;
 }
