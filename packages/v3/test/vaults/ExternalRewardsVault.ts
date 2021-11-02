@@ -42,7 +42,7 @@ describe('ExternalRewardsVault', () => {
             await expectRole(
                 externalRewardsVault,
                 ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
-                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
+                UpgradeableRoles.ROLE_ADMIN,
                 [deployer.address]
             );
         });
