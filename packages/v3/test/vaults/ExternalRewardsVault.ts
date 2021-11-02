@@ -1,47 +1,47 @@
 import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { ExternalProtectionVault } from '../../typechain';
+import { ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-const { Upgradeable: UpgradeableRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles, ExternalRewardsVault: ExternalRewardsVaultRoles } = roles;
 
-describe('ExternalProtectionVault', () => {
-    shouldHaveGap('ExternalProtectionVault');
+describe('ExternalRewardsVault', () => {
+    shouldHaveGap('ExternalRewardsVault');
 
     describe('construction', () => {
-        let externalProtectionVault: ExternalProtectionVault;
+        let externalRewardsVault: ExternalRewardsVault;
 
         prepareEach(async () => {
-            ({ externalProtectionVault } = await createSystem());
+            ({ externalRewardsVault } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(externalProtectionVault.initialize()).to.be.revertedWith(
+            await expect(externalRewardsVault.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
-            expect(await externalProtectionVault.version()).to.equal(1);
-            expect(await externalProtectionVault.isPayable()).to.be.true;
+            expect(await externalRewardsVault.version()).to.equal(1);
+            expect(await externalRewardsVault.isPayable()).to.be.true;
 
-            await expectRole(externalProtectionVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(externalRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
             await expectRole(
-                externalProtectionVault,
-                ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
+                externalRewardsVault,
+                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN,
                 [deployer.address]
             );
@@ -51,7 +51,7 @@ describe('ExternalProtectionVault', () => {
     describe('asset management', () => {
         let amount = 1_000_000;
 
-        let externalProtectionVault: ExternalProtectionVault;
+        let externalRewardsVault: ExternalRewardsVault;
         let networkToken: NetworkToken;
 
         let deployer: SignerWithAddress;
@@ -61,8 +61,8 @@ describe('ExternalProtectionVault', () => {
 
         const testWithdrawFunds = () => {
             it('should allow withdrawals', async () => {
-                await expect(externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(externalProtectionVault, 'FundsWithdrawn')
+                await expect(externalRewardsVault.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(externalRewardsVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -70,7 +70,7 @@ describe('ExternalProtectionVault', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount)
+                    externalRewardsVault.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
@@ -83,10 +83,10 @@ describe('ExternalProtectionVault', () => {
             const isNetworkToken = symbol === BNT;
 
             prepareEach(async () => {
-                ({ externalProtectionVault, networkToken } = await createSystem());
-                token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
+                ({ externalRewardsVault, networkToken } = await createSystem());
+                token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
 
-                await transfer(deployer, token, externalProtectionVault.address, amount);
+                transfer(deployer, token, externalRewardsVault.address, amount);
             });
 
             context(`withdrawing ${symbol}`, () => {
@@ -96,7 +96,7 @@ describe('ExternalProtectionVault', () => {
 
                 context('with admin role', () => {
                     prepareEach(async () => {
-                        await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalRewardsVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -104,8 +104,8 @@ describe('ExternalProtectionVault', () => {
 
                 context('with asset manager role', () => {
                     prepareEach(async () => {
-                        await externalProtectionVault.grantRole(
-                            ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
+                        await externalRewardsVault.grantRole(
+                            ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                             user.address
                         );
                     });

@@ -85,8 +85,8 @@ contract BancorVault is IBancorVault, Vault {
      *
      * requirements:
      *
-     *   - network token: ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER
-     *   - other reserve token or ETH: ROLE_ASSET_MANAGER
+     *   - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
+     *   - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
      */
     function authenticateWithdrawal(
         address caller,
