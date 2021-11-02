@@ -14,6 +14,14 @@ export const roles = {
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
     },
 
+    ExternalProtectionVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
+    ExternalRewardsVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
     TokenGovernance: {
         ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
         ROLE_MINTER: id('ROLE_MINTER')
