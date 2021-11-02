@@ -65,7 +65,7 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
      *
      * requirements:
      *
-     * - ROLE_ASSET_MANAGER
+     * - the caller must have the ROLE_ASSET_MANAGER permission
      */
     function authenticateWithdrawal(
         address caller,
