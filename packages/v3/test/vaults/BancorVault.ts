@@ -60,7 +60,7 @@ describe('BancorVault', () => {
         let token: TokenWithAddress;
 
         const testWithdrawFunds = () => {
-            it('should withdraw', async () => {
+            it('should allow withdrawals', async () => {
                 await expect(bancorVault.connect(user).withdrawFunds(token.address, user.address, amount))
                     .to.emit(bancorVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
@@ -90,11 +90,11 @@ describe('BancorVault', () => {
                     await transfer(deployer, token, bancorVault.address, amount);
                 });
 
-                context('when regular user', () => {
+                context('with no special permissions', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('when admin', () => {
+                context('with admin role', () => {
                     prepareEach(async () => {
                         await bancorVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
@@ -102,7 +102,7 @@ describe('BancorVault', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('when role asset manager', () => {
+                context('with asset manager role', () => {
                     prepareEach(async () => {
                         await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
                     });
@@ -110,7 +110,7 @@ describe('BancorVault', () => {
                     testWithdrawFunds();
                 });
 
-                context('when network token manager', () => {
+                context('with network token manager role', () => {
                     prepareEach(async () => {
                         await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });

@@ -60,7 +60,7 @@ describe('ExternalProtectionVault', () => {
         let token: TokenWithAddress;
 
         const testWithdrawFunds = () => {
-            it('should withdraw', async () => {
+            it('should allow withdrawals', async () => {
                 await expect(externalProtectionVault.connect(user).withdrawFunds(token.address, user.address, amount))
                     .to.emit(externalProtectionVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
@@ -90,11 +90,11 @@ describe('ExternalProtectionVault', () => {
             });
 
             context(`withdrawing ${symbol}`, () => {
-                context('when regular user', () => {
+                context('with no special permissions', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('when admin', () => {
+                context('with admin role', () => {
                     prepareEach(async () => {
                         await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
@@ -102,7 +102,7 @@ describe('ExternalProtectionVault', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('when role asset manager', () => {
+                context('with asset manager role', () => {
                     prepareEach(async () => {
                         await externalProtectionVault.grantRole(
                             ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
