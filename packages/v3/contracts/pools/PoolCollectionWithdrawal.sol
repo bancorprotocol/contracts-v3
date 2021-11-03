@@ -44,7 +44,6 @@ library PoolCollectionWithdrawal {
         assert(b <= type(uint128).max);
         assert(c <= type(uint128).max);
         assert(e <= type(uint128).max);
-        assert(w <= type(uint128).max);
         assert(m <= M);
         assert(n <= M);
         assert(x <= e);
@@ -69,15 +68,12 @@ library PoolCollectionWithdrawal {
         }
 
         if (output.t > 0 && w > 0) {
-            assert(output.t <= type(uint128).max);
-            uint256 tb = output.t * b;
-            uint256 wa = w * a;
-            if (tb > wa) {
-                output.t = (tb - wa) / b;
+            if (gt512(mul512(output.t, b), mul512(w, a))) {
+                output.t = output.t - MathEx.mulDivF(w, a, b);
                 output.u = w;
             } else {
+                output.u = MathEx.mulDivF(output.t, b, a);
                 output.t = 0;
-                output.u = tb / a;
             }
         }
     }}
