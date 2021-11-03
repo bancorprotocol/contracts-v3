@@ -11,6 +11,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain';
+import { expectRole, roles } from '../helpers/AccessControl';
 import {
     FeeTypes,
     NETWORK_TOKEN_POOL_TOKEN_NAME,
@@ -24,12 +25,15 @@ import { prepareEach } from '../helpers/Fixture';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
+import { TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
+
+const { Upgradeable: UpgradeableRoles, NetworkTokenPool: NetworkTokenPoolRoles } = roles;
 
 describe('NetworkTokenPool', () => {
     let deployer: SignerWithAddress;
@@ -80,6 +84,18 @@ describe('NetworkTokenPool', () => {
             } = await createSystem();
 
             expect(await networkTokenPool.version()).to.equal(1);
+            expect(await networkTokenPool.isPayable()).to.be.false;
+
+            await expectRole(networkTokenPool, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+                deployer.address
+            ]);
+
+            await expectRole(
+                networkTokenPool,
+                NetworkTokenPoolRoles.ROLE_POOL_TOKEN_MANAGER,
+                UpgradeableRoles.ROLE_ADMIN
+                // @TODO add staking rewards to initial members
+            );
 
             expect(await networkTokenPool.network()).to.equal(network.address);
             expect(await networkTokenPool.networkToken()).to.equal(networkToken.address);
@@ -1068,6 +1084,95 @@ describe('NetworkTokenPool', () => {
                     );
                 });
             }
+        }
+    });
+
+    describe('asset management', () => {
+        let amount = 1_000_000;
+
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let poolCollection: TestPoolCollection;
+        let networkTokenPool: TestNetworkTokenPool;
+        let networkPoolToken: PoolToken;
+        let networkToken: NetworkToken;
+
+        let deployer: SignerWithAddress;
+        let user: SignerWithAddress;
+
+        let token: TokenWithAddress;
+
+        const testWithdrawFunds = () => {
+            it('should allow withdrawals', async () => {
+                await expect(networkTokenPool.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(networkTokenPool, 'FundsWithdrawn')
+                    .withArgs(token.address, user.address, user.address, amount);
+            });
+        };
+
+        const testWithdrawFundsRestricted = () => {
+            it('should revert', async () => {
+                await expect(
+                    networkTokenPool.connect(user).withdrawFunds(token.address, user.address, amount)
+                ).to.revertedWith('AccessDenied');
+            });
+        };
+
+        before(async () => {
+            [deployer, user] = await ethers.getSigners();
+        });
+
+        for (const symbol of [NETWORK_TOKEN_POOL_TOKEN_SYMBOL]) {
+            const isNetworkTokenPoolToken = symbol === NETWORK_TOKEN_POOL_TOKEN_SYMBOL;
+
+            context(`withdrawing ${symbol}`, () => {
+                prepareEach(async () => {
+                    ({ network, networkTokenPool, networkPoolToken, networkToken, networkSettings, poolCollection } =
+                        await createSystem());
+
+                    const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+
+                    if (isNetworkTokenPoolToken) {
+                        token = networkPoolToken;
+
+                        await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                        await network.mintT(deployer.address, amount);
+                        await networkToken.connect(deployer).transfer(networkTokenPool.address, amount);
+
+                        await networkSettings.setPoolMintingLimit(reserveToken.address, amount);
+
+                        const contextId = formatBytes32String('CTX');
+                        await network.requestLiquidityT(contextId, reserveToken.address, amount);
+
+                        await network.depositToNetworkPoolForT(deployer.address, amount, false, 0);
+                    }
+
+                    await transfer(deployer, token, networkTokenPool.address, amount);
+                });
+
+                context('with no special permissions', () => {
+                    testWithdrawFundsRestricted();
+                });
+
+                context('with admin role', () => {
+                    prepareEach(async () => {
+                        await networkTokenPool.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                    });
+
+                    testWithdrawFundsRestricted();
+                });
+
+                context('with pool token manager role', () => {
+                    prepareEach(async () => {
+                        await networkTokenPool.grantRole(NetworkTokenPoolRoles.ROLE_POOL_TOKEN_MANAGER, user.address);
+                    });
+
+                    if (isNetworkTokenPoolToken) {
+                        testWithdrawFunds();
+                    }
+                });
+            });
         }
     });
 });
