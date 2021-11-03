@@ -41,7 +41,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
     // the pool token manager role is required to access the network token pool token reserve
-    bytes32 public constant ROLE_POOL_TOKEN_MANAGER = keccak256("ROLE_POOL_TOKEN_MANAGER");
+    bytes32 public constant ROLE_NETWORK_POOL_TOKEN_MANAGER = keccak256("ROLE_NETWORK_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -138,7 +138,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
-        _setRoleAdmin(ROLE_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_NETWORK_POOL_TOKEN_MANAGER, ROLE_ADMIN);
     }
 
     /**
@@ -156,12 +156,12 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @dev authenticate the right of a caller to withdraw a specific amount of network token pool token to a target
+     * @dev returns whether the given caller is allowed access to the given token
      *
      * requirements:
      *
      *   - reserve token must be the network token pool token
-     *   - the caller must have the ROLE_POOL_TOKEN_MANAGER permission
+     *   - the caller must have the ROLE_NETWORK_POOL_TOKEN_MANAGER permission
      */
     function authenticateWithdrawal(
         address caller,
@@ -169,7 +169,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_POOL_TOKEN_MANAGER, caller));
+        return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_NETWORK_POOL_TOKEN_MANAGER, caller));
     }
 
     /**

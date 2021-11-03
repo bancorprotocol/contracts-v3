@@ -92,7 +92,7 @@ describe('NetworkTokenPool', () => {
 
             await expectRole(
                 networkTokenPool,
-                NetworkTokenPoolRoles.ROLE_POOL_TOKEN_MANAGER,
+                NetworkTokenPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN
                 // @TODO add staking rewards to initial members
             );
@@ -1165,9 +1165,12 @@ describe('NetworkTokenPool', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('with pool token manager role', () => {
+                context('with network pool token manager role', () => {
                     prepareEach(async () => {
-                        await networkTokenPool.grantRole(NetworkTokenPoolRoles.ROLE_POOL_TOKEN_MANAGER, user.address);
+                        await networkTokenPool.grantRole(
+                            NetworkTokenPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
+                            user.address
+                        );
                     });
 
                     if (isNetworkTokenPoolToken) {

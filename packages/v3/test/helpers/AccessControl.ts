@@ -23,7 +23,7 @@ export const roles = {
     },
 
     NetworkTokenPool: {
-        ROLE_POOL_TOKEN_MANAGER: id('ROLE_POOL_TOKEN_MANAGER')
+        ROLE_NETWORK_POOL_TOKEN_MANAGER: id('ROLE_NETWORK_POOL_TOKEN_MANAGER')
     },
 
     TokenGovernance: {
