@@ -25,7 +25,7 @@ import { prepareEach } from '../helpers/Fixture';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
-import { TokenWithAddress, transfer } from '../helpers/Utils';
+import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -1122,7 +1122,7 @@ describe('NetworkTokenPool', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [NETWORK_TOKEN_POOL_TOKEN_SYMBOL]) {
+        for (const symbol of [TKN, NETWORK_TOKEN_POOL_TOKEN_SYMBOL]) {
             const isNetworkTokenPoolToken = symbol === NETWORK_TOKEN_POOL_TOKEN_SYMBOL;
 
             context(`withdrawing ${symbol}`, () => {
@@ -1146,6 +1146,8 @@ describe('NetworkTokenPool', () => {
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
 
                         await network.depositToNetworkPoolForT(deployer.address, amount, false, 0);
+                    } else {
+                        token = await createTokenBySymbol(symbol);
                     }
 
                     await transfer(deployer, token, networkTokenPool.address, amount);
@@ -1170,6 +1172,8 @@ describe('NetworkTokenPool', () => {
 
                     if (isNetworkTokenPoolToken) {
                         testWithdrawFunds();
+                    } else {
+                        testWithdrawFundsRestricted();
                     }
                 });
             });
