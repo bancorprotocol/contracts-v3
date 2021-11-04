@@ -40,7 +40,7 @@ error MintingLimitExceeded();
 contract NetworkTokenPool is INetworkTokenPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
-    // the pool token manager role is required to access the network token pool token reserve
+    // the network pool token manager role is required to access the network token pool token reserve
     bytes32 public constant ROLE_NETWORK_POOL_TOKEN_MANAGER = keccak256("ROLE_NETWORK_POOL_TOKEN_MANAGER");
 
     // the network contract
