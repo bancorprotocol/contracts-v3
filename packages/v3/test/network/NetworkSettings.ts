@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
+import { NetworkSettings, ExternalProtectionVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
-import { createTokenHolder, createSystem } from '../helpers/Factory';
+import { createExternalProtectionVault, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -13,7 +13,7 @@ import { ethers } from 'hardhat';
 const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('NetworkSettings', () => {
-    let networkFeeWallet: TokenHolder;
+    let networkFeeWallet: ExternalProtectionVault;
     let reserveToken: TestERC20Token;
 
     let deployer: SignerWithAddress;
@@ -28,7 +28,7 @@ describe('NetworkSettings', () => {
     });
 
     prepareEach(async () => {
-        networkFeeWallet = await createTokenHolder();
+        networkFeeWallet = await createExternalProtectionVault();
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
@@ -221,11 +221,11 @@ describe('NetworkSettings', () => {
     });
 
     describe('network fee params', () => {
-        let newNetworkFeeWallet: TokenHolder;
+        let newNetworkFeeWallet: ExternalProtectionVault;
         const newNetworkFee = BigNumber.from(100000);
         let networkSettings: NetworkSettings;
 
-        const expectNetworkFeeParams = async (wallet: TokenHolder | undefined, fee: BigNumber) => {
+        const expectNetworkFeeParams = async (wallet: ExternalProtectionVault | undefined, fee: BigNumber) => {
             const walletAddress = wallet?.address || ZERO_ADDRESS;
             const networkFeeParams = await networkSettings.networkFeeParams();
             expect(networkFeeParams[0]).to.equal(walletAddress);
@@ -239,7 +239,7 @@ describe('NetworkSettings', () => {
 
             await expectNetworkFeeParams(undefined, BigNumber.from(0));
 
-            newNetworkFeeWallet = await createTokenHolder();
+            newNetworkFeeWallet = await createExternalProtectionVault();
         });
 
         it('should revert when a non-owner attempts to set the network fee params', async () => {

@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
@@ -28,7 +28,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     uint256 private _minLiquidityForTrading;
 
     // the address of the network fee wallet, and the fee (in units of PPM)
-    ITokenHolder private _networkFeeWallet;
+    IExternalProtectionVault private _networkFeeWallet;
     uint32 private _networkFeePPM;
 
     // the withdrawal fee (in units of PPM)
@@ -66,7 +66,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev triggered when the network fee is updated
      */
-    event NetworkFeeWalletUpdated(ITokenHolder prevWallet, ITokenHolder newWallet);
+    event NetworkFeeWalletUpdated(IExternalProtectionVault prevWallet, IExternalProtectionVault newWallet);
 
     /**
      * @dev triggered when the network fee is updated
@@ -230,14 +230,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeParams() external view returns (ITokenHolder, uint32) {
+    function networkFeeParams() external view returns (IExternalProtectionVault, uint32) {
         return (_networkFeeWallet, _networkFeePPM);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeWallet() external view returns (ITokenHolder) {
+    function networkFeeWallet() external view returns (IExternalProtectionVault) {
         return _networkFeeWallet;
     }
 
@@ -255,12 +255,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function setNetworkFeeWallet(ITokenHolder newNetworkFeeWallet)
+    function setNetworkFeeWallet(IExternalProtectionVault newNetworkFeeWallet)
         external
         onlyAdmin
         validAddress(address(newNetworkFeeWallet))
     {
-        ITokenHolder prevNetworkFeeWallet = _networkFeeWallet;
+        IExternalProtectionVault prevNetworkFeeWallet = _networkFeeWallet;
         if (prevNetworkFeeWallet == newNetworkFeeWallet) {
             return;
         }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
+import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -34,12 +34,12 @@ interface INetworkSettings is IUpgradeable {
     /**
      * @dev returns the network fee parameters (in units of PPM)
      */
-    function networkFeeParams() external view returns (ITokenHolder, uint32);
+    function networkFeeParams() external view returns (IExternalProtectionVault, uint32);
 
     /**
      * @dev returns the wallet that receives the global network fees
      */
-    function networkFeeWallet() external view returns (ITokenHolder);
+    function networkFeeWallet() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the global network fee (in units of PPM)
