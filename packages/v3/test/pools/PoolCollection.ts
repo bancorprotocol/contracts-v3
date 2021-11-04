@@ -1851,7 +1851,7 @@ describe('PoolCollection', () => {
     });
 });
 
-describe.only('PoolCollection.withdrawalAmounts', () => {
+describe('PoolCollection.withdrawalAmounts', () => {
     let poolCollection: TestPoolCollection;
 
     prepare(async () => {
@@ -1911,66 +1911,66 @@ describe.only('PoolCollection.withdrawalAmounts', () => {
             };
 
             test('WithdrawalAmountsCoverage1', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.000000003') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000001') }
-            });
-
-            test('WithdrawalAmountsCoverage2', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000002') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.00000000000000000008') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000009') }
-            });
-
-            test('WithdrawalAmountsCoverage3', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000002') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.000000000000000000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000001') }
-            });
-
-            test('WithdrawalAmountsCoverage4', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.005') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.005') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0005') }
-            });
-
-            test('WithdrawalAmountsCoverage5', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.00000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') }
-            });
-
-            test('WithdrawalAmountsCoverage6', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000002') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.00000000000008') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000001') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000005') }
-            });
-
-            test('WithdrawalAmountsCoverage7', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000005') },
-                q: { maxAbsoluteError: new Decimal(2), maxRelativeError: new Decimal('0.0000006') },
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000008') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000008') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000004') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') }
+            });
+
+            test('WithdrawalAmountsCoverage2', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000009') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000009') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000002') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000002') }
+            });
+
+            test('WithdrawalAmountsCoverage3', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000000001') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000000001') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000002') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000003') }
+            });
+
+            test('WithdrawalAmountsCoverage4', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000002') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000002') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.002') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.002') }
+            });
+
+            test('WithdrawalAmountsCoverage5', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000002') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000002') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000003') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000004') }
+            });
+
+            test('WithdrawalAmountsCoverage6', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000003') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000003') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000002') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') }
+            });
+
+            test('WithdrawalAmountsCoverage7', {
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000007') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000007') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000002') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000007') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000007') }
             });
         };
 
@@ -1978,7 +1978,7 @@ describe.only('PoolCollection.withdrawalAmounts', () => {
             tests(100);
         });
 
-        describe('@stress tests', () => {
+        describe.only('stress tests', () => {
             tests();
         });
     });
