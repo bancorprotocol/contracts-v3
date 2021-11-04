@@ -127,7 +127,8 @@ library PoolCollectionWithdrawal {
         uint256 y
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * (M - m);
-        output.p = MathEx.mulDivF(a * x, h, b.mul(e * M).sub(x.mul(h))).toInt256();
+        uint256 k = b.mul(e * M).sub(x.mul(h));
+        output.p = MathEx.mulDivF(a * x, h, k).toInt256();
         output.q = 0;
         output.r = -MathEx.mulDivF(x, f, e).toInt256();
         output.s = y;
@@ -145,7 +146,8 @@ library PoolCollectionWithdrawal {
         uint256 y
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * M + e * n;
-        output.p = -MathEx.mulDivF(a * x, h * M, b.mul(e * M).add(x.mul(h)).mul(M - m)).toInt256();
+        uint256 k = b.mul(e * M).add(x.mul(h)).mul(M - m);
+        output.p = -MathEx.mulDivF(a * x, h * M, k).toInt256();
         output.q = 0;
         output.r = MathEx.mulDivF(x, h, e * M).toInt256();
         output.s = y;
