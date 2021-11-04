@@ -1938,7 +1938,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
             });
 
             test('WithdrawalAmountsCoverage4', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000004') },
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000002') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
