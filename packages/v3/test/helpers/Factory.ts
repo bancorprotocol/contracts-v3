@@ -185,6 +185,8 @@ const createSystemFixture = async () => {
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
     const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+
+    const networkFeeVault = await createProxy(Contracts.NetworkFeeVault);
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
     const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
@@ -237,6 +239,7 @@ const createSystemFixture = async () => {
         bancorVault,
         externalProtectionVault,
         externalRewardsVault,
+        networkFeeVault,
         networkTokenPool,
         pendingWithdrawals,
         poolTokenFactory,
