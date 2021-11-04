@@ -68,13 +68,14 @@ library PoolCollectionWithdrawal {
         }
 
         if (output.t > 0 && w > 0) {
-            uint256 v = MathEx.mulDivF(w, a, b);
-            if (output.t > v) {
-                output.t = output.t - v;
+            uint256 tb = output.t.mul(b);
+            uint256 wa = w.mul(a);
+            if (tb > wa) {
+                output.t = (tb - wa) / b;
                 output.u = w;
             } else {
-                output.u = MathEx.mulDivF(output.t, b, a);
                 output.t = 0;
+                output.u = tb / a;
             }
         }
     }}
