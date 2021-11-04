@@ -11,7 +11,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
@@ -103,8 +103,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the pool collection upgrader contract
     IPoolCollectionUpgrader internal _poolCollectionUpgrader;
 
-    // the address of the external protection wallet
-    ITokenHolder private _externalProtectionWallet;
+    // the address of the external protection vault
+    IExternalProtectionVault private _externalProtectionVault;
 
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -122,9 +122,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     uint256[MAX_GAP - 7] private __gap;
 
     /**
-     * @dev triggered when the external protection wallet is updated
+     * @dev triggered when the external protection vault is updated
      */
-    event ExternalProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
+    event ExternalProtectionVaultUpdated(
+        IExternalProtectionVault indexed prevVault,
+        IExternalProtectionVault indexed newVault
+    );
 
     /**
      * @dev triggered when a new pool collection is added
@@ -437,47 +440,33 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function externalProtectionWallet() external view returns (ITokenHolder) {
-        return _externalProtectionWallet;
+    function externalProtectionVault() external view returns (IExternalProtectionVault) {
+        return _externalProtectionVault;
     }
 
     /**
-     * @dev sets the address of the external protection wallet
+     * @dev sets the address of the external protection vault
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function setExternalProtectionWallet(ITokenHolder newExternalProtectionWallet)
+    function setExternalProtectionVault(IExternalProtectionVault newExternalProtectionVault)
         external
-        validAddress(address(newExternalProtectionWallet))
+        validAddress(address(newExternalProtectionVault))
         onlyAdmin
     {
-        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
-        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
+        IExternalProtectionVault prevExternalProtectionVault = _externalProtectionVault;
+        if (prevExternalProtectionVault == newExternalProtectionVault) {
             return;
         }
 
-        newExternalProtectionWallet.acceptOwnership();
+        _externalProtectionVault = newExternalProtectionVault;
 
-        _externalProtectionWallet = newExternalProtectionWallet;
-
-        emit ExternalProtectionWalletUpdated({
-            prevWallet: prevExternalProtectionWallet,
-            newWallet: newExternalProtectionWallet
+        emit ExternalProtectionVaultUpdated({
+            prevVault: prevExternalProtectionVault,
+            newVault: newExternalProtectionVault
         });
-    }
-
-    /**
-     * @dev transfers the ownership of the external protection wallet
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     * - the new owner needs to accept the transfer
-     */
-    function transferExternalProtectionWalletOwnership(address newOwner) external onlyAdmin {
-        _externalProtectionWallet.transferOwnership(newOwner);
     }
 
     /**
@@ -1215,12 +1204,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        ITokenHolder cachedExternalProtectionWallet = _externalProtectionWallet;
+        IExternalProtectionVault cachedExternalProtectionVault = _externalProtectionVault;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
             pool,
             completedRequest.poolTokenAmount,
             pool.balanceOf(address(_vault)),
-            pool.balanceOf(address(cachedExternalProtectionWallet))
+            pool.balanceOf(address(cachedExternalProtectionVault))
         );
 
         // if network token trading liquidity should be lowered - renounce liquidity
@@ -1250,13 +1239,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
-        // if the provider should receive some base tokens from the external wallet - remove the tokens from the
-        // external wallet and send them to the provider
-        if (amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider > 0) {
-            cachedExternalProtectionWallet.withdrawTokens(
+        // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
+        // external protection vault and send them to the provider
+        if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
+            cachedExternalProtectionVault.withdrawFunds(
                 pool,
                 payable(provider),
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
+                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
             );
         }
 
@@ -1266,9 +1255,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider: provider,
             poolCollection: poolCollection,
             baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider +
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
             poolTokenAmount: completedRequest.poolTokenAmount,
-            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });

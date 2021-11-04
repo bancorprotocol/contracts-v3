@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
+import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
-import { createTokenHolder, createSystem } from '../helpers/Factory';
+import { createSystem, createProxy } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -13,7 +13,7 @@ import { ethers } from 'hardhat';
 const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('NetworkSettings', () => {
-    let networkFeeWallet: TokenHolder;
+    let networkFeeVault: NetworkFeeVault;
     let reserveToken: TestERC20Token;
 
     let deployer: SignerWithAddress;
@@ -28,7 +28,7 @@ describe('NetworkSettings', () => {
     });
 
     prepareEach(async () => {
-        networkFeeWallet = await createTokenHolder();
+        networkFeeVault = await createProxy(Contracts.NetworkFeeVault);
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
@@ -55,7 +55,7 @@ describe('NetworkSettings', () => {
             const networkFeeParams = await networkSettings.networkFeeParams();
             expect(networkFeeParams[0]).to.equal(ZERO_ADDRESS);
             expect(networkFeeParams[1]).to.equal(BigNumber.from(0));
-            expect(await networkSettings.networkFeeWallet()).to.equal(ZERO_ADDRESS);
+            expect(await networkSettings.networkFeeVault()).to.equal(ZERO_ADDRESS);
             expect(await networkSettings.networkFeePPM()).to.equal(BigNumber.from(0));
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
@@ -221,16 +221,16 @@ describe('NetworkSettings', () => {
     });
 
     describe('network fee params', () => {
-        let newNetworkFeeWallet: TokenHolder;
+        let newNetworkFeeVault: NetworkFeeVault;
         const newNetworkFee = BigNumber.from(100000);
         let networkSettings: NetworkSettings;
 
-        const expectNetworkFeeParams = async (wallet: TokenHolder | undefined, fee: BigNumber) => {
-            const walletAddress = wallet?.address || ZERO_ADDRESS;
+        const expectNetworkFeeParams = async (vault: NetworkFeeVault | undefined, fee: BigNumber) => {
+            const vaultAddress = vault?.address || ZERO_ADDRESS;
             const networkFeeParams = await networkSettings.networkFeeParams();
-            expect(networkFeeParams[0]).to.equal(walletAddress);
+            expect(networkFeeParams[0]).to.equal(vaultAddress);
             expect(networkFeeParams[1]).to.equal(fee);
-            expect(await networkSettings.networkFeeWallet()).to.equal(walletAddress);
+            expect(await networkSettings.networkFeeVault()).to.equal(vaultAddress);
             expect(await networkSettings.networkFeePPM()).to.equal(fee);
         };
 
@@ -239,20 +239,20 @@ describe('NetworkSettings', () => {
 
             await expectNetworkFeeParams(undefined, BigNumber.from(0));
 
-            newNetworkFeeWallet = await createTokenHolder();
+            newNetworkFeeVault = await createProxy(Contracts.NetworkFeeVault);
         });
 
         it('should revert when a non-owner attempts to set the network fee params', async () => {
             await expect(
-                networkSettings.connect(nonOwner).setNetworkFeeWallet(newNetworkFeeWallet.address)
+                networkSettings.connect(nonOwner).setNetworkFeeVault(newNetworkFeeVault.address)
             ).to.be.revertedWith('AccessDenied');
             await expect(networkSettings.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
 
-        it('should revert when setting the network wallet to an invalid address', async () => {
-            await expect(networkSettings.setNetworkFeeWallet(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+        it('should revert when setting the network vault to an invalid address', async () => {
+            await expect(networkSettings.setNetworkFeeVault(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when setting the network fee to an invalid value', async () => {
@@ -261,45 +261,45 @@ describe('NetworkSettings', () => {
             );
         });
 
-        it('should ignore updating to the same network wallet params', async () => {
-            await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
+        it('should ignore updating to the same network vault params', async () => {
+            await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
 
-            const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
-            await expect(res).not.to.emit(networkSettings, 'NetworkFeeWalletUpdated');
+            const res = await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
+            await expect(res).not.to.emit(networkSettings, 'NetworkFeeVaultUpdated');
 
             await networkSettings.setNetworkFeePPM(newNetworkFee);
             const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
             await expect(res2).not.to.emit(networkSettings, 'NetworkFeePPMUpdated');
         });
 
-        it('should be able to set and update network wallet params', async () => {
-            const res = await networkSettings.setNetworkFeeWallet(newNetworkFeeWallet.address);
+        it('should be able to set and update network vault params', async () => {
+            const res = await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
             await expect(res)
-                .to.emit(networkSettings, 'NetworkFeeWalletUpdated')
-                .withArgs(ZERO_ADDRESS, newNetworkFeeWallet.address);
+                .to.emit(networkSettings, 'NetworkFeeVaultUpdated')
+                .withArgs(ZERO_ADDRESS, newNetworkFeeVault.address);
 
-            await expectNetworkFeeParams(newNetworkFeeWallet, BigNumber.from(0));
+            await expectNetworkFeeParams(newNetworkFeeVault, BigNumber.from(0));
 
             const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
             await expect(res2)
                 .to.emit(networkSettings, 'NetworkFeePPMUpdated')
                 .withArgs(BigNumber.from(0), newNetworkFee);
 
-            await expectNetworkFeeParams(newNetworkFeeWallet, newNetworkFee);
+            await expectNetworkFeeParams(newNetworkFeeVault, newNetworkFee);
 
-            const res3 = await networkSettings.setNetworkFeeWallet(networkFeeWallet.address);
+            const res3 = await networkSettings.setNetworkFeeVault(networkFeeVault.address);
             await expect(res3)
-                .to.emit(networkSettings, 'NetworkFeeWalletUpdated')
-                .withArgs(newNetworkFeeWallet.address, networkFeeWallet.address);
+                .to.emit(networkSettings, 'NetworkFeeVaultUpdated')
+                .withArgs(newNetworkFeeVault.address, networkFeeVault.address);
 
-            await expectNetworkFeeParams(networkFeeWallet, newNetworkFee);
+            await expectNetworkFeeParams(networkFeeVault, newNetworkFee);
 
             const res4 = await networkSettings.setNetworkFeePPM(BigNumber.from(0));
             await expect(res4)
                 .to.emit(networkSettings, 'NetworkFeePPMUpdated')
                 .withArgs(newNetworkFee, BigNumber.from(0));
 
-            await expectNetworkFeeParams(networkFeeWallet, BigNumber.from(0));
+            await expectNetworkFeeParams(networkFeeVault, BigNumber.from(0));
         });
     });
 

@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { INetworkFeeVault } from "../vaults/interfaces/INetworkFeeVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
@@ -27,8 +27,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // below that amount, trading is disabled and co-investments use the initial rate
     uint256 private _minLiquidityForTrading;
 
-    // the address of the network fee wallet, and the fee (in units of PPM)
-    ITokenHolder private _networkFeeWallet;
+    // the address of the network fee vault, and the fee (in units of PPM)
+    INetworkFeeVault private _networkFeeVault;
     uint32 private _networkFeePPM;
 
     // the withdrawal fee (in units of PPM)
@@ -64,12 +64,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event MinLiquidityForTradingUpdated(uint256 prevLiquidity, uint256 newLiquidity);
 
     /**
-     * @dev triggered when the network fee is updated
+     * @dev triggered when the network fee vault is updated
      */
-    event NetworkFeeWalletUpdated(ITokenHolder prevWallet, ITokenHolder newWallet);
+    event NetworkFeeVaultUpdated(INetworkFeeVault prevVault, INetworkFeeVault newVault);
 
     /**
-     * @dev triggered when the network fee is updated
+     * @dev triggered when the network fee PPM is updated
      */
     event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
@@ -230,15 +230,15 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeParams() external view returns (ITokenHolder, uint32) {
-        return (_networkFeeWallet, _networkFeePPM);
+    function networkFeeParams() external view returns (INetworkFeeVault, uint32) {
+        return (_networkFeeVault, _networkFeePPM);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function networkFeeWallet() external view returns (ITokenHolder) {
-        return _networkFeeWallet;
+    function networkFeeVault() external view returns (INetworkFeeVault) {
+        return _networkFeeVault;
     }
 
     /**
@@ -249,25 +249,25 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev sets the network fee wallet
+     * @dev sets the network fee vault
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function setNetworkFeeWallet(ITokenHolder newNetworkFeeWallet)
+    function setNetworkFeeVault(INetworkFeeVault newNetworkFeeVault)
         external
         onlyAdmin
-        validAddress(address(newNetworkFeeWallet))
+        validAddress(address(newNetworkFeeVault))
     {
-        ITokenHolder prevNetworkFeeWallet = _networkFeeWallet;
-        if (prevNetworkFeeWallet == newNetworkFeeWallet) {
+        INetworkFeeVault prevNetworkFeeVault = _networkFeeVault;
+        if (prevNetworkFeeVault == newNetworkFeeVault) {
             return;
         }
 
-        _networkFeeWallet = newNetworkFeeWallet;
+        _networkFeeVault = newNetworkFeeVault;
 
-        emit NetworkFeeWalletUpdated({ prevWallet: prevNetworkFeeWallet, newWallet: newNetworkFeeWallet });
+        emit NetworkFeeVaultUpdated({ prevVault: prevNetworkFeeVault, newVault: newNetworkFeeVault });
     }
 
     /**

@@ -115,8 +115,6 @@ const createGovernedTokensFixture = async () => {
 
 export const createGovernedTokens = async () => waffle.loadFixture(createGovernedTokensFixture);
 
-export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
-
 export const createPoolCollection = async (
     network: string | BaseContract,
     poolTokenFactory: string | BaseContract,
