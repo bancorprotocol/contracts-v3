@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -79,19 +79,19 @@ contract StakingRewardsStore is IStakingRewardsStore, AccessControl, Utils, Time
     }
 
     // allows execution only by an owner
-    modifier onlyOwner {
+    modifier onlyOwner() {
         _hasRole(ROLE_OWNER);
         _;
     }
 
     // allows execution only by an manager
-    modifier onlyManager {
+    modifier onlyManager() {
         _hasRole(ROLE_MANAGER);
         _;
     }
 
     // allows execution only by a seeder
-    modifier onlySeeder {
+    modifier onlySeeder() {
         _hasRole(ROLE_SEEDER);
         _;
     }
