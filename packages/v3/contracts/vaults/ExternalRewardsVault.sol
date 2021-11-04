@@ -61,7 +61,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     }
 
     /**
-     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
+     * @dev returns whether the given caller is allowed access to the given token
      *
      * requirements:
      *
