@@ -92,7 +92,7 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the address of the external protection wallet
      */
-    function externalProtectionWallet() external view returns (IExternalProtectionVault);
+    function externalProtectionVault() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the set of all valid pool collections

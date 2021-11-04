@@ -56,7 +56,7 @@ describe('BancorNetwork', () => {
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
-    shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
+    shouldHaveGap('BancorNetwork', '_externalProtectionVault');
 
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
@@ -332,7 +332,7 @@ describe('BancorNetwork', () => {
             expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
-            expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
+            expect(await network.externalProtectionVault()).to.equal(ZERO_ADDRESS);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(networkToken.address)).to.be.true;
@@ -340,46 +340,46 @@ describe('BancorNetwork', () => {
     });
 
     describe('external protection wallet', () => {
-        let newExternalProtectionWallet: ExternalProtectionVault;
+        let newExternalProtectionVault: ExternalProtectionVault;
         let network: TestBancorNetwork;
 
         prepareEach(async () => {
             ({ network } = await createSystem());
 
-            newExternalProtectionWallet = await createExternalProtectionVault();
+            newExternalProtectionVault = await createExternalProtectionVault();
         });
 
         it('should revert when a non-owner attempts to set the external protection wallet', async () => {
             await expect(
-                network.connect(nonOwner).setExternalProtectionWallet(newExternalProtectionWallet.address)
+                network.connect(nonOwner).setExternalProtectionVault(newExternalProtectionVault.address)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when setting external protection wallet to an invalid address', async () => {
-            await expect(network.setExternalProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+            await expect(network.setExternalProtectionVault(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should ignore updates to the same external protection wallet', async () => {
-            await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
+            await network.setExternalProtectionVault(newExternalProtectionVault.address);
 
-            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
-            await expect(res).not.to.emit(network, 'ExternalProtectionWalletUpdated');
+            const res = await network.setExternalProtectionVault(newExternalProtectionVault.address);
+            await expect(res).not.to.emit(network, 'ExternalProtectionVaultUpdated');
         });
 
         it('should be able to set and update the external protection wallet', async () => {
-            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
+            const res = await network.setExternalProtectionVault(newExternalProtectionVault.address);
             await expect(res)
-                .to.emit(network, 'ExternalProtectionWalletUpdated')
-                .withArgs(ZERO_ADDRESS, newExternalProtectionWallet.address);
-            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet.address);
+                .to.emit(network, 'ExternalProtectionVaultUpdated')
+                .withArgs(ZERO_ADDRESS, newExternalProtectionVault.address);
+            expect(await network.externalProtectionVault()).to.equal(newExternalProtectionVault.address);
 
-            const newExternalProtectionWallet2 = await createExternalProtectionVault();
+            const newExternalProtectionVault2 = await createExternalProtectionVault();
 
-            const res2 = await network.setExternalProtectionWallet(newExternalProtectionWallet2.address);
+            const res2 = await network.setExternalProtectionVault(newExternalProtectionVault2.address);
             await expect(res2)
-                .to.emit(network, 'ExternalProtectionWalletUpdated')
-                .withArgs(newExternalProtectionWallet.address, newExternalProtectionWallet2.address);
-            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet2.address);
+                .to.emit(network, 'ExternalProtectionVaultUpdated')
+                .withArgs(newExternalProtectionVault.address, newExternalProtectionVault2.address);
+            expect(await network.externalProtectionVault()).to.equal(newExternalProtectionVault2.address);
         });
     });
 
@@ -950,7 +950,7 @@ describe('BancorNetwork', () => {
         let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: ExternalProtectionVault;
+        let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -975,9 +975,9 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            externalProtectionWallet = await createExternalProtectionVault();
-            await externalProtectionWallet.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
+            externalProtectionVault = await createExternalProtectionVault();
+            await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
+            await network.setExternalProtectionVault(externalProtectionVault.address);
         });
 
         const testDeposits = (symbol: string) => {
@@ -1721,7 +1721,7 @@ describe('BancorNetwork', () => {
         let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: ExternalProtectionVault;
+        let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -1750,9 +1750,9 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            externalProtectionWallet = await createExternalProtectionVault();
-            await externalProtectionWallet.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
+            externalProtectionVault = await createExternalProtectionVault();
+            await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
+            await network.setExternalProtectionVault(externalProtectionVault.address);
 
             await setTime((await latest()).toNumber());
         });
@@ -1944,7 +1944,7 @@ describe('BancorNetwork', () => {
                                         token.address,
                                         poolTokenAmount,
                                         await getBalance(token, bancorVault.address),
-                                        await getBalance(token, externalProtectionWallet.address)
+                                        await getBalance(token, externalProtectionVault.address)
                                     );
 
                                     const res = await network.connect(provider).withdraw(id);
@@ -1961,10 +1961,10 @@ describe('BancorNetwork', () => {
                                             provider.address,
                                             poolCollection.address,
                                             withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider.add(
-                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
+                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
                                             ),
                                             poolTokenAmount,
-                                            withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                                            withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                                             withdrawalAmounts.networkTokenAmountToMintForProvider,
                                             withdrawalAmounts.baseTokenWithdrawalFeeAmount
                                         );
