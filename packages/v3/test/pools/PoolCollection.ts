@@ -1924,8 +1924,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000002') }
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') }
             });
 
             test('WithdrawalAmountsCoverage3', {
@@ -1933,8 +1933,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000000001') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000003') }
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') }
             });
 
             test('WithdrawalAmountsCoverage4', {
@@ -1942,7 +1942,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.002') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.2') }
             });
 
@@ -1951,7 +1951,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000003') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000002') }
             });
 
@@ -1965,11 +1965,11 @@ describe('PoolCollection.withdrawalAmounts', () => {
             });
 
             test('WithdrawalAmountsCoverage7', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000007') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000007') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000002') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000007') },
+                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
+                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
+                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
+                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0004') }
             });
         };
