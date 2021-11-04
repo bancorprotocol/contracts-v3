@@ -56,14 +56,14 @@ library PoolCollectionWithdrawal {
             if (hlim(b, c, e, x) && deficitHmax(b, e, f, g, m, n, x)) {
                 output = deficitArbitrage(a, b, e, f, m, x, y);
             } else {
-                output = deficitDefault(a, b, c, e, g, y, MathEx.subMax0(y * b, c * (e - y)));
+                output = deficitDefault(a, b, c, e, g, y);
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
             if (f > 0 && hlim(b, c, e, x) && surplusHmax(b, e, f, m, n, x)) {
                 output = surplusArbitrage(a, b, e, f, m, n, x, y);
             } else {
-                output = surplusDefault(a, b, y, MathEx.subMax0(y, c));
+                output = surplusDefault(a, b, c, y);
             }
         }
 
@@ -158,9 +158,9 @@ library PoolCollectionWithdrawal {
         uint256 c,
         uint256 e,
         uint256 g,
-        uint256 y,
-        uint256 z
+        uint256 y
     ) private pure returns (Output memory output) { unchecked {
+        uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = -MathEx.mulDivF(a, z, b * e).toInt256();
         output.q = output.p;
         output.r = -(z / e).toInt256();
@@ -171,9 +171,10 @@ library PoolCollectionWithdrawal {
     function surplusDefault(
         uint256 a,
         uint256 b,
-        uint256 y,
-        uint256 z
+        uint256 c,
+        uint256 y
     ) private pure returns (Output memory output) { unchecked {
+        uint256 z = MathEx.subMax0(y, c);
         output.p = -MathEx.mulDivF(a, z, b).toInt256();
         output.q = output.p;
         output.r = -z.toInt256();
