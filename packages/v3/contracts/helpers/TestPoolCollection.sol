@@ -59,24 +59,22 @@ contract TestPoolCollection is PoolCollection, TestTime {
         uint256 networkTokenLiquidity,
         uint256 baseTokenLiquidity,
         uint256 baseTokenExcessAmount,
-        uint256 basePoolTokenTotalSupply,
         uint256 baseTokenStakedAmount,
         uint256 baseTokenWalletBalance,
         uint32 tradeFeePPM,
         uint32 withdrawalFeePPM,
-        uint256 basePoolTokenWithdrawalAmount
+        uint256 baseTokenWithdrawalAmount
     ) external pure returns (WithdrawalAmounts memory) {
         return
             _withdrawalAmounts(
                 networkTokenLiquidity,
                 baseTokenLiquidity,
                 baseTokenExcessAmount,
-                basePoolTokenTotalSupply,
                 baseTokenStakedAmount,
                 baseTokenWalletBalance,
                 tradeFeePPM,
                 withdrawalFeePPM,
-                basePoolTokenWithdrawalAmount
+                baseTokenWithdrawalAmount
             );
     }
 

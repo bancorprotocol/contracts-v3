@@ -1223,18 +1223,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(cachedExternalProtectionWallet))
         );
 
-        // if network token trading liquidity should be lowered - renounce liquidity
-        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
+        if (amounts.networkTokenAmountToRenounceByProtocol < 0) {
+            cachedNetworkTokenPool.requestLiquidity(
+                contextId,
+                pool,
+                uint256(-amounts.networkTokenAmountToRenounceByProtocol)
+            );
         }
 
-        // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
-        if (amounts.networkTokenArbitrageAmount > 0) {
-            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
-        }
-        // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
-        else if (amounts.networkTokenArbitrageAmount < 0) {
-            cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
+        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol -
+            amounts.networkTokenAmountToDeductFromLiquidity;
+        if (networkTokenArbitrageAmount > 0) {
+            cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
+        } else if (networkTokenArbitrageAmount < 0) {
+            cachedNetworkTokenPool.burnFromVault(uint256(-networkTokenArbitrageAmount));
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
