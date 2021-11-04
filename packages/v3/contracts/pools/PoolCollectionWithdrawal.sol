@@ -68,8 +68,9 @@ library PoolCollectionWithdrawal {
         }
 
         if (output.t > 0 && w > 0) {
-            if (gt512(mul512(output.t, b), mul512(w, a))) {
-                output.t = output.t - MathEx.mulDivF(w, a, b);
+            uint256 v = MathEx.mulDivF(w, a, b);
+            if (output.t > v) {
+                output.t = output.t - v;
                 output.u = w;
             } else {
                 output.u = MathEx.mulDivF(output.t, b, a);
