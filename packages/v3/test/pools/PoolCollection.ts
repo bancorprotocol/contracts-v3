@@ -1969,7 +1969,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0007') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0002') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0004') }
             });
         };
