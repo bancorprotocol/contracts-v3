@@ -995,7 +995,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             "ERR_INVALID_WITHDRAWAL_INPUT"
         );
 
-        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.withdrawalOutput(
+        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.formula(
             networkTokenLiquidity,
             baseTokenLiquidity,
             baseTokenExcessAmount,

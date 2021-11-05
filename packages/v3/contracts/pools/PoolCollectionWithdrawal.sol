@@ -7,9 +7,6 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
-/**
- * @dev this library provides mathematical support for base token withdrawal
- */
 library PoolCollectionWithdrawal {
     using SafeCast for uint256;
     using SafeMath for uint256;
@@ -17,12 +14,12 @@ library PoolCollectionWithdrawal {
     uint256 private constant M = PPM_RESOLUTION;
 
     struct Output {
-        int256 p; // network token amount removed from the trading liquidity
-        int256 q; // network token amount renounced by the protocol
-        int256 r; // base token amount removed from the trading liquidity
-        uint256 s; // base token amount removed from the vault
-        uint256 t; // network token amount sent to the provider
-        uint256 u; // base token amount removed from the external protection wallet
+        int256 p;
+        int256 q;
+        int256 r;
+        uint256 s;
+        uint256 t;
+        uint256 u;
     }
 
     struct Uint512 {
@@ -30,15 +27,15 @@ library PoolCollectionWithdrawal {
         uint256 lo;
     }
 
-    function withdrawalOutput(
-        uint256 a,
-        uint256 b,
-        uint256 c,
-        uint256 e,
-        uint256 w,
-        uint256 m,
-        uint256 n,
-        uint256 x
+    function formula(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 c, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 w, // <= 2**256-1
+        uint256 m, // <= M == 1000000
+        uint256 n, // <= M == 1000000
+        uint256 x  // <= e <= 2**128-1
     ) internal pure returns (Output memory output) { unchecked {
         assert(a <= type(uint128).max);
         assert(b <= type(uint128).max);
@@ -53,17 +50,17 @@ library PoolCollectionWithdrawal {
         if (e * (M - n) / M > b + c) {
             uint256 f = e * (M - n) / M - (b + c);
             uint256 g = e - (b + c);
-            if (hlim(b, c, e, x) && deficitHmax(b, e, f, g, m, n, x)) {
-                output = deficitArbitrage(a, b, e, f, m, x, y);
+            if (hlim(b, c, e, x) && hmaxDeficit(b, e, f, g, m, n, x)) {
+                output = arbitrageDeficit(a, b, e, f, m, x, y);
             } else {
-                output = deficitDefault(a, b, c, e, g, y);
+                output = defaultDeficit(a, b, c, e, g, y);
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
-            if (f > 0 && hlim(b, c, e, x) && surplusHmax(b, e, f, m, n, x)) {
-                output = surplusArbitrage(a, b, e, f, m, n, x, y);
+            if (f > 0 && hlim(b, c, e, x) && hmaxSurplus(b, e, f, m, n, x)) {
+                output = arbitrageSurplus(a, b, e, f, m, n, x, y);
             } else {
-                output = surplusDefault(a, b, c, y);
+                output = defaultSurplus(a, b, c, y);
             }
         }
 
@@ -80,23 +77,29 @@ library PoolCollectionWithdrawal {
         }
     }}
 
+    /**
+     * @dev returns `bx < c(e-x)`
+     */
     function hlim(
-        uint256 b,
-        uint256 c,
-        uint256 e,
-        uint256 x
+        uint256 b, // <= 2**128-1
+        uint256 c, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 x  // <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
         return b * x < c * (e - x);
     }}
 
-    function deficitHmax(
-        uint256 b,
-        uint256 e,
-        uint256 f,
-        uint256 g,
-        uint256 m,
-        uint256 n,
-        uint256 x
+    /**
+     * @dev returns `be((e(1-n)-b-c)m+en) > (e(1-n)-b-c)x(e-b-c)(1-m)`
+     */
+    function hmaxDeficit(
+        uint256 b, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 f, // == e(1-n)-b-c <= e <= 2**128-1
+        uint256 g, // == e-b-c <= e <= 2**128-1
+        uint256 m, // <= M == 1000000
+        uint256 n, // <= M == 1000000
+        uint256 x  // <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
         return gt512(
             mul512(b * e, f * m + e * n),
@@ -104,13 +107,16 @@ library PoolCollectionWithdrawal {
         );
     }}
 
-    function surplusHmax(
-        uint256 b,
-        uint256 e,
-        uint256 f,
-        uint256 m,
-        uint256 n,
-        uint256 x
+    /**
+     * @dev returns `be((b+c-e)m+en) > (b+c-e)x(b+c-e+en)(1-m)`
+     */
+    function hmaxSurplus(
+        uint256 b, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 f, // <= b+c-e <= 2**129-2
+        uint256 m, // <= M == 1000000
+        uint256 n, // <= M == 1000000
+        uint256 x  // <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
         return gt512(
             mul512(b * e, (f * m + e * n) * M),
@@ -118,14 +124,22 @@ library PoolCollectionWithdrawal {
         );
     }}
 
-    function deficitArbitrage(
-        uint256 a,
-        uint256 b,
-        uint256 e,
-        uint256 f,
-        uint256 m,
-        uint256 x,
-        uint256 y
+    /**
+     * @dev returns:
+     * `p = ax(e(1-n)-b-c)(1-m)/(be-x(e(1-n)-b-c)(1-m))`
+     * `q = 0`
+     * `r = -x(e(1-n)-b-c)/e`
+     * `s = y`
+     * `t = 0`
+     */
+    function arbitrageDeficit(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 f, // == e(1-n)-b-c <= e <= 2**128-1
+        uint256 m, // <= M == 1000000
+        uint256 x, // <= e <= 2**128-1
+        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * (M - m);
         uint256 k = b.mul(e * M).sub(MathEx.mulDivF(x, h, 1));
@@ -136,15 +150,23 @@ library PoolCollectionWithdrawal {
         output.t = 0;
     }}
 
-    function surplusArbitrage(
-        uint256 a,
-        uint256 b,
-        uint256 e,
-        uint256 f,
-        uint256 m,
-        uint256 n,
-        uint256 x,
-        uint256 y
+    /**
+     * @dev returns:
+     * `p = -ax(b+c-e+en)/(be(1-m)+x(b+c-e+en)(1-m))`
+     * `q = 0`
+     * `r = x(b+c-e+en)/e`
+     * `s = y`
+     * `t = 0`
+     */
+    function arbitrageSurplus(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 f, // <= b+c-e <= 2**129-2
+        uint256 m, // <= M == 1000000
+        uint256 n, // <= M == 1000000
+        uint256 x, // <= e <= 2**128-1
+        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * M + e * n;
         uint256 k = b.mul(e * (M - m)).add(MathEx.mulDivF(x, h * (M - m), M));
@@ -155,13 +177,21 @@ library PoolCollectionWithdrawal {
         output.t = 0;
     }}
 
-    function deficitDefault(
-        uint256 a,
-        uint256 b,
-        uint256 c,
-        uint256 e,
-        uint256 g,
-        uint256 y
+    /**
+     * @dev returns:
+     * `p = -a(x(1-n)b-c(e-x(1-n)))/be` if `x(1-n)b > c(e-x(1-n))` else `p = 0`
+     * `q = -a(x(1-n)b-c(e-x(1-n)))/be` if `x(1-n)b > c(e-x(1-n))` else `q = 0`
+     * `r = -(x(1-n)b-c(e-x(1-n)))/e` if `x(1-n)b > c(e-x(1-n))` else `r = 0`
+     * `s = x(1-n)(b+c)/e`
+     * `t = ax(1-n)(e-b-c)/be`
+     */
+    function defaultDeficit(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 c, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 g, // == e-b-c <= e <= 2**128-1
+        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = -MathEx.mulDivF(a, z, b * e).toInt256();
@@ -171,11 +201,19 @@ library PoolCollectionWithdrawal {
         output.t = MathEx.mulDivF(a * y, g, b * e);
     }}
 
-    function surplusDefault(
-        uint256 a,
-        uint256 b,
-        uint256 c,
-        uint256 y
+    /**
+     * @dev returns:
+     * `p = -a(x(1-n)-c)/b` if `x(1-n) > c` else `p = 0`
+     * `q = -a(x(1-n)-c)/b` if `x(1-n) > c` else `q = 0`
+     * `r = -(x(1-n)-c)` if `x(1-n) > c` else `r = 0`
+     * `s = x(1-n)`
+     * `t = 0`
+     */
+    function defaultSurplus(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 c, // <= 2**128-1
+        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y, c);
         output.p = -MathEx.mulDivF(a, z, b).toInt256();
