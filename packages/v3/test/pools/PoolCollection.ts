@@ -1960,7 +1960,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000004') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000001') }
             });
 
@@ -1969,7 +1969,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
+                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0007') },
                 u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0004') }
             });
         };
