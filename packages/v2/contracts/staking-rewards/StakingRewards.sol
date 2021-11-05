@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -863,10 +863,9 @@ contract StakingRewards is IStakingRewards, AccessControl, Time, Utils, Contract
             poolRewardsData.rewardPerToken.add( // the aggregated reward rate
                 stakingEndTime
                 .sub(stakingStartTime) // the duration of the staking
-                    .mul(program.rewardRate) // multiplied by the rate
-                    .mul(REWARD_RATE_FACTOR) // and factored to increase precision
-                    .mul(_rewardShare(reserveToken, program)) // and applied the specific token share of the whole reward
-                    .div(totalReserveAmount.mul(PPM_RESOLUTION)) // and divided by the total protected tokens amount in the pool
+                .mul(program.rewardRate) // multiplied by the rate
+                .mul(REWARD_RATE_FACTOR) // and factored to increase precision
+                .mul(_rewardShare(reserveToken, program)).div(totalReserveAmount.mul(PPM_RESOLUTION)) // and applied the specific token share of the whole reward // and divided by the total protected tokens amount in the pool
             );
     }
 
