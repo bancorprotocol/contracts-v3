@@ -56,15 +56,7 @@ library PoolCollectionWithdrawal {
             } else {
                 output = defaultDeficit(a, b, c, e, g, y);
                 if (w > 0) {
-                    uint256 tb = MathEx.mulDivF(a * y, g, e);
-                    uint256 wa = w * a;
-                    if (tb > wa) {
-                        output.t = (tb - wa) / b;
-                        output.u = w;
-                    } else {
-                        output.t = 0;
-                        output.u = y * g / a;
-                    }
+                    (output.t, output.u) = externalProtection(a, b, e, g, y, w);
                 }
             }
         } else {
@@ -221,6 +213,25 @@ library PoolCollectionWithdrawal {
         output.r = -z.toInt256();
         output.s = y;
         output.t = 0;
+    }}
+
+    function externalProtection(
+        uint256 a, // <= 2**128-1
+        uint256 b, // <= 2**128-1
+        uint256 e, // <= 2**128-1
+        uint256 g, // == e-b-c <= e <= 2**128-1
+        uint256 y, // == x(1-n) <= x <= e <= 2**128-1
+        uint256 w  // <= 2**128-1
+    ) private pure returns (uint256 t, uint256 u) { unchecked {
+        uint256 tb = MathEx.mulDivF(a * y, g, e);
+        uint256 wa = w * a;
+        if (tb > wa) {
+            t = (tb - wa) / b;
+            u = w;
+        } else {
+            t = 0;
+            u = y * g / a;
+        }
     }}
 
     /**
