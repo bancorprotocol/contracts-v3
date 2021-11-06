@@ -61,10 +61,8 @@ library PoolCollectionWithdrawal {
             if (hlim(b, c, e, x) && hmaxDeficit(b, e, f, g, m, n, x)) {
                 output = arbitrageDeficit(a, b, e, f, m, x, y);
             } else {
-                output = defaultDeficit(a, b, c, e, g, y);
-                if (w > 0) {
-                    (output.t, output.u) = externalProtection(a, b, e, g, y, w);
-                }
+                output = defaultDeficit(a, b, c, e, y);
+                (output.t, output.u) = externalProtection(a, b, e, g, y, w);
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
@@ -131,7 +129,6 @@ library PoolCollectionWithdrawal {
      * `q = 0`
      * `r = -x(e(1-n)-b-c)/e`
      * `s = y`
-     * `t = 0`
      */
     function arbitrageDeficit(
         uint256 a, // <= 2**128-1
@@ -148,7 +145,6 @@ library PoolCollectionWithdrawal {
         output.q = 0;
         output.r = -MathEx.mulDivF(x, f, e).toInt256();
         output.s = y;
-        output.t = 0;
     }}
 
     /**
@@ -157,7 +153,6 @@ library PoolCollectionWithdrawal {
      * `q = 0`
      * `r = x(b+c-e+en)/e`
      * `s = y`
-     * `t = 0`
      */
     function arbitrageSurplus(
         uint256 a, // <= 2**128-1
@@ -175,7 +170,6 @@ library PoolCollectionWithdrawal {
         output.q = 0;
         output.r = MathEx.mulDivF(x, h, e * M).toInt256();
         output.s = y;
-        output.t = 0;
     }}
 
     /**
@@ -184,14 +178,12 @@ library PoolCollectionWithdrawal {
      * `q = -az/be` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
      * `r = -z/e` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
      * `s = x(1-n)(b+c)/e`
-     * `t = ax(1-n)(e-b-c)/be`
      */
     function defaultDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 g, // == e-b-c <= e <= 2**128-1
         uint256 y  // == x(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
@@ -199,7 +191,6 @@ library PoolCollectionWithdrawal {
         output.q = output.p;
         output.r = -(z / e).toInt256();
         output.s = MathEx.mulDivF(y, b + c, e);
-        output.t = MathEx.mulDivF(a * y, g, b * e);
     }}
 
     /**
@@ -208,7 +199,6 @@ library PoolCollectionWithdrawal {
      * `q = -az/b` where `z = max(x(1-n)-c, 0)`
      * `r = -z` where `z = max(x(1-n)-c, 0)`
      * `s = x(1-n)`
-     * `t = 0`
      */
     function defaultSurplus(
         uint256 a, // <= 2**128-1
@@ -221,18 +211,17 @@ library PoolCollectionWithdrawal {
         output.q = output.p;
         output.r = -z.toInt256();
         output.s = y;
-        output.t = 0;
     }}
 
     /**
      * @dev returns:
-     * +-------------------------------+-----------------------+
-     * | if `ax(1-n)(e-b-c)/e-wa > 0`  | else                  |
-     * +-------------------------------+-----------------------+
-     * | `t = (ax(1-n)(e-b-c)/e-wa)/b` | `t = 0`               |
-     * +-------------------------------+-----------------------+
-     * | `u = w`                       | `u = x(1-n)(e-b-c)/e` |
-     * +-------------------------------+-----------------------+
+     * +-------------------------+-----------------------------------+-----------------------+
+     * | if `w == 0`             | else if `ax(1-n)(e-b-c)/e-wa > 0` | else                  |
+     * +-------------------------+-----------------------------------+-----------------------+
+     * | `t = ax(1-n)(e-b-c)/be` | `t = ax(1-n)(e-b-c)/be-wa/b`      | `t = 0`               |
+     * +-------------------------+-----------------------------------+-----------------------+
+     * | `u = 0`                 | `u = w`                           | `u = x(1-n)(e-b-c)/e` |
+     * +-------------------------+-----------------------------------+-----------------------+
      */
     function externalProtection(
         uint256 a, // <= 2**128-1
@@ -242,14 +231,20 @@ library PoolCollectionWithdrawal {
         uint256 y, // == x(1-n) <= x <= e <= 2**128-1
         uint256 w  // <= 2**128-1
     ) private pure returns (uint256 t, uint256 u) { unchecked {
-        uint256 tb = MathEx.mulDivF(a * y, g, e);
-        uint256 wa = w * a;
-        if (tb > wa) {
-            t = (tb - wa) / b;
-            u = w;
-        } else {
-            t = 0;
-            u = y * g / e;
+        if (w > 0) {
+            uint256 tb = MathEx.mulDivF(a * y, g, e);
+            uint256 wa = w * a;
+            if (tb > wa) {
+                t = (tb - wa) / b;
+                u = w;
+            } else {
+                t = 0;
+                u = y * g / e;
+            }
+        }
+        else {
+            t = MathEx.mulDivF(a * y, g, b * e);
+            u = 0;
         }
     }}
 
