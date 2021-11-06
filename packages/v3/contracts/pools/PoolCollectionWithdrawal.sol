@@ -32,7 +32,7 @@ library PoolCollectionWithdrawal {
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 w, // <= 2**256-1
+        uint256 w, // <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
         uint256 x  // <= e <= 2**128-1
@@ -41,6 +41,7 @@ library PoolCollectionWithdrawal {
         assert(b <= type(uint128).max);
         assert(c <= type(uint128).max);
         assert(e <= type(uint128).max);
+        assert(w <= type(uint128).max);
         assert(m <= M);
         assert(n <= M);
         assert(x <= e);
@@ -54,6 +55,17 @@ library PoolCollectionWithdrawal {
                 output = arbitrageDeficit(a, b, e, f, m, x, y);
             } else {
                 output = defaultDeficit(a, b, c, e, g, y);
+                if (w > 0) {
+                    uint256 tb = MathEx.mulDivF(a * y, g, e);
+                    uint256 wa = w * a;
+                    if (tb > wa) {
+                        output.t = (tb - wa) / b;
+                        output.u = w;
+                    } else {
+                        output.t = 0;
+                        output.u = y * g / a;
+                    }
+                }
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
@@ -61,18 +73,6 @@ library PoolCollectionWithdrawal {
                 output = arbitrageSurplus(a, b, e, f, m, n, x, y);
             } else {
                 output = defaultSurplus(a, b, c, y);
-            }
-        }
-
-        if (output.t > 0 && w > 0) {
-            uint256 tb = output.t.mul(b);
-            uint256 wa = w.mul(a);
-            if (tb > wa) {
-                output.t = (tb - wa) / b;
-                output.u = w;
-            } else {
-                output.t = 0;
-                output.u = tb / a;
             }
         }
     }}
