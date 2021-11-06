@@ -230,7 +230,7 @@ library PoolCollectionWithdrawal {
             u = w;
         } else {
             t = 0;
-            u = y * g / a;
+            u = y * g / e;
         }
     }}
 
