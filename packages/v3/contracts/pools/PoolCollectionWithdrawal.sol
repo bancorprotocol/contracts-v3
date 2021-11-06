@@ -128,7 +128,7 @@ library PoolCollectionWithdrawal {
      * `p = ax(e(1-n)-b-c)(1-m)/(be-x(e(1-n)-b-c)(1-m))`
      * `q = 0`
      * `r = -x(e(1-n)-b-c)/e`
-     * `s = y`
+     * `s = x(1-n)`
      */
     function arbitrageDeficit(
         uint256 a, // <= 2**128-1
@@ -152,7 +152,7 @@ library PoolCollectionWithdrawal {
      * `p = -ax(b+c-e+en)/(be(1-m)+x(b+c-e+en)(1-m))`
      * `q = 0`
      * `r = x(b+c-e+en)/e`
-     * `s = y`
+     * `s = x(1-n)`
      */
     function arbitrageSurplus(
         uint256 a, // <= 2**128-1
