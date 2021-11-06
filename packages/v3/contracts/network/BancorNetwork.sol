@@ -1315,7 +1315,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary,
         address trader
     ) private {
-        if (deadline < _time()) {
+        uint32 currentTime = _time();
+        if (deadline < currentTime) {
             revert DeadlineExpired();
         }
 
@@ -1327,7 +1328,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = keccak256(
             abi.encodePacked(
                 trader,
-                _time(),
+                currentTime,
                 sourceToken,
                 targetToken,
                 sourceAmount,

@@ -40,10 +40,7 @@ library PoolAverageRate {
         uint32 currentTime
     ) internal pure returns (AverageRate memory) {
         // get the elapsed time since the previous average rate was calculated
-        uint256 timeElapsed;
-        unchecked {
-            timeElapsed = currentTime - averageRate.time;
-        }
+        uint256 timeElapsed = currentTime - averageRate.time;
 
         // if the previous average rate was calculated in the current block, the average rate remains unchanged
         if (timeElapsed == 0) {
