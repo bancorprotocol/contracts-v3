@@ -984,17 +984,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         uint32 withdrawalFeePPM,
         uint256 baseTokenWithdrawalAmount
     ) internal pure returns (WithdrawalAmounts memory amounts) {
-        require(
-            networkTokenLiquidity <= type(uint128).max &&
-                baseTokenLiquidity <= type(uint128).max &&
-                baseTokenExcessAmount <= type(uint128).max &&
-                baseTokenStakedAmount <= type(uint128).max &&
-                tradeFeePPM <= PPM_RESOLUTION &&
-                withdrawalFeePPM <= PPM_RESOLUTION &&
-                baseTokenWithdrawalAmount <= baseTokenStakedAmount,
-            "ERR_INVALID_WITHDRAWAL_INPUT"
-        );
-
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.formula(
             networkTokenLiquidity,
             baseTokenLiquidity,
@@ -1012,10 +1001,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
         amounts.networkTokenAmountToDeductFromLiquidity = output.p;
         amounts.networkTokenAmountToRenounceByProtocol = output.q;
-
-        unchecked {
-            amounts.baseTokenWithdrawalFeeAmount = (baseTokenWithdrawalAmount * withdrawalFeePPM) / PPM_RESOLUTION;
-        }
+        amounts.baseTokenWithdrawalFeeAmount = output.v;
     }
 
     /**

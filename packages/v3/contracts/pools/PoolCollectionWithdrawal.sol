@@ -7,6 +7,14 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
+error PoolCollectionWithdrawalInputInvalid();
+
+function validate(bool valid) pure {
+    if (!valid) {
+        revert PoolCollectionWithdrawalInputInvalid();
+    }
+}
+
 library PoolCollectionWithdrawal {
     using SafeCast for uint256;
     using SafeMath for uint256;
@@ -20,6 +28,7 @@ library PoolCollectionWithdrawal {
         uint256 s;
         uint256 t;
         uint256 u;
+        uint256 v;
     }
 
     struct Uint512 {
@@ -37,14 +46,14 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x  // <= e <= 2**128-1
     ) internal pure returns (Output memory output) { unchecked {
-        assert(a <= type(uint128).max);
-        assert(b <= type(uint128).max);
-        assert(c <= type(uint128).max);
-        assert(e <= type(uint128).max);
-        assert(w <= type(uint128).max);
-        assert(m <= M);
-        assert(n <= M);
-        assert(x <= e);
+        validate(a <= type(uint128).max);
+        validate(b <= type(uint128).max);
+        validate(c <= type(uint128).max);
+        validate(e <= type(uint128).max);
+        validate(w <= type(uint128).max);
+        validate(m <= M);
+        validate(n <= M);
+        validate(x <= e);
 
         uint256 y = x * (M - n) / M;
 
@@ -67,6 +76,8 @@ library PoolCollectionWithdrawal {
                 output = defaultSurplus(a, b, c, y);
             }
         }
+
+        output.v = x - y;
     }}
 
     /**
