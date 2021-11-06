@@ -1874,6 +1874,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
             s: string;
             t: string;
             u: string;
+            v: string;
         }
 
         interface MaxErrors {
@@ -1883,6 +1884,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
             s: AlmostEqualOptions;
             t: AlmostEqualOptions;
             u: AlmostEqualOptions;
+            v: AlmostEqualOptions;
         }
 
         const tests = (numOfTestsPerFile: number = Number.MAX_SAFE_INTEGER) => {
@@ -1891,7 +1893,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                     fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
                 ).slice(0, numOfTestsPerFile);
 
-                for (const { a, b, c, e, w, m, n, x, p, q, r, s, t, u } of table) {
+                for (const { a, b, c, e, w, m, n, x, p, q, r, s, t, u, v } of table) {
                     it(`${fileName}(${[a, b, c, e, w, m, n, x]})`, async () => {
                         const actual = await poolCollection.withdrawalAmountsT(a, b, c, e, w, m, n, x);
                         const actual_p = actual.networkTokenAmountToDeductFromLiquidity;
@@ -1900,12 +1902,14 @@ describe('PoolCollection.withdrawalAmounts', () => {
                         const actual_s = actual.baseTokenAmountToTransferFromVaultToProvider;
                         const actual_t = actual.networkTokenAmountToMintForProvider;
                         const actual_u = actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider;
+                        const actual_v = actual.baseTokenWithdrawalFeeAmount;
                         expect(actual_p).to.almostEqual(new Decimal(p), maxErrors.p);
                         expect(actual_q).to.almostEqual(new Decimal(q), maxErrors.q);
                         expect(actual_r).to.almostEqual(new Decimal(r), maxErrors.r);
                         expect(actual_s).to.almostEqual(new Decimal(s), maxErrors.s);
                         expect(actual_t).to.almostEqual(new Decimal(t), maxErrors.t);
                         expect(actual_u).to.almostEqual(new Decimal(u), maxErrors.u);
+                        expect(actual_v).to.almostEqual(new Decimal(v), maxErrors.v);
                     });
                 }
             };
@@ -1916,7 +1920,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage2', {
@@ -1925,7 +1930,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage3', {
@@ -1934,7 +1940,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage4', {
@@ -1943,7 +1950,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage5', {
@@ -1952,7 +1960,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage6', {
@@ -1961,7 +1970,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
             test('WithdrawalAmountsCoverage7', {
@@ -1970,7 +1980,8 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
                 s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
                 t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') }
+                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
+                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
         };
 
