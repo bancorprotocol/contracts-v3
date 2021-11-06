@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import { PPM_RESOLUTION } from "../utility/Constants.sol";
+import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
@@ -18,8 +18,6 @@ function validate(bool valid) pure {
 library PoolCollectionWithdrawal {
     using SafeCast for uint256;
     using SafeMath for uint256;
-
-    uint256 private constant M = PPM_RESOLUTION;
 
     struct Output {
         int256 p;
