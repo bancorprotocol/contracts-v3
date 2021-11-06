@@ -171,9 +171,9 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -a(x(1-n)b-c(e-x(1-n)))/be` if `x(1-n)b > c(e-x(1-n))` else `p = 0`
-     * `q = -a(x(1-n)b-c(e-x(1-n)))/be` if `x(1-n)b > c(e-x(1-n))` else `q = 0`
-     * `r = -(x(1-n)b-c(e-x(1-n)))/e` if `x(1-n)b > c(e-x(1-n))` else `r = 0`
+     * `p = -az/be` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
+     * `q = -az/be` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
+     * `r = -z/e` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
      * `s = x(1-n)(b+c)/e`
      * `t = ax(1-n)(e-b-c)/be`
      */
@@ -195,9 +195,9 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -a(x(1-n)-c)/b` if `x(1-n) > c` else `p = 0`
-     * `q = -a(x(1-n)-c)/b` if `x(1-n) > c` else `q = 0`
-     * `r = -(x(1-n)-c)` if `x(1-n) > c` else `r = 0`
+     * `p = -az/b` where `z = max(x(1-n)-c, 0)`
+     * `q = -az/b` where `z = max(x(1-n)-c, 0)`
+     * `r = -z` where `z = max(x(1-n)-c, 0)`
      * `s = x(1-n)`
      * `t = 0`
      */
@@ -215,6 +215,16 @@ library PoolCollectionWithdrawal {
         output.t = 0;
     }}
 
+    /**
+     * @dev returns:
+     * +-------------------------------+-----------------------+
+     * | if `ax(1-n)(e-b-c)/e-wa > 0`  | else                  |
+     * +-------------------------------+-----------------------+
+     * | `t = (ax(1-n)(e-b-c)/e-wa)/b` | `t = 0`               |
+     * +-------------------------------+-----------------------+
+     * | `u = w`                       | `u = x(1-n)(e-b-c)/e` |
+     * +-------------------------------+-----------------------+
+     */
     function externalProtection(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
