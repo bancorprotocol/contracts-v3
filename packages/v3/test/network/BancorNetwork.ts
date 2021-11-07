@@ -12,6 +12,8 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
+    TestERC20Burnable,
+    PendingWithdrawals,
     TokenHolder
 } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
@@ -40,11 +42,15 @@ import {
     transfer,
     TokenWithAddress
 } from '../helpers/Utils';
+import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
+import Decimal from 'decimal.js';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import fs from 'fs';
 import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';
+import path from 'path';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
@@ -3084,5 +3090,330 @@ describe('BancorNetwork', () => {
                 });
             }
         }
+    });
+});
+
+describe('BancorNetwork Flow', () => {
+    type ERC20Token = TestERC20Burnable | NetworkToken | PoolToken;
+
+    interface User {
+        id: string;
+        tknBalance: string;
+        bntBalance: string;
+    }
+
+    interface Pool {
+        tknProvider: string;
+        tknBalance: string;
+        bntBalance: string;
+        bntMintLimit: string;
+    }
+
+    interface State {
+        tknBalances: any;
+        bntBalances: any;
+        bntknBalances: any;
+        bnbntBalances: any;
+        bntStakedBalance: string;
+        tknStakedBalance: string;
+        tknTradingLiquidity: string;
+        bntTradingLiquidity: string;
+    }
+
+    interface Operation {
+        type: string;
+        userId: string;
+        amount: string;
+        elapsed: number;
+        expected: State;
+    }
+
+    interface Flow {
+        tradingFee: string;
+        withdrawalFee: string;
+        epwBalance: string;
+        tknDecimals: number;
+        users: User[];
+        pool: Pool;
+        operations: Operation[];
+    }
+
+    const tests = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
+        const flow: Flow = JSON.parse(
+            fs.readFileSync(path.join('test', 'data', 'BancorNetworkFlowTest.json'), { encoding: 'utf8' })
+        );
+
+        flow.operations.unshift({
+            type: 'depositTKN',
+            userId: flow.pool.tknProvider,
+            elapsed: 0,
+            amount: flow.pool.tknBalance,
+            expected: {
+                tknBalances: flow.users.reduce(
+                    (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
+                    {
+                        vault: flow.pool.tknBalance,
+                        wallet: flow.epwBalance
+                    }
+                ),
+                bntBalances: flow.users.reduce(
+                    (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
+                    {
+                        vault: flow.pool.bntBalance
+                    }
+                ),
+                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
+                    protocol: flow.pool.bntBalance
+                }),
+                bntStakedBalance: flow.pool.bntBalance,
+                tknStakedBalance: flow.pool.tknBalance,
+                tknTradingLiquidity: flow.pool.tknBalance,
+                bntTradingLiquidity: flow.pool.bntBalance
+            }
+        });
+
+        flow.operations[0].expected.tknBalances[flow.pool.tknProvider] = new Decimal(
+            flow.operations[0].expected.tknBalances[flow.pool.tknProvider]
+        )
+            .sub(flow.pool.tknBalance)
+            .toFixed();
+        flow.operations[0].expected.bntknBalances[flow.pool.tknProvider] = flow.pool.tknBalance;
+
+        let network: TestBancorNetwork;
+        let networkToken: NetworkToken;
+        let networkSettings: NetworkSettings;
+        let networkTokenPool: TestNetworkTokenPool;
+        let networkTokenGovernance: TokenGovernance;
+        let pendingWithdrawals: PendingWithdrawals;
+        let poolCollection: TestPoolCollection;
+        let bancorVault: BancorVault;
+        let externalWallet: TokenHolder;
+        let baseToken: TestERC20Burnable;
+        let basePoolToken: PoolToken;
+        let networkPoolToken: PoolToken;
+        let govToken: GovToken;
+        let tknDecimals: number;
+        let bntDecimals: number;
+        let bntknDecimals: number;
+        let bnbntDecimals: number;
+
+        let users: { [id: string]: SignerWithAddress } = {};
+
+        let timestamp = 0;
+
+        const timeIncrease = async (delta: number) => {
+            timestamp += delta;
+            await network.setTime(timestamp);
+        };
+
+        const decimalToInteger = (value: string, decimals: number) => {
+            return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
+        };
+
+        const integerToDecimal = (value: BigNumber, decimals: number) => {
+            return new Decimal(`${value}e-${decimals}`).toFixed();
+        };
+
+        const percentageToPPM = (percentage: string) => {
+            return decimalToInteger(percentage.replace('%', ''), 4);
+        };
+
+        const toWei = async (userId: string, amount: string, decimals: number, token: ERC20Token) => {
+            if (amount.endsWith('%')) {
+                const balance = await token.balanceOf(users[userId].address);
+                return balance.mul(percentageToPPM(amount)).div(PPM_RESOLUTION);
+            }
+            return decimalToInteger(amount, decimals);
+        };
+
+        const depositTKN = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, tknDecimals, baseToken);
+            await network.connect(users[userId]).deposit(baseToken.address, wei);
+        };
+
+        const depositBNT = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, bntDecimals, networkToken);
+            await network.connect(users[userId]).deposit(networkToken.address, wei);
+        };
+
+        const withdrawTKN = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, bntknDecimals, basePoolToken);
+            await pendingWithdrawals.connect(users[userId]).initWithdrawal(basePoolToken.address, wei);
+            const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
+            await network.connect(users[userId]).withdraw(ids[0]);
+        };
+
+        const withdrawBNT = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, bnbntDecimals, networkPoolToken);
+            await pendingWithdrawals.connect(users[userId]).initWithdrawal(networkPoolToken.address, wei);
+            const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
+            await network.connect(users[userId]).withdraw(ids[0]);
+        };
+
+        const tradeTKN = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, tknDecimals, baseToken);
+            await network
+                .connect(users[userId])
+                .trade(baseToken.address, networkToken.address, wei, 1, timestamp, users[userId].address);
+        };
+
+        const tradeBNT = async (userId: string, amount: string) => {
+            const wei = await toWei(userId, amount, bntDecimals, networkToken);
+            await network
+                .connect(users[userId])
+                .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
+        };
+
+        const verifyState = async (expected: State) => {
+            const actual: State = {
+                tknBalances: {},
+                bntBalances: {},
+                bntknBalances: {},
+                bnbntBalances: {},
+                bntStakedBalance: '',
+                tknStakedBalance: '',
+                tknTradingLiquidity: '',
+                bntTradingLiquidity: ''
+            };
+
+            const poolData = await poolCollection.poolData(baseToken.address);
+
+            for (const userId in users) {
+                actual.tknBalances[userId] = integerToDecimal(
+                    await baseToken.balanceOf(users[userId].address),
+                    tknDecimals
+                );
+                actual.bntBalances[userId] = integerToDecimal(
+                    await networkToken.balanceOf(users[userId].address),
+                    bntDecimals
+                );
+                actual.bntknBalances[userId] = integerToDecimal(
+                    await basePoolToken.balanceOf(users[userId].address),
+                    bntknDecimals
+                );
+                actual.bnbntBalances[userId] = integerToDecimal(
+                    await networkPoolToken.balanceOf(users[userId].address),
+                    bnbntDecimals
+                );
+            }
+
+            actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
+            actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(externalWallet.address), tknDecimals);
+            actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
+            actual.bnbntBalances['protocol'] = integerToDecimal(
+                await networkPoolToken.balanceOf(networkTokenPool.address),
+                bnbntDecimals
+            );
+
+            actual.bntStakedBalance = integerToDecimal(await networkTokenPool.stakedBalance(), bntDecimals);
+            actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
+            actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
+            actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
+
+            console.log(JSON.stringify(actual));//).to.deep.equal(expected);
+        };
+
+        before(async () => {
+            const signers = await ethers.getSigners();
+
+            baseToken = await Contracts.TestERC20Burnable.deploy('TKN', 'TKN', MAX_UINT256);
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                networkTokenPool,
+                networkPoolToken,
+                networkTokenGovernance,
+                govToken,
+                pendingWithdrawals,
+                poolCollection,
+                bancorVault
+            } = await createSystem());
+            basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
+            await networkTokenGovernance.mint(
+                signers[0].address,
+                MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address))
+            );
+            externalWallet = await createTokenHolder();
+
+            tknDecimals = flow.tknDecimals;
+            bntDecimals = await networkToken.decimals();
+            bntknDecimals = await basePoolToken.decimals();
+            bnbntDecimals = await networkPoolToken.decimals();
+            await baseToken.updateDecimals(tknDecimals);
+
+            const tknInitialBalance = decimalToInteger(flow.pool.tknBalance, tknDecimals);
+            const bntInitialBalance = decimalToInteger(flow.pool.bntBalance, bntDecimals);
+
+            await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
+            await networkSettings.setPoolMintingLimit(
+                baseToken.address,
+                decimalToInteger(flow.pool.bntMintLimit, bntDecimals)
+            );
+            await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
+            await networkSettings.setMinLiquidityForTrading(bntInitialBalance);
+
+            await pendingWithdrawals.setLockDuration(0);
+
+            await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
+            await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
+            await poolCollection.setInitialRate(baseToken.address, { n: bntInitialBalance, d: tknInitialBalance });
+
+            await externalWallet.transferOwnership(network.address);
+            await network.setExternalProtectionWallet(externalWallet.address);
+            await baseToken.transfer(externalWallet.address, decimalToInteger(flow.epwBalance, tknDecimals));
+
+            for (let i = 0; i < flow.users.length; i++) {
+                const user = flow.users[i];
+                expect(user.id in users).to.equal(false, `user id '${user.id}' is not unique`);
+                users[user.id] = signers[1 + i];
+                await govToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
+                await baseToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
+                await networkToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
+                await basePoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
+                await networkPoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
+                await baseToken.transfer(users[user.id].address, decimalToInteger(user.tknBalance, tknDecimals));
+                await networkToken.transfer(users[user.id].address, decimalToInteger(user.bntBalance, bntDecimals));
+            }
+
+            await baseToken.burn(await baseToken.balanceOf(signers[0].address));
+            await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
+        });
+
+        for (const operation of flow.operations.slice(0, numOfTests)) {
+            it(JSON.stringify(operation), async () => {
+                await timeIncrease(operation.elapsed);
+                switch (operation.type) {
+                    case 'depositTKN':
+                        await depositTKN(operation.userId, operation.amount);
+                        break;
+                    case 'depositBNT':
+                        await depositBNT(operation.userId, operation.amount);
+                        break;
+                    case 'withdrawTKN':
+                        await withdrawTKN(operation.userId, operation.amount);
+                        break;
+                    case 'withdrawBNT':
+                        await withdrawBNT(operation.userId, operation.amount);
+                        break;
+                    case 'tradeTKN':
+                        await tradeTKN(operation.userId, operation.amount);
+                        break;
+                    case 'tradeBNT':
+                        await tradeBNT(operation.userId, operation.amount);
+                        break;
+                }
+                await verifyState(operation.expected);
+            });
+        }
+    };
+
+    describe.only('quick tests', () => {
+        tests();//100);
+    });
+
+    describe('@stress tests', () => {
+        tests();
     });
 });
