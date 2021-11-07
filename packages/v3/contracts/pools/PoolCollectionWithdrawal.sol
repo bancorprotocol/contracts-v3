@@ -34,6 +34,18 @@ library PoolCollectionWithdrawal {
         uint256 lo;
     }
 
+    /**
+     * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`.
+     * when calculating the values of `p`, `q`, `r` and `s`, we split the input range as follows:
+     * +---------------------------+--------------------------------------+
+     * | `e > (b+c)/(1-n)`         | default deficit or arbitrage deficit |
+     * +---------------------------+--------------------------------------+
+     * | `e < (b+c)`               | default surplus or arbitrage surplus |
+     * +---------------------------+--------------------------------------+
+     * | otherwise                 | default surplus                      |
+     * +---------------------------+--------------------------------------+
+     * we calculate the values of `t` and `u` only when in default deficit.
+     */
     function formula(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
