@@ -1914,6 +1914,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 }
             };
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage1', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
@@ -1924,6 +1925,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage2', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
@@ -1934,6 +1936,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage3', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
@@ -1944,6 +1947,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage4', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
@@ -1954,6 +1958,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage5', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
@@ -1964,6 +1969,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage6', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
@@ -1974,6 +1980,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
                 v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
             });
 
+            // prettier-ignore
             test('WithdrawalAmountsCoverage7', {
                 p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
                 q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },

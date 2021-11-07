@@ -46,6 +46,7 @@ library PoolCollectionWithdrawal {
      * +---------------------------+--------------------------------------+
      * we calculate the values of `t` and `u` only when in default deficit.
      */
+    // prettier-ignore
     function formula(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -91,6 +92,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `b*x < c*(e-x)`
      */
+    // prettier-ignore
     function hlim(
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
@@ -103,6 +105,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
+    // prettier-ignore
     function hmaxDeficit(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
@@ -121,6 +124,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e+e*n)*(1-m)`
      */
+    // prettier-ignore
     function hmaxSurplus(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
@@ -142,6 +146,7 @@ library PoolCollectionWithdrawal {
      * `r = -x*(e*(1-n)-b-c)/e`
      * `s = x*(1-n)`
      */
+    // prettier-ignore
     function arbitrageDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -166,6 +171,7 @@ library PoolCollectionWithdrawal {
      * `r = x*(b+c-e+e*n)/e`
      * `s = x*(1-n)`
      */
+    // prettier-ignore
     function arbitrageSurplus(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -191,6 +197,7 @@ library PoolCollectionWithdrawal {
      * `r = -z/e` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
      * `s = x*(1-n)*(b+c)/e`
      */
+    // prettier-ignore
     function defaultDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -212,6 +219,7 @@ library PoolCollectionWithdrawal {
      * `r = -z` where `z = max(x*(1-n)-c, 0)`
      * `s = x*(1-n)`
      */
+    // prettier-ignore
     function defaultSurplus(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -235,6 +243,7 @@ library PoolCollectionWithdrawal {
      * | `u = 0`                      | `u = w`                              | `u = x*(1-n)*(e-b-c)/e` |
      * +------------------------------+--------------------------------------+-------------------------+
      */
+    // prettier-ignore
     function externalProtection(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -263,6 +272,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns the value of `x * y`
      */
+    // prettier-ignore
     function mul512(uint256 x, uint256 y) private pure returns (Uint512 memory) { unchecked {
         uint256 p = mulmod(x, y, type(uint256).max);
         uint256 q = x * y;
@@ -273,6 +283,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns the value of `x > y`
      */
+    // prettier-ignore
     function gt512(Uint512 memory x, Uint512 memory y) private pure returns (bool) { unchecked {
         return x.hi > y.hi || (x.hi == y.hi && x.lo > y.lo);
     }}
