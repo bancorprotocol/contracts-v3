@@ -94,10 +94,10 @@ contract TestBancorNetwork is BancorNetwork {
         IReserveToken reserveToken,
         address /* provider */,
         uint256 /* amount */,
-        uint256 availableTokens,
+        uint256 availableAmount,
         uint256 originalAmount
     ) external payable {
-        uint256 amountToTransfer = address(reserveToken) == _networkToken ? originalAmount : availableTokens;
+        uint256 amountToTransfer = address(reserveToken) == _networkToken ? originalAmount : availableAmount;
         if (reserveToken.isNativeToken()) {
             assert(msg.value == amountToTransfer);
             reserveToken.safeTransfer(_bancorVault, amountToTransfer);

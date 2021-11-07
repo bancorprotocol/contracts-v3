@@ -11,11 +11,11 @@ import { IPoolCollection } from "./IPoolCollection.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
-import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorVault } from "../../vaults/interfaces/IBancorVault.sol";
+
+import { IVault } from "../../vaults/interfaces/IVault.sol";
 
 struct DepositAmounts {
     uint256 poolTokenAmount; // the minted pool token amount
@@ -32,7 +32,7 @@ struct WithdrawalAmounts {
 /**
  * @dev Network Token Pool interface
  */
-interface INetworkTokenPool is IUpgradeable {
+interface INetworkTokenPool is IVault {
     /**
      * @dev returns the network contract
      */

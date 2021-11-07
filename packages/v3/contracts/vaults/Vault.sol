@@ -90,7 +90,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     }
 
     /**
-     * @dev returns whether the caller is allowed to withdraw the given amount of tokens
+     * @dev returns whether the given caller is allowed access to the given token
      */
     function authenticateWithdrawal(
         address caller,
