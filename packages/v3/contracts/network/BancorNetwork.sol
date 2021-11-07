@@ -211,7 +211,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ReserveToken indexed token,
         address indexed provider,
         uint256 amount,
-        uint256 availableTokens
+        uint256 availableAmount
     );
 
     /**
@@ -1027,7 +1027,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ReserveToken pool,
         uint256 baseTokenAmount,
         address sender,
-        uint256 availableTokens
+        uint256 availableAmount
     ) private {
         INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
 
@@ -1044,7 +1044,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the sender to the vault
-        _depositToVault(pool, sender, availableTokens);
+        _depositToVault(pool, sender, availableAmount);
 
         // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
@@ -1545,19 +1545,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ReserveToken reserveToken,
         address provider,
         uint256 amount,
-        uint256 availableTokens,
+        uint256 availableAmount,
         uint256 originalAmount
     ) external payable onlyRole(ROLE_MIGRATION_MANAGER) {
         bytes32 contextId = keccak256(
-            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableTokens, originalAmount)
+            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableAmount, originalAmount)
         );
 
         if (_isNetworkToken(reserveToken)) {
             _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
-            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableTokens);
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableAmount);
         }
 
-        emit FundsMigrated(contextId, reserveToken, provider, amount, availableTokens);
+        emit FundsMigrated(contextId, reserveToken, provider, amount, availableAmount);
     }
 }

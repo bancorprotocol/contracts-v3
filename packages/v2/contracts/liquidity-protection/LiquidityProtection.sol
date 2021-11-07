@@ -45,7 +45,7 @@ interface IBancorNetworkV3 {
         IReserveToken reserveToken,
         address provider,
         uint256 amount,
-        uint256 availableTokens,
+        uint256 availableAmount,
         uint256 originalAmount
     ) external payable;
 }
