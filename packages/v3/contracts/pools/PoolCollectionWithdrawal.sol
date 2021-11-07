@@ -77,7 +77,7 @@ library PoolCollectionWithdrawal {
     }}
 
     /**
-     * @dev returns `bx < c(e-x)`
+     * @dev returns `b*x < c*(e-x)`
      */
     function hlim(
         uint256 b, // <= 2**128-1
@@ -89,12 +89,12 @@ library PoolCollectionWithdrawal {
     }}
 
     /**
-     * @dev returns `be((e(1-n)-b-c)m+en) > (e(1-n)-b-c)x(e-b-c)(1-m)`
+     * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
     function hmaxDeficit(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 f, // == e(1-n)-b-c <= e <= 2**128-1
+        uint256 f, // == e*(1-n)-b-c <= e <= 2**128-1
         uint256 g, // == e-b-c <= e <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
@@ -107,7 +107,7 @@ library PoolCollectionWithdrawal {
     }}
 
     /**
-     * @dev returns `be((b+c-e)m+en) > (b+c-e)x(b+c-e+en)(1-m)`
+     * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e+e*n)*(1-m)`
      */
     function hmaxSurplus(
         uint256 b, // <= 2**128-1
@@ -125,19 +125,19 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = ax(e(1-n)-b-c)(1-m)/(be-x(e(1-n)-b-c)(1-m))`
+     * `p = a*x(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))`
      * `q = 0`
-     * `r = -x(e(1-n)-b-c)/e`
-     * `s = x(1-n)`
+     * `r = -x*(e*(1-n)-b-c)/e`
+     * `s = x*(1-n)`
      */
     function arbitrageDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 f, // == e(1-n)-b-c <= e <= 2**128-1
+        uint256 f, // == e*(1-n)-b-c <= e <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 x, // <= e <= 2**128-1
-        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
+        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * (M - m);
         uint256 k = b.mul(e * M).sub(MathEx.mulDivF(x, h, 1));
@@ -149,10 +149,10 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -ax(b+c-e+en)/(be(1-m)+x(b+c-e+en)(1-m))`
+     * `p = -a*x(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m))`
      * `q = 0`
-     * `r = x(b+c-e+en)/e`
-     * `s = x(1-n)`
+     * `r = x*(b+c-e+e*n)/e`
+     * `s = x*(1-n)`
      */
     function arbitrageSurplus(
         uint256 a, // <= 2**128-1
@@ -162,7 +162,7 @@ library PoolCollectionWithdrawal {
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
         uint256 x, // <= e <= 2**128-1
-        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
+        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 h = f * M + e * n;
         uint256 k = b.mul(e * (M - m)).add(MathEx.mulDivF(x, h * (M - m), M));
@@ -174,17 +174,17 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -az/be` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
-     * `q = -az/be` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
-     * `r = -z/e` where `z = max(x(1-n)b-c(e-x(1-n)), 0)`
-     * `s = x(1-n)(b+c)/e`
+     * `p = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
+     * `q = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
+     * `r = -z/e` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
+     * `s = x*(1-n)*(b+c)/e`
      */
     function defaultDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
+        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = -MathEx.mulDivF(a, z, b * e).toInt256();
@@ -195,16 +195,16 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -az/b` where `z = max(x(1-n)-c, 0)`
-     * `q = -az/b` where `z = max(x(1-n)-c, 0)`
-     * `r = -z` where `z = max(x(1-n)-c, 0)`
-     * `s = x(1-n)`
+     * `p = -a*z/b` where `z = max(x*(1-n)-c, 0)`
+     * `q = -a*z/b` where `z = max(x*(1-n)-c, 0)`
+     * `r = -z` where `z = max(x*(1-n)-c, 0)`
+     * `s = x*(1-n)`
      */
     function defaultSurplus(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
-        uint256 y  // == x(1-n) <= x <= e <= 2**128-1
+        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y, c);
         output.p = -MathEx.mulDivF(a, z, b).toInt256();
@@ -215,20 +215,20 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * +-------------------------+-----------------------------------+-----------------------+
-     * | if `w == 0`             | else if `ax(1-n)(e-b-c)/e-wa > 0` | else                  |
-     * +-------------------------+-----------------------------------+-----------------------+
-     * | `t = ax(1-n)(e-b-c)/be` | `t = ax(1-n)(e-b-c)/be-wa/b`      | `t = 0`               |
-     * +-------------------------+-----------------------------------+-----------------------+
-     * | `u = 0`                 | `u = w`                           | `u = x(1-n)(e-b-c)/e` |
-     * +-------------------------+-----------------------------------+-----------------------+
+     * +------------------------------+--------------------------------------+-------------------------+
+     * | if `w == 0`                  | else if `a*x(1-n)*(e-b-c)/e-w*a > 0` | else                    |
+     * +------------------------------+--------------------------------------+-------------------------+
+     * | `t = a*x(1-n)*(e-b-c)/(b*e)` | `t = a*x(1-n)*(e-b-c)/(b*e)-w*a/b`   | `t = 0`                 |
+     * +------------------------------+--------------------------------------+-------------------------+
+     * | `u = 0`                      | `u = w`                              | `u = x*(1-n)*(e-b-c)/e` |
+     * +------------------------------+--------------------------------------+-------------------------+
      */
     function externalProtection(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
         uint256 g, // == e-b-c <= e <= 2**128-1
-        uint256 y, // == x(1-n) <= x <= e <= 2**128-1
+        uint256 y, // == x*(1-n) <= x <= e <= 2**128-1
         uint256 w  // <= 2**128-1
     ) private pure returns (uint256 t, uint256 u) { unchecked {
         if (w > 0) {
