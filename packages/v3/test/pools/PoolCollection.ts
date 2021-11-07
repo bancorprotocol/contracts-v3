@@ -1996,7 +1996,7 @@ describe('PoolCollection.withdrawalAmounts', () => {
             tests(100);
         });
 
-        describe.only('stress tests', () => {
+        describe('@stress tests', () => {
             tests();
         });
     });
