@@ -3299,8 +3299,14 @@ describe('BancorNetwork Flow', () => {
             }
 
             actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
-            actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(externalWallet.address), tknDecimals);
-            actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
+            actual.tknBalances['wallet'] = integerToDecimal(
+                await baseToken.balanceOf(externalWallet.address),
+                tknDecimals
+            );
+            actual.bntBalances['vault'] = integerToDecimal(
+                await networkToken.balanceOf(bancorVault.address),
+                bntDecimals
+            );
             actual.bnbntBalances['protocol'] = integerToDecimal(
                 await networkPoolToken.balanceOf(networkTokenPool.address),
                 bnbntDecimals
@@ -3311,7 +3317,7 @@ describe('BancorNetwork Flow', () => {
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
             actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
 
-            console.log(JSON.stringify(actual));//).to.deep.equal(expected);
+            console.log(JSON.stringify(actual)); // ).to.deep.equal(expected);
         };
 
         before(async () => {
@@ -3410,7 +3416,7 @@ describe('BancorNetwork Flow', () => {
     };
 
     describe.only('quick tests', () => {
-        tests();//100);
+        tests(); // 100);
     });
 
     describe('@stress tests', () => {
