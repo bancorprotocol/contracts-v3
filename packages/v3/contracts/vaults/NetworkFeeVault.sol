@@ -24,15 +24,10 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor() {}
-
-    /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __BancorVault_init();
+        __NetworkFeeVault_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -40,16 +35,16 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorVault_init() internal initializer {
+    function __NetworkFeeVault_init() internal initializer {
         __Vault_init();
 
-        __BancorVault_init_unchained();
+        __NetworkFeeVault_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorVault_init_unchained() internal initializer {
+    function __NetworkFeeVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
 
