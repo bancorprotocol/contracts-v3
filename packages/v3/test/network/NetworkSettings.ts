@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
-import { createSystem, createProxy } from '../helpers/Factory';
+import { createSystem, createProxy, createNetworkFeeVault } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -28,7 +28,7 @@ describe('NetworkSettings', () => {
     });
 
     prepareEach(async () => {
-        networkFeeVault = await createProxy(Contracts.NetworkFeeVault);
+        networkFeeVault = await createNetworkFeeVault();
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
@@ -239,7 +239,7 @@ describe('NetworkSettings', () => {
 
             await expectNetworkFeeParams(undefined, BigNumber.from(0));
 
-            newNetworkFeeVault = await createProxy(Contracts.NetworkFeeVault);
+            newNetworkFeeVault = await createNetworkFeeVault();
         });
 
         it('should revert when a non-owner attempts to set the network fee params', async () => {

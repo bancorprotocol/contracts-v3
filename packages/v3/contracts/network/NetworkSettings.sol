@@ -69,7 +69,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event NetworkFeeVaultUpdated(INetworkFeeVault prevVault, INetworkFeeVault newVault);
 
     /**
-     * @dev triggered when the network fee PPM is updated
+     * @dev triggered when the network fee is updated
      */
     event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 

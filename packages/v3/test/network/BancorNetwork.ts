@@ -24,7 +24,8 @@ import {
     depositToPool,
     setupSimplePool,
     PoolSpec,
-    createProxy
+    createProxy,
+    createExternalProtectionVault
 } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { permitSignature } from '../helpers/Permit';
@@ -346,7 +347,7 @@ describe('BancorNetwork', () => {
         prepareEach(async () => {
             ({ network } = await createSystem());
 
-            newExternalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            newExternalProtectionVault = await createExternalProtectionVault();
         });
 
         it('should revert when a non-owner attempts to set the external protection vault', async () => {
@@ -373,7 +374,7 @@ describe('BancorNetwork', () => {
                 .withArgs(ZERO_ADDRESS, newExternalProtectionVault.address);
             expect(await network.externalProtectionVault()).to.equal(newExternalProtectionVault.address);
 
-            const newExternalProtectionVault2 = await createProxy(Contracts.ExternalProtectionVault);
+            const newExternalProtectionVault2 = await createExternalProtectionVault();
 
             const res2 = await network.setExternalProtectionVault(newExternalProtectionVault2.address);
             await expect(res2)
@@ -975,7 +976,7 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            externalProtectionVault = await createExternalProtectionVault();
             await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
             await network.setExternalProtectionVault(externalProtectionVault.address);
         });
@@ -1750,7 +1751,7 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            externalProtectionVault = await createExternalProtectionVault();
             await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
             await network.setExternalProtectionVault(externalProtectionVault.address);
 

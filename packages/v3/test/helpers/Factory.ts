@@ -177,6 +177,12 @@ export const createPool = async (
     return Contracts.PoolToken.attach(pool.poolToken);
 };
 
+export const createNetworkFeeVault = async () => createProxy(Contracts.NetworkFeeVault);
+
+export const createExternalProtectionVault = async () => createProxy(Contracts.ExternalProtectionVault);
+
+export const createExternalRewardsVault = async () => createProxy(Contracts.ExternalRewardsVault);
+
 const createSystemFixture = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
@@ -184,9 +190,9 @@ const createSystemFixture = async () => {
 
     const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
-    const networkFeeVault = await createProxy(Contracts.NetworkFeeVault);
-    const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
-    const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
+    const networkFeeVault = await createNetworkFeeVault();
+    const externalProtectionVault = await createExternalProtectionVault();
+    const externalRewardsVault = await createExternalRewardsVault();
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);

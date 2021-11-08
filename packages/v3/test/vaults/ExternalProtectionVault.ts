@@ -3,7 +3,7 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { ExternalProtectionVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createExternalProtectionVault, createProxy, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
@@ -31,7 +31,7 @@ describe('ExternalProtectionVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
+            const externalProtectionVault = await createExternalProtectionVault();
 
             expect(await externalProtectionVault.version()).to.equal(1);
             expect(await externalProtectionVault.isPayable()).to.be.true;

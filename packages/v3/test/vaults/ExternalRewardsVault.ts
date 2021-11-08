@@ -3,7 +3,7 @@ import { NetworkToken } from '../../components/LegacyContracts';
 import { ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createProxy, createExternalRewardsVault, createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
@@ -31,7 +31,7 @@ describe('ExternalRewardsVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
+            const externalRewardsVault = await createExternalRewardsVault();
 
             expect(await externalRewardsVault.version()).to.equal(1);
             expect(await externalRewardsVault.isPayable()).to.be.true;
