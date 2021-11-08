@@ -49,7 +49,7 @@ describe('ExternalRewardsVault', () => {
     });
 
     describe('asset management', () => {
-        let amount = 1_000_000;
+        const amount = 1_000_000;
 
         let externalRewardsVault: ExternalRewardsVault;
         let networkToken: NetworkToken;
