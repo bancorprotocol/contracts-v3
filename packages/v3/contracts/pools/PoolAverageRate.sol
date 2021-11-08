@@ -88,14 +88,17 @@ library PoolAverageRate {
         AverageRate memory averageRate,
         uint32 maxDeviation
     ) internal pure returns (bool) {
+        // can revert only if one of the components below is larger than 128 bits
+        uint256 x = averageRate.rate.d * spotRate.n;
+        uint256 y = averageRate.rate.n * spotRate.d;
+
         uint256 lowerBound;
         uint256 upperBound;
         unchecked {
             lowerBound = PPM_RESOLUTION - maxDeviation;
             upperBound = PPM_RESOLUTION + maxDeviation;
         }
-        uint256 x = averageRate.rate.d * spotRate.n;
-        uint256 y = averageRate.rate.n * spotRate.d;
+
         Uint512 memory min = MathEx.mul512(x, lowerBound);
         Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
         Uint512 memory max = MathEx.mul512(x, upperBound);
