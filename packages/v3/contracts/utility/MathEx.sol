@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { Fraction } from "./Types.sol";
+import { Fraction, Uint512 } from "./Types.sol";
 
 error Overflow();
-
-struct Uint512 {
-    uint256 hi;
-    uint256 lo;
-}
 
 /**
  * @dev an unchecked version of i++

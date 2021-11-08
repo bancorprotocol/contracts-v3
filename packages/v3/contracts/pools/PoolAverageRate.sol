@@ -2,9 +2,9 @@
 pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { MathEx, Uint512 } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Uint512 } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
