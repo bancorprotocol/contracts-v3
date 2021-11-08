@@ -28,7 +28,7 @@ import {
     setupSimplePool,
     PoolSpec
 } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
+import { prepare, prepareEach } from '../helpers/Fixture';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
@@ -3317,10 +3317,10 @@ describe('BancorNetwork Flow', () => {
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
             actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
 
-            console.log(JSON.stringify(actual)); // ).to.deep.equal(expected);
+            expect(actual).to.deep.equal(expected);
         };
 
-        before(async () => {
+        prepare(async () => {
             const signers = await ethers.getSigners();
 
             baseToken = await Contracts.TestERC20Burnable.deploy('TKN', 'TKN', MAX_UINT256);
@@ -3415,8 +3415,8 @@ describe('BancorNetwork Flow', () => {
         }
     };
 
-    describe.only('quick tests', () => {
-        tests(); // 100);
+    describe('quick tests', () => {
+        tests(100);
     });
 
     describe('@stress tests', () => {
