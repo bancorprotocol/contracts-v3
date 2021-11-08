@@ -45,6 +45,21 @@ library MathEx {
     }
 
     /**
+     * @dev computes the subtraction of a signed value from an unsigned value; reverts on overflow
+     */
+    function uintSubInt(uint256 x, int256 y) internal pure returns (uint256) {
+        if (y >= 0) {
+            return x - uint256(y);
+        } else {
+            uint256 z;
+            unchecked {
+                z = uint256(-y); // must be unchecked in order to support `y = -2^255`
+            }
+            return x + z;
+        }
+    }
+
+    /**
      * @dev computes the product of two given ratios
      */
     function productRatio(Fraction memory x, Fraction memory y) internal pure returns (Fraction memory) {

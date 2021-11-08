@@ -933,11 +933,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = _uintSubInt(
+        uint256 baseTokenNewTradingLiquidity = MathEx.uintSubInt(
             baseTokenCurrTradingLiquidity,
             baseTokenTradingLiquidityDelta
         );
-        uint256 networkTokenNewTradingLiquidity = _uintSubInt(
+        uint256 networkTokenNewTradingLiquidity = MathEx.uintSubInt(
             networkTokenCurrTradingLiquidity,
             networkTokenTradingLiquidityDelta
         );
@@ -1173,9 +1173,5 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         ) {
             data.averageRate = newAverageRate;
         }
-    }
-
-    function _uintSubInt(uint256 x, int256 y) private pure returns (uint256) {
-        return y >= 0 ? x - uint256(y) : x + uint256(y);
     }
 }

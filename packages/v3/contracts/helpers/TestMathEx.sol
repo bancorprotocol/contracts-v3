@@ -14,6 +14,10 @@ contract TestMathEx {
         return MathEx.ceilSqrt(num);
     }
 
+    function uintSubInt(uint256 x, int256 y) external pure returns (uint256) {
+        return MathEx.uintSubInt(x, y);
+    }
+
     function productRatio(Fraction memory x, Fraction memory y) external pure returns (Fraction memory) {
         return MathEx.productRatio(x, y);
     }
