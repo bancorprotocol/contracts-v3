@@ -80,7 +80,7 @@ library PoolAverageRate {
      *
      * requirements:
      *
-     * - spotRate numerator/denumerator should be bound by 128 bits (otherwise, the check might revert with an overflow)
+     * - spotRate numerator/denominator should be bound by 128 bits (otherwise, the check might revert with an overflow)
      * - maxDeviation must be lesser or equal to PPM_RESOLUTION
      */
     function isPoolRateStable(
