@@ -243,8 +243,8 @@ describe('MathEx', () => {
             }
         }
 
-        for (let a = 0; a <= 256; a++) {
-            for (let b = 0; b <= 255; b++) {
+        for (const a of [0, 2, 63, 64, 127, 128, 191, 192, 255, 256]) {
+            for (const b of [0, 2, 63, 64, 127, 128, 191, 192, 255]) {
                 for (const m of [-1, 0, +1]) {
                     for (const n of [-1, 0, +1]) {
                         for (const s of [-1, +1]) {
