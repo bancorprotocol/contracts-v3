@@ -933,11 +933,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = MathEx.uintSubInt(
+        uint256 baseTokenNewTradingLiquidity = MathEx.uintAddInt(
             baseTokenCurrTradingLiquidity,
             baseTokenTradingLiquidityDelta
         );
-        uint256 networkTokenNewTradingLiquidity = MathEx.uintSubInt(
+        uint256 networkTokenNewTradingLiquidity = MathEx.uintAddInt(
             networkTokenCurrTradingLiquidity,
             networkTokenTradingLiquidityDelta
         );

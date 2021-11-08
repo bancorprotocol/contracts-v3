@@ -1224,19 +1224,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         if (amounts.networkTokenAmountToRenounceByProtocol < 0) {
-            cachedNetworkTokenPool.requestLiquidity(
+            cachedNetworkTokenPool.renounceLiquidity(
                 contextId,
                 pool,
-                uint256(-amounts.networkTokenAmountToRenounceByProtocol)
+                MathEx.negToPos(amounts.networkTokenAmountToRenounceByProtocol)
             );
         }
 
-        int256 networkTokenArbitrageAmount = amounts.networkTokenAmountToRenounceByProtocol -
-            amounts.networkTokenAmountToDeductFromLiquidity;
-        if (networkTokenArbitrageAmount > 0) {
-            cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
-        } else if (networkTokenArbitrageAmount < 0) {
-            cachedNetworkTokenPool.burnFromVault(MathEx.negToPos(networkTokenArbitrageAmount));
+        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
+            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenAmountToDeductFromLiquidity));
+        } else if (amounts.networkTokenAmountToDeductFromLiquidity < 0) {
+            cachedNetworkTokenPool.burnFromVault(MathEx.negToPos(amounts.networkTokenAmountToDeductFromLiquidity));
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
