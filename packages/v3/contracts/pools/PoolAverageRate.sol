@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import { MathEx } from "../utility/MathEx.sol";
+import { MathEx, Uint512 } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction } from "../utility/Types.sol";
 
@@ -94,12 +94,13 @@ library PoolAverageRate {
             lowerBound = PPM_RESOLUTION - maxDeviation;
             upperBound = PPM_RESOLUTION + maxDeviation;
         }
-        uint256 d = averageRate.rate.d * spotRate.n;
-        uint256 min = MathEx.mulDivC(d, lowerBound, PPM_RESOLUTION);
-        uint256 mid = averageRate.rate.n * spotRate.d;
-        uint256 max = MathEx.mulDivF(d, upperBound, PPM_RESOLUTION);
+        uint256 x = averageRate.rate.d * spotRate.n;
+        uint256 y = averageRate.rate.n * spotRate.d;
+        Uint512 memory min = MathEx.mul512(x, lowerBound);
+        Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
+        Uint512 memory max = MathEx.mul512(x, upperBound);
 
-        return min <= mid && mid <= max;
+        return MathEx.lte512(min, mid) && MathEx.lte512(mid, max);
     }
 
     /**

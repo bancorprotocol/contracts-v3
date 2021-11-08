@@ -5,6 +5,11 @@ import { Fraction } from "./Types.sol";
 
 error Overflow();
 
+struct Uint512 {
+    uint256 hi;
+    uint256 lo;
+}
+
 /**
  * @dev an unchecked version of i++
  */
@@ -198,7 +203,45 @@ library MathEx {
      * @dev returns the maximum of `n1 - n2` and 0
      */
     function subMax0(uint256 n1, uint256 n2) internal pure returns (uint256) {
-        return n1 > n2 ? n1 - n2 : 0;
+        unchecked {
+            return n1 > n2 ? n1 - n2 : 0;
+        }
+    }
+
+    /**
+     * @dev returns the value of `x * y`
+     */
+    function mul512(uint256 x, uint256 y) internal pure returns (Uint512 memory) {
+        (uint256 hi, uint256 lo) = _mul512(x, y);
+        return Uint512(hi, lo);
+    }
+
+    /**
+     * @dev returns the value of `x > y`
+     */
+    function gt512(Uint512 memory x, Uint512 memory y) internal pure returns (bool) {
+        return x.hi > y.hi || (x.hi == y.hi && x.lo > y.lo);
+    }
+
+    /**
+     * @dev returns the value of `x < y`
+     */
+    function lt512(Uint512 memory x, Uint512 memory y) internal pure returns (bool) {
+        return x.hi < y.hi || (x.hi == y.hi && x.lo < y.lo);
+    }
+
+    /**
+     * @dev returns the value of `x >= y`
+     */
+    function gte512(Uint512 memory x, Uint512 memory y) internal pure returns (bool) {
+        return !lt512(x, y);
+    }
+
+    /**
+     * @dev returns the value of `x <= y`
+     */
+    function lte512(Uint512 memory x, Uint512 memory y) internal pure returns (bool) {
+        return !gt512(x, y);
     }
 
     /**
