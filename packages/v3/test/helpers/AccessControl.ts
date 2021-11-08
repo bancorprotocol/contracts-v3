@@ -26,6 +26,10 @@ export const roles = {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
+    NetworkFeeVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
     NetworkTokenPool: {
         ROLE_NETWORK_POOL_TOKEN_MANAGER: id('ROLE_NETWORK_POOL_TOKEN_MANAGER')
     },
