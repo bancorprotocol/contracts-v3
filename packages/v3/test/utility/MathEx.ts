@@ -66,7 +66,7 @@ describe('MathEx', () => {
             });
         } else {
             it(`uintSubInt(${x.toHexString()}, ${y.toHexString()}) should revert`, async () => {
-                await expect(mathContract.uintSubInt(x, y)).to.reverted;
+                await expect(mathContract.uintSubInt(x, y)).to.be.revertedWith('panic code');
             });
         }
     };
