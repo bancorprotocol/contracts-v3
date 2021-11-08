@@ -18,6 +18,10 @@ contract TestMathEx {
         return MathEx.negToPos(num);
     }
 
+    function uintAddInt(uint256 x, int256 y) external pure returns (uint256) {
+        return MathEx.uintAddInt(x, y);
+    }
+
     function uintSubInt(uint256 x, int256 y) external pure returns (uint256) {
         return MathEx.uintSubInt(x, y);
     }

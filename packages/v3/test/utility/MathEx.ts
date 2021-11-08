@@ -57,6 +57,20 @@ describe('MathEx', () => {
         });
     };
 
+    const testUintAddInt = (x: BigNumber, y: BigNumber) => {
+        const expected = x.add(y);
+        if (expected.lte(BigNumber.from(2).pow(256).add(-1)) && expected.gte(BigNumber.from(0))) {
+            it(`uintAddInt(${x.toHexString()}, ${y.toHexString()}) should return ${expected.toHexString()}`, async () => {
+                const actual = await mathContract.uintAddInt(x, y);
+                expect(actual).to.equal(expected);
+            });
+        } else {
+            it(`uintAddInt(${x.toHexString()}, ${y.toHexString()}) should revert`, async () => {
+                await expect(mathContract.uintAddInt(x, y)).to.be.revertedWith('panic code');
+            });
+        }
+    };
+
     const testUintSubInt = (x: BigNumber, y: BigNumber) => {
         const expected = x.sub(y);
         if (expected.lte(BigNumber.from(2).pow(256).add(-1)) && expected.gte(BigNumber.from(0))) {
@@ -156,6 +170,7 @@ describe('MathEx', () => {
                                 y.lte(BigNumber.from(2).pow(255).add(-1)) &&
                                 y.gte(BigNumber.from(2).pow(255).mul(-1))
                             ) {
+                                testUintAddInt(x, y);
                                 testUintSubInt(x, y);
                             }
                         }
@@ -272,6 +287,7 @@ describe('MathEx', () => {
                                 y.lte(BigNumber.from(2).pow(255).add(-1)) &&
                                 y.gte(BigNumber.from(2).pow(255).mul(-1))
                             ) {
+                                testUintAddInt(x, y);
                                 testUintSubInt(x, y);
                             }
                         }

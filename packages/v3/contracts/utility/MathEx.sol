@@ -45,7 +45,7 @@ library MathEx {
     }
 
     /**
-     * @dev computes the opposite of a negative value; assumes that the input is negative
+     * @dev returns the opposite of a negative value; assumes that the input is negative
      */
     function negToPos(int256 n) internal pure returns (uint256) {
         unchecked {
@@ -54,7 +54,14 @@ library MathEx {
     }
 
     /**
-     * @dev computes the subtraction of a signed value from an unsigned value; reverts on overflow
+     * @dev returns the addition of a signed value to an unsigned value; reverts on overflow
+     */
+    function uintAddInt(uint256 x, int256 y) internal pure returns (uint256) {
+        return y >= 0 ? x + uint256(y) : x - negToPos(y);
+    }
+
+    /**
+     * @dev returns the subtraction of a signed value from an unsigned value; reverts on overflow
      */
     function uintSubInt(uint256 x, int256 y) internal pure returns (uint256) {
         return y >= 0 ? x - uint256(y) : x + negToPos(y);
