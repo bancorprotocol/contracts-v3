@@ -14,6 +14,10 @@ contract TestMathEx {
         return MathEx.ceilSqrt(num);
     }
 
+    function negToPos(int256 num) external pure returns (uint256) {
+        return MathEx.negToPos(num);
+    }
+
     function uintSubInt(uint256 x, int256 y) external pure returns (uint256) {
         return MathEx.uintSubInt(x, y);
     }

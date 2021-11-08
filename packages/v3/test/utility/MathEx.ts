@@ -49,6 +49,14 @@ describe('MathEx', () => {
         });
     };
 
+    const testNegToPos = (n: BigNumber) => {
+        const expected = n.mul(-1);
+        it(`negToPos(${n.toHexString()}) should return ${expected.toHexString()}`, async () => {
+            const actual = await mathContract.negToPos(n);
+            expect(actual).to.equal(expected);
+        });
+    };
+
     const testUintSubInt = (x: BigNumber, y: BigNumber) => {
         const expected = x.sub(y);
         if (expected.lte(BigNumber.from(2).pow(256).add(-1)) && expected.gte(BigNumber.from(0))) {
@@ -129,6 +137,10 @@ describe('MathEx', () => {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testCeilSqrt(n, k);
             }
+        }
+
+        for (const n of [0, 1, 2, 253, 254, 255]) {
+            testNegToPos(BigNumber.from(2).pow(n).mul(-1));
         }
 
         for (const a of [0, 64, 127, 128, 255, 256]) {
@@ -241,6 +253,10 @@ describe('MathEx', () => {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testCeilSqrt(n, k);
             }
+        }
+
+        for (let n = 0; n <= 255; n++) {
+            testNegToPos(BigNumber.from(2).pow(n).mul(-1));
         }
 
         for (const a of [0, 2, 63, 64, 127, 128, 191, 192, 255, 256]) {

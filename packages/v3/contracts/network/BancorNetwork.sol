@@ -1236,7 +1236,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         if (networkTokenArbitrageAmount > 0) {
             cachedNetworkTokenPool.mint(address(_vault), uint256(networkTokenArbitrageAmount));
         } else if (networkTokenArbitrageAmount < 0) {
-            cachedNetworkTokenPool.burnFromVault(uint256(-networkTokenArbitrageAmount));
+            cachedNetworkTokenPool.burnFromVault(MathEx.negToPos(networkTokenArbitrageAmount));
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
