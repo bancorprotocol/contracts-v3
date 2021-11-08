@@ -18,6 +18,9 @@ import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    // the address of the network fee vault
+    INetworkFeeVault private immutable _networkFeeVault;
+
     // a set of tokens which are eligeble for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
@@ -27,8 +30,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // below that amount, trading is disabled and co-investments use the initial rate
     uint256 private _minLiquidityForTrading;
 
-    // the address of the network fee vault, and the fee (in units of PPM)
-    INetworkFeeVault private _networkFeeVault;
+    // the fee (in units of PPM)
     uint32 private _networkFeePPM;
 
     // the withdrawal fee (in units of PPM)
@@ -41,7 +43,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     uint32 private _averageRateMaxDeviationPPM;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 6] private __gap;
+    uint256[MAX_GAP - 5] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -64,11 +66,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event MinLiquidityForTradingUpdated(uint256 prevLiquidity, uint256 newLiquidity);
 
     /**
-     * @dev triggered when the network fee vault is updated
-     */
-    event NetworkFeeVaultUpdated(INetworkFeeVault prevVault, INetworkFeeVault newVault);
-
-    /**
      * @dev triggered when the network fee is updated
      */
     event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
@@ -87,6 +84,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the maximum deviation of the average rate from the spot rate  is updated
      */
     event AverageRateMaxDeviationPPMUpdated(uint32 prevDeviationPPM, uint32 newDeviationPPM);
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(INetworkFeeVault initNetworkFeeVault) validAddress(address(initNetworkFeeVault)) {
+        _networkFeeVault = initNetworkFeeVault;
+    }
 
     /**
      * @dev fully initializes the contract and its parents
@@ -246,28 +250,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function networkFeePPM() external view returns (uint32) {
         return _networkFeePPM;
-    }
-
-    /**
-     * @dev sets the network fee vault
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setNetworkFeeVault(INetworkFeeVault newNetworkFeeVault)
-        external
-        onlyAdmin
-        validAddress(address(newNetworkFeeVault))
-    {
-        INetworkFeeVault prevNetworkFeeVault = _networkFeeVault;
-        if (prevNetworkFeeVault == newNetworkFeeVault) {
-            return;
-        }
-
-        _networkFeeVault = newNetworkFeeVault;
-
-        emit NetworkFeeVaultUpdated({ prevVault: prevNetworkFeeVault, newVault: newNetworkFeeVault });
     }
 
     /**

@@ -1,9 +1,8 @@
-import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
 import { NetworkFeeVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createNetworkFeeVault, createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
@@ -31,7 +30,6 @@ describe('NetworkFeeVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const networkFeeVault = await createNetworkFeeVault();
 
             expect(await networkFeeVault.version()).to.equal(1);
             expect(await networkFeeVault.isPayable()).to.be.true;
@@ -39,9 +37,7 @@ describe('NetworkFeeVault', () => {
             await expectRole(networkFeeVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
                 deployer.address
             ]);
-            await expectRole(networkFeeVault, NetworkFeeVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
-                deployer.address
-            ]);
+            await expectRole(networkFeeVault, NetworkFeeVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN);
         });
     });
 

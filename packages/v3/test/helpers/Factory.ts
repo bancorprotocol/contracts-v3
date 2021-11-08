@@ -19,7 +19,11 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
-const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
+const {
+    TokenGovernance: TokenGovernanceRoles,
+    BancorVault: BancorVaultRoles,
+    ExternalProtectionVault: ExternalProtectionVaultRoles
+} = roles;
 
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
 const V1 = 1;
@@ -186,8 +190,6 @@ export const createExternalRewardsVault = async () => createProxy(Contracts.Exte
 const createSystemFixture = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
-    const networkSettings = await createProxy(Contracts.NetworkSettings);
-
     const bancorVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
 
     const networkFeeVault = await createNetworkFeeVault();
@@ -197,6 +199,8 @@ const createSystemFixture = async () => {
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
 
+    const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [networkFeeVault.address] });
+
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
         ctorArgs: [
@@ -204,7 +208,8 @@ const createSystemFixture = async () => {
             govTokenGovernance.address,
             networkSettings.address,
             bancorVault.address,
-            networkPoolToken.address
+            networkPoolToken.address,
+            externalProtectionVault.address
         ]
     });
 
@@ -231,6 +236,7 @@ const createSystemFixture = async () => {
     await network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
     await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     return {
         networkSettings,

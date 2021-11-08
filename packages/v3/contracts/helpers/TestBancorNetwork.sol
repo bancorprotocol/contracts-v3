@@ -14,6 +14,8 @@ import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+
 // prettier-ignore
 import { IPoolCollection,
     DepositAmounts as PoolCollectionDepositAmounts,
@@ -44,9 +46,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken
+        IPoolToken initNetworkPoolToken,
+        IExternalProtectionVault initExternalProtectionVault
     )
-        BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault, initNetworkPoolToken)
+        BancorNetwork(
+            initNetworkTokenGovernance,
+            initGovTokenGovernance,
+            initSettings,
+            initVault,
+            initNetworkPoolToken,
+            initExternalProtectionVault
+        )
     {}
 
     function createPoolT(IPoolCollection poolCollection, ReserveToken reserveToken) external {

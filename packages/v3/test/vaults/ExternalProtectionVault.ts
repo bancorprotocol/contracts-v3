@@ -1,9 +1,8 @@
-import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { ExternalProtectionVault } from '../../typechain';
+import { ExternalProtectionVault, TestBancorNetwork } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createExternalProtectionVault, createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
@@ -17,10 +16,11 @@ describe('ExternalProtectionVault', () => {
     shouldHaveGap('ExternalProtectionVault');
 
     describe('construction', () => {
+        let network: TestBancorNetwork;
         let externalProtectionVault: ExternalProtectionVault;
 
         prepareEach(async () => {
-            ({ externalProtectionVault } = await createSystem());
+            ({ network, externalProtectionVault } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -31,7 +31,6 @@ describe('ExternalProtectionVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalProtectionVault = await createExternalProtectionVault();
 
             expect(await externalProtectionVault.version()).to.equal(1);
             expect(await externalProtectionVault.isPayable()).to.be.true;
@@ -43,7 +42,7 @@ describe('ExternalProtectionVault', () => {
                 externalProtectionVault,
                 ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN,
-                [deployer.address]
+                [network.address]
             );
         });
     });

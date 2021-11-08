@@ -23,9 +23,7 @@ import {
     createSystem,
     depositToPool,
     setupSimplePool,
-    PoolSpec,
-    createProxy,
-    createExternalProtectionVault
+    PoolSpec
 } from '../helpers/Factory';
 import { prepareEach } from '../helpers/Fixture';
 import { permitSignature } from '../helpers/Permit';
@@ -57,7 +55,7 @@ describe('BancorNetwork', () => {
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
-    shouldHaveGap('BancorNetwork', '_externalProtectionVault');
+    shouldHaveGap('BancorNetwork', '_poolCollections');
 
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
@@ -169,7 +167,8 @@ describe('BancorNetwork', () => {
                 bancorVault,
                 networkPoolToken,
                 pendingWithdrawals,
-                poolCollectionUpgrader
+                poolCollectionUpgrader,
+                externalProtectionVault
             } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
@@ -177,7 +176,8 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -193,7 +193,8 @@ describe('BancorNetwork', () => {
                 bancorVault,
                 networkPoolToken,
                 networkTokenPool,
-                poolCollectionUpgrader
+                poolCollectionUpgrader,
+                externalProtectionVault
             } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
@@ -201,7 +202,8 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -217,7 +219,8 @@ describe('BancorNetwork', () => {
                 bancorVault,
                 networkPoolToken,
                 networkTokenPool,
-                pendingWithdrawals
+                pendingWithdrawals,
+                externalProtectionVault
             } = await createSystem();
 
             const network = await Contracts.BancorNetwork.deploy(
@@ -225,7 +228,8 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -234,7 +238,8 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            const { govTokenGovernance, networkSettings, bancorVault, networkPoolToken } = await createSystem();
+            const { govTokenGovernance, networkSettings, bancorVault, networkPoolToken, externalProtectionVault } =
+                await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
@@ -242,13 +247,15 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     networkSettings.address,
                     bancorVault.address,
-                    networkPoolToken.address
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            const { networkTokenGovernance, networkSettings, bancorVault, networkPoolToken } = await createSystem();
+            const { networkTokenGovernance, networkSettings, bancorVault, networkPoolToken, externalProtectionVault } =
+                await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
@@ -256,13 +263,20 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     networkSettings.address,
                     bancorVault.address,
-                    networkPoolToken.address
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, bancorVault, networkPoolToken } = await createSystem();
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                bancorVault,
+                networkPoolToken,
+                externalProtectionVault
+            } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
@@ -270,13 +284,56 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
                     bancorVault.address,
-                    networkPoolToken.address
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid vault contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, networkPoolToken } =
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                networkPoolToken,
+                externalProtectionVault
+            } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    networkPoolToken.address,
+                    externalProtectionVault.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network pool token contract', async () => {
+            const {
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkSettings,
+                bancorVault,
+                externalProtectionVault
+            } = await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    ZERO_ADDRESS,
+                    externalProtectionVault.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid external protection vault contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, networkPoolToken } =
                 await createSystem();
 
             await expect(
@@ -284,21 +341,8 @@ describe('BancorNetwork', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    ZERO_ADDRESS,
-                    networkPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid network pool token contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault } = await createSystem();
-
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    networkSettings.address,
                     bancorVault.address,
+                    networkPoolToken.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -316,7 +360,8 @@ describe('BancorNetwork', () => {
                 networkPoolToken,
                 networkTokenPool,
                 pendingWithdrawals,
-                poolCollectionUpgrader
+                poolCollectionUpgrader,
+                externalProtectionVault
             } = await createSystem();
 
             expect(await network.version()).to.equal(1);
@@ -333,54 +378,10 @@ describe('BancorNetwork', () => {
             expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
-            expect(await network.externalProtectionVault()).to.equal(ZERO_ADDRESS);
+            expect(await network.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(networkToken.address)).to.be.true;
-        });
-    });
-
-    describe('external protection vault', () => {
-        let newExternalProtectionVault: ExternalProtectionVault;
-        let network: TestBancorNetwork;
-
-        prepareEach(async () => {
-            ({ network } = await createSystem());
-
-            newExternalProtectionVault = await createExternalProtectionVault();
-        });
-
-        it('should revert when a non-owner attempts to set the external protection vault', async () => {
-            await expect(
-                network.connect(nonOwner).setExternalProtectionVault(newExternalProtectionVault.address)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should revert when setting external protection vault to an invalid address', async () => {
-            await expect(network.setExternalProtectionVault(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should ignore updates to the same external protection vault', async () => {
-            await network.setExternalProtectionVault(newExternalProtectionVault.address);
-
-            const res = await network.setExternalProtectionVault(newExternalProtectionVault.address);
-            await expect(res).not.to.emit(network, 'ExternalProtectionVaultUpdated');
-        });
-
-        it('should be able to set and update the external protection vault', async () => {
-            const res = await network.setExternalProtectionVault(newExternalProtectionVault.address);
-            await expect(res)
-                .to.emit(network, 'ExternalProtectionVaultUpdated')
-                .withArgs(ZERO_ADDRESS, newExternalProtectionVault.address);
-            expect(await network.externalProtectionVault()).to.equal(newExternalProtectionVault.address);
-
-            const newExternalProtectionVault2 = await createExternalProtectionVault();
-
-            const res2 = await network.setExternalProtectionVault(newExternalProtectionVault2.address);
-            await expect(res2)
-                .to.emit(network, 'ExternalProtectionVaultUpdated')
-                .withArgs(newExternalProtectionVault.address, newExternalProtectionVault2.address);
-            expect(await network.externalProtectionVault()).to.equal(newExternalProtectionVault2.address);
         });
     });
 
@@ -969,16 +970,13 @@ describe('BancorNetwork', () => {
                 poolCollection,
                 bancorVault,
                 pendingWithdrawals,
-                networkPoolToken
+                networkPoolToken,
+                externalProtectionVault
             } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionVault = await createExternalProtectionVault();
-            await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
-            await network.setExternalProtectionVault(externalProtectionVault.address);
         });
 
         const testDeposits = (symbol: string) => {
@@ -1744,16 +1742,13 @@ describe('BancorNetwork', () => {
                 poolCollection,
                 bancorVault,
                 pendingWithdrawals,
-                networkPoolToken
+                networkPoolToken,
+                externalProtectionVault
             } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionVault = await createExternalProtectionVault();
-            await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
-            await network.setExternalProtectionVault(externalProtectionVault.address);
 
             await setTime((await latest()).toNumber());
         });

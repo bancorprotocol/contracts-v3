@@ -94,6 +94,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the network token pool token
     IPoolToken internal immutable _networkPoolToken;
 
+    // the address of the external protection vault
+    IExternalProtectionVault private immutable _externalProtectionVault;
+
     // the network token pool contract
     INetworkTokenPool internal _networkTokenPool;
 
@@ -102,9 +105,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     // the pool collection upgrader contract
     IPoolCollectionUpgrader internal _poolCollectionUpgrader;
-
-    // the address of the external protection vault
-    IExternalProtectionVault private _externalProtectionVault;
 
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -119,7 +119,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     mapping(ReserveToken => IPoolCollection) private _collectionByPool;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 7] private __gap;
+    uint256[MAX_GAP - 6] private __gap;
 
     /**
      * @dev triggered when the external protection vault is updated
@@ -277,13 +277,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken
+        IPoolToken initNetworkPoolToken,
+        IExternalProtectionVault initExternalProtectionVault
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
         validAddress(address(initVault))
         validAddress(address(initNetworkPoolToken))
+        validAddress(address(initExternalProtectionVault))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
         _networkToken = initNetworkTokenGovernance.token();
@@ -293,6 +295,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _settings = initSettings;
         _vault = initVault;
         _networkPoolToken = initNetworkPoolToken;
+        _externalProtectionVault = initExternalProtectionVault;
     }
 
     /**
@@ -442,31 +445,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function externalProtectionVault() external view returns (IExternalProtectionVault) {
         return _externalProtectionVault;
-    }
-
-    /**
-     * @dev sets the address of the external protection vault
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setExternalProtectionVault(IExternalProtectionVault newExternalProtectionVault)
-        external
-        validAddress(address(newExternalProtectionVault))
-        onlyAdmin
-    {
-        IExternalProtectionVault prevExternalProtectionVault = _externalProtectionVault;
-        if (prevExternalProtectionVault == newExternalProtectionVault) {
-            return;
-        }
-
-        _externalProtectionVault = newExternalProtectionVault;
-
-        emit ExternalProtectionVaultUpdated({
-            prevVault: prevExternalProtectionVault,
-            newVault: newExternalProtectionVault
-        });
     }
 
     /**
@@ -1204,12 +1182,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        IExternalProtectionVault cachedExternalProtectionVault = _externalProtectionVault;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
             pool,
             completedRequest.poolTokenAmount,
             pool.balanceOf(address(_vault)),
-            pool.balanceOf(address(cachedExternalProtectionVault))
+            pool.balanceOf(address(_externalProtectionVault))
         );
 
         // if network token trading liquidity should be lowered - renounce liquidity
@@ -1242,7 +1219,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
         // external protection vault and send them to the provider
         if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
-            cachedExternalProtectionVault.withdrawFunds(
+            _externalProtectionVault.withdrawFunds(
                 pool,
                 payable(provider),
                 amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider

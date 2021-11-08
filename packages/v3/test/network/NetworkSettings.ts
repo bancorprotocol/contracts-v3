@@ -15,6 +15,7 @@ const { Upgradeable: UpgradeableRoles } = roles;
 describe('NetworkSettings', () => {
     let networkFeeVault: NetworkFeeVault;
     let reserveToken: TestERC20Token;
+    let networkSettings: NetworkSettings;
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -28,23 +29,19 @@ describe('NetworkSettings', () => {
     });
 
     prepareEach(async () => {
-        networkFeeVault = await createNetworkFeeVault();
+        ({ networkSettings, networkFeeVault } = await createSystem());
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
 
     describe('construction', async () => {
         it('should revert when attempting to reinitialize', async () => {
-            const { networkSettings } = await createSystem();
-
             await expect(networkSettings.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { networkSettings } = await createSystem();
-
             expect(await networkSettings.version()).to.equal(1);
 
             await expectRole(networkSettings, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
@@ -53,9 +50,9 @@ describe('NetworkSettings', () => {
 
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
             const networkFeeParams = await networkSettings.networkFeeParams();
-            expect(networkFeeParams[0]).to.equal(ZERO_ADDRESS);
+            expect(networkFeeParams[0]).to.equal(networkFeeVault.address);
             expect(networkFeeParams[1]).to.equal(BigNumber.from(0));
-            expect(await networkSettings.networkFeeVault()).to.equal(ZERO_ADDRESS);
+            expect(await networkSettings.networkFeeVault()).to.equal(networkFeeVault.address);
             expect(await networkSettings.networkFeePPM()).to.equal(BigNumber.from(0));
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
@@ -64,11 +61,7 @@ describe('NetworkSettings', () => {
     });
 
     describe('protected tokens whitelist', async () => {
-        let networkSettings: NetworkSettings;
-
         prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
         });
 
@@ -135,11 +128,6 @@ describe('NetworkSettings', () => {
 
     describe('pool minting limits', () => {
         const poolMintingLimit = BigNumber.from(12345).mul(BigNumber.from(10).pow(18));
-        let networkSettings: NetworkSettings;
-
-        prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-        });
 
         it('should revert when a non-owner attempts to set a pool limit', async () => {
             await expect(
@@ -181,11 +169,6 @@ describe('NetworkSettings', () => {
 
     describe('min liquidity for trading', () => {
         const minLiquidityForTrading = BigNumber.from(1000).mul(BigNumber.from(10).pow(18));
-        let networkSettings: NetworkSettings;
-
-        prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-        });
 
         it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
             await expect(
@@ -221,9 +204,7 @@ describe('NetworkSettings', () => {
     });
 
     describe('network fee params', () => {
-        let newNetworkFeeVault: NetworkFeeVault;
         const newNetworkFee = BigNumber.from(100000);
-        let networkSettings: NetworkSettings;
 
         const expectNetworkFeeParams = async (vault: NetworkFeeVault | undefined, fee: BigNumber) => {
             const vaultAddress = vault?.address || ZERO_ADDRESS;
@@ -235,24 +216,7 @@ describe('NetworkSettings', () => {
         };
 
         prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-
-            await expectNetworkFeeParams(undefined, BigNumber.from(0));
-
-            newNetworkFeeVault = await createNetworkFeeVault();
-        });
-
-        it('should revert when a non-owner attempts to set the network fee params', async () => {
-            await expect(
-                networkSettings.connect(nonOwner).setNetworkFeeVault(newNetworkFeeVault.address)
-            ).to.be.revertedWith('AccessDenied');
-            await expect(networkSettings.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWith(
-                'AccessDenied'
-            );
-        });
-
-        it('should revert when setting the network vault to an invalid address', async () => {
-            await expect(networkSettings.setNetworkFeeVault(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+            await expectNetworkFeeParams(networkFeeVault, BigNumber.from(0));
         });
 
         it('should revert when setting the network fee to an invalid value', async () => {
@@ -261,55 +225,20 @@ describe('NetworkSettings', () => {
             );
         });
 
-        it('should ignore updating to the same network vault params', async () => {
-            await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
-
-            const res = await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
-            await expect(res).not.to.emit(networkSettings, 'NetworkFeeVaultUpdated');
-
-            await networkSettings.setNetworkFeePPM(newNetworkFee);
-            const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
-            await expect(res2).not.to.emit(networkSettings, 'NetworkFeePPMUpdated');
-        });
-
         it('should be able to set and update network vault params', async () => {
-            const res = await networkSettings.setNetworkFeeVault(newNetworkFeeVault.address);
+            const res = await networkSettings.setNetworkFeePPM(newNetworkFee);
             await expect(res)
-                .to.emit(networkSettings, 'NetworkFeeVaultUpdated')
-                .withArgs(ZERO_ADDRESS, newNetworkFeeVault.address);
-
-            await expectNetworkFeeParams(newNetworkFeeVault, BigNumber.from(0));
-
-            const res2 = await networkSettings.setNetworkFeePPM(newNetworkFee);
-            await expect(res2)
                 .to.emit(networkSettings, 'NetworkFeePPMUpdated')
                 .withArgs(BigNumber.from(0), newNetworkFee);
 
-            await expectNetworkFeeParams(newNetworkFeeVault, newNetworkFee);
-
-            const res3 = await networkSettings.setNetworkFeeVault(networkFeeVault.address);
-            await expect(res3)
-                .to.emit(networkSettings, 'NetworkFeeVaultUpdated')
-                .withArgs(newNetworkFeeVault.address, networkFeeVault.address);
-
             await expectNetworkFeeParams(networkFeeVault, newNetworkFee);
-
-            const res4 = await networkSettings.setNetworkFeePPM(BigNumber.from(0));
-            await expect(res4)
-                .to.emit(networkSettings, 'NetworkFeePPMUpdated')
-                .withArgs(newNetworkFee, BigNumber.from(0));
-
-            await expectNetworkFeeParams(networkFeeVault, BigNumber.from(0));
         });
     });
 
     describe('withdrawal fee', () => {
         const newWithdrawalFee = BigNumber.from(500000);
-        let networkSettings: NetworkSettings;
 
         prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
         });
 
@@ -351,11 +280,8 @@ describe('NetworkSettings', () => {
 
     describe('flash-loan fee', () => {
         const newFlashLoanFee = BigNumber.from(500000);
-        let networkSettings: NetworkSettings;
 
         prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
         });
 
@@ -397,11 +323,8 @@ describe('NetworkSettings', () => {
 
     describe('maximum deviation', () => {
         const newMaxDeviation = BigNumber.from(500000);
-        let networkSettings: NetworkSettings;
 
         prepareEach(async () => {
-            ({ networkSettings } = await createSystem());
-
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));
         });
 
