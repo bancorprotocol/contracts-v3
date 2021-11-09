@@ -43,7 +43,7 @@ import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
-import { ethers } from 'hardhat';
+import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
 const { Upgradeable: UpgradeableRoles } = roles;
@@ -789,7 +789,7 @@ describe('BancorNetwork', () => {
             await pendingWithdrawals.setTime(time);
         };
 
-        beforeEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -833,6 +833,10 @@ describe('BancorNetwork', () => {
             await depositToPool(deployer, networkToken, toWei(BigNumber.from(100_000)), network);
 
             await network.setTime(await latest());
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         it('should revert when attempting to upgrade already upgraded pools', async () => {
@@ -841,7 +845,7 @@ describe('BancorNetwork', () => {
             await expect(network.upgradePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');
         });
 
-        it('should  revert when attempting to upgrade invalid pools', async () => {
+        it('should revert when attempting to upgrade invalid pools', async () => {
             const reserveTokenAddresses2 = [ZERO_ADDRESS, ZERO_ADDRESS, ...reserveTokenAddresses, ZERO_ADDRESS];
             await expect(network.upgradePools(reserveTokenAddresses2)).to.be.revertedWith('InvalidPool');
         });
@@ -963,7 +967,7 @@ describe('BancorNetwork', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
-        beforeEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -983,6 +987,10 @@ describe('BancorNetwork', () => {
             externalProtectionWallet = await createTokenHolder();
             await externalProtectionWallet.transferOwnership(network.address);
             await network.setExternalProtectionWallet(externalProtectionWallet.address);
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         const testDeposits = (symbol: string) => {
@@ -1033,7 +1041,6 @@ describe('BancorNetwork', () => {
                 );
 
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                console.log('In verifyDeposit');
                 const prevProviderPoolTokenBalance = await poolToken.balanceOf(providerAddress);
 
                 const prevProviderTokenBalance = await getBalance(token, providerAddress);
@@ -1739,7 +1746,7 @@ describe('BancorNetwork', () => {
             await pendingWithdrawals.setTime(time);
         };
 
-        beforeEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -1761,6 +1768,10 @@ describe('BancorNetwork', () => {
             await network.setExternalProtectionWallet(externalProtectionWallet.address);
 
             await setTime((await latest()).toNumber());
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         it('should revert when attempting to withdraw a non-existing withdrawal request', async () => {
@@ -2131,7 +2142,7 @@ describe('BancorNetwork', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
-        const setup = async (source: PoolSpec, target: PoolSpec) => {
+        const setupPools = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
             ({ token: sourceToken } = await setupSimplePool(
@@ -2141,6 +2152,7 @@ describe('BancorNetwork', () => {
                 networkSettings,
                 poolCollection
             ));
+
             ({ token: targetToken } = await setupSimplePool(
                 target,
                 deployer,
@@ -2535,7 +2547,7 @@ describe('BancorNetwork', () => {
                 const testAmount = BigNumber.from(1000);
 
                 beforeEach(async () => {
-                    await setup(source, target);
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2719,7 +2731,7 @@ describe('BancorNetwork', () => {
                 };
 
                 beforeEach(async () => {
-                    await setup(source, target);
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2743,7 +2755,7 @@ describe('BancorNetwork', () => {
                 const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
 
                 beforeEach(async () => {
-                    await setup(source, target);
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2856,7 +2868,7 @@ describe('BancorNetwork', () => {
         const ZERO_BYTES = '0x';
         const ZERO_BYTES32 = formatBytes32String('');
 
-        beforeEach(async () => {
+        const setup = async () => {
             ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
                 await createSystem());
 
@@ -2864,6 +2876,10 @@ describe('BancorNetwork', () => {
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         describe('basic tests', () => {
