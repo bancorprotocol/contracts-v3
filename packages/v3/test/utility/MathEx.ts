@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
-import { prepareEach } from '../helpers/Fixture';
 import { prepare } from '../helpers/Fixture';
 import {
     floorSqrt,
@@ -13,7 +12,7 @@ import {
     mulDivC,
     mulDivF
 } from '../helpers/MathUtils';
-import { Fraction, toBigNumber, toString } from '../helpers/Types';
+import { Fraction, toBigNumber, toString, toUint512, fromUint512 } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -23,6 +22,13 @@ const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
 const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128);
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
 const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
+
+const BN_TEST_ARRAY = [
+    BigNumber.from(0),
+    BigNumber.from(100),
+    BigNumber.from(10000),
+    ...PR_TEST_ARRAY.map((x) => BigNumber.from(x.toFixed()))
+];
 
 describe('MathEx', () => {
     let mathContract: TestMathEx;
@@ -103,6 +109,54 @@ describe('MathEx', () => {
             }
         });
     };
+
+    const testSubMax0 = (x: BigNumber, y: BigNumber) => {
+        it(`subMax0(${x}, ${y})`, async () => {
+            const expected = BigNumber.max(x.sub(y), BigNumber.from(0));
+            const actual = await mathContract.subMax0(x, y);
+            expect(actual).to.equal(expected);
+        });
+    }
+
+    const testMul512 = (x: BigNumber, y: BigNumber) => {
+        it(`mul512(${x}, ${y})`, async () => {
+            const expected = x.mul(y);
+            const actual = await mathContract.mul512(x, y);
+            expect(fromUint512(actual.hi, actual.lo)).to.equal(expected);
+        });
+    }
+
+    const testGT512 = (x: BigNumber, y: BigNumber) => {
+        it(`gt512(${x}, ${y})`, async () => {
+            const expected = x.gt(y);
+            const actual = await mathContract.gt512(toUint512(x), toUint512(y));
+            expect(actual).to.equal(expected);
+        });
+    }
+
+    const testLT512 = (x: BigNumber, y: BigNumber) => {
+        it(`lt512(${x}, ${y})`, async () => {
+            const expected = x.lt(y);
+            const actual = await mathContract.lt512(toUint512(x), toUint512(y));
+            expect(actual).to.equal(expected);
+        });
+    }
+
+    const testGTE512 = (x: BigNumber, y: BigNumber) => {
+        it(`gte512(${x}, ${y})`, async () => {
+            const expected = x.gte(y);
+            const actual = await mathContract.gte512(toUint512(x), toUint512(y));
+            expect(actual).to.equal(expected);
+        });
+    }
+
+    const testLTE512 = (x: BigNumber, y: BigNumber) => {
+        it(`lte512(${x}, ${y})`, async () => {
+            const expected = x.lte(y);
+            const actual = await mathContract.lte512(toUint512(x), toUint512(y));
+            expect(actual).to.equal(expected);
+        });
+    }
 
     describe('quick tests', () => {
         for (const n of [1, 64, 128, 192, 256]) {
@@ -186,11 +240,14 @@ describe('MathEx', () => {
             }
         }
 
-        for (const n1 of [BigNumber.from(0), BigNumber.from(1000), BigNumber.from(10_000)]) {
-            for (const n2 of [BigNumber.from(0), BigNumber.from(1000), BigNumber.from(10_000)]) {
-                it(`subMax0(${n1.toString()}, ${n2.toString()})`, async () => {
-                    expect(await mathContract.subMax0(n1, n2)).to.equal(BigNumber.max(n1.sub(n2), BigNumber.from(0)));
-                });
+        for (const x of BN_TEST_ARRAY) {
+            for (const y of BN_TEST_ARRAY) {
+                testSubMax0(x, y);
+                testMul512(x, y);
+                testGT512(x, y);
+                testLT512(x, y);
+                testGTE512(x, y);
+                testLTE512(x, y);
             }
         }
     });

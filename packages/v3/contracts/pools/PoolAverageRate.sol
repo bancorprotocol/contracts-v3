@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Uint512 } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
@@ -80,7 +80,7 @@ library PoolAverageRate {
      *
      * requirements:
      *
-     * - spotRate numerator/denumerator should be bound by 128 bits (otherwise, the check might revert with an overflow)
+     * - spotRate numerator/denominator should be bound by 128 bits (otherwise, the check might revert with an overflow)
      * - maxDeviation must be lesser or equal to PPM_RESOLUTION
      */
     function isPoolRateStable(
@@ -88,18 +88,22 @@ library PoolAverageRate {
         AverageRate memory averageRate,
         uint32 maxDeviation
     ) internal pure returns (bool) {
+        // can revert only if one of the components below is larger than 128 bits
+        uint256 x = averageRate.rate.d * spotRate.n;
+        uint256 y = averageRate.rate.n * spotRate.d;
+
         uint256 lowerBound;
         uint256 upperBound;
         unchecked {
             lowerBound = PPM_RESOLUTION - maxDeviation;
             upperBound = PPM_RESOLUTION + maxDeviation;
         }
-        uint256 d = averageRate.rate.d * spotRate.n;
-        uint256 min = MathEx.mulDivC(d, lowerBound, PPM_RESOLUTION);
-        uint256 mid = averageRate.rate.n * spotRate.d;
-        uint256 max = MathEx.mulDivF(d, upperBound, PPM_RESOLUTION);
 
-        return min <= mid && mid <= max;
+        Uint512 memory min = MathEx.mul512(x, lowerBound);
+        Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
+        Uint512 memory max = MathEx.mul512(x, upperBound);
+
+        return MathEx.lte512(min, mid) && MathEx.lte512(mid, max);
     }
 
     /**
