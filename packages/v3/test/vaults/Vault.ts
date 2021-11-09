@@ -4,7 +4,6 @@ import { TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
     transfer,
@@ -35,7 +34,7 @@ describe('TestVault', () => {
     describe('construction', () => {
         let testVault: TestVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             testVault = await createProxy(Contracts.TestVault);
         });
 
@@ -69,12 +68,12 @@ describe('TestVault', () => {
         let testVault: TestVault;
         const amount = 1_000_000;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             testVault = await createProxy(Contracts.TestVault);
         });
 
         context('payable', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await testVault.setPayable(true);
             });
 
@@ -96,7 +95,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
         let networkToken: NetworkToken;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkToken } = await createSystem());
 
             testVault = await createProxy(Contracts.TestVault);
@@ -109,7 +108,7 @@ describe('TestVault', () => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
                 await transfer(deployer, token, testVault.address, amount);
             });
@@ -149,7 +148,7 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await testVault.pause();
                 });
 
@@ -176,7 +175,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
         let networkToken: NetworkToken;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkToken } = await createSystem());
 
             testVault = await createProxy(Contracts.TestVault);
@@ -188,13 +187,13 @@ describe('TestVault', () => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
                 await transfer(deployer, token, testVault.address, amount);
             });
 
             context('when authenticated', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await testVault.setAuthenticateWithdrawal(true);
                 });
 
@@ -222,7 +221,7 @@ describe('TestVault', () => {
     describe('pausing/unpausing', () => {
         let testVault: TestVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             testVault = await createProxy(Contracts.TestVault);
         });
 
@@ -234,7 +233,7 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
@@ -255,7 +254,7 @@ describe('TestVault', () => {
             });
 
             context('when paused', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
@@ -269,7 +268,7 @@ describe('TestVault', () => {
         };
 
         context('admin', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
             });
 

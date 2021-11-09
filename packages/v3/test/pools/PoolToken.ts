@@ -1,7 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { PoolToken, TestERC20Token } from '../../typechain';
 import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
-import { prepareEach } from '../helpers/Fixture';
 import { domainSeparator, permitSignature } from '../helpers/Permit';
 import { latest, duration } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -25,7 +24,7 @@ describe('PoolToken', () => {
         [owner, nonOwner, spender] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
     });
 
@@ -48,7 +47,7 @@ describe('PoolToken', () => {
     });
 
     describe('minting', () => {
-        prepareEach(async () => {
+        beforeEach(async () => {
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
         });
 
@@ -73,7 +72,7 @@ describe('PoolToken', () => {
         const wallet = Wallet.createRandom();
         let sender: string;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             sender = await wallet.getAddress();
 
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);

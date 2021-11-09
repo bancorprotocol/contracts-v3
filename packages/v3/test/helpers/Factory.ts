@@ -17,7 +17,7 @@ import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
-import { ethers } from 'hardhat';
+import { ethers, waffle } from 'hardhat';
 
 const { TokenGovernance: TokenGovernanceRoles, BancorVault: BancorVaultRoles } = roles;
 
@@ -177,7 +177,7 @@ export const createPool = async (
     return Contracts.PoolToken.attach(pool.poolToken);
 };
 
-export const createSystem = async () => {
+const createSystemFixture = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
@@ -245,6 +245,8 @@ export const createSystem = async () => {
         poolCollectionUpgrader
     };
 };
+
+export const createSystem = async () => waffle.loadFixture(createSystemFixture);
 
 export const depositToPool = async (
     provider: SignerWithAddress,

@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestOwned } from '../../typechain';
-import { prepareEach } from '../helpers/Fixture';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -16,7 +15,7 @@ describe('Owned', () => {
         [owner, nonOwner, newOwner] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         contract = await Contracts.TestOwned.deploy();
     });
 
