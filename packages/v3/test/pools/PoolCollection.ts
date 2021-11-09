@@ -50,34 +50,37 @@ describe('PoolCollection', () => {
     });
 
     describe('construction', () => {
-        it('should revert when initialized with an invalid network contract', async () => {
-            const { poolTokenFactory, poolCollectionUpgrader } = await createSystem();
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: NetworkToken;
+        let poolTokenFactory: PoolTokenFactory;
+        let poolCollection: TestPoolCollection;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
 
+        prepareEach(async () => {
+            ({ network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
+        });
+
+        it('should revert when initialized with an invalid network contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(ZERO_ADDRESS, poolTokenFactory.address, poolCollectionUpgrader.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool token factory contract', async () => {
-            const { network, poolCollectionUpgrader } = await createSystem();
-
             await expect(
                 Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool collection upgrader contract', async () => {
-            const { network, poolTokenFactory } = await createSystem();
-
             await expect(
                 Contracts.PoolCollection.deploy(network.address, poolTokenFactory.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
-            const { network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem();
-
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
@@ -90,8 +93,6 @@ describe('PoolCollection', () => {
         });
 
         it('should emit events on initialization', async () => {
-            const { poolCollection } = await createSystem();
-
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(BigNumber.from(0), DEFAULT_TRADING_FEE_PPM);

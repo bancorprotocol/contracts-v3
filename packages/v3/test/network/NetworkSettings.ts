@@ -34,17 +34,19 @@ describe('NetworkSettings', () => {
     });
 
     describe('construction', async () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { networkSettings } = await createSystem();
+        let networkSettings: NetworkSettings;
 
+        prepareEach(async () => {
+            ({ networkSettings } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(networkSettings.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { networkSettings } = await createSystem();
-
             expect(await networkSettings.version()).to.equal(1);
 
             await expectRole(networkSettings, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [

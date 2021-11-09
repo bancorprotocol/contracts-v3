@@ -81,6 +81,7 @@ describe('NetworkFeeVault', () => {
 
             prepareEach(async () => {
                 ({ networkFeeVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, networkFeeVault.address, amount);

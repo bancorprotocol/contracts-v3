@@ -27,17 +27,19 @@ describe('PoolTokenFactory', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { poolTokenFactory } = await createSystem();
+        let poolTokenFactory: PoolTokenFactory;
 
+        prepareEach(async () => {
+            ({ poolTokenFactory } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(poolTokenFactory.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { poolTokenFactory } = await createSystem();
-
             expect(await poolTokenFactory.version()).to.equal(1);
 
             await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [

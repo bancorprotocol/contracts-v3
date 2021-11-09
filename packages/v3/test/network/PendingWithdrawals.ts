@@ -39,31 +39,34 @@ describe('PendingWithdrawals', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { pendingWithdrawals } = await createSystem();
+        let network: TestBancorNetwork;
+        let networkToken: NetworkToken;
+        let networkTokenPool: TestNetworkTokenPool;
+        let pendingWithdrawals: TestPendingWithdrawals;
 
+        prepareEach(async () => {
+            ({ network, networkToken, networkTokenPool, pendingWithdrawals } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(pendingWithdrawals.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
-            const { networkTokenPool } = await createSystem();
             await expect(
                 Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, networkTokenPool.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid network token pool contract', async () => {
-            const { network } = await createSystem();
             await expect(Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { pendingWithdrawals, network, networkToken, networkTokenPool } = await createSystem();
-
             expect(await pendingWithdrawals.version()).to.equal(1);
 
             await expectRole(pendingWithdrawals, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
@@ -78,7 +81,6 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should emit events on initialization', async () => {
-            const { network, networkTokenPool } = await createSystem();
             const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
                 network.address,
                 networkTokenPool.address

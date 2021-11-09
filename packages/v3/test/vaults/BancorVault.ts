@@ -85,6 +85,7 @@ describe('BancorVault', () => {
             context(`withdrawing ${symbol}`, () => {
                 prepareEach(async () => {
                     ({ bancorVault, networkToken } = await createSystem());
+
                     token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
 
                     await transfer(deployer, token, bancorVault.address, amount);

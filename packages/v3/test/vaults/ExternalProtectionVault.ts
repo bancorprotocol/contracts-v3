@@ -84,6 +84,7 @@ describe('ExternalProtectionVault', () => {
 
             prepareEach(async () => {
                 ({ externalProtectionVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
 
                 await transfer(deployer, token, externalProtectionVault.address, amount);

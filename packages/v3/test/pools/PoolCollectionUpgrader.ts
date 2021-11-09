@@ -27,6 +27,13 @@ describe('PoolCollectionUpgrader', () => {
     });
 
     describe('construction', () => {
+        let network: TestBancorNetwork;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+
+        prepareEach(async () => {
+            ({ network, poolCollectionUpgrader } = await createSystem());
+        });
+
         it('should revert when attempting to initialize with an invalid network contract', async () => {
             await expect(Contracts.TestPoolCollectionUpgrader.deploy(ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
@@ -34,16 +41,12 @@ describe('PoolCollectionUpgrader', () => {
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            const { poolCollectionUpgrader } = await createSystem();
-
             await expect(poolCollectionUpgrader.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { network, poolCollectionUpgrader } = await createSystem();
-
             expect(await poolCollectionUpgrader.version()).to.equal(1);
 
             expect(await poolCollectionUpgrader.network()).to.equal(network.address);

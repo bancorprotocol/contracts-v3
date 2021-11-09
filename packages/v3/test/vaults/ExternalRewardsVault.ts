@@ -84,6 +84,7 @@ describe('ExternalRewardsVault', () => {
 
             prepareEach(async () => {
                 ({ externalRewardsVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, externalRewardsVault.address, amount);
