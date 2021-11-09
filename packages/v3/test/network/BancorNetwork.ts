@@ -1896,18 +1896,17 @@ describe('BancorNetwork', () => {
                 describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
                     prepareEach(async () => {
                         await initLegacySystem(isETH);
-                    });
-
-                    it('verifies that the caller can migrate positions', async () => {
-                        const reserveAmount = BigNumber.from(1000);
                         await addProtectedLiquidity(
                             poolToken.address,
                             baseToken,
                             baseToken.address,
-                            reserveAmount,
+                            BigNumber.from(1000),
                             isETH,
                             owner
                         );
+                    });
+
+                    it('verifies that the caller can migrate positions', async () => {
                         let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         const protectionId = protectionIds[0];
                         let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
@@ -1957,8 +1956,8 @@ describe('BancorNetwork', () => {
 
                         const vaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                         const vaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount));
-                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(reserveAmount.div(2)));
+                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount));
+                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(protection.reserveAmount.div(2)));
 
                         const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
 
@@ -1983,15 +1982,6 @@ describe('BancorNetwork', () => {
                     });
 
                     it('verifies that the owner can migrate system pool tokens', async () => {
-                        const reserveAmount = BigNumber.from(1000);
-                        await addProtectedLiquidity(
-                            poolToken.address,
-                            baseToken,
-                            baseToken.address,
-                            reserveAmount,
-                            isETH,
-                            owner
-                        );
                         let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         const protectionId = protectionIds[0];
                         let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
@@ -2014,7 +2004,7 @@ describe('BancorNetwork', () => {
 
                         const vaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                         const vaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount.div(2)));
+                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
                         expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
 
                         const govBalance = await govToken.balanceOf(owner.address);
@@ -2039,28 +2029,30 @@ describe('BancorNetwork', () => {
                     await baseToken.transfer(provider.address, amount);
                     await baseToken.connect(provider).approve(network.address, amount);
                     await network.connect(provider).deposit(baseToken.address, amount);
-                });
-                it('verifies that the caller can migrate positions', async () => {
-                    let reserveAmount = BigNumber.from(5000);
-                    await baseToken.transfer(provider.address, 5000);
+
+                    const reserve1Amount = BigNumber.from(5000);
+                    await baseToken.transfer(provider.address, reserve1Amount);
                     await addProtectedLiquidity(
                         poolToken.address,
                         baseToken,
                         baseToken.address,
-                        reserveAmount,
+                        reserve1Amount,
                         false,
                         provider
                     );
 
-                    reserveAmount = BigNumber.from(1000);
+                    const reserve2Amount = BigNumber.from(1000);
                     await addProtectedLiquidity(
                         poolToken.address,
                         networkToken,
                         networkToken.address,
-                        reserveAmount,
+                        reserve2Amount,
                         false,
                         owner
                     );
+                });
+
+                it('verifies that the caller can migrate positions', async () => {
                     let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                     const protectionId = protectionIds[0];
                     let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
@@ -2107,7 +2099,7 @@ describe('BancorNetwork', () => {
                     expect(walletBalance).to.equal(prevWalletBalance);
 
                     const balance = await getBalance(networkToken, owner.address);
-                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(reserveAmount).toString()), {
+                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
                         maxRelativeError: new Decimal('0.000000000000000000000001')
                     });
 
