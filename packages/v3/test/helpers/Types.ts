@@ -82,6 +82,14 @@ export const toString = <T extends BigNumber | Decimal>(fraction: Fraction<T>) =
     return `{n: ${fraction.n.toString()}, d: ${fraction.d.toString()}}`;
 };
 
+export const toUint512 = (x: BigNumber) => {
+    return { hi: x.shr(256), lo: x.shl(256).shr(256) };
+};
+
+export const fromUint512 = (hi: BigNumber, lo: BigNumber) => {
+    return hi.shl(256).or(lo);
+};
+
 type ToWeiInput = Decimal | BigNumber;
 type ToWeiReturn<T> = T extends BigNumber ? BigNumber : T extends Decimal ? Decimal : never;
 
