@@ -29,11 +29,6 @@ library PoolCollectionWithdrawal {
         uint256 v;
     }
 
-    struct Uint512 {
-        uint256 hi;
-        uint256 lo;
-    }
-
     /**
      * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`.
      * when calculating the values of `p`, `q`, `r` and `s`, we split the input range as follows:
@@ -115,9 +110,9 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x  // <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
-        return gt512(
-            mul512(b * e, f * m + e * n),
-            mul512(f * x, g * (M - m))
+        return MathEx.gt512(
+            MathEx.mul512(b * e, f * m + e * n),
+            MathEx.mul512(f * x, g * (M - m))
         );
     }}
 
@@ -133,9 +128,9 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x  // <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
-        return gt512(
-            mul512(b * e, (f * m + e * n) * M),
-            mul512(f * x, (f * M + e * n) * (M - m))
+        return MathEx.gt512(
+            MathEx.mul512(b * e, (f * m + e * n) * M),
+            MathEx.mul512(f * x, (f * M + e * n) * (M - m))
         );
     }}
 
@@ -267,24 +262,5 @@ library PoolCollectionWithdrawal {
             t = MathEx.mulDivF(a * y, g, b * e);
             u = 0;
         }
-    }}
-
-    /**
-     * @dev returns the value of `x * y`
-     */
-    // prettier-ignore
-    function mul512(uint256 x, uint256 y) private pure returns (Uint512 memory) { unchecked {
-        uint256 p = mulmod(x, y, type(uint256).max);
-        uint256 q = x * y;
-        uint256 r = p < q ? 1 : 0;
-        return Uint512({ hi: p - q - r, lo: q });
-    }}
-
-    /**
-     * @dev returns the value of `x > y`
-     */
-    // prettier-ignore
-    function gt512(Uint512 memory x, Uint512 memory y) private pure returns (bool) { unchecked {
-        return x.hi > y.hi || (x.hi == y.hi && x.lo > y.lo);
     }}
 }
