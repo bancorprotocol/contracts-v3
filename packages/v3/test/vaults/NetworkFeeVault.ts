@@ -4,7 +4,6 @@ import { NetworkFeeVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -19,7 +18,7 @@ describe('NetworkFeeVault', () => {
     describe('construction', () => {
         let networkFeeVault: NetworkFeeVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkFeeVault } = await createSystem());
         });
 
@@ -79,8 +78,9 @@ describe('NetworkFeeVault', () => {
         for (const symbol of [BNT, ETH, TKN]) {
             const isNetworkToken = symbol === BNT;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 ({ networkFeeVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, networkFeeVault.address, amount);
@@ -92,7 +92,7 @@ describe('NetworkFeeVault', () => {
                 });
 
                 context('with admin role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await networkFeeVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
@@ -100,7 +100,7 @@ describe('NetworkFeeVault', () => {
                 });
 
                 context('with asset manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await networkFeeVault.grantRole(NetworkFeeVaultRoles.ROLE_ASSET_MANAGER, user.address);
                     });
 
