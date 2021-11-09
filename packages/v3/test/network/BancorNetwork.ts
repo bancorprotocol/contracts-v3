@@ -3323,7 +3323,7 @@ describe('BancorNetwork Flow', () => {
         prepare(async () => {
             const signers = await ethers.getSigners();
 
-            baseToken = await Contracts.TestERC20Burnable.deploy('TKN', 'TKN', MAX_UINT256);
+            baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, MAX_UINT256);
             ({
                 network,
                 networkToken,
