@@ -3387,32 +3387,34 @@ describe('BancorNetwork Flow', () => {
             await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         });
 
-        for (const operation of flow.operations.slice(0, numOfTests)) {
-            it(JSON.stringify(operation), async () => {
-                await timeIncrease(operation.elapsed);
-                switch (operation.type) {
+        it('', async () => {
+            const operations = flow.operations.slice(0, numOfTests);
+            for (let n = 0; n < operations.length; n++) {
+                console.log(`${n + 1} out of ${operations.length}: ${operations[n].type}(${operations[n].amount})`);
+                await timeIncrease(operations[n].elapsed);
+                switch (operations[n].type) {
                     case 'depositTKN':
-                        await depositTKN(operation.userId, operation.amount);
+                        await depositTKN(operations[n].userId, operations[n].amount);
                         break;
                     case 'depositBNT':
-                        await depositBNT(operation.userId, operation.amount);
+                        await depositBNT(operations[n].userId, operations[n].amount);
                         break;
                     case 'withdrawTKN':
-                        await withdrawTKN(operation.userId, operation.amount);
+                        await withdrawTKN(operations[n].userId, operations[n].amount);
                         break;
                     case 'withdrawBNT':
-                        await withdrawBNT(operation.userId, operation.amount);
+                        await withdrawBNT(operations[n].userId, operations[n].amount);
                         break;
                     case 'tradeTKN':
-                        await tradeTKN(operation.userId, operation.amount);
+                        await tradeTKN(operations[n].userId, operations[n].amount);
                         break;
                     case 'tradeBNT':
-                        await tradeBNT(operation.userId, operation.amount);
+                        await tradeBNT(operations[n].userId, operations[n].amount);
                         break;
                 }
-                await verifyState(operation.expected);
-            });
-        }
+                await verifyState(operations[n].expected);
+            }
+        });
     };
 
     describe('quick tests', () => {
