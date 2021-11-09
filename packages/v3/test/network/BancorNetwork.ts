@@ -64,7 +64,7 @@ describe('BancorNetwork', () => {
 
     shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
-    prepare(async () => {
+    before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
     });
 
@@ -1210,7 +1210,7 @@ describe('BancorNetwork', () => {
 
                     let provider: SignerWithAddress;
 
-                    prepare(async () => {
+                    before(async () => {
                         [, provider] = await ethers.getSigners();
                     });
 
@@ -1224,7 +1224,7 @@ describe('BancorNetwork', () => {
                         context(`using ${camelCase(Method[method])} method`, () => {
                             let sender: SignerWithAddress;
 
-                            prepare(async () => {
+                            before(async () => {
                                 switch (method) {
                                     case Method.Deposit:
                                         sender = provider;
@@ -1807,7 +1807,7 @@ describe('BancorNetwork', () => {
                 let id: BigNumber;
                 let creationTime: number;
 
-                prepare(async () => {
+                before(async () => {
                     [, provider] = await ethers.getSigners();
                 });
 
