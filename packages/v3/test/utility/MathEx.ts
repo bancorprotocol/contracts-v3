@@ -152,7 +152,7 @@ describe('MathEx', () => {
             const actual = await mathContract.subMax0(x, y);
             expect(actual).to.equal(expected);
         });
-    }
+    };
 
     const testMul512 = (x: BigNumber, y: BigNumber) => {
         it(`mul512(${x}, ${y})`, async () => {
@@ -160,7 +160,7 @@ describe('MathEx', () => {
             const actual = await mathContract.mul512(x, y);
             expect(fromUint512(actual.hi, actual.lo)).to.equal(expected);
         });
-    }
+    };
 
     const testGT512 = (x: BigNumber, y: BigNumber) => {
         it(`gt512(${x}, ${y})`, async () => {
@@ -168,7 +168,7 @@ describe('MathEx', () => {
             const actual = await mathContract.gt512(toUint512(x), toUint512(y));
             expect(actual).to.equal(expected);
         });
-    }
+    };
 
     const testLT512 = (x: BigNumber, y: BigNumber) => {
         it(`lt512(${x}, ${y})`, async () => {
@@ -176,7 +176,7 @@ describe('MathEx', () => {
             const actual = await mathContract.lt512(toUint512(x), toUint512(y));
             expect(actual).to.equal(expected);
         });
-    }
+    };
 
     const testGTE512 = (x: BigNumber, y: BigNumber) => {
         it(`gte512(${x}, ${y})`, async () => {
@@ -184,7 +184,7 @@ describe('MathEx', () => {
             const actual = await mathContract.gte512(toUint512(x), toUint512(y));
             expect(actual).to.equal(expected);
         });
-    }
+    };
 
     const testLTE512 = (x: BigNumber, y: BigNumber) => {
         it(`lte512(${x}, ${y})`, async () => {
@@ -192,7 +192,7 @@ describe('MathEx', () => {
             const actual = await mathContract.lte512(toUint512(x), toUint512(y));
             expect(actual).to.equal(expected);
         });
-    }
+    };
 
     describe('quick tests', () => {
         for (const n of [1, 64, 128, 192, 256]) {

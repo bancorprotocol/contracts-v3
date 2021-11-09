@@ -15,6 +15,6 @@ contract TestPoolCollectionWithdrawal {
         uint256 n,
         uint256 x
     ) external pure returns (PoolCollectionWithdrawal.Output memory) {
-        return PoolCollectionWithdrawal.formula(a,b,c,e,w,m,n,x);
+        return PoolCollectionWithdrawal.formula(a, b, c, e, w, m, n, x);
     }
 }
