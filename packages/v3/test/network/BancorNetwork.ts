@@ -441,8 +441,6 @@ describe('BancorNetwork', () => {
                         await poolCollection.version()
                     );
 
-                    expect(await network.poolCollections()).to.have.members([poolCollection.address]);
-
                     await expect(network.addPoolCollection(newPoolCollection.address)).to.be.revertedWith(
                         'AlreadyExists'
                     );
