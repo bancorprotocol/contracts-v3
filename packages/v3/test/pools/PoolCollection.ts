@@ -21,18 +21,15 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { prepare, prepareEach } from '../helpers/Fixture';
+import { prepareEach } from '../helpers/Fixture';
 import { roundDiv } from '../helpers/MathUtils';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
-import { AlmostEqualOptions } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-import fs from 'fs';
 import { ethers } from 'hardhat';
-import path from 'path';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
@@ -1847,157 +1844,6 @@ describe('PoolCollection', () => {
 
                 expect(await poolToken.newOwner()).to.equal(targetPoolCollection.address);
             });
-        });
-    });
-});
-
-describe('PoolCollection.withdrawalAmounts', () => {
-    let poolCollection: TestPoolCollection;
-
-    prepare(async () => {
-        ({ poolCollection } = await createSystem());
-    });
-
-    describe('tests', () => {
-        interface Row {
-            a: string;
-            b: string;
-            c: string;
-            e: string;
-            w: string;
-            m: string;
-            n: string;
-            x: string;
-            p: string;
-            q: string;
-            r: string;
-            s: string;
-            t: string;
-            u: string;
-            v: string;
-        }
-
-        interface MaxErrors {
-            p: AlmostEqualOptions;
-            q: AlmostEqualOptions;
-            r: AlmostEqualOptions;
-            s: AlmostEqualOptions;
-            t: AlmostEqualOptions;
-            u: AlmostEqualOptions;
-            v: AlmostEqualOptions;
-        }
-
-        const tests = (numOfTestsPerFile: number = Number.MAX_SAFE_INTEGER) => {
-            const test = (fileName: string, maxErrors: MaxErrors) => {
-                const table: Row[] = JSON.parse(
-                    fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
-                ).slice(0, numOfTestsPerFile);
-
-                for (const { a, b, c, e, w, m, n, x, p, q, r, s, t, u, v } of table) {
-                    it(`${fileName}(${[a, b, c, e, w, m, n, x]})`, async () => {
-                        const actual = await poolCollection.withdrawalAmountsT(a, b, c, e, w, m, n, x);
-                        const actual_p = actual.networkTokenAmountToDeductFromLiquidity;
-                        const actual_q = actual.networkTokenAmountToRenounceByProtocol;
-                        const actual_r = actual.baseTokenAmountToDeductFromLiquidity;
-                        const actual_s = actual.baseTokenAmountToTransferFromVaultToProvider;
-                        const actual_t = actual.networkTokenAmountToMintForProvider;
-                        const actual_u = actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider;
-                        const actual_v = actual.baseTokenWithdrawalFeeAmount;
-                        expect(actual_p).to.almostEqual(new Decimal(p), maxErrors.p);
-                        expect(actual_q).to.almostEqual(new Decimal(q), maxErrors.q);
-                        expect(actual_r).to.almostEqual(new Decimal(r), maxErrors.r);
-                        expect(actual_s).to.almostEqual(new Decimal(s), maxErrors.s);
-                        expect(actual_t).to.almostEqual(new Decimal(t), maxErrors.t);
-                        expect(actual_u).to.almostEqual(new Decimal(u), maxErrors.u);
-                        expect(actual_v).to.almostEqual(new Decimal(v), maxErrors.v);
-                    });
-                }
-            };
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage1', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage2', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage3', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage4', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage5', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage6', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-
-            // prettier-ignore
-            test('WithdrawalAmountsCoverage7', {
-                p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
-                q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
-                r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
-                s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
-                t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-                u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-                v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
-            });
-        };
-
-        describe('quick tests', () => {
-            tests(100);
-        });
-
-        describe('@stress tests', () => {
-            tests();
         });
     });
 });

@@ -870,17 +870,24 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     ) internal view returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
 
-        return
-            _withdrawalAmounts(
-                params.networkTokenAvgTradingLiquidity,
-                params.baseTokenAvgTradingLiquidity,
-                MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-                params.baseTokenStakedAmount,
-                externalProtectionWalletBalance,
-                params.tradeFeePPM,
-                _settings.withdrawalFeePPM(),
-                MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
-            );
+        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.formula(
+            params.networkTokenAvgTradingLiquidity,
+            params.baseTokenAvgTradingLiquidity,
+            MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+            params.baseTokenStakedAmount,
+            externalProtectionWalletBalance,
+            params.tradeFeePPM,
+            _settings.withdrawalFeePPM(),
+            MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
+        );
+
+        amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
+        amounts.networkTokenAmountToMintForProvider = output.t;
+        amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
+        amounts.baseTokenAmountToDeductFromLiquidity = output.r;
+        amounts.networkTokenAmountToDeductFromLiquidity = output.p;
+        amounts.networkTokenAmountToRenounceByProtocol = output.q;
+        amounts.baseTokenWithdrawalFeeAmount = output.v;
     }
 
     /**
@@ -968,40 +975,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
                 emit TradingEnabled({ pool: pool, newStatus: newEnabled, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
             }
         }
-    }
-
-    /**
-     * @dev returns all amounts related to base token withdrawal, where each amount includes the withdrawal fee, which
-     * may need to be deducted (depending on usage)
-     */
-    function _withdrawalAmounts(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenExcessAmount,
-        uint256 baseTokenStakedAmount,
-        uint256 baseTokenExternalProtectionWalletBalance,
-        uint32 tradeFeePPM,
-        uint32 withdrawalFeePPM,
-        uint256 baseTokenWithdrawalAmount
-    ) internal pure returns (WithdrawalAmounts memory amounts) {
-        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.formula(
-            networkTokenLiquidity,
-            baseTokenLiquidity,
-            baseTokenExcessAmount,
-            baseTokenStakedAmount,
-            baseTokenExternalProtectionWalletBalance,
-            tradeFeePPM,
-            withdrawalFeePPM,
-            baseTokenWithdrawalAmount
-        );
-
-        amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
-        amounts.networkTokenAmountToMintForProvider = output.t;
-        amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
-        amounts.baseTokenAmountToDeductFromLiquidity = output.r;
-        amounts.networkTokenAmountToDeductFromLiquidity = output.p;
-        amounts.networkTokenAmountToRenounceByProtocol = output.q;
-        amounts.baseTokenWithdrawalFeeAmount = output.v;
     }
 
     /**
