@@ -24,13 +24,14 @@ import {
     DSToken__factory as GovToken__factory,
     SmartToken as NetworkToken,
     SmartToken__factory as NetworkToken__factory,
+    TokenGovernance,
     TokenGovernance__factory
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
 /* eslint-enable camelcase */
 
-export { NetworkToken, GovToken };
+export { NetworkToken, GovToken, TokenGovernance };
 
 export {
     ConverterFactory,
