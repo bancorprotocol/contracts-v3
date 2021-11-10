@@ -4,7 +4,6 @@ import { ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -19,7 +18,7 @@ describe('ExternalRewardsVault', () => {
     describe('construction', () => {
         let externalRewardsVault: ExternalRewardsVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ externalRewardsVault } = await createSystem());
         });
 
@@ -82,8 +81,9 @@ describe('ExternalRewardsVault', () => {
         for (const symbol of [BNT, ETH, TKN]) {
             const isNetworkToken = symbol === BNT;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 ({ externalRewardsVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
 
                 transfer(deployer, token, externalRewardsVault.address, amount);
@@ -95,7 +95,7 @@ describe('ExternalRewardsVault', () => {
                 });
 
                 context('with admin role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await externalRewardsVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
@@ -103,7 +103,7 @@ describe('ExternalRewardsVault', () => {
                 });
 
                 context('with asset manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await externalRewardsVault.grantRole(
                             ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
                             user.address

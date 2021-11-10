@@ -4,7 +4,6 @@ import { ExternalProtectionVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -19,7 +18,7 @@ describe('ExternalProtectionVault', () => {
     describe('construction', () => {
         let externalProtectionVault: ExternalProtectionVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ externalProtectionVault } = await createSystem());
         });
 
@@ -82,8 +81,9 @@ describe('ExternalProtectionVault', () => {
         for (const symbol of [BNT, ETH, TKN]) {
             const isNetworkToken = symbol === BNT;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 ({ externalProtectionVault, networkToken } = await createSystem());
+
                 token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
 
                 await transfer(deployer, token, externalProtectionVault.address, amount);
@@ -95,7 +95,7 @@ describe('ExternalProtectionVault', () => {
                 });
 
                 context('with admin role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
@@ -103,7 +103,7 @@ describe('ExternalProtectionVault', () => {
                 });
 
                 context('with asset manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await externalProtectionVault.grantRole(
                             ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                             user.address

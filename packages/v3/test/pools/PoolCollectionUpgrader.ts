@@ -10,7 +10,6 @@ import {
 } from '../../typechain';
 import { ZERO_ADDRESS, TKN } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -27,6 +26,13 @@ describe('PoolCollectionUpgrader', () => {
     });
 
     describe('construction', () => {
+        let network: TestBancorNetwork;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+
+        beforeEach(async () => {
+            ({ network, poolCollectionUpgrader } = await createSystem());
+        });
+
         it('should revert when attempting to initialize with an invalid network contract', async () => {
             await expect(Contracts.TestPoolCollectionUpgrader.deploy(ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
@@ -34,16 +40,12 @@ describe('PoolCollectionUpgrader', () => {
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            const { poolCollectionUpgrader } = await createSystem();
-
             await expect(poolCollectionUpgrader.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { network, poolCollectionUpgrader } = await createSystem();
-
             expect(await poolCollectionUpgrader.version()).to.equal(1);
 
             expect(await poolCollectionUpgrader.network()).to.equal(network.address);
@@ -59,7 +61,7 @@ describe('PoolCollectionUpgrader', () => {
         let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ network, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
                 await createSystem());
 
@@ -117,7 +119,7 @@ describe('PoolCollectionUpgrader', () => {
         context('v1', () => {
             let targetPoolCollection: TestPoolCollection;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 targetPoolCollection = await createPoolCollection(
                     network,
                     poolTokenFactory,
