@@ -3,7 +3,6 @@ import { NetworkSettings, TokenHolder, TestERC20Token } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createTokenHolder, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -27,24 +26,26 @@ describe('NetworkSettings', () => {
         [deployer, nonOwner] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         networkFeeWallet = await createTokenHolder();
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
     });
 
     describe('construction', async () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { networkSettings } = await createSystem();
+        let networkSettings: NetworkSettings;
 
+        beforeEach(async () => {
+            ({ networkSettings } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(networkSettings.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { networkSettings } = await createSystem();
-
             expect(await networkSettings.version()).to.equal(1);
 
             await expectRole(networkSettings, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
@@ -66,7 +67,7 @@ describe('NetworkSettings', () => {
     describe('protected tokens whitelist', async () => {
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
 
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
@@ -103,7 +104,7 @@ describe('NetworkSettings', () => {
         });
 
         describe('removing', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
             });
 
@@ -137,7 +138,7 @@ describe('NetworkSettings', () => {
         const poolMintingLimit = BigNumber.from(12345).mul(BigNumber.from(10).pow(18));
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
         });
 
@@ -183,7 +184,7 @@ describe('NetworkSettings', () => {
         const minLiquidityForTrading = BigNumber.from(1000).mul(BigNumber.from(10).pow(18));
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
         });
 
@@ -234,7 +235,7 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.networkFeePPM()).to.equal(fee);
         };
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
 
             await expectNetworkFeeParams(undefined, BigNumber.from(0));
@@ -307,7 +308,7 @@ describe('NetworkSettings', () => {
         const newWithdrawalFee = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
 
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
@@ -353,7 +354,7 @@ describe('NetworkSettings', () => {
         const newFlashLoanFee = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
 
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
@@ -399,7 +400,7 @@ describe('NetworkSettings', () => {
         const newMaxDeviation = BigNumber.from(500000);
         let networkSettings: NetworkSettings;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings } = await createSystem());
 
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));

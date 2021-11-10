@@ -4,7 +4,6 @@ import { BancorVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -20,7 +19,7 @@ describe('BancorVault', () => {
     describe('construction', () => {
         let bancorVault: BancorVault;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ bancorVault } = await createSystem());
         });
 
@@ -83,8 +82,9 @@ describe('BancorVault', () => {
             const isNetworkToken = symbol === BNT;
 
             context(`withdrawing ${symbol}`, () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     ({ bancorVault, networkToken } = await createSystem());
+
                     token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
 
                     await transfer(deployer, token, bancorVault.address, amount);
@@ -95,7 +95,7 @@ describe('BancorVault', () => {
                 });
 
                 context('with admin role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await bancorVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
@@ -103,7 +103,7 @@ describe('BancorVault', () => {
                 });
 
                 context('with asset manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
                     });
 
@@ -111,7 +111,7 @@ describe('BancorVault', () => {
                 });
 
                 context('with network token manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });
 
