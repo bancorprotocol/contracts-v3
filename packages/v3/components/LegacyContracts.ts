@@ -47,7 +47,6 @@ import { Signer } from 'ethers';
 export {
     NetworkToken,
     GovToken,
-    TestCheckpointStore,
     ConverterFactory,
     ContractRegistry,
     ConverterRegistry,
@@ -59,6 +58,7 @@ export {
     LiquidityProtectionStats,
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
+    TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory
@@ -71,7 +71,6 @@ const getContracts = (signer?: Signer) => ({
     NetworkToken: deployOrAttach('NetworkToken', NetworkToken__factory, signer),
     GovToken: deployOrAttach('GovToken', GovToken__factory, signer),
 
-    TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     ConverterFactory: deployOrAttach('ConverterFactory', ConverterFactory__factory, signer),
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
@@ -83,6 +82,7 @@ const getContracts = (signer?: Signer) => ({
     LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
     LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
     LiquidityProtectionSystemStore: deployOrAttach('LiquidityProtectionSystemStore', LiquidityProtectionSystemStore__factory, signer),
+    TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
     TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),
     TestStandardPoolConverterFactory: deployOrAttach(
