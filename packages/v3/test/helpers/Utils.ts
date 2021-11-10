@@ -14,14 +14,14 @@ export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
 
 export const getTransactionGas = async (res: ContractTransaction) => {
     const receipt = await res.wait();
+
     return receipt.cumulativeGasUsed;
 };
 
 export const getTransactionCost = async (res: ContractTransaction) => {
     const receipt = await res.wait();
-    const { cumulativeGasUsed, effectiveGasPrice } = receipt;
 
-    return effectiveGasPrice.mul(cumulativeGasUsed);
+    return receipt.effectiveGasPrice.mul(await getTransactionGas(res));
 };
 
 export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress) => {
