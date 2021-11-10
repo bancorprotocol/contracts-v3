@@ -38,8 +38,7 @@ import {
     DSToken__factory as GovToken__factory,
     SmartToken as NetworkToken,
     SmartToken__factory as NetworkToken__factory,
-    TokenGovernance__factory,
-    TokenGovernance
+    TokenGovernance__factory
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
@@ -62,8 +61,7 @@ export {
     LiquidityProtectionSystemStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
-    TestStandardPoolConverterFactory,
-    TokenGovernance
+    TestStandardPoolConverterFactory
 };
 
 const getContracts = (signer?: Signer) => ({
