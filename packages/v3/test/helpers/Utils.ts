@@ -1,5 +1,4 @@
 import Contracts from '../../components/Contracts';
-import LegacyContracts from '../../components/LegacyContracts';
 import { TestERC20Token } from '../../typechain';
 import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from './Constants';
 import { toWei } from './Types';
