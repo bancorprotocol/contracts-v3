@@ -37,6 +37,7 @@ library PoolCollectionWithdrawal {
      * | otherwise         | default surplus                      |
      * +-------------------+--------------------------------------+
      * in default deficit, we also calculate the values of `t` and `u` (which are otherwise zero)
+     * the value of `v` is calculated as `x*n` in all cases
      */
     // prettier-ignore
     function formula(
