@@ -94,7 +94,7 @@ const createGovernedToken = async <F extends ContractFactory>(
     return { token, tokenGovernance };
 };
 
-const createGovernedTokensFixture = async () => {
+const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
         TOTAL_SUPPLY,
@@ -112,8 +112,6 @@ const createGovernedTokensFixture = async () => {
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
-
-export const createGovernedTokens = async () => waffle.loadFixture(createGovernedTokensFixture);
 
 export const createTokenHolder = async () => Contracts.TokenHolder.deploy();
 

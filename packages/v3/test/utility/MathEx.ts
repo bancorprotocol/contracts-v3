@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain';
-import { prepare } from '../helpers/Fixture';
 import {
     floorSqrt,
     ceilSqrt,
@@ -33,7 +32,7 @@ const BN_TEST_ARRAY = [
 describe('MathEx', () => {
     let mathContract: TestMathEx;
 
-    prepare(async () => {
+    before(async () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
 
