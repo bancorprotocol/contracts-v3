@@ -106,7 +106,7 @@ library PoolCollectionWithdrawal {
         uint256 g, // == e-b-c <= e <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
-        uint256 x  // <= e <= 2**128-1
+        uint256 x  // <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
         return MathEx.gt512(
             MathEx.mul512(b * e, f * m + e * n),
@@ -124,12 +124,12 @@ library PoolCollectionWithdrawal {
         uint256 f, // == b+c-e <= 2**129-2
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
-        uint256 x  // <= e <= 2**128-1
+        uint256 x  // <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) { unchecked {
         return MathEx.gt512(
             MathEx.mul512(b * e, (f * m + e * n) * M),
             MathEx.mul512(f * x, (f * M + e * n) * (M - m))
-            // hlim --> `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
+            // `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
         );
     }}
 
