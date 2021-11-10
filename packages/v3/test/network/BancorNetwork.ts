@@ -49,6 +49,7 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import fs from 'fs';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
+import { Context } from 'mocha';
 import path from 'path';
 
 const { Upgradeable: UpgradeableRoles } = roles;
@@ -3330,7 +3331,8 @@ describe('BancorNetwork Flow', () => {
             await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         });
 
-        it('', async () => {
+        it('', async function (this: Context) {
+            this.timeout(0);
             const operations = flow.operations.slice(0, numOfTests);
             for (let n = 0; n < operations.length; n++) {
                 console.log(`${n + 1} out of ${operations.length}: ${operations[n].type}(${operations[n].amount})`);
