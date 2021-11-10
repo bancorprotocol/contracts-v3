@@ -1,6 +1,6 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken } from '../../components/LegacyContracts';
+import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -40,7 +40,6 @@ import {
     transfer,
     TokenWithAddress
 } from '../helpers/Utils';
-import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

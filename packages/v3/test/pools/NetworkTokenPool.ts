@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken, GovToken } from '../../components/LegacyContracts';
+import { NetworkToken, GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -25,7 +25,6 @@ import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
-import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
