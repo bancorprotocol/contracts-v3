@@ -27,16 +27,16 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`.
+     * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`
      * when calculating the values of `p`, `q`, `r` and `s`, we split the input range as follows:
-     * +---------------------------+--------------------------------------+
-     * | `e > (b+c)/(1-n)`         | default deficit or arbitrage deficit |
-     * +---------------------------+--------------------------------------+
-     * | `e < (b+c)`               | default surplus or arbitrage surplus |
-     * +---------------------------+--------------------------------------+
-     * | otherwise                 | default surplus                      |
-     * +---------------------------+--------------------------------------+
-     * we calculate the values of `t` and `u` only when in default deficit.
+     * +-------------------+--------------------------------------+
+     * | `e > (b+c)/(1-n)` | default deficit or arbitrage deficit |
+     * +-------------------+--------------------------------------+
+     * | `e < (b+c)`       | default surplus or arbitrage surplus |
+     * +-------------------+--------------------------------------+
+     * | otherwise         | default surplus                      |
+     * +-------------------+--------------------------------------+
+     * in default deficit, we also calculate the values of `t` and `u` (which are otherwise zero)
      */
     // prettier-ignore
     function formula(
