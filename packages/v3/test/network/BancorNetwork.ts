@@ -46,12 +46,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
-<<<<<<< HEAD
 import fs from 'fs';
-import { ethers } from 'hardhat';
-=======
 import { ethers, waffle } from 'hardhat';
->>>>>>> d2d04412a6a8668a7ba118910973728641b60d7d
 import { camelCase } from 'lodash';
 import path from 'path';
 
