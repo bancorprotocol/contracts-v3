@@ -2,8 +2,6 @@
 pragma solidity 0.8.9;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -17,7 +15,6 @@ function validate(bool valid) pure {
 
 library PoolCollectionWithdrawal {
     using SafeCast for uint256;
-    using SafeMath for uint256;
 
     struct Output {
         int256 p;
@@ -152,7 +149,7 @@ library PoolCollectionWithdrawal {
         uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 i = f * (M - m);
-        uint256 j = b.mul(e * M).sub(MathEx.mulDivF(x, i, 1));
+        uint256 j = mulSubMulDivF(b, e * M, x, i, 1);
         output.p = MathEx.mulDivF(a * x, i, j).toInt256();
         output.q = 0;
         output.r = -MathEx.mulDivF(x, f, e).toInt256();
@@ -178,7 +175,7 @@ library PoolCollectionWithdrawal {
         uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 i = f * M + e * n;
-        uint256 j = b.mul(e * (M - m)).add(MathEx.mulDivF(x, i * (M - m), M));
+        uint256 j = mulAddMulDivF(b, e * (M - m), x, i * (M - m), M);
         output.p = -MathEx.mulDivF(a * x, i, j).toInt256();
         output.q = 0;
         output.r = MathEx.mulDivF(x, i, e * M).toInt256();
@@ -263,4 +260,30 @@ library PoolCollectionWithdrawal {
             u = 0;
         }
     }}
+
+    /**
+     * @dev returns `a*b+x*y/z`
+     */
+    function mulAddMulDivF(
+        uint256 a,
+        uint256 b,
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (uint256) {
+        return a * b + MathEx.mulDivF(x, y, z);
+    }
+
+    /**
+     * @dev returns `a*b-x*y/z`
+     */
+    function mulSubMulDivF(
+        uint256 a,
+        uint256 b,
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (uint256) {
+        return a * b - MathEx.mulDivF(x, y, z);
+    }
 }
