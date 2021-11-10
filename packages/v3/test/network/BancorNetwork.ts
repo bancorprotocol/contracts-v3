@@ -1,6 +1,6 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
+import { GovToken, NetworkToken } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
