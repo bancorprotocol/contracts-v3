@@ -19,14 +19,14 @@
         "!/contracts/helpers"
     ],
     "scripts": {
-        "hh": "hardhat",
-        "migrate": "MIGRATION=1 hardhat migrate",
-        "create-migration": "MIGRATION=1 hardhat create-migration",
-        "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
         "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
         "testb": "BAIL=1 yarn test",
+        "dev": "hardhat node",
+        "migrate": "MIGRATION=1 hardhat migrate",
+        "create-migration": "MIGRATION=1 hardhat create-migration",
+        "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
         "size": "yarn rebuild && hardhat size-contracts",
         "verify": "hardhat verify",
         "coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat coverage",
@@ -35,7 +35,8 @@
         "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
         "snyk-protect": "snyk protect",
         "prepare": "yarn build && yarn snyk-protect",
-        "clean": "rm -rf artifacts cache data coverage typechain"
+        "clean": "rm -rf artifacts cache data coverage typechain",
+        "hh": "hardhat"
     },
     "dependencies": {
         "hardhat": "2.6.5"
