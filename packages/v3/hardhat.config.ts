@@ -27,6 +27,7 @@ const ci = getEnvKey<boolean>('CI');
 const config: HardhatUserConfig = {
     networks: {
         hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
+        localhost: { url: 'http://127.0.0.1:8545' },
 
         ...CONFIG.networks
     },
