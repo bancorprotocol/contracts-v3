@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolCollectionWithdrawal } from '../../typechain';
-import { prepare } from '../helpers/Fixture';
 import { AlmostEqualOptions } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -10,7 +9,7 @@ import path from 'path';
 describe('PoolCollectionWithdrawal', () => {
     let poolCollectionWithdrawal: TestPoolCollectionWithdrawal;
 
-    prepare(async () => {
+    before(async () => {
         poolCollectionWithdrawal = await Contracts.TestPoolCollectionWithdrawal.deploy();
     });
 
