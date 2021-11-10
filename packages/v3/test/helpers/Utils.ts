@@ -12,6 +12,11 @@ export type TokenWithAddress = TestERC20Token | { address: string };
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
 
+export const getTransactionGas = async (res: ContractTransaction) => {
+    const receipt = await res.wait();
+    return receipt.cumulativeGasUsed;
+};
+
 export const getTransactionCost = async (res: ContractTransaction) => {
     const receipt = await res.wait();
     const { cumulativeGasUsed, effectiveGasPrice } = receipt;
