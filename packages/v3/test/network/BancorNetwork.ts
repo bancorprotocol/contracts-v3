@@ -3271,7 +3271,6 @@ describe('BancorNetwork Flow', () => {
         before(async () => {
             const signers = await ethers.getSigners();
 
-            baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, MAX_UINT256);
             ({
                 network,
                 networkToken,
@@ -3285,6 +3284,7 @@ describe('BancorNetwork Flow', () => {
                 bancorVault
             } = await createSystem());
 
+            baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, MAX_UINT256);
             basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
             await networkTokenGovernance.mint(signers[0].address, MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address)));
             externalWallet = await createTokenHolder();
