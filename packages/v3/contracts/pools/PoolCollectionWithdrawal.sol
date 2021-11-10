@@ -83,7 +83,7 @@ library PoolCollectionWithdrawal {
     }}
 
     /**
-     * @dev returns `b*x < c*(e-x)`
+     * @dev returns `x < e*c/(b+c)`
      */
     // prettier-ignore
     function hlim(
@@ -121,7 +121,7 @@ library PoolCollectionWithdrawal {
     function hmaxSurplus(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 f, // <= b+c-e <= 2**129-2
+        uint256 f, // == b+c-e <= 2**129-2
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
         uint256 x  // <= e <= 2**128-1
@@ -129,6 +129,7 @@ library PoolCollectionWithdrawal {
         return MathEx.gt512(
             MathEx.mul512(b * e, (f * m + e * n) * M),
             MathEx.mul512(f * x, (f * M + e * n) * (M - m))
+            // hlim --> `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
         );
     }}
 
@@ -169,7 +170,7 @@ library PoolCollectionWithdrawal {
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 f, // <= b+c-e <= 2**129-2
+        uint256 f, // == b+c-e <= 2**129-2
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
         uint256 x, // <= e <= 2**128-1
