@@ -88,10 +88,11 @@ describe('Profile', () => {
     };
 
     after(async () => {
+        console.log();
         console.log('Summary:');
 
         for (const [desc, samples] of Object.entries(summary)) {
-            console.log(`${desc}:  average=${mean(samples)}`);
+            console.log(`${desc},${mean(samples)}`);
         }
     });
 
@@ -1534,7 +1535,7 @@ describe('Profile', () => {
             const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
             const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
             const res = await profile(
-                `trade ${sourceSymbol} --> ${targetSymbol}`,
+                `trade ${sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
 
