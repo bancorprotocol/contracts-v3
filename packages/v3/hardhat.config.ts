@@ -77,11 +77,12 @@ const config: HardhatUserConfig = {
     },
 
     mocha: {
-        timeout: 600000,
+        timeout: 0,
         color: true,
         bail: getEnvKey('BAIL'),
         grep: ci ? '' : '@stress',
-        invert: !ci
+        invert: !ci,
+        reporter: 'mocha-silent-reporter'
     }
 };
 

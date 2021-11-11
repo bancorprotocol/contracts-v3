@@ -37,6 +37,7 @@ import {
     createWallet,
     errorMessageTokenExceedsAllowance,
     getBalance,
+    getTransactionGas,
     getTransactionCost,
     transfer,
     TokenWithAddress
@@ -51,11 +52,14 @@ import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 import { Context } from 'mocha';
 import path from 'path';
+import prompt from 'prompt';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('Profile', () => {
+    prompt.start();
+
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
     let newOwner: SignerWithAddress;
@@ -67,6 +71,25 @@ describe('Profile', () => {
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
     });
+
+    const profile = async (msg: string, tx: Promise<ContractTransaction>) => {
+        const { DEBUG: debug } = process.env;
+
+        if (debug) {
+            await prompt.get([`[${msg}]`]);
+        }
+
+        const res = await tx;
+
+        const gas = await getTransactionGas(res);
+        console.log(`[${msg}]: ${gas}`);
+
+        if (debug) {
+            console.log(`   ${(await res.wait()).transactionHash}`);
+        }
+
+        return res;
+    };
 
     const networkPermitSignature = async (
         sender: Wallet,
@@ -270,7 +293,7 @@ describe('Profile', () => {
                         .mul(await poolToken.totalSupply())
                         .div(await networkTokenPool.stakedBalance());
 
-                    const res = await deposit(amount);
+                    const res = await profile(`deposit ${symbol}`, deposit(amount));
 
                     await expect(res)
                         .to.emit(network, 'NetworkTokenDeposited')
@@ -307,7 +330,7 @@ describe('Profile', () => {
                             .div(prevPoolLiquidity.stakedBalance);
                     }
 
-                    const res = await deposit(amount);
+                    const res = await profile(`deposit ${symbol}`, deposit(amount));
 
                     if (isETH) {
                         transactionCost = await getTransactionCost(res);
@@ -519,7 +542,7 @@ describe('Profile', () => {
                                                     );
                                                 });
 
-                                                it('should complete a deposit', async () => {
+                                                it.only('should complete a deposit', async () => {
                                                     await test();
                                                 });
                                             });
@@ -533,7 +556,7 @@ describe('Profile', () => {
                                                 });
 
                                                 context('with a whitelisted token', async () => {
-                                                    it('should complete a deposit', async () => {
+                                                    it.only('should complete a deposit', async () => {
                                                         await test();
                                                     });
                                                 });
@@ -641,7 +664,7 @@ describe('Profile', () => {
                                                         });
                                                     }
 
-                                                    it('should complete a deposit', async () => {
+                                                    it.only('should complete a deposit', async () => {
                                                         await test();
                                                     });
 
@@ -655,7 +678,7 @@ describe('Profile', () => {
                                                                 );
                                                             });
 
-                                                            it('should complete a deposit', async () => {
+                                                            it.only('should complete a deposit', async () => {
                                                                 await test();
                                                             });
                                                         }
@@ -811,7 +834,7 @@ describe('Profile', () => {
                                         });
 
                                         context('with a whitelisted token', async () => {
-                                            it('should complete a deposit', async () => {
+                                            it.only('should complete a deposit', async () => {
                                                 await test();
                                             });
                                         });
@@ -885,7 +908,7 @@ describe('Profile', () => {
                                         });
 
                                         context('when spot rate is stable', () => {
-                                            it('should complete a deposit', async () => {
+                                            it.only('should complete a deposit', async () => {
                                                 await test();
                                             });
 
@@ -899,7 +922,7 @@ describe('Profile', () => {
                                                         );
                                                     });
 
-                                                    it('should complete a deposit', async () => {
+                                                    it.only('should complete a deposit', async () => {
                                                         await test();
                                                     });
                                                 }
@@ -1129,7 +1152,10 @@ describe('Profile', () => {
                                         poolTokenAmount
                                     );
 
-                                    const res = await network.connect(provider).withdraw(id);
+                                    const res = await profile(
+                                        `withdraw ${symbol}`,
+                                        network.connect(provider).withdraw(id)
+                                    );
 
                                     await expect(res)
                                         .to.emit(network, 'NetworkTokenWithdrawn')
@@ -1172,7 +1198,10 @@ describe('Profile', () => {
                                         await getBalance(token, externalProtectionWallet.address)
                                     );
 
-                                    const res = await network.connect(provider).withdraw(id);
+                                    const res = await profile(
+                                        `withdraw ${symbol}`,
+                                        network.connect(provider).withdraw(id)
+                                    );
 
                                     if (isETH) {
                                         transactionCost = await getTransactionCost(res);
@@ -1308,7 +1337,7 @@ describe('Profile', () => {
                                 });
 
                                 context('when spot rate is stable', () => {
-                                    it('should complete a withdraw', async () => {
+                                    it.only('should complete a withdraw', async () => {
                                         await test();
                                     });
                                 });
@@ -1525,7 +1554,12 @@ describe('Profile', () => {
             const targetAmount = await tradeTargetAmount(amount);
             expect(targetAmount).to.equal(tradeAmounts.amount);
 
-            const res = await trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline });
+            const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
+            const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
+            const res = await profile(
+                `trader ${sourceSymbol} --> ${targetSymbol}`,
+                trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
+            );
 
             const transactionCost = await getTransactionCost(res);
 
@@ -1947,7 +1981,7 @@ describe('Profile', () => {
                     }
                 });
 
-                it('should complete multiple trades', async () => {
+                it.only('should complete multiple trades', async () => {
                     for (let i = 0; i < TRADES_COUNT; i++) {
                         await test();
                     }
@@ -1979,7 +2013,7 @@ describe('Profile', () => {
                     return;
                 }
 
-                it('should complete a trade', async () => {
+                it.only('should complete a trade', async () => {
                     await test();
                 });
             });
@@ -2199,7 +2233,10 @@ describe('Profile', () => {
                     [deployer.address, await network.currentTime(), token.address, amount, recipient.address, data]
                 );
 
-                const res = network.flashLoan(token.address, amount, recipient.address, data);
+                const res = await profile(
+                    `flashLoan ${symbol}`,
+                    network.flashLoan(token.address, amount, recipient.address, data)
+                );
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
@@ -2263,7 +2300,7 @@ describe('Profile', () => {
                     await recipient.setAmountToReturn(amount.add(feeAmount).add(extraReturn));
                 });
 
-                it('should succeed requesting a flash-loan', async () => {
+                it.only('should succeed requesting a flash-loan', async () => {
                     await test();
                 });
             });
@@ -2273,7 +2310,7 @@ describe('Profile', () => {
                     await recipient.setAmountToReturn(amount.add(feeAmount));
                 });
 
-                it('should succeed requesting a flash-loan', async () => {
+                it.only('should succeed requesting a flash-loan', async () => {
                     await test();
                 });
             });
