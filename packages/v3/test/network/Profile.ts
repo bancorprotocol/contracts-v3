@@ -1557,7 +1557,7 @@ describe('Profile', () => {
             const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
             const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
             const res = await profile(
-                `trader ${sourceSymbol} --> ${targetSymbol}`,
+                `trade ${sourceSymbol} --> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
 
@@ -2234,7 +2234,7 @@ describe('Profile', () => {
                 );
 
                 const res = await profile(
-                    `flashLoan ${symbol}`,
+                    `flash-loan ${symbol}`,
                     network.flashLoan(token.address, amount, recipient.address, data)
                 );
 
