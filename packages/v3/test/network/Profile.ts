@@ -5,23 +5,18 @@ import {
     BancorVault,
     NetworkSettings,
     PoolToken,
-    PoolTokenFactory,
     TestBancorNetwork,
     TestFlashLoanRecipient,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader,
-    TestERC20Burnable,
-    PendingWithdrawals,
     TokenHolder
 } from '../../typechain';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { roles } from '../helpers/AccessControl';
 import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
-    createPoolCollection,
     createSystem,
     createTokenHolder,
     depositToPool,
@@ -42,54 +37,63 @@ import {
     transfer,
     TokenWithAddress
 } from '../helpers/Utils';
-import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import Decimal from 'decimal.js';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
-import fs from 'fs';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
-import { Context } from 'mocha';
-import path from 'path';
+import { mean } from 'lodash';
 import prompt from 'prompt';
 
-const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('Profile', () => {
     prompt.start();
 
     let deployer: SignerWithAddress;
-    let nonOwner: SignerWithAddress;
-    let newOwner: SignerWithAddress;
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
     shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
 
     before(async () => {
-        [deployer, nonOwner, newOwner] = await ethers.getSigners();
+        [deployer] = await ethers.getSigners();
     });
 
-    const profile = async (msg: string, tx: Promise<ContractTransaction>) => {
+    const summary: Record<string, number[]> = {};
+
+    const profile = async (desc: string, tx: Promise<ContractTransaction>) => {
         const { DEBUG: debug } = process.env;
 
         if (debug) {
-            await prompt.get([`[${msg}]`]);
+            await prompt.get([`[${desc}]`]);
         }
 
         const res = await tx;
 
         const gas = await getTransactionGas(res);
-        console.log(`[${msg}]: ${gas}`);
+        console.log(`[${desc}]: ${gas}`);
 
         if (debug) {
             console.log(`   ${(await res.wait()).transactionHash}`);
         }
 
+        if (summary[desc] === undefined) {
+            summary[desc] = [];
+        }
+
+        summary[desc].push(gas.toNumber());
+
         return res;
     };
+
+    after(async () => {
+        console.log('Summary:');
+
+        for (const [desc, samples] of Object.entries(summary)) {
+            console.log(`${desc}:  average=${mean(samples)}`);
+        }
+    });
 
     const networkPermitSignature = async (
         sender: Wallet,
@@ -149,33 +153,6 @@ describe('Profile', () => {
         const creationTime = withdrawalRequest.createdAt;
 
         return { id, creationTime };
-    };
-
-    const trade = async (
-        trader: SignerWithAddress,
-        sourceToken: TokenWithAddress,
-        targetToken: TokenWithAddress,
-        amount: BigNumber,
-        minReturnAmount: BigNumber,
-        deadline: BigNumber,
-        beneficiary: string,
-        network: TestBancorNetwork
-    ) => {
-        let value = BigNumber.from(0);
-        if (sourceToken.address === NATIVE_TOKEN_ADDRESS) {
-            value = amount;
-        } else {
-            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-
-            await reserveToken.transfer(await trader.getAddress(), amount);
-            await reserveToken.connect(trader).approve(network.address, amount);
-        }
-
-        return network
-            .connect(trader)
-            .trade(sourceToken.address, targetToken.address, amount, minReturnAmount, deadline, beneficiary, {
-                value
-            });
     };
 
     const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
