@@ -264,6 +264,13 @@ describe('@profile Profile', () => {
                                 const test = async () => await profile(`deposit ${symbol}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
+                                    if (!isETH) {
+                                        beforeEach(async () => {
+                                            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                                            await reserveToken.transfer(sender.address, amount);
+                                        });
+                                    }
+
                                     context('with an approval', () => {
                                         if (!isETH) {
                                             beforeEach(async () => {
