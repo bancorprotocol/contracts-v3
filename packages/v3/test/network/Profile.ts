@@ -149,7 +149,6 @@ describe('@profile Profile', () => {
         let networkToken: NetworkToken;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let networkPoolToken: PoolToken;
         let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
@@ -159,8 +158,7 @@ describe('@profile Profile', () => {
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
         const setup = async () => {
-            ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals, networkPoolToken } =
-                await createSystem());
+            ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -189,6 +187,8 @@ describe('@profile Profile', () => {
                 }
 
                 if (!isNetworkToken) {
+                    await createPool(token, network, networkSettings, poolCollection);
+
                     await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
 
                     await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
