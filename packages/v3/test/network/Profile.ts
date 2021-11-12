@@ -51,13 +51,13 @@ describe('@profile Profile', () => {
         const { DEBUG: debug } = process.env;
 
         if (debug) {
-            await prompt.get([`[${desc}]`]);
+            await prompt.get([`${desc}`]);
         }
 
         const res = await tx;
 
         const gas = await getTransactionGas(res);
-        console.log(`[${desc}]: ${gas}`);
+        console.log(`${desc}: ${gas}`);
 
         if (debug) {
             console.log(`   ${(await res.wait()).transactionHash}`);
