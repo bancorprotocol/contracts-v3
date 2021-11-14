@@ -55,7 +55,7 @@ describe('BancorNetwork', () => {
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
-    shouldHaveGap('BancorNetwork', '_poolCollections');
+    shouldHaveGap('BancorNetwork', '_networkTokenPool');
 
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
