@@ -129,7 +129,7 @@ describe.only('BancorV1Migration', () => {
                 const currNetworkBalance = await getBalance(networkToken, bancorVault.address);
                 const currBaseBalance = await getBalance(baseToken, bancorVault.address);
 
-                expect(currNetworkBalance).to.equal(prevNetworkBalance.add(NETWORK_AMOUNT.div(5)));
+                expect(currNetworkBalance).to.equal(prevNetworkBalance.add(prevNetworkBalance.mul(BASE_AMOUNT).div(prevBaseBalance)));
                 expect(currBaseBalance).to.equal(prevBaseBalance.add(BASE_AMOUNT));
             });
         });
