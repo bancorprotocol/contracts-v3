@@ -1939,7 +1939,9 @@ describe('BancorNetwork', () => {
                         const vaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                         const vaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                         expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount));
-                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(protection.reserveAmount.div(2)));
+                        expect(vaultNetworkBalance).to.equal(
+                            prevVaultNetworkBalance.add(protection.reserveAmount.div(2))
+                        );
 
                         const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
 
