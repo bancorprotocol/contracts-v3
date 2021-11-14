@@ -30,6 +30,8 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         _network = network;
     }
 
+    receive() external payable {}
+
     function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
         poolToken.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -45,8 +47,12 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
 
         for (uint256 i = 0; i < 2; i = uncheckedInc(i)) {
-            reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
-            _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
+            if (reserveTokens[i].isNativeToken()) {
+                _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
+            } else {
+                reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
+                _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
+            }
         }
     }
 }
