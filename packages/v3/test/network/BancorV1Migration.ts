@@ -11,7 +11,6 @@ import {
 import { ETH, TKN } from '../helpers/Constants';
 import { createPool, createSystem, createTokenHolder } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { toWei } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/Utils';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -20,13 +19,13 @@ import { ethers, waffle } from 'hardhat';
 describe.only('BancorV1Migration', () => {
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
     const MAX_DEVIATION = BigNumber.from(10_000); // %1
-    const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
+    const MINTING_LIMIT = BigNumber.from(10_000_000);
     const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
-    const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
-    const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
-    const TOTAL_SUPPLY = BigNumber.from(10).pow(BigNumber.from(25));
-    const RESERVE1_AMOUNT = BigNumber.from(1000000);
-    const RESERVE2_AMOUNT = BigNumber.from(2500000);
+    const MIN_LIQUIDITY_FOR_TRADING = BigNumber.from(100_000);
+    const DEPOSIT_LIMIT = BigNumber.from(100_000_000);
+    const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
+    const NETWORK_AMOUNT = BigNumber.from(2_500_000);
+    const BASE_AMOUNT = BigNumber.from(1_000_000);
 
     let networkTokenGovernance: TokenGovernance;
     let govTokenGovernance: TokenGovernance;
@@ -41,7 +40,8 @@ describe.only('BancorV1Migration', () => {
     let converter: any;
     let poolToken: any;
     let baseToken: any;
-    let owner: any;
+    let deployer: any;
+    let provider: any;
 
     const setup = async () => {
         ({
@@ -67,12 +67,12 @@ describe.only('BancorV1Migration', () => {
     };
 
     const initLegacySystem = async (isETH: boolean) => {
-        [owner] = await ethers.getSigners();
+        [deployer, provider] = await ethers.getSigners();
 
         baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
 
         ({ poolToken, converter } = await createLegacySystem(
-            owner,
+            deployer,
             network,
             networkToken,
             networkTokenGovernance,
@@ -80,56 +80,56 @@ describe.only('BancorV1Migration', () => {
             baseToken
         ));
 
-        await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY);
+        await networkTokenGovernance.mint(deployer.address, TOTAL_SUPPLY);
+        await networkToken.transfer(provider.address, NETWORK_AMOUNT);
 
         await createPool(baseToken, network, networkSettings, poolCollection);
         await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
         await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
         await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
 
-        await networkToken.approve(converter.address, RESERVE2_AMOUNT);
-
-        let value = BigNumber.from(0);
-        if (isETH) {
-            value = RESERVE1_AMOUNT;
-        } else {
-            await baseToken.approve(converter.address, RESERVE1_AMOUNT);
+        await networkToken.connect(provider).approve(converter.address, NETWORK_AMOUNT);
+        if (!isETH) {
+            await baseToken.transfer(provider.address, BASE_AMOUNT);
+            await baseToken.connect(provider).approve(converter.address, BASE_AMOUNT);
         }
 
-        await converter.addLiquidity([baseToken.address, networkToken.address], [RESERVE1_AMOUNT, RESERVE2_AMOUNT], 1, {
-            value: value
-        });
+        await converter.connect(provider).addLiquidity(
+            [networkToken.address, baseToken.address],
+            [NETWORK_AMOUNT, BASE_AMOUNT],
+            1,
+            { value: isETH ? BASE_AMOUNT : BigNumber.from(0) }
+        );
     };
 
     for (const isETH of [false, true]) {
         describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
-            let poolTokenAmount: BigNumber;
-
             beforeEach(async () => {
                 await waffle.loadFixture(setup);
                 await initLegacySystem(isETH);
-                poolTokenAmount = await getBalance(poolToken, owner.address);
-                await poolToken.approve(bancorV1Migration.address, poolTokenAmount);
+                const baseTokenAmount = DEPOSIT_LIMIT.div(10);
+                if (isETH) {
+                    await network.deposit(baseToken.address, baseTokenAmount, { value : baseTokenAmount });
+                } else {
+                    await baseToken.approve(network.address, baseTokenAmount);
+                    await network.deposit(baseToken.address, baseTokenAmount);
+                }
             });
 
             it('verifies that the caller can migrate pool tokens', async () => {
-                const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
-                const prevOwnerBaseBalance = await getBalance(baseToken, owner.address);
-                const prevOwnerGovBalance = await govToken.balanceOf(owner.address);
+                const prevNetworkBalance = await getBalance(networkToken, bancorVault.address);
+                const prevBaseBalance = await getBalance(baseToken, bancorVault.address);
 
-                const res = await bancorV1Migration.migratePoolTokens(poolToken.address, poolTokenAmount);
-                const transactionCost = isETH ? await getTransactionCost(res) : BigNumber.from(0);
+                const poolTokenAmount = await getBalance(poolToken, provider.address);
+                await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
+                const response = await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+                const gasCost = isETH ? await getTransactionCost(response) : BigNumber.from(0);
 
-                const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
-                const currOwnerBaseBalance = await getBalance(baseToken, owner.address);
-                const currOwnerGovBalance = await govToken.balanceOf(owner.address);
+                const currNetworkBalance = await getBalance(networkToken, bancorVault.address);
+                const currBaseBalance = await getBalance(baseToken, bancorVault.address);
 
-                expect(currVaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(RESERVE2_AMOUNT));
-                expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(RESERVE1_AMOUNT));
-                expect(currOwnerBaseBalance).to.equal(prevOwnerBaseBalance.sub(transactionCost));
-                expect(currOwnerGovBalance).to.equal(prevOwnerGovBalance);
+                expect(currNetworkBalance).to.equal(prevNetworkBalance.add(NETWORK_AMOUNT));
+                expect(currBaseBalance).to.equal(prevBaseBalance.add(BASE_AMOUNT));
             });
         });
     }
