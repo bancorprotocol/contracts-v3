@@ -1726,7 +1726,7 @@ describe('BancorNetwork', () => {
             });
         }
 
-        describe.only('migrate liquidity', () => {
+        describe('migrate liquidity', () => {
             const TOTAL_SUPPLY = BigNumber.from(10).pow(BigNumber.from(25));
             const RESERVE1_AMOUNT = BigNumber.from(1000000);
             const RESERVE2_AMOUNT = BigNumber.from(2500000);
