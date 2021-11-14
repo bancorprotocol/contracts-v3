@@ -6,14 +6,16 @@ import {
     NetworkSettings,
     TestBancorNetwork,
     TestPoolCollection,
+    PendingWithdrawals,
+    PoolToken,
     TokenHolder
 } from '../../typechain';
-import { ETH, TKN } from '../helpers/Constants';
+import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
 import { createPool, createSystem, createTokenHolder } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/Utils';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
+import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 describe.only('BancorV1Migration', () => {
@@ -29,10 +31,13 @@ describe.only('BancorV1Migration', () => {
 
     let networkTokenGovernance: TokenGovernance;
     let govTokenGovernance: TokenGovernance;
+    let govToken: GovToken;
     let network: TestBancorNetwork;
     let networkSettings: NetworkSettings;
     let networkToken: NetworkToken;
-    let govToken: GovToken;
+    let networkPoolToken: PoolToken;
+    let basePoolToken: PoolToken;
+    let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
     let bancorVault: BancorVault;
     let externalProtectionWallet: TokenHolder;
@@ -47,10 +52,12 @@ describe.only('BancorV1Migration', () => {
         ({
             networkTokenGovernance,
             govTokenGovernance,
+            govToken,
             network,
             networkSettings,
             networkToken,
-            govToken,
+            networkPoolToken,
+            pendingWithdrawals,
             poolCollection,
             bancorVault
         } = await createSystem());
@@ -83,10 +90,11 @@ describe.only('BancorV1Migration', () => {
         await networkTokenGovernance.mint(deployer.address, TOTAL_SUPPLY);
         await networkToken.transfer(provider.address, NETWORK_AMOUNT);
 
-        await createPool(baseToken, network, networkSettings, poolCollection);
+        basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
         await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
         await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
         await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
+        await pendingWithdrawals.setLockDuration(0);
 
         await networkToken.connect(provider).approve(converter.address, NETWORK_AMOUNT);
         if (!isETH) {
@@ -100,6 +108,8 @@ describe.only('BancorV1Migration', () => {
                 value: isETH ? BASE_AMOUNT : BigNumber.from(0)
             });
     };
+
+    const deductWithdrawalFee = (amount: BigNumber) => amount.sub(amount.mul(WITHDRAWAL_FEE).div(PPM_RESOLUTION));
 
     for (const isETH of [false, true]) {
         describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
@@ -116,21 +126,45 @@ describe.only('BancorV1Migration', () => {
             });
 
             it('verifies that the caller can migrate pool tokens', async () => {
-                const prevNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                const prevBaseBalance = await getBalance(baseToken, bancorVault.address);
+                const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
+                const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
                 const poolTokenAmount = await getBalance(poolToken, provider.address);
                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
-                const response = await bancorV1Migration
-                    .connect(provider)
-                    .migratePoolTokens(poolToken.address, poolTokenAmount);
-                const gasCost = isETH ? await getTransactionCost(response) : BigNumber.from(0);
+                await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
 
-                const currNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                const currBaseBalance = await getBalance(baseToken, bancorVault.address);
+                const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
+                const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
-                expect(currNetworkBalance).to.equal(prevNetworkBalance.add(prevNetworkBalance.mul(BASE_AMOUNT).div(prevBaseBalance)));
-                expect(currBaseBalance).to.equal(prevBaseBalance.add(BASE_AMOUNT));
+                expect(currVaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)));
+                expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(BASE_AMOUNT));
+
+                const prevProviderNetworkBalance = await getBalance(networkToken, provider);
+                const prevProviderBaseBalance = await getBalance(baseToken, provider);
+
+                const txs: ContractTransaction[] = [];
+
+                const networkPoolTokenAmount =  await getBalance(networkPoolToken, provider.address);
+                txs.push(await networkPoolToken.connect(provider).approve(pendingWithdrawals.address, networkPoolTokenAmount));
+                txs.push(await pendingWithdrawals.connect(provider).initWithdrawal(networkPoolToken.address, networkPoolTokenAmount));
+                const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                txs.push(await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address)));
+                txs.push(await network.connect(provider).withdraw(networkIds[0]));
+
+                const basePoolTokenAmount =  await getBalance(basePoolToken, provider.address);
+                txs.push(await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount));
+                txs.push(await pendingWithdrawals.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount));
+                const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                txs.push(await network.connect(provider).withdraw(baseIds[0]));
+
+                const costs = isETH ? await Promise.all(txs.map((tx) => getTransactionCost(tx))) : [];
+                const cost = costs.reduce((a, b) => a.add(b), BigNumber.from(0));
+
+                const currProviderNetworkBalance = await getBalance(networkToken, provider);
+                const currProviderBaseBalance = await getBalance(baseToken, provider);
+
+                expect(currProviderNetworkBalance).to.equal(prevProviderNetworkBalance.add(deductWithdrawalFee(NETWORK_AMOUNT)));
+                expect(currProviderBaseBalance.add(cost)).to.equal(prevProviderBaseBalance.add(deductWithdrawalFee(BASE_AMOUNT)));
             });
         });
     }
