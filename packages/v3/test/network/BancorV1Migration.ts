@@ -14,10 +14,10 @@ import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
 import { createPool, createSystem, createTokenHolder } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers, waffle } from 'hardhat';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 const MAX_DEVIATION = BigNumber.from(10_000);
@@ -118,9 +118,14 @@ describe.only('BancorV1Migration', () => {
                             });
                     };
 
-                    const deductWithdrawalFee = (amount: BigNumber) => amount.sub(amount.mul(WITHDRAWAL_FEE).div(PPM_RESOLUTION));
+                    const deductWithdrawalFee = (amount: BigNumber) =>
+                        amount.sub(amount.mul(WITHDRAWAL_FEE).div(PPM_RESOLUTION));
 
-                    const totalCost = async (txs: ContractTransaction[]) => (await Promise.all(txs.map((tx) => getTransactionCost(tx)))).reduce((a, b) => a.add(b), BigNumber.from(0));
+                    const totalCost = async (txs: ContractTransaction[]) =>
+                        (await Promise.all(txs.map((tx) => getTransactionCost(tx)))).reduce(
+                            (a, b) => a.add(b),
+                            BigNumber.from(0)
+                        );
 
                     for (const isETH of [false, true]) {
                         describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
@@ -129,7 +134,9 @@ describe.only('BancorV1Migration', () => {
                                 await initLegacySystem(isETH);
                                 const baseTokenAmount = DEPOSIT_LIMIT.div(10);
                                 if (isETH) {
-                                    await network.deposit(baseToken.address, baseTokenAmount, { value: baseTokenAmount });
+                                    await network.deposit(baseToken.address, baseTokenAmount, {
+                                        value: baseTokenAmount
+                                    });
                                 } else {
                                     await baseToken.approve(network.address, baseTokenAmount);
                                     await network.deposit(baseToken.address, baseTokenAmount);
@@ -143,14 +150,22 @@ describe.only('BancorV1Migration', () => {
 
                                 const poolTokenAmount = await getBalance(poolToken, provider.address);
                                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
-                                await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+                                await bancorV1Migration
+                                    .connect(provider)
+                                    .migratePoolTokens(poolToken.address, poolTokenAmount);
 
                                 const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
                                 const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                                 const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
-                                expect(currProviderPoolTokenBalance).to.equal(prevProviderPoolTokenBalance.sub(poolTokenAmount));
-                                expect(currVaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)));
+                                expect(currProviderPoolTokenBalance).to.equal(
+                                    prevProviderPoolTokenBalance.sub(poolTokenAmount)
+                                );
+                                expect(currVaultNetworkBalance).to.equal(
+                                    prevVaultNetworkBalance.add(
+                                        prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)
+                                    )
+                                );
                                 expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(BASE_AMOUNT));
 
                                 const prevProviderNetworkBalance = await getBalance(networkToken, provider);
@@ -158,16 +173,36 @@ describe.only('BancorV1Migration', () => {
 
                                 const txs: ContractTransaction[] = [];
 
-                                const networkPoolTokenAmount =  await getBalance(networkPoolToken, provider.address);
-                                txs.push(await networkPoolToken.connect(provider).approve(pendingWithdrawals.address, networkPoolTokenAmount));
-                                txs.push(await pendingWithdrawals.connect(provider).initWithdrawal(networkPoolToken.address, networkPoolTokenAmount));
+                                const networkPoolTokenAmount = await getBalance(networkPoolToken, provider.address);
+                                txs.push(
+                                    await networkPoolToken
+                                        .connect(provider)
+                                        .approve(pendingWithdrawals.address, networkPoolTokenAmount)
+                                );
+                                txs.push(
+                                    await pendingWithdrawals
+                                        .connect(provider)
+                                        .initWithdrawal(networkPoolToken.address, networkPoolTokenAmount)
+                                );
                                 const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-                                txs.push(await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address)));
+                                txs.push(
+                                    await govToken
+                                        .connect(provider)
+                                        .approve(network.address, await getBalance(govToken, provider.address))
+                                );
                                 txs.push(await network.connect(provider).withdraw(networkIds[0]));
 
-                                const basePoolTokenAmount =  await getBalance(basePoolToken, provider.address);
-                                txs.push(await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount));
-                                txs.push(await pendingWithdrawals.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount));
+                                const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
+                                txs.push(
+                                    await basePoolToken
+                                        .connect(provider)
+                                        .approve(pendingWithdrawals.address, basePoolTokenAmount)
+                                );
+                                txs.push(
+                                    await pendingWithdrawals
+                                        .connect(provider)
+                                        .initWithdrawal(basePoolToken.address, basePoolTokenAmount)
+                                );
                                 const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
                                 txs.push(await network.connect(provider).withdraw(baseIds[0]));
 
@@ -176,8 +211,12 @@ describe.only('BancorV1Migration', () => {
                                 const currProviderNetworkBalance = await getBalance(networkToken, provider);
                                 const currProviderBaseBalance = await getBalance(baseToken, provider);
 
-                                expect(currProviderNetworkBalance).to.equal(prevProviderNetworkBalance.add(deductWithdrawalFee(NETWORK_AMOUNT)));
-                                expect(currProviderBaseBalance.add(cost)).to.equal(prevProviderBaseBalance.add(deductWithdrawalFee(BASE_AMOUNT)));
+                                expect(currProviderNetworkBalance).to.equal(
+                                    prevProviderNetworkBalance.add(deductWithdrawalFee(NETWORK_AMOUNT))
+                                );
+                                expect(currProviderBaseBalance.add(cost)).to.equal(
+                                    prevProviderBaseBalance.add(deductWithdrawalFee(BASE_AMOUNT))
+                                );
                             });
                         });
                     }
