@@ -128,6 +128,7 @@ describe.only('BancorV1Migration', () => {
             });
 
             it('verifies that the caller can migrate pool tokens', async () => {
+                const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
                 const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                 const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
@@ -135,9 +136,11 @@ describe.only('BancorV1Migration', () => {
                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
                 await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
 
+                const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
                 const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                 const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
+                expect(currProviderPoolTokenBalance).to.equal(prevProviderPoolTokenBalance.sub(poolTokenAmount));
                 expect(currVaultNetworkBalance).to.equal(prevVaultNetworkBalance.add(prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)));
                 expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(BASE_AMOUNT));
 
