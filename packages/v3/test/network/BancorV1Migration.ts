@@ -94,12 +94,11 @@ describe.only('BancorV1Migration', () => {
             await baseToken.connect(provider).approve(converter.address, BASE_AMOUNT);
         }
 
-        await converter.connect(provider).addLiquidity(
-            [networkToken.address, baseToken.address],
-            [NETWORK_AMOUNT, BASE_AMOUNT],
-            1,
-            { value: isETH ? BASE_AMOUNT : BigNumber.from(0) }
-        );
+        await converter
+            .connect(provider)
+            .addLiquidity([networkToken.address, baseToken.address], [NETWORK_AMOUNT, BASE_AMOUNT], 1, {
+                value: isETH ? BASE_AMOUNT : BigNumber.from(0)
+            });
     };
 
     for (const isETH of [false, true]) {
@@ -109,7 +108,7 @@ describe.only('BancorV1Migration', () => {
                 await initLegacySystem(isETH);
                 const baseTokenAmount = DEPOSIT_LIMIT.div(10);
                 if (isETH) {
-                    await network.deposit(baseToken.address, baseTokenAmount, { value : baseTokenAmount });
+                    await network.deposit(baseToken.address, baseTokenAmount, { value: baseTokenAmount });
                 } else {
                     await baseToken.approve(network.address, baseTokenAmount);
                     await network.deposit(baseToken.address, baseTokenAmount);
@@ -122,7 +121,9 @@ describe.only('BancorV1Migration', () => {
 
                 const poolTokenAmount = await getBalance(poolToken, provider.address);
                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
-                const response = await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+                const response = await bancorV1Migration
+                    .connect(provider)
+                    .migratePoolTokens(poolToken.address, poolTokenAmount);
                 const gasCost = isETH ? await getTransactionCost(response) : BigNumber.from(0);
 
                 const currNetworkBalance = await getBalance(networkToken, bancorVault.address);
