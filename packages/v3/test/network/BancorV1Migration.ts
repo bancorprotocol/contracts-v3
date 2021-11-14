@@ -17,8 +17,16 @@ import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers, waffle } from 'hardhat';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe.only('BancorV1Migration', () => {
+    let deployer: SignerWithAddress;
+    let provider: SignerWithAddress;
+
+    before(async () => {
+        [deployer, provider] = await ethers.getSigners();
+    });
+
     for (const withdrawalFee of [1, 2.5, 5]) {
         for (const networkAmount of [1, 2.5, 5]) {
             for (const baseAmount of [1, 2.5, 5]) {
@@ -49,8 +57,6 @@ describe.only('BancorV1Migration', () => {
                     let converter: any;
                     let poolToken: any;
                     let baseToken: any;
-                    let deployer: any;
-                    let provider: any;
 
                     const setup = async () => {
                         ({
@@ -78,8 +84,6 @@ describe.only('BancorV1Migration', () => {
                     };
 
                     const initLegacySystem = async (isETH: boolean) => {
-                        [deployer, provider] = await ethers.getSigners();
-
                         baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
 
                         ({ poolToken, converter } = await createLegacySystem(
