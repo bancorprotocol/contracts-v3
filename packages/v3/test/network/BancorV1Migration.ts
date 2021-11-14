@@ -19,6 +19,13 @@ import { BigNumber, ContractTransaction } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
+const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+const MAX_DEVIATION = BigNumber.from(10_000);
+const MINTING_LIMIT = BigNumber.from(10_000_000);
+const MIN_LIQUIDITY_FOR_TRADING = BigNumber.from(100_000);
+const DEPOSIT_LIMIT = BigNumber.from(100_000_000);
+const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
+
 describe.only('BancorV1Migration', () => {
     let deployer: SignerWithAddress;
     let provider: SignerWithAddress;
@@ -31,13 +38,7 @@ describe.only('BancorV1Migration', () => {
         for (const networkAmount of [1, 2.5, 5]) {
             for (const baseAmount of [1, 2.5, 5]) {
                 describe(`withdrawalFee = ${withdrawalFee}%, networkAmount = ${networkAmount}M, baseAmount = ${baseAmount}M`, () => {
-                    const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-                    const MAX_DEVIATION = BigNumber.from(10_000);
-                    const MINTING_LIMIT = BigNumber.from(10_000_000);
                     const WITHDRAWAL_FEE = BigNumber.from(withdrawalFee * 10_000);
-                    const MIN_LIQUIDITY_FOR_TRADING = BigNumber.from(100_000);
-                    const DEPOSIT_LIMIT = BigNumber.from(100_000_000);
-                    const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
                     const NETWORK_AMOUNT = BigNumber.from(networkAmount * 1_000_000);
                     const BASE_AMOUNT = BigNumber.from(baseAmount * 10_000);
 
