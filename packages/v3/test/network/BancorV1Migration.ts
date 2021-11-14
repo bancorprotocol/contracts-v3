@@ -111,6 +111,8 @@ describe.only('BancorV1Migration', () => {
 
     const deductWithdrawalFee = (amount: BigNumber) => amount.sub(amount.mul(WITHDRAWAL_FEE).div(PPM_RESOLUTION));
 
+    const totalCost = async (txs: ContractTransaction[]) => (await Promise.all(txs.map((tx) => getTransactionCost(tx)))).reduce((a, b) => a.add(b), BigNumber.from(0));
+
     for (const isETH of [false, true]) {
         describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
             beforeEach(async () => {
@@ -157,8 +159,7 @@ describe.only('BancorV1Migration', () => {
                 const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
                 txs.push(await network.connect(provider).withdraw(baseIds[0]));
 
-                const costs = isETH ? await Promise.all(txs.map((tx) => getTransactionCost(tx))) : [];
-                const cost = costs.reduce((a, b) => a.add(b), BigNumber.from(0));
+                const cost = isETH ? await totalCost(txs) : BigNumber.from(0);
 
                 const currProviderNetworkBalance = await getBalance(networkToken, provider);
                 const currProviderBaseBalance = await getBalance(baseToken, provider);
