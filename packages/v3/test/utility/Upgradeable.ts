@@ -1,7 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestUpgradeable } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { prepareEach } from '../helpers/Fixture';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -18,7 +17,7 @@ describe('Upgradeable', () => {
         [deployer, nonOwner] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         upgradeable = await Contracts.TestUpgradeable.deploy();
 
         await upgradeable.initialize();

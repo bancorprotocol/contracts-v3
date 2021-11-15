@@ -1,6 +1,7 @@
 import { ContractBuilder, Contract } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import LegacyContracts from '../../components/LegacyContracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -14,7 +15,6 @@ import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
 import { Fraction } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
-import { TokenGovernance } from '@bancor/token-governance';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
 import { ethers, waffle } from 'hardhat';
@@ -98,7 +98,7 @@ const createGovernedToken = async <F extends ContractFactory>(
     return { token, tokenGovernance };
 };
 
-const createGovernedTokensFixture = async () => {
+const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
         TOTAL_SUPPLY,
@@ -116,8 +116,6 @@ const createGovernedTokensFixture = async () => {
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
 };
-
-export const createGovernedTokens = async () => waffle.loadFixture(createGovernedTokensFixture);
 
 export const createPoolCollection = async (
     network: string | BaseContract,

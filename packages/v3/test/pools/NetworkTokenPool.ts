@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken, GovToken } from '../../components/LegacyContracts';
+import { NetworkToken, GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
     NetworkSettings,
@@ -21,7 +21,6 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
@@ -47,33 +46,21 @@ describe('NetworkTokenPool', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to initialize with an invalid network contract', async () => {
-            const { networkPoolToken } = await createSystem();
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: NetworkToken;
+        let govToken: GovToken;
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
+        let networkTokenPool: TestNetworkTokenPool;
+        let bancorVault: BancorVault;
+        let networkPoolToken: PoolToken;
 
-            await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
-                'InvalidAddress'
-            );
-        });
-
-        it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
-            const { network } = await createSystem();
-
-            await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
-            );
-        });
-
-        it('should revert when attempting to reinitialize', async () => {
-            const { networkTokenPool } = await createSystem();
-
-            await expect(networkTokenPool.initialize()).to.be.revertedWith(
-                'Initializable: contract is already initialized'
-            );
-        });
-
-        it('should be properly initialized', async () => {
-            const {
+        beforeEach(async () => {
+            ({
+                network,
                 networkTokenPool,
+                networkPoolToken,
                 networkSettings,
                 network,
                 networkToken,
@@ -81,8 +68,28 @@ describe('NetworkTokenPool', () => {
                 govToken,
                 govTokenGovernance,
                 bancorVault
-            } = await createSystem();
+            } = await createSystem());
+        });
 
+        it('should revert when attempting to initialize with an invalid network contract', async () => {
+            await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
+            await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
+            await expect(networkTokenPool.initialize()).to.be.revertedWith(
+                'Initializable: contract is already initialized'
+            );
+        });
+
+        it('should be properly initialized', async () => {
             expect(await networkTokenPool.version()).to.equal(1);
             expect(await networkTokenPool.isPayable()).to.be.false;
 
@@ -125,7 +132,7 @@ describe('NetworkTokenPool', () => {
             [deployer, recipient] = await ethers.getSigners();
         });
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ network, networkToken, networkTokenPool } = await createSystem());
         });
 
@@ -166,7 +173,7 @@ describe('NetworkTokenPool', () => {
 
         const amount = toWei(BigNumber.from(12345));
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ network, networkToken, networkTokenPool, bancorVault } = await createSystem());
 
             await networkToken.transfer(bancorVault.address, amount);
@@ -212,7 +219,7 @@ describe('NetworkTokenPool', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
                 await createSystem());
 
@@ -236,7 +243,7 @@ describe('NetworkTokenPool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
@@ -244,7 +251,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when spot rate is unstable', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     const spotRate = { n: BigNumber.from(1_000_000), d: BigNumber.from(1) };
 
                     await poolCollection.setTradingLiquidityT(reserveToken.address, {
@@ -270,7 +277,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when spot rate is stable', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     const spotRate = {
                         n: toWei(BigNumber.from(1_000_000)),
                         d: toWei(BigNumber.from(10_000_000))
@@ -328,7 +335,7 @@ describe('NetworkTokenPool', () => {
 
         const contextId = formatBytes32String('CTX');
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({
                 networkSettings,
                 network,
@@ -434,7 +441,7 @@ describe('NetworkTokenPool', () => {
         context('when close to the minting limit', () => {
             const remaining = toWei(BigNumber.from(1_000_000));
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 const amount = MINTING_LIMIT.sub(remaining);
 
                 await testRequest(amount, amount);
@@ -463,7 +470,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('when the minting limit is lowered retroactively', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await testRequest(BigNumber.from(100_000), BigNumber.from(100_000));
 
                     await networkSettings.setPoolMintingLimit(reserveToken.address, BigNumber.from(1));
@@ -485,7 +492,7 @@ describe('NetworkTokenPool', () => {
         });
 
         context('when at the minting limit', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await testRequest(MINTING_LIMIT, MINTING_LIMIT);
             });
 
@@ -519,7 +526,7 @@ describe('NetworkTokenPool', () => {
 
         const contextId = formatBytes32String('CTX');
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({
                 networkSettings,
                 network,
@@ -567,7 +574,7 @@ describe('NetworkTokenPool', () => {
         context('with requested liquidity', () => {
             const requestedAmount = toWei(BigNumber.from(1_000_000));
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await network.requestLiquidityT(contextId, reserveToken.address, requestedAmount);
             });
 
@@ -650,7 +657,7 @@ describe('NetworkTokenPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
@@ -693,7 +700,7 @@ describe('NetworkTokenPool', () => {
             const MAX_DEVIATION = BigNumber.from(10_000); // %1
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION); // %1
@@ -701,7 +708,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('with requested liquidity', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     const requestedAmount = toWei(BigNumber.from(1_000_000));
                     const contextId = formatBytes32String('CTX');
 
@@ -840,7 +847,7 @@ describe('NetworkTokenPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
@@ -876,7 +883,7 @@ describe('NetworkTokenPool', () => {
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
             const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
@@ -885,7 +892,7 @@ describe('NetworkTokenPool', () => {
             });
 
             context('with requested liquidity', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     const requestedAmount = toWei(BigNumber.from(1_000_000));
                     const contextId = formatBytes32String('CTX');
 
@@ -898,7 +905,7 @@ describe('NetworkTokenPool', () => {
                         govTokenAmount: BigNumber;
                     };
 
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         // since this is only a unit test, we will simulate a proper transfer of the network token amount
                         // from the network to the network token pool
                         const depositAmount = toWei(BigNumber.from(1_000_000));
@@ -1041,7 +1048,7 @@ describe('NetworkTokenPool', () => {
 
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ networkSettings, networkTokenPool, network } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -1126,7 +1133,7 @@ describe('NetworkTokenPool', () => {
             const isNetworkTokenPoolToken = symbol === NETWORK_TOKEN_POOL_TOKEN_SYMBOL;
 
             context(`withdrawing ${symbol}`, () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     ({ network, networkTokenPool, networkPoolToken, networkToken, networkSettings, poolCollection } =
                         await createSystem());
 
@@ -1158,7 +1165,7 @@ describe('NetworkTokenPool', () => {
                 });
 
                 context('with admin role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await networkTokenPool.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
@@ -1166,7 +1173,7 @@ describe('NetworkTokenPool', () => {
                 });
 
                 context('with network pool token manager role', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await networkTokenPool.grantRole(
                             NetworkTokenPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
                             user.address

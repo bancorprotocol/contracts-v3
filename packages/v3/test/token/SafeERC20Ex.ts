@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestSafeERC20Ex, TestERC20Token } from '../../typechain';
-import { prepareEach } from '../helpers/Fixture';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -19,7 +18,7 @@ describe('SafeERC20Ex', () => {
         [, spender] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         safeERC20 = await Contracts.TestSafeERC20Ex.deploy();
         sender = safeERC20.address;
 
@@ -41,7 +40,7 @@ describe('SafeERC20Ex', () => {
     context('with existing allowance', () => {
         const allowance = BigNumber.from(1000);
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             await safeERC20.ensureApprove(token.address, spender.address, allowance);
         });
 

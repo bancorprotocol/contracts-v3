@@ -3,7 +3,6 @@ import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechai
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -28,7 +27,7 @@ describe('NetworkSettings', () => {
         [deployer, nonOwner] = await ethers.getSigners();
     });
 
-    prepareEach(async () => {
+    beforeEach(async () => {
         ({ networkSettings, networkFeeVault } = await createSystem());
 
         reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
@@ -61,7 +60,7 @@ describe('NetworkSettings', () => {
     });
 
     describe('protected tokens whitelist', async () => {
-        prepareEach(async () => {
+        beforeEach(async () => {
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
         });
 
@@ -96,7 +95,7 @@ describe('NetworkSettings', () => {
         });
 
         describe('removing', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
             });
 
@@ -215,7 +214,7 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.networkFeePPM()).to.equal(fee);
         };
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             await expectNetworkFeeParams(networkFeeVault, BigNumber.from(0));
         });
 
@@ -238,7 +237,7 @@ describe('NetworkSettings', () => {
     describe('withdrawal fee', () => {
         const newWithdrawalFee = BigNumber.from(500000);
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             expect(await networkSettings.withdrawalFeePPM()).to.equal(BigNumber.from(0));
         });
 
@@ -281,7 +280,7 @@ describe('NetworkSettings', () => {
     describe('flash-loan fee', () => {
         const newFlashLoanFee = BigNumber.from(500000);
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             expect(await networkSettings.flashLoanFeePPM()).to.equal(BigNumber.from(0));
         });
 
@@ -324,7 +323,7 @@ describe('NetworkSettings', () => {
     describe('maximum deviation', () => {
         const newMaxDeviation = BigNumber.from(500000);
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(BigNumber.from(0));
         });
 
