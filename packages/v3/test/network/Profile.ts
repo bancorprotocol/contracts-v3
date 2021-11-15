@@ -61,6 +61,7 @@ describe('@profile Profile', () => {
 
         if (debug) {
             console.log(`   ${(await res.wait()).transactionHash}`);
+            await prompt.get(['Press any key to continue to the next test']);
         }
 
         if (summary[desc] === undefined) {
