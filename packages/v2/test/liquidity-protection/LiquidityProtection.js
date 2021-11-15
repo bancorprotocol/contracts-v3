@@ -356,6 +356,7 @@ describe('LiquidityProtection', () => {
                 liquidityProtectionWallet = await Contracts.TokenHolder.deploy();
                 liquidityProtection = await Contracts.TestLiquidityProtection.deploy(
                     bancorNetwork.address,
+                    bancorVault.address,
                     liquidityProtectionSettings.address,
                     liquidityProtectionStore.address,
                     liquidityProtectionStats.address,
@@ -2280,7 +2281,7 @@ describe('LiquidityProtection', () => {
 
                                 const prevGovBalance = await govToken.balanceOf(owner.address);
 
-                                await liquidityProtection.migrateSystemPoolTokens([poolToken.address], bancorVault.address);
+                                await liquidityProtection.migrateSystemPoolTokens([poolToken.address]);
 
                                 // verify balances
                                 const systemBalance = await liquidityProtectionSystemStore.systemBalance(
@@ -2324,7 +2325,7 @@ describe('LiquidityProtection', () => {
                                 );
 
                                 await expect(
-                                    liquidityProtection.connect(nonOwner).migrateSystemPoolTokens([poolToken.address], bancorVault.address)
+                                    liquidityProtection.connect(nonOwner).migrateSystemPoolTokens([poolToken.address])
                                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
                                 });
                         });

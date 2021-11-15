@@ -1831,6 +1831,7 @@ describe('BancorNetwork', () => {
                 } = await createLegacySystem(
                     owner,
                     network,
+                    bancorVault,
                     networkToken,
                     networkTokenGovernance,
                     govTokenGovernance,

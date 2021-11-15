@@ -10,6 +10,7 @@ const {
 export const createLegacySystem = async (
     owner: any,
     network: any,
+    vault: any,
     networkToken: any,
     networkTokenGovernance: any,
     govTokenGovernance: any,
@@ -42,6 +43,7 @@ export const createLegacySystem = async (
     );
     const liquidityProtection = await LegacyContracts.TestLiquidityProtection.deploy(
         network.address,
+        vault.address,
         liquidityProtectionSettings.address,
         liquidityProtectionStore.address,
         liquidityProtectionStats.address,
