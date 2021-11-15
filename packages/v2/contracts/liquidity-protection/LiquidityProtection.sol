@@ -88,6 +88,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
     uint256 internal constant MAX_UINT256 = uint256(-1);
 
     IBancorNetworkV3 private immutable _networkV3;
+    address payable private immutable _vaultV3;
     ILiquidityProtectionSettings private immutable _settings;
     ILiquidityProtectionStore private immutable _store;
     ILiquidityProtectionStats private immutable _stats;
@@ -104,6 +105,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      */
     constructor(
         IBancorNetworkV3 networkV3,
+        address payable vaultV3,
         ILiquidityProtectionSettings settings,
         ILiquidityProtectionStore store,
         ILiquidityProtectionStats stats,
@@ -114,15 +116,18 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         ICheckpointStore lastRemoveCheckpointStore
     )
         public
-        validAddress(address(networkV3))
-        validAddress(address(settings))
-        validAddress(address(store))
-        validAddress(address(stats))
-        validAddress(address(systemStore))
-        validAddress(address(wallet))
-        validAddress(address(lastRemoveCheckpointStore))
     {
+        _validAddress(address(networkV3));
+        _validAddress(address(vaultV3));
+        _validAddress(address(settings));
+        _validAddress(address(store));
+        _validAddress(address(stats));
+        _validAddress(address(systemStore));
+        _validAddress(address(wallet));
+        _validAddress(address(lastRemoveCheckpointStore));
+
         _networkV3 = networkV3;
+        _vaultV3 = vaultV3;
         _settings = settings;
         _store = store;
         _stats = stats;
@@ -755,7 +760,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      *
      * - the caller must be the owner of this contract
      */
-    function migrateSystemPoolTokens(IConverterAnchor[] calldata poolAnchors, address bancorVault) external nonReentrant ownerOnly {
+    function migrateSystemPoolTokens(IConverterAnchor[] calldata poolAnchors) external nonReentrant ownerOnly {
         uint256 length = poolAnchors.length;
         for (uint256 i = 0; i < length; i++) {
             IDSToken poolToken = IDSToken(address(poolAnchors[i]));
@@ -773,9 +778,9 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
 
             _burnNetworkTokens(poolAnchors[i], reserveAmounts[0]);
             if (reserveTokens[1].isNativeToken()) {
-                payable(bancorVault).sendValue(reserveAmounts[1]);
+                _vaultV3.sendValue(reserveAmounts[1]);
             } else {
-                reserveTokens[1].safeTransfer(bancorVault, reserveAmounts[1]);
+                reserveTokens[1].safeTransfer(_vaultV3, reserveAmounts[1]);
             }
         }
     }
