@@ -607,7 +607,7 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
             if (isMigrating) {
                 // mint network tokens for this contract and migrate them
                 _mintNetworkTokens(address(this), removedPos.poolToken, removedPos.reserveAmount);
-                _networkToken.ensureApprove(address(_networkV3), removedPos.reserveAmount);
+                _networkToken.approve(address(_networkV3), removedPos.reserveAmount);
                 _networkV3.migrateLiquidity(IReserveToken(address(_networkToken)), provider, targetAmount, targetAmount, removedPos.reserveAmount);
             } else {
                 // mint network tokens for the caller and lock them

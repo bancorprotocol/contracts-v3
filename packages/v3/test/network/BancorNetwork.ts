@@ -1889,6 +1889,31 @@ describe('BancorNetwork', () => {
                         );
                     });
 
+                    it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
+                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                        const protectionId = protectionIds[0];
+                        let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                        protection = getProtection(protection);
+
+                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
+                            'ERR_ACCESS_DENIED'
+                        );
+                    });
+
+                    it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
+                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                        const protectionId = protectionIds[0];
+                        let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                        protection = getProtection(protection);
+
+                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await liquidityProtection.migratePositions([protectionId]);
+                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                            'ERR_ACCESS_DENIED'
+                        );
+                    });
+
                     it('verifies that the caller can migrate positions', async () => {
                         let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         const protectionId = protectionIds[0];
@@ -1981,7 +2006,7 @@ describe('BancorNetwork', () => {
 
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
-                        await liquidityProtection.migrateSystemPoolTokens([poolToken.address], bancorVault.address);
+                        await liquidityProtection.migrateSystemPoolTokens([poolToken.address]);
 
                         // verify balances
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
@@ -2034,6 +2059,31 @@ describe('BancorNetwork', () => {
                         reserve2Amount,
                         false,
                         owner
+                    );
+                });
+
+                it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
+                    let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                    const protectionId = protectionIds[0];
+                    let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                    protection = getProtection(protection);
+
+                    await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                    await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
+                        'ERR_ACCESS_DENIED'
+                    );
+                });
+
+                it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
+                    let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                    const protectionId = protectionIds[0];
+                    let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                    protection = getProtection(protection);
+
+                    await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                    await liquidityProtection.migratePositions([protectionId]);
+                    await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                        'ERR_ACCESS_DENIED'
                     );
                 });
 

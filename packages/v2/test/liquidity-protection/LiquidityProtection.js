@@ -2079,9 +2079,6 @@ describe('LiquidityProtection', () => {
                                 await initPool(isETHReserve);
                                 await bancorNetwork.setNetworkToken(networkToken.address);
                                 await bancorNetwork.setBancorVault(bancorVault.address);
-                            });
-
-                            it('verifies that the caller can migrate positions', async () => {
                                 const reserveAmount = BigNumber.from(1000);
                                 await addProtectedLiquidity(
                                     poolToken.address,
@@ -2090,6 +2087,9 @@ describe('LiquidityProtection', () => {
                                     reserveAmount,
                                     isETHReserve
                                 );
+                            });
+
+                            it('verifies that the caller can migrate positions', async () => {
                                 let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                                 const protectionId = protectionIds[0];
                                 let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
@@ -2148,7 +2148,7 @@ describe('LiquidityProtection', () => {
 
                                 const vaultBaseBalance = await getBalance(baseToken, baseTokenAddress, bancorVault.address);
                                 const vaultNetworkBalance = await getBalance(networkToken, networkToken.address, bancorVault.address);
-                                expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount));
+                                expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount));
                                 expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
 
                                 const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
@@ -2180,15 +2180,6 @@ describe('LiquidityProtection', () => {
                             });
 
                             it('verifies that migrating positions does not update the removal checkpoint', async () => {
-                                const reserveAmount = BigNumber.from(100000);
-                                await addProtectedLiquidity(
-                                    poolToken.address,
-                                    baseToken,
-                                    baseTokenAddress,
-                                    reserveAmount,
-                                    isETHReserve
-                                );
-
                                 await setTime(now.add(duration.days(3)));
 
                                 const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(
@@ -2210,16 +2201,32 @@ describe('LiquidityProtection', () => {
                                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
                             });
 
-                            it('should revert when attempting to migrate a position that belongs to another account', async () => {
-                                const reserveAmount = BigNumber.from(5000);
-                                await addProtectedLiquidity(
-                                    poolToken.address,
-                                    baseToken,
-                                    baseTokenAddress,
-                                    reserveAmount,
-                                    isETHReserve
+                            it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
+                                const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(
+                                    owner.address
                                 );
+                                const protectionId = protectionIds[0];
 
+                                await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                                await expect(
+                                    liquidityProtection.migratePositions([protectionId, protectionId])
+                                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                            });
+
+                            it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
+                                const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(
+                                    owner.address
+                                );
+                                const protectionId = protectionIds[0];
+
+                                await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                                await liquidityProtection.migratePositions([protectionId]);
+                                await expect(
+                                    liquidityProtection.migratePositions([protectionId])
+                                ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                            });
+
+                            it('should revert when attempting to migrate a position that belongs to another account', async () => {
                                 const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(
                                     owner.address
                                 );
@@ -2234,15 +2241,6 @@ describe('LiquidityProtection', () => {
                             });
 
                             it('should revert when attempting to migrate a position from a non whitelisted pool', async () => {
-                                const reserveAmount = BigNumber.from(5000);
-                                await addProtectedLiquidity(
-                                    poolToken.address,
-                                    baseToken,
-                                    baseTokenAddress,
-                                    reserveAmount,
-                                    isETHReserve
-                                );
-
                                 const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(
                                     owner.address
                                 );
@@ -2257,14 +2255,6 @@ describe('LiquidityProtection', () => {
                             });
 
                             it('verifies that the owner can migrate system pool tokens', async () => {
-                                const reserveAmount = BigNumber.from(1000);
-                                await addProtectedLiquidity(
-                                    poolToken.address,
-                                    baseToken,
-                                    baseTokenAddress,
-                                    reserveAmount,
-                                    isETHReserve
-                                );
                                 let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                                 const protectionId = protectionIds[0];
                                 let protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
@@ -2291,7 +2281,7 @@ describe('LiquidityProtection', () => {
 
                                 const vaultBaseBalance = await getBalance(baseToken, baseTokenAddress, bancorVault.address);
                                 const vaultNetworkBalance = await getBalance(networkToken, networkToken.address, bancorVault.address);
-                                expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(reserveAmount.div(2)));
+                                expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
                                 expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
 
                                 const govBalance = await govToken.balanceOf(owner.address);
@@ -2315,15 +2305,6 @@ describe('LiquidityProtection', () => {
 
                             it('verifies that a non-owner cannot migrate system pool tokens', async () => {
                                 const nonOwner = accounts[8];
-                                const reserveAmount = BigNumber.from(1000);
-                                await addProtectedLiquidity(
-                                    poolToken.address,
-                                    baseToken,
-                                    baseTokenAddress,
-                                    reserveAmount,
-                                    isETHReserve
-                                );
-
                                 await expect(
                                     liquidityProtection.connect(nonOwner).migrateSystemPoolTokens([poolToken.address])
                                 ).to.be.revertedWith('ERR_ACCESS_DENIED');
