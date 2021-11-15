@@ -90,6 +90,7 @@ describe.only('BancorV1Migration', () => {
                         ({ poolToken, converter } = await createLegacySystem(
                             deployer,
                             network,
+                            bancorVault,
                             networkToken,
                             networkTokenGovernance,
                             govTokenGovernance,
