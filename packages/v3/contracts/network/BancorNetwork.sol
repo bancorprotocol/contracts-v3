@@ -119,7 +119,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     mapping(ReserveToken => IPoolCollection) private _collectionByPool;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 6] private __gap;
+    uint256[MAX_GAP - 9] private __gap;
 
     /**
      * @dev triggered when the external protection vault is updated
