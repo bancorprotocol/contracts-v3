@@ -57,6 +57,7 @@
         "@typechain/hardhat": "^3.0.0",
         "@types/chai": "^4.2.22",
         "@types/fs-extra": "^9.0.13",
+        "@types/lodash": "^4.14.177",
         "@types/mocha": "^9.0.0",
         "@types/node": "^16.11.7",
         "@types/prompt": "^1.1.1",
