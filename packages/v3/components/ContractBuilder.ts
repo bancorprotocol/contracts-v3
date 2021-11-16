@@ -1,6 +1,6 @@
 /* eslint-enable camelcase */
 import { Signer, ContractFactory } from 'ethers';
-import { ethers } from 'hardhat';
+import { ethers, tenderly } from 'hardhat';
 
 export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
@@ -42,7 +42,21 @@ export const deployOrAttach = <F extends ContractFactory>(
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             const defaultSigner = initialSigner || (await ethers.getSigners())[0];
 
-            return new FactoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
+            const res = new FactoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
+
+            // persist artifacts during profiling debugging
+            const { PROFILE: profile, DEBUG: debug } = process.env;
+
+            if (profile && debug) {
+                const contract = await res;
+
+                await tenderly.persistArtifacts({
+                    name: contractName,
+                    address: contract.address
+                });
+            }
+
+            return res;
         },
         attach: attachOnly<F>(FactoryConstructor, initialSigner).attach
     };

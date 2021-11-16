@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
 import '@nomiclabs/hardhat-waffle';
+import '@tenderly/hardhat-tenderly';
 import '@typechain/hardhat';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';

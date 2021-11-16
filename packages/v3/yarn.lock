@@ -1112,6 +1112,15 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
+"@tenderly/hardhat-tenderly@^1.0.12":
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/@tenderly/hardhat-tenderly/-/hardhat-tenderly-1.0.12.tgz#fa64da2bf2f6d35a1c131ac9ccaf2f7e8b189a50"
+  integrity sha512-zx2zVpbBxGWVp+aLgf59sZR5lxdqfq/PjqUhga6+iazukQNu/Y6pLfVnCcF1ggvLsf7gnMjwLe3YEx/GxCAykQ==
+  dependencies:
+    axios "^0.21.1"
+    fs-extra "^9.0.1"
+    js-yaml "^3.14.0"
+
 "@trivago/prettier-plugin-sort-imports@^2.0.4":
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/@trivago/prettier-plugin-sort-imports/-/prettier-plugin-sort-imports-2.0.4.tgz#2e5bbf80bd87e919202f791008a2fbcdbb2a566f"
@@ -5008,7 +5017,7 @@ fs-extra@^8.1.0:
     jsonfile "^4.0.0"
     universalify "^0.1.0"
 
-fs-extra@^9.1.0:
+fs-extra@^9.0.1, fs-extra@^9.1.0:
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-9.1.0.tgz#5954460c764a8da2094ba3554bf839e6b9a7c86d"
   integrity sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==
@@ -6252,7 +6261,7 @@ js-yaml@3.13.1:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
-js-yaml@3.x, js-yaml@^3.12.0, js-yaml@^3.13.0, js-yaml@^3.13.1:
+js-yaml@3.x, js-yaml@^3.12.0, js-yaml@^3.13.0, js-yaml@^3.13.1, js-yaml@^3.14.0:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
   integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==
