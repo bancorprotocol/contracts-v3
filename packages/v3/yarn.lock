@@ -247,10 +247,10 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
-"@bancor/token-governance@^0.1.6":
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.6.tgz#e2cb855dbab4494b0106e4f24c236e18996aa492"
-  integrity sha512-dkHSTi00RwgwBb9kETmwDhce0T+DJ9NX7C7bHY4szY0qO7jgHkVJcp0x2FbYdsVXxQMhoemrHEtbrs3tUJIBpg==
+"@bancor/token-governance@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.5.tgz#756d33360a64240cfd810c053987b2a72fe58d5e"
+  integrity sha512-1+TbwneERE+5lMvppA2QJlPxj7rBXa0vL3GA2VDqKdUYcBhATYz4Gqo+VoNdfMiGi4CDKSKQ9p88ftZe7AufqQ==
 
 "@cspotcode/source-map-consumer@0.8.0":
   version "0.8.0"
@@ -9087,10 +9087,10 @@ solc@0.7.3:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solc@0.8.10:
-  version "0.8.10"
-  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.10.tgz#3f761794677a36cdd8054f4ec57d84bab8455358"
-  integrity sha512-I/Mcn6J5bEtJqveNLplQm9IRrhemm6v+qkw5S2+wM4x9HItJ1sYdrqVTN3j4DMhFDM3ZbvM0QywVzpPx666PHw==
+solc@0.8.9:
+  version "0.8.9"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.9.tgz#e57eb1c65c1eea273cc9b2b0d6cca051b878cbf8"
+  integrity sha512-dD8tQgGCrdWQPpbDTbQF048S3JAcpytOax2r5qPgQluKJPCRFT6c/fec0ZkbrRwRSeYT/qiKz0OKBDOinnGeWw==
   dependencies:
     command-exists "^1.2.8"
     commander "^8.1.0"
