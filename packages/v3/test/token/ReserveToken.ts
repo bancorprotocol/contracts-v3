@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestReserveToken } from '../../typechain';
+import { TestReserveToken } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS, ETH, TKN } from '../helpers/Constants';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

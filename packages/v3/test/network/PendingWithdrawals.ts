@@ -7,7 +7,7 @@ import {
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain';
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes } from '../helpers/Constants';
 import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';

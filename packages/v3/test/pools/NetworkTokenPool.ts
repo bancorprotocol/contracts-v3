@@ -10,7 +10,7 @@ import {
     TestNetworkTokenPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
     FeeTypes,

@@ -9,7 +9,7 @@ yarn-error.log*
 
 /cache
 /artifacts
-/typechain
+/typechain-types
 /data
 /deployments
 

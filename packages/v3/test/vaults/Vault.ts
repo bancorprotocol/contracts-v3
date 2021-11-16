@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { TestVault } from '../../typechain';
+import { TestVault } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';

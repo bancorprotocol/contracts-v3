@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestERC20Token, TokenHolder } from '../../typechain';
+import { TestERC20Token, TokenHolder } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createTokenHolder } from '../helpers/Factory';
 import { getBalance, getBalances, TokenWithAddress } from '../helpers/Utils';

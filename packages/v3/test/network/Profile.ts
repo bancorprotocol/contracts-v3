@@ -10,7 +10,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TokenHolder
-} from '../../typechain';
+} from '../../typechain-types';
 import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import {

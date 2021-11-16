@@ -10,7 +10,7 @@ import {
     TestPoolAverageRate,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
 import {
     INVALID_FRACTION,
     MAX_UINT256,
