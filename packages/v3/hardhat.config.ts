@@ -43,8 +43,8 @@ const mochaOptions = (): MochaOptions => {
         // if we're running in CI, run all the tests
         grep = '';
     } else {
-        // if we're running locally, filter out @stress tests
-        grep = '@stress';
+        // if we're running in dev, filter out stress and profile tests
+        grep = '@stress|@profile';
         invert = true;
     }
 

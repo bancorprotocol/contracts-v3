@@ -28,8 +28,7 @@ import { createTokenBySymbol, createWallet, getTransactionGas, transfer, TokenWi
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
-import { camelCase } from 'lodash';
-import { mean } from 'lodash';
+import { camelCase, mean } from 'lodash';
 import prompt from 'prompt';
 
 const { formatBytes32String } = utils;
