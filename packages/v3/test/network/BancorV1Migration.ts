@@ -7,11 +7,10 @@ import {
     TestBancorNetwork,
     TestPoolCollection,
     PendingWithdrawals,
-    PoolToken,
-    TokenHolder
+    PoolToken
 } from '../../typechain';
 import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
-import { createPool, createSystem, createTokenHolder } from '../helpers/Factory';
+import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -53,7 +52,6 @@ describe.only('BancorV1Migration', () => {
                     let pendingWithdrawals: PendingWithdrawals;
                     let poolCollection: TestPoolCollection;
                     let bancorVault: BancorVault;
-                    let externalProtectionWallet: TokenHolder;
                     let bancorV1Migration: BancorV1Migration;
                     let converter: any;
                     let poolToken: any;
@@ -78,10 +76,6 @@ describe.only('BancorV1Migration', () => {
                         await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                         await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
                         await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-                        externalProtectionWallet = await createTokenHolder();
-                        await externalProtectionWallet.transferOwnership(network.address);
-                        await network.setExternalProtectionWallet(externalProtectionWallet.address);
                     };
 
                     const initLegacySystem = async (isETH: boolean) => {
