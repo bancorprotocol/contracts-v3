@@ -1,3 +1,4 @@
+import { isProfiling } from './components/Profler';
 import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
 import './migration';
 import './test/Setup.ts';
@@ -26,14 +27,13 @@ const hardhatDefaultConfig: NetworkUserConfig = {
 
 const mochaOptions = (): MochaOptions => {
     const ci = getEnvKey<boolean>('CI');
-    const profile = getEnvKey<boolean>('PROFILE');
 
     let timeout = 600000;
     let grep;
     let invert = false;
     let reporter;
 
-    if (profile) {
+    if (isProfiling) {
         // if we're profiling, make sure to only run @profile tests without any timeout restriction, and silence most
         // of test output
         timeout = 0;
