@@ -582,7 +582,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     )
         external
         only(address(_network))
@@ -596,7 +596,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             pool,
             basePoolTokenAmount,
             baseTokenVaultBalance,
-            externalProtectionWalletBalance
+            externalProtectionVaultBalance
         );
 
         // execute post-withdrawal actions
@@ -866,7 +866,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     ) internal view returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
 
@@ -875,7 +875,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             params.baseTokenAvgTradingLiquidity,
             MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
             params.baseTokenStakedAmount,
-            externalProtectionWalletBalance,
+            externalProtectionVaultBalance,
             params.tradeFeePPM,
             _settings.withdrawalFeePPM(),
             MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
@@ -883,7 +883,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
         amounts.networkTokenAmountToMintForProvider = output.t;
-        amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider = output.u;
+        amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider = output.u;
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
         amounts.networkTokenAmountToDeductFromLiquidity = output.p;
         amounts.networkTokenAmountToRenounceByProtocol = output.q;

@@ -44,14 +44,14 @@ contract TestPoolCollection is PoolCollection, TestTime {
         ReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     ) external view returns (WithdrawalAmounts memory) {
         return
             _poolWithdrawalAmounts(
                 baseToken,
                 basePoolTokenAmount,
                 baseTokenVaultBalance,
-                externalProtectionWalletBalance
+                externalProtectionVaultBalance
             );
     }
 
