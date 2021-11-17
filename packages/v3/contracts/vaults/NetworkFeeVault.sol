@@ -47,9 +47,6 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     function __NetworkFeeVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
-
-        // allow the deployer to initially be the asset manager of the contract
-        _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
     /**

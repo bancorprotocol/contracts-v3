@@ -539,7 +539,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromVaultToProvider: string;
             networkTokenAmountToMintForProvider: string;
             baseTokenAmountToDeductFromLiquidity: string;
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
+            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: string;
             networkTokenAmountToDeductFromLiquidity: string;
             networkTokenArbitrageAmount: string;
         }
@@ -553,7 +553,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromVaultToProvider: MaxError;
             networkTokenAmountToMintForProvider: MaxError;
             baseTokenAmountToDeductFromLiquidity: MaxError;
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
+            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: MaxError;
             networkTokenAmountToDeductFromLiquidity: MaxError;
             networkTokenArbitrageAmount: MaxError;
         }
@@ -583,7 +583,7 @@ describe('PoolCollection', () => {
                     baseTokenAmountToTransferFromVaultToProvider,
                     networkTokenAmountToMintForProvider,
                     baseTokenAmountToDeductFromLiquidity,
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                     networkTokenAmountToDeductFromLiquidity,
                     networkTokenArbitrageAmount
                 } of table) {
@@ -600,7 +600,7 @@ describe('PoolCollection', () => {
                         baseTokenAmountToTransferFromVaultToProvider,
                         networkTokenAmountToMintForProvider,
                         baseTokenAmountToDeductFromLiquidity,
-                        baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                        baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                         networkTokenAmountToDeductFromLiquidity,
                         networkTokenArbitrageAmount
                     ]})`, async () => {
@@ -636,13 +636,13 @@ describe('PoolCollection', () => {
                                 maxRelativeError: maxErrors.baseTokenAmountToDeductFromLiquidity.relative
                             }
                         );
-                        expect(actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider).to.almostEqual(
-                            new Decimal(baseTokenAmountToTransferFromExternalProtectionWalletToProvider),
+                        expect(actual.baseTokenAmountToTransferFromExternalProtectionVaultToProvider).to.almostEqual(
+                            new Decimal(baseTokenAmountToTransferFromExternalProtectionVaultToProvider),
                             {
                                 maxAbsoluteError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.absolute,
                                 maxRelativeError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.relative
                             }
                         );
                         expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
@@ -677,7 +677,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000000000000000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -708,7 +708,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.00000000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -733,7 +733,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -758,7 +758,7 @@ describe('PoolCollection', () => {
                         relative: new Decimal('0.0000002')
                     },
                     baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -786,7 +786,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000003')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -811,7 +811,7 @@ describe('PoolCollection', () => {
                         relative: new Decimal('0.000002')
                     },
                     baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -839,7 +839,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000009')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
