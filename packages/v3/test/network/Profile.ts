@@ -498,9 +498,7 @@ describe('@profile Profile', () => {
         let networkSettings: NetworkSettings;
         let networkToken: NetworkToken;
         let govToken: GovToken;
-        let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
         let externalProtectionWallet: TokenHolder;
@@ -521,9 +519,7 @@ describe('@profile Profile', () => {
                 networkSettings,
                 networkToken,
                 govToken,
-                networkTokenPool,
                 poolCollection,
-                bancorVault,
                 pendingWithdrawals,
                 networkPoolToken
             } = await createSystem());
@@ -684,9 +680,7 @@ describe('@profile Profile', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: NetworkToken;
-        let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
@@ -698,8 +692,7 @@ describe('@profile Profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
-                await createSystem());
+            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -833,11 +826,6 @@ describe('@profile Profile', () => {
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
         }
-        const tradeTargetAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
-            const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
-
-            return network.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
-        };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceETH = source.symbol === ETH;
