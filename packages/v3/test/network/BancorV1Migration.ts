@@ -40,7 +40,7 @@ describe.only('BancorV1Migration', () => {
                 describe(`withdrawalFee = ${withdrawalFee}%, networkAmount = ${networkAmount}M, baseAmount = ${baseAmount}M`, () => {
                     const WITHDRAWAL_FEE = BigNumber.from(withdrawalFee * 10_000);
                     const NETWORK_AMOUNT = BigNumber.from(networkAmount * 1_000_000);
-                    const BASE_AMOUNT = BigNumber.from(baseAmount * 10_000);
+                    const BASE_AMOUNT = BigNumber.from(baseAmount * 1_000_000);
 
                     let networkTokenGovernance: TokenGovernance;
                     let govTokenGovernance: TokenGovernance;
