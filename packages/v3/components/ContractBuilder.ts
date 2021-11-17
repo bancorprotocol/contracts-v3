@@ -1,5 +1,5 @@
 /* eslint-enable camelcase */
-import { Profiler } from './Profler';
+import { Profiler } from './Profiler';
 import { Signer, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 

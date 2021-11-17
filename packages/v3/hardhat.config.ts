@@ -1,4 +1,4 @@
-import { isProfiling } from './components/Profler';
+import { isProfiling } from './components/Profiler';
 import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
 import './migration';
 import './test/Setup.ts';

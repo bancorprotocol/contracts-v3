@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { GovToken, NetworkToken } from '../../components/LegacyContracts';
-import { Profiler } from '../../components/Profler';
+import { Profiler } from '../../components/Profiler';
 import {
     BancorVault,
     NetworkSettings,
