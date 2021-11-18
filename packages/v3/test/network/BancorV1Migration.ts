@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
+import { GovToken, NetworkToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
 import {
     BancorV1Migration,
     BancorVault,
@@ -53,8 +53,8 @@ describe.only('BancorV1Migration', () => {
                     let poolCollection: TestPoolCollection;
                     let bancorVault: BancorVault;
                     let bancorV1Migration: BancorV1Migration;
-                    let converter: any;
-                    let poolToken: any;
+                    let converter: TestStandardPoolConverter;
+                    let poolToken: GovToken;
                     let baseToken: any;
 
                     const setup = async () => {
