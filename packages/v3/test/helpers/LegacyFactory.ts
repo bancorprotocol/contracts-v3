@@ -1,5 +1,8 @@
 import LegacyContracts from '../../components/LegacyContracts';
-import { ethers } from 'hardhat';
+import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
+import { TestBancorNetwork, BancorVault } from '../../typechain';
+import { TokenWithAddress } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS },
@@ -8,13 +11,13 @@ const {
 } = require('../../../v2/test/helpers/Constants');
 
 export const createLegacySystem = async (
-    owner: any,
-    network: any,
-    vault: any,
-    networkToken: any,
-    networkTokenGovernance: any,
-    govTokenGovernance: any,
-    baseToken: any
+    owner: SignerWithAddress,
+    network: TestBancorNetwork,
+    vault: BancorVault,
+    networkToken: NetworkToken,
+    networkTokenGovernance: TokenGovernance,
+    govTokenGovernance: TokenGovernance,
+    baseToken: TokenWithAddress
 ) => {
     const contractRegistry = await LegacyContracts.ContractRegistry.deploy();
     const converterRegistry = await LegacyContracts.ConverterRegistry.deploy(contractRegistry.address);
