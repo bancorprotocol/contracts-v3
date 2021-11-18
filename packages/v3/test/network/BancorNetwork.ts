@@ -3,7 +3,7 @@ import Contracts from '../../components/Contracts';
 import {
     NetworkToken,
     GovToken,
-    LegacyTokenHolder,
+    TokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -1701,7 +1701,7 @@ describe('BancorNetwork', () => {
             let liquidityProtectionStore: LiquidityProtectionStore;
             let liquidityProtectionStats: LiquidityProtectionStats;
             let liquidityProtectionSystemStore: LiquidityProtectionSystemStore;
-            let liquidityProtectionWallet: LegacyTokenHolder;
+            let liquidityProtectionWallet: TokenHolder;
             let liquidityProtection: TestLiquidityProtection;
             let converter: TestStandardPoolConverter;
             let poolToken: any;

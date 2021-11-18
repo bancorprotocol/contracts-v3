@@ -39,7 +39,7 @@ export const createLegacySystem = async (
     const liquidityProtectionStore = await LegacyContracts.LiquidityProtectionStore.deploy();
     const liquidityProtectionStats = await LegacyContracts.LiquidityProtectionStats.deploy();
     const liquidityProtectionSystemStore = await LegacyContracts.LiquidityProtectionSystemStore.deploy();
-    const liquidityProtectionWallet = await LegacyContracts.LegacyTokenHolder.deploy();
+    const liquidityProtectionWallet = await LegacyContracts.TokenHolder.deploy();
     const liquidityProtectionSettings = await LegacyContracts.LiquidityProtectionSettings.deploy(
         networkToken.address,
         contractRegistry.address
