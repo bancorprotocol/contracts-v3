@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
 import {
     BancorVault,
+    IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
@@ -112,7 +112,7 @@ describe('@profile Profile', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let externalProtectionWallet: TokenHolder;
@@ -462,8 +462,8 @@ describe('@profile Profile', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
@@ -645,7 +645,7 @@ describe('@profile Profile', () => {
     describe('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
@@ -817,7 +817,7 @@ describe('@profile Profile', () => {
                     }
                 });
 
-                it.only('should complete multiple trades', async () => {
+                it('should complete multiple trades', async () => {
                     for (let i = 0; i < TRADES_COUNT; i++) {
                         await test();
                     }
@@ -929,7 +929,7 @@ describe('@profile Profile', () => {
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let bancorVault: BancorVault;

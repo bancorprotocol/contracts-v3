@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
-import { NetworkFeeVault } from '../../typechain';
+import { IERC20, NetworkFeeVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
@@ -48,7 +47,7 @@ describe('NetworkFeeVault', () => {
         const amount = 1_000_000;
 
         let networkFeeVault: NetworkFeeVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;

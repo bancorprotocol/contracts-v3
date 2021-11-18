@@ -8,9 +8,9 @@ import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessCo
 import { AccessDenied } from "../utility/Utils.sol";
 
 contract TestTokenGovernance is ITokenGovernance, AccessControlEnumerable {
-    bytes32 private constant ROLE_SUPERVISOR = keccak256("ROLE_SUPERVISOR");
-    bytes32 private constant ROLE_GOVERNOR = keccak256("ROLE_GOVERNOR");
-    bytes32 private constant ROLE_MINTER = keccak256("ROLE_MINTER");
+    bytes32 public constant ROLE_SUPERVISOR = keccak256("ROLE_SUPERVISOR");
+    bytes32 public constant ROLE_GOVERNOR = keccak256("ROLE_GOVERNOR");
+    bytes32 public constant ROLE_MINTER = keccak256("ROLE_MINTER");
 
     IMintableToken private immutable _token;
 
