@@ -58,7 +58,11 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const { Upgradeable: UpgradeableRoles, BancorNetwork: BancorNetworkRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
+const {
+    Upgradeable: UpgradeableRoles,
+    BancorNetwork: BancorNetworkRoles,
+    ExternalProtectionVault: ExternalProtectionVaultRoles
+} = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -1738,7 +1742,11 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const getPoolStats = async (poolToken: TokenWithAddress, reserveToken: TokenWithAddress, isETH: boolean) => {
+            const getPoolStats = async (
+                poolToken: TokenWithAddress,
+                reserveToken: TokenWithAddress,
+                isETH: boolean
+            ) => {
                 const poolTokenAddress = poolToken.address;
                 const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
@@ -1750,7 +1758,12 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const getProviderStats = async (provider: SignerWithAddress, poolToken: TokenWithAddress, reserveToken: TokenWithAddress, isETH: boolean) => {
+            const getProviderStats = async (
+                provider: SignerWithAddress,
+                poolToken: TokenWithAddress,
+                reserveToken: TokenWithAddress,
+                isETH: boolean
+            ) => {
                 const poolTokenAddress = poolToken.address;
                 const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
@@ -1854,9 +1867,9 @@ describe('BancorNetwork', () => {
                         const protectionId = protectionIds[0];
 
                         await liquidityProtection.setTime(now.add(duration.seconds(1)));
-                        await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
-                            'ERR_ACCESS_DENIED'
-                        );
+                        await expect(
+                            liquidityProtection.migratePositions([protectionId, protectionId])
+                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
                     });
 
                     it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {

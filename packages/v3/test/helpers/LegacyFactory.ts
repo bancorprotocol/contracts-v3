@@ -1,8 +1,8 @@
 import LegacyContracts from '../../components/LegacyContracts';
-import { NetworkToken, TokenGovernance} from '../../components/LegacyContracts';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { TestBancorNetwork, BancorVault } from '../../typechain';
 import { TokenWithAddress } from '../helpers/Utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS },
