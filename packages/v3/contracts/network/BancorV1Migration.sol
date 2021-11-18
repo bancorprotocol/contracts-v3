@@ -11,7 +11,7 @@ import { BancorNetwork } from "./BancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-interface IBancorConverterV2 {
+interface IBancorConverterV1 {
     function reserveTokens() external view returns (ReserveToken[] memory);
 
     function removeLiquidity(
@@ -21,21 +21,36 @@ interface IBancorConverterV2 {
     ) external returns (uint256[] memory);
 }
 
+/**
+ * @dev this contract supports v1 liquidity migration
+ */
 contract BancorV1Migration is ReentrancyGuard, Utils {
     using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
     using ReserveTokenLibrary for ReserveToken;
 
+    // the network contract
     BancorNetwork private immutable _network;
 
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
     constructor(BancorNetwork network) validAddress(address(network)) {
         _network = network;
     }
 
+    /**
+     * @dev ETH receive callback
+     */
+    receive() external payable {}
+
+    /**
+     * @dev migrates pool tokens from v1 to v3
+     */
     function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
         poolToken.safeTransferFrom(msg.sender, address(this), amount);
 
-        IBancorConverterV2 converter = IBancorConverterV2(payable(poolToken.owner()));
+        IBancorConverterV1 converter = IBancorConverterV1(payable(poolToken.owner()));
 
         ReserveToken[] memory reserveTokens = converter.reserveTokens();
 
