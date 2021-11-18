@@ -28,7 +28,7 @@ import {
     TestStandardPoolConverterFactory__factory,
     TestStandardPoolConverterFactory,
     TokenHolder__factory,
-    TokenHolder as LegacyTokenHolder
+    TokenHolder
 } from '../../v2/typechain';
 import { deployOrAttach } from './ContractBuilder';
 
@@ -54,7 +54,7 @@ export {
     ConverterRegistryData,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
-    LegacyTokenHolder,
+    TokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -79,7 +79,7 @@ const getContracts = (signer?: Signer) => ({
     ConverterRegistryData: deployOrAttach('ConverterRegistryData', ConverterRegistryData__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
-    LegacyTokenHolder: deployOrAttach('LegacyTokenHolder', TokenHolder__factory, signer),
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     LiquidityProtectionSettings: deployOrAttach('LiquidityProtectionSettings', LiquidityProtectionSettings__factory, signer),
     LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
     LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
