@@ -1685,7 +1685,7 @@ describe('BancorNetwork', () => {
                 testDeposits(symbol);
             });
         }
-    
+
         describe('migrate liquidity', () => {
             const TOTAL_SUPPLY = BigNumber.from(10).pow(BigNumber.from(25));
             const RESERVE1_AMOUNT = BigNumber.from(1000000);
@@ -1738,7 +1738,7 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const getPoolStats = async (poolToken: any, reserveToken: any, isETH: boolean) => {
+            const getPoolStats = async (poolToken: TokenWithAddress, reserveToken: TokenWithAddress, isETH: boolean) => {
                 const poolTokenAddress = poolToken.address;
                 const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
@@ -1750,7 +1750,7 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const getProviderStats = async (provider: SignerWithAddress, poolToken: any, reserveToken: any, isETH: boolean) => {
+            const getProviderStats = async (provider: SignerWithAddress, poolToken: TokenWithAddress, reserveToken: TokenWithAddress, isETH: boolean) => {
                 const poolTokenAddress = poolToken.address;
                 const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
