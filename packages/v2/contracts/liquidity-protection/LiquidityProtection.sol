@@ -1377,12 +1377,8 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
      * @dev returns the network token minting limit
      */
     function _networkTokenMintingLimit(IConverterAnchor poolAnchor) private view returns (uint256) {
-        // verify network token minting limit
         uint256 mintingLimit = _settings.networkTokenMintingLimits(poolAnchor);
-        if (mintingLimit == 0) {
-            mintingLimit = _settings.defaultNetworkTokenMintingLimit();
-        }
-        return mintingLimit;
+        return mintingLimit > 0 ? mintingLimit : _settings.defaultNetworkTokenMintingLimit();
     }
 
     /**
