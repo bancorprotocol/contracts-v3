@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Utils } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
@@ -21,6 +22,7 @@ interface IBancorConverterV2 {
 }
 
 contract BancorV1Migration is ReentrancyGuard, Utils {
+    using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -50,7 +52,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
             if (reserveTokens[i].isNativeToken()) {
                 _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
             } else {
-                reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
+                reserveTokens[i].toIERC20().safeApprove(address(_network), reserveAmounts[i]);
                 _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
             }
         }
