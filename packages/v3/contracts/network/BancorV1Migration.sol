@@ -42,9 +42,8 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         ReserveToken[] memory reserveTokens = converter.reserveTokens();
 
         uint256[] memory minReturnAmounts = new uint256[](2);
-        for (uint256 i = 0; i < 2; i = uncheckedInc(i)) {
-            minReturnAmounts[i] = 1;
-        }
+        minReturnAmounts[0] = 1;
+        minReturnAmounts[1] = 1;
 
         uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
 
