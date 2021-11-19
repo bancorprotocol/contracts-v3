@@ -1,7 +1,7 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
 import {
+    IERC20,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -52,7 +52,7 @@ describe('PoolCollection', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
@@ -540,7 +540,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromVaultToProvider: string;
             networkTokenAmountToMintForProvider: string;
             baseTokenAmountToDeductFromLiquidity: string;
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: string;
+            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: string;
             networkTokenAmountToDeductFromLiquidity: string;
             networkTokenArbitrageAmount: string;
         }
@@ -554,7 +554,7 @@ describe('PoolCollection', () => {
             baseTokenAmountToTransferFromVaultToProvider: MaxError;
             networkTokenAmountToMintForProvider: MaxError;
             baseTokenAmountToDeductFromLiquidity: MaxError;
-            baseTokenAmountToTransferFromExternalProtectionWalletToProvider: MaxError;
+            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: MaxError;
             networkTokenAmountToDeductFromLiquidity: MaxError;
             networkTokenArbitrageAmount: MaxError;
         }
@@ -584,7 +584,7 @@ describe('PoolCollection', () => {
                     baseTokenAmountToTransferFromVaultToProvider,
                     networkTokenAmountToMintForProvider,
                     baseTokenAmountToDeductFromLiquidity,
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                     networkTokenAmountToDeductFromLiquidity,
                     networkTokenArbitrageAmount
                 } of table) {
@@ -601,7 +601,7 @@ describe('PoolCollection', () => {
                         baseTokenAmountToTransferFromVaultToProvider,
                         networkTokenAmountToMintForProvider,
                         baseTokenAmountToDeductFromLiquidity,
-                        baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                        baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                         networkTokenAmountToDeductFromLiquidity,
                         networkTokenArbitrageAmount
                     ]})`, async () => {
@@ -637,13 +637,13 @@ describe('PoolCollection', () => {
                                 maxRelativeError: maxErrors.baseTokenAmountToDeductFromLiquidity.relative
                             }
                         );
-                        expect(actual.baseTokenAmountToTransferFromExternalProtectionWalletToProvider).to.almostEqual(
-                            new Decimal(baseTokenAmountToTransferFromExternalProtectionWalletToProvider),
+                        expect(actual.baseTokenAmountToTransferFromExternalProtectionVaultToProvider).to.almostEqual(
+                            new Decimal(baseTokenAmountToTransferFromExternalProtectionVaultToProvider),
                             {
                                 maxAbsoluteError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.absolute,
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.absolute,
                                 maxRelativeError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionWalletToProvider.relative
+                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.relative
                             }
                         );
                         expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
@@ -678,7 +678,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000000000000000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -709,7 +709,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.00000000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -734,7 +734,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000002')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -759,7 +759,7 @@ describe('PoolCollection', () => {
                         relative: new Decimal('0.0000002')
                     },
                     baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -787,7 +787,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.000000003')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -812,7 +812,7 @@ describe('PoolCollection', () => {
                         relative: new Decimal('0.000002')
                     },
                     baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -840,7 +840,7 @@ describe('PoolCollection', () => {
                         absolute: new Decimal(1),
                         relative: new Decimal('0.0000009')
                     },
-                    baseTokenAmountToTransferFromExternalProtectionWalletToProvider: {
+                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
                         absolute: new Decimal(1),
                         relative: new Decimal('0')
                     },
@@ -1202,7 +1202,7 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: NetworkToken;
+            let networkToken: IERC20;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;
@@ -1302,7 +1302,7 @@ describe('PoolCollection', () => {
     describe('trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
@@ -1333,8 +1333,8 @@ describe('PoolCollection', () => {
             const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
             const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
-                let sourceToken: TestERC20Token | NetworkToken;
-                let targetToken: TestERC20Token | NetworkToken;
+                let sourceToken: IERC20;
+                let targetToken: IERC20;
 
                 beforeEach(async () => {
                     sourceToken = isSourceNetworkToken ? networkToken : reserveToken;

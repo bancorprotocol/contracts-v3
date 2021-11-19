@@ -30,9 +30,13 @@ library PoolAverageRate {
      *
      *      if t == 0, return P
      *      if t >= T, return S
-     *      else, return:             T - t         t
-     *                           P * ------- + S * ---
-     *                                  T           T
+     *      if 0 < t < T, return P * (T - t) / T + S * t / T
+     *
+     * note that:
+     *
+     *      T - t         t     Pn     T - t     Sn     t     Pn * Sd * (T - t) + Pd * Sn * t
+     * P * ------- + S * --- = ---- * ------- + ---- * --- = ---------------------------------
+     *        T           T     Pd       T       Sd     T               Pd * Sd * T
      */
     function calcAverageRate(
         Fraction memory spotRate,
@@ -53,17 +57,15 @@ library PoolAverageRate {
             return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, type(uint112).max) });
         }
 
-        // calculate the new average rate
-        uint256 x = averageRate.rate.d * spotRate.n;
-        uint256 y = averageRate.rate.n * spotRate.d;
-
         // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
         uint256 remainingWindow;
         unchecked {
             remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
         }
+
+        // calculate the new average rate
         Fraction memory newRate = Fraction({
-            n: (y * remainingWindow) + x * timeElapsed,
+            n: averageRate.rate.n * spotRate.d * remainingWindow + averageRate.rate.d * spotRate.n * timeElapsed,
             d: averageRate.rate.d * spotRate.d * AVERAGE_RATE_PERIOD
         });
 

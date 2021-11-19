@@ -113,7 +113,6 @@ describe('PoolTokenFactory', () => {
     });
 
     describe('create pool token', () => {
-        let networkToken: NetworkToken;
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TokenWithAddress;
 
@@ -122,7 +121,7 @@ describe('PoolTokenFactory', () => {
 
         const testCreatePoolToken = (symbol: string) => {
             beforeEach(async () => {
-                ({ networkToken, poolTokenFactory } = await createSystem());
+                ({ poolTokenFactory } = await createSystem());
 
                 reserveToken = await createTokenBySymbol(symbol);
             });

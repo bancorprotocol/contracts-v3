@@ -41,9 +41,6 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     function __ExternalRewardsVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
-
-        // allow the deployer to initially manage the assets of the contract
-        _setupRole(ROLE_ASSET_MANAGER, msg.sender);
     }
 
     /**

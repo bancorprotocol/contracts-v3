@@ -18,6 +18,7 @@ import {
     TestERC20Burnable__factory,
     TestERC20Token__factory,
     TestFlashLoanRecipient__factory,
+    TestGovernedToken__factory,
     TestMathEx__factory,
     TestNetworkTokenPool__factory,
     TestOwned__factory,
@@ -27,9 +28,9 @@ import {
     TestPoolCollectionUpgrader__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
+    TestTokenGovernance__factory,
     TestUpgradeable__factory,
     TestVault__factory,
-    TokenHolder__factory,
     TransparentUpgradeableProxy__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
@@ -58,6 +59,7 @@ const getContracts = (signer?: Signer) => ({
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
     TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
+    TestGovernedToken: deployOrAttach('TestGovernedToken', TestGovernedToken__factory, signer),
     TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
     TestNetworkTokenPool: deployOrAttach('TestNetworkTokenPool', TestNetworkTokenPool__factory, signer),
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
@@ -71,9 +73,9 @@ const getContracts = (signer?: Signer) => ({
     ),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
+    TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
-    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
         TransparentUpgradeableProxy__factory,
