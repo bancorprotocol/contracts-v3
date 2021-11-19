@@ -44,9 +44,11 @@ export class Profiler {
             return;
         }
 
+        console.log('Persisting', contractName, address);
+
         return tenderly.persistArtifacts({
             name: contractName,
-            address: address
+            address
         });
     }
 
