@@ -32,3 +32,5 @@ migration/data/fork*
 migration/test/migration/data/hardhat
 migration/test/migration/data/localhost
 migration/test/migration/data/fork*
+
+tenderly.yaml
