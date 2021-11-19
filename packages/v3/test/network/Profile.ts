@@ -9,19 +9,11 @@ import {
     TestFlashLoanRecipient,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
-    TestPoolCollection,
-    TokenHolder
+    TestPoolCollection
 } from '../../typechain';
 import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import {
-    createPool,
-    createSystem,
-    createTokenHolder,
-    depositToPool,
-    setupSimplePool,
-    PoolSpec
-} from '../helpers/Factory';
+import { createPool, createSystem, depositToPool, setupSimplePool, PoolSpec } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { latest } from '../helpers/Time';
 import { toDecimal, toWei } from '../helpers/Types';
@@ -115,7 +107,6 @@ describe('@profile Profile', () => {
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -129,10 +120,6 @@ describe('@profile Profile', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
         };
 
         beforeEach(async () => {
@@ -467,7 +454,6 @@ describe('@profile Profile', () => {
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -493,10 +479,6 @@ describe('@profile Profile', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
 
             await setTime((await latest()).toNumber());
         };
