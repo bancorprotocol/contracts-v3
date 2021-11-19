@@ -46,6 +46,10 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
 
     /**
      * @dev migrates pool tokens from v1 to v3
+     *
+     * requirements:
+     *
+     * - the caller must have approved this contract to transfer the pool tokens on its behalf
      */
     function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
         poolToken.safeTransferFrom(msg.sender, address(this), amount);
