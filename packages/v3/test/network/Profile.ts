@@ -1,41 +1,32 @@
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken } from '../../components/LegacyContracts';
+import { Profiler } from '../../components/Profiler';
 import {
     BancorVault,
+    IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestFlashLoanRecipient,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
-    TestPoolCollection,
-    TokenHolder
+    TestPoolCollection
 } from '../../typechain';
 import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import {
-    createPool,
-    createSystem,
-    createTokenHolder,
-    depositToPool,
-    setupSimplePool,
-    PoolSpec
-} from '../helpers/Factory';
+import { createPool, createSystem, depositToPool, setupSimplePool, PoolSpec } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { latest } from '../helpers/Time';
 import { toDecimal, toWei } from '../helpers/Types';
-import { createTokenBySymbol, createWallet, getTransactionGas, transfer, TokenWithAddress } from '../helpers/Utils';
+import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
-import { camelCase, mean } from 'lodash';
-import prompt from 'prompt';
+import { camelCase } from 'lodash';
 
 const { formatBytes32String } = utils;
 
 describe('@profile Profile', () => {
-    prompt.start();
-
+    const profiler = new Profiler();
     let deployer: SignerWithAddress;
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -44,41 +35,8 @@ describe('@profile Profile', () => {
         [deployer] = await ethers.getSigners();
     });
 
-    const summary: Record<string, number[]> = {};
-
-    const profile = async (desc: string, tx: Promise<ContractTransaction>) => {
-        const { DEBUG: debug } = process.env;
-
-        if (debug) {
-            await prompt.get([`${desc}`]);
-        }
-
-        const res = await tx;
-
-        const gas = await getTransactionGas(res);
-        console.log(`${desc}: ${gas}`);
-
-        if (debug) {
-            console.log(`   ${(await res.wait()).transactionHash}`);
-            await prompt.get(['Press any key to continue to the next test']);
-        }
-
-        if (summary[desc] === undefined) {
-            summary[desc] = [];
-        }
-
-        summary[desc].push(gas.toNumber());
-
-        return res;
-    };
-
     after(async () => {
-        console.log();
-        console.log('Summary:');
-
-        for (const [desc, samples] of Object.entries(summary)) {
-            console.log(`${desc},${mean(samples)}`);
-        }
+        profiler.printSummary();
     });
 
     const networkPermitSignature = async (
@@ -146,10 +104,9 @@ describe('@profile Profile', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -163,10 +120,6 @@ describe('@profile Profile', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
         };
 
         beforeEach(async () => {
@@ -261,7 +214,7 @@ describe('@profile Profile', () => {
                             };
 
                             const testDepositAmount = async (amount: BigNumber) => {
-                                const test = async () => await profile(`deposit ${symbol}`, deposit(amount));
+                                const test = async () => await profiler.profile(`deposit ${symbol}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
                                     if (!isETH) {
@@ -432,7 +385,7 @@ describe('@profile Profile', () => {
                             };
 
                             const testDepositAmount = async (amount: BigNumber) => {
-                                const test = async () => profile(`deposit ${symbol}`, deposit(amount));
+                                const test = async () => profiler.profile(`deposit ${symbol}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
                                     if (isNetworkToken || isETH) {
@@ -496,14 +449,11 @@ describe('@profile Profile', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
-        let networkTokenPool: TestNetworkTokenPool;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolder;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -521,9 +471,7 @@ describe('@profile Profile', () => {
                 networkSettings,
                 networkToken,
                 govToken,
-                networkTokenPool,
                 poolCollection,
-                bancorVault,
                 pendingWithdrawals,
                 networkPoolToken
             } = await createSystem());
@@ -531,10 +479,6 @@ describe('@profile Profile', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
 
             await setTime((await latest()).toNumber());
         };
@@ -628,7 +572,7 @@ describe('@profile Profile', () => {
                             });
 
                             const test = async () =>
-                                profile(`withdraw ${symbol}`, network.connect(provider).withdraw(id));
+                                profiler.profile(`withdraw ${symbol}`, network.connect(provider).withdraw(id));
 
                             if (isNetworkToken) {
                                 it('should complete a withdraw', async () => {
@@ -683,10 +627,8 @@ describe('@profile Profile', () => {
     describe('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let networkTokenPool: TestNetworkTokenPool;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
@@ -698,8 +640,7 @@ describe('@profile Profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
-                await createSystem());
+            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -823,7 +764,7 @@ describe('@profile Profile', () => {
 
             const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
             const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
-            await profile(
+            await profiler.profile(
                 `trade ${sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
@@ -833,11 +774,6 @@ describe('@profile Profile', () => {
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
         }
-        const tradeTargetAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
-            const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
-
-            return network.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
-        };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceETH = source.symbol === ETH;
@@ -975,7 +911,7 @@ describe('@profile Profile', () => {
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
         let bancorVault: BancorVault;
@@ -1036,7 +972,7 @@ describe('@profile Profile', () => {
 
             const test = async () => {
                 const data = '0x1234';
-                await profile(
+                await profiler.profile(
                     `flash-loan ${symbol}`,
                     network.flashLoan(token.address, amount, recipient.address, data)
                 );

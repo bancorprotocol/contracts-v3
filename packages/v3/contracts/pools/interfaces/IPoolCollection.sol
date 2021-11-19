@@ -48,7 +48,7 @@ struct DepositAmounts {
 struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
     uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
-    uint256 baseTokenAmountToTransferFromExternalProtectionWalletToProvider; // the base token amount to transfer from the external protection wallet to the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProvider; // the base token amount to transfer from the external protection vault to the provider
     uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
     uint256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the vault
     uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
@@ -173,7 +173,7 @@ interface IPoolCollection is IVersioned {
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     ) external returns (WithdrawalAmounts memory);
 
     /**

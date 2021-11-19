@@ -1,9 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
-import { BancorVault } from '../../typechain';
+import { IERC20, BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -17,10 +16,12 @@ describe('BancorVault', () => {
     shouldHaveGap('BancorVault');
 
     describe('construction', () => {
+        let network: TestBancorNetwork;
         let bancorVault: BancorVault;
+        let networkTokenPool: TestNetworkTokenPool;
 
         beforeEach(async () => {
-            ({ bancorVault } = await createSystem());
+            ({ network, bancorVault, networkTokenPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -33,17 +34,17 @@ describe('BancorVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-            const vault = await createProxy(Contracts.BancorVault, { ctorArgs: [reserveToken.address] });
 
             expect(await bancorVault.version()).to.equal(1);
             expect(await bancorVault.isPayable()).to.be.true;
 
-            await expectRole(vault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
-            await expectRole(vault, BancorVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
-                deployer.address
+            await expectRole(bancorVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(bancorVault, BancorVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+                network.address
             ]);
-            await expectRole(vault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN);
+            await expectRole(bancorVault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+                networkTokenPool.address
+            ]);
         });
     });
 
@@ -51,7 +52,7 @@ describe('BancorVault', () => {
         const amount = 1_000_000;
 
         let bancorVault: BancorVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;

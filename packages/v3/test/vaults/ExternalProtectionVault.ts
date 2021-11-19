@@ -1,9 +1,7 @@
-import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
-import { ExternalProtectionVault } from '../../typechain';
+import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -16,10 +14,11 @@ describe('ExternalProtectionVault', () => {
     shouldHaveGap('ExternalProtectionVault');
 
     describe('construction', () => {
+        let network: TestBancorNetwork;
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            ({ externalProtectionVault } = await createSystem());
+            ({ network, externalProtectionVault } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -30,7 +29,6 @@ describe('ExternalProtectionVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
 
             expect(await externalProtectionVault.version()).to.equal(1);
             expect(await externalProtectionVault.isPayable()).to.be.true;
@@ -42,7 +40,7 @@ describe('ExternalProtectionVault', () => {
                 externalProtectionVault,
                 ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN,
-                [deployer.address]
+                [network.address]
             );
         });
     });
@@ -51,7 +49,7 @@ describe('ExternalProtectionVault', () => {
         const amount = 1_000_000;
 
         let externalProtectionVault: ExternalProtectionVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;
