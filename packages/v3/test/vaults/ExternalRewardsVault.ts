@@ -1,8 +1,7 @@
-import Contracts from '../../components/Contracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -29,7 +28,6 @@ describe('ExternalRewardsVault', () => {
 
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
-            const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
             expect(await externalRewardsVault.version()).to.equal(1);
             expect(await externalRewardsVault.isPayable()).to.be.true;
@@ -40,8 +38,7 @@ describe('ExternalRewardsVault', () => {
             await expectRole(
                 externalRewardsVault,
                 ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
-                UpgradeableRoles.ROLE_ADMIN,
-                [deployer.address]
+                UpgradeableRoles.ROLE_ADMIN
             );
         });
     });

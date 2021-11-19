@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
+import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -90,9 +90,9 @@ interface IBancorNetwork is IUpgradeable {
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
 
     /**
-     * @dev returns the address of the external protection wallet
+     * @dev returns the address of the external protection vault
      */
-    function externalProtectionWallet() external view returns (ITokenHolder);
+    function externalProtectionVault() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the set of all valid pool collections
