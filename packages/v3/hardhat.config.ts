@@ -61,7 +61,7 @@ const mochaOptions = (): MochaOptions => {
 const config: HardhatUserConfig = {
     networks: {
         hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
-        localhost: { url: 'http://localhost:8545' },
+        localhost: { url: 'http://localhost:8545', chainId: 31337 },
 
         ...CONFIG.networks
     },
