@@ -46,11 +46,11 @@ struct DepositAmounts {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
+    uint256 baseTokenAmountToTransferFromBancorVault; // the base token amount to transfer from the bancor vault to the provider
     uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
-    uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProvider; // the base token amount to transfer from the external protection vault to the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionVault; // the base token amount to transfer from the external protection vault to the provider
     int256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
-    int256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the vault
+    int256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the bancor vault
     int256 networkTokenAmountToRenounceByProtocol; // network token amount renounced by the protocol
     uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
 }

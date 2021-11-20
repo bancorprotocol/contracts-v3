@@ -881,9 +881,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
         );
 
-        amounts.baseTokenAmountToTransferFromVaultToProvider = output.s;
+        amounts.baseTokenAmountToTransferFromBancorVault = output.s;
         amounts.networkTokenAmountToMintForProvider = output.t;
-        amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider = output.u;
+        amounts.baseTokenAmountToTransferFromExternalProtectionVault = output.u;
         amounts.baseTokenAmountToDeductFromLiquidity = output.r;
         amounts.networkTokenAmountToDeductFromLiquidity = output.p;
         amounts.networkTokenAmountToRenounceByProtocol = output.q;

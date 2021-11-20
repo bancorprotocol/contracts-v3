@@ -1211,20 +1211,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
         // external protection vault and send them to the bancor vault
-        if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
+        if (amounts.baseTokenAmountToTransferFromExternalProtectionVault > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
                 payable(address(_vault)),
-                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
+                amounts.baseTokenAmountToTransferFromExternalProtectionVault
             );
-            amounts.baseTokenAmountToTransferFromVaultToProvider += amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider;
+            amounts.baseTokenAmountToTransferFromBancorVault += amounts.baseTokenAmountToTransferFromExternalProtectionVault;
         }
 
         // if the provider should receive some base tokens from the bancor vault - remove the tokens from the bancor vault and send
         // them to the provider
-        if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
-            // base token amount to transfer from the bancor vault to the provider
-            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+        if (amounts.baseTokenAmountToTransferFromBancorVault > 0) {
+            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromBancorVault);
         }
 
         emit BaseTokenWithdrawn({
@@ -1232,9 +1231,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider,
+            baseTokenAmount: amounts.baseTokenAmountToTransferFromBancorVault,
             poolTokenAmount: completedRequest.poolTokenAmount,
-            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
+            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVault,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });
