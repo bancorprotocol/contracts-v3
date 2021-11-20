@@ -1209,21 +1209,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             cachedNetworkTokenPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
 
-        // if the provider should receive some base tokens from the vault - remove the tokens from the vault and send
-        // them to the provider
-        if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
-            // base token amount to transfer from the vault to the provider
-            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
-        }
-
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
-        // external protection vault and send them to the provider
+        // external protection vault and send them to the bancor vault
         if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
-                payable(provider),
+                payable(address(_vault)),
                 amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
             );
+            amounts.baseTokenAmountToTransferFromVaultToProvider += amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider;
+        }
+
+        // if the provider should receive some base tokens from the bancor vault - remove the tokens from the bancor vault and send
+        // them to the provider
+        if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
+            // base token amount to transfer from the bancor vault to the provider
+            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
         emit BaseTokenWithdrawn({
@@ -1231,8 +1232,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider +
-                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
+            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider,
             poolTokenAmount: completedRequest.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
