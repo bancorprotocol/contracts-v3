@@ -689,10 +689,7 @@ describe('@profile Profile', () => {
             } = overrides;
 
             if (!value) {
-                value = BigNumber.from(0);
-                if (sourceTokenAddress === NATIVE_TOKEN_ADDRESS) {
-                    value = amount;
-                }
+                value = sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
             }
 
             return network
