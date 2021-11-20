@@ -25,6 +25,7 @@
         "testb": "BAIL=1 yarn test",
         "dev": "hardhat node",
         "profile": "PROFILE=1 yarn test ${DEBUG:+--network localhost}",
+        "profiled": "DEBUG=1 yarn profile",
         "migrate": "MIGRATION=1 hardhat migrate",
         "create-migration": "MIGRATION=1 hardhat create-migration",
         "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
