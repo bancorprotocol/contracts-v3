@@ -600,7 +600,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         );
 
         // execute post-withdrawal actions
-        _postWithdrawal(
+        _withdraw(
             pool,
             basePoolTokenAmount,
             amounts.baseTokenAmountToDeductFromLiquidity,
@@ -917,7 +917,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     }
 
     /**
-     * @dev executes post-withdrawal actions:
+     * @dev executes the following actions:
      *
      * - burns the network's base pool tokens
      * - updates the pool's base token staked balance
@@ -927,7 +927,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
      * or below it)
      */
-    function _postWithdrawal(
+    function _withdraw(
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         int256 baseTokenTradingLiquidityDelta,
