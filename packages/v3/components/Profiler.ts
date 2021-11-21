@@ -30,9 +30,7 @@ export class Profiler {
             await prompt.get(['Press any key to continue to the next test']);
         }
 
-        if (this.summary[description] === undefined) {
-            this.summary[description] = [];
-        }
+        this.summary[description] ||= [];
 
         this.summary[description].push(gas.toNumber());
 

@@ -62,7 +62,7 @@ Bancor is a work in progress. Make sure you understand the risks before using it
 
 For an interactive profiling, with Tenderly integration:
 
--   `DEBUG=1 yarn profile`
+-   `yarn profiled`
 
 ## Collaborators
 
