@@ -1704,7 +1704,7 @@ describe('BancorNetwork', () => {
             let liquidityProtectionWallet: TokenHolder;
             let liquidityProtection: TestLiquidityProtection;
             let converter: TestStandardPoolConverter;
-            let poolToken: any;
+            let poolToken: GovToken;
             let baseToken: any;
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
