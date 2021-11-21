@@ -6,18 +6,12 @@ import { IMintableToken } from "@bancor/token-governance/contracts/IMintableToke
 import { TestERC20Token } from "./TestERC20Token.sol";
 
 contract TestGovernedToken is IMintableToken, TestERC20Token {
-    uint8 private _decimals = 18;
-
     constructor(
         string memory name,
         string memory symbol,
         uint256 totalSupply
     ) TestERC20Token(name, symbol, totalSupply) {
         _mint(msg.sender, totalSupply);
-    }
-
-    function decimals() public view virtual override returns (uint8) {
-        return _decimals;
     }
 
     function issue(address recipient, uint256 amount) external {
