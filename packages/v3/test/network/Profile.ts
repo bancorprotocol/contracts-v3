@@ -195,12 +195,7 @@ describe('@profile Profile', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 let { value, poolAddress = token.address } = overrides;
 
-                                if (!value) {
-                                    value = BigNumber.from(0);
-                                    if (isETH) {
-                                        value = amount;
-                                    }
-                                }
+                                value ||= isETH ? amount : BigNumber.from(0);
 
                                 switch (method) {
                                     case Method.Deposit:
@@ -688,9 +683,7 @@ describe('@profile Profile', () => {
                 targetTokenAddress = targetToken.address
             } = overrides;
 
-            if (!value) {
-                value = sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
-            }
+            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
             return network
                 .connect(trader)
