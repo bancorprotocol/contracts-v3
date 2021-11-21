@@ -1217,7 +1217,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 payable(address(_vault)),
                 amounts.baseTokenAmountToTransferFromExternalProtectionVault
             );
-            amounts.baseTokenAmountToTransferFromBancorVault += amounts.baseTokenAmountToTransferFromExternalProtectionVault;
+            amounts.baseTokenAmountToTransferFromBancorVault += amounts
+                .baseTokenAmountToTransferFromExternalProtectionVault;
         }
 
         // if the provider should receive some base tokens from the bancor vault - remove the tokens from the bancor vault and send
