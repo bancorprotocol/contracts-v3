@@ -937,12 +937,11 @@ describe('PoolCollection', () => {
                 await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
                 await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
 
-                const poolDataBefore = await poolCollection.poolData(reserveToken.address);
-                expect(poolDataBefore.liquidity.stakedBalance).to.not.equal(BigNumber.from(0));
-                expect(poolDataBefore.liquidity.baseTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
-                expect(poolDataBefore.liquidity.networkTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
-                expect(poolDataBefore.liquidity.tradingLiquidityProduct).to.not.equal(BigNumber.from(0));
-                expect(poolDataBefore.averageRate.rate).to.not.equal(ZERO_FRACTION);
+                expect(prevPoolData.liquidity.stakedBalance).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.baseTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.networkTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.tradingLiquidityProduct).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.averageRate.rate).to.not.equal(ZERO_FRACTION);
 
                 await network.withdrawFromPoolCollectionT(
                     poolCollection.address,
@@ -952,12 +951,12 @@ describe('PoolCollection', () => {
                     BigNumber.from(0)
                 );
 
-                const poolDataAfter = await poolCollection.poolData(reserveToken.address);
-                expect(poolDataAfter.liquidity.stakedBalance).to.equal(BigNumber.from(0));
-                expect(poolDataAfter.liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(poolDataAfter.liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(poolDataAfter.liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                expect(poolDataAfter.averageRate.rate).to.equal(ZERO_FRACTION);
+                const poolData = await poolCollection.poolData(reserveToken.address);
+                expect(poolData.liquidity.stakedBalance).to.equal(BigNumber.from(0));
+                expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
+                expect(poolData.liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                expect(poolData.averageRate.rate).to.equal(ZERO_FRACTION);
             });
 
             for (const percent of [1, 5, 10, 25, 50]) {
@@ -973,18 +972,15 @@ describe('PoolCollection', () => {
                     );
 
                     const prevPoolData = await poolCollection.poolData(reserveToken.address);
-                    expect(prevPoolData.averageRate.rate).to.equal(prevPoolData.initialRate);
-
                     const poolTokenAmount = await poolToken.balanceOf(provider.address);
                     await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
                     await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
 
-                    const poolDataBefore = await poolCollection.poolData(reserveToken.address);
-                    const stakedBalanceExpected = poolDataBefore.liquidity.stakedBalance.mul(100 - percent).div(100);
-                    const baseTokenTradingLiquidityExpected = poolDataBefore.liquidity.baseTokenTradingLiquidity
+                    const stakedBalanceExpected = prevPoolData.liquidity.stakedBalance.mul(100 - percent).div(100);
+                    const baseTokenTradingLiquidityExpected = prevPoolData.liquidity.baseTokenTradingLiquidity
                         .mul(100 - percent)
                         .div(100);
-                    const networkTokenTradingLiquidityExpected = poolDataBefore.liquidity.networkTokenTradingLiquidity
+                    const networkTokenTradingLiquidityExpected = prevPoolData.liquidity.networkTokenTradingLiquidity
                         .mul(100 - percent)
                         .div(100);
                     const tradingLiquidityProductExpected = baseTokenTradingLiquidityExpected.mul(
@@ -999,15 +995,13 @@ describe('PoolCollection', () => {
                         BigNumber.from(0)
                     );
 
-                    const poolDataAfter = await poolCollection.poolData(reserveToken.address);
-                    expect(poolDataAfter.liquidity.stakedBalance).to.equal(stakedBalanceExpected);
-                    expect(poolDataAfter.liquidity.baseTokenTradingLiquidity).to.equal(
-                        baseTokenTradingLiquidityExpected
-                    );
-                    expect(poolDataAfter.liquidity.networkTokenTradingLiquidity).to.equal(
+                    const poolData = await poolCollection.poolData(reserveToken.address);
+                    expect(poolData.liquidity.stakedBalance).to.equal(stakedBalanceExpected);
+                    expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(baseTokenTradingLiquidityExpected);
+                    expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(
                         networkTokenTradingLiquidityExpected
                     );
-                    expect(poolDataAfter.liquidity.tradingLiquidityProduct).to.equal(tradingLiquidityProductExpected);
+                    expect(poolData.liquidity.tradingLiquidityProduct).to.equal(tradingLiquidityProductExpected);
                 });
             }
         };
