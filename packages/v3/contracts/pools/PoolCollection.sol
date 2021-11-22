@@ -940,12 +940,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidityDelta.isNeg ?
-            baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta.value :
-            baseTokenCurrTradingLiquidity + baseTokenTradingLiquidityDelta.value;
-        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta.isNeg ?
-            networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta.value :
-            networkTokenCurrTradingLiquidity + networkTokenTradingLiquidityDelta.value;
+        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidityDelta.isNeg
+            ? baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta.value
+            : baseTokenCurrTradingLiquidity + baseTokenTradingLiquidityDelta.value;
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta.isNeg
+            ? networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta.value
+            : networkTokenCurrTradingLiquidity + networkTokenTradingLiquidityDelta.value;
 
         data.poolToken.burnFrom(address(_network), basePoolTokenAmount);
 
