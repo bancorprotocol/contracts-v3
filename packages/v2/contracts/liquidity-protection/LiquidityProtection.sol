@@ -638,12 +638,13 @@ contract LiquidityProtection is ILiquidityProtection, Utils, Owned, ReentrancyGu
         // transfer the base tokens to the caller
         uint256 baseBalance = removedPos.reserveToken.balanceOf(address(this));
         if (isMigrating) {
+            uint256 value;
             if (removedPos.reserveToken.isNativeToken()) {
-                _networkV3.migrateLiquidity{ value: baseBalance }(removedPos.reserveToken, provider, targetAmount, baseBalance, removedPos.reserveAmount);
+                value = baseBalance;
             } else {
                 IERC20(address(removedPos.reserveToken)).safeApprove(address(_networkV3), baseBalance);
-                _networkV3.migrateLiquidity(removedPos.reserveToken, provider, targetAmount, baseBalance, removedPos.reserveAmount);
             }
+            _networkV3.migrateLiquidity{ value: value }(removedPos.reserveToken, provider, targetAmount, baseBalance, removedPos.reserveAmount);
         } else {
             removedPos.reserveToken.safeTransfer(provider, baseBalance);
 
