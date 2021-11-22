@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
+import { Sint256 } from "../utility/Types.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
@@ -14,12 +14,12 @@ function validate(bool valid) pure {
 }
 
 library PoolCollectionWithdrawal {
-    using SafeCast for uint256;
+    using MathEx for uint256;
 
     struct Output {
-        int256 p;
-        int256 q;
-        int256 r;
+        Sint256 p;
+        uint256 q;
+        Sint256 r;
         uint256 s;
         uint256 t;
         uint256 u;
@@ -152,9 +152,9 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) { unchecked {
         uint256 i = f * (M - m);
         uint256 j = mulSubMulDivF(b, e * M, x, i, 1);
-        output.p = MathEx.mulDivF(a * x, i, j).toInt256();
+        output.p = MathEx.mulDivF(a * x, i, j).toPos256();
         output.q = 0;
-        output.r = -MathEx.mulDivF(x, f, e).toInt256();
+        output.r = MathEx.mulDivF(x, f, e).toNeg256();
         output.s = y;
     }}
 
@@ -178,9 +178,9 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) { unchecked {
         uint256 i = f * M + e * n;
         uint256 j = mulAddMulDivF(b, e * (M - m), x, i * (M - m), M);
-        output.p = -MathEx.mulDivF(a * x, i, j).toInt256();
+        output.p = MathEx.mulDivF(a * x, i, j).toNeg256();
         output.q = 0;
-        output.r = MathEx.mulDivF(x, i, e * M).toInt256();
+        output.r = MathEx.mulDivF(x, i, e * M).toPos256();
         output.s = y;
     }}
 
@@ -200,9 +200,9 @@ library PoolCollectionWithdrawal {
         uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
-        output.p = -MathEx.mulDivF(a, z, b * e).toInt256();
-        output.q = output.p;
-        output.r = -(z / e).toInt256();
+        output.p = MathEx.mulDivF(a, z, b * e).toNeg256();
+        output.q = output.p.value;
+        output.r = (z / e).toNeg256();
         output.s = MathEx.mulDivF(y, b + c, e);
     }}
 
@@ -221,9 +221,9 @@ library PoolCollectionWithdrawal {
         uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y, c);
-        output.p = -MathEx.mulDivF(a, z, b).toInt256();
-        output.q = output.p;
-        output.r = -z.toInt256();
+        output.p = MathEx.mulDivF(a, z, b).toNeg256();
+        output.q = output.p.value;
+        output.r = z.toNeg256();
         output.s = y;
     }}
 

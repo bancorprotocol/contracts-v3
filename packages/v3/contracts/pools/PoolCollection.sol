@@ -8,7 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -930,8 +930,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     function _executeWithdrawalActions(
         ReserveToken pool,
         uint256 basePoolTokenAmount,
-        int256 baseTokenTradingLiquidityDelta,
-        int256 networkTokenTradingLiquidityDelta
+        Sint256 memory baseTokenTradingLiquidityDelta,
+        Sint256 memory networkTokenTradingLiquidityDelta
     ) private {
         Pool storage data = _poolData[pool];
         uint256 totalSupply = data.poolToken.totalSupply();
@@ -940,14 +940,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = MathEx.uintAddInt(
-            baseTokenCurrTradingLiquidity,
-            baseTokenTradingLiquidityDelta
-        );
-        uint256 networkTokenNewTradingLiquidity = MathEx.uintAddInt(
-            networkTokenCurrTradingLiquidity,
-            networkTokenTradingLiquidityDelta
-        );
+        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidityDelta.isNeg ?
+            baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta.value :
+            baseTokenCurrTradingLiquidity + baseTokenTradingLiquidityDelta.value;
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta.isNeg ?
+            networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta.value :
+            networkTokenCurrTradingLiquidity + networkTokenTradingLiquidityDelta.value;
 
         data.poolToken.burnFrom(address(_network), basePoolTokenAmount);
 
