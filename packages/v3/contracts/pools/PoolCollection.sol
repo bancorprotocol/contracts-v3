@@ -599,8 +599,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             externalProtectionVaultBalance
         );
 
-        // execute post-withdrawal actions
-        _withdraw(
+        // execute all withdrawal-related actions
+        _executeWithdrawalActions(
             pool,
             basePoolTokenAmount,
             amounts.baseTokenAmountToDeductFromLiquidity,
@@ -927,7 +927,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
      * or below it)
      */
-    function _withdraw(
+    function _executeWithdrawalActions(
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         int256 baseTokenTradingLiquidityDelta,
