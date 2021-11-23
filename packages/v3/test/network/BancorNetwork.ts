@@ -14,7 +14,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader,
     ExternalProtectionVault
-} from '../../typechain';
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';

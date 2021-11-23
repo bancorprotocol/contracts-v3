@@ -10,7 +10,8 @@ import {
     TestPoolAverageRate,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
+import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     INVALID_FRACTION,
     MAX_UINT256,
@@ -997,13 +998,13 @@ describe('PoolCollection', () => {
                                 .div(prevPoolData.liquidity.stakedBalance);
                         }
 
-                        const depositAmounts = await network.callStatic.depositToPoolCollectionForT(
+                        const depositAmounts = (await network.callStatic.depositToPoolCollectionForT(
                             poolCollection.address,
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
                             unallocatedNetworkTokenLiquidity
-                        );
+                        )) as any as DepositAmountsStructOutput;
 
                         const res = await network.depositToPoolCollectionForT(
                             poolCollection.address,

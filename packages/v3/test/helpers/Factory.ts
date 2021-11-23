@@ -15,7 +15,7 @@ import {
     ProxyAdmin,
     TestPoolCollection,
     TestBancorNetwork
-} from '../../typechain';
+} from '../../typechain-types';
 import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
 import { Fraction } from './Types';

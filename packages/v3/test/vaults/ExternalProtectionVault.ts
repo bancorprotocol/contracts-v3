@@ -1,4 +1,4 @@
-import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain';
+import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';

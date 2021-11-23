@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestERC20Token } from '../../typechain';
+import { TestERC20Token } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from './Constants';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

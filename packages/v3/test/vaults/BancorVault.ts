@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { IERC20, BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain';
+import { IERC20, BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';

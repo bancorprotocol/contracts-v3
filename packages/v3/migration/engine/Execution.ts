@@ -1,5 +1,5 @@
 import { ContractBuilder, Contract } from '../../components/ContractBuilder';
-import { ProxyAdmin } from '../../typechain';
+import { ProxyAdmin } from '../../typechain-types';
 import { Engine } from './Engine';
 import { log } from './Logger';
 import { ContractFactory, ContractReceipt, ContractTransaction } from 'ethers';

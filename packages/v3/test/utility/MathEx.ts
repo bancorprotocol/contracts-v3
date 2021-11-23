@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestMathEx } from '../../typechain';
+import { TestMathEx } from '../../typechain-types';
 import {
     floorSqrt,
     ceilSqrt,

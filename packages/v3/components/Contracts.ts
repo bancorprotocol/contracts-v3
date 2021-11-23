@@ -32,7 +32,7 @@ import {
     TestUpgradeable__factory,
     TestVault__factory,
     TransparentUpgradeableProxy__factory
-} from '../typechain';
+} from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-enable camelcase */

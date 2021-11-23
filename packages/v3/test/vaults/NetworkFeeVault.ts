@@ -1,4 +1,4 @@
-import { IERC20, NetworkFeeVault } from '../../typechain';
+import { IERC20, NetworkFeeVault } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
