@@ -22,11 +22,13 @@ contract StakingRewards is IStakingRewards {
      * input value to this function is limited by `LAMBDA * numOfSeconds < 16` --> `numOfSeconds < 1120000000`.
      * For `numOfSeconds = 1120000000 - 1`, the formula above returns more than 99.9999% of `TOTAL_REWARDS`.
      */
-    function reward(uint256 numOfSeconds) internal pure returns (uint256) { unchecked {
-        require(numOfSeconds <= type(uint256).max / LAMBDA_N, "ERR_SECONDS_TOO_HIGH");
-        uint256 n = exp(numOfSeconds * LAMBDA_N, LAMBDA_D);
-        return MathEx.mulDivF(TOTAL_REWARDS, n - ONE, n);
-    }}
+    function reward(uint256 numOfSeconds) internal pure returns (uint256) {
+        unchecked {
+            require(numOfSeconds <= type(uint256).max / LAMBDA_N, "ERR_SECONDS_TOO_HIGH");
+            uint256 n = exp(numOfSeconds * LAMBDA_N, LAMBDA_D);
+            return MathEx.mulDivF(TOTAL_REWARDS, n - ONE, n);
+        }
+    }
 
     // prettier-ignore
 
