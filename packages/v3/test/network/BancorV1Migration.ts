@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
+import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
 import {
+    IERC20,
     BancorV1Migration,
     BancorVault,
     NetworkSettings,
@@ -8,7 +9,7 @@ import {
     TestPoolCollection,
     PendingWithdrawals,
     PoolToken
-} from '../../typechain';
+} from '../../typechain-types';
 import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
@@ -43,10 +44,10 @@ describe.only('BancorV1Migration', () => {
 
                     let networkTokenGovernance: TokenGovernance;
                     let govTokenGovernance: TokenGovernance;
-                    let govToken: GovToken;
+                    let govToken: IERC20;
                     let network: TestBancorNetwork;
                     let networkSettings: NetworkSettings;
-                    let networkToken: NetworkToken;
+                    let networkToken: IERC20;
                     let networkPoolToken: PoolToken;
                     let basePoolToken: PoolToken;
                     let pendingWithdrawals: PendingWithdrawals;
@@ -54,7 +55,7 @@ describe.only('BancorV1Migration', () => {
                     let bancorVault: BancorVault;
                     let bancorV1Migration: BancorV1Migration;
                     let converter: TestStandardPoolConverter;
-                    let poolToken: GovToken;
+                    let poolToken: DSToken;
                     let baseToken: any;
 
                     const setup = async () => {
