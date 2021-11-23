@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
-interface IAutoCompoundingStakingRewards {}
+import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
+
+interface IAutoCompoundingStakingRewards is IUpgradeable {}
