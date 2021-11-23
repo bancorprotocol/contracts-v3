@@ -35,13 +35,13 @@ import { PoolToken } from "./PoolToken.sol";
 error MintingLimitExceeded();
 
 /**
- * @dev Network Token Pool contract
+ * @dev Master Pool contract
  */
 contract MasterPool is IMasterPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
-    // the network pool token manager role is required to access the master pool token reserve
-    bytes32 public constant ROLE_NETWORK_POOL_TOKEN_MANAGER = keccak256("ROLE_NETWORK_POOL_TOKEN_MANAGER");
+    // the master pool token manager role is required to access the master pool token reserve
+    bytes32 public constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -138,7 +138,7 @@ contract MasterPool is IMasterPool, Vault {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
-        _setRoleAdmin(ROLE_NETWORK_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_MASTER_POOL_TOKEN_MANAGER, ROLE_ADMIN);
     }
 
     /**
@@ -161,7 +161,7 @@ contract MasterPool is IMasterPool, Vault {
      * requirements:
      *
      *   - reserve token must be the master pool token
-     *   - the caller must have the ROLE_NETWORK_POOL_TOKEN_MANAGER permission
+     *   - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER permission
      */
     function authenticateWithdrawal(
         address caller,
@@ -169,7 +169,7 @@ contract MasterPool is IMasterPool, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_NETWORK_POOL_TOKEN_MANAGER, caller));
+        return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller));
     }
 
     /**

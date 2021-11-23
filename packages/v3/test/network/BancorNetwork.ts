@@ -284,7 +284,7 @@ describe('BancorNetwork', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network pool token contract', async () => {
+        it('should revert when initialized with an invalid master pool token contract', async () => {
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,

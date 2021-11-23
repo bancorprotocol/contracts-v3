@@ -27,7 +27,7 @@ export const roles = {
     },
 
     MasterPool: {
-        ROLE_NETWORK_POOL_TOKEN_MANAGER: id('ROLE_NETWORK_POOL_TOKEN_MANAGER')
+        ROLE_MASTER_POOL_TOKEN_MANAGER: id('ROLE_MASTER_POOL_TOKEN_MANAGER')
     },
 
     TokenGovernance: {

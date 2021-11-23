@@ -30,7 +30,7 @@ struct WithdrawalAmounts {
 }
 
 /**
- * @dev Network Token Pool interface
+ * @dev Master Pool interface
  */
 interface IMasterPool is IVault {
     /**

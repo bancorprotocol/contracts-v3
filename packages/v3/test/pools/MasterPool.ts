@@ -78,7 +78,7 @@ describe('MasterPool', () => {
             );
         });
 
-        it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
+        it('should revert when attempting to initialize with an invalid master pool token contract', async () => {
             await expect(Contracts.MasterPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
@@ -96,7 +96,7 @@ describe('MasterPool', () => {
 
             await expectRole(
                 masterPool,
-                MasterPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
+                MasterPoolRoles.ROLE_MASTER_POOL_TOKEN_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN
                 // @TODO add staking rewards to initial members
             );
@@ -1142,9 +1142,9 @@ describe('MasterPool', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('with network pool token manager role', () => {
+                context('with master pool token manager role', () => {
                     beforeEach(async () => {
-                        await masterPool.grantRole(MasterPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER, user.address);
+                        await masterPool.grantRole(MasterPoolRoles.ROLE_MASTER_POOL_TOKEN_MANAGER, user.address);
                     });
 
                     if (isMasterPoolToken) {
