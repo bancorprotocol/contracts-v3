@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -22,7 +22,7 @@ library ReserveTokenLibrary {
     // the symbol that represents the native token
     string private constant NATIVE_TOKEN_SYMBOL = "ETH";
 
-    // the ‏decimals for the native token
+    // the decimals for the native token
     uint8 private constant NATIVE_TOKEN_DECIMALS = 18;
 
     /**

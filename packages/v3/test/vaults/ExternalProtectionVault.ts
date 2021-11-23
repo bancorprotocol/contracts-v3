@@ -1,5 +1,4 @@
-import { NetworkToken } from '../../components/LegacyContracts';
-import { ExternalProtectionVault, TestBancorNetwork } from '../../typechain';
+import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
@@ -50,7 +49,7 @@ describe('ExternalProtectionVault', () => {
         const amount = 1_000_000;
 
         let externalProtectionVault: ExternalProtectionVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;

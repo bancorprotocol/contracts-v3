@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
-import LegacyContracts from '../../components/LegacyContracts';
-import { TestERC20Token } from '../../typechain';
+import { TestERC20Token } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from './Constants';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -12,11 +11,16 @@ export type TokenWithAddress = TestERC20Token | { address: string };
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
 
+export const getTransactionGas = async (res: ContractTransaction) => {
+    const receipt = await res.wait();
+
+    return receipt.cumulativeGasUsed;
+};
+
 export const getTransactionCost = async (res: ContractTransaction) => {
     const receipt = await res.wait();
-    const { cumulativeGasUsed, effectiveGasPrice } = receipt;
 
-    return effectiveGasPrice.mul(cumulativeGasUsed);
+    return receipt.effectiveGasPrice.mul(await getTransactionGas(res));
 };
 
 export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress) => {

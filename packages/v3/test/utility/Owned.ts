@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestOwned } from '../../typechain';
+import { TestOwned } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestSafeERC20Ex, TestERC20Token } from '../../typechain';
+import { TestSafeERC20Ex, TestERC20Token } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
