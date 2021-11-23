@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
 import { Sint256 } from "../utility/Types.sol";
