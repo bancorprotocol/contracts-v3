@@ -21,7 +21,7 @@ import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
-import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/INetworkTokenPool.sol";
+import { IMasterPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/IMasterPool.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
@@ -37,10 +37,10 @@ error MintingLimitExceeded();
 /**
  * @dev Network Token Pool contract
  */
-contract NetworkTokenPool is INetworkTokenPool, Vault {
+contract MasterPool is IMasterPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
-    // the network pool token manager role is required to access the network token pool token reserve
+    // the network pool token manager role is required to access the master pool token reserve
     bytes32 public constant ROLE_NETWORK_POOL_TOKEN_MANAGER = keccak256("ROLE_NETWORK_POOL_TOKEN_MANAGER");
 
     // the network contract
@@ -64,7 +64,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     // the vault contract
     IBancorVault private immutable _vault;
 
-    // the network token pool token
+    // the master pool token
     IPoolToken internal immutable _poolToken;
 
     // the total staked network token balance in the network
@@ -117,7 +117,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __NetworkTokenPool_init();
+        __MasterPool_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -125,16 +125,16 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkTokenPool_init() internal initializer {
+    function __MasterPool_init() internal initializer {
         __Vault_init();
 
-        __NetworkTokenPool_init_unchained();
+        __MasterPool_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkTokenPool_init_unchained() internal initializer {
+    function __MasterPool_init_unchained() internal initializer {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
@@ -160,7 +160,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
      *
      * requirements:
      *
-     *   - reserve token must be the network token pool token
+     *   - reserve token must be the master pool token
      *   - the caller must have the ROLE_NETWORK_POOL_TOKEN_MANAGER permission
      */
     function authenticateWithdrawal(
@@ -173,77 +173,77 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function network() external view returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function networkToken() external view returns (IERC20) {
         return _networkToken;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function networkTokenGovernance() external view returns (ITokenGovernance) {
         return _networkTokenGovernance;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function govToken() external view returns (IERC20) {
         return _govToken;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function govTokenGovernance() external view returns (ITokenGovernance) {
         return _govTokenGovernance;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function settings() external view returns (INetworkSettings) {
         return _settings;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function vault() external view returns (IBancorVault) {
         return _vault;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function poolToken() external view returns (IPoolToken) {
         return _poolToken;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function stakedBalance() external view returns (uint256) {
         return _stakedBalance;
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function mintedAmount(ReserveToken pool) external view returns (uint256) {
         return _mintedAmounts[pool];
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool) {
         return
@@ -254,14 +254,14 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function unallocatedLiquidity(ReserveToken pool) external view returns (uint256) {
         return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function mint(address recipient, uint256 networkTokenAmount)
         external
@@ -273,7 +273,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function burnFromVault(uint256 networkTokenAmount)
         external
@@ -286,7 +286,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function depositFor(
         address provider,
@@ -330,7 +330,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function withdraw(address provider, uint256 poolTokenAmount)
         external
@@ -360,7 +360,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function requestLiquidity(
         bytes32 contextId,
@@ -412,7 +412,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function renounceLiquidity(
         bytes32 contextId,
@@ -453,7 +453,7 @@ contract NetworkTokenPool is INetworkTokenPool, Vault {
     }
 
     /**
-     * @inheritdoc INetworkTokenPool
+     * @inheritdoc IMasterPool
      */
     function onFeesCollected(
         ReserveToken pool,

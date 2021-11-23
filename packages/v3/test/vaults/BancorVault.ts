@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { IERC20, BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain-types';
+import { IERC20, BancorVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
@@ -18,10 +18,10 @@ describe('BancorVault', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let bancorVault: BancorVault;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
 
         beforeEach(async () => {
-            ({ network, bancorVault, networkTokenPool } = await createSystem());
+            ({ network, bancorVault, masterPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -43,7 +43,7 @@ describe('BancorVault', () => {
                 network.address
             ]);
             await expectRole(bancorVault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
-                networkTokenPool.address
+                masterPool.address
             ]);
         });
     });

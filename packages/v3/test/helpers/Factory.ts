@@ -153,27 +153,27 @@ export const createPoolCollection = async (
         toAddress(poolCollectionUpgrader)
     );
 
-const createNetworkTokenPoolUninitialized = async (
+const createMasterPoolUninitialized = async (
     network: TestBancorNetwork,
     vault: BancorVault,
     networkPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance
 ) => {
-    const networkTokenPool = await createProxy(Contracts.TestNetworkTokenPool, {
+    const masterPool = await createProxy(Contracts.TestMasterPool, {
         skipInitialization: true,
         ctorArgs: [network.address, networkPoolToken.address]
     });
 
     await networkPoolToken.acceptOwnership();
-    await networkPoolToken.transferOwnership(networkTokenPool.address);
+    await networkPoolToken.transferOwnership(masterPool.address);
 
-    await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
-    await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, networkTokenPool.address);
+    await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
+    await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
 
-    await vault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, networkTokenPool.address);
+    await vault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
 
-    return networkTokenPool;
+    return masterPool;
 };
 
 export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
@@ -228,7 +228,7 @@ const createSystemFixture = async () => {
         ]
     });
 
-    const networkTokenPool = await createNetworkTokenPoolUninitialized(
+    const masterPool = await createMasterPoolUninitialized(
         network,
         bancorVault,
         networkPoolToken,
@@ -236,10 +236,10 @@ const createSystemFixture = async () => {
         govTokenGovernance
     );
 
-    await networkTokenPool.initialize();
+    await masterPool.initialize();
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address, networkTokenPool.address]
+        ctorArgs: [network.address, masterPool.address]
     });
 
     const poolCollectionUpgrader = await createProxy(Contracts.TestPoolCollectionUpgrader, {
@@ -248,7 +248,7 @@ const createSystemFixture = async () => {
 
     const poolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
 
-    await network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
+    await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
     await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
     await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
@@ -265,7 +265,7 @@ const createSystemFixture = async () => {
         externalProtectionVault,
         externalRewardsVault,
         networkFeeVault,
-        networkTokenPool,
+        masterPool,
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,

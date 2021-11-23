@@ -8,15 +8,15 @@ import {
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
-    TestNetworkTokenPool,
+    TestMasterPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
     FeeTypes,
-    NETWORK_TOKEN_POOL_TOKEN_NAME,
-    NETWORK_TOKEN_POOL_TOKEN_SYMBOL,
+    MASTER_POOL_TOKEN_NAME,
+    MASTER_POOL_TOKEN_SYMBOL,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
     TKN
@@ -33,14 +33,14 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-const { Upgradeable: UpgradeableRoles, NetworkTokenPool: NetworkTokenPoolRoles } = roles;
+const { Upgradeable: UpgradeableRoles, MasterPool: MasterPoolRoles } = roles;
 
-describe('NetworkTokenPool', () => {
+describe('MasterPool', () => {
     let deployer: SignerWithAddress;
     let provider: SignerWithAddress;
     let provider2: SignerWithAddress;
 
-    shouldHaveGap('NetworkTokenPool', '_stakedBalance');
+    shouldHaveGap('MasterPool', '_stakedBalance');
 
     before(async () => {
         [deployer, provider, provider2] = await ethers.getSigners();
@@ -53,14 +53,14 @@ describe('NetworkTokenPool', () => {
         let govToken: IERC20;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let bancorVault: BancorVault;
         let networkPoolToken: PoolToken;
 
         beforeEach(async () => {
             ({
                 network,
-                networkTokenPool,
+                masterPool,
                 networkPoolToken,
                 networkSettings,
                 network,
@@ -73,60 +73,56 @@ describe('NetworkTokenPool', () => {
         });
 
         it('should revert when attempting to initialize with an invalid network contract', async () => {
-            await expect(Contracts.NetworkTokenPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
+            await expect(Contracts.MasterPool.deploy(ZERO_ADDRESS, networkPoolToken.address)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
         it('should revert when attempting to initialize with an invalid network pool token contract', async () => {
-            await expect(Contracts.NetworkTokenPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.MasterPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(networkTokenPool.initialize()).to.be.revertedWith(
-                'Initializable: contract is already initialized'
-            );
+            await expect(masterPool.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should be properly initialized', async () => {
-            expect(await networkTokenPool.version()).to.equal(1);
-            expect(await networkTokenPool.isPayable()).to.be.false;
+            expect(await masterPool.version()).to.equal(1);
+            expect(await masterPool.isPayable()).to.be.false;
 
-            await expectRole(networkTokenPool, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
-                deployer.address
-            ]);
+            await expectRole(masterPool, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
 
             await expectRole(
-                networkTokenPool,
-                NetworkTokenPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
+                masterPool,
+                MasterPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
                 UpgradeableRoles.ROLE_ADMIN
                 // @TODO add staking rewards to initial members
             );
 
-            expect(await networkTokenPool.network()).to.equal(network.address);
-            expect(await networkTokenPool.networkToken()).to.equal(networkToken.address);
-            expect(await networkTokenPool.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
-            expect(await networkTokenPool.govToken()).to.equal(govToken.address);
-            expect(await networkTokenPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
-            expect(await networkTokenPool.settings()).to.equal(networkSettings.address);
-            expect(await networkTokenPool.vault()).to.equal(bancorVault.address);
+            expect(await masterPool.network()).to.equal(network.address);
+            expect(await masterPool.networkToken()).to.equal(networkToken.address);
+            expect(await masterPool.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
+            expect(await masterPool.govToken()).to.equal(govToken.address);
+            expect(await masterPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
+            expect(await masterPool.settings()).to.equal(networkSettings.address);
+            expect(await masterPool.vault()).to.equal(bancorVault.address);
 
-            expect(await networkTokenPool.stakedBalance()).to.equal(BigNumber.from(0));
+            expect(await masterPool.stakedBalance()).to.equal(BigNumber.from(0));
 
-            const poolToken = await Contracts.PoolToken.attach(await networkTokenPool.poolToken());
-            expect(await poolToken.owner()).to.equal(networkTokenPool.address);
+            const poolToken = await Contracts.PoolToken.attach(await masterPool.poolToken());
+            expect(await poolToken.owner()).to.equal(masterPool.address);
             expect(await poolToken.reserveToken()).to.equal(networkToken.address);
-            expect(await poolToken.name()).to.equal(NETWORK_TOKEN_POOL_TOKEN_NAME);
-            expect(await poolToken.symbol()).to.equal(NETWORK_TOKEN_POOL_TOKEN_SYMBOL);
+            expect(await poolToken.name()).to.equal(MASTER_POOL_TOKEN_NAME);
+            expect(await poolToken.symbol()).to.equal(MASTER_POOL_TOKEN_SYMBOL);
         });
     });
 
     describe('mint', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let recipient: SignerWithAddress;
 
         before(async () => {
@@ -134,15 +130,15 @@ describe('NetworkTokenPool', () => {
         });
 
         beforeEach(async () => {
-            ({ network, networkToken, networkTokenPool } = await createSystem());
+            ({ network, networkToken, masterPool } = await createSystem());
         });
 
         it('should revert when attempting to mint from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(
-                networkTokenPool.connect(nonNetwork).mint(recipient.address, BigNumber.from(1))
-            ).to.be.revertedWith('AccessDenied');
+            await expect(masterPool.connect(nonNetwork).mint(recipient.address, BigNumber.from(1))).to.be.revertedWith(
+                'AccessDenied'
+            );
         });
 
         it('should revert when attempting to mint to an invalid address', async () => {
@@ -169,13 +165,13 @@ describe('NetworkTokenPool', () => {
     describe('burnFromVault', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let bancorVault: BancorVault;
 
         const amount = toWei(BigNumber.from(12345));
 
         beforeEach(async () => {
-            ({ network, networkToken, networkTokenPool, bancorVault } = await createSystem());
+            ({ network, networkToken, masterPool, bancorVault } = await createSystem());
 
             await networkToken.transfer(bancorVault.address, amount);
         });
@@ -183,7 +179,7 @@ describe('NetworkTokenPool', () => {
         it('should revert when attempting to burn from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(networkTokenPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
+            await expect(masterPool.connect(nonNetwork).burnFromVault(BigNumber.from(1))).to.be.revertedWith(
                 'AccessDenied'
             );
         });
@@ -214,29 +210,29 @@ describe('NetworkTokenPool', () => {
     describe('is minting enabled', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkTokenPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+            ({ networkSettings, network, masterPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
 
         it('should return false for an invalid pool', async () => {
-            expect(await networkTokenPool.isNetworkLiquidityEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
+            expect(await masterPool.isNetworkLiquidityEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
         });
 
         it('should return false for an invalid pool collection', async () => {
-            expect(await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
+            expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
         });
 
         it('should return false for a non-whitelisted token', async () => {
-            expect(await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to.be
+            expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to.be
                 .false;
         });
 
@@ -271,9 +267,8 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return false', async () => {
-                    expect(
-                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)
-                    ).to.be.false;
+                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to
+                        .be.false;
                 });
             });
 
@@ -301,9 +296,8 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should return true', async () => {
-                    expect(
-                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)
-                    ).to.be.true;
+                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to
+                        .be.true;
                 });
 
                 it('should return false for another pool collection', async () => {
@@ -313,9 +307,8 @@ describe('NetworkTokenPool', () => {
                         poolCollectionUpgrader
                     );
 
-                    expect(
-                        await networkTokenPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)
-                    ).to.be.false;
+                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)).to
+                        .be.false;
                 });
             });
         });
@@ -325,7 +318,7 @@ describe('NetworkTokenPool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkPoolToken: PoolToken;
         let bancorVault: BancorVault;
         let poolCollection: TestPoolCollection;
@@ -337,15 +330,8 @@ describe('NetworkTokenPool', () => {
         const contextId = formatBytes32String('CTX');
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                networkTokenPool,
-                networkPoolToken,
-                bancorVault,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, masterPool, networkPoolToken, bancorVault, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
@@ -356,18 +342,18 @@ describe('NetworkTokenPool', () => {
         });
 
         const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
-            const prevStakedBalance = await networkTokenPool.stakedBalance();
-            const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-            const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
+            const prevStakedBalance = await masterPool.stakedBalance();
+            const prevMintedAmount = await masterPool.mintedAmount(reserveToken.address);
+            const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
 
             const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-            const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+            const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(masterPool.address);
             const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(bancorVault.address);
 
             expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
             const prevTokenTotalSupply = await networkToken.totalSupply();
-            const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+            const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
             const prevVaultTokenBalance = await networkToken.balanceOf(bancorVault.address);
 
             let expectedPoolTokenAmount;
@@ -380,27 +366,25 @@ describe('NetworkTokenPool', () => {
             const res = await network.requestLiquidityT(contextId, reserveToken.address, amount);
 
             await expect(res)
-                .to.emit(networkTokenPool, 'LiquidityRequested')
+                .to.emit(masterPool, 'LiquidityRequested')
                 .withArgs(contextId, reserveToken.address, expectedAmount, expectedPoolTokenAmount);
 
-            expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
-            expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
-                prevMintedAmount.add(expectedAmount)
-            );
-            expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
+            expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
+            expect(await masterPool.mintedAmount(reserveToken.address)).to.equal(prevMintedAmount.add(expectedAmount));
+            expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                 prevUnallocatedLiquidity.sub(expectedAmount)
             );
 
             expect(await networkPoolToken.totalSupply()).to.equal(
                 prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
             );
-            expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+            expect(await networkPoolToken.balanceOf(masterPool.address)).to.equal(
                 prevPoolPoolTokenBalance.add(expectedPoolTokenAmount)
             );
             expect(await networkPoolToken.balanceOf(bancorVault.address)).to.equal(prevVaultPoolTokenBalance);
 
             expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.add(expectedAmount));
-            expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
+            expect(await networkToken.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance);
             expect(await networkToken.balanceOf(bancorVault.address)).to.equal(
                 prevVaultTokenBalance.add(expectedAmount)
             );
@@ -410,9 +394,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                networkTokenPool
-                    .connect(nonNetwork)
-                    .requestLiquidity(contextId, reserveToken.address, BigNumber.from(1))
+                masterPool.connect(nonNetwork).requestLiquidity(contextId, reserveToken.address, BigNumber.from(1))
             ).to.be.revertedWith('AccessDenied');
         });
 
@@ -516,7 +498,7 @@ describe('NetworkTokenPool', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkPoolToken: PoolToken;
         let bancorVault: BancorVault;
         let poolCollection: TestPoolCollection;
@@ -528,15 +510,8 @@ describe('NetworkTokenPool', () => {
         const contextId = formatBytes32String('CTX');
 
         beforeEach(async () => {
-            ({
-                networkSettings,
-                network,
-                networkToken,
-                networkTokenPool,
-                networkPoolToken,
-                bancorVault,
-                poolCollection
-            } = await createSystem());
+            ({ networkSettings, network, networkToken, masterPool, networkPoolToken, bancorVault, poolCollection } =
+                await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
@@ -550,9 +525,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                networkTokenPool
-                    .connect(nonNetwork)
-                    .renounceLiquidity(contextId, reserveToken.address, BigNumber.from(1))
+                masterPool.connect(nonNetwork).renounceLiquidity(contextId, reserveToken.address, BigNumber.from(1))
             ).to.be.revertedWith('AccessDenied');
         });
 
@@ -580,18 +553,18 @@ describe('NetworkTokenPool', () => {
             });
 
             const testRenounce = async (amount: BigNumber) => {
-                const prevStakedBalance = await networkTokenPool.stakedBalance();
-                const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
+                const prevStakedBalance = await masterPool.stakedBalance();
+                const prevMintedAmount = await masterPool.mintedAmount(reserveToken.address);
+                const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
 
                 const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(masterPool.address);
                 const prevVaultPoolTokenBalance = await networkPoolToken.balanceOf(bancorVault.address);
 
                 expect(prevVaultPoolTokenBalance).to.equal(BigNumber.from(0));
 
                 const prevTokenTotalSupply = await networkToken.totalSupply();
-                const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                 const prevVaultTokenBalance = await networkToken.balanceOf(bancorVault.address);
 
                 const renouncedAmount = BigNumber.min(prevMintedAmount, amount);
@@ -600,15 +573,15 @@ describe('NetworkTokenPool', () => {
                 const res = await network.renounceLiquidityT(contextId, reserveToken.address, amount);
 
                 await expect(res)
-                    .to.emit(networkTokenPool, 'LiquidityRenounced')
+                    .to.emit(masterPool, 'LiquidityRenounced')
                     .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
 
-                expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.sub(renouncedAmount));
-                expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
+                expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.sub(renouncedAmount));
+                expect(await masterPool.mintedAmount(reserveToken.address)).to.equal(
                     prevMintedAmount.sub(renouncedAmount)
                 );
 
-                expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
+                expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                     prevUnallocatedLiquidity.gt(renouncedAmount)
                         ? prevUnallocatedLiquidity.add(renouncedAmount)
                         : MINTING_LIMIT
@@ -617,13 +590,13 @@ describe('NetworkTokenPool', () => {
                 expect(await networkPoolToken.totalSupply()).to.equal(
                     prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
                 );
-                expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                expect(await networkPoolToken.balanceOf(masterPool.address)).to.equal(
                     prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                 );
                 expect(await networkPoolToken.balanceOf(bancorVault.address)).to.equal(prevVaultPoolTokenBalance);
 
                 expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
+                expect(await networkToken.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance);
                 expect(await networkToken.balanceOf(bancorVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
             };
 
@@ -653,13 +626,13 @@ describe('NetworkTokenPool', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let govToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
+            ({ networkSettings, network, networkToken, govToken, masterPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -670,7 +643,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                networkTokenPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
+                masterPool.connect(nonNetwork).depositFor(provider.address, amount, false, BigNumber.from(0))
             ).to.be.revertedWith('AccessDenied');
         });
 
@@ -723,21 +696,21 @@ describe('NetworkTokenPool', () => {
                     originalGovTokenAmount: BigNumber
                 ) => {
                     // since this is only a unit test, we will simulate a proper transfer of the network token amount
-                    // from the network to the network token pool
-                    await networkToken.connect(deployer).transfer(networkTokenPool.address, amount);
+                    // from the network to the master pool
+                    await networkToken.connect(deployer).transfer(masterPool.address, amount);
 
-                    const prevStakedBalance = await networkTokenPool.stakedBalance();
+                    const prevStakedBalance = await masterPool.stakedBalance();
 
                     const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                    const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(masterPool.address);
                     const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                     const prevTokenTotalSupply = await networkToken.totalSupply();
-                    const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                    const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                     const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                     const prevGovTotalSupply = await govToken.totalSupply();
-                    const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                    const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
                     const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
 
                     const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
@@ -765,10 +738,10 @@ describe('NetworkTokenPool', () => {
                         originalGovTokenAmount
                     );
 
-                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
+                    expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance);
 
                     expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                    expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                    expect(await networkPoolToken.balanceOf(masterPool.address)).to.equal(
                         prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                     );
                     expect(await networkPoolToken.balanceOf(provider.address)).to.equal(
@@ -776,13 +749,11 @@ describe('NetworkTokenPool', () => {
                     );
 
                     expect(await networkToken.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                    expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(
-                        prevPoolTokenBalance.sub(amount)
-                    );
+                    expect(await networkToken.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance.sub(amount));
                     expect(await networkToken.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
 
                     expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.add(expectedGovTokenAmount));
-                    expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolGovTokenBalance);
+                    expect(await govToken.balanceOf(masterPool.address)).to.equal(prevPoolGovTokenBalance);
                     expect(await govToken.balanceOf(provider.address)).to.equal(
                         prevProviderGovTokenBalance.add(expectedGovTokenAmount)
                     );
@@ -797,8 +768,8 @@ describe('NetworkTokenPool', () => {
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
-                    const maxAmount = (await networkPoolToken.balanceOf(networkTokenPool.address))
-                        .mul(await networkTokenPool.stakedBalance())
+                    const maxAmount = (await networkPoolToken.balanceOf(masterPool.address))
+                        .mul(await masterPool.stakedBalance())
                         .div(await networkPoolToken.totalSupply());
 
                     await expect(
@@ -843,13 +814,13 @@ describe('NetworkTokenPool', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let govToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, networkToken, govToken, networkTokenPool, networkPoolToken, poolCollection } =
+            ({ networkSettings, network, networkToken, govToken, masterPool, networkPoolToken, poolCollection } =
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -859,7 +830,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                networkTokenPool.connect(nonNetwork).withdraw(provider.address, BigNumber.from(1))
+                masterPool.connect(nonNetwork).withdraw(provider.address, BigNumber.from(1))
             ).to.be.revertedWith('AccessDenied');
         });
 
@@ -908,9 +879,9 @@ describe('NetworkTokenPool', () => {
 
                     beforeEach(async () => {
                         // since this is only a unit test, we will simulate a proper transfer of the network token amount
-                        // from the network to the network token pool
+                        // from the network to the master pool
                         const depositAmount = toWei(BigNumber.from(1_000_000));
-                        await networkToken.connect(deployer).transfer(networkTokenPool.address, depositAmount);
+                        await networkToken.connect(deployer).transfer(masterPool.address, depositAmount);
 
                         depositAmounts = await network.callStatic.depositToNetworkPoolForT(
                             provider.address,
@@ -929,22 +900,22 @@ describe('NetworkTokenPool', () => {
 
                     const testWithdraw = async (provider: SignerWithAddress, poolTokenAmount: BigNumber) => {
                         await networkPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
-                        await govToken.connect(provider).transfer(networkTokenPool.address, poolTokenAmount);
+                        await network.approveT(networkPoolToken.address, masterPool.address, poolTokenAmount);
+                        await govToken.connect(provider).transfer(masterPool.address, poolTokenAmount);
 
-                        const prevStakedBalance = await networkTokenPool.stakedBalance();
+                        const prevStakedBalance = await masterPool.stakedBalance();
 
                         const prevPoolTokenTotalSupply = await networkPoolToken.totalSupply();
-                        const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(networkTokenPool.address);
+                        const prevPoolPoolTokenBalance = await networkPoolToken.balanceOf(masterPool.address);
                         const prevNetworkPoolTokenBalance = await networkPoolToken.balanceOf(network.address);
                         const prevProviderPoolTokenBalance = await networkPoolToken.balanceOf(provider.address);
 
                         const prevTokenTotalSupply = await networkToken.totalSupply();
-                        const prevPoolTokenBalance = await networkToken.balanceOf(networkTokenPool.address);
+                        const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                         const prevProviderTokenBalance = await networkToken.balanceOf(provider.address);
 
                         const prevGovTotalSupply = await govToken.totalSupply();
-                        const prevPoolGovTokenBalance = await govToken.balanceOf(networkTokenPool.address);
+                        const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
                         const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
                         const expectedTokenAmount = BigNumber.from(
                             mulDivF(
@@ -964,10 +935,10 @@ describe('NetworkTokenPool', () => {
 
                         await network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount);
 
-                        expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance);
+                        expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance);
 
                         expect(await networkPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                        expect(await networkPoolToken.balanceOf(networkTokenPool.address)).to.equal(
+                        expect(await networkPoolToken.balanceOf(masterPool.address)).to.equal(
                             prevPoolPoolTokenBalance.add(poolTokenAmount)
                         );
 
@@ -981,13 +952,13 @@ describe('NetworkTokenPool', () => {
                         expect(await networkToken.totalSupply()).to.equal(
                             prevTokenTotalSupply.add(expectedTokenAmount)
                         );
-                        expect(await networkToken.balanceOf(networkTokenPool.address)).to.equal(prevPoolTokenBalance);
+                        expect(await networkToken.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance);
                         expect(await networkToken.balanceOf(provider.address)).to.equal(
                             prevProviderTokenBalance.add(expectedTokenAmount)
                         );
 
                         expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
-                        expect(await govToken.balanceOf(networkTokenPool.address)).to.equal(
+                        expect(await govToken.balanceOf(masterPool.address)).to.equal(
                             prevPoolGovTokenBalance.sub(poolTokenAmount)
                         );
                         expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenBalance);
@@ -997,9 +968,9 @@ describe('NetworkTokenPool', () => {
                         const extra = BigNumber.from(1);
                         const poolTokenAmount = depositAmounts.poolTokenAmount.add(extra);
 
-                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
+                        await network.approveT(networkPoolToken.address, masterPool.address, poolTokenAmount);
                         await govToken.connect(deployer).transfer(provider.address, extra);
-                        await govToken.connect(provider).transfer(networkTokenPool.address, poolTokenAmount);
+                        await govToken.connect(provider).transfer(masterPool.address, poolTokenAmount);
 
                         await expect(
                             network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
@@ -1010,7 +981,7 @@ describe('NetworkTokenPool', () => {
                         const poolTokenAmount = BigNumber.from(1000);
 
                         await networkPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                        await network.approveT(networkPoolToken.address, networkTokenPool.address, poolTokenAmount);
+                        await network.approveT(networkPoolToken.address, masterPool.address, poolTokenAmount);
 
                         await expect(
                             network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
@@ -1019,7 +990,7 @@ describe('NetworkTokenPool', () => {
 
                     it('should revert when attempting to deposit without approving the network tokens', async () => {
                         const poolTokenAmount = BigNumber.from(1000);
-                        await govToken.connect(provider).transfer(networkTokenPool.address, poolTokenAmount);
+                        await govToken.connect(provider).transfer(masterPool.address, poolTokenAmount);
 
                         await expect(
                             network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
@@ -1044,13 +1015,13 @@ describe('NetworkTokenPool', () => {
     describe('fee collection', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let reserveToken: TestERC20Token;
 
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
         beforeEach(async () => {
-            ({ networkSettings, networkTokenPool, network } = await createSystem());
+            ({ networkSettings, masterPool, network } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
@@ -1061,7 +1032,7 @@ describe('NetworkTokenPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                networkTokenPool
+                masterPool
                     .connect(nonNetwork)
                     .onFeesCollected(reserveToken.address, BigNumber.from(1), FeeTypes.Trading)
             ).to.be.revertedWith('AccessDenied');
@@ -1076,18 +1047,18 @@ describe('NetworkTokenPool', () => {
         for (const [name, type] of Object.entries(FeeTypes)) {
             for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
-                    const prevStakedBalance = await networkTokenPool.stakedBalance();
-                    const prevMintedAmount = await networkTokenPool.mintedAmount(reserveToken.address);
-                    const prevUnallocatedLiquidity = await networkTokenPool.unallocatedLiquidity(reserveToken.address);
+                    const prevStakedBalance = await masterPool.stakedBalance();
+                    const prevMintedAmount = await masterPool.mintedAmount(reserveToken.address);
+                    const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
                     const expectedMintedAmount = type === FeeTypes.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 
-                    expect(await networkTokenPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                    expect(await networkTokenPool.mintedAmount(reserveToken.address)).to.equal(
+                    expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
+                    expect(await masterPool.mintedAmount(reserveToken.address)).to.equal(
                         prevMintedAmount.add(expectedMintedAmount)
                     );
-                    expect(await networkTokenPool.unallocatedLiquidity(reserveToken.address)).to.equal(
+                    expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                         prevUnallocatedLiquidity.sub(expectedMintedAmount)
                     );
                 });
@@ -1101,7 +1072,7 @@ describe('NetworkTokenPool', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkPoolToken: PoolToken;
         let networkToken: IERC20;
 
@@ -1112,8 +1083,8 @@ describe('NetworkTokenPool', () => {
 
         const testWithdrawFunds = () => {
             it('should allow withdrawals', async () => {
-                await expect(networkTokenPool.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(networkTokenPool, 'FundsWithdrawn')
+                await expect(masterPool.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(masterPool, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -1121,7 +1092,7 @@ describe('NetworkTokenPool', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    networkTokenPool.connect(user).withdrawFunds(token.address, user.address, amount)
+                    masterPool.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
@@ -1130,23 +1101,23 @@ describe('NetworkTokenPool', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [TKN, NETWORK_TOKEN_POOL_TOKEN_SYMBOL]) {
-            const isNetworkTokenPoolToken = symbol === NETWORK_TOKEN_POOL_TOKEN_SYMBOL;
+        for (const symbol of [TKN, MASTER_POOL_TOKEN_SYMBOL]) {
+            const isMasterPoolToken = symbol === MASTER_POOL_TOKEN_SYMBOL;
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {
-                    ({ network, networkTokenPool, networkPoolToken, networkToken, networkSettings, poolCollection } =
+                    ({ network, masterPool, networkPoolToken, networkToken, networkSettings, poolCollection } =
                         await createSystem());
 
                     const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
-                    if (isNetworkTokenPoolToken) {
+                    if (isMasterPoolToken) {
                         token = networkPoolToken;
 
                         await createPool(reserveToken, network, networkSettings, poolCollection);
 
                         await network.mintT(deployer.address, amount);
-                        await networkToken.connect(deployer).transfer(networkTokenPool.address, amount);
+                        await networkToken.connect(deployer).transfer(masterPool.address, amount);
 
                         await networkSettings.setPoolMintingLimit(reserveToken.address, amount);
 
@@ -1158,7 +1129,7 @@ describe('NetworkTokenPool', () => {
                         token = await createTokenBySymbol(symbol);
                     }
 
-                    await transfer(deployer, token, networkTokenPool.address, amount);
+                    await transfer(deployer, token, masterPool.address, amount);
                 });
 
                 context('with no special permissions', () => {
@@ -1167,7 +1138,7 @@ describe('NetworkTokenPool', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await networkTokenPool.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await masterPool.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -1175,13 +1146,10 @@ describe('NetworkTokenPool', () => {
 
                 context('with network pool token manager role', () => {
                     beforeEach(async () => {
-                        await networkTokenPool.grantRole(
-                            NetworkTokenPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER,
-                            user.address
-                        );
+                        await masterPool.grantRole(MasterPoolRoles.ROLE_NETWORK_POOL_TOKEN_MANAGER, user.address);
                     });
 
-                    if (isNetworkTokenPoolToken) {
+                    if (isMasterPoolToken) {
                         testWithdrawFunds();
                     } else {
                         testWithdrawFundsRestricted();

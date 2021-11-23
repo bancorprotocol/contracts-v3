@@ -32,7 +32,7 @@ struct WithdrawalAmounts {
 /**
  * @dev Network Token Pool interface
  */
-interface INetworkTokenPool is IVault {
+interface IMasterPool is IVault {
     /**
      * @dev returns the network contract
      */
@@ -69,7 +69,7 @@ interface INetworkTokenPool is IVault {
     function vault() external view returns (IBancorVault);
 
     /**
-     * @dev returns the network token pool token contract
+     * @dev returns the master pool token contract
      */
     function poolToken() external view returns (IPoolToken);
 

@@ -26,7 +26,7 @@ export const roles = {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
-    NetworkTokenPool: {
+    MasterPool: {
         ROLE_NETWORK_POOL_TOKEN_MANAGER: id('ROLE_NETWORK_POOL_TOKEN_MANAGER')
     },
 

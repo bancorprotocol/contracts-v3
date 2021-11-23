@@ -16,8 +16,8 @@ export const ZERO_ADDRESS = AddressZero;
 export const INVALID_FRACTION = { n: BigNumber.from(0), d: BigNumber.from(0) };
 export const ZERO_FRACTION = { n: BigNumber.from(0), d: BigNumber.from(1) };
 export const PPM_RESOLUTION = BigNumber.from(1_000_000);
-export const NETWORK_TOKEN_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
-export const NETWORK_TOKEN_POOL_TOKEN_SYMBOL = `bn${BNT}`;
+export const MASTER_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
+export const MASTER_POOL_TOKEN_SYMBOL = `bn${BNT}`;
 export const FeeTypes = {
     Trading: 0,
     Withdrawal: 1,

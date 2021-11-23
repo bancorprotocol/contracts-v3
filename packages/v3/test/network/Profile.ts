@@ -7,7 +7,7 @@ import {
     PoolToken,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestNetworkTokenPool,
+    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
@@ -902,7 +902,7 @@ describe('@profile Profile', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
         let bancorVault: BancorVault;
         let recipient: TestFlashLoanRecipient;
@@ -914,7 +914,7 @@ describe('@profile Profile', () => {
         const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
+            ({ network, networkSettings, networkToken, masterPool, poolCollection, bancorVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
