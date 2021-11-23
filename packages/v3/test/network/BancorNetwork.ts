@@ -18,7 +18,7 @@ import {
     ExternalProtectionVault
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
+import { DEFAULT_DECIMALS, FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
@@ -3033,8 +3033,6 @@ describe('BancorNetwork', () => {
 });
 
 describe('BancorNetwork Flow', () => {
-    type ERC20Token = TestERC20Burnable | NetworkToken | PoolToken;
-
     interface User {
         id: string;
         tknBalance: string;
@@ -3102,7 +3100,7 @@ describe('BancorNetwork Flow', () => {
         flow.operations[0].expected.bntknBalances[flow.pool.tknProvider] = flow.pool.tknBalance;
 
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkSettings: NetworkSettings;
         let networkTokenPool: TestNetworkTokenPool;
         let networkTokenGovernance: TokenGovernance;
@@ -3113,7 +3111,7 @@ describe('BancorNetwork Flow', () => {
         let baseToken: TestERC20Burnable;
         let basePoolToken: PoolToken;
         let networkPoolToken: PoolToken;
-        let govToken: GovToken;
+        let govToken: IERC20;
         let tknDecimals: number;
         let bntDecimals: number;
         let bntknDecimals: number;
@@ -3140,7 +3138,7 @@ describe('BancorNetwork Flow', () => {
             return decimalToInteger(percentage.replace('%', ''), 4);
         };
 
-        const toWei = async (userId: string, amount: string, decimals: number, token: ERC20Token) => {
+        const toWei = async (userId: string, amount: string, decimals: number, token: IERC20) => {
             if (amount.endsWith('%')) {
                 const balance = await token.balanceOf(users[userId].address);
                 return balance.mul(percentageToPPM(amount)).div(PPM_RESOLUTION);
@@ -3238,9 +3236,9 @@ describe('BancorNetwork Flow', () => {
             await networkTokenGovernance.mint(signers[0].address, MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address)));
 
             tknDecimals = flow.tknDecimals;
-            bntDecimals = await networkToken.decimals();
-            bntknDecimals = await basePoolToken.decimals();
-            bnbntDecimals = await networkPoolToken.decimals();
+            bntDecimals = DEFAULT_DECIMALS.toNumber();
+            bntknDecimals = DEFAULT_DECIMALS.toNumber();
+            bnbntDecimals = DEFAULT_DECIMALS.toNumber();
             await baseToken.updateDecimals(tknDecimals);
 
             const tknInitialBalance = decimalToInteger(flow.pool.tknBalance, tknDecimals);
