@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestUpgradeable } from '../../typechain';
+import { TestUpgradeable } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain';
+import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';

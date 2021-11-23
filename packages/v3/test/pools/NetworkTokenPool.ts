@@ -1,7 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken, GovToken, TokenGovernance } from '../../components/LegacyContracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorVault,
+    IERC20,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -10,7 +11,7 @@ import {
     TestNetworkTokenPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
     FeeTypes,
@@ -48,8 +49,8 @@ describe('NetworkTokenPool', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
         let networkTokenPool: TestNetworkTokenPool;
@@ -124,7 +125,7 @@ describe('NetworkTokenPool', () => {
 
     describe('mint', () => {
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let recipient: SignerWithAddress;
 
@@ -167,7 +168,7 @@ describe('NetworkTokenPool', () => {
 
     describe('burnFromVault', () => {
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let bancorVault: BancorVault;
 
@@ -323,7 +324,7 @@ describe('NetworkTokenPool', () => {
     describe('request liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let bancorVault: BancorVault;
@@ -514,7 +515,7 @@ describe('NetworkTokenPool', () => {
     describe('renounce liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let bancorVault: BancorVault;
@@ -650,8 +651,8 @@ describe('NetworkTokenPool', () => {
     describe('deposit liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
@@ -840,8 +841,8 @@ describe('NetworkTokenPool', () => {
     describe('withdraw liquidity', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let poolCollection: TestPoolCollection;
@@ -1102,7 +1103,7 @@ describe('NetworkTokenPool', () => {
         let poolCollection: TestPoolCollection;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;

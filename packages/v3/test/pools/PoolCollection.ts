@@ -1,7 +1,7 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
 import {
+    IERC20,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -10,7 +10,8 @@ import {
     TestPoolAverageRate,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
+import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     INVALID_FRACTION,
     MAX_UINT256,
@@ -49,7 +50,7 @@ describe('PoolCollection', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
@@ -657,13 +658,13 @@ describe('PoolCollection', () => {
                                 .div(prevPoolData.liquidity.stakedBalance);
                         }
 
-                        const depositAmounts = await network.callStatic.depositToPoolCollectionForT(
+                        const depositAmounts = (await network.callStatic.depositToPoolCollectionForT(
                             poolCollection.address,
                             provider.address,
                             reserveToken.address,
                             baseTokenAmount,
                             unallocatedNetworkTokenLiquidity
-                        );
+                        )) as any as DepositAmountsStructOutput;
 
                         const res = await network.depositToPoolCollectionForT(
                             poolCollection.address,
@@ -861,7 +862,7 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: NetworkToken;
+            let networkToken: IERC20;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;
@@ -1016,7 +1017,7 @@ describe('PoolCollection', () => {
     describe('trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
@@ -1047,8 +1048,8 @@ describe('PoolCollection', () => {
             const fromTokenName = isSourceNetworkToken ? 'network token' : 'base token';
             const toTokenName = isSourceNetworkToken ? 'base token' : 'network token';
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
-                let sourceToken: TestERC20Token | NetworkToken;
-                let targetToken: TestERC20Token | NetworkToken;
+                let sourceToken: IERC20;
+                let targetToken: IERC20;
 
                 beforeEach(async () => {
                     sourceToken = isSourceNetworkToken ? networkToken : reserveToken;

@@ -31,7 +31,7 @@ import { Signer } from 'ethers';
 
 /* eslint-enable camelcase */
 
-export { NetworkToken, GovToken, TokenGovernance };
+export { NetworkToken, NetworkToken__factory, GovToken, GovToken__factory, TokenGovernance };
 
 export {
     ConverterFactory,
