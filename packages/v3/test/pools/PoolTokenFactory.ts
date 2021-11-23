@@ -1,10 +1,9 @@
 import Contracts from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { TestERC20Token, PoolTokenFactory } from '../../typechain';
+import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -27,17 +26,19 @@ describe('PoolTokenFactory', () => {
     });
 
     describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { poolTokenFactory } = await createSystem();
+        let poolTokenFactory: PoolTokenFactory;
 
+        beforeEach(async () => {
+            ({ poolTokenFactory } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(poolTokenFactory.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
-            const { poolTokenFactory } = await createSystem();
-
             expect(await poolTokenFactory.version()).to.equal(1);
 
             await expectRole(poolTokenFactory, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
@@ -53,7 +54,7 @@ describe('PoolTokenFactory', () => {
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -85,7 +86,7 @@ describe('PoolTokenFactory', () => {
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TestERC20Token;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -112,7 +113,6 @@ describe('PoolTokenFactory', () => {
     });
 
     describe('create pool token', () => {
-        let networkToken: NetworkToken;
         let poolTokenFactory: PoolTokenFactory;
         let reserveToken: TokenWithAddress;
 
@@ -120,8 +120,8 @@ describe('PoolTokenFactory', () => {
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
 
         const testCreatePoolToken = (symbol: string) => {
-            prepareEach(async () => {
-                ({ networkToken, poolTokenFactory } = await createSystem());
+            beforeEach(async () => {
+                ({ poolTokenFactory } = await createSystem());
 
                 reserveToken = await createTokenBySymbol(symbol);
             });
@@ -153,7 +153,7 @@ describe('PoolTokenFactory', () => {
             context('with a token symbol override', () => {
                 const newSymbol = 'TKN2';
 
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, newSymbol);
                 });
 
@@ -170,7 +170,7 @@ describe('PoolTokenFactory', () => {
             context('with a token decimals override', () => {
                 const newDecimals = 4;
 
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await poolTokenFactory.setTokenDecimalsOverride(reserveToken.address, newDecimals);
                 });
 

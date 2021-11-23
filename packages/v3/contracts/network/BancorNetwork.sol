@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -10,10 +10,11 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { ITokenHolder } from "../utility/interfaces/ITokenHolder.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -52,16 +53,17 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
-import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-import { IBancorVault } from "./interfaces/IBancorVault.sol";
+import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
+import { IBancorVault } from "./../vaults/interfaces/IBancorVault.sol";
 
-import { TRADING_FEE } from "./FeeTypes.sol";
+import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
 
 error DeadlineExpired();
 error EthAmountMismatch();
 error InvalidTokens();
 error NetworkLiquidityDisabled();
 error PermitUnsupported();
+error InsufficientFlashLoanReturn();
 
 /**
  * @dev Bancor Network contract
@@ -92,6 +94,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the network token pool token
     IPoolToken internal immutable _networkPoolToken;
 
+    // the address of the external protection vault
+    IExternalProtectionVault private immutable _externalProtectionVault;
+
     // the network token pool contract
     INetworkTokenPool internal _networkTokenPool;
 
@@ -100,9 +105,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     // the pool collection upgrader contract
     IPoolCollectionUpgrader internal _poolCollectionUpgrader;
-
-    // the address of the external protection wallet
-    ITokenHolder private _externalProtectionWallet;
 
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -117,12 +119,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     mapping(ReserveToken => IPoolCollection) private _collectionByPool;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 7] private __gap;
+    uint256[MAX_GAP - 9] private __gap;
 
     /**
-     * @dev triggered when the external protection wallet is updated
+     * @dev triggered when the external protection vault is updated
      */
-    event ExternalProtectionWalletUpdated(ITokenHolder indexed prevWallet, ITokenHolder indexed newWallet);
+    event ExternalProtectionVaultUpdated(
+        IExternalProtectionVault indexed prevVault,
+        IExternalProtectionVault indexed newVault
+    );
 
     /**
      * @dev triggered when a new pool collection is added
@@ -272,13 +277,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken
+        IPoolToken initNetworkPoolToken,
+        IExternalProtectionVault initExternalProtectionVault
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
         validAddress(address(initVault))
         validAddress(address(initNetworkPoolToken))
+        validAddress(address(initExternalProtectionVault))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
         _networkToken = initNetworkTokenGovernance.token();
@@ -288,6 +295,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _settings = initSettings;
         _vault = initVault;
         _networkPoolToken = initNetworkPoolToken;
+        _externalProtectionVault = initExternalProtectionVault;
     }
 
     /**
@@ -337,6 +345,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     // solhint-enable func-name-mixedcase
+
+    receive() external payable {}
 
     modifier validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) {
         _validTokensForTrade(sourceToken, targetToken);
@@ -433,47 +443,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function externalProtectionWallet() external view returns (ITokenHolder) {
-        return _externalProtectionWallet;
-    }
-
-    /**
-     * @dev sets the address of the external protection wallet
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setExternalProtectionWallet(ITokenHolder newExternalProtectionWallet)
-        external
-        validAddress(address(newExternalProtectionWallet))
-        onlyAdmin
-    {
-        ITokenHolder prevExternalProtectionWallet = _externalProtectionWallet;
-        if (prevExternalProtectionWallet == newExternalProtectionWallet) {
-            return;
-        }
-
-        newExternalProtectionWallet.acceptOwnership();
-
-        _externalProtectionWallet = newExternalProtectionWallet;
-
-        emit ExternalProtectionWalletUpdated({
-            prevWallet: prevExternalProtectionWallet,
-            newWallet: newExternalProtectionWallet
-        });
-    }
-
-    /**
-     * @dev transfers the ownership of the external protection wallet
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     * - the new owner needs to accept the transfer
-     */
-    function transferExternalProtectionWalletOwnership(address newOwner) external onlyAdmin {
-        _externalProtectionWallet.transferOwnership(newOwner);
+    function externalProtectionVault() external view returns (IExternalProtectionVault) {
+        return _externalProtectionVault;
     }
 
     /**
@@ -618,7 +589,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         validAddress(ReserveToken.unwrap(reserveToken))
     {
-        if (reserveToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(reserveToken)) {
             revert InvalidToken();
         }
 
@@ -815,6 +786,79 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @inheritdoc IBancorNetwork
+     */
+    function flashLoan(
+        ReserveToken token,
+        uint256 amount,
+        IFlashLoanRecipient recipient,
+        bytes calldata data
+    )
+        external
+        nonReentrant
+        validAddress(ReserveToken.unwrap(token))
+        greaterThanZero(amount)
+        validAddress(address(recipient))
+    {
+        if (!_isNetworkToken(token) && !_settings.isTokenWhitelisted(token)) {
+            revert NotWhitelisted();
+        }
+
+        uint256 feeAmount = MathEx.mulDivF(amount, _settings.flashLoanFeePPM(), PPM_RESOLUTION);
+
+        // save the current balance
+        uint256 prevBalance = token.balanceOf(address(this));
+
+        // transfer the amount from the vault to the recipient
+        _vault.withdrawFunds(token, payable(address(recipient)), amount);
+
+        // invoke the recipient's callback
+        recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, data);
+
+        // ensure that the tokens + fee have been deposited back to the network
+        uint256 returnedAmount = token.balanceOf(address(this)) - prevBalance;
+        if (returnedAmount < amount + feeAmount) {
+            revert InsufficientFlashLoanReturn();
+        }
+
+        // transfer the amount and the fee back to the vault
+        if (token.isNativeToken()) {
+            payable(address(_vault)).sendValue(returnedAmount);
+        } else {
+            token.safeTransfer(payable(address(_vault)), returnedAmount);
+        }
+
+        uint256 stakedBalance;
+
+        // notify the pool of accrued fees
+        if (_isNetworkToken(token)) {
+            INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+
+            cachedNetworkTokenPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
+
+            stakedBalance = cachedNetworkTokenPool.stakedBalance();
+        } else {
+            // get the pool and verify that it exists
+            IPoolCollection poolCollection = _poolCollection(token);
+            poolCollection.onFeesCollected(token, feeAmount);
+
+            stakedBalance = poolCollection.poolLiquidity(token).stakedBalance;
+        }
+
+        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
+
+        emit FlashLoanCompleted({ contextId: contextId, token: token, borrower: msg.sender, amount: amount });
+
+        emit FeesCollected({
+            contextId: contextId,
+            token: token,
+            feeType: FLASH_LOAN_FEE,
+            amount: feeAmount,
+            stakedBalance: stakedBalance
+        });
+    }
+
+    /**
      * @dev sets the new latest pool collection for the given type
      *
      * requirements:
@@ -879,7 +923,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
-        if (pool.toIERC20() == _networkToken) {
+        if (_isNetworkToken(pool)) {
             _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
@@ -1031,7 +1075,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address sender
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
-        if (token.toIERC20() == _networkToken || token.isNativeToken()) {
+        if (_isNetworkToken(token) || token.isNativeToken()) {
             revert PermitUnsupported();
         }
 
@@ -1138,12 +1182,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        ITokenHolder cachedExternalProtectionWallet = _externalProtectionWallet;
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
             pool,
             completedRequest.poolTokenAmount,
             pool.balanceOf(address(_vault)),
-            pool.balanceOf(address(cachedExternalProtectionWallet))
+            pool.balanceOf(address(_externalProtectionVault))
         );
 
         // if network token trading liquidity should be lowered - renounce liquidity
@@ -1170,16 +1213,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // them to the provider
         if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
             // base token amount to transfer from the vault to the provider
-            _vault.withdrawTokens(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+            _vault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
-        // if the provider should receive some base tokens from the external wallet - remove the tokens from the
-        // external wallet and send them to the provider
-        if (amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider > 0) {
-            cachedExternalProtectionWallet.withdrawTokens(
+        // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
+        // external protection vault and send them to the provider
+        if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
+            _externalProtectionVault.withdrawFunds(
                 pool,
                 payable(provider),
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
+                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
             );
         }
 
@@ -1189,9 +1232,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider: provider,
             poolCollection: poolCollection,
             baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider +
-                amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
             poolTokenAmount: completedRequest.poolTokenAmount,
-            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
             networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
         });
@@ -1238,7 +1281,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary,
         address trader
     ) private {
-        if (deadline < _time()) {
+        uint32 currentTime = _time();
+        if (deadline < currentTime) {
             revert DeadlineExpired();
         }
 
@@ -1250,7 +1294,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = keccak256(
             abi.encodePacked(
                 trader,
-                _time(),
+                currentTime,
                 sourceToken,
                 targetToken,
                 sourceAmount,
@@ -1262,9 +1306,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // perform either a single or double hop trade, based on the source and the target pool
         uint256 tradeAmount;
-        if (sourceToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(sourceToken)) {
             tradeAmount = _tradeNetworkToken(contextId, targetToken, true, sourceAmount, minReturnAmount, trader);
-        } else if (targetToken.toIERC20() == _networkToken) {
+        } else if (_isNetworkToken(targetToken)) {
             tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, minReturnAmount, trader);
         } else {
             tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
@@ -1274,7 +1318,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _depositToVault(sourceToken, trader, sourceAmount);
 
         // transfer the target tokens/ETH to the beneficiary
-        _vault.withdrawTokens(targetToken, payable(beneficiary), tradeAmount);
+        _vault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
     }
 
     /**
@@ -1373,13 +1417,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool targetAmount
     ) private view returns (uint256) {
         // return the trade amount and fee when trading the network token to the base token
-        if (sourceToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(sourceToken)) {
             return
                 _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
         // return the trade amount and fee when trading the bsase token to the network token
-        if (targetToken.toIERC20() == _networkToken) {
+        if (_isNetworkToken(targetToken)) {
             return
                 _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
@@ -1423,7 +1467,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
-            payable(_vault).sendValue(amount);
+            payable(address(_vault)).sendValue(amount);
         } else {
             if (reserveToken.isNativeToken()) {
                 revert InvalidPool();
@@ -1444,5 +1488,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         return poolCollection;
+    }
+
+    /**
+     * @dev returns whether the specified token is the network token
+     */
+    function _isNetworkToken(ReserveToken token) private view returns (bool) {
+        return token.toIERC20() == _networkToken;
     }
 }

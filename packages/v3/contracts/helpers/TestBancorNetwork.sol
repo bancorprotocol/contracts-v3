@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -10,9 +10,11 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
+
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 // prettier-ignore
 import { IPoolCollection,
@@ -44,9 +46,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken
+        IPoolToken initNetworkPoolToken,
+        IExternalProtectionVault initExternalProtectionVault
     )
-        BancorNetwork(initNetworkTokenGovernance, initGovTokenGovernance, initSettings, initVault, initNetworkPoolToken)
+        BancorNetwork(
+            initNetworkTokenGovernance,
+            initGovTokenGovernance,
+            initSettings,
+            initVault,
+            initNetworkPoolToken,
+            initExternalProtectionVault
+        )
     {}
 
     function createPoolT(IPoolCollection poolCollection, ReserveToken reserveToken) external {
@@ -107,10 +117,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     ) external returns (PoolCollectionWithdrawalAmounts memory) {
         return
-            poolCollection.withdraw(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionWalletBalance);
+            poolCollection.withdraw(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
     }
 
     function requestLiquidityT(

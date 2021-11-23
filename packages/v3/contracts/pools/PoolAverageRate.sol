@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Uint512 } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
@@ -30,9 +30,13 @@ library PoolAverageRate {
      *
      *      if t == 0, return P
      *      if t >= T, return S
-     *      else, return:             T - t         t
-     *                           P * ------- + S * ---
-     *                                  T           T
+     *      if 0 < t < T, return P * (T - t) / T + S * t / T
+     *
+     * note that:
+     *
+     *      T - t         t     Pn     T - t     Sn     t     Pn * Sd * (T - t) + Pd * Sn * t
+     * P * ------- + S * --- = ---- * ------- + ---- * --- = ---------------------------------
+     *        T           T     Pd       T       Sd     T               Pd * Sd * T
      */
     function calcAverageRate(
         Fraction memory spotRate,
@@ -40,10 +44,7 @@ library PoolAverageRate {
         uint32 currentTime
     ) internal pure returns (AverageRate memory) {
         // get the elapsed time since the previous average rate was calculated
-        uint256 timeElapsed;
-        unchecked {
-            timeElapsed = currentTime - averageRate.time;
-        }
+        uint256 timeElapsed = currentTime - averageRate.time;
 
         // if the previous average rate was calculated in the current block, the average rate remains unchanged
         if (timeElapsed == 0) {
@@ -56,17 +57,15 @@ library PoolAverageRate {
             return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, type(uint112).max) });
         }
 
-        // calculate the new average rate
-        uint256 x = averageRate.rate.d * spotRate.n;
-        uint256 y = averageRate.rate.n * spotRate.d;
-
         // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
         uint256 remainingWindow;
         unchecked {
             remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
         }
+
+        // calculate the new average rate
         Fraction memory newRate = Fraction({
-            n: (y * remainingWindow) + x * timeElapsed,
+            n: averageRate.rate.n * spotRate.d * remainingWindow + averageRate.rate.d * spotRate.n * timeElapsed,
             d: averageRate.rate.d * spotRate.d * AVERAGE_RATE_PERIOD
         });
 
@@ -83,7 +82,7 @@ library PoolAverageRate {
      *
      * requirements:
      *
-     * - spotRate numerator/denumerator should be bound by 128 bits (otherwise, the check might revert with an overflow)
+     * - spotRate numerator/denominator should be bound by 128 bits (otherwise, the check might revert with an overflow)
      * - maxDeviation must be lesser or equal to PPM_RESOLUTION
      */
     function isPoolRateStable(
@@ -91,18 +90,22 @@ library PoolAverageRate {
         AverageRate memory averageRate,
         uint32 maxDeviation
     ) internal pure returns (bool) {
+        // can revert only if one of the components below is larger than 128 bits
+        uint256 x = averageRate.rate.d * spotRate.n;
+        uint256 y = averageRate.rate.n * spotRate.d;
+
         uint256 lowerBound;
         uint256 upperBound;
         unchecked {
             lowerBound = PPM_RESOLUTION - maxDeviation;
             upperBound = PPM_RESOLUTION + maxDeviation;
         }
-        uint256 d = averageRate.rate.d * spotRate.n;
-        uint256 min = MathEx.mulDivC(d, lowerBound, PPM_RESOLUTION);
-        uint256 mid = averageRate.rate.n * spotRate.d;
-        uint256 max = MathEx.mulDivF(d, upperBound, PPM_RESOLUTION);
 
-        return min <= mid && mid <= max;
+        Uint512 memory min = MathEx.mul512(x, lowerBound);
+        Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
+        Uint512 memory max = MathEx.mul512(x, upperBound);
+
+        return MathEx.lte512(min, mid) && MathEx.lte512(mid, max);
     }
 
     /**

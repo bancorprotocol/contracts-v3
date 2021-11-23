@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -11,11 +11,11 @@ import { IPoolCollection } from "./IPoolCollection.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
-import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../../network/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../../vaults/interfaces/IBancorVault.sol";
+
+import { IVault } from "../../vaults/interfaces/IVault.sol";
 
 struct DepositAmounts {
     uint256 poolTokenAmount; // the minted pool token amount
@@ -32,7 +32,7 @@ struct WithdrawalAmounts {
 /**
  * @dev Network Token Pool interface
  */
-interface INetworkTokenPool is IUpgradeable {
+interface INetworkTokenPool is IVault {
     /**
      * @dev returns the network contract
      */
@@ -177,7 +177,7 @@ interface INetworkTokenPool is IUpgradeable {
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external;
 }

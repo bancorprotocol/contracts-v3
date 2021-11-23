@@ -3,6 +3,9 @@ import {
     BancorNetwork__factory,
     BancorVault__factory,
     ERC20__factory,
+    ExternalProtectionVault__factory,
+    ExternalRewardsVault__factory,
+    NetworkFeeVault__factory,
     NetworkSettings__factory,
     NetworkTokenPool__factory,
     PendingWithdrawals__factory,
@@ -14,6 +17,8 @@ import {
     TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
+    TestFlashLoanRecipient__factory,
+    TestGovernedToken__factory,
     TestMathEx__factory,
     TestNetworkTokenPool__factory,
     TestOwned__factory,
@@ -24,14 +29,15 @@ import {
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestStakingRewards__factory,
+    TestTokenGovernance__factory,
     TestUpgradeable__factory,
-    TokenHolder__factory,
+    TestVault__factory,
     TransparentUpgradeableProxy__factory
-} from '../typechain';
+} from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-enable camelcase */
-import { Signer } from '@ethersproject/abstract-signer';
+import { Signer } from 'ethers';
 
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
@@ -39,6 +45,9 @@ const getContracts = (signer?: Signer) => ({
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorVault: deployOrAttach('BancorVault', BancorVault__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
+    ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),
+    ExternalRewardsVault: deployOrAttach('ExternalRewardsVault', ExternalRewardsVault__factory, signer),
+    NetworkFeeVault: deployOrAttach('NetworkFeeVault', NetworkFeeVault__factory, signer),
     NetworkSettings: deployOrAttach('NetworkSettings', NetworkSettings__factory, signer),
     NetworkTokenPool: deployOrAttach('NetworkTokenPool', NetworkTokenPool__factory, signer),
     PendingWithdrawals: deployOrAttach('PendingWithdrawals', PendingWithdrawals__factory, signer),
@@ -48,8 +57,14 @@ const getContracts = (signer?: Signer) => ({
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
-    TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
+    TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
+    TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
+    TestGovernedToken: deployOrAttach('TestGovernedToken', TestGovernedToken__factory, signer),
+    TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
+    TestNetworkTokenPool: deployOrAttach('TestNetworkTokenPool', TestNetworkTokenPool__factory, signer),
+    TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
+    TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestPoolAverageRate: deployOrAttach('TestPoolAverageRate', TestPoolAverageRate__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
     TestPoolCollectionUpgrader: deployOrAttach(
@@ -57,15 +72,12 @@ const getContracts = (signer?: Signer) => ({
         TestPoolCollectionUpgrader__factory,
         signer
     ),
-    TestNetworkTokenPool: deployOrAttach('TestNetworkTokenPool', TestNetworkTokenPool__factory, signer),
-    TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
-    TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
-    TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestStakingRewards: deployOrAttach('TestStakingRewards', TestStakingRewards__factory, signer),
+    TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
-    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
+    TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
     TransparentUpgradeableProxy: deployOrAttach(
         'TransparentUpgradeableProxy',
         TransparentUpgradeableProxy__factory,

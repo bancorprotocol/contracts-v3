@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -32,14 +32,6 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _version;
     }
 
-    function mintT(
-        address recipient,
-        IPoolToken poolToken,
-        uint256 amount
-    ) external {
-        poolToken.mint(recipient, amount);
-    }
-
     function setTradingLiquidityT(ReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
         _poolData[reserveToken].liquidity = liquidity;
     }
@@ -52,14 +44,14 @@ contract TestPoolCollection is PoolCollection, TestTime {
         ReserveToken baseToken,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
-        uint256 externalProtectionWalletBalance
+        uint256 externalProtectionVaultBalance
     ) external view returns (WithdrawalAmounts memory) {
         return
             _poolWithdrawalAmounts(
                 baseToken,
                 basePoolTokenAmount,
                 baseTokenVaultBalance,
-                externalProtectionWalletBalance
+                externalProtectionVaultBalance
             );
     }
 

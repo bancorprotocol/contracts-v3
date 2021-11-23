@@ -1,4 +1,4 @@
-import { AccessControlEnumerableUpgradeable } from '../../typechain';
+import { AccessControlEnumerableUpgradeable } from '../../typechain-types';
 import { expect } from 'chai';
 import { utils, BigNumber } from 'ethers';
 
@@ -12,6 +12,22 @@ export const roles = {
     BancorVault: {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
+    },
+
+    ExternalProtectionVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
+    ExternalRewardsVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
+    NetworkFeeVault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
+    },
+
+    NetworkTokenPool: {
+        ROLE_NETWORK_POOL_TOKEN_MANAGER: id('ROLE_NETWORK_POOL_TOKEN_MANAGER')
     },
 
     TokenGovernance: {

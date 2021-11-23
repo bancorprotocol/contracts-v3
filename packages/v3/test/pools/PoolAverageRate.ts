@@ -1,7 +1,6 @@
 import Contracts from '../../components/Contracts';
-import { TestPoolAverageRate } from '../../typechain';
+import { TestPoolAverageRate } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../helpers/Constants';
-import { prepare } from '../helpers/Fixture';
 import { duration } from '../helpers/Time';
 import { toString, toWei, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
@@ -11,7 +10,7 @@ import { BigNumber } from 'ethers';
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
-    prepare(async () => {
+    before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
 

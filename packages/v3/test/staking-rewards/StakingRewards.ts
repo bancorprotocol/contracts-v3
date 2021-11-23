@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestStakingRewards } from '../../typechain';
-import { prepare } from '../helpers/Fixture';
+import { TestStakingRewards } from '../../typechain-types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { EOL } from 'os';
@@ -36,7 +35,7 @@ const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string)
 describe('StakingRewards formula', () => {
     let stakingRewards: TestStakingRewards;
 
-    prepare(async () => {
+    before(async () => {
         stakingRewards = await Contracts.TestStakingRewards.deploy();
     });
 

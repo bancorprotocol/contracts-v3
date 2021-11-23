@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.6.12;
 
 import "../../liquidity-protection/interfaces/ILiquidityProvisionEventsSubscriber.sol";
@@ -38,7 +38,14 @@ interface IStakingRewards is ILiquidityProvisionEventsSubscriber {
 
     function claimRewards() external returns (uint256);
 
-    function stakeRewards(uint256 maxAmount, IDSToken poolToken) external returns (uint256, uint256);
+    function stakeRewards(uint256 maxAmount, IDSToken newPoolToken) external returns (uint256, uint256);
+
+    function stakeReserveRewards(
+        IDSToken poolToken,
+        IReserveToken reserveToken,
+        uint256 maxAmount,
+        IDSToken newPoolToken
+    ) external returns (uint256, uint256);
 
     function storePoolRewards(address[] calldata providers, IDSToken poolToken) external;
 }

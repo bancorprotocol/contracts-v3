@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 pragma abicoder v2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
@@ -18,13 +17,18 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../network/interfaces/IBancorVault.sol";
+import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
 import { INetworkTokenPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/INetworkTokenPool.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
+
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+
+import { Vault } from "../vaults/Vault.sol";
+import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 
@@ -33,7 +37,12 @@ error MintingLimitExceeded();
 /**
  * @dev Network Token Pool contract
  */
-contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgradeable, Utils {
+contract NetworkTokenPool is INetworkTokenPool, Vault {
+    using ReserveTokenLibrary for ReserveToken;
+
+    // the network pool token manager role is required to access the network token pool token reserve
+    bytes32 public constant ROLE_NETWORK_POOL_TOKEN_MANAGER = keccak256("ROLE_NETWORK_POOL_TOKEN_MANAGER");
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -117,7 +126,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      * @dev initializes the contract and its parents
      */
     function __NetworkTokenPool_init() internal initializer {
-        __ReentrancyGuard_init();
+        __Vault_init();
 
         __NetworkTokenPool_init_unchained();
     }
@@ -127,15 +136,40 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function __NetworkTokenPool_init_unchained() internal initializer {
         _poolToken.acceptOwnership();
+
+        // set up administrative roles
+        _setRoleAdmin(ROLE_NETWORK_POOL_TOKEN_MANAGER, ROLE_ADMIN);
     }
 
-    // solhint-enable func-name-mixedcase
+    /**
+     * @inheritdoc Vault
+     */
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
+        return false;
+    }
 
     /**
      * @dev returns the current version of the contract
      */
     function version() external pure returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @dev returns whether the given caller is allowed access to the given token
+     *
+     * requirements:
+     *
+     *   - reserve token must be the network token pool token
+     *   - the caller must have the ROLE_NETWORK_POOL_TOKEN_MANAGER permission
+     */
+    function authenticateWithdrawal(
+        address caller,
+        ReserveToken reserveToken,
+        address, /* target */
+        uint256 /* amount */
+    ) internal view override returns (bool) {
+        return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_NETWORK_POOL_TOKEN_MANAGER, caller));
     }
 
     /**
@@ -246,7 +280,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
 
         _networkTokenGovernance.burn(networkTokenAmount);
     }
@@ -407,7 +441,7 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
         _poolToken.burn(poolTokenAmount);
 
         // withdraw network tokens from the vault and burn them
-        _vault.withdrawTokens(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced({
@@ -423,19 +457,19 @@ contract NetworkTokenPool is INetworkTokenPool, Upgradeable, ReentrancyGuardUpgr
      */
     function onFeesCollected(
         ReserveToken pool,
-        uint256 networkTokenAmount,
+        uint256 feeAmount,
         uint8 feeType
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) {
-        if (networkTokenAmount == 0) {
+        if (feeAmount == 0) {
             return;
         }
 
         // increase the staked balance by the given amount
-        _stakedBalance += networkTokenAmount;
+        _stakedBalance += feeAmount;
 
         if (feeType == TRADING_FEE) {
             // increase the minted amount for the specified pool by the given amount
-            _mintedAmounts[pool] += networkTokenAmount;
+            _mintedAmounts[pool] += feeAmount;
         }
     }
 

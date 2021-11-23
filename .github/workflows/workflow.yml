@@ -21,10 +21,18 @@ jobs:
         with:
           node-version: '16'
 
+      - name: Install V2 NPM Dependencies
+        run: yarn install
+        working-directory: packages/v2
+
+      - name: Build V2
+        run: yarn build
+        working-directory: packages/v2
+
       - name: Install NPM Dependencies
         run: yarn install
 
-      # temporary remove lint check from CI since solhint doesn't fully support Solidity 0.8.9
+      # temporary remove lint check from CI since solhint doesn't fully support Solidity 0.8.10
       # - name: Lint
       #   run: yarn lint
 

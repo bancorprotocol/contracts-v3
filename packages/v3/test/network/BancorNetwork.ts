@@ -1,23 +1,31 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import { GovToken, NetworkToken } from '../../components/LegacyContracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import {
+    IERC20,
     BancorVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
+    TestFlashLoanRecipient,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
-    TokenHolder
-} from '../../typechain';
+    ExternalProtectionVault
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createPool, createPoolCollection, createSystem, createTokenHolder } from '../helpers/Factory';
-import { prepareEach } from '../helpers/Fixture';
+import {
+    createPool,
+    createPoolCollection,
+    createSystem,
+    depositToPool,
+    setupSimplePool,
+    PoolSpec
+} from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
@@ -28,15 +36,16 @@ import {
     errorMessageTokenExceedsAllowance,
     getBalance,
     getTransactionCost,
+    transfer,
     TokenWithAddress
 } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
-import { ethers } from 'hardhat';
+import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const { Upgradeable: UpgradeableRoles } = roles;
+const { Upgradeable: UpgradeableRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -46,7 +55,7 @@ describe('BancorNetwork', () => {
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
-    shouldHaveGap('BancorNetwork', '_externalProtectionWallet');
+    shouldHaveGap('BancorNetwork', '_networkTokenPool');
 
     before(async () => {
         [deployer, nonOwner, newOwner] = await ethers.getSigners();
@@ -87,63 +96,12 @@ describe('BancorNetwork', () => {
         );
     };
 
-    interface PoolSpec {
-        symbol: string;
-        balance: BigNumber;
-        tradingFeePPM?: number;
-    }
-
     const specToString = (spec: PoolSpec) => {
-        const feeDesc =
-            spec.tradingFeePPM !== undefined
-                ? `, fee=${toDecimal(spec.tradingFeePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`
-                : '';
-        return `${spec.symbol} (balance=${spec.balance}${feeDesc})}`;
-    };
-
-    const deposit = async (
-        provider: SignerWithAddress,
-        token: TokenWithAddress,
-        amount: BigNumber,
-        network: TestBancorNetwork
-    ) => {
-        let value = BigNumber.from(0);
-        if (token.address === NATIVE_TOKEN_ADDRESS) {
-            value = amount;
-        } else {
-            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-            await reserveToken.transfer(provider.address, amount);
-            await reserveToken.connect(provider).approve(network.address, amount);
+        if (spec.tradingFeePPM !== undefined) {
+            return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
         }
 
-        await network.connect(provider).deposit(token.address, amount, { value });
-    };
-
-    const setupPool = async (
-        spec: PoolSpec,
-        network: TestBancorNetwork,
-        networkSettings: NetworkSettings,
-        networkToken: NetworkToken,
-        poolCollection: TestPoolCollection
-    ) => {
-        const isNetworkToken = spec.symbol === BNT;
-
-        if (isNetworkToken) {
-            return networkToken;
-        }
-
-        const token = await createTokenBySymbol(spec.symbol);
-
-        await createPool(token, network, networkSettings, poolCollection);
-
-        await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
-        await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-        await poolCollection.setInitialRate(token.address, INITIAL_RATE);
-        await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
-
-        await deposit(deployer, token, spec.balance, network);
-
-        return token;
+        return `${spec.symbol} (balance=${spec.balance})`;
     };
 
     const initWithdraw = async (
@@ -190,32 +148,53 @@ describe('BancorNetwork', () => {
             });
     };
 
-    describe('construction', () => {
-        it('should revert when attempting to reinitialize', async () => {
-            const { network, networkTokenPool, pendingWithdrawals, poolCollectionUpgrader } = await createSystem();
+    const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
 
+    describe('construction', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: IERC20;
+        let govToken: IERC20;
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
+        let networkTokenPool: TestNetworkTokenPool;
+        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let bancorVault: BancorVault;
+        let externalProtectionVault: ExternalProtectionVault;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let networkPoolToken: PoolToken;
+
+        beforeEach(async () => {
+            ({
+                network,
+                networkSettings,
+                networkToken,
+                govToken,
+                networkTokenGovernance,
+                govTokenGovernance,
+                networkTokenPool,
+                poolCollectionUpgrader,
+                bancorVault,
+                externalProtectionVault,
+                pendingWithdrawals,
+                networkPoolToken
+            } = await createSystem());
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
             await expect(
                 network.initialize(networkTokenPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
             ).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should revert when attempting to initialize with an invalid network token pool contract', async () => {
-            const {
-                networkTokenGovernance,
-                govTokenGovernance,
-                networkSettings,
-                vault,
-                networkPoolToken,
-                pendingWithdrawals,
-                poolCollectionUpgrader
-            } = await createSystem();
-
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
-                networkPoolToken.address
+                bancorVault.address,
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -224,22 +203,13 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when attempting to initialize with an invalid pending withdrawals contract', async () => {
-            const {
-                networkTokenGovernance,
-                govTokenGovernance,
-                networkSettings,
-                vault,
-                networkPoolToken,
-                networkTokenPool,
-                poolCollectionUpgrader
-            } = await createSystem();
-
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
-                networkPoolToken.address
+                bancorVault.address,
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -248,22 +218,13 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when attempting to initialize with an invalid pool collection upgrader contract', async () => {
-            const {
-                networkTokenGovernance,
-                govTokenGovernance,
-                networkSettings,
-                vault,
-                networkPoolToken,
-                networkTokenPool,
-                pendingWithdrawals
-            } = await createSystem();
-
             const network = await Contracts.BancorNetwork.deploy(
                 networkTokenGovernance.address,
                 govTokenGovernance.address,
                 networkSettings.address,
-                vault.address,
-                networkPoolToken.address
+                bancorVault.address,
+                networkPoolToken.address,
+                externalProtectionVault.address
             );
 
             await expect(
@@ -272,49 +233,72 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when initialized with an invalid network token governance contract', async () => {
-            const { govTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
-
             await expect(
                 Contracts.BancorNetwork.deploy(
                     ZERO_ADDRESS,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    vault.address,
-                    networkPoolToken.address
+                    bancorVault.address,
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid governance token governance contract', async () => {
-            const { networkTokenGovernance, networkSettings, vault, networkPoolToken } = await createSystem();
-
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    vault.address,
-                    networkPoolToken.address
+                    bancorVault.address,
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid network settings contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, vault, networkPoolToken } = await createSystem();
-
             await expect(
                 Contracts.BancorNetwork.deploy(
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
-                    vault.address,
-                    networkPoolToken.address
+                    bancorVault.address,
+                    networkPoolToken.address,
+                    externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid vault contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, networkPoolToken } =
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    networkPoolToken.address,
+                    externalProtectionVault.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network pool token contract', async () => {
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    ZERO_ADDRESS,
+                    externalProtectionVault.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid external protection vault contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, networkPoolToken } =
                 await createSystem();
 
             await expect(
@@ -322,41 +306,14 @@ describe('BancorNetwork', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    ZERO_ADDRESS,
-                    networkPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid network pool token contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, vault } = await createSystem();
-
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    networkSettings.address,
-                    vault.address,
+                    bancorVault.address,
+                    networkPoolToken.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
-            const {
-                network,
-                networkToken,
-                networkTokenGovernance,
-                govToken,
-                govTokenGovernance,
-                networkSettings,
-                vault,
-                networkPoolToken,
-                networkTokenPool,
-                pendingWithdrawals,
-                poolCollectionUpgrader
-            } = await createSystem();
-
             expect(await network.version()).to.equal(1);
 
             await expectRole(network, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
@@ -366,87 +323,15 @@ describe('BancorNetwork', () => {
             expect(await network.govToken()).to.equal(govToken.address);
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
-            expect(await network.vault()).to.equal(vault.address);
+            expect(await network.vault()).to.equal(bancorVault.address);
             expect(await network.networkPoolToken()).to.equal(networkPoolToken.address);
             expect(await network.networkTokenPool()).to.equal(networkTokenPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
-            expect(await network.externalProtectionWallet()).to.equal(ZERO_ADDRESS);
+            expect(await network.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(networkToken.address)).to.be.true;
-        });
-    });
-
-    describe('external protection wallet', () => {
-        let newExternalProtectionWallet: TokenHolder;
-        let network: TestBancorNetwork;
-
-        prepareEach(async () => {
-            ({ network } = await createSystem());
-
-            newExternalProtectionWallet = await createTokenHolder();
-        });
-
-        it('should revert when a non-owner attempts to set the external protection wallet', async () => {
-            await expect(
-                network.connect(nonOwner).setExternalProtectionWallet(newExternalProtectionWallet.address)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should revert when setting external protection wallet to an invalid address', async () => {
-            await expect(network.setExternalProtectionWallet(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should ignore updates to the same external protection wallet', async () => {
-            await newExternalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
-
-            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
-            await expect(res).not.to.emit(network, 'ExternalProtectionWalletUpdated');
-        });
-
-        it('should be able to set and update the external protection wallet', async () => {
-            await newExternalProtectionWallet.transferOwnership(network.address);
-
-            const res = await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
-            await expect(res)
-                .to.emit(network, 'ExternalProtectionWalletUpdated')
-                .withArgs(ZERO_ADDRESS, newExternalProtectionWallet.address);
-            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet.address);
-            expect(await newExternalProtectionWallet.owner()).to.equal(network.address);
-
-            const newExternalProtectionWallet2 = await createTokenHolder();
-            await newExternalProtectionWallet2.transferOwnership(network.address);
-
-            const res2 = await network.setExternalProtectionWallet(newExternalProtectionWallet2.address);
-            await expect(res2)
-                .to.emit(network, 'ExternalProtectionWalletUpdated')
-                .withArgs(newExternalProtectionWallet.address, newExternalProtectionWallet2.address);
-            expect(await network.externalProtectionWallet()).to.equal(newExternalProtectionWallet2.address);
-            expect(await newExternalProtectionWallet2.owner()).to.equal(network.address);
-        });
-
-        it('should revert when attempting to set the external protection wallet without transferring its ownership', async () => {
-            await expect(network.setExternalProtectionWallet(newExternalProtectionWallet.address)).to.be.revertedWith(
-                'AccessDenied'
-            );
-        });
-
-        it('should revert when a non-owner attempts to transfer the ownership of the protection wallet', async () => {
-            await expect(
-                network.connect(newOwner).transferExternalProtectionWalletOwnership(newOwner.address)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should allow explicitly transferring the ownership', async () => {
-            await newExternalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(newExternalProtectionWallet.address);
-            expect(await newExternalProtectionWallet.owner()).to.equal(network.address);
-
-            await network.transferExternalProtectionWalletOwnership(newOwner.address);
-            await newExternalProtectionWallet.connect(newOwner).acceptOwnership();
-            expect(await newExternalProtectionWallet.owner()).to.equal(newOwner.address);
         });
     });
 
@@ -458,7 +343,7 @@ describe('BancorNetwork', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolType: number;
 
-        prepareEach(async () => {
+        beforeEach(async () => {
             ({ network, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
                 await createSystem());
 
@@ -493,7 +378,7 @@ describe('BancorNetwork', () => {
             });
 
             context('with an existing pool collection', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await network.addPoolCollection(poolCollection.address);
                 });
 
@@ -542,7 +427,7 @@ describe('BancorNetwork', () => {
         });
 
         describe('removing existing pool collections', () => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 await network.addPoolCollection(poolCollection.address);
             });
 
@@ -585,7 +470,7 @@ describe('BancorNetwork', () => {
                 let newPoolCollection: TestPoolCollection;
                 let lastCollection: TestPoolCollection;
 
-                prepareEach(async () => {
+                beforeEach(async () => {
                     newPoolCollection = await createPoolCollection(
                         network,
                         poolTokenFactory,
@@ -687,7 +572,7 @@ describe('BancorNetwork', () => {
         describe('setting the latest pool collections', () => {
             let newPoolCollection: TestPoolCollection;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 newPoolCollection = await createPoolCollection(
                     network,
                     poolTokenFactory,
@@ -751,12 +636,12 @@ describe('BancorNetwork', () => {
         let reserveToken: TokenWithAddress;
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let poolType: number;
 
         const testCreatePool = async (symbol: string) => {
-            prepareEach(async () => {
+            beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
                 if (symbol === BNT) {
@@ -779,12 +664,12 @@ describe('BancorNetwork', () => {
             });
 
             context('with an associated pool collection', () => {
-                prepareEach(async () => {
+                beforeEach(async () => {
                     await network.addPoolCollection(poolCollection.address);
                 });
 
                 context('with a whitelisted token', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await networkSettings.addTokenToWhitelist(reserveToken.address);
                     });
 
@@ -821,19 +706,23 @@ describe('BancorNetwork', () => {
             });
         }
 
-        it('should revert when attempting to create a pool for the network token', async () => {
-            const { network, networkToken } = await createSystem();
+        context(BNT, () => {
+            beforeEach(async () => {
+                ({ network, networkToken } = await createSystem());
+            });
 
-            await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
-                'InvalidToken'
-            );
+            it('should revert when attempting to create a pool', async () => {
+                await expect(network.createPool(BigNumber.from(1), networkToken.address)).to.be.revertedWith(
+                    'InvalidToken'
+                );
+            });
         });
     });
 
     describe('upgrade pool', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
@@ -851,7 +740,7 @@ describe('BancorNetwork', () => {
             await pendingWithdrawals.setTime(time);
         };
 
-        prepareEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -867,14 +756,15 @@ describe('BancorNetwork', () => {
             reserveTokenAddresses = [];
 
             for (const symbol of reserveTokenSymbols) {
-                const token = await setupPool(
+                const { token } = await setupSimplePool(
                     {
                         symbol,
-                        balance: toWei(BigNumber.from(50_000_000))
+                        balance: toWei(BigNumber.from(50_000_000)),
+                        initialRate: INITIAL_RATE
                     },
+                    deployer,
                     network,
                     networkSettings,
-                    networkToken,
                     poolCollection
                 );
 
@@ -891,9 +781,13 @@ describe('BancorNetwork', () => {
             await network.addPoolCollection(targetPoolCollection.address);
             await network.setLatestPoolCollection(targetPoolCollection.address);
 
-            await deposit(deployer, networkToken, toWei(BigNumber.from(100_000)), network);
+            await depositToPool(deployer, networkToken, toWei(BigNumber.from(100_000)), network);
 
             await network.setTime(await latest());
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         it('should revert when attempting to upgrade already upgraded pools', async () => {
@@ -902,7 +796,7 @@ describe('BancorNetwork', () => {
             await expect(network.upgradePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');
         });
 
-        it('should  revert when attempting to upgrade invalid pools', async () => {
+        it('should revert when attempting to upgrade invalid pools', async () => {
             const reserveTokenAddresses2 = [ZERO_ADDRESS, ZERO_ADDRESS, ...reserveTokenAddresses, ZERO_ADDRESS];
             await expect(network.upgradePools(reserveTokenAddresses2)).to.be.revertedWith('InvalidPool');
         });
@@ -931,7 +825,7 @@ describe('BancorNetwork', () => {
                 const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
 
                 const prevPoolTokenBalance = await poolToken.balanceOf(deployer.address);
-                await deposit(deployer, token, toWei(BigNumber.from(1_000_000)), network);
+                await depositToPool(deployer, token, toWei(BigNumber.from(1_000_000)), network);
                 expect(await poolToken.balanceOf(deployer.address)).to.be.gte(prevPoolTokenBalance);
 
                 const poolTokenAmount = await toWei(BigNumber.from(1));
@@ -1009,14 +903,14 @@ describe('BancorNetwork', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolder;
+        let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -1024,7 +918,7 @@ describe('BancorNetwork', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
-        prepareEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -1032,18 +926,19 @@ describe('BancorNetwork', () => {
                 govToken,
                 networkTokenPool,
                 poolCollection,
-                vault,
+                bancorVault,
                 pendingWithdrawals,
-                networkPoolToken
+                networkPoolToken,
+                externalProtectionVault
             } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+        };
 
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         const testDeposits = (symbol: string) => {
@@ -1053,7 +948,7 @@ describe('BancorNetwork', () => {
             let poolToken: PoolToken;
             let token: TokenWithAddress;
 
-            prepareEach(async () => {
+            beforeEach(async () => {
                 if (isNetworkToken) {
                     token = networkToken;
                 } else {
@@ -1098,10 +993,10 @@ describe('BancorNetwork', () => {
 
                 const prevProviderTokenBalance = await getBalance(token, providerAddress);
                 const prevSenderTokenBalance = await getBalance(token, senderAddress);
-                const prevVaultTokenBalance = await getBalance(token, vault.address);
+                const prevVaultTokenBalance = await getBalance(token, bancorVault.address);
 
                 const prevNetworkTokenTotalSupply = await networkToken.totalSupply();
-                const prevVaultNetworkTokenBalance = await networkToken.balanceOf(vault.address);
+                const prevVaultNetworkTokenBalance = await networkToken.balanceOf(bancorVault.address);
 
                 const prevGovTotalSupply = await govToken.totalSupply();
                 const prevProviderGovTokenBalance = await govToken.balanceOf(providerAddress);
@@ -1128,12 +1023,12 @@ describe('BancorNetwork', () => {
                             token.address,
                             await poolToken.totalSupply(),
                             await networkTokenPool.stakedBalance(),
-                            await getBalance(token, vault.address)
+                            await getBalance(token, bancorVault.address)
                         );
 
                     expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
 
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultTokenBalance);
+                    expect(await getBalance(token, bancorVault.address)).to.equal(prevVaultTokenBalance);
 
                     expect(await networkToken.totalSupply()).to.equal(prevNetworkTokenTotalSupply.sub(amount));
 
@@ -1178,7 +1073,7 @@ describe('BancorNetwork', () => {
                             token.address,
                             await poolToken.totalSupply(),
                             poolLiquidity.stakedBalance,
-                            await getBalance(token, vault.address)
+                            await getBalance(token, bancorVault.address)
                         );
 
                     await expect(res)
@@ -1188,7 +1083,7 @@ describe('BancorNetwork', () => {
                             networkToken.address,
                             await networkPoolToken.totalSupply(),
                             await networkTokenPool.stakedBalance(),
-                            await networkToken.balanceOf(vault.address)
+                            await networkToken.balanceOf(bancorVault.address)
                         );
 
                     await expect(res)
@@ -1208,11 +1103,11 @@ describe('BancorNetwork', () => {
                         prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                     );
 
-                    expect(await getBalance(token, vault.address)).to.equal(prevVaultTokenBalance.add(amount));
+                    expect(await getBalance(token, bancorVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
                     // expect a few network tokens to be minted to the vault
                     expect(await networkToken.totalSupply()).to.be.gte(prevNetworkTokenTotalSupply);
-                    expect(await networkToken.balanceOf(vault.address)).to.be.gte(prevVaultNetworkTokenBalance);
+                    expect(await networkToken.balanceOf(bancorVault.address)).to.be.gte(prevVaultNetworkTokenBalance);
 
                     expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply);
                     expect(await govToken.balanceOf(providerAddress)).to.equal(prevProviderGovTokenBalance);
@@ -1317,7 +1212,7 @@ describe('BancorNetwork', () => {
 
                                 context(`${amount} tokens`, () => {
                                     if (!isETH) {
-                                        prepareEach(async () => {
+                                        beforeEach(async () => {
                                             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
                                             await reserveToken.transfer(sender.address, amount);
                                         });
@@ -1331,7 +1226,7 @@ describe('BancorNetwork', () => {
 
                                     context('with an approval', () => {
                                         if (!isETH) {
-                                            prepareEach(async () => {
+                                            beforeEach(async () => {
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     token.address
                                                 );
@@ -1341,7 +1236,7 @@ describe('BancorNetwork', () => {
 
                                         if (isNetworkToken) {
                                             context('with requested liquidity', () => {
-                                                prepareEach(async () => {
+                                                beforeEach(async () => {
                                                     const contextId = formatBytes32String('CTX');
 
                                                     const reserveToken = await createTokenBySymbol(TKN);
@@ -1370,7 +1265,7 @@ describe('BancorNetwork', () => {
                                             });
                                         } else {
                                             context('when there is no unallocated network token liquidity', () => {
-                                                prepareEach(async () => {
+                                                beforeEach(async () => {
                                                     await networkSettings.setPoolMintingLimit(
                                                         token.address,
                                                         BigNumber.from(0)
@@ -1384,7 +1279,7 @@ describe('BancorNetwork', () => {
                                                 });
 
                                                 context('with non-whitelisted token', async () => {
-                                                    prepareEach(async () => {
+                                                    beforeEach(async () => {
                                                         await networkSettings.removeTokenFromWhitelist(token.address);
                                                     });
 
@@ -1399,7 +1294,7 @@ describe('BancorNetwork', () => {
                                             });
 
                                             context('when there is enough unallocated network token liquidity', () => {
-                                                prepareEach(async () => {
+                                                beforeEach(async () => {
                                                     await networkSettings.setPoolMintingLimit(
                                                         token.address,
                                                         MAX_UINT256
@@ -1407,7 +1302,7 @@ describe('BancorNetwork', () => {
                                                 });
 
                                                 context('with non-whitelisted token', async () => {
-                                                    prepareEach(async () => {
+                                                    beforeEach(async () => {
                                                         await networkSettings.removeTokenFromWhitelist(token.address);
                                                     });
 
@@ -1421,17 +1316,20 @@ describe('BancorNetwork', () => {
                                                 });
 
                                                 context('when spot rate is unstable', () => {
-                                                    prepareEach(async () => {
+                                                    beforeEach(async () => {
                                                         const spotRate = {
                                                             n: toWei(BigNumber.from(1_000_000)),
                                                             d: toWei(BigNumber.from(10_000_000))
                                                         };
 
+                                                        const { stakedBalance } = await poolCollection.poolLiquidity(
+                                                            token.address
+                                                        );
                                                         await poolCollection.setTradingLiquidityT(token.address, {
                                                             networkTokenTradingLiquidity: spotRate.n,
                                                             baseTokenTradingLiquidity: spotRate.d,
                                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                            stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                            stakedBalance
                                                         });
                                                         await poolCollection.setAverageRateT(token.address, {
                                                             rate: {
@@ -1490,7 +1388,7 @@ describe('BancorNetwork', () => {
                                                     context(
                                                         'when close to the limit of the unallocated network token liquidity',
                                                         () => {
-                                                            prepareEach(async () => {
+                                                            beforeEach(async () => {
                                                                 await networkSettings.setPoolMintingLimit(
                                                                     token.address,
                                                                     BigNumber.from(1000)
@@ -1533,7 +1431,7 @@ describe('BancorNetwork', () => {
                     let provider: Wallet;
                     let providerAddress: string;
 
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         provider = await createWallet();
                         providerAddress = await provider.getAddress();
                     });
@@ -1558,7 +1456,7 @@ describe('BancorNetwork', () => {
                             let sender: Wallet;
                             let senderAddress: string;
 
-                            prepareEach(async () => {
+                            beforeEach(async () => {
                                 switch (method) {
                                     case Method.DepositPermitted:
                                         sender = provider;
@@ -1642,13 +1540,13 @@ describe('BancorNetwork', () => {
                                         return;
                                     }
 
-                                    prepareEach(async () => {
+                                    beforeEach(async () => {
                                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
                                         await reserveToken.transfer(senderAddress, amount);
                                     });
 
                                     context('when there is no unallocated network token liquidity', () => {
-                                        prepareEach(async () => {
+                                        beforeEach(async () => {
                                             await networkSettings.setPoolMintingLimit(token.address, BigNumber.from(0));
                                         });
 
@@ -1659,7 +1557,7 @@ describe('BancorNetwork', () => {
                                         });
 
                                         context('with non-whitelisted token', async () => {
-                                            prepareEach(async () => {
+                                            beforeEach(async () => {
                                                 await networkSettings.removeTokenFromWhitelist(token.address);
                                             });
 
@@ -1672,12 +1570,12 @@ describe('BancorNetwork', () => {
                                     });
 
                                     context('when there is enough unallocated network token liquidity', () => {
-                                        prepareEach(async () => {
+                                        beforeEach(async () => {
                                             await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
                                         });
 
                                         context('with non-whitelisted token', async () => {
-                                            prepareEach(async () => {
+                                            beforeEach(async () => {
                                                 await networkSettings.removeTokenFromWhitelist(token.address);
                                             });
 
@@ -1691,17 +1589,20 @@ describe('BancorNetwork', () => {
                                         });
 
                                         context('when spot rate is unstable', () => {
-                                            prepareEach(async () => {
+                                            beforeEach(async () => {
                                                 const spotRate = {
                                                     n: toWei(BigNumber.from(1_000_000)),
                                                     d: toWei(BigNumber.from(10_000_000))
                                                 };
 
+                                                const { stakedBalance } = await poolCollection.poolLiquidity(
+                                                    token.address
+                                                );
                                                 await poolCollection.setTradingLiquidityT(token.address, {
                                                     networkTokenTradingLiquidity: spotRate.n,
                                                     baseTokenTradingLiquidity: spotRate.d,
                                                     tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                                    stakedBalance: toWei(BigNumber.from(1_000_000))
+                                                    stakedBalance
                                                 });
                                                 await poolCollection.setAverageRateT(token.address, {
                                                     rate: {
@@ -1731,7 +1632,7 @@ describe('BancorNetwork', () => {
                                             context(
                                                 'when close to the limit of the unallocated network token liquidity',
                                                 () => {
-                                                    prepareEach(async () => {
+                                                    beforeEach(async () => {
                                                         await networkSettings.setPoolMintingLimit(
                                                             token.address,
                                                             BigNumber.from(1000)
@@ -1774,14 +1675,14 @@ describe('BancorNetwork', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
-        let govToken: GovToken;
+        let networkToken: IERC20;
+        let govToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let networkPoolToken: PoolToken;
-        let externalProtectionWallet: TokenHolder;
+        let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -1793,7 +1694,7 @@ describe('BancorNetwork', () => {
             await pendingWithdrawals.setTime(time);
         };
 
-        prepareEach(async () => {
+        const setup = async () => {
             ({
                 network,
                 networkSettings,
@@ -1801,20 +1702,21 @@ describe('BancorNetwork', () => {
                 govToken,
                 networkTokenPool,
                 poolCollection,
-                vault,
+                bancorVault,
                 pendingWithdrawals,
-                networkPoolToken
+                networkPoolToken,
+                externalProtectionVault
             } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            externalProtectionWallet = await createTokenHolder();
-            await externalProtectionWallet.transferOwnership(network.address);
-            await network.setExternalProtectionWallet(externalProtectionWallet.address);
-
             await setTime((await latest()).toNumber());
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
         });
 
         it('should revert when attempting to withdraw a non-existing withdrawal request', async () => {
@@ -1837,7 +1739,7 @@ describe('BancorNetwork', () => {
                     [, provider] = await ethers.getSigners();
                 });
 
-                prepareEach(async () => {
+                beforeEach(async () => {
                     if (isNetworkToken) {
                         token = networkToken;
                     } else {
@@ -1864,7 +1766,7 @@ describe('BancorNetwork', () => {
                         await poolCollection.setInitialRate(token.address, INITIAL_RATE);
                     }
 
-                    await deposit(provider, token, amount, network);
+                    await depositToPool(provider, token, amount, network);
 
                     poolTokenAmount = await poolToken.balanceOf(provider.address);
 
@@ -1881,7 +1783,7 @@ describe('BancorNetwork', () => {
                 });
 
                 context('during the lock duration', () => {
-                    prepareEach(async () => {
+                    beforeEach(async () => {
                         await setTime(creationTime + 1000);
                     });
 
@@ -1890,7 +1792,7 @@ describe('BancorNetwork', () => {
                     });
 
                     context('after the withdrawal window duration', () => {
-                        prepareEach(async () => {
+                        beforeEach(async () => {
                             const withdrawalDuration =
                                 (await pendingWithdrawals.lockDuration()) +
                                 (await pendingWithdrawals.withdrawalWindowDuration());
@@ -1905,7 +1807,7 @@ describe('BancorNetwork', () => {
                     });
 
                     context('during the withdrawal window duration', () => {
-                        prepareEach(async () => {
+                        beforeEach(async () => {
                             const withdrawalDuration =
                                 (await pendingWithdrawals.lockDuration()) +
                                 (await pendingWithdrawals.withdrawalWindowDuration());
@@ -1932,7 +1834,7 @@ describe('BancorNetwork', () => {
                         context('with approvals', () => {
                             let contextId: string;
 
-                            prepareEach(async () => {
+                            beforeEach(async () => {
                                 contextId = solidityKeccak256(
                                     ['address', 'uint32', 'uint256'],
                                     [provider.address, await network.currentTime(), id]
@@ -1984,7 +1886,7 @@ describe('BancorNetwork', () => {
                                             token.address,
                                             await poolToken.totalSupply(),
                                             await networkTokenPool.stakedBalance(),
-                                            await getBalance(token, vault.address)
+                                            await getBalance(token, bancorVault.address)
                                         );
 
                                     expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
@@ -2003,8 +1905,8 @@ describe('BancorNetwork', () => {
                                     const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
                                         token.address,
                                         poolTokenAmount,
-                                        await getBalance(token, vault.address),
-                                        await getBalance(token, externalProtectionWallet.address)
+                                        await getBalance(token, bancorVault.address),
+                                        await getBalance(token, externalProtectionVault.address)
                                     );
 
                                     const res = await network.connect(provider).withdraw(id);
@@ -2021,10 +1923,10 @@ describe('BancorNetwork', () => {
                                             provider.address,
                                             poolCollection.address,
                                             withdrawalAmounts.baseTokenAmountToTransferFromVaultToProvider.add(
-                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider
+                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
                                             ),
                                             poolTokenAmount,
-                                            withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionWalletToProvider,
+                                            withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
                                             withdrawalAmounts.networkTokenAmountToMintForProvider,
                                             withdrawalAmounts.baseTokenWithdrawalFeeAmount
                                         );
@@ -2038,7 +1940,7 @@ describe('BancorNetwork', () => {
                                             token.address,
                                             await poolToken.totalSupply(),
                                             poolLiquidity.stakedBalance,
-                                            await getBalance(token, vault.address)
+                                            await getBalance(token, bancorVault.address)
                                         );
 
                                     await expect(res)
@@ -2099,7 +2001,7 @@ describe('BancorNetwork', () => {
                                 });
                             } else {
                                 context('with non-whitelisted token', async () => {
-                                    prepareEach(async () => {
+                                    beforeEach(async () => {
                                         await networkSettings.removeTokenFromWhitelist(token.address);
                                     });
 
@@ -2111,17 +2013,18 @@ describe('BancorNetwork', () => {
                                 });
 
                                 context('when spot rate is unstable', () => {
-                                    prepareEach(async () => {
+                                    beforeEach(async () => {
                                         const spotRate = {
                                             n: toWei(BigNumber.from(1_000_000)),
                                             d: toWei(BigNumber.from(10_000_000))
                                         };
 
+                                        const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
                                         await poolCollection.setTradingLiquidityT(token.address, {
                                             networkTokenTradingLiquidity: spotRate.n,
                                             baseTokenTradingLiquidity: spotRate.d,
                                             tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                            stakedBalance: toWei(BigNumber.from(1_000_000))
+                                            stakedBalance
                                         });
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
@@ -2163,10 +2066,10 @@ describe('BancorNetwork', () => {
     describe('trade', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let poolCollection: TestPoolCollection;
-        let vault: BancorVault;
+        let bancorVault: BancorVault;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
@@ -2177,20 +2080,33 @@ describe('BancorNetwork', () => {
 
         let trader: Wallet;
 
-        prepareEach(async () => {
-            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, vault } =
+        beforeEach(async () => {
+            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
-        const setup = async (source: PoolSpec, target: PoolSpec) => {
+        const setupPools = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
-            sourceToken = await setupPool(source, network, networkSettings, networkToken, poolCollection);
-            targetToken = await setupPool(target, network, networkSettings, networkToken, poolCollection);
+            ({ token: sourceToken } = await setupSimplePool(
+                source,
+                deployer,
+                network,
+                networkSettings,
+                poolCollection
+            ));
 
-            await deposit(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
+            ({ token: targetToken } = await setupSimplePool(
+                target,
+                deployer,
+                network,
+                networkSettings,
+                poolCollection
+            ));
+
+            await depositToPool(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
 
             await network.setTime(await latest());
         };
@@ -2304,14 +2220,14 @@ describe('BancorNetwork', () => {
             );
 
             const prevTraderSourceTokenAmount = await getBalance(sourceToken, traderAddress);
-            const prevVaultSourceTokenAmount = await getBalance(sourceToken, vault.address);
+            const prevVaultSourceTokenAmount = await getBalance(sourceToken, bancorVault.address);
 
             const prevBeneficiaryTargetTokenAmount = await getBalance(targetToken, beneficiary);
-            const prevVaultTargetTokenAmount = await getBalance(targetToken, vault.address);
+            const prevVaultTargetTokenAmount = await getBalance(targetToken, bancorVault.address);
 
             const prevTraderNetworkTokenAmount = await getBalance(networkToken, traderAddress);
             const prevBeneficiaryNetworkTokenAmount = await getBalance(networkToken, beneficiary);
-            const prevVaultNetworkTokenAmount = await getBalance(networkToken, vault.address);
+            const prevVaultNetworkTokenAmount = await getBalance(networkToken, bancorVault.address);
 
             const prevNetworkTokenPoolStakedBalance = await networkTokenPool.stakedBalance();
 
@@ -2532,21 +2448,23 @@ describe('BancorNetwork', () => {
             expect(await getBalance(sourceToken, traderAddress)).to.equal(
                 prevTraderSourceTokenAmount.sub(amount.add(isSourceETH ? transactionCost : BigNumber.from(0)))
             );
-            expect(await getBalance(sourceToken, vault.address)).to.equal(prevVaultSourceTokenAmount.add(amount));
+            expect(await getBalance(sourceToken, bancorVault.address)).to.equal(prevVaultSourceTokenAmount.add(amount));
 
             expect(await getBalance(targetToken, beneficiary)).to.equal(
                 prevBeneficiaryTargetTokenAmount.add(
                     targetAmount.sub(traderAddress === beneficiary && isTargetETH ? transactionCost : BigNumber.from(0))
                 )
             );
-            expect(await getBalance(targetToken, vault.address)).to.equal(prevVaultTargetTokenAmount.sub(targetAmount));
+            expect(await getBalance(targetToken, bancorVault.address)).to.equal(
+                prevVaultTargetTokenAmount.sub(targetAmount)
+            );
 
             // if neither the source or the target tokens are the network token - ensure that no network
             // token amount has left the system
             if (!isSourceNetworkToken && !isTargetNetworkToken) {
                 expect(await getBalance(networkToken, traderAddress)).to.equal(prevTraderNetworkTokenAmount);
                 expect(await getBalance(networkToken, beneficiary)).to.equal(prevBeneficiaryNetworkTokenAmount);
-                expect(await getBalance(networkToken, vault.address)).to.equal(prevVaultNetworkTokenAmount);
+                expect(await getBalance(networkToken, bancorVault.address)).to.equal(prevVaultNetworkTokenAmount);
             }
         };
 
@@ -2573,8 +2491,8 @@ describe('BancorNetwork', () => {
             context(`basic trades from ${source.symbol} to ${target.symbol}`, () => {
                 const testAmount = BigNumber.from(1000);
 
-                prepareEach(async () => {
-                    await setup(source, target);
+                beforeEach(async () => {
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2716,7 +2634,7 @@ describe('BancorNetwork', () => {
                         const extraAmount = BigNumber.from(10);
                         const testAmount2 = testAmount.add(extraAmount);
 
-                        prepareEach(async () => {
+                        beforeEach(async () => {
                             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                             await reserveToken.transfer(await trader.getAddress(), extraAmount);
                         });
@@ -2757,8 +2675,8 @@ describe('BancorNetwork', () => {
                     await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
                 };
 
-                prepareEach(async () => {
-                    await setup(source, target);
+                beforeEach(async () => {
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2781,8 +2699,8 @@ describe('BancorNetwork', () => {
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
 
-                prepareEach(async () => {
-                    await setup(source, target);
+                beforeEach(async () => {
+                    await setupPools(source, target);
 
                     if (!isSourceETH) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2817,11 +2735,13 @@ describe('BancorNetwork', () => {
             testTradesBasic(
                 {
                     symbol: sourceSymbol,
-                    balance: toWei(BigNumber.from(1_000_000))
+                    balance: toWei(BigNumber.from(1_000_000)),
+                    initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
-                    balance: toWei(BigNumber.from(5_000_000))
+                    balance: toWei(BigNumber.from(5_000_000)),
+                    initialRate: INITIAL_RATE
                 }
             );
 
@@ -2840,12 +2760,14 @@ describe('BancorNetwork', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM,
+                                        initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM,
+                                        initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
@@ -2855,12 +2777,14 @@ describe('BancorNetwork', () => {
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM
+                                            tradingFeePPM,
+                                            initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: tradingFeePPM2
+                                            tradingFeePPM: tradingFeePPM2,
+                                            initialRate: INITIAL_RATE
                                         },
                                         amount
                                     );
@@ -2869,6 +2793,234 @@ describe('BancorNetwork', () => {
                         }
                     }
                 }
+            }
+        }
+    });
+
+    describe('flash-loans', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: IERC20;
+        let networkTokenPool: TestNetworkTokenPool;
+        let poolCollection: TestPoolCollection;
+        let bancorVault: BancorVault;
+        let recipient: TestFlashLoanRecipient;
+        let token: TokenWithAddress;
+
+        const amount = toWei(BigNumber.from(123456));
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
+        const ZERO_BYTES = '0x';
+        const ZERO_BYTES32 = formatBytes32String('');
+
+        const setup = async () => {
+            ({ network, networkSettings, networkToken, networkTokenPool, poolCollection, bancorVault } =
+                await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+
+            recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
+        });
+
+        describe('basic tests', () => {
+            beforeEach(async () => {
+                ({ token } = await setupSimplePool(
+                    {
+                        symbol: TKN,
+                        balance: amount,
+                        initialRate: INITIAL_RATE
+                    },
+                    deployer,
+                    network,
+                    networkSettings,
+                    poolCollection
+                ));
+            });
+
+            it('should revert when attempting to request a flash-loan of an invalid token', async () => {
+                await expect(network.flashLoan(ZERO_ADDRESS, amount, recipient.address, ZERO_BYTES)).to.be.revertedWith(
+                    'InvalidAddress'
+                );
+            });
+
+            it('should revert when attempting to request a flash-loan of a non-whitelisted token', async () => {
+                const reserveToken = await createTokenBySymbol(TKN);
+                await expect(
+                    network.flashLoan(reserveToken.address, amount, recipient.address, ZERO_BYTES)
+                ).to.be.revertedWith('NotWhitelisted');
+            });
+
+            it('should revert when attempting to request a flash-loan of an invalid amount', async () => {
+                await expect(
+                    network.flashLoan(token.address, BigNumber.from(0), recipient.address, ZERO_BYTES)
+                ).to.be.revertedWith('ZeroValue');
+            });
+
+            it('should revert when attempting to request a flash-loan for an invalid recipient', async () => {
+                await expect(network.flashLoan(token.address, amount, ZERO_ADDRESS, ZERO_BYTES)).to.be.revertedWith(
+                    'InvalidAddress'
+                );
+            });
+
+            context('reentering', () => {
+                beforeEach(async () => {
+                    await recipient.setReenter(true);
+                });
+
+                it('should revert when attempting to request a flash-loan', async () => {
+                    await expect(
+                        network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                    ).to.be.revertedWith('ReentrancyGuard: reentrant call');
+                });
+            });
+
+            it('should revert when attempting to request a flash-loan of more than the pool has', async () => {
+                await expect(
+                    network.flashLoan(token.address, amount.add(1), recipient.address, ZERO_BYTES)
+                ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+            });
+        });
+
+        const testFlashLoan = async (symbol: string, flashLoanFeePPM: BigNumber) => {
+            const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
+
+            beforeEach(async () => {
+                if (symbol === BNT) {
+                    token = networkToken;
+
+                    const reserveToken = await createTokenBySymbol(TKN);
+
+                    await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+                    await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
+
+                    await depositToPool(deployer, networkToken, amount, network);
+                } else {
+                    ({ token } = await setupSimplePool(
+                        {
+                            symbol,
+                            balance: amount,
+                            initialRate: INITIAL_RATE
+                        },
+                        deployer,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
+                }
+
+                await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
+
+                await transfer(deployer, token, recipient.address, feeAmount);
+                await recipient.snapshot(token.address);
+            });
+
+            const test = async () => {
+                const prevVaultBalance = await getBalance(token, bancorVault.address);
+                const prevNetworkBalance = await getBalance(token, network.address);
+
+                let prevStakedBalance;
+                if (symbol === BNT) {
+                    prevStakedBalance = await networkTokenPool.stakedBalance();
+                } else {
+                    prevStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
+                }
+
+                const data = '0x1234';
+                const contextId = solidityKeccak256(
+                    ['address', 'uint32', 'address', 'uint256', 'address', 'bytes'],
+                    [deployer.address, await network.currentTime(), token.address, amount, recipient.address, data]
+                );
+
+                const res = network.flashLoan(token.address, amount, recipient.address, data);
+
+                await expect(res)
+                    .to.emit(network, 'FlashLoanCompleted')
+                    .withArgs(contextId, token.address, deployer.address, amount);
+
+                await expect(res)
+                    .to.emit(network, 'FeesCollected')
+                    .withArgs(
+                        contextId,
+                        token.address,
+                        FeeTypes.FlashLoan,
+                        feeAmount,
+                        prevStakedBalance.add(feeAmount)
+                    );
+
+                const callbackData = await recipient.callbackData();
+                expect(callbackData.sender).to.equal(deployer.address);
+                expect(callbackData.token).to.equal(token.address);
+                expect(callbackData.amount).to.equal(amount);
+                expect(callbackData.feeAmount).to.equal(feeAmount);
+                expect(callbackData.data).to.equal(data);
+                expect(callbackData.receivedAmount).to.equal(amount);
+
+                expect(await getBalance(token, bancorVault.address)).to.be.gte(prevVaultBalance.add(feeAmount));
+                expect(await getBalance(token, network.address)).to.equal(prevNetworkBalance);
+            };
+
+            context('not repaying the original amount', () => {
+                beforeEach(async () => {
+                    await recipient.setAmountToReturn(amount.sub(1));
+                });
+
+                it('should revert when attempting to request a flash-loan', async () => {
+                    await expect(
+                        network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                    ).to.be.revertedWith('InsufficientFlashLoanReturn');
+                });
+            });
+
+            if (flashLoanFeePPM.gt(0)) {
+                context('not repaying the fee', () => {
+                    beforeEach(async () => {
+                        await recipient.setAmountToReturn(amount);
+                    });
+
+                    it('should revert when attempting to request a flash-loan', async () => {
+                        await expect(
+                            network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                        ).to.be.revertedWith('InsufficientFlashLoanReturn');
+                    });
+                });
+            }
+
+            context('repaying more than required', () => {
+                beforeEach(async () => {
+                    const extraReturn = toWei(BigNumber.from(12345));
+
+                    await transfer(deployer, token, recipient.address, extraReturn);
+                    await recipient.snapshot(token.address);
+
+                    await recipient.setAmountToReturn(amount.add(feeAmount).add(extraReturn));
+                });
+
+                it('should succeed requesting a flash-loan', async () => {
+                    await test();
+                });
+            });
+
+            context('returning just about right', () => {
+                beforeEach(async () => {
+                    await recipient.setAmountToReturn(amount.add(feeAmount));
+                });
+
+                it('should succeed requesting a flash-loan', async () => {
+                    await test();
+                });
+            });
+        };
+
+        for (const symbol of [BNT, ETH, TKN]) {
+            for (const flashLoanFeePPM of [0, 10_000, 100_000]) {
+                context(`${symbol} with fee=${feeToString(flashLoanFeePPM)}`, () => {
+                    testFlashLoan(symbol, BigNumber.from(flashLoanFeePPM));
+                });
             }
         }
     });

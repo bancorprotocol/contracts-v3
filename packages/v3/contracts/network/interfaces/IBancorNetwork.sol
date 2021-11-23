@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.9;
+pragma solidity 0.8.10;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { ITokenHolder } from "../../utility/interfaces/ITokenHolder.sol";
+import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -16,8 +16,24 @@ import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol"
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorVault } from "./IBancorVault.sol";
+import { IBancorVault } from "./../../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
+
+/**
+ * @dev Flash-loan recipient interface
+ */
+interface IFlashLoanRecipient {
+    /**
+     * @dev a flash-loan recipient callback after each the caller must return the borrowed amount and an additional fee
+     */
+    function onFlashLoan(
+        address sender,
+        IERC20 token,
+        uint256 amount,
+        uint256 feeAmount,
+        bytes memory data
+    ) external;
+}
 
 /**
  * @dev Bancor Network interface
@@ -74,9 +90,9 @@ interface IBancorNetwork is IUpgradeable {
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
 
     /**
-     * @dev returns the address of the external protection wallet
+     * @dev returns the address of the external protection vault
      */
-    function externalProtectionWallet() external view returns (ITokenHolder);
+    function externalProtectionVault() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the set of all valid pool collections
@@ -225,5 +241,19 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
+    ) external;
+
+    /**
+     * @dev provides a flash-loan
+     *
+     * requirements:
+     *
+     * - the recipient's callback must return *at least* the borrowed amount and fee back to the specified return address
+     */
+    function flashLoan(
+        ReserveToken token,
+        uint256 amount,
+        IFlashLoanRecipient recipient,
+        bytes calldata data
     ) external;
 }
