@@ -1191,7 +1191,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         if (amounts.networkTokenAmountToRenounceByProtocol.value > 0) {
             assert(amounts.networkTokenAmountToRenounceByProtocol.isNeg); // currently no support for requesting liquidity here
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToRenounceByProtocol.value);
+            cachedNetworkTokenPool.renounceLiquidity(
+                contextId,
+                pool,
+                amounts.networkTokenAmountToRenounceByProtocol.value
+            );
         }
 
         if (amounts.networkTokenAmountToDeductFromLiquidity.value > 0) {
