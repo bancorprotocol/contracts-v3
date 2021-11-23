@@ -27,7 +27,7 @@ import {
     ExternalProtectionVault
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
+import { DEFAULT_DECIMALS, FeeTypes, MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
@@ -1691,9 +1691,9 @@ describe('BancorNetwork', () => {
         }
 
         describe('migrate liquidity', () => {
-            const TOTAL_SUPPLY = BigNumber.from(10).pow(BigNumber.from(25));
-            const RESERVE1_AMOUNT = BigNumber.from(1000000);
-            const RESERVE2_AMOUNT = BigNumber.from(2500000);
+            const TOTAL_SUPPLY = BigNumber.from(10_000_000);
+            const RESERVE1_AMOUNT = BigNumber.from(1_000_000);
+            const RESERVE2_AMOUNT = BigNumber.from(2_500_000);
 
             let now: BigNumber;
             let checkpointStore: TestCheckpointStore;
@@ -1811,7 +1811,7 @@ describe('BancorNetwork', () => {
                     baseToken
                 ));
 
-                await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY);
+                await networkTokenGovernance.mint(owner.address, TOTAL_SUPPLY.mul(BigNumber.from(10).pow(DEFAULT_DECIMALS)));
 
                 await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(BigNumber.from(100));
                 await liquidityProtectionSettings.setMinNetworkCompensation(BigNumber.from(3));
