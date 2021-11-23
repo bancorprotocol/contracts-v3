@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
-import { TestVault } from '../../typechain';
+import { IERC20, TestVault } from '../../typechain';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
@@ -93,7 +92,7 @@ describe('TestVault', () => {
 
     describe('withdrawing funds', async () => {
         let testVault: TestVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         beforeEach(async () => {
             ({ networkToken } = await createSystem());
@@ -173,7 +172,7 @@ describe('TestVault', () => {
 
     describe('authenticated/unauthenticated', () => {
         let testVault: TestVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         beforeEach(async () => {
             ({ networkToken } = await createSystem());

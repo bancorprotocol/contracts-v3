@@ -22,7 +22,7 @@ library ReserveTokenLibrary {
     // the symbol that represents the native token
     string private constant NATIVE_TOKEN_SYMBOL = "ETH";
 
-    // the ‏decimals for the native token
+    // the decimals for the native token
     uint8 private constant NATIVE_TOKEN_DECIMALS = 18;
 
     /**

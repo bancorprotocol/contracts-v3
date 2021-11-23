@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
 import '@nomiclabs/hardhat-waffle';
+import '@tenderly/hardhat-tenderly';
 import '@typechain/hardhat';
 import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
@@ -12,6 +13,7 @@ import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
 import { NetworkUserConfig } from 'hardhat/types';
+import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
 
 const hardhatDefaultConfig: NetworkUserConfig = {
@@ -22,11 +24,44 @@ const hardhatDefaultConfig: NetworkUserConfig = {
     allowUnlimitedContractSize: true
 };
 
-const ci = getEnvKey<boolean>('CI');
+const mochaOptions = (): MochaOptions => {
+    const ci = getEnvKey<boolean>('CI');
+    const profile = getEnvKey<boolean>('PROFILE');
+
+    let timeout = 600000;
+    let grep;
+    let invert = false;
+    let reporter;
+
+    if (profile) {
+        // if we're profiling, make sure to only run @profile tests without any timeout restriction, and silence most
+        // of test output
+        timeout = 0;
+        grep = '@profile';
+        reporter = 'mocha-silent-reporter';
+    } else if (ci) {
+        // if we're running in CI, run all the tests
+        grep = '';
+    } else {
+        // if we're running in dev, filter out stress and profile tests
+        grep = '@stress|@profile';
+        invert = true;
+    }
+
+    return {
+        timeout,
+        color: true,
+        bail: getEnvKey('BAIL'),
+        grep,
+        invert,
+        reporter
+    };
+};
 
 const config: HardhatUserConfig = {
     networks: {
         hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
+        localhost: { url: 'http://localhost:8545', chainId: 31337 },
 
         ...CONFIG.networks
     },
@@ -75,13 +110,7 @@ const config: HardhatUserConfig = {
         clear: true
     },
 
-    mocha: {
-        timeout: 600000,
-        color: true,
-        bail: getEnvKey('BAIL'),
-        grep: ci ? '' : '@stress',
-        invert: !ci
-    }
+    mocha: mochaOptions()
 };
 
 export default config;

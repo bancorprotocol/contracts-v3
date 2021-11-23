@@ -1,8 +1,13 @@
 import { ContractBuilder, Contract } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
-import LegacyContracts from '../../components/LegacyContracts';
-import { TokenGovernance } from '../../components/LegacyContracts';
+import LegacyContracts, {
+    TokenGovernance,
+    NetworkToken__factory,
+    GovToken__factory
+} from '../../components/LegacyContracts';
+import { isProfiling } from '../../components/Profiler';
 import {
+    IERC20,
     BancorVault,
     NetworkSettings,
     PoolToken,
@@ -79,21 +84,39 @@ export const createProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-const createGovernedToken = async <F extends ContractFactory>(
-    legacyFactory: ContractBuilder<F>,
-    totalSupply: BigNumber,
-    ...args: Parameters<F['deploy']>
+const createGovernedToken = async (
+    legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
+    name: string,
+    symbol: string,
+    decimals: BigNumber,
+    totalSupply: BigNumber
 ) => {
     const deployer = await getDeployer();
 
-    const token = await legacyFactory.deploy(...args);
-    await token.issue(deployer.address, totalSupply);
+    let token: IERC20;
+    let tokenGovernance: TokenGovernance;
 
-    const tokenGovernance = await LegacyContracts.TokenGovernance.deploy(token.address);
-    await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
-    await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
-    await token.transferOwnership(tokenGovernance.address);
-    await tokenGovernance.acceptTokenOwnership();
+    if (isProfiling) {
+        const testToken = await Contracts.TestGovernedToken.deploy(name, symbol, totalSupply);
+        await testToken.updateDecimals(decimals);
+
+        tokenGovernance = (await Contracts.TestTokenGovernance.deploy(testToken.address)) as TokenGovernance;
+        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+
+        token = testToken;
+    } else {
+        const legacyToken = await legacyFactory.deploy(name, symbol, decimals);
+        legacyToken.issue(deployer.address, totalSupply);
+
+        tokenGovernance = await LegacyContracts.TokenGovernance.deploy(legacyToken.address);
+        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+        await legacyToken.transferOwnership(tokenGovernance.address);
+        await tokenGovernance.acceptTokenOwnership();
+
+        token = legacyToken as any as IERC20;
+    }
 
     return { token, tokenGovernance };
 };
@@ -101,17 +124,17 @@ const createGovernedToken = async <F extends ContractFactory>(
 const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
-        TOTAL_SUPPLY,
         BNT,
         BNT,
-        DEFAULT_DECIMALS
+        DEFAULT_DECIMALS,
+        TOTAL_SUPPLY
     );
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
-        TOTAL_SUPPLY,
         vBNT,
         vBNT,
-        DEFAULT_DECIMALS
+        DEFAULT_DECIMALS,
+        TOTAL_SUPPLY
     );
 
     return { networkToken, networkTokenGovernance, govToken, govTokenGovernance };
@@ -288,7 +311,9 @@ export const setupSimplePool = async (
 
     if (isNetworkToken) {
         const poolToken = await Contracts.PoolToken.attach(await network.networkPoolToken());
-        const networkToken = await LegacyContracts.NetworkToken.attach(await network.networkToken());
+
+        const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
+        const networkToken = await factory.attach(await network.networkToken());
 
         return { poolToken, token: networkToken };
     }

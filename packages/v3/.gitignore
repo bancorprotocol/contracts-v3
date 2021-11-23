@@ -11,6 +11,7 @@ yarn-error.log*
 /artifacts
 /typechain
 /data
+/deployments
 
 .coverage_artifacts
 .coverage_contracts
