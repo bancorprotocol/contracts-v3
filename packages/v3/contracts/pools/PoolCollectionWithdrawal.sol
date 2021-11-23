@@ -18,7 +18,7 @@ library PoolCollectionWithdrawal {
 
     struct Output {
         Sint256 p;
-        uint256 q;
+        Sint256 q;
         Sint256 r;
         uint256 s;
         uint256 t;
@@ -153,7 +153,6 @@ library PoolCollectionWithdrawal {
         uint256 i = f * (M - m);
         uint256 j = mulSubMulDivF(b, e * M, x, i, 1);
         output.p = MathEx.mulDivF(a * x, i, j).toPos256();
-        output.q = 0;
         output.r = MathEx.mulDivF(x, f, e).toNeg256();
         output.s = y;
     }}
@@ -179,7 +178,6 @@ library PoolCollectionWithdrawal {
         uint256 i = f * M + e * n;
         uint256 j = mulAddMulDivF(b, e * (M - m), x, i * (M - m), M);
         output.p = MathEx.mulDivF(a * x, i, j).toNeg256();
-        output.q = 0;
         output.r = MathEx.mulDivF(x, i, e * M).toPos256();
         output.s = y;
     }}
@@ -201,7 +199,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = MathEx.mulDivF(a, z, b * e).toNeg256();
-        output.q = output.p.value;
+        output.q = output.p;
         output.r = (z / e).toNeg256();
         output.s = MathEx.mulDivF(y, b + c, e);
     }}
@@ -222,7 +220,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) { unchecked {
         uint256 z = MathEx.subMax0(y, c);
         output.p = MathEx.mulDivF(a, z, b).toNeg256();
-        output.q = output.p.value;
+        output.q = output.p;
         output.r = z.toNeg256();
         output.s = y;
     }}
