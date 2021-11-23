@@ -1,13 +1,13 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
 import {
+    IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestNetworkTokenPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain';
+} from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes } from '../helpers/Constants';
 import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
@@ -39,7 +39,7 @@ describe('PendingWithdrawals', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let pendingWithdrawals: TestPendingWithdrawals;
 
@@ -179,7 +179,7 @@ describe('PendingWithdrawals', () => {
         let reserveToken: TokenWithAddress;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
         let networkTokenPool: TestNetworkTokenPool;
         let networkPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;

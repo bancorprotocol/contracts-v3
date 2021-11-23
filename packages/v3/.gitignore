@@ -9,8 +9,9 @@ yarn-error.log*
 
 /cache
 /artifacts
-/typechain
+/typechain-types
 /data
+/deployments
 
 .coverage_artifacts
 .coverage_contracts
@@ -31,3 +32,5 @@ migration/data/fork*
 migration/test/migration/data/hardhat
 migration/test/migration/data/localhost
 migration/test/migration/data/fork*
+
+tenderly.yaml

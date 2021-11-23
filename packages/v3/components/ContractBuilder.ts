@@ -1,4 +1,5 @@
 /* eslint-enable camelcase */
+import { Profiler } from './Profiler';
 import { Signer, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
 
@@ -42,7 +43,12 @@ export const deployOrAttach = <F extends ContractFactory>(
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
             const defaultSigner = initialSigner || (await ethers.getSigners())[0];
 
-            return new FactoryConstructor(defaultSigner).deploy(...(args || [])) as Contract<F>;
+            const res = new FactoryConstructor(defaultSigner).deploy(...(args || []));
+
+            // persist artifacts during profiling debugging (if needed)
+            await Profiler.persistArtifacts(contractName, (await res).address);
+
+            return res as Promise<Contract<F>>;
         },
         attach: attachOnly<F>(FactoryConstructor, initialSigner).attach
     };

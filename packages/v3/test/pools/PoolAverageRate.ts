@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { TestPoolAverageRate } from '../../typechain';
+import { TestPoolAverageRate } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toString, toWei, Fraction, AverageRate } from '../helpers/Types';

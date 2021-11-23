@@ -7,7 +7,7 @@ import {
     TestERC20Token,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain';
+} from '../../typechain-types';
 import { ZERO_ADDRESS, TKN } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
