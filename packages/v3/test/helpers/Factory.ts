@@ -156,17 +156,17 @@ export const createPoolCollection = async (
 const createMasterPoolUninitialized = async (
     network: TestBancorNetwork,
     vault: BancorVault,
-    networkPoolToken: PoolToken,
+    masterPoolToken: PoolToken,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance
 ) => {
     const masterPool = await createProxy(Contracts.TestMasterPool, {
         skipInitialization: true,
-        ctorArgs: [network.address, networkPoolToken.address]
+        ctorArgs: [network.address, masterPoolToken.address]
     });
 
-    await networkPoolToken.acceptOwnership();
-    await networkPoolToken.transferOwnership(masterPool.address);
+    await masterPoolToken.acceptOwnership();
+    await masterPoolToken.transferOwnership(masterPool.address);
 
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
     await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
@@ -212,7 +212,7 @@ const createSystemFixture = async () => {
     const externalRewardsVault = await createProxy(Contracts.ExternalRewardsVault);
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
-    const networkPoolToken = await createPoolToken(poolTokenFactory, networkToken);
+    const masterPoolToken = await createPoolToken(poolTokenFactory, networkToken);
 
     const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [networkFeeVault.address] });
 
@@ -223,7 +223,7 @@ const createSystemFixture = async () => {
             govTokenGovernance.address,
             networkSettings.address,
             bancorVault.address,
-            networkPoolToken.address,
+            masterPoolToken.address,
             externalProtectionVault.address
         ]
     });
@@ -231,7 +231,7 @@ const createSystemFixture = async () => {
     const masterPool = await createMasterPoolUninitialized(
         network,
         bancorVault,
-        networkPoolToken,
+        masterPoolToken,
         networkTokenGovernance,
         govTokenGovernance
     );
@@ -260,7 +260,7 @@ const createSystemFixture = async () => {
         networkTokenGovernance,
         govToken,
         govTokenGovernance,
-        networkPoolToken,
+        masterPoolToken,
         bancorVault,
         externalProtectionVault,
         externalRewardsVault,
@@ -310,7 +310,7 @@ export const setupSimplePool = async (
     const isNetworkToken = spec.symbol === BNT;
 
     if (isNetworkToken) {
-        const poolToken = await Contracts.PoolToken.attach(await network.networkPoolToken());
+        const poolToken = await Contracts.PoolToken.attach(await network.masterPoolToken());
 
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
         const networkToken = await factory.attach(await network.networkToken());

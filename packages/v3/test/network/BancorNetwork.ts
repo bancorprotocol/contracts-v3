@@ -162,7 +162,7 @@ describe('BancorNetwork', () => {
         let bancorVault: BancorVault;
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
 
         beforeEach(async () => {
             ({
@@ -177,7 +177,7 @@ describe('BancorNetwork', () => {
                 bancorVault,
                 externalProtectionVault,
                 pendingWithdrawals,
-                networkPoolToken
+                masterPoolToken
             } = await createSystem());
         });
 
@@ -193,7 +193,7 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address,
+                masterPoolToken.address,
                 externalProtectionVault.address
             );
 
@@ -208,7 +208,7 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address,
+                masterPoolToken.address,
                 externalProtectionVault.address
             );
 
@@ -223,7 +223,7 @@ describe('BancorNetwork', () => {
                 govTokenGovernance.address,
                 networkSettings.address,
                 bancorVault.address,
-                networkPoolToken.address,
+                masterPoolToken.address,
                 externalProtectionVault.address
             );
 
@@ -239,7 +239,7 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     networkSettings.address,
                     bancorVault.address,
-                    networkPoolToken.address,
+                    masterPoolToken.address,
                     externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -252,7 +252,7 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     networkSettings.address,
                     bancorVault.address,
-                    networkPoolToken.address,
+                    masterPoolToken.address,
                     externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -265,7 +265,7 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
                     bancorVault.address,
-                    networkPoolToken.address,
+                    masterPoolToken.address,
                     externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -278,7 +278,7 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     networkSettings.address,
                     ZERO_ADDRESS,
-                    networkPoolToken.address,
+                    masterPoolToken.address,
                     externalProtectionVault.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -298,7 +298,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when initialized with an invalid external protection vault contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, networkPoolToken } =
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, masterPoolToken } =
                 await createSystem();
 
             await expect(
@@ -307,7 +307,7 @@ describe('BancorNetwork', () => {
                     govTokenGovernance.address,
                     networkSettings.address,
                     bancorVault.address,
-                    networkPoolToken.address,
+                    masterPoolToken.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -324,7 +324,7 @@ describe('BancorNetwork', () => {
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.vault()).to.equal(bancorVault.address);
-            expect(await network.networkPoolToken()).to.equal(networkPoolToken.address);
+            expect(await network.masterPoolToken()).to.equal(masterPoolToken.address);
             expect(await network.masterPool()).to.equal(masterPool.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
@@ -909,7 +909,7 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
         let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
@@ -928,7 +928,7 @@ describe('BancorNetwork', () => {
                 poolCollection,
                 bancorVault,
                 pendingWithdrawals,
-                networkPoolToken,
+                masterPoolToken,
                 externalProtectionVault
             } = await createSystem());
 
@@ -956,7 +956,7 @@ describe('BancorNetwork', () => {
                 }
 
                 if (isNetworkToken) {
-                    poolToken = networkPoolToken;
+                    poolToken = masterPoolToken;
                 } else {
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
@@ -1081,7 +1081,7 @@ describe('BancorNetwork', () => {
                         .withArgs(
                             contextId,
                             networkToken.address,
-                            await networkPoolToken.totalSupply(),
+                            await masterPoolToken.totalSupply(),
                             await masterPool.stakedBalance(),
                             await networkToken.balanceOf(bancorVault.address)
                         );
@@ -1681,7 +1681,7 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
         let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
@@ -1704,7 +1704,7 @@ describe('BancorNetwork', () => {
                 poolCollection,
                 bancorVault,
                 pendingWithdrawals,
-                networkPoolToken,
+                masterPoolToken,
                 externalProtectionVault
             } = await createSystem());
 
@@ -1750,7 +1750,7 @@ describe('BancorNetwork', () => {
                     const amount = toWei(BigNumber.from(222_222_222));
 
                     if (isNetworkToken) {
-                        poolToken = networkPoolToken;
+                        poolToken = masterPoolToken;
 
                         const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTokenBySymbol(TKN);

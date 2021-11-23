@@ -448,7 +448,7 @@ describe('@profile Profile', () => {
         let govToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -461,15 +461,8 @@ describe('@profile Profile', () => {
         };
 
         const setup = async () => {
-            ({
-                network,
-                networkSettings,
-                networkToken,
-                govToken,
-                poolCollection,
-                pendingWithdrawals,
-                networkPoolToken
-            } = await createSystem());
+            ({ network, networkSettings, networkToken, govToken, poolCollection, pendingWithdrawals, masterPoolToken } =
+                await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -509,7 +502,7 @@ describe('@profile Profile', () => {
                     const amount = toWei(BigNumber.from(222_222_222));
 
                     if (isNetworkToken) {
-                        poolToken = networkPoolToken;
+                        poolToken = masterPoolToken;
 
                         const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTokenBySymbol(TKN);

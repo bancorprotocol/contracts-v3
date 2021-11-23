@@ -72,7 +72,7 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the master pool token contract
      */
-    function networkPoolToken() external view returns (IPoolToken);
+    function masterPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the master pool contract

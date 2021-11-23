@@ -178,7 +178,7 @@ describe('PendingWithdrawals', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
@@ -193,7 +193,7 @@ describe('PendingWithdrawals', () => {
                     networkSettings,
                     networkToken,
                     masterPool,
-                    networkPoolToken,
+                    masterPoolToken,
                     pendingWithdrawals,
                     poolCollection
                 } = await createSystem());
@@ -206,7 +206,7 @@ describe('PendingWithdrawals', () => {
 
             const poolTokenUnderlying = async (poolToken: PoolToken, amount: BigNumber) => {
                 let stakedBalance: BigNumber;
-                if (networkPoolToken.address === poolToken.address) {
+                if (masterPoolToken.address === poolToken.address) {
                     stakedBalance = await masterPool.stakedBalance();
                 } else {
                     ({ stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address));

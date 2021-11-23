@@ -92,7 +92,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     IBancorVault private immutable _vault;
 
     // the master pool token
-    IPoolToken internal immutable _networkPoolToken;
+    IPoolToken internal immutable _masterPoolToken;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -277,14 +277,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken,
+        IPoolToken initMasterPoolToken,
         IExternalProtectionVault initExternalProtectionVault
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
         validAddress(address(initVault))
-        validAddress(address(initNetworkPoolToken))
+        validAddress(address(initMasterPoolToken))
         validAddress(address(initExternalProtectionVault))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
@@ -294,7 +294,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _settings = initSettings;
         _vault = initVault;
-        _networkPoolToken = initNetworkPoolToken;
+        _masterPoolToken = initMasterPoolToken;
         _externalProtectionVault = initExternalProtectionVault;
     }
 
@@ -415,8 +415,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev IBancorNetwork
      */
-    function networkPoolToken() external view returns (IPoolToken) {
-        return _networkPoolToken;
+    function masterPoolToken() external view returns (IPoolToken) {
+        return _masterPoolToken;
     }
 
     /**
@@ -708,7 +708,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
-        if (completedRequest.poolToken == _networkPoolToken) {
+        if (completedRequest.poolToken == _masterPoolToken) {
             _withdrawNetworkToken(contextId, provider, completedRequest);
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
@@ -967,7 +967,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         emit TotalLiquidityUpdated({
             contextId: contextId,
             pool: ReserveToken.wrap(address(_networkToken)),
-            poolTokenSupply: _networkPoolToken.totalSupply(),
+            poolTokenSupply: _masterPoolToken.totalSupply(),
             stakedBalance: cachedMasterPool.stakedBalance(),
             actualBalance: _networkToken.balanceOf(address(_vault))
         });
@@ -1042,7 +1042,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         emit TotalLiquidityUpdated({
             contextId: contextId,
             pool: ReserveToken.wrap(address(_networkToken)),
-            poolTokenSupply: _networkPoolToken.totalSupply(),
+            poolTokenSupply: _masterPoolToken.totalSupply(),
             stakedBalance: cachedMasterPool.stakedBalance(),
             actualBalance: _networkToken.balanceOf(address(_vault))
         });
