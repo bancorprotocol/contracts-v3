@@ -3,7 +3,6 @@ import fs from 'fs';
 import { NetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
-// utilities
 export const getEnvKey = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };

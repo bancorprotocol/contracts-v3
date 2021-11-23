@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
-import { BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain';
+import { IERC20, BancorVault, TestBancorNetwork, TestNetworkTokenPool } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
@@ -53,7 +52,7 @@ describe('BancorVault', () => {
         const amount = 1_000_000;
 
         let bancorVault: BancorVault;
-        let networkToken: NetworkToken;
+        let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;

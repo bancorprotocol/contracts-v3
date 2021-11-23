@@ -1,4 +1,4 @@
-import { AccessControlEnumerableUpgradeable } from '../../typechain';
+import { AccessControlEnumerableUpgradeable } from '../../typechain-types';
 import { expect } from 'chai';
 import { utils, BigNumber } from 'ethers';
 

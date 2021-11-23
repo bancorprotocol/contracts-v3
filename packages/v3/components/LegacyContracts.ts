@@ -47,7 +47,9 @@ import { Signer } from 'ethers';
 
 export {
     NetworkToken,
+    NetworkToken__factory,
     GovToken,
+    GovToken__factory,
     ConverterFactory,
     ContractRegistry,
     ConverterRegistry,
