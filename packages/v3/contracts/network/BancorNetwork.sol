@@ -1189,18 +1189,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(_externalProtectionVault))
         );
 
-        if (amounts.networkTokenAmountToRenounceByProtocol < 0) {
-            cachedNetworkTokenPool.renounceLiquidity(
-                contextId,
-                pool,
-                MathEx.negToPos(amounts.networkTokenAmountToRenounceByProtocol)
-            );
+        if (amounts.networkTokenAmountToAddToProtocol.value > 0) {
+            assert(amounts.networkTokenAmountToAddToProtocol.isNeg); // currently no support for requesting liquidity here
+            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToAddToProtocol.value);
         }
 
-        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenAmountToDeductFromLiquidity));
-        } else if (amounts.networkTokenAmountToDeductFromLiquidity < 0) {
-            cachedNetworkTokenPool.burnFromVault(MathEx.negToPos(amounts.networkTokenAmountToDeductFromLiquidity));
+        if (amounts.networkTokenAmountToAddToLiquidity.value > 0) {
+            if (amounts.networkTokenAmountToAddToLiquidity.isNeg) {
+                cachedNetworkTokenPool.burnFromVault(amounts.networkTokenAmountToAddToLiquidity.value);
+            } else {
+                cachedNetworkTokenPool.mint(address(_vault), amounts.networkTokenAmountToAddToLiquidity.value);
+            }
         }
 
         // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the

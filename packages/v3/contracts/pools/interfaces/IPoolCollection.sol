@@ -5,7 +5,7 @@ pragma abicoder v2;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
-import { Fraction } from "../../utility/Types.sol";
+import { Fraction, Sint256 } from "../../utility/Types.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -49,9 +49,9 @@ struct WithdrawalAmounts {
     uint256 baseTokenAmountToTransferFromBancorVault; // the base token amount to transfer from the bancor vault to the provider
     uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
     uint256 baseTokenAmountToTransferFromExternalProtectionVault; // the base token amount to transfer from the external protection vault to the provider
-    int256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
-    int256 networkTokenAmountToDeductFromLiquidity; // the network token amount to deduct from the trading liquidity and burn in the bancor vault
-    int256 networkTokenAmountToRenounceByProtocol; // network token amount renounced by the protocol
+    Sint256 baseTokenAmountToAddToLiquidity; // the base token amount to add to the trading liquidity
+    Sint256 networkTokenAmountToAddToLiquidity; // the network token amount to add to the trading liquidity and to the bancor vault
+    Sint256 networkTokenAmountToAddToProtocol; // network token amount add to the protocol
     uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
 }
 

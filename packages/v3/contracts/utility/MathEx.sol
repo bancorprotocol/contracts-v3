@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.9;
 
-import { Fraction, Uint512 } from "./Types.sol";
+import { Fraction, Uint512, Sint256 } from "./Types.sol";
 
 error Overflow();
 
@@ -45,26 +45,17 @@ library MathEx {
     }
 
     /**
-     * @dev returns the opposite of a negative value; assumes that the input is negative
+     * @dev returns an `Sint256` positive representation of an unsigned integer
      */
-    function negToPos(int256 n) internal pure returns (uint256) {
-        unchecked {
-            return uint256(-n); // must be unchecked in order to support `n = type(int256).max`
-        }
+    function toPos256(uint256 n) internal pure returns (Sint256 memory) {
+        return Sint256({ value: n, isNeg: false });
     }
 
     /**
-     * @dev returns the addition of a signed value to an unsigned value; reverts on overflow
+     * @dev returns an `Sint256` negative representation of a unsigned integer
      */
-    function uintAddInt(uint256 x, int256 y) internal pure returns (uint256) {
-        return y >= 0 ? x + uint256(y) : x - negToPos(y);
-    }
-
-    /**
-     * @dev returns the subtraction of a signed value from an unsigned value; reverts on overflow
-     */
-    function uintSubInt(uint256 x, int256 y) internal pure returns (uint256) {
-        return y >= 0 ? x - uint256(y) : x + negToPos(y);
+    function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
+        return Sint256({ value: n, isNeg: true });
     }
 
     /**

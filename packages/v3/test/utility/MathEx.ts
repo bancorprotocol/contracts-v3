@@ -54,42 +54,6 @@ describe('MathEx', () => {
         });
     };
 
-    const testNegToPos = (n: BigNumber) => {
-        const expected = n.mul(-1);
-        it(`negToPos(${n.toHexString()}) should return ${expected.toHexString()}`, async () => {
-            const actual = await mathContract.negToPos(n);
-            expect(actual).to.equal(expected);
-        });
-    };
-
-    const testUintAddInt = (x: BigNumber, y: BigNumber) => {
-        const expected = x.add(y);
-        if (expected.lte(BigNumber.from(2).pow(256).add(-1)) && expected.gte(BigNumber.from(0))) {
-            it(`uintAddInt(${x.toHexString()}, ${y.toHexString()}) should return ${expected.toHexString()}`, async () => {
-                const actual = await mathContract.uintAddInt(x, y);
-                expect(actual).to.equal(expected);
-            });
-        } else {
-            it(`uintAddInt(${x.toHexString()}, ${y.toHexString()}) should revert`, async () => {
-                await expect(mathContract.uintAddInt(x, y)).to.be.revertedWith('panic code');
-            });
-        }
-    };
-
-    const testUintSubInt = (x: BigNumber, y: BigNumber) => {
-        const expected = x.sub(y);
-        if (expected.lte(BigNumber.from(2).pow(256).add(-1)) && expected.gte(BigNumber.from(0))) {
-            it(`uintSubInt(${x.toHexString()}, ${y.toHexString()}) should return ${expected.toHexString()}`, async () => {
-                const actual = await mathContract.uintSubInt(x, y);
-                expect(actual).to.equal(expected);
-            });
-        } else {
-            it(`uintSubInt(${x.toHexString()}, ${y.toHexString()}) should revert`, async () => {
-                await expect(mathContract.uintSubInt(x, y)).to.be.revertedWith('panic code');
-            });
-        }
-    };
-
     const testProductRatio = (x: Fraction, y: Fraction, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
         it(`productRatio(${toString(x)}, ${toString(y)}`, async () => {
             const expected = productRatio(x, y);
@@ -206,32 +170,6 @@ describe('MathEx', () => {
             }
         }
 
-        for (const n of [0, 1, 2, 253, 254, 255]) {
-            testNegToPos(BigNumber.from(2).pow(n).mul(-1));
-        }
-
-        for (const a of [0, 64, 127, 128, 255, 256]) {
-            for (const b of [0, 64, 127, 128, 255]) {
-                for (const m of [-1, 0, +1]) {
-                    for (const n of [-1, 0, +1]) {
-                        for (const s of [-1, +1]) {
-                            const x = BigNumber.from(2).pow(a).add(m);
-                            const y = BigNumber.from(2).pow(b).add(n).mul(s);
-                            if (
-                                x.gte(BigNumber.from(0)) &&
-                                x.lte(BigNumber.from(2).pow(256).add(-1)) &&
-                                y.lte(BigNumber.from(2).pow(255).add(-1)) &&
-                                y.gte(BigNumber.from(2).pow(255).mul(-1))
-                            ) {
-                                testUintAddInt(x, y);
-                                testUintSubInt(x, y);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         for (const xn of PR_TEST_ARRAY.slice(-2)) {
             for (const yn of PR_TEST_ARRAY.slice(-2)) {
                 for (const xd of PR_TEST_ARRAY.slice(-2)) {
@@ -323,32 +261,6 @@ describe('MathEx', () => {
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testCeilSqrt(n, k);
-            }
-        }
-
-        for (let n = 0; n <= 255; n++) {
-            testNegToPos(BigNumber.from(2).pow(n).mul(-1));
-        }
-
-        for (const a of [0, 2, 63, 64, 127, 128, 191, 192, 255, 256]) {
-            for (const b of [0, 2, 63, 64, 127, 128, 191, 192, 255]) {
-                for (const m of [-1, 0, +1]) {
-                    for (const n of [-1, 0, +1]) {
-                        for (const s of [-1, +1]) {
-                            const x = BigNumber.from(2).pow(a).add(m);
-                            const y = BigNumber.from(2).pow(b).add(n).mul(s);
-                            if (
-                                x.gte(BigNumber.from(0)) &&
-                                x.lte(BigNumber.from(2).pow(256).add(-1)) &&
-                                y.lte(BigNumber.from(2).pow(255).add(-1)) &&
-                                y.gte(BigNumber.from(2).pow(255).mul(-1))
-                            ) {
-                                testUintAddInt(x, y);
-                                testUintSubInt(x, y);
-                            }
-                        }
-                    }
-                }
             }
         }
 
