@@ -1,7 +1,7 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import {
-    GovToken,
+    DSToken,
     TokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
@@ -1711,7 +1711,7 @@ describe('BancorNetwork', () => {
             let liquidityProtectionWallet: TokenHolder;
             let liquidityProtection: TestLiquidityProtection;
             let converter: TestStandardPoolConverter;
-            let poolToken: GovToken;
+            let poolToken: DSToken;
             let baseToken: any;
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;

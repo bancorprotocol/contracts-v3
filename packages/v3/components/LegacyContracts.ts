@@ -34,6 +34,8 @@ import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-disable camelcase */
 import {
+    DSToken,
+    DSToken__factory,
     DSToken as GovToken,
     DSToken__factory as GovToken__factory,
     SmartToken as NetworkToken,
@@ -54,6 +56,7 @@ export {
     ContractRegistry,
     ConverterRegistry,
     ConverterRegistryData,
+    DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
     TokenHolder,
@@ -79,6 +82,7 @@ const getContracts = (signer?: Signer) => ({
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
     ConverterRegistryData: deployOrAttach('ConverterRegistryData', ConverterRegistryData__factory, signer),
+    DSToken: deployOrAttach('DSToken', DSToken__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
