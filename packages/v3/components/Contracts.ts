@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import {
+    AutoCompoundingStakingRewards__factory,
     BancorNetwork__factory,
     BancorVault__factory,
     ERC20__factory,
@@ -42,6 +43,11 @@ import { Signer } from 'ethers';
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    AutoCompoundingStakingRewards: deployOrAttach(
+        'AutoCompoundingStakingRewards',
+        AutoCompoundingStakingRewards__factory,
+        signer
+    ),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorVault: deployOrAttach('BancorVault', BancorVault__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),

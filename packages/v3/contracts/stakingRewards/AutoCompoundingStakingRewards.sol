@@ -11,6 +11,8 @@ import { IAutoCompoundingStakingRewards } from "./interfaces/IAutoCompoundingSta
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 
+import { StakingRewardsMath } from "./StakingRewardsMath.sol";
+
 enum DistributionType {
     FLAT,
     EXPONENTIAL_DECAY
@@ -24,7 +26,7 @@ struct ProgramData {
     DistributionType distributionType;
     uint256 startTime;
     uint256 endTime;
-    uint256 lastUpdate;
+    uint256 prevProcessReward;
     bool isEnabled;
 }
 
@@ -33,7 +35,12 @@ error ProgramAlreadyRunning();
 /**
  * @dev Auto Compounding Staking Rewards contract
  */
-contract AutoCompoundingStakingRewards is IAutoCompoundingStakingRewards, ReentrancyGuardUpgradeable, Upgradeable {
+contract AutoCompoundingStakingRewards is
+    IAutoCompoundingStakingRewards,
+    StakingRewardsMath,
+    ReentrancyGuardUpgradeable,
+    Upgradeable
+{
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     // a mapping between a pool address and a program
@@ -182,7 +189,7 @@ contract AutoCompoundingStakingRewards is IAutoCompoundingStakingRewards, Reentr
         currentProgram.distributionType = distributionType;
         currentProgram.startTime = startTime;
         currentProgram.endTime = endTime;
-        currentProgram.lastUpdate = block.timestamp;
+        currentProgram.prevProcessReward = 0;
         currentProgram.isEnabled = true;
 
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
@@ -199,9 +206,10 @@ contract AutoCompoundingStakingRewards is IAutoCompoundingStakingRewards, Reentr
             currentProgram.endTime = block.timestamp;
         }
 
+        uint256 cachedAvailableRewards = currentProgram.availableRewards;
         currentProgram.availableRewards = 0;
 
-        emit ProgramTerminated(pool, 0, 0);
+        emit ProgramTerminated(pool, currentProgram.endTime, cachedAvailableRewards);
     }
 
     /**
@@ -224,5 +232,32 @@ contract AutoCompoundingStakingRewards is IAutoCompoundingStakingRewards, Reentr
         if (!isProgramActive(pool)) {
             return;
         }
+
+        ProgramData memory currentProgram = _programs[pool];
+
+        uint256 amountToDistribute;
+
+        uint256 timeElapsed = block.timestamp - currentProgram.startTime;
+
+        if (currentProgram.distributionType == DistributionType.EXPONENTIAL_DECAY) {
+            amountToDistribute = processExponentialDecayReward(timeElapsed, currentProgram.availableRewards);
+        } else {
+            amountToDistribute = processFlatReward(
+                timeElapsed,
+                currentProgram.endTime - currentProgram.startTime,
+                currentProgram.prevProcessReward,
+                currentProgram.availableRewards
+            );
+        }
+
+        currentProgram.availableRewards -= amountToDistribute;
+
+        emit RewardsDistributed(
+            pool,
+            amountToDistribute,
+            amountToDistribute,
+            timeElapsed,
+            currentProgram.availableRewards
+        );
     }
 }
