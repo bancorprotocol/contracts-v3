@@ -25,7 +25,7 @@ import { camelCase } from 'lodash';
 
 const { formatBytes32String } = utils;
 
-describe('@profile Profile', () => {
+describe('Profile @profile', () => {
     const profiler = new Profiler();
     let deployer: SignerWithAddress;
 
