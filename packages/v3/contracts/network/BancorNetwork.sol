@@ -11,7 +11,6 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
@@ -28,6 +27,9 @@ import {
     NotWhitelisted
  } from "../utility/Utils.sol";
 
+import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 // prettier-ignore
@@ -36,8 +38,7 @@ import {
     PoolLiquidity,
     DepositAmounts as PoolCollectionDepositAmounts,
     WithdrawalAmounts as PoolCollectionWithdrawalAmounts,
-    TradeAmountsWithLiquidity,
-    TradeAmounts
+    TradeAmountsWithLiquidity
 } from "../pools/interfaces/IPoolCollection.sol";
 
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -54,21 +55,20 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
-import { IBancorVault } from "./../vaults/interfaces/IBancorVault.sol";
 
 import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
-
-error DeadlineExpired();
-error EthAmountMismatch();
-error InvalidTokens();
-error NetworkLiquidityDisabled();
-error PermitUnsupported();
-error InsufficientFlashLoanReturn();
 
 /**
  * @dev Bancor Network contract
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+    error DeadlineExpired();
+    error EthAmountMismatch();
+    error InvalidTokens();
+    error NetworkLiquidityDisabled();
+    error PermitUnsupported();
+    error InsufficientFlashLoanReturn();
+
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
@@ -91,14 +91,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the vault contract
     IBancorVault private immutable _vault;
 
-    // the master pool token
-    IPoolToken internal immutable _masterPoolToken;
-
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
     // the master pool contract
     IMasterPool internal _masterPool;
+
+    // the master pool token
+    IPoolToken internal immutable _masterPoolToken;
 
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
@@ -413,10 +413,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev IBancorNetwork
+     * @inheritdoc IBancorNetwork
      */
-    function masterPoolToken() external view returns (IPoolToken) {
-        return _masterPoolToken;
+    function externalProtectionVault() external view returns (IExternalProtectionVault) {
+        return _externalProtectionVault;
     }
 
     /**
@@ -424,6 +424,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function masterPool() external view returns (IMasterPool) {
         return _masterPool;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function masterPoolToken() external view returns (IPoolToken) {
+        return _masterPoolToken;
     }
 
     /**
@@ -438,13 +445,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
         return _poolCollectionUpgrader;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function externalProtectionVault() external view returns (IExternalProtectionVault) {
-        return _externalProtectionVault;
     }
 
     /**
@@ -761,28 +761,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _permit(sourceToken, sourceAmount, deadline, v, r, s, trader);
 
         _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, trader);
-    }
-
-    /**
-     * @dev returns the target amount by specifying the source amount
-     */
-    function tradeTargetAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
-        uint256 sourceAmount
-    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(sourceAmount) returns (uint256) {
-        return _tradeAmount(sourceToken, targetToken, sourceAmount, true);
-    }
-
-    /**
-     * @dev returns the source amount by specifying the target amount
-     */
-    function tradeSourceAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
-        uint256 targetAmount
-    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
-        return _tradeAmount(sourceToken, targetToken, targetAmount, false);
     }
 
     /**
@@ -1404,48 +1382,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // trade the received network token target amount to the target token (while respecting the minimum return
         // amount)
         return _tradeNetworkToken(contextId, targetToken, true, tradeAmount, minReturnAmount, trader);
-    }
-
-    /**
-     * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're
-     * interested in the target or source amount
-     */
-    function _tradeAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
-        uint256 amount,
-        bool targetAmount
-    ) private view returns (uint256) {
-        // return the trade amount and fee when trading the network token to the base token
-        if (_isNetworkToken(sourceToken)) {
-            return
-                _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
-        }
-
-        // return the trade amount and fee when trading the bsase token to the network token
-        if (_isNetworkToken(targetToken)) {
-            return
-                _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
-        }
-
-        // return the trade amount and fee by simulating double-hop trade from the source token to the target token via
-        // the network token
-        TradeAmounts memory sourceTradeAmounts = _poolCollection(sourceToken).tradeAmountAndFee(
-            sourceToken,
-            ReserveToken.wrap(address(_networkToken)),
-            amount,
-            targetAmount
-        );
-
-        return
-            _poolCollection(targetToken)
-                .tradeAmountAndFee(
-                    ReserveToken.wrap(address(_networkToken)),
-                    targetToken,
-                    sourceTradeAmounts.amount,
-                    targetAmount
-                )
-                .amount;
     }
 
     /**

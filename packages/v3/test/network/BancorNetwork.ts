@@ -51,14 +51,13 @@ const { solidityKeccak256, formatBytes32String } = utils;
 describe('BancorNetwork', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
-    let newOwner: SignerWithAddress;
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
     shouldHaveGap('BancorNetwork', '_masterPool');
 
     before(async () => {
-        [deployer, nonOwner, newOwner] = await ethers.getSigners();
+        [deployer, nonOwner] = await ethers.getSigners();
     });
 
     const networkPermitSignature = async (
@@ -324,11 +323,11 @@ describe('BancorNetwork', () => {
             expect(await network.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await network.settings()).to.equal(networkSettings.address);
             expect(await network.vault()).to.equal(bancorVault.address);
-            expect(await network.masterPoolToken()).to.equal(masterPoolToken.address);
+            expect(await network.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await network.masterPool()).to.equal(masterPool.address);
+            expect(await network.masterPoolToken()).to.equal(masterPoolToken.address);
             expect(await network.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await network.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
-            expect(await network.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(networkToken.address)).to.be.true;

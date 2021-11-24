@@ -7,6 +7,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
+import { IBancorVault } from "./../../vaults/interfaces/IBancorVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -16,7 +17,6 @@ import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorVault } from "./../../vaults/interfaces/IBancorVault.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
@@ -70,14 +70,19 @@ interface IBancorNetwork is IUpgradeable {
     function vault() external view returns (IBancorVault);
 
     /**
-     * @dev returns the master pool token contract
+     * @dev returns the address of the external protection vault
      */
-    function masterPoolToken() external view returns (IPoolToken);
+    function externalProtectionVault() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the master pool contract
      */
     function masterPool() external view returns (IMasterPool);
+
+    /**
+     * @dev returns the master pool token contract
+     */
+    function masterPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the pending withdrawals contract
@@ -88,11 +93,6 @@ interface IBancorNetwork is IUpgradeable {
      * @dev returns the pool collection upgrader contract
      */
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
-
-    /**
-     * @dev returns the address of the external protection vault
-     */
-    function externalProtectionVault() external view returns (IExternalProtectionVault);
 
     /**
      * @dev returns the set of all valid pool collections
