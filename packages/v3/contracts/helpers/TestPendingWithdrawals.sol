@@ -4,15 +4,15 @@ pragma abicoder v2;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { PendingWithdrawals } from "../network/PendingWithdrawals.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 
 import { Time } from "../utility/Time.sol";
 
 import { TestTime } from "./TestTime.sol";
 
 contract TestPendingWithdrawals is PendingWithdrawals, TestTime {
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
-        PendingWithdrawals(initNetwork, initNetworkTokenPool)
+    constructor(IBancorNetwork initNetwork, IMasterPool initMasterPool)
+        PendingWithdrawals(initNetwork, initMasterPool)
     {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
