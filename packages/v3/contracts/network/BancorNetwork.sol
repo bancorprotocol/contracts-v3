@@ -354,6 +354,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _;
     }
 
+    /**
+     * @dev validates if the provided tokens are valid and different
+     */
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
         _validAddress(ReserveToken.unwrap(sourceToken));
         _validAddress(ReserveToken.unwrap(targetToken));
