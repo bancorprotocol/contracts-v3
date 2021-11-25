@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import { MathEx } from "../utility/MathEx.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev This contract contains the functions necessary to process staking rewards
@@ -12,14 +13,26 @@ contract StakingRewardsMath {
     uint256 internal constant LAMBDA_N = 142857142857143;
     uint256 internal constant LAMBDA_D = 10000000000000000000000;
 
+    function processTokenToPoolToken(
+        uint256 a_totalAmountOfTokenStaked,
+        uint256 b_amountOfTokenToDistribute,
+        uint256 c_totalSupplyOfPoolToken,
+        uint256 d_amountOfPoolTokenOwnedByProtocol
+    ) internal pure returns (uint256) {
+        uint256 topFraction = b_amountOfTokenToDistribute * (c_totalSupplyOfPoolToken * c_totalSupplyOfPoolToken);
+        uint256 lowerFraction = ((c_totalSupplyOfPoolToken * a_totalAmountOfTokenStaked) +
+            (c_totalSupplyOfPoolToken * b_amountOfTokenToDistribute)) -
+            (a_totalAmountOfTokenStaked * d_amountOfPoolTokenOwnedByProtocol);
+        return MathEx.roundDiv(topFraction, lowerFraction);
+    }
+
     function processFlatReward(
-        uint256 timeElapsed, // time elapsed in the program (seconds)
+        uint256 timeElapsed, // time elapsed in the program
         uint256 totalTime, // total time of the program
-        uint256 lastUpdate,
-        uint256 availableRewards
-    ) internal pure returns (uint256 reward) {
-        uint256 n = (totalTime * ONE - lastUpdate * ONE) / (timeElapsed * ONE - lastUpdate * ONE);
-        reward = ((availableRewards * ONE) / n) / ONE;
+        uint256 prevDistributionTime, // last distribution timestamp
+        uint256 availableRewards // available rewards
+    ) internal pure returns (uint256) {
+        return MathEx.mulDivF(availableRewards, timeElapsed - prevDistributionTime, totalTime - prevDistributionTime);
     }
 
     /**

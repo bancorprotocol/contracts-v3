@@ -6,12 +6,23 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IAutoCompoundingStakingRewards } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { Utils } from "../utility/Utils.sol";
+import { Time } from "../utility/Time.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { StakingRewardsMath } from "./StakingRewardsMath.sol";
+import { MathEx } from "../utility/MathEx.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { IVault } from "../vaults/interfaces/IVault.sol";
+
+import "hardhat/console.sol";
 
 enum DistributionType {
     FLAT,
@@ -20,13 +31,13 @@ enum DistributionType {
 
 struct ProgramData {
     address pool;
-    address rewardsVault;
+    IVault rewardsVault;
     uint256 totalRewards;
     uint256 availableRewards;
     DistributionType distributionType;
     uint256 startTime;
     uint256 endTime;
-    uint256 prevProcessReward;
+    uint256 prevDistributionTimestamp;
     bool isEnabled;
 }
 
@@ -39,9 +50,21 @@ contract AutoCompoundingStakingRewards is
     IAutoCompoundingStakingRewards,
     StakingRewardsMath,
     ReentrancyGuardUpgradeable,
+    Utils,
+    Time,
     Upgradeable
 {
+    using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+
+    // the network contract
+    IBancorNetwork private immutable _network;
+
+    // the network token contract
+    IERC20 private immutable _networkToken;
+
+    // the network token pool contract
+    INetworkTokenPool private immutable _networkTokenPool;
 
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
@@ -54,7 +77,7 @@ contract AutoCompoundingStakingRewards is
      */
     event ProgramCreated(
         address indexed pool,
-        address rewardsVault,
+        IVault rewardsVault,
         uint256 totalRewards,
         DistributionType distributionType,
         uint256 startTime,
@@ -81,6 +104,18 @@ contract AutoCompoundingStakingRewards is
         uint256 timeElapsed,
         uint256 availableRewards
     );
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkTokenPool))
+    {
+        _network = initNetwork;
+        _networkToken = initNetwork.networkToken();
+        _networkTokenPool = initNetworkTokenPool;
+    }
 
     /**
      * @dev fully initializes the contract and its parents
@@ -138,16 +173,17 @@ contract AutoCompoundingStakingRewards is
     function isProgramActive(address pool) public view returns (bool) {
         ProgramData storage currentProgram = _programs[pool];
 
-        if (currentProgram.availableRewards > 0) {
+        if (currentProgram.availableRewards <= 0) {
             return false;
         }
 
-        if (block.timestamp < currentProgram.startTime) {
+        if (_time() < currentProgram.startTime) {
             return false;
         }
 
         if (currentProgram.distributionType == DistributionType.FLAT) {
-            if (block.timestamp > currentProgram.endTime) {
+            // if the program end time has already been passed
+            if (_time() > currentProgram.endTime) {
                 return false;
             }
         }
@@ -163,21 +199,21 @@ contract AutoCompoundingStakingRewards is
      * - pool's program must not be active
      */
     function createProgram(
-        address pool,
-        address rewardsVault,
+        ReserveToken pool,
+        IVault rewardsVault,
         uint256 totalRewards,
         DistributionType distributionType,
         uint256 startTime,
         uint256 endTime
     ) external onlyAdmin {
-        if (isProgramActive(pool)) {
+        if (isProgramActive(ReserveToken.unwrap(pool))) {
             revert ProgramAlreadyRunning();
         }
 
-        ProgramData storage currentProgram = _programs[pool];
+        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
         // if rewards vault address is different from address(0) then they was a previous program
-        if (rewardsVault != address(0)) {
+        if (address(rewardsVault) != address(0)) {
             // process rewards to make sure there's no rewards left for that pool
             processRewards(pool);
         }
@@ -189,10 +225,17 @@ contract AutoCompoundingStakingRewards is
         currentProgram.distributionType = distributionType;
         currentProgram.startTime = startTime;
         currentProgram.endTime = endTime;
-        currentProgram.prevProcessReward = 0;
+        currentProgram.prevDistributionTimestamp = 0;
         currentProgram.isEnabled = true;
 
-        emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
+        emit ProgramCreated(
+            ReserveToken.unwrap(pool),
+            rewardsVault,
+            totalRewards,
+            distributionType,
+            startTime,
+            endTime
+        );
     }
 
     function terminateProgram(address pool) external onlyAdmin {
@@ -203,7 +246,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData storage currentProgram = _programs[pool];
 
         if (currentProgram.distributionType == DistributionType.FLAT) {
-            currentProgram.endTime = block.timestamp;
+            currentProgram.endTime = _time();
         }
 
         uint256 cachedAvailableRewards = currentProgram.availableRewards;
@@ -228,36 +271,88 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev process a pool's rewards
      */
-    function processRewards(address pool) public nonReentrant {
-        if (!isProgramActive(pool)) {
-            return;
+    function processRewards(ReserveToken pool) public nonReentrant {
+        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+
+        if (!isProgramActive(ReserveToken.unwrap(pool))) {
+            // if the program is inactive but the previous distributionTimeStamp
+            // is lower than the program end time it means that the latest batch of rewards
+            // hasn't been sent
+            if (currentProgram.distributionType == DistributionType.FLAT) {
+                if (!(currentProgram.prevDistributionTimestamp < currentProgram.endTime)) {
+                    return;
+                }
+            }
         }
 
-        ProgramData memory currentProgram = _programs[pool];
+        uint256 timeElapsed = _time() - currentProgram.startTime;
+        uint256 totalProgramTime = currentProgram.endTime - currentProgram.startTime;
 
-        uint256 amountToDistribute;
-
-        uint256 timeElapsed = block.timestamp - currentProgram.startTime;
+        uint256 tokenToBeDistributed;
 
         if (currentProgram.distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            amountToDistribute = processExponentialDecayReward(timeElapsed, currentProgram.availableRewards);
-        } else {
-            amountToDistribute = processFlatReward(
-                timeElapsed,
-                currentProgram.endTime - currentProgram.startTime,
-                currentProgram.prevProcessReward,
+            tokenToBeDistributed = processExponentialDecayReward(timeElapsed, currentProgram.availableRewards);
+        } else if (currentProgram.distributionType == DistributionType.FLAT) {
+            uint256 effectiveTimeElapsed = timeElapsed > totalProgramTime ? totalProgramTime : timeElapsed;
+
+            uint256 effectivePrevDistributionTimestamp = currentProgram.prevDistributionTimestamp == 0
+                ? currentProgram.prevDistributionTimestamp
+                : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
+
+            tokenToBeDistributed = processFlatReward(
+                effectiveTimeElapsed,
+                totalProgramTime,
+                effectivePrevDistributionTimestamp,
                 currentProgram.availableRewards
             );
         }
 
-        currentProgram.availableRewards -= amountToDistribute;
+        ReserveToken reserveToken = ReserveToken(pool);
 
-        emit RewardsDistributed(
-            pool,
-            amountToDistribute,
-            amountToDistribute,
-            timeElapsed,
-            currentProgram.availableRewards
+        uint256 stakedBalance;
+        IPoolToken poolToken;
+
+        if (_networkToken == reserveToken.toIERC20()) {
+            stakedBalance = _networkTokenPool.stakedBalance();
+            poolToken = _networkTokenPool.poolToken();
+        } else {
+            // note that we don't need to verify that the pool exists, since it has been already checked before this call
+            stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
+            poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
+        }
+        uint256 poolTokenTotalSupply = poolToken.totalSupply();
+
+        uint256 counterBalance = (stakedBalance - poolTokenTotalSupply);
+
+        uint256 counterBalancePoolTokenToBurn = MathEx.mulDivF(tokenToBeDistributed, counterBalance, stakedBalance);
+
+        uint256 poolTokenToBurn = MathEx.mulDivF(tokenToBeDistributed, poolTokenTotalSupply, stakedBalance) +
+            counterBalancePoolTokenToBurn;
+
+        currentProgram.rewardsVault.withdrawFunds(
+            ReserveToken.wrap(address(poolToken)),
+            payable(address(this)),
+            poolTokenToBurn
         );
+
+        uint256 tokenActuallyDistributed = MathEx.mulDivF(
+            (poolTokenToBurn - counterBalancePoolTokenToBurn),
+            stakedBalance,
+            poolToken.totalSupply()
+        );
+
+        currentProgram.availableRewards -= tokenActuallyDistributed;
+        currentProgram.prevDistributionTimestamp = _time();
+
+        poolToken.approve(address(this), poolTokenToBurn);
+        poolToken.burnFrom(address(this), poolTokenToBurn);
+
+        // emit RewardsDistributed(
+        //     ReserveToken.unwrap(pool),
+        //     tokenActuallyDistributed,
+        //     poolTokenToBurn,
+        //     timeElapsed,
+        //     currentProgram.availableRewards
+        // );
     }
 }

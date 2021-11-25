@@ -15,6 +15,7 @@ import {
     PoolToken__factory,
     PoolTokenFactory__factory,
     ProxyAdmin__factory,
+    TestAutoCompoundingStakingRewards__factory,
     TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
@@ -62,6 +63,11 @@ const getContracts = (signer?: Signer) => ({
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
+    TestAutoCompoundingStakingRewards: deployOrAttach(
+        'TestAutoCompoundingStakingRewards',
+        TestAutoCompoundingStakingRewards__factory,
+        signer
+    ),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
