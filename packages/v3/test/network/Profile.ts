@@ -2,13 +2,11 @@ import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
     BancorNetworkInformation,
-    BancorVault,
     IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
@@ -632,7 +630,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -913,7 +911,7 @@ describe('Profile @profile', () => {
         const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
-            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
