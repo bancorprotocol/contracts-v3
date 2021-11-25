@@ -58,7 +58,8 @@ describe('PoolCollection', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
 
         beforeEach(async () => {
-            ({ network, poolTokenFactory, poolCollection, poolCollectionUpgrader } = await createSystem());
+            ({ network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
+                await createSystem());
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
