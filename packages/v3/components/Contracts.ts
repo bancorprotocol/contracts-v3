@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import {
     BancorNetwork__factory,
+    BancorNetworkInformation__factory,
     BancorVault__factory,
     ERC20__factory,
     ExternalProtectionVault__factory,
@@ -42,6 +43,7 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
+    BancorNetworkInformation: deployOrAttach('BancorNetworkInformation', BancorNetworkInformation__factory, signer),
     BancorVault: deployOrAttach('BancorVault', BancorVault__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
     ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),

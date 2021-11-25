@@ -76,31 +76,6 @@ interface IPoolCollection is IVersioned {
     function poolType() external pure returns (uint16);
 
     /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
-     * @dev returns the pool token factory contract
-     */
-    function poolTokenFactory() external view returns (IPoolTokenFactory);
-
-    /**
-     * @dev returns the pool collection upgrader contract
-     */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
-
-    /**
      * @dev returns the default trading fee (in units of PPM)
      */
     function defaultTradingFeePPM() external view returns (uint32);

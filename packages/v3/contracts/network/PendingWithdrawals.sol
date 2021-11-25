@@ -119,12 +119,13 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, IMasterPool initMasterPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initMasterPool))
-    {
+    constructor(
+        IBancorNetwork initNetwork,
+        IERC20 initNetworkToken,
+        IMasterPool initMasterPool
+    ) validAddress(address(initNetwork)) validAddress(address(initNetworkToken)) validAddress(address(initMasterPool)) {
         _network = initNetwork;
-        _networkToken = initNetwork.networkToken();
+        _networkToken = initNetworkToken;
         _masterPool = initMasterPool;
     }
 
@@ -161,27 +162,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     function version() external pure returns (uint16) {
         return 1;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function network() external view returns (IBancorNetwork) {
-        return _network;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function networkToken() external view returns (IERC20) {
-        return _networkToken;
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function masterPool() external view returns (IMasterPool) {
-        return _masterPool;
     }
 
     /**

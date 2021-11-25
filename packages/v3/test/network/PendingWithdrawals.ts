@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
+    BancorNetworkInformation,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -47,21 +48,27 @@ describe('PendingWithdrawals', () => {
             ({ network, networkToken, masterPool, pendingWithdrawals } = await createSystem());
         });
 
-        it('should revert when attempting to reinitialize', async () => {
-            await expect(pendingWithdrawals.initialize()).to.be.revertedWith(
-                'Initializable: contract is already initialized'
-            );
+        it('should revert when initialized with an invalid network contract', async () => {
+            await expect(
+                Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, networkToken.address, masterPool.address)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, masterPool.address)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+        it('should revert when initialized with an invalid network token contract', async () => {
+            await expect(
+                Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS, masterPool.address)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid master pool contract', async () => {
-            await expect(Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
+            await expect(
+                Contracts.PendingWithdrawals.deploy(network.address, networkToken.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
+            await expect(pendingWithdrawals.initialize()).to.be.revertedWith(
+                'Initializable: contract is already initialized'
             );
         });
 
@@ -72,15 +79,16 @@ describe('PendingWithdrawals', () => {
                 deployer.address
             ]);
 
-            expect(await pendingWithdrawals.network()).to.equal(network.address);
-            expect(await pendingWithdrawals.networkToken()).to.equal(networkToken.address);
-            expect(await pendingWithdrawals.masterPool()).to.equal(masterPool.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should emit events on initialization', async () => {
-            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(network.address, masterPool.address);
+            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
+                network.address,
+                networkToken.address,
+                masterPool.address
+            );
             const res = await pendingWithdrawals.initialize();
             await expect(res)
                 .to.emit(pendingWithdrawals, 'LockDurationUpdated')
@@ -174,6 +182,7 @@ describe('PendingWithdrawals', () => {
     describe('withdrawals', () => {
         let poolToken: PoolToken;
         let reserveToken: TokenWithAddress;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -190,6 +199,7 @@ describe('PendingWithdrawals', () => {
             beforeEach(async () => {
                 ({
                     network,
+                    networkInformation,
                     networkSettings,
                     networkToken,
                     masterPool,
@@ -347,6 +357,7 @@ describe('PendingWithdrawals', () => {
                                 },
                                 provider as any as SignerWithAddress,
                                 network,
+                                networkInformation,
                                 networkSettings,
                                 poolCollection
                             ));
@@ -411,6 +422,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider1,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));
@@ -529,6 +541,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider1,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));
@@ -647,6 +660,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));

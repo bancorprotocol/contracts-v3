@@ -277,15 +277,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initMasterPoolToken,
-        IExternalProtectionVault initExternalProtectionVault
+        IExternalProtectionVault initExternalProtectionVault,
+        IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
         validAddress(address(initVault))
-        validAddress(address(initMasterPoolToken))
         validAddress(address(initExternalProtectionVault))
+        validAddress(address(initMasterPoolToken))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
         _networkToken = initNetworkTokenGovernance.token();
@@ -294,8 +294,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _settings = initSettings;
         _vault = initVault;
-        _masterPoolToken = initMasterPoolToken;
         _externalProtectionVault = initExternalProtectionVault;
+        _masterPoolToken = initMasterPoolToken;
     }
 
     /**
@@ -368,83 +368,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function version() external pure returns (uint16) {
         return 1;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function networkToken() external view returns (IERC20) {
-        return _networkToken;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function networkTokenGovernance() external view returns (ITokenGovernance) {
-        return _networkTokenGovernance;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function govToken() external view returns (IERC20) {
-        return _govToken;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function govTokenGovernance() external view returns (ITokenGovernance) {
-        return _govTokenGovernance;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function settings() external view returns (INetworkSettings) {
-        return _settings;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function vault() external view returns (IBancorVault) {
-        return _vault;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function externalProtectionVault() external view returns (IExternalProtectionVault) {
-        return _externalProtectionVault;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function masterPool() external view returns (IMasterPool) {
-        return _masterPool;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function masterPoolToken() external view returns (IPoolToken) {
-        return _masterPoolToken;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals) {
-        return _pendingWithdrawals;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
-        return _poolCollectionUpgrader;
     }
 
     /**

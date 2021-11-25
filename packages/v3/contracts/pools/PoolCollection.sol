@@ -185,18 +185,22 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     constructor(
         IBancorNetwork initNetwork,
+        IERC20 initNetworkToken,
+        INetworkSettings initSettings,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         validAddress(address(initNetwork))
+        validAddress(address(initNetworkToken))
+        validAddress(address(initSettings))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
         __ReentrancyGuard_init();
 
         _network = initNetwork;
-        _networkToken = initNetwork.networkToken();
-        _settings = initNetwork.settings();
+        _networkToken = initNetworkToken;
+        _settings = initSettings;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -227,41 +231,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function poolType() external pure returns (uint16) {
         return POOL_TYPE;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function network() external view returns (IBancorNetwork) {
-        return _network;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function networkToken() external view returns (IERC20) {
-        return _networkToken;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function settings() external view returns (INetworkSettings) {
-        return _settings;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function poolTokenFactory() external view returns (IPoolTokenFactory) {
-        return _poolTokenFactory;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
-        return _poolCollectionUpgrader;
     }
 
     /**

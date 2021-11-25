@@ -40,61 +40,6 @@ interface IFlashLoanRecipient {
  */
 interface IBancorNetwork is IUpgradeable {
     /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the network token governance contract
-     */
-    function networkTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the governance token contract
-     */
-    function govToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the governance token governance contract
-     */
-    function govTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
-     * @dev returns the vault contract
-     */
-    function vault() external view returns (IBancorVault);
-
-    /**
-     * @dev returns the address of the external protection vault
-     */
-    function externalProtectionVault() external view returns (IExternalProtectionVault);
-
-    /**
-     * @dev returns the master pool contract
-     */
-    function masterPool() external view returns (IMasterPool);
-
-    /**
-     * @dev returns the master pool token contract
-     */
-    function masterPoolToken() external view returns (IPoolToken);
-
-    /**
-     * @dev returns the pending withdrawals contract
-     */
-    function pendingWithdrawals() external view returns (IPendingWithdrawals);
-
-    /**
-     * @dev returns the pool collection upgrader contract
-     */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
-
-    /**
      * @dev returns the set of all valid pool collections
      */
     function poolCollections() external view returns (IPoolCollection[] memory);

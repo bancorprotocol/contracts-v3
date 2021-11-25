@@ -99,18 +99,29 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, IPoolToken initPoolToken)
+    constructor(
+        IBancorNetwork initNetwork,
+        ITokenGovernance initNetworkTokenGovernance,
+        ITokenGovernance initGovTokenGovernance,
+        INetworkSettings initSettings,
+        IBancorVault initVault,
+        IPoolToken initMasterPoolToken
+    )
         validAddress(address(initNetwork))
-        validAddress(address(initPoolToken))
+        validAddress(address(initNetworkTokenGovernance))
+        validAddress(address(initGovTokenGovernance))
+        validAddress(address(initSettings))
+        validAddress(address(initVault))
+        validAddress(address(initMasterPoolToken))
     {
         _network = initNetwork;
-        _networkToken = initNetwork.networkToken();
-        _networkTokenGovernance = initNetwork.networkTokenGovernance();
-        _govToken = initNetwork.govToken();
-        _govTokenGovernance = initNetwork.govTokenGovernance();
-        _settings = initNetwork.settings();
-        _vault = initNetwork.vault();
-        _poolToken = initPoolToken;
+        _networkTokenGovernance = initNetworkTokenGovernance;
+        _networkToken = initNetworkTokenGovernance.token();
+        _govTokenGovernance = initGovTokenGovernance;
+        _govToken = initGovTokenGovernance.token();
+        _settings = initSettings;
+        _vault = initVault;
+        _poolToken = initMasterPoolToken;
     }
 
     /**
@@ -170,55 +181,6 @@ contract MasterPool is IMasterPool, Vault {
         uint256 /* amount */
     ) internal view override returns (bool) {
         return (reserveToken.toIERC20() == _poolToken && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller));
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function network() external view returns (IBancorNetwork) {
-        return _network;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function networkToken() external view returns (IERC20) {
-        return _networkToken;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function networkTokenGovernance() external view returns (ITokenGovernance) {
-        return _networkTokenGovernance;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function govToken() external view returns (IERC20) {
-        return _govToken;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function govTokenGovernance() external view returns (ITokenGovernance) {
-        return _govTokenGovernance;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function settings() external view returns (INetworkSettings) {
-        return _settings;
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function vault() external view returns (IBancorVault) {
-        return _vault;
     }
 
     /**

@@ -48,40 +48,103 @@ describe('MasterPool', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkSettings: NetworkSettings;
         let networkToken: IERC20;
-        let govToken: IERC20;
+        let networkSettings: NetworkSettings;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
-        let masterPool: TestMasterPool;
         let bancorVault: BancorVault;
+        let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
 
         beforeEach(async () => {
             ({
                 network,
-                masterPool,
-                masterPoolToken,
-                networkSettings,
-                network,
                 networkToken,
+                networkSettings,
                 networkTokenGovernance,
-                govToken,
                 govTokenGovernance,
-                bancorVault
+                bancorVault,
+                masterPool,
+                masterPoolToken
             } = await createSystem());
         });
 
         it('should revert when attempting to initialize with an invalid network contract', async () => {
-            await expect(Contracts.MasterPool.deploy(ZERO_ADDRESS, masterPoolToken.address)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                Contracts.MasterPool.deploy(
+                    ZERO_ADDRESS,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to initialize with an invalid network token governance contract', async () => {
+            await expect(
+                Contracts.MasterPool.deploy(
+                    network.address,
+                    ZERO_ADDRESS,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to initialize with an invalid gov token governance contract', async () => {
+            await expect(
+                Contracts.MasterPool.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    bancorVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to initialize with an invalid network settings contract', async () => {
+            await expect(
+                Contracts.MasterPool.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    bancorVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to initialize with an invalid vault contract', async () => {
+            await expect(
+                Contracts.MasterPool.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to initialize with an invalid master pool token contract', async () => {
-            await expect(Contracts.MasterPool.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                Contracts.MasterPool.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    ZERO_ADDRESS
+                )
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -100,14 +163,6 @@ describe('MasterPool', () => {
                 UpgradeableRoles.ROLE_ADMIN
                 // @TODO add staking rewards to initial members
             );
-
-            expect(await masterPool.network()).to.equal(network.address);
-            expect(await masterPool.networkToken()).to.equal(networkToken.address);
-            expect(await masterPool.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
-            expect(await masterPool.govToken()).to.equal(govToken.address);
-            expect(await masterPool.govTokenGovernance()).to.equal(govTokenGovernance.address);
-            expect(await masterPool.settings()).to.equal(networkSettings.address);
-            expect(await masterPool.vault()).to.equal(bancorVault.address);
 
             expect(await masterPool.stakedBalance()).to.equal(BigNumber.from(0));
 
@@ -210,6 +265,7 @@ describe('MasterPool', () => {
     describe('is minting enabled', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
@@ -217,8 +273,15 @@ describe('MasterPool', () => {
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, masterPool, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({
+                networkSettings,
+                network,
+                networkToken,
+                masterPool,
+                poolTokenFactory,
+                poolCollection,
+                poolCollectionUpgrader
+            } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
         });
@@ -303,6 +366,8 @@ describe('MasterPool', () => {
                 it('should return false for another pool collection', async () => {
                     const poolCollection2 = await createPoolCollection(
                         network,
+                        networkToken,
+                        networkSettings,
                         poolTokenFactory,
                         poolCollectionUpgrader
                     );

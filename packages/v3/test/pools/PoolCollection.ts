@@ -51,32 +51,73 @@ describe('PoolCollection', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkSettings: NetworkSettings;
         let networkToken: IERC20;
+        let networkSettings: NetworkSettings;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
 
         beforeEach(async () => {
-            ({ network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({ network, poolTokenFactory, poolCollection, poolCollectionUpgrader } = await createSystem());
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(ZERO_ADDRESS, poolTokenFactory.address, poolCollectionUpgrader.address)
+                Contracts.PoolCollection.deploy(
+                    ZERO_ADDRESS,
+                    networkToken.address,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network token contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network settings contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    ZERO_ADDRESS,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool token factory contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    poolCollectionUpgrader.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid pool collection upgrader contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(network.address, poolTokenFactory.address, ZERO_ADDRESS)
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    ZERO_ADDRESS
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -84,11 +125,6 @@ describe('PoolCollection', () => {
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
-            expect(await poolCollection.network()).to.equal(network.address);
-            expect(await poolCollection.networkToken()).to.equal(networkToken.address);
-            expect(await poolCollection.settings()).to.equal(networkSettings.address);
-            expect(await poolCollection.poolTokenFactory()).to.equal(poolTokenFactory.address);
-            expect(await poolCollection.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
 
@@ -2032,6 +2068,7 @@ describe('PoolCollection', () => {
 
     describe('pool migrations', () => {
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
         let networkSettings: NetworkSettings;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
@@ -2041,8 +2078,15 @@ describe('PoolCollection', () => {
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                networkSettings,
+                poolTokenFactory,
+                poolCollection,
+                poolCollectionUpgrader
+            } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
@@ -2050,6 +2094,8 @@ describe('PoolCollection', () => {
 
             targetPoolCollection = await createPoolCollection(
                 network,
+                networkToken,
+                networkSettings,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1
@@ -2145,7 +2191,13 @@ describe('PoolCollection', () => {
                     poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
                 ).to.be.revertedWith('InvalidAddress');
 
-                const newPoolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
+                const newPoolCollection = await createPoolCollection(
+                    network,
+                    networkToken,
+                    networkSettings,
+                    poolTokenFactory,
+                    poolCollectionUpgrader
+                );
                 await expect(
                     poolCollectionUpgrader.migratePoolOutT(
                         poolCollection.address,
