@@ -62,7 +62,7 @@ describe('PoolCollection', () => {
                 await createSystem());
         });
 
-        it('should revert when initialized with an invalid network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     ZERO_ADDRESS,
@@ -74,7 +74,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network token contract', async () => {
+        it('should revert when attempting to create with an invalid network token contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     network.address,
@@ -86,7 +86,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network settings contract', async () => {
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     network.address,
@@ -98,7 +98,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid pool token factory contract', async () => {
+        it('should revert when attempting to create with an invalid pool token factory contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     network.address,
@@ -110,7 +110,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid pool collection upgrader contract', async () => {
+        it('should revert when attempting to create with an invalid pool collection upgrader contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     network.address,

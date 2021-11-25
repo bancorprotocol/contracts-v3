@@ -10,11 +10,12 @@ import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { InvalidToken, Utils } from "../utility/Utils.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
@@ -59,13 +60,16 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     IMasterPool private immutable _masterPool;
 
     // the master pool token
-    IPoolToken internal immutable _masterPoolToken;
+    IPoolToken private immutable _masterPoolToken;
 
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
     // the pool collection upgrader contract
     IPoolCollectionUpgrader private immutable _poolCollectionUpgrader;
+
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 0] private __gap;
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -271,24 +275,18 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         // return the trade amount and fee when trading the network token to the base token
         if (_isNetworkToken(sourceToken)) {
             return
-                _network
-                    .collectionByPool(targetToken)
-                    .tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount)
-                    .amount;
+                _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
         // return the trade amount and fee when trading the bsase token to the network token
         if (_isNetworkToken(targetToken)) {
             return
-                _network
-                    .collectionByPool(sourceToken)
-                    .tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount)
-                    .amount;
+                _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
         // return the trade amount and fee by simulating double-hop trade from the source token to the target token via
         // the network token
-        TradeAmounts memory sourceTradeAmounts = _network.collectionByPool(sourceToken).tradeAmountAndFee(
+        TradeAmounts memory sourceTradeAmounts = _poolCollection(sourceToken).tradeAmountAndFee(
             sourceToken,
             ReserveToken.wrap(address(_networkToken)),
             amount,
@@ -296,8 +294,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         );
 
         return
-            _network
-                .collectionByPool(targetToken)
+            _poolCollection(targetToken)
                 .tradeAmountAndFee(
                     ReserveToken.wrap(address(_networkToken)),
                     targetToken,
@@ -305,6 +302,19 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
                     targetAmount
                 )
                 .amount;
+    }
+
+    /**
+     * @dev verifies that the specified pool is managed by a valid pool collection and returns it
+     */
+    function _poolCollection(ReserveToken token) private view returns (IPoolCollection) {
+        // verify that the pool is managed by a valid pool collection
+        IPoolCollection poolCollection = _network.collectionByPool(token);
+        if (address(poolCollection) == address(0)) {
+            revert InvalidToken();
+        }
+
+        return poolCollection;
     }
 
     /**

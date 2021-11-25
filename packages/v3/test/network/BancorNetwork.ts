@@ -46,7 +46,7 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const { Upgradeable: UpgradeableRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -180,10 +180,85 @@ describe('BancorNetwork', () => {
             } = await createSystem());
         });
 
-        it('should revert when attempting to reinitialize', async () => {
+        it('should revert when attempting to create with an invalid network token governance contract', async () => {
             await expect(
-                network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('Initializable: contract is already initialized');
+                Contracts.BancorNetwork.deploy(
+                    ZERO_ADDRESS,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    externalProtectionVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid governance token governance contract', async () => {
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    bancorVault.address,
+                    externalProtectionVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    ZERO_ADDRESS,
+                    bancorVault.address,
+                    externalProtectionVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid vault contract', async () => {
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    externalProtectionVault.address,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid external protection vault contract', async () => {
+            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, masterPoolToken } =
+                await createSystem();
+
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    ZERO_ADDRESS,
+                    masterPoolToken.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid master pool token contract', async () => {
+            await expect(
+                Contracts.BancorNetwork.deploy(
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    externalProtectionVault.address,
+                    ZERO_ADDRESS
+                )
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to initialize with an invalid master pool contract', async () => {
@@ -231,85 +306,10 @@ describe('BancorNetwork', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network token governance contract', async () => {
+        it('should revert when attempting to reinitialize', async () => {
             await expect(
-                Contracts.BancorNetwork.deploy(
-                    ZERO_ADDRESS,
-                    govTokenGovernance.address,
-                    networkSettings.address,
-                    bancorVault.address,
-                    externalProtectionVault.address,
-                    masterPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid governance token governance contract', async () => {
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    ZERO_ADDRESS,
-                    networkSettings.address,
-                    bancorVault.address,
-                    externalProtectionVault.address,
-                    masterPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid network settings contract', async () => {
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    ZERO_ADDRESS,
-                    bancorVault.address,
-                    externalProtectionVault.address,
-                    masterPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid vault contract', async () => {
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    networkSettings.address,
-                    ZERO_ADDRESS,
-                    externalProtectionVault.address,
-                    masterPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid external protection vault contract', async () => {
-            const { networkTokenGovernance, govTokenGovernance, networkSettings, bancorVault, masterPoolToken } =
-                await createSystem();
-
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    networkSettings.address,
-                    bancorVault.address,
-                    ZERO_ADDRESS,
-                    masterPoolToken.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when initialized with an invalid master pool token contract', async () => {
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    networkTokenGovernance.address,
-                    govTokenGovernance.address,
-                    networkSettings.address,
-                    bancorVault.address,
-                    externalProtectionVault.address,
-                    ZERO_ADDRESS
-                )
-            ).to.be.revertedWith('InvalidAddress');
+                network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
+            ).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should be properly initialized', async () => {
@@ -922,7 +922,6 @@ describe('BancorNetwork', () => {
         let bancorVault: BancorVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
-        let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = BigNumber.from(10_000); // %1
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
@@ -940,8 +939,7 @@ describe('BancorNetwork', () => {
                 poolCollection,
                 bancorVault,
                 pendingWithdrawals,
-                masterPoolToken,
-                externalProtectionVault
+                masterPoolToken
             } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
@@ -2273,8 +2271,12 @@ describe('BancorNetwork', () => {
                 );
             }
 
-            // const targetAmount = await tradeTargetAmount(amount);
-            // expect(targetAmount).to.equal(tradeAmounts.amount);
+            const targetAmount = await networkInformation.tradeTargetAmount(
+                sourceToken.address,
+                targetToken.address,
+                amount
+            );
+            expect(targetAmount).to.equal(tradeAmounts.amount);
 
             const res = await trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline });
 
@@ -2460,14 +2462,14 @@ describe('BancorNetwork', () => {
             );
             expect(await getBalance(sourceToken, bancorVault.address)).to.equal(prevVaultSourceTokenAmount.add(amount));
 
-            // expect(await getBalance(targetToken, beneficiary)).to.equal(
-            //     prevBeneficiaryTargetTokenAmount.add(
-            //         targetAmount.sub(traderAddress === beneficiary && isTargetETH ? transactionCost : BigNumber.from(0))
-            //     )
-            // );
-            // expect(await getBalance(targetToken, bancorVault.address)).to.equal(
-            //     prevVaultTargetTokenAmount.sub(targetAmount)
-            // );
+            expect(await getBalance(targetToken, beneficiary)).to.equal(
+                prevBeneficiaryTargetTokenAmount.add(
+                    targetAmount.sub(traderAddress === beneficiary && isTargetETH ? transactionCost : BigNumber.from(0))
+                )
+            );
+            expect(await getBalance(targetToken, bancorVault.address)).to.equal(
+                prevVaultTargetTokenAmount.sub(targetAmount)
+            );
 
             // if neither the source or the target tokens are the network token - ensure that no network
             // token amount has left the system
@@ -2477,22 +2479,6 @@ describe('BancorNetwork', () => {
                 expect(await getBalance(networkToken, bancorVault.address)).to.equal(prevVaultNetworkTokenAmount);
             }
         };
-
-        // interface TradeAmountsOverrides {
-        //     sourceTokenAddress?: string;
-        //     targetTokenAddress?: string;
-        // }
-        // const tradeTargetAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
-        //     const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
-
-        //     return network.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
-        // };
-
-        // const tradeSourceAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
-        //     const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
-
-        //     return network.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
-        // };
 
         const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
             const isSourceETH = source.symbol === ETH;
@@ -2517,40 +2503,25 @@ describe('BancorNetwork', () => {
                     context(`${permitted ? 'regular' : 'permitted'} trade`, () => {
                         const tradeFunc = permitted ? tradePermitted : trade;
 
-                        it('should revert when attempting to trade or query using an invalid source pool', async () => {
+                        it('should revert when attempting to trade using an invalid source pool', async () => {
                             await expect(
                                 tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                             ).to.be.revertedWith('InvalidAddress');
                             await expect(
                                 tradePermitted(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                             ).to.be.revertedWith('InvalidAddress');
-
-                            // await expect(
-                            //     tradeTargetAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                            // ).to.be.revertedWith('InvalidAddress');
-                            // await expect(
-                            //     tradeSourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                            // ).to.be.revertedWith('InvalidAddress');
                         });
 
-                        it('should revert when attempting to trade or query using an invalid target pool', async () => {
+                        it('should revert when attempting to trade using an invalid target pool', async () => {
                             await expect(
                                 tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                             ).to.be.revertedWith('InvalidAddress');
-                            // await expect(
-                            //     tradeTargetAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                            // ).to.be.revertedWith('InvalidAddress');
-                            // await expect(
-                            //     tradeSourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                            // ).to.be.revertedWith('InvalidAddress');
                         });
 
-                        it('should revert when attempting to trade or query using an invalid amount', async () => {
+                        it('should revert when attempting to trade using an invalid amount', async () => {
                             const amount = BigNumber.from(0);
 
                             await expect(tradeFunc(amount)).to.be.revertedWith('ZeroValue');
-                            // await expect(tradeTargetAmount(amount)).to.be.revertedWith('ZeroValue');
-                            // await expect(tradeSourceAmount(amount)).to.be.revertedWith('ZeroValue');
                         });
 
                         it('should revert when attempting to trade using an invalid minimum return amount', async () => {
@@ -2567,7 +2538,7 @@ describe('BancorNetwork', () => {
                             );
                         });
 
-                        it('should revert when attempting to trade or query using unsupported tokens', async () => {
+                        it('should revert when attempting to trade using unsupported tokens', async () => {
                             const reserveToken2 = await Contracts.TestERC20Token.deploy(
                                 TKN,
                                 TKN,
@@ -2581,35 +2552,17 @@ describe('BancorNetwork', () => {
                             await expect(
                                 trade(testAmount, { sourceTokenAddress: reserveToken2.address })
                             ).to.be.revertedWith('InvalidToken');
-                            // await expect(
-                            //     tradeTargetAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
-                            // ).to.be.revertedWith('InvalidToken');
-                            // await expect(
-                            //     tradeSourceAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
-                            // ).to.be.revertedWith('InvalidToken');
 
                             // unknown target token
                             await expect(
                                 trade(testAmount, { targetTokenAddress: reserveToken2.address })
                             ).to.be.revertedWith('InvalidToken');
-                            // await expect(
-                            //     tradeTargetAmount(testAmount, { targetTokenAddress: reserveToken2.address })
-                            // ).to.be.revertedWith('InvalidToken');
-                            // await expect(
-                            //     tradeSourceAmount(testAmount, { targetTokenAddress: reserveToken2.address })
-                            // ).to.be.revertedWith('InvalidToken');
                         });
 
-                        it('should revert when attempting to trade or query using same source and target tokens', async () => {
+                        it('should revert when attempting to trade using same source and target tokens', async () => {
                             await expect(
                                 trade(testAmount, { targetTokenAddress: sourceToken.address })
                             ).to.be.revertedWith('InvalidTokens');
-                            // await expect(
-                            //     tradeTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                            // ).to.be.revertedWith('InvalidTokens');
-                            // await expect(
-                            //     tradeSourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                            // ).to.be.revertedWith('InvalidTokens');
                         });
 
                         it('should support a custom beneficiary', async () => {

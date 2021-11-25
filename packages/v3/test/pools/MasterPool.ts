@@ -69,7 +69,7 @@ describe('MasterPool', () => {
             } = await createSystem());
         });
 
-        it('should revert when attempting to initialize with an invalid network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     ZERO_ADDRESS,
@@ -82,7 +82,7 @@ describe('MasterPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid network token governance contract', async () => {
+        it('should revert when attempting to create with an invalid network token governance contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     network.address,
@@ -95,7 +95,7 @@ describe('MasterPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid gov token governance contract', async () => {
+        it('should revert when attempting to create with an invalid gov token governance contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     network.address,
@@ -108,7 +108,7 @@ describe('MasterPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid network settings contract', async () => {
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     network.address,
@@ -121,7 +121,7 @@ describe('MasterPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid vault contract', async () => {
+        it('should revert when attempting to create with an invalid vault contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     network.address,
@@ -134,7 +134,7 @@ describe('MasterPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid master pool token contract', async () => {
+        it('should revert when attempting to create with an invalid master pool token contract', async () => {
             await expect(
                 Contracts.MasterPool.deploy(
                     network.address,

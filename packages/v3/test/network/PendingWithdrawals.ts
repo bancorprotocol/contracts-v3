@@ -48,19 +48,19 @@ describe('PendingWithdrawals', () => {
             ({ network, networkToken, masterPool, pendingWithdrawals } = await createSystem());
         });
 
-        it('should revert when initialized with an invalid network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, networkToken.address, masterPool.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid network token contract', async () => {
+        it('should revert when attempting to create with an invalid network token contract', async () => {
             await expect(
                 Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS, masterPool.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid master pool contract', async () => {
+        it('should revert when attempting to create with an invalid master pool contract', async () => {
             await expect(
                 Contracts.PendingWithdrawals.deploy(network.address, networkToken.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
