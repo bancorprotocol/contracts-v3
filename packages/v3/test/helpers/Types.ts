@@ -107,13 +107,7 @@ export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
 };
 
 export const toPPM = (percent: number): number => {
-    let factor = 1;
-    while (!Number.isInteger(percent)) {
-        factor *= 10;
-        percent *= 10;
-    }
-
-    return (percent * PPM_RESOLUTION) / factor / 100;
+    return (percent * PPM_RESOLUTION) / 100;
 };
 
 export const fromPPM = (ppm: number): number => (ppm * 100) / PPM_RESOLUTION;
