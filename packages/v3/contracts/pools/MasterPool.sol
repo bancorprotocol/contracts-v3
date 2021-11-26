@@ -61,8 +61,8 @@ contract MasterPool is IMasterPool, Vault {
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // the vault contract
-    IBancorVault private immutable _vault;
+    // the main vault contract
+    IBancorVault private immutable _mainVault;
 
     // the master pool token
     IPoolToken internal immutable _poolToken;
@@ -104,14 +104,14 @@ contract MasterPool is IMasterPool, Vault {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
-        IBancorVault initVault,
+        IBancorVault initMainVault,
         IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
-        validAddress(address(initVault))
+        validAddress(address(initMainVault))
         validAddress(address(initMasterPoolToken))
     {
         _network = initNetwork;
@@ -120,7 +120,7 @@ contract MasterPool is IMasterPool, Vault {
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
         _settings = initSettings;
-        _vault = initVault;
+        _mainVault = initMainVault;
         _poolToken = initMasterPoolToken;
     }
 
@@ -242,7 +242,7 @@ contract MasterPool is IMasterPool, Vault {
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        _mainVault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
 
         _networkTokenGovernance.burn(networkTokenAmount);
     }
@@ -363,7 +363,7 @@ contract MasterPool is IMasterPool, Vault {
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint network tokens to the vault
-        _networkTokenGovernance.mint(address(_vault), networkTokenAmount);
+        _networkTokenGovernance.mint(address(_mainVault), networkTokenAmount);
 
         emit LiquidityRequested({
             contextId: contextId,
@@ -402,8 +402,8 @@ contract MasterPool is IMasterPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // withdraw network tokens from the vault and burn them
-        _vault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
+        // withdraw network tokens from the main vault and burn them
+        _mainVault.withdrawFunds(ReserveToken.wrap(address(_networkToken)), payable(address(this)), networkTokenAmount);
         _networkTokenGovernance.burn(networkTokenAmount);
 
         emit LiquidityRenounced({

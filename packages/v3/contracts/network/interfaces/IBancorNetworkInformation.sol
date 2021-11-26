@@ -57,9 +57,9 @@ interface IBancorNetworkInformation is IUpgradeable {
     function settings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the vault contract
+     * @dev returns the main vault contract
      */
-    function vault() external view returns (IBancorVault);
+    function mainVault() external view returns (IBancorVault);
 
     /**
      * @dev returns the address of the external protection vault

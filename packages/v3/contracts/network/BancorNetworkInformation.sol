@@ -51,8 +51,8 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     // the network settings contract
     INetworkSettings private immutable _settings;
 
-    // the vault contract
-    IBancorVault private immutable _vault;
+    // the main vault contract
+    IBancorVault private immutable _mainVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -83,7 +83,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
-        IBancorVault initVault,
+        IBancorVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
         IExternalRewardsVault initExternalRewardsVault,
         IMasterPool initMasterPool,
@@ -94,7 +94,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _validAddress(address(initNetworkTokenGovernance));
         _validAddress(address(initGovTokenGovernance));
         _validAddress(address(initSettings));
-        _validAddress(address(initVault));
+        _validAddress(address(initMainVault));
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initExternalRewardsVault));
         _validAddress(address(initMasterPool));
@@ -107,7 +107,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
         _settings = initSettings;
-        _vault = initVault;
+        _mainVault = initMainVault;
         _externalProtectionVault = initExternalProtectionVault;
         _externalRewardsVault = initExternalRewardsVault;
         _masterPool = initMasterPool;
@@ -211,8 +211,8 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function vault() external view returns (IBancorVault) {
-        return _vault;
+    function mainVault() external view returns (IBancorVault) {
+        return _mainVault;
     }
 
     /**
