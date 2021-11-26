@@ -1283,7 +1283,7 @@ describe('BancorNetwork', () => {
                                                         await poolCollection.setAverageRateT(token.address, {
                                                             rate: {
                                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 5000)
+                                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                                             },
                                                             time: BigNumber.from(0)
                                                         });
@@ -1554,7 +1554,7 @@ describe('BancorNetwork', () => {
                                                 await poolCollection.setAverageRateT(token.address, {
                                                     rate: {
                                                         n: spotRate.n.mul(PPM_RESOLUTION),
-                                                        d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 5000)
+                                                        d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                                     },
                                                     time: BigNumber.from(0)
                                                 });
@@ -1970,7 +1970,7 @@ describe('BancorNetwork', () => {
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 5000)
+                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                             },
                                             time: BigNumber.from(0)
                                         });
