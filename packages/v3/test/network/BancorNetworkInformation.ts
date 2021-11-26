@@ -4,7 +4,9 @@ import {
     BancorNetworkInformation,
     BancorVault,
     ExternalProtectionVault,
+    ExternalRewardsVault,
     IERC20,
+    IPoolToken,
     NetworkSettings,
     TestBancorNetwork,
     TestMasterPool,
@@ -35,25 +37,34 @@ describe('BancorNetworkInformation', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let govToken: IERC20;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
         let masterPool: TestMasterPool;
+        let masterPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let bancorVault: BancorVault;
+        let mainVault: BancorVault;
         let externalProtectionVault: ExternalProtectionVault;
+        let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
             ({
                 network,
+                networkToken,
+                govToken,
+                networkInformation,
                 networkSettings,
                 networkTokenGovernance,
                 govTokenGovernance,
                 masterPool,
                 poolCollectionUpgrader,
-                bancorVault,
+                mainVault,
                 externalProtectionVault,
+                externalRewardsVault,
                 pendingWithdrawals
             } = await createSystem());
         });
@@ -65,8 +76,9 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -81,8 +93,9 @@ describe('BancorNetworkInformation', () => {
                     ZERO_ADDRESS,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -97,8 +110,9 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -113,8 +127,9 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -122,7 +137,7 @@ describe('BancorNetworkInformation', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid vault contract', async () => {
+        it('should revert when attempting to create with an invalid main vault contract', async () => {
             await expect(
                 Contracts.BancorNetworkInformation.deploy(
                     network.address,
@@ -131,6 +146,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -145,7 +161,25 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
+                    ZERO_ADDRESS,
+                    externalRewardsVault.address,
+                    masterPool.address,
+                    pendingWithdrawals.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid external rewards vault contract', async () => {
+            await expect(
+                Contracts.BancorNetworkInformation.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    mainVault.address,
+                    externalProtectionVault.address,
                     ZERO_ADDRESS,
                     masterPool.address,
                     pendingWithdrawals.address,
@@ -161,8 +195,9 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     ZERO_ADDRESS,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -177,8 +212,9 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     ZERO_ADDRESS,
                     poolCollectionUpgrader.address
@@ -193,13 +229,32 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    bancorVault.address,
+                    mainVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should be properly initialized', async () => {
+            expect(await networkInformation.version()).to.equal(1);
+
+            expect(await networkInformation.network()).to.equal(network.address);
+            expect(await networkInformation.networkToken()).to.equal(networkToken.address);
+            expect(await networkInformation.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
+            expect(await networkInformation.govToken()).to.equal(govToken.address);
+            expect(await networkInformation.govTokenGovernance()).to.equal(govTokenGovernance.address);
+            expect(await networkInformation.networkSettings()).to.equal(networkSettings.address);
+            expect(await networkInformation.mainVault()).to.equal(mainVault.address);
+            expect(await networkInformation.externalProtectionVault()).to.equal(externalProtectionVault.address);
+            expect(await networkInformation.externalRewardsVault()).to.equal(externalRewardsVault.address);
+            expect(await networkInformation.masterPool()).to.equal(masterPool.address);
+            expect(await networkInformation.masterPoolToken()).to.equal(masterPoolToken.address);
+            expect(await networkInformation.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+            expect(await networkInformation.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
         });
     });
 

@@ -26,10 +26,18 @@ contract TestPoolCollection is PoolCollection, TestTime {
         uint16 initVersion,
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
-        INetworkSettings initSettings,
+        INetworkSettings initNetworkSettings,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) PoolCollection(initNetwork, initNetworkToken, initSettings, initPoolTokenFactory, initPoolCollectionUpgrader) {
+    )
+        PoolCollection(
+            initNetwork,
+            initNetworkToken,
+            initNetworkSettings,
+            initPoolTokenFactory,
+            initPoolCollectionUpgrader
+        )
+    {
         _version = initVersion;
     }
 

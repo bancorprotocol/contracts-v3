@@ -5,8 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -48,13 +49,16 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
-    INetworkSettings private immutable _settings;
+    INetworkSettings private immutable _networkSettings;
 
-    // the vault contract
-    IBancorVault private immutable _vault;
+    // the main vault contract
+    IBancorVault private immutable _mainVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
+
+    // the address of the external protection vault
+    IExternalRewardsVault private immutable _externalRewardsVault;
 
     // the master pool contract
     IMasterPool private immutable _masterPool;
@@ -78,9 +82,10 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         IBancorNetwork initNetwork,
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
-        IBancorVault initVault,
+        INetworkSettings initNetworkSettings,
+        IBancorVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
+        IExternalRewardsVault initExternalRewardsVault,
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -88,9 +93,10 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _validAddress(address(initNetwork));
         _validAddress(address(initNetworkTokenGovernance));
         _validAddress(address(initGovTokenGovernance));
-        _validAddress(address(initSettings));
-        _validAddress(address(initVault));
+        _validAddress(address(initNetworkSettings));
+        _validAddress(address(initMainVault));
         _validAddress(address(initExternalProtectionVault));
+        _validAddress(address(initExternalRewardsVault));
         _validAddress(address(initMasterPool));
         _validAddress(address(initPendingWithdrawals));
         _validAddress(address(initPoolCollectionUpgrader));
@@ -100,9 +106,10 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _networkToken = initNetworkTokenGovernance.token();
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
-        _settings = initSettings;
-        _vault = initVault;
+        _networkSettings = initNetworkSettings;
+        _mainVault = initMainVault;
         _externalProtectionVault = initExternalProtectionVault;
+        _externalRewardsVault = initExternalRewardsVault;
         _masterPool = initMasterPool;
         _masterPoolToken = initMasterPool.poolToken();
         _pendingWithdrawals = initPendingWithdrawals;
@@ -141,7 +148,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev validates if the provided tokens are valid and different
+     * @dev validates that the provided tokens are valid and unique
      */
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
         _validAddress(ReserveToken.unwrap(sourceToken));
@@ -197,15 +204,15 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function settings() external view returns (INetworkSettings) {
-        return _settings;
+    function networkSettings() external view returns (INetworkSettings) {
+        return _networkSettings;
     }
 
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function vault() external view returns (IBancorVault) {
-        return _vault;
+    function mainVault() external view returns (IBancorVault) {
+        return _mainVault;
     }
 
     /**
@@ -213,6 +220,13 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
      */
     function externalProtectionVault() external view returns (IExternalProtectionVault) {
         return _externalProtectionVault;
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInformation
+     */
+    function externalRewardsVault() external view returns (IExternalRewardsVault) {
+        return _externalRewardsVault;
     }
 
     /**

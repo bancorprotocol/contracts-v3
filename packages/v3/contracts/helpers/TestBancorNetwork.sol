@@ -44,16 +44,16 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
-        IBancorVault initVault,
+        INetworkSettings initNetworkSettings,
+        IBancorVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
         BancorNetwork(
             initNetworkTokenGovernance,
             initGovTokenGovernance,
-            initSettings,
-            initVault,
+            initNetworkSettings,
+            initMainVault,
             initExternalProtectionVault,
             initMasterPoolToken
         )

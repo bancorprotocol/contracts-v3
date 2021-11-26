@@ -16,15 +16,15 @@ describe('BancorVault', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let bancorVault: BancorVault;
+        let mainVault: BancorVault;
         let masterPool: TestMasterPool;
 
         beforeEach(async () => {
-            ({ network, bancorVault, masterPool } = await createSystem());
+            ({ network, mainVault, masterPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(bancorVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(mainVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should revert when initialized with an invalid network token', async () => {
@@ -34,14 +34,14 @@ describe('BancorVault', () => {
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
 
-            expect(await bancorVault.version()).to.equal(1);
-            expect(await bancorVault.isPayable()).to.be.true;
+            expect(await mainVault.version()).to.equal(1);
+            expect(await mainVault.isPayable()).to.be.true;
 
-            await expectRole(bancorVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
-            await expectRole(bancorVault, BancorVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(mainVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(mainVault, BancorVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
                 network.address
             ]);
-            await expectRole(bancorVault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(mainVault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
                 masterPool.address
             ]);
         });
@@ -50,7 +50,7 @@ describe('BancorVault', () => {
     describe('asset management', () => {
         const amount = 1_000_000;
 
-        let bancorVault: BancorVault;
+        let mainVault: BancorVault;
         let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
@@ -60,8 +60,8 @@ describe('BancorVault', () => {
 
         const testWithdrawFunds = () => {
             it('should allow withdrawals', async () => {
-                await expect(bancorVault.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(bancorVault, 'FundsWithdrawn')
+                await expect(mainVault.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(mainVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -69,7 +69,7 @@ describe('BancorVault', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    bancorVault.connect(user).withdrawFunds(token.address, user.address, amount)
+                    mainVault.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
@@ -83,11 +83,11 @@ describe('BancorVault', () => {
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {
-                    ({ bancorVault, networkToken } = await createSystem());
+                    ({ mainVault, networkToken } = await createSystem());
 
                     token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
 
-                    await transfer(deployer, token, bancorVault.address, amount);
+                    await transfer(deployer, token, mainVault.address, amount);
                 });
 
                 context('with no special permissions', () => {
@@ -96,7 +96,7 @@ describe('BancorVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await bancorVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await mainVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -104,7 +104,7 @@ describe('BancorVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await bancorVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                        await mainVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();
@@ -112,7 +112,7 @@ describe('BancorVault', () => {
 
                 context('with network token manager role', () => {
                     beforeEach(async () => {
-                        await bancorVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                        await mainVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });
 
                     isNetworkToken ? testWithdrawFunds() : testWithdrawFundsRestricted();
