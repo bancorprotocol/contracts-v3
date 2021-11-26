@@ -89,7 +89,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
-    IMasterVault private immutable _mainVault;
+    IMasterVault private immutable _masterVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -276,14 +276,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMainVault,
+        IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initNetworkSettings))
-        validAddress(address(initMainVault))
+        validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initMasterPoolToken))
     {
@@ -293,7 +293,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _govToken = initGovTokenGovernance.token();
 
         _networkSettings = initNetworkSettings;
-        _mainVault = initMainVault;
+        _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
         _masterPoolToken = initMasterPoolToken;
     }
@@ -713,8 +713,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));
 
-        // transfer the amount from the main vault to the recipient
-        _mainVault.withdrawFunds(token, payable(address(recipient)), amount);
+        // transfer the amount from the master vault to the recipient
+        _masterVault.withdrawFunds(token, payable(address(recipient)), amount);
 
         // invoke the recipient's callback
         recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, data);
@@ -727,9 +727,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // transfer the amount and the fee back to the vault
         if (token.isNativeToken()) {
-            payable(address(_mainVault)).sendValue(returnedAmount);
+            payable(address(_masterVault)).sendValue(returnedAmount);
         } else {
-            token.safeTransfer(payable(address(_mainVault)), returnedAmount);
+            token.safeTransfer(payable(address(_masterVault)), returnedAmount);
         }
 
         uint256 stakedBalance;
@@ -873,7 +873,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: ReserveToken.wrap(address(_networkToken)),
             poolTokenSupply: _masterPoolToken.totalSupply(),
             stakedBalance: cachedMasterPool.stakedBalance(),
-            actualBalance: _networkToken.balanceOf(address(_mainVault))
+            actualBalance: _networkToken.balanceOf(address(_masterVault))
         });
     }
 
@@ -940,7 +940,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: pool,
             poolTokenSupply: depositAmounts.poolToken.totalSupply(),
             stakedBalance: poolLiquidity.stakedBalance,
-            actualBalance: pool.balanceOf(address(_mainVault))
+            actualBalance: pool.balanceOf(address(_masterVault))
         });
 
         emit TotalLiquidityUpdated({
@@ -948,7 +948,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: ReserveToken.wrap(address(_networkToken)),
             poolTokenSupply: _masterPoolToken.totalSupply(),
             stakedBalance: cachedMasterPool.stakedBalance(),
-            actualBalance: _networkToken.balanceOf(address(_mainVault))
+            actualBalance: _networkToken.balanceOf(address(_masterVault))
         });
 
         emit TradingLiquidityUpdated({
@@ -1057,7 +1057,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: ReserveToken.wrap(address(_networkToken)),
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
             stakedBalance: cachedMasterPool.stakedBalance(),
-            actualBalance: _networkToken.balanceOf(address(_mainVault))
+            actualBalance: _networkToken.balanceOf(address(_masterVault))
         });
     }
 
@@ -1089,7 +1089,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         PoolCollectionWithdrawalAmounts memory amounts = poolCollection.withdraw(
             pool,
             completedRequest.poolTokenAmount,
-            pool.balanceOf(address(_mainVault)),
+            pool.balanceOf(address(_masterVault)),
             pool.balanceOf(address(_externalProtectionVault))
         );
 
@@ -1100,7 +1100,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if the network token arbitrage is positive - ask the master pool to mint network tokens into the vault
         if (amounts.networkTokenArbitrageAmount > 0) {
-            cachedMasterPool.mint(address(_mainVault), uint256(amounts.networkTokenArbitrageAmount));
+            cachedMasterPool.mint(address(_masterVault), uint256(amounts.networkTokenArbitrageAmount));
         }
         // if the network token arbitrage is negative - ask the master pool to burn network tokens from the vault
         else if (amounts.networkTokenArbitrageAmount < 0) {
@@ -1113,11 +1113,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             cachedMasterPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
 
-        // if the provider should receive some base tokens from the main vault - remove the tokens from the main vault
+        // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault
         // and send them to the provider
         if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
-            // base token amount to transfer from the main vault to the provider
-            _mainVault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+            // base token amount to transfer from the master vault to the provider
+            _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
         }
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
@@ -1151,7 +1151,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: pool,
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
             stakedBalance: poolLiquidity.stakedBalance,
-            actualBalance: pool.balanceOf(address(_mainVault))
+            actualBalance: pool.balanceOf(address(_masterVault))
         });
 
         emit TradingLiquidityUpdated({
@@ -1222,7 +1222,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _depositMainToVault(sourceToken, trader, sourceAmount);
 
         // transfer the target tokens/ETH to the beneficiary
-        _mainVault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
+        _masterVault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
     }
 
     /**
@@ -1311,7 +1311,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev deposits reserve tokens to the main vault and verifies that msg.value corresponds to its type
+     * @dev deposits reserve tokens to the master vault and verifies that msg.value corresponds to its type
      */
     function _depositMainToVault(
         ReserveToken reserveToken,
@@ -1329,13 +1329,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
-            payable(address(_mainVault)).sendValue(amount);
+            payable(address(_masterVault)).sendValue(amount);
         } else {
             if (reserveToken.isNativeToken()) {
                 revert InvalidPool();
             }
 
-            reserveToken.safeTransferFrom(sender, address(_mainVault), amount);
+            reserveToken.safeTransferFrom(sender, address(_masterVault), amount);
         }
     }
 

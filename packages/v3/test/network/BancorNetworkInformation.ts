@@ -46,7 +46,7 @@ describe('BancorNetworkInformation', () => {
         let masterPool: TestMasterPool;
         let masterPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let mainVault: MasterVault;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -63,7 +63,7 @@ describe('BancorNetworkInformation', () => {
                 masterPool,
                 masterPoolToken,
                 poolCollectionUpgrader,
-                mainVault,
+                masterVault,
                 externalProtectionVault,
                 externalRewardsVault,
                 pendingWithdrawals
@@ -77,7 +77,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -94,7 +94,7 @@ describe('BancorNetworkInformation', () => {
                     ZERO_ADDRESS,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -111,7 +111,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -128,7 +128,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     ZERO_ADDRESS,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -138,7 +138,7 @@ describe('BancorNetworkInformation', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid main vault contract', async () => {
+        it('should revert when attempting to create with an invalid master vault contract', async () => {
             await expect(
                 Contracts.BancorNetworkInformation.deploy(
                     network.address,
@@ -162,7 +162,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     ZERO_ADDRESS,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -179,7 +179,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
                     masterPool.address,
@@ -196,7 +196,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     ZERO_ADDRESS,
@@ -213,7 +213,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -230,7 +230,7 @@ describe('BancorNetworkInformation', () => {
                     networkTokenGovernance.address,
                     govTokenGovernance.address,
                     networkSettings.address,
-                    mainVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     masterPool.address,
@@ -249,7 +249,7 @@ describe('BancorNetworkInformation', () => {
             expect(await networkInformation.govToken()).to.equal(govToken.address);
             expect(await networkInformation.govTokenGovernance()).to.equal(govTokenGovernance.address);
             expect(await networkInformation.networkSettings()).to.equal(networkSettings.address);
-            expect(await networkInformation.mainVault()).to.equal(mainVault.address);
+            expect(await networkInformation.masterVault()).to.equal(masterVault.address);
             expect(await networkInformation.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await networkInformation.externalRewardsVault()).to.equal(externalRewardsVault.address);
             expect(await networkInformation.masterPool()).to.equal(masterPool.address);
