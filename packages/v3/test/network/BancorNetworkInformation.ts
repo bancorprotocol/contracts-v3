@@ -61,6 +61,7 @@ describe('BancorNetworkInformation', () => {
                 networkTokenGovernance,
                 govTokenGovernance,
                 masterPool,
+                masterPoolToken,
                 poolCollectionUpgrader,
                 mainVault,
                 externalProtectionVault,
