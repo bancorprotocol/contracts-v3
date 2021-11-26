@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
-import { toString, toWei, Fraction, AverageRate } from '../helpers/Types';
+import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -507,7 +507,7 @@ describe('PoolAverageRate', () => {
         describe('quick tests', () => {
             const AVERAGE_RATES = [{ n: BigNumber.from(1), d: BigNumber.from(10000) }];
             const SCALE_FACTORS = [0, 18].map((d) => BigNumber.from(d));
-            const MAX_DEVIATIONS = [10_000].map((d) => BigNumber.from(d));
+            const MAX_DEVIATIONS = [1].map((d) => toPPM(d));
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });
@@ -519,7 +519,7 @@ describe('PoolAverageRate', () => {
                 { n: BigNumber.from(10000), d: BigNumber.from(1) }
             ];
             const SCALE_FACTORS = [0, 2, 10, 18].map((d) => BigNumber.from(d));
-            const MAX_DEVIATIONS = [10_000, 100_000, 500_000].map((d) => BigNumber.from(d));
+            const MAX_DEVIATIONS = [1, 10, 50].map((d) => toPPM(d));
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });

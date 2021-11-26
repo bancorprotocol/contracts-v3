@@ -27,13 +27,12 @@ import {
     initWithdraw,
     setupSimplePool,
     PoolSpec,
-    specToString,
-    feeToString
+    specToString
 } from '../helpers/Factory';
 import { permitContractSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import {
     createTokenBySymbol,
     createWallet,
@@ -863,9 +862,9 @@ describe('BancorNetwork', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
@@ -1636,9 +1635,9 @@ describe('BancorNetwork', () => {
         let masterPoolToken: PoolToken;
         let externalProtectionVault: ExternalProtectionVault;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
 
         const setTime = async (time: number) => {
@@ -2651,8 +2650,8 @@ describe('BancorNetwork', () => {
             for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                 for (const targetBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                     for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
-                        const TRADING_FEES = [0, 50_000];
-                        for (const tradingFeePPM of TRADING_FEES) {
+                        const TRADING_FEES = [0, 5];
+                        for (const tradingFee of TRADING_FEES) {
                             const isSourceNetworkToken = sourceSymbol === BNT;
                             const isTargetNetworkToken = targetSymbol === BNT;
 
@@ -2663,30 +2662,30 @@ describe('BancorNetwork', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFee),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFee),
                                         initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
                             } else {
-                                for (const tradingFeePPM2 of TRADING_FEES) {
+                                for (const tradingFee2 of TRADING_FEES) {
                                     testTrades(
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM,
+                                            tradingFeePPM: toPPM(tradingFee),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: tradingFeePPM2,
+                                            tradingFeePPM: toPPM(tradingFee2),
                                             initialRate: INITIAL_RATE
                                         },
                                         amount
@@ -2923,9 +2922,9 @@ describe('BancorNetwork', () => {
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
-            for (const flashLoanFeePPM of [0, 10_000, 100_000]) {
-                context(`${symbol} with fee=${feeToString(flashLoanFeePPM)}`, () => {
-                    testFlashLoan(symbol, BigNumber.from(flashLoanFeePPM));
+            for (const flashLoanFee of [0, 1, 10]) {
+                context(`${symbol} with fee=${flashLoanFee}%`, () => {
+                    testFlashLoan(symbol, toPPM(flashLoanFee));
                 });
             }
         }

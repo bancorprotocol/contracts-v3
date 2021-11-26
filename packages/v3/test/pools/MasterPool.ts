@@ -24,7 +24,7 @@ import {
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -300,7 +300,7 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
             beforeEach(async () => {
@@ -389,7 +389,7 @@ describe('MasterPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
         const contextId = formatBytes32String('CTX');
@@ -565,7 +565,7 @@ describe('MasterPool', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
         const contextId = formatBytes32String('CTX');
@@ -732,7 +732,7 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
             beforeEach(async () => {
@@ -912,9 +912,9 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-            const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+            const WITHDRAWAL_FEE = toPPM(5);
 
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);

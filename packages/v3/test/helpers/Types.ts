@@ -1,5 +1,6 @@
+import { PPM_RESOLUTION } from './Constants';
 import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 
 export interface Fraction<T = Decimal> {
     n: T;
@@ -33,7 +34,11 @@ type ToDecimalReturn<T> = T extends Fraction<BigNumber>
     ? Decimal
     : never;
 
-// eslint-disable-next-line no-prototype-builtins
+export interface AverageRate<T> {
+    rate: Fraction<T>;
+    time: T;
+}
+
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
 export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn<T> => {
@@ -101,7 +106,15 @@ export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
     return (v as BigNumber).mul(BigNumber.from(10).pow(BigNumber.from(18))) as ToWeiReturn<T>;
 };
 
-export interface AverageRate<T> {
-    rate: Fraction<T>;
-    time: T;
-}
+export const toPPM = (percent: number): BigNumber => {
+    let factor = 1;
+    while (!Number.isInteger(percent)) {
+        factor *= 10;
+        percent *= 10;
+    }
+
+    return BigNumber.from(percent).mul(PPM_RESOLUTION).div(factor).div(100);
+};
+
+export const fromPPM = (ppm: BigNumberish): number =>
+    BigNumber.from(ppm).mul(100).toNumber() / PPM_RESOLUTION.toNumber();
