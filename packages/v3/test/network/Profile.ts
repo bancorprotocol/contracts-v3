@@ -530,9 +530,7 @@ describe('Profile @profile', () => {
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(
-                                                    PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
-                                                )
+                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 5000)
                                             },
                                             time: BigNumber.from(0)
                                         });
@@ -868,7 +866,7 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testFlashLoan = async (symbol: string, flashLoanFeePPM: BigNumber) => {
+        const testFlashLoan = async (symbol: string, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {

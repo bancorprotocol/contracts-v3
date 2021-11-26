@@ -323,7 +323,7 @@ describe('MasterPool', () => {
                     await poolCollection.setAverageRateT(reserveToken.address, {
                         rate: {
                             n: spotRate.n.mul(PPM_RESOLUTION),
-                            d: spotRate.d.mul(PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(1000))))
+                            d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 1000)
                         },
                         time: BigNumber.from(0)
                     });
@@ -983,7 +983,7 @@ describe('MasterPool', () => {
                         const expectedTokenAmount = BigNumber.from(
                             mulDivF(
                                 poolTokenAmount,
-                                prevStakedBalance.mul(PPM_RESOLUTION.sub(WITHDRAWAL_FEE)),
+                                prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE),
                                 prevPoolTokenTotalSupply.mul(PPM_RESOLUTION)
                             ).toFixed()
                         );

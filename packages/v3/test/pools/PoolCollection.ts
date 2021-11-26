@@ -159,9 +159,7 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(
-                poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith('InvalidFee');
+            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
         });
 
         it('should ignore updating to the same default trading fee', async () => {
@@ -385,7 +383,7 @@ describe('PoolCollection', () => {
 
             it('should revert when setting an invalid trading fee', async () => {
                 await expect(
-                    poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION.add(BigNumber.from(1)))
+                    poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION + 1)
                 ).to.be.revertedWith('InvalidFee');
             });
 
@@ -1819,7 +1817,7 @@ describe('PoolCollection', () => {
                 interface Spec {
                     sourceBalance: BigNumber;
                     targetBalance: BigNumber;
-                    tradingFeePPM: BigNumber;
+                    tradingFeePPM: number;
                     amount: BigNumber;
                     intervals: number[];
                 }

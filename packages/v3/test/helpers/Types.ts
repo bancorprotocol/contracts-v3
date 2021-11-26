@@ -106,15 +106,8 @@ export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
     return (v as BigNumber).mul(BigNumber.from(10).pow(BigNumber.from(18))) as ToWeiReturn<T>;
 };
 
-export const toPPM = (percent: number): BigNumber => {
-    let factor = 1;
-    while (!Number.isInteger(percent)) {
-        factor *= 10;
-        percent *= 10;
-    }
-
-    return BigNumber.from(percent).mul(PPM_RESOLUTION).div(factor).div(100);
+export const toPPM = (percent: number): number => {
+    return (percent * PPM_RESOLUTION) / 100;
 };
 
-export const fromPPM = (ppm: BigNumberish): number =>
-    BigNumber.from(ppm).mul(100).toNumber() / PPM_RESOLUTION.toNumber();
+export const fromPPM = (ppm: number): number => (ppm * 100) / PPM_RESOLUTION;
