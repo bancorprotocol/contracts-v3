@@ -19,7 +19,7 @@ import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 import { MathEx } from "../utility/MathEx.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import "hardhat/console.sol";
@@ -64,7 +64,7 @@ contract AutoCompoundingStakingRewards is
     IERC20 private immutable _networkToken;
 
     // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
+    IMasterPool private immutable _networkTokenPool;
 
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
@@ -108,7 +108,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+    constructor(IBancorNetwork initNetwork, IMasterPool initNetworkTokenPool)
         validAddress(address(initNetwork))
         validAddress(address(initNetworkTokenPool))
     {
