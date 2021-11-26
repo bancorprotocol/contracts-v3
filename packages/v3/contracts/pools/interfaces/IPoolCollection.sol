@@ -46,7 +46,7 @@ struct DepositAmounts {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the main vault to the provider
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the master vault to the provider
     uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
     uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProvider; // the base token amount to transfer from the external protection vault to the provider
     uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity

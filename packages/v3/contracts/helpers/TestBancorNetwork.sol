@@ -45,7 +45,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMainVault,
+        IBancorVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
@@ -53,7 +53,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initNetworkTokenGovernance,
             initGovTokenGovernance,
             initNetworkSettings,
-            initMainVault,
+            initMasterVault,
             initExternalProtectionVault,
             initMasterPoolToken
         )
