@@ -5,8 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -56,6 +57,9 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
+    // the address of the external protection vault
+    IExternalRewardsVault private immutable _externalRewardsVault;
+
     // the master pool contract
     IMasterPool private immutable _masterPool;
 
@@ -81,6 +85,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         INetworkSettings initSettings,
         IBancorVault initVault,
         IExternalProtectionVault initExternalProtectionVault,
+        IExternalRewardsVault initExternalRewardsVault,
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -91,6 +96,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _validAddress(address(initSettings));
         _validAddress(address(initVault));
         _validAddress(address(initExternalProtectionVault));
+        _validAddress(address(initExternalRewardsVault));
         _validAddress(address(initMasterPool));
         _validAddress(address(initPendingWithdrawals));
         _validAddress(address(initPoolCollectionUpgrader));
@@ -103,6 +109,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _settings = initSettings;
         _vault = initVault;
         _externalProtectionVault = initExternalProtectionVault;
+        _externalRewardsVault = initExternalRewardsVault;
         _masterPool = initMasterPool;
         _masterPoolToken = initMasterPool.poolToken();
         _pendingWithdrawals = initPendingWithdrawals;
@@ -213,6 +220,13 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
      */
     function externalProtectionVault() external view returns (IExternalProtectionVault) {
         return _externalProtectionVault;
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInformation
+     */
+    function externalRewardsVault() external view returns (IExternalRewardsVault) {
+        return _externalRewardsVault;
     }
 
     /**

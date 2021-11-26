@@ -4,6 +4,7 @@ import {
     BancorNetworkInformation,
     BancorVault,
     ExternalProtectionVault,
+    ExternalRewardsVault,
     IERC20,
     NetworkSettings,
     TestBancorNetwork,
@@ -42,6 +43,7 @@ describe('BancorNetworkInformation', () => {
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let bancorVault: BancorVault;
         let externalProtectionVault: ExternalProtectionVault;
+        let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
@@ -54,6 +56,7 @@ describe('BancorNetworkInformation', () => {
                 poolCollectionUpgrader,
                 bancorVault,
                 externalProtectionVault,
+                externalRewardsVault,
                 pendingWithdrawals
             } = await createSystem());
         });
@@ -67,6 +70,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -83,6 +87,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -99,6 +104,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -115,6 +121,7 @@ describe('BancorNetworkInformation', () => {
                     ZERO_ADDRESS,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -131,6 +138,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -146,6 +154,24 @@ describe('BancorNetworkInformation', () => {
                     govTokenGovernance.address,
                     networkSettings.address,
                     bancorVault.address,
+                    ZERO_ADDRESS,
+                    externalRewardsVault.address,
+                    masterPool.address,
+                    pendingWithdrawals.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid external rewards vault contract', async () => {
+            await expect(
+                Contracts.BancorNetworkInformation.deploy(
+                    network.address,
+                    networkTokenGovernance.address,
+                    govTokenGovernance.address,
+                    networkSettings.address,
+                    bancorVault.address,
+                    externalProtectionVault.address,
                     ZERO_ADDRESS,
                     masterPool.address,
                     pendingWithdrawals.address,
@@ -163,6 +189,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     ZERO_ADDRESS,
                     pendingWithdrawals.address,
                     poolCollectionUpgrader.address
@@ -179,6 +206,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     ZERO_ADDRESS,
                     poolCollectionUpgrader.address
@@ -195,6 +223,7 @@ describe('BancorNetworkInformation', () => {
                     networkSettings.address,
                     bancorVault.address,
                     externalProtectionVault.address,
+                    externalRewardsVault.address,
                     masterPool.address,
                     pendingWithdrawals.address,
                     ZERO_ADDRESS

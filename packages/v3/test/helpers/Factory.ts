@@ -280,6 +280,7 @@ const createSystemFixture = async () => {
         networkSettings.address,
         bancorVault.address,
         externalProtectionVault.address,
+        externalRewardsVault.address,
         masterPool.address,
         pendingWithdrawals.address,
         poolCollectionUpgrader.address
