@@ -94,11 +94,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
-    // the master pool contract
-    IMasterPool internal _masterPool;
-
     // the master pool token
     IPoolToken internal immutable _masterPoolToken;
+
+    // the master pool contract
+    IMasterPool internal _masterPool;
 
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
