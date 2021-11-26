@@ -61,7 +61,7 @@ contract MasterPool is IMasterPool, Vault {
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the main vault contract
+    // the master vault contract
     IMasterVault private immutable _masterVault;
 
     // the master pool token

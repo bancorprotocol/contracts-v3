@@ -51,7 +51,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the main vault contract
+    // the master vault contract
     IMasterVault private immutable _masterVault;
 
     // the address of the external protection vault
