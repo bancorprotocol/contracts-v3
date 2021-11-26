@@ -19,11 +19,12 @@ contract StakingRewardsMath {
         uint256 c_totalSupplyOfPoolToken,
         uint256 d_amountOfPoolTokenOwnedByProtocol
     ) internal pure returns (uint256) {
-        uint256 topFraction = b_amountOfTokenToDistribute * (c_totalSupplyOfPoolToken * c_totalSupplyOfPoolToken);
-        uint256 lowerFraction = ((c_totalSupplyOfPoolToken * a_totalAmountOfTokenStaked) +
-            (c_totalSupplyOfPoolToken * b_amountOfTokenToDistribute)) -
-            (a_totalAmountOfTokenStaked * d_amountOfPoolTokenOwnedByProtocol);
-        return MathEx.roundDiv(topFraction, lowerFraction);
+        uint256 a = a_totalAmountOfTokenStaked;
+        uint256 b = b_amountOfTokenToDistribute;
+        uint256 c = c_totalSupplyOfPoolToken;
+        uint256 d = d_amountOfPoolTokenOwnedByProtocol;
+        uint256 bc = b * c;
+        return MathEx.mulDivF(bc, c, bc + a * (c - d));
     }
 
     function processFlatReward(
