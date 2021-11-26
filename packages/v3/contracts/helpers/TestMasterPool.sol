@@ -19,7 +19,7 @@ contract TestMasterPool is MasterPool {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMainVault,
+        IBancorVault initMasterVault,
         IPoolToken initMasterPoolTokenn
     )
         MasterPool(
@@ -27,7 +27,7 @@ contract TestMasterPool is MasterPool {
             initNetworkTokenGovernance,
             initGovTokenGovernance,
             initNetworkSettings,
-            initMainVault,
+            initMasterVault,
             initMasterPoolTokenn
         )
     {}
