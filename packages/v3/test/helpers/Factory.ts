@@ -332,7 +332,7 @@ export interface PoolSpec {
     symbol: string;
     balance: BigNumber;
     initialRate: Fraction<BigNumber>;
-    tradingFeePPM?: BigNumber;
+    tradingFeePPM?: number;
 }
 
 export const specToString = (spec: PoolSpec) => {
