@@ -141,7 +141,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev validates if the provided tokens are valid and different
+     * @dev validates that the provided tokens are valid and unique
      */
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
         _validAddress(ReserveToken.unwrap(sourceToken));
