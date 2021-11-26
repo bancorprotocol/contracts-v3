@@ -19,13 +19,13 @@ import { Time } from "../utility/Time.sol";
 import { MathEx } from "../utility/MathEx.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 
 import "hardhat/console.sol";
 
 contract TestAutoCompoundingStakingRewards is AutoCompoundingStakingRewards, TestTime {
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+    constructor(IBancorNetwork initNetwork, IMasterPool initNetworkTokenPool)
         AutoCompoundingStakingRewards(initNetwork, initNetworkTokenPool)
     {}
 

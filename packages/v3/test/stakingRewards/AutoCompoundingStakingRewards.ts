@@ -7,7 +7,7 @@ import {
     PoolTokenFactory,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestNetworkTokenPool,
+    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
@@ -53,13 +53,13 @@ describe('AutoCompoundingStakingRewards', () => {
     let networkSettings: NetworkSettings;
     let networkToken: IERC20;
     let govToken: IERC20;
-    let networkTokenPool: TestNetworkTokenPool;
+    let masterPool: TestMasterPool;
     let poolCollectionUpgrader: TestPoolCollectionUpgrader;
     let bancorVault: BancorVault;
     let poolCollection: TestPoolCollection;
     let externalProtectionVault: ExternalProtectionVault;
     let pendingWithdrawals: TestPendingWithdrawals;
-    let networkPoolToken: PoolToken;
+    let masterPoolToken: PoolToken;
     let externalRewardsVault: ExternalRewardsVault;
 
     before(async () => {
@@ -75,13 +75,13 @@ describe('AutoCompoundingStakingRewards', () => {
             networkSettings,
             networkToken,
             govToken,
-            networkTokenPool,
+            masterPool,
             poolCollectionUpgrader,
             bancorVault,
             externalProtectionVault,
             poolCollection,
             pendingWithdrawals,
-            networkPoolToken,
+            masterPoolToken,
             externalRewardsVault
         } = await createSystem());
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
@@ -89,7 +89,7 @@ describe('AutoCompoundingStakingRewards', () => {
         await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
         autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-            ctorArgs: [network.address, networkTokenPool.address]
+            ctorArgs: [network.address, masterPool.address]
         });
 
         const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -161,15 +161,14 @@ describe('AutoCompoundingStakingRewards', () => {
 
         for (let i = 1; i <= 10; i++) {
             // lambda user deposit funds to pool
-            // await depositToPool(user4, token, BigNumber.from(10_000), network);
+            await depositToPool(user4, token, BigNumber.from(10_000), network);
 
-            await autoCompoundingStakingRewards.setTime(currentTime.add(i * MONTH + i * DAY));
+            await autoCompoundingStakingRewards.setTime(currentTime.add(i * MONTH));
 
             await autoCompoundingStakingRewards.processRewards(token.address);
 
             poolTokenTotalSupply = await poolToken.totalSupply();
             tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-            poolTokenUserBalance = await poolToken.balanceOf(user2.address);
 
             program = await autoCompoundingStakingRewards.program(token.address);
 
@@ -180,9 +179,22 @@ describe('AutoCompoundingStakingRewards', () => {
             console.log('current pool token protec vault balance: ', currentPoolTokenProtecVaultBalance.toString());
 
             console.log(
-                'token ownable: ',
-                mulDivF(poolTokenUserBalance, tokenStakedBalance, poolTokenTotalSupply).toString()
+                'token ownable user1: ',
+                mulDivF(await poolToken.balanceOf(user1.address), tokenStakedBalance, poolTokenTotalSupply).toString()
             );
+            console.log(
+                'token ownable user2: ',
+                mulDivF(await poolToken.balanceOf(user2.address), tokenStakedBalance, poolTokenTotalSupply).toString()
+            );
+            console.log(
+                'token ownable user3: ',
+                mulDivF(await poolToken.balanceOf(user3.address), tokenStakedBalance, poolTokenTotalSupply).toString()
+            );
+            console.log(
+                'token ownable user4: ',
+                mulDivF(await poolToken.balanceOf(user4.address), tokenStakedBalance, poolTokenTotalSupply).toString()
+            );
+
             console.log('');
         }
     });
