@@ -17,7 +17,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
@@ -62,7 +62,7 @@ contract MasterPool is IMasterPool, Vault {
     INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
-    IBancorVault private immutable _mainVault;
+    IMasterVault private immutable _mainVault;
 
     // the master pool token
     IPoolToken internal immutable _poolToken;
@@ -104,7 +104,7 @@ contract MasterPool is IMasterPool, Vault {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMainVault,
+        IMasterVault initMainVault,
         IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetwork))

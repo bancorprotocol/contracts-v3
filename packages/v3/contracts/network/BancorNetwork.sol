@@ -27,7 +27,7 @@ import {
     NotWhitelisted
  } from "../utility/Utils.sol";
 
-import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
@@ -89,7 +89,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
-    IBancorVault private immutable _mainVault;
+    IMasterVault private immutable _mainVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -276,7 +276,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMainVault,
+        IMasterVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )

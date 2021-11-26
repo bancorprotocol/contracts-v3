@@ -3,7 +3,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorNetworkInformation,
-    BancorVault,
+    MasterVault,
     ExternalProtectionVault,
     IERC20,
     NetworkSettings,
@@ -98,7 +98,7 @@ describe('BancorNetwork', () => {
         let govTokenGovernance: TokenGovernance;
         let masterPool: TestMasterPool;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let mainVault: BancorVault;
+        let mainVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
@@ -858,7 +858,7 @@ describe('BancorNetwork', () => {
         let govToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let mainVault: BancorVault;
+        let mainVault: MasterVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
@@ -1630,7 +1630,7 @@ describe('BancorNetwork', () => {
         let govToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let mainVault: BancorVault;
+        let mainVault: MasterVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
         let externalProtectionVault: ExternalProtectionVault;
@@ -2017,7 +2017,7 @@ describe('BancorNetwork', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let mainVault: BancorVault;
+        let mainVault: MasterVault;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
@@ -2706,7 +2706,7 @@ describe('BancorNetwork', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let mainVault: BancorVault;
+        let mainVault: MasterVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
