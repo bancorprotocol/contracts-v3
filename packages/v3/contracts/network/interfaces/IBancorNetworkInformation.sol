@@ -54,7 +54,7 @@ interface IBancorNetworkInformation is IUpgradeable {
     /**
      * @dev returns the network settings contract
      */
-    function settings() external view returns (INetworkSettings);
+    function networkSettings() external view returns (INetworkSettings);
 
     /**
      * @dev returns the main vault contract

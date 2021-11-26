@@ -59,7 +59,7 @@ contract MasterPool is IMasterPool, Vault {
     ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
-    INetworkSettings private immutable _settings;
+    INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
     IBancorVault private immutable _mainVault;
@@ -103,14 +103,14 @@ contract MasterPool is IMasterPool, Vault {
         IBancorNetwork initNetwork,
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
+        INetworkSettings initNetworkSettings,
         IBancorVault initMainVault,
         IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
-        validAddress(address(initSettings))
+        validAddress(address(initNetworkSettings))
         validAddress(address(initMainVault))
         validAddress(address(initMasterPoolToken))
     {
@@ -119,7 +119,7 @@ contract MasterPool is IMasterPool, Vault {
         _networkToken = initNetworkTokenGovernance.token();
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
-        _settings = initSettings;
+        _networkSettings = initNetworkSettings;
         _mainVault = initMainVault;
         _poolToken = initMasterPoolToken;
     }
@@ -211,7 +211,7 @@ contract MasterPool is IMasterPool, Vault {
         return
             ReserveToken.unwrap(pool) != address(0) &&
             address(poolCollection) != address(0) &&
-            _settings.isTokenWhitelisted(pool) &&
+            _networkSettings.isTokenWhitelisted(pool) &&
             poolCollection.isPoolRateStable(pool);
     }
 
@@ -219,7 +219,7 @@ contract MasterPool is IMasterPool, Vault {
      * @inheritdoc IMasterPool
      */
     function unallocatedLiquidity(ReserveToken pool) external view returns (uint256) {
-        return MathEx.subMax0(_settings.poolMintingLimit(pool), _mintedAmounts[pool]);
+        return MathEx.subMax0(_networkSettings.poolMintingLimit(pool), _mintedAmounts[pool]);
     }
 
     /**
@@ -330,7 +330,7 @@ contract MasterPool is IMasterPool, Vault {
         uint256 networkTokenAmount
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentMintedAmount = _mintedAmounts[pool];
-        uint256 mintingLimit = _settings.poolMintingLimit(pool);
+        uint256 mintingLimit = _networkSettings.poolMintingLimit(pool);
         uint256 newMintedAmount = currentMintedAmount + networkTokenAmount;
 
         // verify that the new minted amount doesn't exceed the limit
@@ -443,7 +443,11 @@ contract MasterPool is IMasterPool, Vault {
         uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
 
         // deduct the exit fee from the network token amount
-        uint256 withdrawalFeeAmount = MathEx.mulDivF(networkTokenAmount, _settings.withdrawalFeePPM(), PPM_RESOLUTION);
+        uint256 withdrawalFeeAmount = MathEx.mulDivF(
+            networkTokenAmount,
+            _networkSettings.withdrawalFeePPM(),
+            PPM_RESOLUTION
+        );
         unchecked {
             networkTokenAmount -= withdrawalFeeAmount;
         }

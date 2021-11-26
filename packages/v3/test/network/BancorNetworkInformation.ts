@@ -6,6 +6,7 @@ import {
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
+    IPoolToken,
     NetworkSettings,
     TestBancorNetwork,
     TestMasterPool,
@@ -36,10 +37,14 @@ describe('BancorNetworkInformation', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let govToken: IERC20;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
         let masterPool: TestMasterPool;
+        let masterPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let mainVault: BancorVault;
         let externalProtectionVault: ExternalProtectionVault;
@@ -49,6 +54,9 @@ describe('BancorNetworkInformation', () => {
         beforeEach(async () => {
             ({
                 network,
+                networkToken,
+                govToken,
+                networkInformation,
                 networkSettings,
                 networkTokenGovernance,
                 govTokenGovernance,
@@ -229,6 +237,24 @@ describe('BancorNetworkInformation', () => {
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should be properly initialized', async () => {
+            expect(await networkInformation.version()).to.equal(1);
+
+            expect(await networkInformation.network()).to.equal(network.address);
+            expect(await networkInformation.networkToken()).to.equal(networkToken.address);
+            expect(await networkInformation.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
+            expect(await networkInformation.govToken()).to.equal(govToken.address);
+            expect(await networkInformation.govTokenGovernance()).to.equal(govTokenGovernance.address);
+            expect(await networkInformation.networkSettings()).to.equal(networkSettings.address);
+            expect(await networkInformation.mainVault()).to.equal(mainVault.address);
+            expect(await networkInformation.externalProtectionVault()).to.equal(externalProtectionVault.address);
+            expect(await networkInformation.externalRewardsVault()).to.equal(externalRewardsVault.address);
+            expect(await networkInformation.masterPool()).to.equal(masterPool.address);
+            expect(await networkInformation.masterPoolToken()).to.equal(masterPoolToken.address);
+            expect(await networkInformation.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+            expect(await networkInformation.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
         });
     });
 

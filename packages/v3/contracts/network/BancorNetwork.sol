@@ -86,7 +86,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
-    INetworkSettings private immutable _settings;
+    INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
     IBancorVault private immutable _mainVault;
@@ -275,14 +275,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
+        INetworkSettings initNetworkSettings,
         IBancorVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
-        validAddress(address(initSettings))
+        validAddress(address(initNetworkSettings))
         validAddress(address(initMainVault))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initMasterPoolToken))
@@ -292,7 +292,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
 
-        _settings = initSettings;
+        _networkSettings = initNetworkSettings;
         _mainVault = initMainVault;
         _externalProtectionVault = initExternalProtectionVault;
         _masterPoolToken = initMasterPoolToken;
@@ -704,11 +704,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(amount)
         validAddress(address(recipient))
     {
-        if (!_isNetworkToken(token) && !_settings.isTokenWhitelisted(token)) {
+        if (!_isNetworkToken(token) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
-        uint256 feeAmount = MathEx.mulDivF(amount, _settings.flashLoanFeePPM(), PPM_RESOLUTION);
+        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(), PPM_RESOLUTION);
 
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));
@@ -899,7 +899,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the master pool is able to provide network liquidity
         uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.unallocatedLiquidity(pool);
-        if (unallocatedNetworkTokenLiquidity == 0 && !_settings.isTokenWhitelisted(pool)) {
+        if (unallocatedNetworkTokenLiquidity == 0 && !_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         } else if (!cachedMasterPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
             revert NetworkLiquidityDisabled();

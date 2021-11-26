@@ -118,7 +118,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     IERC20 private immutable _networkToken;
 
     // the network settings contract
-    INetworkSettings private immutable _settings;
+    INetworkSettings private immutable _networkSettings;
 
     // the pool token factory contract
     IPoolTokenFactory private immutable _poolTokenFactory;
@@ -186,13 +186,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     constructor(
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
-        INetworkSettings initSettings,
+        INetworkSettings initNetworkSettings,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkToken))
-        validAddress(address(initSettings))
+        validAddress(address(initNetworkSettings))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
@@ -200,7 +200,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         _network = initNetwork;
         _networkToken = initNetworkToken;
-        _settings = initSettings;
+        _networkSettings = initNetworkSettings;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -278,7 +278,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @inheritdoc IPoolCollection
      */
     function createPool(ReserveToken reserveToken) external only(address(_network)) nonReentrant {
-        if (!_settings.isTokenWhitelisted(reserveToken)) {
+        if (!_networkSettings.isTokenWhitelisted(reserveToken)) {
             revert NotWhitelisted();
         }
 
@@ -344,7 +344,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
                     d: data.liquidity.baseTokenTradingLiquidity
                 }),
                 data.averageRate,
-                _settings.averageRateMaxDeviationPPM()
+                _networkSettings.averageRateMaxDeviationPPM()
             );
     }
 
@@ -505,7 +505,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         // if we've passed above the minimum network token liquidity for trading - emit that trading is now enabled
         if (data.tradingEnabled) {
-            uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+            uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
             if (
                 data.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading &&
                 data.liquidity.networkTokenTradingLiquidity + depositParams.baseTokenDeltaAmount >=
@@ -772,7 +772,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         // get the effective rate to use when calculating the matching network token trading liquidity amount
-        uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
         if (minLiquidityForTrading == 0) {
             revert MinLiquidityNotSet();
         }
@@ -848,7 +848,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
                 params.baseTokenStakedAmount,
                 externalProtectionVaultBalance,
                 params.tradeFeePPM,
-                _settings.withdrawalFeePPM(),
+                _networkSettings.withdrawalFeePPM(),
                 basePoolTokenAmount
             );
     }
@@ -925,7 +925,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         if (data.tradingEnabled) {
-            uint256 minLiquidityForTrading = _settings.minLiquidityForTrading();
+            uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
             bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
             bool newEnabled = networkTokenNewTradingLiquidity >= minLiquidityForTrading;
             if (newEnabled != currEnabled) {
@@ -1450,7 +1450,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         }
 
         // verify that liquidity is above the minimum network token liquidity for trading
-        if (params.liquidity.networkTokenTradingLiquidity < _settings.minLiquidityForTrading()) {
+        if (params.liquidity.networkTokenTradingLiquidity < _networkSettings.minLiquidityForTrading()) {
             revert LiquidityTooLow();
         }
 

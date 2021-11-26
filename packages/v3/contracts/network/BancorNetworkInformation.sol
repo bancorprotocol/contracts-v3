@@ -49,7 +49,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     ITokenGovernance private immutable _govTokenGovernance;
 
     // the network settings contract
-    INetworkSettings private immutable _settings;
+    INetworkSettings private immutable _networkSettings;
 
     // the main vault contract
     IBancorVault private immutable _mainVault;
@@ -82,7 +82,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         IBancorNetwork initNetwork,
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
+        INetworkSettings initNetworkSettings,
         IBancorVault initMainVault,
         IExternalProtectionVault initExternalProtectionVault,
         IExternalRewardsVault initExternalRewardsVault,
@@ -93,7 +93,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _validAddress(address(initNetwork));
         _validAddress(address(initNetworkTokenGovernance));
         _validAddress(address(initGovTokenGovernance));
-        _validAddress(address(initSettings));
+        _validAddress(address(initNetworkSettings));
         _validAddress(address(initMainVault));
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initExternalRewardsVault));
@@ -106,7 +106,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         _networkToken = initNetworkTokenGovernance.token();
         _govTokenGovernance = initGovTokenGovernance;
         _govToken = initGovTokenGovernance.token();
-        _settings = initSettings;
+        _networkSettings = initNetworkSettings;
         _mainVault = initMainVault;
         _externalProtectionVault = initExternalProtectionVault;
         _externalRewardsVault = initExternalRewardsVault;
@@ -204,8 +204,8 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function settings() external view returns (INetworkSettings) {
-        return _settings;
+    function networkSettings() external view returns (INetworkSettings) {
+        return _networkSettings;
     }
 
     /**
