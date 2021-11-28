@@ -12,7 +12,7 @@ import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IPoolCollection, TradeAmounts } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
+import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
@@ -70,14 +70,14 @@ interface IBancorNetwork is IUpgradeable {
     function vault() external view returns (IBancorVault);
 
     /**
-     * @dev returns the network token pool token contract
+     * @dev returns the master pool token contract
      */
-    function networkPoolToken() external view returns (IPoolToken);
+    function masterPoolToken() external view returns (IPoolToken);
 
     /**
-     * @dev returns the network token pool contract
+     * @dev returns the master pool contract
      */
-    function networkTokenPool() external view returns (INetworkTokenPool);
+    function masterPool() external view returns (IMasterPool);
 
     /**
      * @dev returns the pending withdrawals contract
