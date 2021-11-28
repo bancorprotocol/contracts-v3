@@ -48,7 +48,7 @@ describe.only('BancorV1Migration', () => {
                     let network: TestBancorNetwork;
                     let networkSettings: NetworkSettings;
                     let networkToken: IERC20;
-                    let networkPoolToken: PoolToken;
+                    let masterPoolToken: PoolToken;
                     let basePoolToken: PoolToken;
                     let pendingWithdrawals: PendingWithdrawals;
                     let poolCollection: TestPoolCollection;
@@ -66,7 +66,7 @@ describe.only('BancorV1Migration', () => {
                             network,
                             networkSettings,
                             networkToken,
-                            networkPoolToken,
+                            masterPoolToken,
                             pendingWithdrawals,
                             poolCollection,
                             bancorVault
@@ -169,16 +169,16 @@ describe.only('BancorV1Migration', () => {
 
                                 const txs: ContractTransaction[] = [];
 
-                                const networkPoolTokenAmount = await getBalance(networkPoolToken, provider.address);
+                                const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
                                 txs.push(
-                                    await networkPoolToken
+                                    await masterPoolToken
                                         .connect(provider)
-                                        .approve(pendingWithdrawals.address, networkPoolTokenAmount)
+                                        .approve(pendingWithdrawals.address, masterPoolTokenAmount)
                                 );
                                 txs.push(
                                     await pendingWithdrawals
                                         .connect(provider)
-                                        .initWithdrawal(networkPoolToken.address, networkPoolTokenAmount)
+                                        .initWithdrawal(masterPoolToken.address, masterPoolTokenAmount)
                                 );
                                 const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
                                 txs.push(
