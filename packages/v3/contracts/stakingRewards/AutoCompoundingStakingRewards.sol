@@ -205,7 +205,7 @@ contract AutoCompoundingStakingRewards is
         DistributionType distributionType,
         uint256 startTime,
         uint256 endTime
-    ) external onlyAdmin {
+    ) external validAddress(address(rewardsVault)) onlyAdmin {
         if (isProgramActive(ReserveToken.unwrap(pool))) {
             revert ProgramAlreadyRunning();
         }
@@ -213,7 +213,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
         // if rewards vault address is different from address(0) then they was a previous program
-        if (address(rewardsVault) != address(0)) {
+        if (address(currentProgram.rewardsVault) != address(0)) {
             // process rewards to make sure there's no rewards left for that pool
             processRewards(pool);
         }
@@ -310,25 +310,27 @@ contract AutoCompoundingStakingRewards is
         ReserveToken reserveToken = ReserveToken(pool);
 
         uint256 stakedBalance;
+        uint256 amountOfPoolTokenOwnedByProtocol;
         IPoolToken poolToken;
 
         if (_networkToken == reserveToken.toIERC20()) {
             stakedBalance = _networkTokenPool.stakedBalance();
             poolToken = _networkTokenPool.poolToken();
+            amountOfPoolTokenOwnedByProtocol = poolToken.balanceOf(address(_network.masterPool()));
         } else {
-            // note that we don't need to verify that the pool exists, since it has been already checked before this call
             stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
             poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
+            amountOfPoolTokenOwnedByProtocol = poolToken.balanceOf(address(currentProgram.rewardsVault));
         }
+
         uint256 poolTokenTotalSupply = poolToken.totalSupply();
 
-        uint256 counterBalance = (stakedBalance - poolTokenTotalSupply);
-
-        uint256 counterBalancePoolTokenToBurn = MathEx.mulDivF(tokenToBeDistributed, counterBalance, stakedBalance);
-
-        uint256 poolTokenToBurn = MathEx.mulDivF(tokenToBeDistributed, poolTokenTotalSupply, stakedBalance) +
-            counterBalancePoolTokenToBurn;
-        console.log("---> poolTokenToBurn", poolTokenToBurn);
+        uint256 poolTokenToBurn = processPoolTokenToBurn(
+            stakedBalance,
+            tokenToBeDistributed,
+            poolTokenTotalSupply,
+            amountOfPoolTokenOwnedByProtocol
+        );
 
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(poolToken)),
@@ -336,24 +338,18 @@ contract AutoCompoundingStakingRewards is
             poolTokenToBurn
         );
 
-        uint256 tokenActuallyDistributed = MathEx.mulDivF(
-            (poolTokenToBurn - counterBalancePoolTokenToBurn),
-            stakedBalance,
-            poolToken.totalSupply()
-        );
-
-        currentProgram.availableRewards -= tokenActuallyDistributed;
+        currentProgram.availableRewards -= tokenToBeDistributed;
         currentProgram.prevDistributionTimestamp = _time();
 
         poolToken.approve(address(this), poolTokenToBurn);
         poolToken.burnFrom(address(this), poolTokenToBurn);
 
-        // emit RewardsDistributed(
-        //     ReserveToken.unwrap(pool),
-        //     tokenActuallyDistributed,
-        //     poolTokenToBurn,
-        //     timeElapsed,
-        //     currentProgram.availableRewards
-        // );
+        emit RewardsDistributed(
+            ReserveToken.unwrap(pool),
+            tokenToBeDistributed,
+            poolTokenToBurn,
+            timeElapsed,
+            currentProgram.availableRewards
+        );
     }
 }

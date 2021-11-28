@@ -13,17 +13,14 @@ contract StakingRewardsMath {
     uint256 internal constant LAMBDA_N = 142857142857143;
     uint256 internal constant LAMBDA_D = 10000000000000000000000;
 
-    function processTokenToPoolToken(
-        uint256 a_totalAmountOfTokenStaked,
-        uint256 b_amountOfTokenToDistribute,
-        uint256 c_totalSupplyOfPoolToken,
-        uint256 d_amountOfPoolTokenOwnedByProtocol
+    function processPoolTokenToBurn(
+        uint256 a, // totalAmountOfTokenStaked
+        uint256 b, // amountOfTokenToDistribute
+        uint256 c, // totalSupplyOfPoolToken
+        uint256 d // amountOfPoolTokenOwnedByProtocol
     ) internal pure returns (uint256) {
-        uint256 topFraction = b_amountOfTokenToDistribute * (c_totalSupplyOfPoolToken * c_totalSupplyOfPoolToken);
-        uint256 lowerFraction = ((c_totalSupplyOfPoolToken * a_totalAmountOfTokenStaked) +
-            (c_totalSupplyOfPoolToken * b_amountOfTokenToDistribute)) -
-            (a_totalAmountOfTokenStaked * d_amountOfPoolTokenOwnedByProtocol);
-        return MathEx.roundDiv(topFraction, lowerFraction);
+        uint256 bc = b * c;
+        return MathEx.mulDivF(bc, c, bc + a * (c - d));
     }
 
     function processFlatReward(
