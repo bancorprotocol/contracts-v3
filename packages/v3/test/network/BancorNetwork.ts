@@ -3109,7 +3109,7 @@ describe('BancorNetwork Flow', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let baseToken: TestERC20Burnable;
         let basePoolToken: PoolToken;
-        let networkPoolToken: PoolToken;
+        let masterPoolToken: PoolToken;
         let govToken: IERC20;
         let tknDecimals: number;
         let bntDecimals: number;
@@ -3163,8 +3163,8 @@ describe('BancorNetwork Flow', () => {
         };
 
         const withdrawBNT = async (userId: string, amount: string) => {
-            const wei = await toWei(userId, amount, bnbntDecimals, networkPoolToken);
-            await pendingWithdrawals.connect(users[userId]).initWithdrawal(networkPoolToken.address, wei);
+            const wei = await toWei(userId, amount, bnbntDecimals, masterPoolToken);
+            await pendingWithdrawals.connect(users[userId]).initWithdrawal(masterPoolToken.address, wei);
             const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
             await network.connect(users[userId]).withdraw(ids[0]);
         };
@@ -3197,13 +3197,13 @@ describe('BancorNetwork Flow', () => {
                 actual.tknBalances[userId] = integerToDecimal(await baseToken.balanceOf(users[userId].address), tknDecimals);
                 actual.bntBalances[userId] = integerToDecimal(await networkToken.balanceOf(users[userId].address), bntDecimals);
                 actual.bntknBalances[userId] = integerToDecimal(await basePoolToken.balanceOf(users[userId].address), bntknDecimals);
-                actual.bnbntBalances[userId] = integerToDecimal(await networkPoolToken.balanceOf(users[userId].address), bnbntDecimals);
+                actual.bnbntBalances[userId] = integerToDecimal(await masterPoolToken.balanceOf(users[userId].address), bnbntDecimals);
             }
 
             actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
             actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(externalProtectionVault.address), tknDecimals);
             actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
-            actual.bnbntBalances['protocol'] = integerToDecimal(await networkPoolToken.balanceOf(masterPool.address), bnbntDecimals);
+            actual.bnbntBalances['protocol'] = integerToDecimal(await masterPoolToken.balanceOf(masterPool.address), bnbntDecimals);
 
             actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
             actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
@@ -3221,7 +3221,7 @@ describe('BancorNetwork Flow', () => {
                 networkToken,
                 networkSettings,
                 masterPool,
-                networkPoolToken,
+                masterPoolToken,
                 networkTokenGovernance,
                 govToken,
                 pendingWithdrawals,
@@ -3264,7 +3264,7 @@ describe('BancorNetwork Flow', () => {
                 await baseToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
                 await networkToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
                 await basePoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
-                await networkPoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
+                await masterPoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
                 await baseToken.transfer(users[user.id].address, decimalToInteger(user.tknBalance, tknDecimals));
                 await networkToken.transfer(users[user.id].address, decimalToInteger(user.bntBalance, bntDecimals));
             }
