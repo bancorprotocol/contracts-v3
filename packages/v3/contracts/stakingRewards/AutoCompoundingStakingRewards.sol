@@ -42,6 +42,8 @@ struct ProgramData {
 }
 
 error ProgramAlreadyRunning();
+error ProgramNotRunning();
+error InvalidParam();
 
 /**
  * @dev Auto Compounding Staking Rewards contract
@@ -205,9 +207,17 @@ contract AutoCompoundingStakingRewards is
         DistributionType distributionType,
         uint256 startTime,
         uint256 endTime
-    ) external validAddress(address(rewardsVault)) onlyAdmin {
+    ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
         if (isProgramActive(ReserveToken.unwrap(pool))) {
             revert ProgramAlreadyRunning();
+        }
+
+        if (totalRewards <= 0) {
+            revert InvalidParam();
+        }
+
+        if (startTime > endTime || startTime < _time()) {
+            revert InvalidParam();
         }
 
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
@@ -238,9 +248,16 @@ contract AutoCompoundingStakingRewards is
         );
     }
 
+    /**
+     * @dev terminate a pool's program
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
     function terminateProgram(address pool) external onlyAdmin {
         if (!isProgramActive(pool)) {
-            revert ProgramAlreadyRunning();
+            revert ProgramNotRunning();
         }
 
         ProgramData storage currentProgram = _programs[pool];
