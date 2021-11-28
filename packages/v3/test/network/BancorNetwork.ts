@@ -3101,7 +3101,7 @@ describe('BancorNetwork Flow', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let networkTokenGovernance: TokenGovernance;
         let pendingWithdrawals: PendingWithdrawals;
         let poolCollection: TestPoolCollection;
@@ -3203,9 +3203,9 @@ describe('BancorNetwork Flow', () => {
             actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
             actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(externalProtectionVault.address), tknDecimals);
             actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
-            actual.bnbntBalances['protocol'] = integerToDecimal(await networkPoolToken.balanceOf(networkTokenPool.address), bnbntDecimals);
+            actual.bnbntBalances['protocol'] = integerToDecimal(await networkPoolToken.balanceOf(masterPool.address), bnbntDecimals);
 
-            actual.bntStakedBalance = integerToDecimal(await networkTokenPool.stakedBalance(), bntDecimals);
+            actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
             actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
             actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
             actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
@@ -3220,7 +3220,7 @@ describe('BancorNetwork Flow', () => {
                 network,
                 networkToken,
                 networkSettings,
-                networkTokenPool,
+                masterPool,
                 networkPoolToken,
                 networkTokenGovernance,
                 govToken,
