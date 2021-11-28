@@ -44,10 +44,10 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 
 // prettier-ignore
 import {
-    INetworkTokenPool,
-    DepositAmounts as NetworkTokenPoolDepositAmounts,
-    WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts
-} from "../pools/interfaces/INetworkTokenPool.sol";
+    IMasterPool,
+    DepositAmounts as MasterPoolDepositAmounts,
+    WithdrawalAmounts as MasterPoolWithdrawalAmounts
+} from "../pools/interfaces/IMasterPool.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -94,14 +94,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the vault contract
     IBancorVault private immutable _vault;
 
-    // the network token pool token
-    IPoolToken internal immutable _networkPoolToken;
+    // the master pool token
+    IPoolToken internal immutable _masterPoolToken;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
-    // the network token pool contract
-    INetworkTokenPool internal _networkTokenPool;
+    // the master pool contract
+    IMasterPool internal _masterPool;
 
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
@@ -280,14 +280,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken,
+        IPoolToken initMasterPoolToken,
         IExternalProtectionVault initExternalProtectionVault
     )
         validAddress(address(initNetworkTokenGovernance))
         validAddress(address(initGovTokenGovernance))
         validAddress(address(initSettings))
         validAddress(address(initVault))
-        validAddress(address(initNetworkPoolToken))
+        validAddress(address(initMasterPoolToken))
         validAddress(address(initExternalProtectionVault))
     {
         _networkTokenGovernance = initNetworkTokenGovernance;
@@ -297,7 +297,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _settings = initSettings;
         _vault = initVault;
-        _networkPoolToken = initNetworkPoolToken;
+        _masterPoolToken = initMasterPoolToken;
         _externalProtectionVault = initExternalProtectionVault;
     }
 
@@ -305,17 +305,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev fully initializes the contract and its parents
      */
     function initialize(
-        INetworkTokenPool initNetworkTokenPool,
+        IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         external
-        validAddress(address(initNetworkTokenPool))
+        validAddress(address(initMasterPool))
         validAddress(address(initPendingWithdrawals))
         validAddress(address(initPoolCollectionUpgrader))
         initializer
     {
-        __BancorNetwork_init(initNetworkTokenPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init(initMasterPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     // solhint-disable func-name-mixedcase
@@ -324,25 +324,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev initializes the contract and its parents
      */
     function __BancorNetwork_init(
-        INetworkTokenPool initNetworkTokenPool,
+        IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal initializer {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initNetworkTokenPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init_unchained(initMasterPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
     function __BancorNetwork_init_unchained(
-        INetworkTokenPool initNetworkTokenPool,
+        IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal initializer {
-        _networkTokenPool = initNetworkTokenPool;
+        _masterPool = initMasterPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -421,15 +421,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev IBancorNetwork
      */
-    function networkPoolToken() external view returns (IPoolToken) {
-        return _networkPoolToken;
+    function masterPoolToken() external view returns (IPoolToken) {
+        return _masterPoolToken;
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function networkTokenPool() external view returns (INetworkTokenPool) {
-        return _networkTokenPool;
+    function masterPool() external view returns (IMasterPool) {
+        return _masterPool;
     }
 
     /**
@@ -714,7 +714,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
-        if (completedRequest.poolToken == _networkPoolToken) {
+        if (completedRequest.poolToken == _masterPoolToken) {
             _withdrawNetworkToken(contextId, provider, completedRequest);
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
@@ -838,11 +838,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // notify the pool of accrued fees
         if (_isNetworkToken(token)) {
-            INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+            IMasterPool cachedMasterPool = _masterPool;
 
-            cachedNetworkTokenPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
+            cachedMasterPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
 
-            stakedBalance = cachedNetworkTokenPool.stakedBalance();
+            stakedBalance = cachedMasterPool.stakedBalance();
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
@@ -951,13 +951,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private {
-        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+        IMasterPool cachedMasterPool = _masterPool;
 
-        // transfer the tokens from the sender to the network token pool
-        _networkToken.transferFrom(sender, address(cachedNetworkTokenPool), networkTokenAmount);
+        // transfer the tokens from the sender to the master pool
+        _networkToken.transferFrom(sender, address(cachedMasterPool), networkTokenAmount);
 
-        // process network token pool deposit
-        NetworkTokenPoolDepositAmounts memory depositAmounts = cachedNetworkTokenPool.depositFor(
+        // process master pool deposit
+        MasterPoolDepositAmounts memory depositAmounts = cachedMasterPool.depositFor(
             provider,
             networkTokenAmount,
             isMigrating,
@@ -975,8 +975,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         emit TotalLiquidityUpdated({
             contextId: contextId,
             pool: ReserveToken.wrap(address(_networkToken)),
-            poolTokenSupply: _networkPoolToken.totalSupply(),
-            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            poolTokenSupply: _masterPoolToken.totalSupply(),
+            stakedBalance: cachedMasterPool.stakedBalance(),
             actualBalance: _networkToken.balanceOf(address(_vault))
         });
     }
@@ -996,17 +996,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address sender,
         uint256 availableAmount
     ) private {
-        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+        IMasterPool cachedMasterPool = _masterPool;
 
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
-        // we need to check if the network token pool is able to provide network liquidity
-        uint256 unallocatedNetworkTokenLiquidity = cachedNetworkTokenPool.unallocatedLiquidity(pool);
+        // we need to check if the master pool is able to provide network liquidity
+        uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.unallocatedLiquidity(pool);
         if (unallocatedNetworkTokenLiquidity == 0 && !_settings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
-        } else if (!cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+        } else if (!cachedMasterPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
             revert NetworkLiquidityDisabled();
         }
 
@@ -1021,9 +1021,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             unallocatedNetworkTokenLiquidity
         );
 
-        // request additional liquidity from the network token pool and transfer it to the vault
+        // request additional liquidity from the master pool and transfer it to the vault
         if (depositAmounts.networkTokenDeltaAmount > 0) {
-            cachedNetworkTokenPool.requestLiquidity(contextId, pool, depositAmounts.networkTokenDeltaAmount);
+            cachedMasterPool.requestLiquidity(contextId, pool, depositAmounts.networkTokenDeltaAmount);
         }
 
         // TODO: process network fees based on the return values
@@ -1051,8 +1051,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         emit TotalLiquidityUpdated({
             contextId: contextId,
             pool: ReserveToken.wrap(address(_networkToken)),
-            poolTokenSupply: _networkPoolToken.totalSupply(),
-            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            poolTokenSupply: _masterPoolToken.totalSupply(),
+            stakedBalance: cachedMasterPool.stakedBalance(),
             actualBalance: _networkToken.balanceOf(address(_vault))
         });
 
@@ -1132,17 +1132,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         CompletedWithdrawal memory completedRequest
     ) private {
-        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+        IMasterPool cachedMasterPool = _masterPool;
 
-        // approve the network token pool to transfer pool tokens, which we have received from the completion of the
+        // approve the master pool to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // transfer governance tokens from the caller to the network token pool
-        _govToken.transferFrom(provider, address(cachedNetworkTokenPool), completedRequest.poolTokenAmount);
+        // transfer governance tokens from the caller to the master pool
+        _govToken.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the network token pool - returns the amounts/breakdown
-        NetworkTokenPoolWithdrawalAmounts memory amounts = cachedNetworkTokenPool.withdraw(
+        // call withdraw on the master pool - returns the amounts/breakdown
+        MasterPoolWithdrawalAmounts memory amounts = cachedMasterPool.withdraw(
             provider,
             completedRequest.poolTokenAmount
         );
@@ -1162,7 +1162,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId: contextId,
             pool: ReserveToken.wrap(address(_networkToken)),
             poolTokenSupply: completedRequest.poolToken.totalSupply(),
-            stakedBalance: cachedNetworkTokenPool.stakedBalance(),
+            stakedBalance: cachedMasterPool.stakedBalance(),
             actualBalance: _networkToken.balanceOf(address(_vault))
         });
     }
@@ -1175,7 +1175,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         CompletedWithdrawal memory completedRequest
     ) private {
-        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+        IMasterPool cachedMasterPool = _masterPool;
 
         ReserveToken pool = completedRequest.poolToken.reserveToken();
 
@@ -1183,7 +1183,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // ensure that network token liquidity is enabled
-        if (!cachedNetworkTokenPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+        if (!cachedMasterPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
             revert NetworkLiquidityDisabled();
         }
 
@@ -1201,22 +1201,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if network token trading liquidity should be lowered - renounce liquidity
         if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedNetworkTokenPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
+            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
         }
 
-        // if the network token arbitrage is positive - ask the network token pool to mint network tokens into the vault
+        // if the network token arbitrage is positive - ask the master pool to mint network tokens into the vault
         if (amounts.networkTokenArbitrageAmount > 0) {
-            cachedNetworkTokenPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
+            cachedMasterPool.mint(address(_vault), uint256(amounts.networkTokenArbitrageAmount));
         }
-        // if the network token arbitrage is negative - ask the network token pool to burn network tokens from the vault
+        // if the network token arbitrage is negative - ask the master pool to burn network tokens from the vault
         else if (amounts.networkTokenArbitrageAmount < 0) {
-            cachedNetworkTokenPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
+            cachedMasterPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
         }
 
-        // if the provider should receive some network tokens - ask the network token pool to mint network tokens to the
+        // if the provider should receive some network tokens - ask the master pool to mint network tokens to the
         // provider
         if (amounts.networkTokenAmountToMintForProvider > 0) {
-            cachedNetworkTokenPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
+            cachedMasterPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the vault - remove the tokens from the vault and send
@@ -1353,11 +1353,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             minReturnAmount
         );
 
-        INetworkTokenPool cachedNetworkTokenPool = _networkTokenPool;
+        IMasterPool cachedMasterPool = _masterPool;
 
-        // if the target token is the network token, notify the network token pool on collected fees
+        // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
-            cachedNetworkTokenPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
+            cachedMasterPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
         }
 
         emit TokensTraded({
@@ -1377,7 +1377,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             amount: tradeAmounts.feeAmount,
             stakedBalance: isSourceNetworkToken
                 ? tradeAmounts.liquidity.stakedBalance
-                : cachedNetworkTokenPool.stakedBalance()
+                : cachedMasterPool.stakedBalance()
         });
 
         emit TradingLiquidityUpdated({

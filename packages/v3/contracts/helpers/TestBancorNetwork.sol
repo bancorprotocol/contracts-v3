@@ -27,10 +27,10 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 
 // prettier-ignore
 import {
-    INetworkTokenPool,
-    DepositAmounts as NetworkTokenPoolDepositAmounts,
-    WithdrawalAmounts as NetworkTokenPoolWithdrawalAmounts
-} from "../pools/interfaces/INetworkTokenPool.sol";
+    IMasterPool,
+    DepositAmounts as MasterPoolDepositAmounts,
+    WithdrawalAmounts as MasterPoolWithdrawalAmounts
+} from "../pools/interfaces/IMasterPool.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -46,7 +46,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initSettings,
         IBancorVault initVault,
-        IPoolToken initNetworkPoolToken,
+        IPoolToken initMasterPoolToken,
         IExternalProtectionVault initExternalProtectionVault
     )
         BancorNetwork(
@@ -54,7 +54,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initGovTokenGovernance,
             initSettings,
             initVault,
-            initNetworkPoolToken,
+            initMasterPoolToken,
             initExternalProtectionVault
         )
     {}
@@ -79,11 +79,11 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     }
 
     function mintT(address recipient, uint256 networkTokenAmount) external {
-        return _networkTokenPool.mint(recipient, networkTokenAmount);
+        return _masterPool.mint(recipient, networkTokenAmount);
     }
 
     function burnFromVaultT(uint256 networkTokenAmount) external {
-        return _networkTokenPool.burnFromVault(networkTokenAmount);
+        return _masterPool.burnFromVault(networkTokenAmount);
     }
 
     function depositToNetworkPoolForT(
@@ -91,8 +91,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
-    ) external returns (NetworkTokenPoolDepositAmounts memory) {
-        return _networkTokenPool.depositFor(provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
+    ) external returns (MasterPoolDepositAmounts memory) {
+        return _masterPool.depositFor(provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
@@ -107,9 +107,9 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function withdrawFromNetworkPoolT(address provider, uint256 poolTokenAmount)
         external
-        returns (NetworkTokenPoolWithdrawalAmounts memory)
+        returns (MasterPoolWithdrawalAmounts memory)
     {
-        return _networkTokenPool.withdraw(provider, poolTokenAmount);
+        return _masterPool.withdraw(provider, poolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(
@@ -128,7 +128,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ReserveToken pool,
         uint256 networkTokenAmount
     ) external {
-        _networkTokenPool.requestLiquidity(contextId, pool, networkTokenAmount);
+        _masterPool.requestLiquidity(contextId, pool, networkTokenAmount);
     }
 
     function renounceLiquidityT(
@@ -136,7 +136,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ReserveToken pool,
         uint256 networkTokenAmount
     ) external {
-        _networkTokenPool.renounceLiquidity(contextId, pool, networkTokenAmount);
+        _masterPool.renounceLiquidity(contextId, pool, networkTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(
@@ -144,7 +144,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 amount,
         uint8 feeType
     ) external {
-        _networkTokenPool.onFeesCollected(pool, amount, feeType);
+        _masterPool.onFeesCollected(pool, amount, feeType);
     }
 
     function onPoolCollectionFeesCollectedT(

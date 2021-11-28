@@ -4,7 +4,7 @@ import {
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
-    TestNetworkTokenPool,
+    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
@@ -40,11 +40,11 @@ describe('PendingWithdrawals', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
+        let masterPool: TestMasterPool;
         let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
-            ({ network, networkToken, networkTokenPool, pendingWithdrawals } = await createSystem());
+            ({ network, networkToken, masterPool, pendingWithdrawals } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -54,12 +54,12 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should revert when initialized with an invalid network contract', async () => {
-            await expect(
-                Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, networkTokenPool.address)
-            ).to.be.revertedWith('InvalidAddress');
+            await expect(Contracts.PendingWithdrawals.deploy(ZERO_ADDRESS, masterPool.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
-        it('should revert when initialized with an invalid network token pool contract', async () => {
+        it('should revert when initialized with an invalid master pool contract', async () => {
             await expect(Contracts.PendingWithdrawals.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
@@ -74,16 +74,13 @@ describe('PendingWithdrawals', () => {
 
             expect(await pendingWithdrawals.network()).to.equal(network.address);
             expect(await pendingWithdrawals.networkToken()).to.equal(networkToken.address);
-            expect(await pendingWithdrawals.networkTokenPool()).to.equal(networkTokenPool.address);
+            expect(await pendingWithdrawals.masterPool()).to.equal(masterPool.address);
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
             expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should emit events on initialization', async () => {
-            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(
-                network.address,
-                networkTokenPool.address
-            );
+            const pendingWithdrawals = await Contracts.PendingWithdrawals.deploy(network.address, masterPool.address);
             const res = await pendingWithdrawals.initialize();
             await expect(res)
                 .to.emit(pendingWithdrawals, 'LockDurationUpdated')
@@ -180,8 +177,8 @@ describe('PendingWithdrawals', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
-        let networkTokenPool: TestNetworkTokenPool;
-        let networkPoolToken: PoolToken;
+        let masterPool: TestMasterPool;
+        let masterPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
@@ -195,8 +192,8 @@ describe('PendingWithdrawals', () => {
                     network,
                     networkSettings,
                     networkToken,
-                    networkTokenPool,
-                    networkPoolToken,
+                    masterPool,
+                    masterPoolToken,
                     pendingWithdrawals,
                     poolCollection
                 } = await createSystem());
@@ -209,8 +206,8 @@ describe('PendingWithdrawals', () => {
 
             const poolTokenUnderlying = async (poolToken: PoolToken, amount: BigNumber) => {
                 let stakedBalance: BigNumber;
-                if (networkPoolToken.address === poolToken.address) {
-                    stakedBalance = await networkTokenPool.stakedBalance();
+                if (masterPoolToken.address === poolToken.address) {
+                    stakedBalance = await masterPool.stakedBalance();
                 } else {
                     ({ stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address));
                 }

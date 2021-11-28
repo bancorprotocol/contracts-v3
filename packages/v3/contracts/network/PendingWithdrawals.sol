@@ -16,7 +16,7 @@ import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
-import { INetworkTokenPool } from "../pools/interfaces/INetworkTokenPool.sol";
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 
@@ -41,8 +41,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     // the network token contract
     IERC20 private immutable _networkToken;
 
-    // the network token pool contract
-    INetworkTokenPool private immutable _networkTokenPool;
+    // the master pool contract
+    IMasterPool private immutable _masterPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -119,13 +119,13 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, INetworkTokenPool initNetworkTokenPool)
+    constructor(IBancorNetwork initNetwork, IMasterPool initMasterPool)
         validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
+        validAddress(address(initMasterPool))
     {
         _network = initNetwork;
         _networkToken = initNetwork.networkToken();
-        _networkTokenPool = initNetworkTokenPool;
+        _masterPool = initMasterPool;
     }
 
     /**
@@ -180,8 +180,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function networkTokenPool() external view returns (INetworkTokenPool) {
-        return _networkTokenPool;
+    function masterPool() external view returns (IMasterPool) {
+        return _masterPool;
     }
 
     /**
@@ -486,7 +486,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     ) private view returns (uint256) {
         uint256 stakedBalance;
         if (_networkToken == reserveToken.toIERC20()) {
-            stakedBalance = _networkTokenPool.stakedBalance();
+            stakedBalance = _masterPool.stakedBalance();
         } else {
             // note that we don't need to verify that the pool exists, since it has been already checked before this call
             stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
