@@ -5,7 +5,7 @@ pragma abicoder v2;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { INetworkTokenPool } from "../../pools/interfaces/INetworkTokenPool.sol";
+import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -49,9 +49,9 @@ interface IPendingWithdrawals is IUpgradeable {
     function networkToken() external view returns (IERC20);
 
     /**
-     * @dev returns the network token pool contract
+     * @dev returns the master pool contract
      */
-    function networkTokenPool() external view returns (INetworkTokenPool);
+    function masterPool() external view returns (IMasterPool);
 
     /**
      * @dev returns the lock duration
