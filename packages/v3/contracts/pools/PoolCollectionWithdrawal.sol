@@ -13,6 +13,26 @@ function validate(bool valid) pure {
     }
 }
 
+/**
+ * @dev This library implements the mathematics behind base-token withdrawal.
+ * It exposes a single function which takes the following input values:
+ * `a` - network token average trading liquidity
+ * `b` - base token average trading liquidity
+ * `c` - base token excess amount
+ * `e` - base token staked amount
+ * `w` - base token external protection vault balance
+ * `m` - trading fee in PPM units
+ * `n` - withdrawal fee in PPM units
+ * `x` - base token withdrawal amount
+ * And returns the following output values:
+ * `p` - network token amount to add to the trading liquidity and to the master vault
+ * `q` - network token amount to add to the protocol
+ * `r` - base token amount to add to the trading liquidity
+ * `s` - base token amount to transfer from the master vault to the provider
+ * `t` - network token amount to mint directly for the provider
+ * `u` - base token amount to transfer from the external protection vault to the provider
+ * `v` - base token amount to keep in the pool as a withdrawal fee
+ */
 library PoolCollectionWithdrawal {
     using MathEx for uint256;
 
