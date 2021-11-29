@@ -3067,7 +3067,7 @@ describe('BancorNetwork Financial Verification', () => {
     interface Flow {
         tradingFee: string;
         withdrawalFee: string;
-        epwBalance: string;
+        epVaultBalance: string;
         tknDecimals: number;
         users: User[];
         pool: Pool;
@@ -3087,8 +3087,8 @@ describe('BancorNetwork Financial Verification', () => {
             elapsed: 0,
             amount: flow.pool.tknBalance,
             expected: {
-                tknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }), { vault: flow.pool.tknBalance, wallet: flow.epwBalance }),
-                bntBalances: flow.users.reduce((bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }), { vault: flow.pool.bntBalance }),
+                tknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }), { masterVault: flow.pool.tknBalance, epVault: flow.epVaultBalance }),
+                bntBalances: flow.users.reduce((bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }), { masterVault: flow.pool.bntBalance }),
                 bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
                 bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), { protocol: flow.pool.bntBalance }),
                 bntStakedBalance: flow.pool.bntBalance,
@@ -3203,9 +3203,9 @@ describe('BancorNetwork Financial Verification', () => {
                 actual.bnbntBalances[userId] = integerToDecimal(await masterPoolToken.balanceOf(users[userId].address), bnbntDecimals);
             }
 
-            actual.tknBalances['vault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
-            actual.tknBalances['wallet'] = integerToDecimal(await baseToken.balanceOf(externalProtectionVault.address), tknDecimals);
-            actual.bntBalances['vault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
+            actual.tknBalances['masterVault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
+            actual.tknBalances['epVault'] = integerToDecimal(await baseToken.balanceOf(externalProtectionVault.address), tknDecimals);
+            actual.bntBalances['masterVault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
             actual.bnbntBalances['protocol'] = integerToDecimal(await masterPoolToken.balanceOf(masterPool.address), bnbntDecimals);
 
             actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
@@ -3261,7 +3261,7 @@ describe('BancorNetwork Financial Verification', () => {
             await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
             await poolCollection.setInitialRate(baseToken.address, { n: bntInitialBalance, d: tknInitialBalance });
 
-            await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epwBalance, tknDecimals));
+            await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 
             for (const [i, { id, tknBalance, bntBalance }] of flow.users.entries()) {
                 expect(id in users).to.equal(false, `user id '${id}' is not unique`);
