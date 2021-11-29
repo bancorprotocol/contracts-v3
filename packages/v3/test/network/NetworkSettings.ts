@@ -167,7 +167,7 @@ describe('NetworkSettings', () => {
     });
 
     describe('min liquidity for trading', () => {
-        const minLiquidityForTrading = 1000;
+        const minLiquidityForTrading = toWei(1000);
 
         it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
             await expect(
