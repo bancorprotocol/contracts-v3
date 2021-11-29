@@ -1,7 +1,7 @@
 {
     "tradingFee": "0.25%",
     "withdrawalFee": "0.25%",
-    "epVaultBalance": "0",
+    "epwBalance": "0",
     "tknDecimals": 18,
     "users": [
         {
@@ -37,14 +37,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "8900000",
                     "bntProvider": "0",
-                    "masterVault": "1100000",
-                    "epVault": "0"
+                    "vault": "1100000",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "1100000"
+                    "vault": "1100000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -73,14 +73,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "8900000",
                     "bntProvider": "0",
-                    "masterVault": "1100000",
-                    "epVault": "0"
+                    "vault": "1100000",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1100000"
+                    "vault": "1100000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -109,14 +109,14 @@
                     "dayTrader": "9000",
                     "tknProvider": "8900000",
                     "bntProvider": "0",
-                    "masterVault": "1101000",
-                    "epVault": "0"
+                    "vault": "1101000",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10996.594005449591280654",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1099003.405994550408719346"
+                    "vault": "1099003.405994550408719346"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -145,14 +145,14 @@
                     "dayTrader": "9998.403726765770480027",
                     "tknProvider": "8900000",
                     "bntProvider": "0",
-                    "masterVault": "1100001.596273234229519973",
-                    "epVault": "0"
+                    "vault": "1100001.596273234229519973",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9996.594005449591280654",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1100003.405994550408719346"
+                    "vault": "1100003.405994550408719346"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -181,14 +181,14 @@
                     "dayTrader": "9998.403726765770480027",
                     "tknProvider": "9448626.248004658457213099",
                     "bntProvider": "0",
-                    "masterVault": "551375.348268575772306874",
-                    "epVault": "0"
+                    "vault": "551375.348268575772306874",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9996.594005449591280654",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "2750.909985233494293148"
+                    "vault": "2750.909985233494293148"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -217,14 +217,14 @@
                     "dayTrader": "9998.403726765770480027",
                     "tknProvider": "9448626.248004658457213099",
                     "bntProvider": "0",
-                    "masterVault": "551375.348268575772306874",
-                    "epVault": "0"
+                    "vault": "551375.348268575772306874",
+                    "wallet": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9996.594005449591280654",
                     "tknProvider": "0",
                     "bntProvider": "9949875.113249318801089918",
-                    "masterVault": "2750.909985233494293148"
+                    "vault": "2750.909985233494293148"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
