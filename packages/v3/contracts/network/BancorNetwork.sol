@@ -906,7 +906,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the sender to the vault
-        _depositMainToVault(pool, sender, baseTokenAmount);
+        _depositToMasterVault(pool, sender, baseTokenAmount);
 
         // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
@@ -1219,7 +1219,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the trader to the vault
-        _depositMainToVault(sourceToken, trader, sourceAmount);
+        _depositToMasterVault(sourceToken, trader, sourceAmount);
 
         // transfer the target tokens/ETH to the beneficiary
         _masterVault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
@@ -1313,7 +1313,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev deposits reserve tokens to the master vault and verifies that msg.value corresponds to its type
      */
-    function _depositMainToVault(
+    function _depositToMasterVault(
         ReserveToken reserveToken,
         address sender,
         uint256 amount
