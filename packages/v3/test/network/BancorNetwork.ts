@@ -3204,7 +3204,7 @@ describe('BancorNetwork Financial Verification', () => {
             await networkToken.balanceOf(bancorVault.address),
             bntDecimals
         );
-        actual.bnbntBalances['protocol'] = integerToDecimal(
+        actual.bnbntBalances['masterPool'] = integerToDecimal(
             await masterPoolToken.balanceOf(masterPool.address),
             bnbntDecimals
         );
@@ -3243,7 +3243,7 @@ describe('BancorNetwork Financial Verification', () => {
                 ),
                 bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
                 bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
-                    protocol: flow.pool.bntBalance
+                    masterPool: flow.pool.bntBalance
                 }),
                 bntStakedBalance: flow.pool.bntBalance,
                 tknStakedBalance: flow.pool.tknBalance,

@@ -55,7 +55,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "protocol": "10000000"
+                    "masterPool": "10000000"
                 },
                 "bntStakedBalance": "10000000",
                 "tknStakedBalance": "10000000",
@@ -91,7 +91,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "protocol": "9000000"
+                    "masterPool": "9000000"
                 },
                 "bntStakedBalance": "10000000",
                 "tknStakedBalance": "10000000",
@@ -127,7 +127,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "protocol": "4012500"
+                    "masterPool": "4012500"
                 },
                 "bntStakedBalance": "5012500",
                 "tknStakedBalance": "5000000",
@@ -163,7 +163,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "500000",
-                    "protocol": "4512500"
+                    "masterPool": "4512500"
                 },
                 "bntStakedBalance": "5012500",
                 "tknStakedBalance": "5000000",
