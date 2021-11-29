@@ -9,28 +9,11 @@ export const latest = async () => {
     return block.timestamp;
 };
 
-const seconds = (val: number) => {
-    return val;
-};
-
-const minutes = (val: number) => {
-    return val * seconds(60);
-};
-
-const hours = (val: number) => {
-    return val * minutes(60);
-};
-
-const days = (val: number) => {
-    return val * hours(24);
-};
-
-const weeks = (val: number) => {
-    return val * days(7);
-};
-
-const years = (val: number) => {
-    return val * days(365);
-};
+const seconds = (val: number) => val;
+const minutes = (val: number) => val * seconds(60);
+const hours = (val: number) => val * minutes(60);
+const days = (val: number) => val * hours(24);
+const weeks = (val: number) => val * days(7);
+const years = (val: number) => val * days(365);
 
 export const duration = { seconds, minutes, hours, days, weeks, years };
