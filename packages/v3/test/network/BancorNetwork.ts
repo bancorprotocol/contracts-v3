@@ -3310,12 +3310,12 @@ describe('BancorNetwork Financial Verification', () => {
     };
 
     describe('quick tests', () => {
-        test('BancorNetworkFinancialQuickVerification1');
-        test('BancorNetworkFinancialQuickVerification2');
-        test('BancorNetworkFinancialQuickVerification3');
+        test('BancorNetworkSimpleFinancialScenario1');
+        test('BancorNetworkSimpleFinancialScenario2');
+        test('BancorNetworkSimpleFinancialScenario3');
     });
 
     describe('@stress test', () => {
-        test('BancorNetworkFinancialStressVerification');
+        test('BancorNetworkComplexFinancialScenario');
     });
 });
