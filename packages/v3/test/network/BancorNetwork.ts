@@ -3031,6 +3031,7 @@ describe('BancorNetwork', () => {
     });
 });
 
+// prettier-ignore
 describe('BancorNetwork Financial Verification', () => {
     interface User {
         id: string;
