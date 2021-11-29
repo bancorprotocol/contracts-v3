@@ -32,6 +32,28 @@ function validate(bool valid) pure {
  * `t` - network token amount to mint directly for the provider
  * `u` - base token amount to transfer from the external protection vault to the provider
  * `v` - base token amount to keep in the pool as a withdrawal fee
+ * The following table depicts the actual formulae based on the current state of the system:
+ * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * |           |                         Deficit                         |                       Surplus                       |
+ * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * |           | p = a*x(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))  | p = -a*x(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m)) |
+ * |           | q = 0                                                   | q = 0                                               |
+ * |           | r = -x*(e*(1-n)-b-c)/e                                  | r = x*(b+c-e+e*n)/e                                 |
+ * | Arbitrage | s = x*(1-n)                                             | s = x*(1-n)                                         |
+ * |           | t = 0                                                   | t = 0                                               |
+ * |           | u = 0                                                   | u = 0                                               |
+ * |           | v = x*n                                                 | v = x*n                                             |
+ * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * |           | p = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | p = -a*z/b where z = max(x*(1-n)-c,0)               |
+ * |           | q = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | q = -a*z/b where z = max(x*(1-n)-c,0)               |
+ * |           | r = -z/e       where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | r = -z     where z = max(x*(1-n)-c,0)               |
+ * | Default   | s = x*(1-n)*(b+c)/e                                     | s = x*(1-n)                                         |
+ * |           | t = see function `externalProtection`                   | t = 0                                               |
+ * |           | u = see function `externalProtection`                   | u = 0                                               |
+ * |           | v = x*n                                                 | v = x*n                                             |
+ * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * Note that for the sake of illustration, both `m` and `n` are assumed normalized (between 0 and 1).
+ * During runtime, it is taken into account that they are given in PPM units (between 0 and 1000000).
  */
 library PoolCollectionWithdrawal {
     using MathEx for uint256;
@@ -204,9 +226,9 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
-     * `q = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
-     * `r = -z/e` where `z = max(x*(1-n)*b-c*(e-x*(1-n)), 0)`
+     * `p = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)),0)`
+     * `q = -a*z/(b*e)` where `z = max(x*(1-n)*b-c*(e-x*(1-n)),0)`
+     * `r = -z/e` where `z = max(x*(1-n)*b-c*(e-x*(1-n)),0)`
      * `s = x*(1-n)*(b+c)/e`
      */
     // prettier-ignore
@@ -226,9 +248,9 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -a*z/b` where `z = max(x*(1-n)-c, 0)`
-     * `q = -a*z/b` where `z = max(x*(1-n)-c, 0)`
-     * `r = -z` where `z = max(x*(1-n)-c, 0)`
+     * `p = -a*z/b` where `z = max(x*(1-n)-c,0)`
+     * `q = -a*z/b` where `z = max(x*(1-n)-c,0)`
+     * `r = -z` where `z = max(x*(1-n)-c,0)`
      * `s = x*(1-n)`
      */
     // prettier-ignore
