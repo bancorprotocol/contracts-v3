@@ -1,0 +1,175 @@
+{
+    "tradingFee": "0.25%",
+    "withdrawalFee": "0.25%",
+    "epwBalance": "0",
+    "tknDecimals": 18,
+    "users": [
+        {
+            "id": "dayTrader",
+            "tknBalance": "10000",
+            "bntBalance": "10000"
+        },
+        {
+            "id": "tknProvider",
+            "tknBalance": "10000000",
+            "bntBalance": "0"
+        },
+        {
+            "id": "bntProvider",
+            "tknBalance": "0",
+            "bntBalance": "10000000"
+        }
+    ],
+    "pool": {
+        "tknProvider": "tknProvider",
+        "tknBalance": "1000000",
+        "bntBalance": "1000000",
+        "bntMintLimit": "10000000"
+    },
+    "operations": [
+        {
+            "type": "depositTKN",
+            "userId": "tknProvider",
+            "elapsed": 0,
+            "amount": "100%",
+            "expected": {
+                "tknBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "0",
+                    "vault": "10000000",
+                    "wallet": "0"
+                },
+                "bntBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "10000000",
+                    "vault": "10000000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "10000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "0",
+                    "protocol": "10000000"
+                },
+                "bntStakedBalance": "10000000",
+                "tknStakedBalance": "10000000",
+                "tknTradingLiquidity": "10000000",
+                "bntTradingLiquidity": "10000000"
+            }
+        },
+        {
+            "type": "depositBNT",
+            "userId": "bntProvider",
+            "elapsed": 0,
+            "amount": "10%",
+            "expected": {
+                "tknBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "0",
+                    "vault": "10000000",
+                    "wallet": "0"
+                },
+                "bntBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "9000000",
+                    "vault": "10000000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "10000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "1000000",
+                    "protocol": "9000000"
+                },
+                "bntStakedBalance": "10000000",
+                "tknStakedBalance": "10000000",
+                "tknTradingLiquidity": "10000000",
+                "bntTradingLiquidity": "10000000"
+            }
+        },
+        {
+            "type": "withdrawTKN",
+            "userId": "tknProvider",
+            "elapsed": 0,
+            "amount": "50%",
+            "expected": {
+                "tknBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "4987500",
+                    "bntProvider": "0",
+                    "vault": "5012500",
+                    "wallet": "0"
+                },
+                "bntBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "9000000",
+                    "vault": "25000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "5000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "1000000",
+                    "protocol": "4012500"
+                },
+                "bntStakedBalance": "5012500",
+                "tknStakedBalance": "5000000",
+                "tknTradingLiquidity": "5012500",
+                "bntTradingLiquidity": "5012500"
+            }
+        },
+        {
+            "type": "withdrawBNT",
+            "userId": "bntProvider",
+            "elapsed": 0,
+            "amount": "50%",
+            "expected": {
+                "tknBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "4987500",
+                    "bntProvider": "0",
+                    "vault": "5012500",
+                    "wallet": "0"
+                },
+                "bntBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "9498750",
+                    "vault": "25000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "5000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "500000",
+                    "protocol": "4512500"
+                },
+                "bntStakedBalance": "5012500",
+                "tknStakedBalance": "5000000",
+                "tknTradingLiquidity": "5012500",
+                "bntTradingLiquidity": "5012500"
+            }
+        }
+    ]
+}

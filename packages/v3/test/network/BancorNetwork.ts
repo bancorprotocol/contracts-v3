@@ -3075,8 +3075,10 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     // prettier-ignore
-    const tests = (numOfTests: number = Number.MAX_SAFE_INTEGER) => {
-        const flow: Flow = JSON.parse(fs.readFileSync(path.join('test', 'data', 'BancorNetworkFlowTest.json'), { encoding: 'utf8' }));
+    const test = (fileName: string) => {
+        const flow: Flow = JSON.parse(
+            fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
+        );
 
         flow.operations.unshift({
             type: 'depositTKN',
@@ -3116,9 +3118,9 @@ describe('BancorNetwork Financial Verification', () => {
         let bntknDecimals: number;
         let bnbntDecimals: number;
 
-        let users: { [id: string]: SignerWithAddress } = {};
+        let users: { [id: string]: SignerWithAddress };
 
-        let timestamp = 0;
+        let timestamp: number;
 
         const timeIncrease = async (delta: number) => {
             timestamp += delta;
@@ -3213,8 +3215,12 @@ describe('BancorNetwork Financial Verification', () => {
             expect(actual).to.deep.equal(expected);
         };
 
-        before(async () => {
+        beforeEach(async () => {
             const signers = await ethers.getSigners();
+
+            users = {};
+
+            timestamp = 0;
 
             ({
                 network,
@@ -3272,11 +3278,10 @@ describe('BancorNetwork Financial Verification', () => {
             await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         });
 
-        it('should properly deposit, withdraw and trade', async function (this: Context) {
+        it(`${fileName} should complete successfully`, async function (this: Context) {
             this.timeout(0);
-            const operations = flow.operations.slice(0, numOfTests);
-            for (const [n, { type, userId, amount, elapsed, expected }] of operations.entries()) {
-                console.log(`${n + 1} out of ${operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
+            for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
+                console.log(`${n + 1} out of ${flow.operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
                 await timeIncrease(elapsed);
                 switch (type) {
                     case 'depositTKN':
@@ -3304,10 +3309,12 @@ describe('BancorNetwork Financial Verification', () => {
     };
 
     describe('quick tests', () => {
-        tests(100);
+        test('BancorNetworkFinancialQuickVerification1');
+        test('BancorNetworkFinancialQuickVerification2');
+        test('BancorNetworkFinancialQuickVerification3');
     });
 
-    describe('@stress tests', () => {
-        tests();
+    describe('@stress test', () => {
+        test('BancorNetworkFinancialStressVerification');
     });
 });
