@@ -296,8 +296,7 @@ library PoolCollectionWithdrawal {
                 t = 0;
                 u = y * g / e;
             }
-        }
-        else {
+        } else {
             t = MathEx.mulDivF(a * y, g, b * e);
             u = 0;
         }
