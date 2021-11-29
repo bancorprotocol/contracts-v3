@@ -3275,8 +3275,7 @@ describe('BancorNetwork Financial Verification', () => {
         it('should properly deposit, withdraw and trade', async function (this: Context) {
             this.timeout(0);
             const operations = flow.operations.slice(0, numOfTests);
-            for (let n = 0; n < operations.length; n++) {
-                const { type, userId, amount, elapsed, expected } = operations[n];
+            for (const [n, { type, userId, amount, elapsed, expected }] of operations.entries()) {
                 console.log(`${n + 1} out of ${operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
                 await timeIncrease(elapsed);
                 switch (type) {
