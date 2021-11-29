@@ -43,7 +43,7 @@ export const permitData = (
     owner: string,
     spender: string,
     amount: BigNumber,
-    nonce: BigNumber,
+    nonce: number,
     deadline: BigNumber = MAX_UINT256
 ) => ({
     primaryType: PERMIT_TYPE,
@@ -58,7 +58,7 @@ export const permitSignature = async (
     verifyingContract: string,
     spender: string,
     amount: BigNumber,
-    nonce: BigNumber,
+    nonce: number,
     deadline: BigNumber
 ) => {
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
@@ -80,7 +80,7 @@ export const permitContractSignature = async (
         tokenAddress === networkToken.address
     ) {
         return {
-            v: BigNumber.from(0),
+            v: 0,
             r: formatBytes32String(''),
             s: formatBytes32String('')
         };
@@ -97,7 +97,7 @@ export const permitContractSignature = async (
         reserveToken.address,
         network.address,
         amount,
-        nonce,
+        nonce.toNumber(),
         deadline
     );
 };

@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, ETH, TKN, DEFAULT_DECIMALS } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
@@ -13,8 +13,6 @@ import { ethers } from 'hardhat';
 const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('PoolTokenFactory', () => {
-    const DEFAULT_DECIMALS = BigNumber.from(18);
-
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
@@ -56,7 +54,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
         });
 
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
@@ -88,7 +86,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
         });
 
         it('should revert when a non-owner attempts to set a token decimal override', async () => {

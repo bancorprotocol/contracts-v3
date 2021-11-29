@@ -131,7 +131,7 @@ describe('TestVault', () => {
             it('should allow withdrawing 0 tokens', async () => {
                 const prevVaultBalance = await getBalance(token, testVault.address);
 
-                await testVault.withdrawFunds(token.address, target.address, BigNumber.from(0));
+                await testVault.withdrawFunds(token.address, target.address, 0);
 
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });

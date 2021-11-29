@@ -92,7 +92,7 @@ const createGovernedToken = async (
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
     name: string,
     symbol: string,
-    decimals: BigNumber,
+    decimals: number,
     totalSupply: BigNumber
 ) => {
     const deployer = await getDeployer();
@@ -133,6 +133,7 @@ const createGovernedTokens = async () => {
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
+
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
         vBNT,
@@ -331,7 +332,7 @@ export const depositToPool = async (
 export interface PoolSpec {
     symbol: string;
     balance: BigNumber;
-    initialRate: Fraction<BigNumber>;
+    initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }
 
@@ -369,7 +370,7 @@ export const setupSimplePool = async (
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setInitialRate(token.address, spec.initialRate);
-    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
+    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
 

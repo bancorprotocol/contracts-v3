@@ -1,4 +1,3 @@
-import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 export const advanceBlock = async () => {
@@ -7,31 +6,31 @@ export const advanceBlock = async () => {
 
 export const latest = async () => {
     const block = await ethers.provider.getBlock('latest');
-    return BigNumber.from(block.timestamp);
+    return block.timestamp;
 };
 
-const seconds = (val: BigNumberish) => {
-    return BigNumber.from(val);
+const seconds = (val: number) => {
+    return val;
 };
 
-const minutes = (val: BigNumberish) => {
-    return BigNumber.from(val).mul(seconds(60));
+const minutes = (val: number) => {
+    return val * seconds(60);
 };
 
-const hours = (val: BigNumberish) => {
-    return BigNumber.from(val).mul(minutes(60));
+const hours = (val: number) => {
+    return val * minutes(60);
 };
 
-const days = (val: BigNumberish) => {
-    return BigNumber.from(val).mul(hours(24));
+const days = (val: number) => {
+    return val * hours(24);
 };
 
-const weeks = (val: BigNumberish) => {
-    return BigNumber.from(val).mul(days(7));
+const weeks = (val: number) => {
+    return val * days(7);
 };
 
-const years = (val: BigNumberish) => {
-    return BigNumber.from(val).mul(days(365));
+const years = (val: number) => {
+    return val * days(365);
 };
 
 export const duration = { seconds, minutes, hours, days, weeks, years };

@@ -37,7 +37,7 @@ describe('MathEx', () => {
     });
 
     const testFloorSqrt = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k));
+        const x = BigNumber.from(2).pow(n).add(k);
         it(`floorSqrt(${x.toHexString()})`, async () => {
             const expected = floorSqrt(x);
             const actual = await mathContract.floorSqrt(x);
@@ -46,7 +46,7 @@ describe('MathEx', () => {
     };
 
     const testCeilSqrt = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(BigNumber.from(n)).add(BigNumber.from(k));
+        const x = BigNumber.from(2).pow(n).add(k);
         it(`ceilSqrt(${x.toHexString()})`, async () => {
             const expected = ceilSqrt(x);
             const actual = await mathContract.ceilSqrt(x);
@@ -111,7 +111,7 @@ describe('MathEx', () => {
 
     const testSubMax0 = (x: BigNumber, y: BigNumber) => {
         it(`subMax0(${x}, ${y})`, async () => {
-            const expected = BigNumber.max(x.sub(y), BigNumber.from(0));
+            const expected = BigNumber.max(x.sub(y), 0);
             const actual = await mathContract.subMax0(x, y);
             expect(actual).to.equal(expected);
         });

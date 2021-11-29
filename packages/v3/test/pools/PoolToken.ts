@@ -11,7 +11,7 @@ import { ethers } from 'hardhat';
 describe('PoolToken', () => {
     const NAME = 'Pool Token';
     const SYMBOL = 'POOL';
-    const DECIMALS = BigNumber.from(10);
+    const DECIMALS = 10;
 
     let poolToken: PoolToken;
     let reserveToken: TestERC20Token;
@@ -25,7 +25,7 @@ describe('PoolToken', () => {
     });
 
     beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', BigNumber.from(1_000_000));
+        reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', 1_000_000);
     });
 
     describe('construction', () => {
@@ -35,7 +35,7 @@ describe('PoolToken', () => {
             expect(await poolToken.name()).to.equal(NAME);
             expect(await poolToken.symbol()).to.equal(SYMBOL);
             expect(await poolToken.decimals()).to.equal(DECIMALS);
-            expect(await poolToken.totalSupply()).to.equal(BigNumber.from(0));
+            expect(await poolToken.totalSupply()).to.equal(0);
             expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
         });
 
@@ -52,19 +52,15 @@ describe('PoolToken', () => {
         });
 
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
-            await expect(poolToken.mint(ZERO_ADDRESS, BigNumber.from(1))).to.be.revertedWith('InvalidExternalAddress');
+            await expect(poolToken.mint(ZERO_ADDRESS, 1)).to.be.revertedWith('InvalidExternalAddress');
         });
 
         it('should revert when the owner attempts to issue tokens to the token address', async () => {
-            await expect(poolToken.mint(poolToken.address, BigNumber.from(1))).to.be.revertedWith(
-                'InvalidExternalAddress'
-            );
+            await expect(poolToken.mint(poolToken.address, 1)).to.be.revertedWith('InvalidExternalAddress');
         });
 
         it('should revert when a non owner attempts to issue tokens', async () => {
-            await expect(poolToken.connect(nonOwner).mint(owner.address, BigNumber.from(1))).to.be.revertedWith(
-                'AccessDenied'
-            );
+            await expect(poolToken.connect(nonOwner).mint(owner.address, 1)).to.be.revertedWith('AccessDenied');
         });
     });
 
@@ -77,7 +73,7 @@ describe('PoolToken', () => {
 
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
 
-            await poolToken.mint(sender, BigNumber.from(10000));
+            await poolToken.mint(sender, 10000);
         });
 
         it('should have the correct domain separator', async () => {
@@ -92,13 +88,13 @@ describe('PoolToken', () => {
                 poolToken.address,
                 spender.address,
                 amount,
-                BigNumber.from(0),
+                0,
                 MAX_UINT256
             );
 
             await poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s);
 
-            expect(await poolToken.nonces(sender)).to.equal(BigNumber.from(1));
+            expect(await poolToken.nonces(sender)).to.equal(1);
             expect(await poolToken.allowance(sender, spender.address)).to.equal(amount);
         });
 
@@ -110,7 +106,7 @@ describe('PoolToken', () => {
                 poolToken.address,
                 spender.address,
                 amount,
-                BigNumber.from(0),
+                0,
                 MAX_UINT256
             );
 
@@ -130,7 +126,7 @@ describe('PoolToken', () => {
                 poolToken.address,
                 spender.address,
                 amount,
-                BigNumber.from(0),
+                0,
                 MAX_UINT256
             );
 
@@ -141,14 +137,14 @@ describe('PoolToken', () => {
 
         it('should reject an expired permit', async () => {
             const amount = BigNumber.from(500);
-            const deadline = (await latest()).sub(duration.weeks(1));
+            const deadline = BigNumber.from((await latest()) - duration.weeks(1));
             const { v, r, s } = await permitSignature(
                 wallet,
                 NAME,
                 poolToken.address,
                 spender.address,
                 amount,
-                BigNumber.from(0),
+                0,
                 deadline
             );
 
