@@ -3031,7 +3031,6 @@ describe('BancorNetwork', () => {
     });
 });
 
-// prettier-ignore
 describe('BancorNetwork Financial Verification', () => {
     interface User {
         id: string;
@@ -3148,12 +3147,16 @@ describe('BancorNetwork Financial Verification', () => {
 
     const tradeTKN = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, tknDecimals, baseToken);
-        await network.connect(users[userId]).trade(baseToken.address, networkToken.address, wei, 1, timestamp, users[userId].address);
+        await network
+            .connect(users[userId])
+            .trade(baseToken.address, networkToken.address, wei, 1, timestamp, users[userId].address);
     };
 
     const tradeBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntDecimals, networkToken);
-        await network.connect(users[userId]).trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
+        await network
+            .connect(users[userId])
+            .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
     const verifyState = async (expected: State) => {
@@ -3171,16 +3174,40 @@ describe('BancorNetwork Financial Verification', () => {
         const poolData = await poolCollection.poolData(baseToken.address);
 
         for (const userId in users) {
-            actual.tknBalances[userId] = integerToDecimal(await baseToken.balanceOf(users[userId].address), tknDecimals);
-            actual.bntBalances[userId] = integerToDecimal(await networkToken.balanceOf(users[userId].address), bntDecimals);
-            actual.bntknBalances[userId] = integerToDecimal(await basePoolToken.balanceOf(users[userId].address), bntknDecimals);
-            actual.bnbntBalances[userId] = integerToDecimal(await masterPoolToken.balanceOf(users[userId].address), bnbntDecimals);
+            actual.tknBalances[userId] = integerToDecimal(
+                await baseToken.balanceOf(users[userId].address),
+                tknDecimals
+            );
+            actual.bntBalances[userId] = integerToDecimal(
+                await networkToken.balanceOf(users[userId].address),
+                bntDecimals
+            );
+            actual.bntknBalances[userId] = integerToDecimal(
+                await basePoolToken.balanceOf(users[userId].address),
+                bntknDecimals
+            );
+            actual.bnbntBalances[userId] = integerToDecimal(
+                await masterPoolToken.balanceOf(users[userId].address),
+                bnbntDecimals
+            );
         }
 
-        actual.tknBalances['masterVault'] = integerToDecimal(await baseToken.balanceOf(bancorVault.address), tknDecimals);
-        actual.tknBalances['epVault'] = integerToDecimal(await baseToken.balanceOf(externalProtectionVault.address), tknDecimals);
-        actual.bntBalances['masterVault'] = integerToDecimal(await networkToken.balanceOf(bancorVault.address), bntDecimals);
-        actual.bnbntBalances['protocol'] = integerToDecimal(await masterPoolToken.balanceOf(masterPool.address), bnbntDecimals);
+        actual.tknBalances['masterVault'] = integerToDecimal(
+            await baseToken.balanceOf(bancorVault.address),
+            tknDecimals
+        );
+        actual.tknBalances['epVault'] = integerToDecimal(
+            await baseToken.balanceOf(externalProtectionVault.address),
+            tknDecimals
+        );
+        actual.bntBalances['masterVault'] = integerToDecimal(
+            await networkToken.balanceOf(bancorVault.address),
+            bntDecimals
+        );
+        actual.bnbntBalances['protocol'] = integerToDecimal(
+            await masterPoolToken.balanceOf(masterPool.address),
+            bnbntDecimals
+        );
 
         actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
         actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
@@ -3195,7 +3222,9 @@ describe('BancorNetwork Financial Verification', () => {
 
         users = {};
         timestamp = 0;
-        flow = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' }));
+        flow = JSON.parse(
+            fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
+        );
 
         // insert an initial operation of depositing the same amount of TKN specified in the call to function `setInitialRate`
         flow.operations.unshift({
@@ -3204,10 +3233,18 @@ describe('BancorNetwork Financial Verification', () => {
             elapsed: 0,
             amount: flow.pool.tknBalance,
             expected: {
-                tknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }), { masterVault: flow.pool.tknBalance, epVault: flow.epVaultBalance }),
-                bntBalances: flow.users.reduce((bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }), { masterVault: flow.pool.bntBalance }),
+                tknBalances: flow.users.reduce(
+                    (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
+                    { masterVault: flow.pool.tknBalance, epVault: flow.epVaultBalance }
+                ),
+                bntBalances: flow.users.reduce(
+                    (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
+                    { masterVault: flow.pool.bntBalance }
+                ),
                 bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
-                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), { protocol: flow.pool.bntBalance }),
+                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
+                    protocol: flow.pool.bntBalance
+                }),
                 bntStakedBalance: flow.pool.bntBalance,
                 tknStakedBalance: flow.pool.tknBalance,
                 tknTradingLiquidity: flow.pool.tknBalance,
@@ -3216,7 +3253,11 @@ describe('BancorNetwork Financial Verification', () => {
         });
 
         // update the expected state of the system following the initial operation (i.e., after this operation is executed during runtime)
-        flow.operations[0].expected.tknBalances[flow.pool.tknProvider] = new Decimal(flow.operations[0].expected.tknBalances[flow.pool.tknProvider]).sub(flow.pool.tknBalance).toFixed();
+        flow.operations[0].expected.tknBalances[flow.pool.tknProvider] = new Decimal(
+            flow.operations[0].expected.tknBalances[flow.pool.tknProvider]
+        )
+            .sub(flow.pool.tknBalance)
+            .toFixed();
         flow.operations[0].expected.bntknBalances[flow.pool.tknProvider] = flow.pool.tknBalance;
 
         ({
@@ -3235,7 +3276,10 @@ describe('BancorNetwork Financial Verification', () => {
 
         baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, MAX_UINT256);
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
-        await networkTokenGovernance.mint(signers[0].address, MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address)));
+        await networkTokenGovernance.mint(
+            signers[0].address,
+            MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address))
+        );
 
         tknDecimals = flow.tknDecimals;
         bntDecimals = DEFAULT_DECIMALS.toNumber();
@@ -3247,7 +3291,10 @@ describe('BancorNetwork Financial Verification', () => {
         const bntInitialBalance = decimalToInteger(flow.pool.bntBalance, bntDecimals);
 
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
-        await networkSettings.setPoolMintingLimit(baseToken.address, decimalToInteger(flow.pool.bntMintLimit, bntDecimals));
+        await networkSettings.setPoolMintingLimit(
+            baseToken.address,
+            decimalToInteger(flow.pool.bntMintLimit, bntDecimals)
+        );
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
         await networkSettings.setMinLiquidityForTrading(bntInitialBalance);
 
