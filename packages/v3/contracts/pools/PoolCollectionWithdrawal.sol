@@ -81,7 +81,6 @@ library PoolCollectionWithdrawal {
      * in default deficit, we also calculate the values of `t` and `u` (which are otherwise zero)
      * the value of `v` is calculated as `x*n` in all cases
      */
-    // prettier-ignore
     function formula(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -90,8 +89,9 @@ library PoolCollectionWithdrawal {
         uint256 w, // <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
-        uint256 x  // <= e <= 2**128-1
-    ) internal pure returns (Output memory output) { unchecked {
+        uint256 x /// <= e <= 2**128-1
+    ) internal pure returns (Output memory output) {
+        // given the restrictions above, everything below can be declared `unchecked`
         validate(a <= type(uint128).max);
         validate(b <= type(uint128).max);
         validate(c <= type(uint128).max);
@@ -122,25 +122,24 @@ library PoolCollectionWithdrawal {
         }
 
         output.v = x - y;
-    }}
+    }
 
     /**
      * @dev returns `x < e*c/(b+c)`
      */
-    // prettier-ignore
     function hlim(
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 x  // <= e <= 2**128-1
-    ) private pure returns (bool) { unchecked {
+        uint256 x /// <= e <= 2**128-1
+    ) private pure returns (bool) {
+        // given the restrictions above, everything below can be declared `unchecked`
         return b * x < c * (e - x);
-    }}
+    }
 
     /**
      * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
-    // prettier-ignore
     function hmaxDeficit(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
@@ -148,32 +147,33 @@ library PoolCollectionWithdrawal {
         uint256 g, // == e-b-c <= e <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
-        uint256 x  // <  e*c/(b+c) <= e <= 2**128-1
-    ) private pure returns (bool) { unchecked {
+        uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
+    ) private pure returns (bool) {
+        // given the restrictions above, everything below can be declared `unchecked`
         return MathEx.gt512(
             MathEx.mul512(b * e, f * m + e * n),
             MathEx.mul512(f * x, g * (M - m))
         );
-    }}
+    }
 
     /**
      * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e+e*n)*(1-m)`
      */
-    // prettier-ignore
     function hmaxSurplus(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
         uint256 f, // == b+c-e <= 2**129-2
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
-        uint256 x  // <  e*c/(b+c) <= e <= 2**128-1
-    ) private pure returns (bool) { unchecked {
+        uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
+    ) private pure returns (bool) {
+        // given the restrictions above, everything below can be declared `unchecked`
         return MathEx.gt512(
             MathEx.mul512(b * e, (f * m + e * n) * M),
             MathEx.mul512(f * x, (f * M + e * n) * (M - m))
             // `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
         );
-    }}
+    }
 
     /**
      * @dev returns:
@@ -182,7 +182,6 @@ library PoolCollectionWithdrawal {
      * `r = -x*(e*(1-n)-b-c)/e`
      * `s = x*(1-n)`
      */
-    // prettier-ignore
     function arbitrageDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -190,14 +189,15 @@ library PoolCollectionWithdrawal {
         uint256 f, // == e*(1-n)-b-c <= e <= 2**128-1
         uint256 m, // <= M == 1000000
         uint256 x, // <= e <= 2**128-1
-        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
-    ) private pure returns (Output memory output) { unchecked {
+        uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
+    ) private pure returns (Output memory output) {
+        // given the restrictions above, everything below can be declared `unchecked`
         uint256 i = f * (M - m);
         uint256 j = mulSubMulDivF(b, e * M, x, i, 1);
         output.p = MathEx.mulDivF(a * x, i, j).toPos256();
         output.r = MathEx.mulDivF(x, f, e).toNeg256();
         output.s = y;
-    }}
+    }
 
     /**
      * @dev returns:
@@ -206,7 +206,6 @@ library PoolCollectionWithdrawal {
      * `r = x*(b+c-e+e*n)/e`
      * `s = x*(1-n)`
      */
-    // prettier-ignore
     function arbitrageSurplus(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
@@ -215,14 +214,15 @@ library PoolCollectionWithdrawal {
         uint256 m, // <= M == 1000000
         uint256 n, // <= M == 1000000
         uint256 x, // <= e <= 2**128-1
-        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
-    ) private pure returns (Output memory output) { unchecked {
+        uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
+    ) private pure returns (Output memory output) {
+        // given the restrictions above, everything below can be declared `unchecked`
         uint256 i = f * M + e * n;
         uint256 j = mulAddMulDivF(b, e * (M - m), x, i * (M - m), M);
         output.p = MathEx.mulDivF(a * x, i, j).toNeg256();
         output.r = MathEx.mulDivF(x, i, e * M).toPos256();
         output.s = y;
-    }}
+    }
 
     /**
      * @dev returns:
@@ -231,20 +231,20 @@ library PoolCollectionWithdrawal {
      * `r = -z/e` where `z = max(x*(1-n)*b-c*(e-x*(1-n)),0)`
      * `s = x*(1-n)*(b+c)/e`
      */
-    // prettier-ignore
     function defaultDeficit(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
-        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
-    ) private pure returns (Output memory output) { unchecked {
+        uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
+    ) private pure returns (Output memory output) {
+        // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = MathEx.mulDivF(a, z, b * e).toNeg256();
         output.q = output.p;
         output.r = (z / e).toNeg256();
         output.s = MathEx.mulDivF(y, b + c, e);
-    }}
+    }
 
     /**
      * @dev returns:
@@ -253,19 +253,19 @@ library PoolCollectionWithdrawal {
      * `r = -z` where `z = max(x*(1-n)-c,0)`
      * `s = x*(1-n)`
      */
-    // prettier-ignore
     function defaultSurplus(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
-        uint256 y  // == x*(1-n) <= x <= e <= 2**128-1
-    ) private pure returns (Output memory output) { unchecked {
+        uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
+    ) private pure returns (Output memory output) {
+        // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y, c);
         output.p = MathEx.mulDivF(a, z, b).toNeg256();
         output.q = output.p;
         output.r = z.toNeg256();
         output.s = y;
-    }}
+    }
 
     /**
      * @dev returns:
@@ -277,15 +277,15 @@ library PoolCollectionWithdrawal {
      * | `u = 0`                      | `u = w`                              | `u = x*(1-n)*(e-b-c)/e` |
      * +------------------------------+--------------------------------------+-------------------------+
      */
-    // prettier-ignore
     function externalProtection(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
         uint256 g, // == e-b-c <= e <= 2**128-1
         uint256 y, // == x*(1-n) <= x <= e <= 2**128-1
-        uint256 w  // <= 2**128-1
-    ) private pure returns (uint256 t, uint256 u) { unchecked {
+        uint256 w /// <= 2**128-1
+    ) private pure returns (uint256 t, uint256 u) {
+        // given the restrictions above, everything below can be declared `unchecked`
         if (w > 0) {
             uint256 tb = MathEx.mulDivF(a * y, g, e);
             uint256 wa = w * a;
@@ -301,7 +301,7 @@ library PoolCollectionWithdrawal {
             t = MathEx.mulDivF(a * y, g, b * e);
             u = 0;
         }
-    }}
+    }
 
     /**
      * @dev returns `a*b+x*y/z`
