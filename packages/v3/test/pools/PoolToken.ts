@@ -73,7 +73,7 @@ describe('PoolToken', () => {
 
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
 
-            await poolToken.mint(sender, 10000);
+            await poolToken.mint(sender, 10_000);
         });
 
         it('should have the correct domain separator', async () => {

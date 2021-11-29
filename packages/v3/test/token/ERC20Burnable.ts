@@ -16,7 +16,7 @@ describe('ERC20Burnable', () => {
     });
 
     beforeEach(async () => {
-        burnable = await Contracts.TestERC20Burnable.deploy('ERC', 'ERC1', 100000);
+        burnable = await Contracts.TestERC20Burnable.deploy('ERC', 'ERC1', 100_000);
     });
 
     describe('burning', () => {

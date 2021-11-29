@@ -25,7 +25,7 @@ const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 const BN_TEST_ARRAY = [
     BigNumber.from(0),
     BigNumber.from(100),
-    BigNumber.from(10000),
+    BigNumber.from(10_000),
     ...PR_TEST_ARRAY.map((x) => BigNumber.from(x.toFixed()))
 ];
 

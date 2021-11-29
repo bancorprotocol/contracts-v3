@@ -96,7 +96,7 @@ describe('ReserveToken', () => {
                     expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
                 });
             } else {
-                for (const amount of [0, 10000]) {
+                for (const amount of [0, 10_000]) {
                     it('should properly transfer the reserve token on behalf of a different account', async () => {
                         const prevSenderBalance = await getBalance(token, sender);
                         const prevRecipientBalance = await getBalance(token, recipient);

@@ -2403,7 +2403,7 @@ describe('BancorNetwork', () => {
             const isSourceNetworkToken = source.symbol === BNT;
 
             context(`basic trades from ${source.symbol} to ${target.symbol}`, () => {
-                const testAmount = BigNumber.from(10000);
+                const testAmount = BigNumber.from(10_000);
 
                 beforeEach(async () => {
                     await setupPools(source, target);

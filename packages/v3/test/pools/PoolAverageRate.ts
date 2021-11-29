@@ -25,7 +25,7 @@ describe('PoolAverageRate', () => {
         };
 
         it('should update the average rate to the spot rate at the beginning', async () => {
-            const currentTime = 10000;
+            const currentTime = 10_000;
             const spotRate = { n: 1, d: 10 };
             const averageRate = await poolAverageRate.calcAverageRate(spotRate, INITIAL_AVERAGE_RATE, currentTime);
 
@@ -37,7 +37,7 @@ describe('PoolAverageRate', () => {
             const spotRate1 = { n: 100, d: 10 };
             const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, 0);
 
-            const currentTime = 10000;
+            const currentTime = 10_000;
             const spotRate2 = { n: 1000, d: 10 };
             const averageRate2 = await poolAverageRate.calcAverageRate(spotRate2, averageRate1, currentTime);
             expect(averageRate2.time).to.equal(currentTime);
@@ -49,7 +49,7 @@ describe('PoolAverageRate', () => {
         });
 
         it('should update the average rate to the spot rate after the TWA window', async () => {
-            let currentTime = 10000;
+            let currentTime = 10_000;
             const spotRate1 = { n: 100, d: 10 };
             const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, currentTime);
 
@@ -84,7 +84,7 @@ describe('PoolAverageRate', () => {
 
             context(`${name}`, () => {
                 it('should update the average rate', async () => {
-                    let currentTime = 10000;
+                    let currentTime = 10_000;
                     let spotRate = initSpotRate;
                     let averageRate = await poolAverageRate.calcAverageRate(
                         spotRate,
@@ -497,7 +497,7 @@ describe('PoolAverageRate', () => {
         };
 
         describe('quick tests', () => {
-            const AVERAGE_RATES = [{ n: BigNumber.from(1), d: BigNumber.from(10000) }];
+            const AVERAGE_RATES = [{ n: BigNumber.from(1), d: BigNumber.from(10_000) }];
             const SCALE_FACTORS = [0, 18];
             const MAX_DEVIATIONS = [1].map((d) => toPPM(d));
 
@@ -507,8 +507,8 @@ describe('PoolAverageRate', () => {
         describe('@stress tests', () => {
             const AVERAGE_RATES = [
                 { n: BigNumber.from(1), d: BigNumber.from(1) },
-                { n: BigNumber.from(1), d: BigNumber.from(10000) },
-                { n: BigNumber.from(10000), d: BigNumber.from(1) }
+                { n: BigNumber.from(1), d: BigNumber.from(10_000) },
+                { n: BigNumber.from(10_000), d: BigNumber.from(1) }
             ];
             const SCALE_FACTORS = [0, 2, 10, 18];
             const MAX_DEVIATIONS = [1, 10, 50];
