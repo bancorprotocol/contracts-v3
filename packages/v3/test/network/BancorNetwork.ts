@@ -3080,6 +3080,7 @@ describe('BancorNetwork Financial Verification', () => {
             fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
         );
 
+        // insert an initial operation of depositing the same amount of TKN specified in the call to function `setInitialRate`
         flow.operations.unshift({
             type: 'depositTKN',
             userId: flow.pool.tknProvider,
