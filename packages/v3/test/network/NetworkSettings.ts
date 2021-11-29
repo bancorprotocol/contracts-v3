@@ -4,6 +4,7 @@ import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
+import { toWei } from '../helpers/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -125,7 +126,7 @@ describe('NetworkSettings', () => {
     });
 
     describe('pool minting limits', () => {
-        const poolMintingLimit = 123_456;
+        const poolMintingLimit = toWei(123_456);
 
         it('should revert when a non-owner attempts to set a pool limit', async () => {
             await expect(
