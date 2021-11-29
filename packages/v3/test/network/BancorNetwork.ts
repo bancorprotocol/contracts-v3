@@ -3256,16 +3256,16 @@ describe('BancorNetwork Financial Verification', () => {
 
             await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epwBalance, tknDecimals));
 
-            for (const [i, user] of flow.users.entries()) {
-                expect(user.id in users).to.equal(false, `user id '${user.id}' is not unique`);
-                users[user.id] = signers[1 + i];
-                await govToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
-                await baseToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
-                await networkToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
-                await basePoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
-                await masterPoolToken.connect(users[user.id]).approve(pendingWithdrawals.address, MAX_UINT256);
-                await baseToken.transfer(users[user.id].address, decimalToInteger(user.tknBalance, tknDecimals));
-                await networkToken.transfer(users[user.id].address, decimalToInteger(user.bntBalance, bntDecimals));
+            for (const [i, { id, tknBalance, bntBalance }] of flow.users.entries()) {
+                expect(id in users).to.equal(false, `user id '${id}' is not unique`);
+                users[id] = signers[1 + i];
+                await govToken.connect(users[id]).approve(network.address, MAX_UINT256);
+                await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
+                await networkToken.connect(users[id]).approve(network.address, MAX_UINT256);
+                await basePoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
+                await masterPoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
+                await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
+                await networkToken.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
             }
 
             await baseToken.burn(await baseToken.balanceOf(signers[0].address));
