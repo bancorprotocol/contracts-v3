@@ -3031,7 +3031,7 @@ describe('BancorNetwork', () => {
     });
 });
 
-describe('BancorNetwork Flow', () => {
+describe('BancorNetwork Financial Verification', () => {
     interface User {
         id: string;
         tknBalance: string;
@@ -3273,33 +3273,34 @@ describe('BancorNetwork Flow', () => {
             await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         });
 
-        it('', async function (this: Context) {
+        it('should properly deposit, withdraw and trade', async function (this: Context) {
             this.timeout(0);
             const operations = flow.operations.slice(0, numOfTests);
             for (let n = 0; n < operations.length; n++) {
-                console.log(`${n + 1} out of ${operations.length}: ${operations[n].type}(${operations[n].amount})`);
-                await timeIncrease(operations[n].elapsed);
-                switch (operations[n].type) {
+                const { type, userId, amount, elapsed, expected } = operations[n];
+                console.log(`${n + 1} out of ${operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
+                await timeIncrease(elapsed);
+                switch (type) {
                     case 'depositTKN':
-                        await depositTKN(operations[n].userId, operations[n].amount);
+                        await depositTKN(userId, amount);
                         break;
                     case 'depositBNT':
-                        await depositBNT(operations[n].userId, operations[n].amount);
+                        await depositBNT(userId, amount);
                         break;
                     case 'withdrawTKN':
-                        await withdrawTKN(operations[n].userId, operations[n].amount);
+                        await withdrawTKN(userId, amount);
                         break;
                     case 'withdrawBNT':
-                        await withdrawBNT(operations[n].userId, operations[n].amount);
+                        await withdrawBNT(userId, amount);
                         break;
                     case 'tradeTKN':
-                        await tradeTKN(operations[n].userId, operations[n].amount);
+                        await tradeTKN(userId, amount);
                         break;
                     case 'tradeBNT':
-                        await tradeBNT(operations[n].userId, operations[n].amount);
+                        await tradeBNT(userId, amount);
                         break;
                 }
-                await verifyState(operations[n].expected);
+                await verifyState(expected);
             }
         });
     };
