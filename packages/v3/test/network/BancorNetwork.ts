@@ -3256,8 +3256,7 @@ describe('BancorNetwork Financial Verification', () => {
 
             await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epwBalance, tknDecimals));
 
-            for (let i = 0; i < flow.users.length; i++) {
-                const user = flow.users[i];
+            for (const [i, user] of flow.users.entries()) {
                 expect(user.id in users).to.equal(false, `user id '${user.id}' is not unique`);
                 users[user.id] = signers[1 + i];
                 await govToken.connect(users[user.id]).approve(network.address, MAX_UINT256);
