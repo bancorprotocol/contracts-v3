@@ -53,8 +53,8 @@ describe('StakingRewardsMath', () => {
         });
     };
 
-    const rewardTest = (numOfSeconds: number, totalRewards: number, minAccuracy: string) => {
-        it(`reward(${numOfSeconds}, ${totalRewards})`, async () => {
+    const processExponentialDecayRewardTest = (numOfSeconds: number, totalRewards: number, minAccuracy: string) => {
+        it(`processExponentialDecayReward(${numOfSeconds}, ${totalRewards})`, async () => {
             const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
             if (numOfSeconds < SECONDS_TOO_HIGH) {
                 const actual = new Decimal(
@@ -137,7 +137,7 @@ describe('StakingRewardsMath', () => {
             SECONDS_TOO_HIGH - 1,
             SECONDS_TOO_HIGH
         ]) {
-            rewardTest(numOfSeconds, 40_000_000, '0.999999999999999999');
+            processExponentialDecayRewardTest(numOfSeconds, 40_000_000, '0.999999999999999999');
         }
     });
 
@@ -154,7 +154,7 @@ describe('StakingRewardsMath', () => {
                     for (let days = 0; days < 5; days++) {
                         for (let years = 0; years < 5; years++) {
                             for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
-                                rewardTest(
+                                processExponentialDecayRewardTest(
                                     seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
                                     totalRewards,
                                     '0.999999999999999999'
