@@ -1720,7 +1720,7 @@ describe('BancorNetwork', () => {
 
             const addProtectedLiquidity = async (
                 poolTokenAddress: string,
-                token: any,
+                token: IERC20,
                 tokenAddress: string,
                 amount: BigNumber,
                 isETH: boolean,
