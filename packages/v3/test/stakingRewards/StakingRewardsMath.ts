@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
+import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -7,7 +8,6 @@ import { EOL } from 'os';
 
 const ONE = new Decimal(1);
 const LAMBDA = new Decimal('0.0000000142857142857143');
-const TOTAL_REWARDS = BigNumber.from(40_000_000).mul(BigNumber.from(10).pow(18));
 
 const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
@@ -53,14 +53,15 @@ describe('StakingRewardsMath', () => {
         });
     };
 
-    const rewardTest = (numOfSeconds: number, totalRewards: BigNumber, minAccuracy: string) => {
-        it(`reward(${numOfSeconds})`, async () => {
+    const rewardTest = (numOfSeconds: number, totalRewards: number, minAccuracy: string) => {
+        it(`reward(${numOfSeconds}, ${totalRewards})`, async () => {
+            const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
             if (numOfSeconds < SECONDS_TOO_HIGH) {
-                const actual = new Decimal((await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewards)).toString());
-                const expected = new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp()));
+                const actual = new Decimal((await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)).toString());
+                const expected = new Decimal(totalRewardsInWei.toString()).mul(ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp()));
                 assertAccuracy(actual, expected, minAccuracy);
             } else {
-                await expect(stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewards)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                await expect(stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
             }
         });
     };
@@ -128,7 +129,7 @@ describe('StakingRewardsMath', () => {
             SECONDS_TOO_HIGH - 1,
             SECONDS_TOO_HIGH
         ]) {
-            rewardTest(numOfSeconds, TOTAL_REWARDS, '0.999999999999999999');
+            rewardTest(numOfSeconds, 40_000_000, '0.999999999999999999');
         }
     });
 
@@ -144,11 +145,13 @@ describe('StakingRewardsMath', () => {
                 for (let hours = 0; hours < 5; hours++) {
                     for (let days = 0; days < 5; days++) {
                         for (let years = 0; years < 5; years++) {
-                            rewardTest(
-                                seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
-                                TOTAL_REWARDS,
-                                '0.999999999999999999'
-                            );
+                            for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
+                                rewardTest(
+                                    seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
+                                    totalRewards,
+                                    '0.999999999999999999'
+                                );
+                            }
                         }
                     }
                 }
