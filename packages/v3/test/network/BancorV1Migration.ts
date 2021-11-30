@@ -26,7 +26,7 @@ const MIN_LIQUIDITY_FOR_TRADING = BigNumber.from(100_000);
 const DEPOSIT_LIMIT = BigNumber.from(100_000_000);
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
 
-describe.only('BancorV1Migration', () => {
+describe('BancorV1Migration', () => {
     let deployer: SignerWithAddress;
     let provider: SignerWithAddress;
 
