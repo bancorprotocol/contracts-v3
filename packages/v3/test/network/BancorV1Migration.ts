@@ -141,6 +141,8 @@ describe.only('BancorV1Migration', () => {
 
                             it('verifies that the caller can migrate pool tokens', async () => {
                                 const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
+                                const prevConverterNetworkBalance = await getBalance(networkToken, converter.address);
+                                const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
                                 const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                                 const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
@@ -151,12 +153,20 @@ describe.only('BancorV1Migration', () => {
                                     .migratePoolTokens(poolToken.address, poolTokenAmount);
 
                                 const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
+                                const currConverterNetworkBalance = await getBalance(networkToken, converter.address);
+                                const currConverterBaseBalance = await getBalance(baseToken, converter.address);
                                 const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                                 const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
 
                                 expect(currProviderPoolTokenBalance).to.equal(
                                     prevProviderPoolTokenBalance.sub(poolTokenAmount)
                                 );
+                                expect(currConverterNetworkBalance).to.equal(
+                                    prevConverterNetworkBalance.sub(
+                                        prevConverterNetworkBalance.mul(BASE_AMOUNT).div(prevConverterBaseBalance)
+                                    )
+                                );
+                                expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(BASE_AMOUNT));
                                 expect(currVaultNetworkBalance).to.equal(
                                     prevVaultNetworkBalance.add(
                                         prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)
