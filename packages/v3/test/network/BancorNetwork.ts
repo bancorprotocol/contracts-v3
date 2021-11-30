@@ -1704,7 +1704,7 @@ describe('BancorNetwork', () => {
             reserve1Amount: BigNumber,
             reserve2Amount: BigNumber,
             maxRelativeError: Decimal,
-            offset: { negative: number; positive: number }
+            maxOffset: { negative: number; positive: number }
         ) => {
             let now: BigNumber;
             let checkpointStore: TestCheckpointStore;
@@ -1721,8 +1721,8 @@ describe('BancorNetwork', () => {
             let provider: SignerWithAddress;
 
             const expectInRange = (x: BigNumber, y: BigNumber) => {
-                expect(x).to.gte(y.sub(offset.negative));
-                expect(x).to.lte(y.add(offset.positive));
+                expect(x).to.gte(y.sub(maxOffset.negative));
+                expect(x).to.lte(y.add(maxOffset.positive));
             };
 
             const addProtectedLiquidity = async (
@@ -2137,38 +2137,38 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const { totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, offset } of [
+        for (const { totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset } of [
             {
                 totalSupply: BigNumber.from(10_000_000),
                 reserve1Amount: BigNumber.from(1_000_000),
                 reserve2Amount: BigNumber.from(2_500_000),
                 maxRelativeError: new Decimal('0.000000000000000000000001'),
-                offset: { negative: 0, positive: 0 }
+                maxOffset: { negative: 0, positive: 0 }
             },
             {
                 totalSupply: toWei(BigNumber.from(10_000_000)),
                 reserve1Amount: BigNumber.from(1_000_000),
                 reserve2Amount: BigNumber.from(2_500_000),
                 maxRelativeError: new Decimal('0.000000000000000000000001'),
-                offset: { negative: 0, positive: 0 }
+                maxOffset: { negative: 0, positive: 0 }
             },
             {
                 totalSupply: BigNumber.from(10_000_000),
                 reserve1Amount: toWei(BigNumber.from(1_000_000)),
                 reserve2Amount: toWei(BigNumber.from(2_500_000)),
                 maxRelativeError: new Decimal('0.000000000000000000000001003'),
-                offset: { negative: 1, positive: 1 }
+                maxOffset: { negative: 1, positive: 1 }
             },
             {
                 totalSupply: toWei(BigNumber.from(10_000_000)),
                 reserve1Amount: toWei(BigNumber.from(1_000_000)),
                 reserve2Amount: toWei(BigNumber.from(2_500_000)),
                 maxRelativeError: new Decimal('0.000000000000000000000001'),
-                offset: { negative: 1, positive: 1 }
+                maxOffset: { negative: 1, positive: 1 }
             }
         ]) {
             describe(`migrate liquidity (totalSupply = ${totalSupply}, reserve1Amount = ${reserve1Amount}, reserve2Amount = ${reserve2Amount})`, () => {
-                migrateLiquidity(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, offset);
+                migrateLiquidity(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset);
             });
         }
     });
