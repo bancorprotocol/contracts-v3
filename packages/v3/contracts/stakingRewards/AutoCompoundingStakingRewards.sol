@@ -41,8 +41,8 @@ struct ProgramData {
     bool isEnabled;
 }
 
-error ProgramAlreadyRunning();
-error ProgramNotRunning();
+error ProgramActive();
+error ProgramNotActive();
 error InvalidParam();
 
 /**
@@ -209,7 +209,7 @@ contract AutoCompoundingStakingRewards is
         uint256 endTime
     ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
         if (isProgramActive(ReserveToken.unwrap(pool))) {
-            revert ProgramAlreadyRunning();
+            revert ProgramActive();
         }
 
         if (totalRewards <= 0) {
@@ -228,7 +228,7 @@ contract AutoCompoundingStakingRewards is
             processRewards(pool);
         }
 
-        // currentProgram.pool shouldn't change
+        currentProgram.pool = ReserveToken.unwrap(pool);
         currentProgram.rewardsVault = rewardsVault;
         currentProgram.totalRewards = totalRewards;
         currentProgram.availableRewards = totalRewards;
@@ -257,7 +257,7 @@ contract AutoCompoundingStakingRewards is
      */
     function terminateProgram(address pool) external onlyAdmin {
         if (!isProgramActive(pool)) {
-            revert ProgramNotRunning();
+            revert ProgramNotActive();
         }
 
         ProgramData storage currentProgram = _programs[pool];
@@ -308,7 +308,9 @@ contract AutoCompoundingStakingRewards is
         uint256 tokenToBeDistributed;
 
         if (currentProgram.distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokenToBeDistributed = processExponentialDecayReward(timeElapsed, currentProgram.availableRewards);
+            tokenToBeDistributed =
+                processExponentialDecayReward(timeElapsed, currentProgram.totalRewards) -
+                (currentProgram.totalRewards - currentProgram.availableRewards);
         } else if (currentProgram.distributionType == DistributionType.FLAT) {
             uint256 effectiveTimeElapsed = timeElapsed > totalProgramTime ? totalProgramTime : timeElapsed;
 
@@ -323,6 +325,7 @@ contract AutoCompoundingStakingRewards is
                 currentProgram.availableRewards
             );
         }
+        console.log("---> token to be distributed: ", tokenToBeDistributed);
 
         ReserveToken reserveToken = ReserveToken(pool);
 

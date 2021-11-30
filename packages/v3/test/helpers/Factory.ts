@@ -21,7 +21,7 @@ import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from '
 import { Fraction } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, ContractFactory } from 'ethers';
+import { BaseContract, BigNumber, ContractFactory, BigNumberish } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const {
@@ -278,12 +278,12 @@ export const createSystem = async () => waffle.loadFixture(createSystemFixture);
 export const depositToPool = async (
     provider: SignerWithAddress,
     token: TokenWithAddress,
-    amount: BigNumber,
+    amount: BigNumberish,
     network: TestBancorNetwork
 ) => {
     let value = BigNumber.from(0);
     if (token.address === NATIVE_TOKEN_ADDRESS) {
-        value = amount;
+        value = BigNumber.from(amount);
     } else {
         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
         await reserveToken.transfer(provider.address, amount);
@@ -295,7 +295,7 @@ export const depositToPool = async (
 
 export interface PoolSpec {
     symbol: string;
-    balance: BigNumber;
+    balance: BigNumberish;
     initialRate: Fraction<BigNumber>;
     tradingFeePPM?: number;
 }

@@ -1,3 +1,4 @@
+import { BancorNetwork } from '../../../v2/typechain';
 import Contracts from '../../components/Contracts';
 import {
     IERC20,
@@ -25,7 +26,7 @@ import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Util
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
@@ -42,8 +43,6 @@ const MONTH = 30 * DAY;
 const YEAR = 365 * DAY;
 
 describe('AutoCompoundingStakingRewards', () => {
-    const TOTAL_REWARDS = 90_000;
-
     let deployer: SignerWithAddress;
     let user1: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
@@ -126,7 +125,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     balance: BigNumber.from(10_000),
                     initialRate: INITIAL_RATE
                 },
-                user1,
+                deployer,
                 network,
                 networkSettings,
                 poolCollection
@@ -138,7 +137,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 autoCompoundingStakingRewards.createProgram(
                     ZERO_ADDRESS,
                     externalRewardsVault.address,
-                    TOTAL_REWARDS,
+                    10,
                     0,
                     currentTime,
                     currentTime.add(TOTAL_DURATION)
@@ -151,7 +150,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 autoCompoundingStakingRewards.createProgram(
                     token.address,
                     ZERO_ADDRESS,
-                    TOTAL_REWARDS,
+                    10,
                     0,
                     currentTime,
                     currentTime.add(TOTAL_DURATION)
@@ -163,7 +162,7 @@ describe('AutoCompoundingStakingRewards', () => {
             await autoCompoundingStakingRewards.createProgram(
                 token.address,
                 externalRewardsVault.address,
-                TOTAL_REWARDS,
+                10,
                 0,
                 currentTime,
                 currentTime.add(TOTAL_DURATION)
@@ -173,12 +172,12 @@ describe('AutoCompoundingStakingRewards', () => {
                 autoCompoundingStakingRewards.createProgram(
                     token.address,
                     externalRewardsVault.address,
-                    TOTAL_REWARDS,
+                    10,
                     0,
                     currentTime,
                     currentTime.add(TOTAL_DURATION)
                 )
-            ).to.revertedWith('ProgramAlreadyRunning');
+            ).to.revertedWith('ProgramActive');
         });
 
         it('should revert when total rewards is lower or equal to 0', async () => {
@@ -210,7 +209,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 autoCompoundingStakingRewards.createProgram(
                     token.address,
                     externalRewardsVault.address,
-                    TOTAL_REWARDS,
+                    10,
                     0,
                     currentTime.add(TOTAL_DURATION),
                     currentTime
@@ -240,7 +239,7 @@ describe('AutoCompoundingStakingRewards', () => {
             const res = await autoCompoundingStakingRewards.createProgram(
                 token.address,
                 externalRewardsVault.address,
-                TOTAL_REWARDS,
+                10,
                 0,
                 startTime,
                 endTime
@@ -248,7 +247,19 @@ describe('AutoCompoundingStakingRewards', () => {
 
             await expect(res)
                 .to.emit(autoCompoundingStakingRewards, 'ProgramCreated')
-                .withArgs(token.address, externalRewardsVault.address, TOTAL_REWARDS, 0, startTime, endTime);
+                .withArgs(token.address, externalRewardsVault.address, 10, 0, startTime, endTime);
+
+            const program = await autoCompoundingStakingRewards.program(token.address);
+
+            expect(program.pool).to.equal(token.address);
+            expect(program.rewardsVault).to.equal(externalRewardsVault.address);
+            expect(program.totalRewards).to.equal(10);
+            expect(program.availableRewards).to.equal(10);
+            expect(program.distributionType).to.equal(0);
+            expect(program.startTime).to.equal(startTime);
+            expect(program.endTime).to.equal(endTime);
+            expect(program.prevDistributionTimestamp).to.equal(0);
+            expect(program.isEnabled).to.equal(true);
         });
     });
 
@@ -279,7 +290,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     balance: BigNumber.from(10_000),
                     initialRate: INITIAL_RATE
                 },
-                user1,
+                deployer,
                 network,
                 networkSettings,
                 poolCollection
@@ -289,7 +300,7 @@ describe('AutoCompoundingStakingRewards', () => {
         context('when no program is running', () => {
             it('should revert when no program is running', async () => {
                 await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
-                    'ProgramNotRunning'
+                    'ProgramNotActive'
                 );
             });
         });
@@ -299,7 +310,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 await autoCompoundingStakingRewards.createProgram(
                     token.address,
                     externalRewardsVault.address,
-                    TOTAL_REWARDS,
+                    10,
                     0,
                     currentTime,
                     currentTime.add(TOTAL_DURATION)
@@ -315,148 +326,191 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 await expect(res)
                     .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
-                    .withArgs(token.address, newEndTime, TOTAL_REWARDS);
+                    .withArgs(token.address, newEndTime, 10);
+
+                const program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.pool).to.equal(token.address);
+                expect(program.rewardsVault).to.equal(externalRewardsVault.address);
+                expect(program.totalRewards).to.equal(10);
+                expect(program.availableRewards).to.equal(0);
+                expect(program.distributionType).to.equal(0);
+                expect(program.startTime).to.equal(currentTime);
+                expect(program.endTime).to.equal(newEndTime);
+                expect(program.prevDistributionTimestamp).to.equal(0);
+                expect(program.isEnabled).to.equal(true);
             });
         });
     });
+
+    describe('program status', () => {
+        let currentTime: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
+        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+        const TOTAL_DURATION = 10 * MONTH;
+
+        let token: TokenWithAddress;
+        let poolToken: PoolToken;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            currentTime = BigNumber.from(0);
+
+            autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+                ctorArgs: [network.address, masterPool.address]
+            });
+
+            ({ token, poolToken } = await setupSimplePool(
+                {
+                    symbol: 'TKN',
+                    balance: BigNumber.from(10_000),
+                    initialRate: INITIAL_RATE
+                },
+                deployer,
+                network,
+                networkSettings,
+                poolCollection
+            ));
+        });
+
+        context('when program is not active', () => {
+            it('should return false when program is not active', async () => {
+                expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
+            });
+        });
+
+        context('when program is active', () => {
+            beforeEach(async () => {
+                await autoCompoundingStakingRewards.createProgram(
+                    token.address,
+                    externalRewardsVault.address,
+                    10,
+                    0,
+                    currentTime,
+                    currentTime.add(TOTAL_DURATION)
+                );
+            });
+
+            it('should return true when program is active', async () => {
+                expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
+            });
+        });
+    });
+
+    describe('process rewards', () => {
+        let currentTime: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
+        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+
+        let token: TokenWithAddress;
+        let poolToken: PoolToken;
+
+        const depositAndTransferToSR = async (
+            lp: SignerWithAddress,
+            token: TokenWithAddress,
+            poolToken: TokenWithAddress,
+            amount: BigNumberish,
+            network: TestBancorNetwork,
+            externalRewardsVault: ExternalRewardsVault
+        ) => {
+            await depositToPool(lp, token, amount, network);
+            await transfer(lp, poolToken, externalRewardsVault, amount);
+        };
+
+        const ownableToken = async (user: { address: string }, token: TokenWithAddress, poolToken: PoolToken) => {
+            const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
+            return Number(
+                mulDivF(
+                    await poolToken.balanceOf(user.address),
+                    tokenStakedBalance,
+                    await poolToken.totalSupply()
+                ).toString()
+            );
+        };
+
+        beforeEach(async () => {
+            ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            currentTime = BigNumber.from(0);
+
+            autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+                ctorArgs: [network.address, masterPool.address]
+            });
+
+            await externalRewardsVault.grantRole(
+                roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+                autoCompoundingStakingRewards.address
+            );
+        });
+
+        const TOTAL_DURATION = 10 * DAY;
+        const TOTAL_REWARDS = 90_000;
+        const INITIAL_STAKE = 10_000;
+
+        for (const distributionType of [1]) {
+            const distributionTypeName = distributionType === 0 ? 'FLAT' : 'EXPONENTIAL_DECAY';
+
+            context(distributionTypeName, () => {
+                beforeEach(async () => {
+                    ({ token, poolToken } = await setupSimplePool(
+                        {
+                            symbol: 'TKN',
+                            balance: INITIAL_STAKE,
+                            initialRate: INITIAL_RATE
+                        },
+                        user1,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
+
+                    await depositAndTransferToSR(
+                        stakingRewardsProvider,
+                        token,
+                        poolToken,
+                        TOTAL_REWARDS,
+                        network,
+                        externalRewardsVault
+                    );
+
+                    await autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS,
+                        distributionType,
+                        currentTime,
+                        currentTime.add(TOTAL_DURATION)
+                    );
+                });
+
+                it.only('', async () => {
+                    for (let i = 1; i <= 100; i++) {
+                        await autoCompoundingStakingRewards.setTime(currentTime.add(i * MONTH));
+                        await autoCompoundingStakingRewards.processRewards(token.address);
+
+                        const user1OwnableTokens = await ownableToken(user1, token, poolToken);
+                        const externalRewardsVaultOwnableTokens = await ownableToken(
+                            externalRewardsVault,
+                            token,
+                            poolToken
+                        );
+
+                        console.log(user1OwnableTokens);
+                        console.log(externalRewardsVaultOwnableTokens);
+
+                        // expect(user1OwnableTokens + externalRewardsVaultOwnableTokens).to.equal(
+                        //     INITIAL_STAKE + TOTAL_REWARDS
+                        // );
+                    }
+                });
+            });
+        }
+    });
 });
-
-//  //
-//  beforeEach(async () => {
-//     ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
-//     const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
-
-//     await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-//     autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-//         ctorArgs: [network.address, masterPool.address]
-//     });
-
-//     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-
-//     ({ token, poolToken } = await setupSimplePool(
-//         {
-//             symbol: 'TKN',
-//             balance: BigNumber.from(10_000),
-//             initialRate: INITIAL_RATE
-//         },
-//         user1,
-//         network,
-//         networkSettings,
-//         poolCollection
-//     ));
-
-//     // lambda user deposit funds to pool
-//     await depositToPool(user2, token, BigNumber.from(10_000), network);
-
-//     // // lambda user deposit funds to pool
-//     await depositToPool(user3, token, BigNumber.from(10_000), network);
-
-//     await externalRewardsVault.grantRole(
-//         roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-//         autoCompoundingStakingRewards.address
-//     );
-
-//     // sr provider deposit funds to pool
-//     await depositToPool(stakingRewardsProvider, token, BigNumber.from(TOTAL_REWARDS), network);
-
-//     // sr provider transfer pool token to external reward vault
-//     const tx = await transfer(
-//         stakingRewardsProvider,
-//         poolToken,
-//         externalRewardsVault,
-//         BigNumber.from(TOTAL_REWARDS)
-//     );
-// });
-
-// it('', async () => {
-//     const TOTAL_DURATION = 10 * MONTH;
-
-//     const currentTime = await latest();
-
-//     await autoCompoundingStakingRewards.createProgram(
-//         token.address,
-//         externalRewardsVault.address,
-//         TOTAL_REWARDS,
-//         0, // flat
-//         currentTime,
-//         currentTime.add(TOTAL_DURATION)
-//     );
-
-//     let program = await autoCompoundingStakingRewards.program(token.address);
-//     let poolTokenTotalSupply = await poolToken.totalSupply();
-//     let tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-//     let poolTokenUserBalance = await poolToken.balanceOf(user2.address);
-
-//     console.log(
-//         'current pool token protec vault balance: ',
-//         (await poolToken.balanceOf(externalRewardsVault.address)).toString()
-//     );
-//     console.log('start program available rewards: ', program.availableRewards.toString());
-//     console.log(
-//         'token ownable: ',
-//         mulDivF(poolTokenUserBalance, tokenStakedBalance, poolTokenTotalSupply).toString()
-//     );
-//     console.log('');
-
-//     for (let i = 1; i <= 10; i++) {
-//         await autoCompoundingStakingRewards.setTime(currentTime.add(i * MONTH));
-
-//         await autoCompoundingStakingRewards.processRewards(token.address);
-
-//         poolTokenTotalSupply = await poolToken.totalSupply();
-//         tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-
-//         program = await autoCompoundingStakingRewards.program(token.address);
-
-//         const currentAvailableRewards = program.availableRewards.toString();
-//         console.log('current available rewards: ', currentAvailableRewards);
-
-//         const currentPoolTokenProtecVaultBalance = await poolToken.balanceOf(externalRewardsVault.address);
-//         console.log('current pool token protec vault balance: ', currentPoolTokenProtecVaultBalance.toString());
-
-//         console.log(
-//             'token ownable user1: ',
-//             mulDivF(
-//                 await poolToken.balanceOf(user1.address),
-//                 tokenStakedBalance,
-//                 poolTokenTotalSupply
-//             ).toString()
-//         );
-//         console.log(
-//             'token ownable user2: ',
-//             mulDivF(
-//                 await poolToken.balanceOf(user2.address),
-//                 tokenStakedBalance,
-//                 poolTokenTotalSupply
-//             ).toString()
-//         );
-//         console.log(
-//             'token ownable user3: ',
-//             mulDivF(
-//                 await poolToken.balanceOf(user3.address),
-//                 tokenStakedBalance,
-//                 poolTokenTotalSupply
-//             ).toString()
-//         );
-//         console.log(
-//             'token ownable user4: ',
-//             mulDivF(
-//                 await poolToken.balanceOf(user4.address),
-//                 tokenStakedBalance,
-//                 poolTokenTotalSupply
-//             ).toString()
-//         );
-//         console.log(
-//             'token ownable externalRewardsVault: ',
-//             mulDivF(
-//                 await poolToken.balanceOf(externalRewardsVault.address),
-//                 tokenStakedBalance,
-//                 poolTokenTotalSupply
-//             ).toString()
-//         );
-
-//         console.log('');
-//     }
-// });
-// });
