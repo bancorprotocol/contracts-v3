@@ -3,8 +3,12 @@ pragma solidity 0.8.10;
 
 import { StakingRewardsMath } from "../stakingRewards/StakingRewardsMath.sol";
 
-contract TestStakingRewards is StakingRewardsMath {
-    function rewardT(uint256 numOfSeconds, uint256 totalRewards) external pure returns (uint256) {
+contract TestStakingRewardsMath is StakingRewardsMath {
+    function processExponentialDecayRewardT(uint256 numOfSeconds, uint256 totalRewards)
+        external
+        pure
+        returns (uint256)
+    {
         return processExponentialDecayReward(numOfSeconds, totalRewards);
     }
 

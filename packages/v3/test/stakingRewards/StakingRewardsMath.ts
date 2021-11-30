@@ -1,12 +1,13 @@
 import Contracts from '../../components/Contracts';
-import { TestStakingRewards } from '../../typechain-types';
+import { TestStakingRewardsMath } from '../../typechain-types';
+import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
+import { BigNumber } from 'ethers';
 import { EOL } from 'os';
 
 const ONE = new Decimal(1);
 const LAMBDA = new Decimal('0.0000000142857142857143');
-const TOTAL_REWARDS = new Decimal('4e25'); // 40 million + 18 decimals
 
 const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
@@ -32,34 +33,43 @@ const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string)
     }
 };
 
-describe('StakingRewards formula', () => {
-    let stakingRewards: TestStakingRewards;
+describe('StakingRewardsMath', () => {
+    let stakingRewardsMath: TestStakingRewardsMath;
 
     before(async () => {
-        stakingRewards = await Contracts.TestStakingRewards.deploy();
+        stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
     });
 
     const expTest = (a: number, b: number, minAccuracy: string) => {
         it(`exp(${a}, ${b})`, async () => {
             if (a / b < EXP_VAL_TOO_HIGH) {
-                const retval = await stakingRewards.expT(a, b);
+                const retval = await stakingRewardsMath.expT(a, b);
                 const actual = new Decimal(retval[0].toString()).div(retval[1].toString());
                 const expected = new Decimal(a).div(b).exp();
                 assertAccuracy(actual, expected, minAccuracy);
             } else {
-                await expect(stakingRewards.expT(a, b)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                await expect(stakingRewardsMath.expT(a, b)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
             }
         });
     };
 
-    const rewardTest = (numOfSeconds: number, minAccuracy: string) => {
-        it(`reward(${numOfSeconds})`, async () => {
+    const processExponentialDecayRewardTest = (numOfSeconds: number, totalRewards: number, minAccuracy: string) => {
+        it(`processExponentialDecayReward(${numOfSeconds}, ${totalRewards})`, async () => {
+            const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
             if (numOfSeconds < SECONDS_TOO_HIGH) {
-                const actual = new Decimal((await stakingRewards.rewardT(numOfSeconds)).toString());
-                const expected = TOTAL_REWARDS.mul(ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp()));
+                const actual = new Decimal(
+                    (
+                        await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                    ).toString()
+                );
+                const expected = new Decimal(totalRewardsInWei.toString()).mul(
+                    ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp())
+                );
                 assertAccuracy(actual, expected, minAccuracy);
             } else {
-                await expect(stakingRewards.rewardT(numOfSeconds)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                await expect(
+                    stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                ).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
             }
         });
     };
@@ -127,7 +137,7 @@ describe('StakingRewards formula', () => {
             SECONDS_TOO_HIGH - 1,
             SECONDS_TOO_HIGH
         ]) {
-            rewardTest(numOfSeconds, '0.999999999999999999');
+            processExponentialDecayRewardTest(numOfSeconds, 40_000_000, '0.999999999999999999');
         }
     });
 
@@ -143,10 +153,13 @@ describe('StakingRewards formula', () => {
                 for (let hours = 0; hours < 5; hours++) {
                     for (let days = 0; days < 5; days++) {
                         for (let years = 0; years < 5; years++) {
-                            rewardTest(
-                                seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
-                                '0.999999999999999999'
-                            );
+                            for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
+                                processExponentialDecayRewardTest(
+                                    seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
+                                    totalRewards,
+                                    '0.999999999999999999'
+                                );
+                            }
                         }
                     }
                 }
