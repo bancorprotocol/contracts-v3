@@ -145,6 +145,7 @@ describe.only('BancorV1Migration', () => {
                                 const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
                                 const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                                 const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
+                                const prevPoolTokenSupply = await poolToken.totalSupply();
 
                                 const poolTokenAmount = await getBalance(poolToken, provider.address);
                                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
@@ -157,6 +158,7 @@ describe.only('BancorV1Migration', () => {
                                 const currConverterBaseBalance = await getBalance(baseToken, converter.address);
                                 const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                                 const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
+                                const currPoolTokenSupply = await poolToken.totalSupply();
 
                                 expect(currProviderPoolTokenBalance).to.equal(
                                     prevProviderPoolTokenBalance.sub(poolTokenAmount)
@@ -173,6 +175,7 @@ describe.only('BancorV1Migration', () => {
                                     )
                                 );
                                 expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(BASE_AMOUNT));
+                                expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
                                 const prevProviderNetworkBalance = await getBalance(networkToken, provider);
                                 const prevProviderBaseBalance = await getBalance(baseToken, provider);
