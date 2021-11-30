@@ -1915,12 +1915,10 @@ describe('BancorNetwork', () => {
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
-                        expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
+                        const transactionCost = isETH ? await getTransactionCost(res) : BigNumber.from(0);
 
-                        let transactionCost = BigNumber.from(0);
-                        if (isETH) {
-                            transactionCost = transactionCost.add(await getTransactionCost(res));
-                        }
+                        // verify protected liquidities
+                        expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                         // verify stats
                         const poolStats = await getPoolStats(poolToken, baseToken, isETH);
@@ -2073,6 +2071,8 @@ describe('BancorNetwork', () => {
 
                     await liquidityProtection.setTime(now.add(duration.seconds(1)));
                     await liquidityProtection.migratePositions([protectionId]);
+
+                    // verify protected liquidities
                     expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                     // verify stats
