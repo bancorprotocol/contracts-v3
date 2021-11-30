@@ -1699,11 +1699,7 @@ describe('BancorNetwork', () => {
             });
         }
 
-        describe('migrate liquidity', () => {
-            const TOTAL_SUPPLY = BigNumber.from(10_000_000);
-            const RESERVE1_AMOUNT = BigNumber.from(1_000_000);
-            const RESERVE2_AMOUNT = BigNumber.from(2_500_000);
-
+        const migrateLiquidity = (totalSupply: BigNumber, reserve1Amount: BigNumber, reserve2Amount: BigNumber, offset: { negative: number, positive: number }) => {
             let now: BigNumber;
             let checkpointStore: TestCheckpointStore;
             let liquidityProtectionSettings: LiquidityProtectionSettings;
@@ -1717,6 +1713,11 @@ describe('BancorNetwork', () => {
             let baseToken: IERC20;
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
+
+            const expectInRange = (x: BigNumber, y: BigNumber) => {
+                expect(x).to.gte(y.sub(offset.negative));
+                expect(x).to.lte(y.add(offset.positive));
+            };
 
             const addProtectedLiquidity = async (
                 poolTokenAddress: string,
@@ -1820,10 +1821,7 @@ describe('BancorNetwork', () => {
                     baseToken
                 ));
 
-                await networkTokenGovernance.mint(
-                    owner.address,
-                    TOTAL_SUPPLY.mul(BigNumber.from(10).pow(DEFAULT_DECIMALS))
-                );
+                await networkTokenGovernance.mint(owner.address, totalSupply);
 
                 await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(BigNumber.from(100));
                 await liquidityProtectionSettings.setMinNetworkCompensation(BigNumber.from(3));
@@ -1837,18 +1835,18 @@ describe('BancorNetwork', () => {
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
                 await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
 
-                await networkToken.approve(converter.address, RESERVE2_AMOUNT);
+                await networkToken.approve(converter.address, reserve2Amount);
 
                 let value = BigNumber.from(0);
                 if (isETH) {
-                    value = RESERVE1_AMOUNT;
+                    value = reserve1Amount;
                 } else {
-                    await baseToken.approve(converter.address, RESERVE1_AMOUNT);
+                    await baseToken.approve(converter.address, reserve1Amount);
                 }
 
                 await converter.addLiquidity(
                     [baseToken.address, networkToken.address],
-                    [RESERVE1_AMOUNT, RESERVE2_AMOUNT],
+                    [reserve1Amount, reserve2Amount],
                     1,
                     {
                         value: value
@@ -1941,12 +1939,12 @@ describe('BancorNetwork', () => {
 
                         // verify balances
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-                        expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
+                        expectInRange(systemBalance, prevSystemBalance.sub(protection.poolAmount));
 
                         const vaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                         const vaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount));
-                        expect(vaultNetworkBalance).to.equal(
+                        expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
+                        expectInRange(vaultNetworkBalance,
                             prevVaultNetworkBalance.add(protection.reserveAmount.div(2))
                         );
 
@@ -1954,7 +1952,7 @@ describe('BancorNetwork', () => {
 
                         // double since system balance was also liquidated
                         const delta = protection.poolAmount.mul(BigNumber.from(2));
-                        expect(walletBalance).to.equal(prevWalletBalance.sub(delta));
+                        expectInRange(walletBalance, prevWalletBalance.sub(delta));
 
                         const balance = await getBalance(baseToken, owner.address);
                         expect(balance).to.equal(prevBalance.sub(transactionCost));
@@ -2021,23 +2019,23 @@ describe('BancorNetwork', () => {
                     await baseToken.connect(provider).approve(network.address, amount);
                     await network.connect(provider).deposit(baseToken.address, amount);
 
-                    const reserve1Amount = BigNumber.from(5000);
-                    await baseToken.transfer(provider.address, reserve1Amount);
+                    const amount1 = BigNumber.from(5000);
+                    await baseToken.transfer(provider.address, amount1);
                     await addProtectedLiquidity(
                         poolToken.address,
                         baseToken,
                         baseToken.address,
-                        reserve1Amount,
+                        amount1,
                         false,
                         provider
                     );
 
-                    const reserve2Amount = BigNumber.from(1000);
+                    const amount2 = BigNumber.from(1000);
                     await addProtectedLiquidity(
                         poolToken.address,
                         networkToken,
                         networkToken.address,
-                        reserve2Amount,
+                        amount2,
                         false,
                         owner
                     );
@@ -2125,10 +2123,35 @@ describe('BancorNetwork', () => {
                     expect(protectionBaseBalance).to.equal(BigNumber.from(0));
 
                     const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                    expect(protectionNetworkBalance).to.equal(BigNumber.from(0));
+                    expectInRange(protectionNetworkBalance, BigNumber.from(0));
                 });
             });
-        });
+        };
+
+        for (const { totalSupply, reserve1Amount, reserve2Amount, offset } of [
+            {
+                totalSupply: BigNumber.from(10_000_000),
+                reserve1Amount: BigNumber.from(1_000_000),
+                reserve2Amount: BigNumber.from(2_500_000),
+                offset: { negative: 0, positive: 0 }
+            },
+            {
+                totalSupply: toWei(BigNumber.from(10_000_000)),
+                reserve1Amount: BigNumber.from(1_000_000),
+                reserve2Amount: BigNumber.from(2_500_000),
+                offset: { negative: 0, positive: 0 }
+            },
+            {
+                totalSupply: toWei(BigNumber.from(10_000_000)),
+                reserve1Amount: toWei(BigNumber.from(1_000_000)),
+                reserve2Amount: toWei(BigNumber.from(2_500_000)),
+                offset: { negative: 1, positive: 1 }
+            }
+        ]) {
+            describe(`migrate liquidity (totalSupply = ${totalSupply}, reserve1Amount = ${reserve1Amount}, reserve2Amount = ${reserve2Amount})`, () => {
+                migrateLiquidity(totalSupply, reserve1Amount, reserve2Amount, offset);
+            });
+        }
     });
 
     describe('withdraw', () => {
