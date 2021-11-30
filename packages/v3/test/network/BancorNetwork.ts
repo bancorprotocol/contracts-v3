@@ -2118,7 +2118,7 @@ describe('BancorNetwork', () => {
 
                     const balance = await getBalance(networkToken, owner.address);
                     expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
-                        maxRelativeError: new Decimal('0.000000000000000000000001')
+                        maxRelativeError: new Decimal('0.0000000000000000000000011')
                     });
 
                     const govBalance = await govToken.balanceOf(owner.address);
@@ -2148,6 +2148,12 @@ describe('BancorNetwork', () => {
                 reserve1Amount: BigNumber.from(1_000_000),
                 reserve2Amount: BigNumber.from(2_500_000),
                 offset: { negative: 0, positive: 0 }
+            },
+            {
+                totalSupply: BigNumber.from(10_000_000),
+                reserve1Amount: toWei(BigNumber.from(1_000_000)),
+                reserve2Amount: toWei(BigNumber.from(2_500_000)),
+                offset: { negative: 1, positive: 1 }
             },
             {
                 totalSupply: toWei(BigNumber.from(10_000_000)),
