@@ -1699,7 +1699,12 @@ describe('BancorNetwork', () => {
             });
         }
 
-        const migrateLiquidity = (totalSupply: BigNumber, reserve1Amount: BigNumber, reserve2Amount: BigNumber, offset: { negative: number, positive: number }) => {
+        const migrateLiquidity = (
+            totalSupply: BigNumber,
+            reserve1Amount: BigNumber,
+            reserve2Amount: BigNumber,
+            offset: { negative: number; positive: number }
+        ) => {
             let now: BigNumber;
             let checkpointStore: TestCheckpointStore;
             let liquidityProtectionSettings: LiquidityProtectionSettings;
@@ -1739,7 +1744,9 @@ describe('BancorNetwork', () => {
                     .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
             };
 
-            const getProtection = (protection: [string, string, string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber]) => {
+            const getProtection = (
+                protection: [string, string, string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber]
+            ) => {
                 return {
                     provider: protection[0],
                     poolToken: protection[1],
@@ -1799,7 +1806,7 @@ describe('BancorNetwork', () => {
             const initLegacySystem = async (isETH: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
-                baseToken = await createTokenBySymbol(isETH ? ETH : TKN) as IERC20;
+                baseToken = (await createTokenBySymbol(isETH ? ETH : TKN)) as IERC20;
 
                 ({
                     checkpointStore,
@@ -1944,7 +1951,8 @@ describe('BancorNetwork', () => {
                         const vaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                         const vaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
                         expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
-                        expectInRange(vaultNetworkBalance,
+                        expectInRange(
+                            vaultNetworkBalance,
                             prevVaultNetworkBalance.add(protection.reserveAmount.div(2))
                         );
 
