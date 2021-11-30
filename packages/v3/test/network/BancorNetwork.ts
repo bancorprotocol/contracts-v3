@@ -1738,7 +1738,7 @@ describe('BancorNetwork', () => {
                     .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
             };
 
-            const getProtection = (protection: any) => {
+            const getProtection = (protection: [string, string, string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber]) => {
                 return {
                     provider: protection[0],
                     poolToken: protection[1],
