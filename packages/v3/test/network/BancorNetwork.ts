@@ -1699,7 +1699,7 @@ describe('BancorNetwork', () => {
             });
         }
 
-        const migrateLiquidity = (
+        const testLiquidityMigration = (
             totalSupply: BigNumber,
             reserve1Amount: BigNumber,
             reserve2Amount: BigNumber,
@@ -1745,9 +1745,8 @@ describe('BancorNetwork', () => {
                     .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
             };
 
-            const getProtection = (
-                protection: [string, string, string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber]
-            ) => {
+            const getProtection = async (protectionId: BigNumber) => {
+                const protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
                 return {
                     provider: protection[0],
                     poolToken: protection[1],
@@ -1881,9 +1880,7 @@ describe('BancorNetwork', () => {
                     });
 
                     it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                        const protectionId = protectionIds[0];
-
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         await liquidityProtection.setTime(now.add(duration.seconds(1)));
                         await expect(
                             liquidityProtection.migratePositions([protectionId, protectionId])
@@ -1891,9 +1888,7 @@ describe('BancorNetwork', () => {
                     });
 
                     it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                        const protectionId = protectionIds[0];
-
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         await liquidityProtection.setTime(now.add(duration.seconds(1)));
                         await liquidityProtection.migratePositions([protectionId]);
                         await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
@@ -1902,10 +1897,8 @@ describe('BancorNetwork', () => {
                     });
 
                     it('verifies that the caller can migrate positions', async () => {
-                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                        const protectionId = protectionIds[0];
-                        const protectedLiquidity = await liquidityProtectionStore.protectedLiquidity(protectionId);
-                        const protection = getProtection(protectedLiquidity);
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        const protection = await getProtection(protectionId);
 
                         const prevPoolStats = await getPoolStats(poolToken, baseToken, isETH);
                         const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isETH);
@@ -1922,8 +1915,7 @@ describe('BancorNetwork', () => {
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
-                        protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                        expect(protectionIds.length).to.equal(0);
+                        expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                         let transactionCost = BigNumber.from(0);
                         if (isETH) {
@@ -1980,10 +1972,8 @@ describe('BancorNetwork', () => {
                     });
 
                     it('verifies that the owner can migrate system pool tokens', async () => {
-                        let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                        const protectionId = protectionIds[0];
-                        const protectedLiquidity = await liquidityProtectionStore.protectedLiquidity(protectionId);
-                        const protection = getProtection(protectedLiquidity);
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        const protection = await getProtection(protectionId);
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
@@ -2051,9 +2041,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                    let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                    const protectionId = protectionIds[0];
-
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                     await liquidityProtection.setTime(now.add(duration.seconds(1)));
                     await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
                         'ERR_ACCESS_DENIED'
@@ -2061,9 +2049,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                    let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                    const protectionId = protectionIds[0];
-
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                     await liquidityProtection.setTime(now.add(duration.seconds(1)));
                     await liquidityProtection.migratePositions([protectionId]);
                     await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
@@ -2072,10 +2058,8 @@ describe('BancorNetwork', () => {
                 });
 
                 it('verifies that the caller can migrate positions', async () => {
-                    let protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                    const protectionId = protectionIds[0];
-                    const protectedLiquidity = await liquidityProtectionStore.protectedLiquidity(protectionId);
-                    const protection = getProtection(protectedLiquidity);
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                    const protection = await getProtection(protectionId);
 
                     const prevPoolStats = await getPoolStats(poolToken, networkToken, false);
                     const prevProviderStats = await getProviderStats(owner, poolToken, networkToken, false);
@@ -2089,8 +2073,7 @@ describe('BancorNetwork', () => {
 
                     await liquidityProtection.setTime(now.add(duration.seconds(1)));
                     await liquidityProtection.migratePositions([protectionId]);
-                    protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
-                    expect(protectionIds.length).to.equal(0);
+                    expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                     // verify stats
                     const poolStats = await getPoolStats(poolToken, networkToken, false);
@@ -2168,7 +2151,7 @@ describe('BancorNetwork', () => {
             }
         ]) {
             describe(`migrate liquidity (totalSupply = ${totalSupply}, reserve1Amount = ${reserve1Amount}, reserve2Amount = ${reserve2Amount})`, () => {
-                migrateLiquidity(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset);
+                testLiquidityMigration(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset);
             });
         }
     });
