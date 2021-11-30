@@ -57,11 +57,19 @@ describe('StakingRewardsMath', () => {
         it(`reward(${numOfSeconds}, ${totalRewards})`, async () => {
             const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
             if (numOfSeconds < SECONDS_TOO_HIGH) {
-                const actual = new Decimal((await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)).toString());
-                const expected = new Decimal(totalRewardsInWei.toString()).mul(ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp()));
+                const actual = new Decimal(
+                    (
+                        await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                    ).toString()
+                );
+                const expected = new Decimal(totalRewardsInWei.toString()).mul(
+                    ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp())
+                );
                 assertAccuracy(actual, expected, minAccuracy);
             } else {
-                await expect(stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                await expect(
+                    stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                ).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
             }
         });
     };
