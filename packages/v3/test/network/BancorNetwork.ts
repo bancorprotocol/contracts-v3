@@ -1714,7 +1714,7 @@ describe('BancorNetwork', () => {
             let liquidityProtection: TestLiquidityProtection;
             let converter: TestStandardPoolConverter;
             let poolToken: DSToken;
-            let baseToken: any;
+            let baseToken: IERC20;
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
 
@@ -1798,7 +1798,7 @@ describe('BancorNetwork', () => {
             const initLegacySystem = async (isETH: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
-                baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
+                baseToken = await createTokenBySymbol(isETH ? ETH : TKN) as IERC20;
 
                 ({
                     checkpointStore,
