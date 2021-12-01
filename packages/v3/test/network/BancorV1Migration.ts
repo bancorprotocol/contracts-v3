@@ -139,7 +139,9 @@ describe('BancorV1Migration', () => {
                                 }
                             });
 
-                            it('verifies that the caller can migrate pool tokens', async () => {
+                            for (const percent of [10, 25, 50, 100]) {
+                            const part = (n: BigNumber) => n.mul(percent).div(100);
+                            it.only(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
                                 const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
                                 const prevConverterNetworkBalance = await getBalance(networkToken, converter.address);
                                 const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
@@ -147,7 +149,7 @@ describe('BancorV1Migration', () => {
                                 const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
                                 const prevPoolTokenSupply = await poolToken.totalSupply();
 
-                                const poolTokenAmount = await getBalance(poolToken, provider.address);
+                                const poolTokenAmount = part(await getBalance(poolToken, provider.address));
                                 await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
                                 await bancorV1Migration
                                     .connect(provider)
@@ -165,16 +167,16 @@ describe('BancorV1Migration', () => {
                                 );
                                 expect(currConverterNetworkBalance).to.equal(
                                     prevConverterNetworkBalance.sub(
-                                        prevConverterNetworkBalance.mul(BASE_AMOUNT).div(prevConverterBaseBalance)
+                                        prevConverterNetworkBalance.mul(part(BASE_AMOUNT)).div(prevConverterBaseBalance)
                                     )
                                 );
-                                expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(BASE_AMOUNT));
+                                expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(part(BASE_AMOUNT)));
                                 expect(currVaultNetworkBalance).to.equal(
                                     prevVaultNetworkBalance.add(
-                                        prevVaultNetworkBalance.mul(BASE_AMOUNT).div(prevVaultBaseBalance)
+                                        prevVaultNetworkBalance.mul(part(BASE_AMOUNT)).div(prevVaultBaseBalance)
                                     )
                                 );
-                                expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(BASE_AMOUNT));
+                                expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(part(BASE_AMOUNT)));
                                 expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
                                 const prevProviderNetworkBalance = await getBalance(networkToken, provider);
@@ -221,12 +223,13 @@ describe('BancorV1Migration', () => {
                                 const currProviderBaseBalance = await getBalance(baseToken, provider);
 
                                 expect(currProviderNetworkBalance).to.equal(
-                                    prevProviderNetworkBalance.add(deductWithdrawalFee(NETWORK_AMOUNT))
+                                    prevProviderNetworkBalance.add(deductWithdrawalFee(part(NETWORK_AMOUNT)))
                                 );
                                 expect(currProviderBaseBalance.add(cost)).to.equal(
-                                    prevProviderBaseBalance.add(deductWithdrawalFee(BASE_AMOUNT))
+                                    prevProviderBaseBalance.add(deductWithdrawalFee(part(BASE_AMOUNT)))
                                 );
                             });
+                            }
                         });
                     }
                 });
