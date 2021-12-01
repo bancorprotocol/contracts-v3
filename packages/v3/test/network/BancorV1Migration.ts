@@ -119,7 +119,7 @@ describe('BancorV1Migration', () => {
         }
     };
 
-    const execute = async (
+    const verify = async (
         withdrawalFee: BigNumber,
         networkAmount: BigNumber,
         baseAmount: BigNumber,
@@ -214,7 +214,7 @@ describe('BancorV1Migration', () => {
                             await init(withdrawalFee, networkAmount, baseAmount, isETH);
                         });
                         it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
-                            await execute(withdrawalFee, networkAmount, baseAmount, isETH, percent);
+                            await verify(withdrawalFee, networkAmount, baseAmount, isETH, percent);
                         });
                     });
                 });
