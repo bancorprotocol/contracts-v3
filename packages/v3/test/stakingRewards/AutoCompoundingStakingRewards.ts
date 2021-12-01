@@ -44,7 +44,7 @@ const YEAR = 365 * DAY;
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
-    let user1: SignerWithAddress;
+    let user: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
 
     let network: TestBancorNetwork;
@@ -56,7 +56,7 @@ describe('AutoCompoundingStakingRewards', () => {
     let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
 
     before(async () => {
-        [deployer, user1, stakingRewardsProvider] = await ethers.getSigners();
+        [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
     describe('construction', () => {
@@ -396,8 +396,6 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('process rewards', () => {
-        let currentTime: BigNumber;
-
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
         const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
@@ -408,8 +406,6 @@ describe('AutoCompoundingStakingRewards', () => {
             ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
-            currentTime = BigNumber.from(0);
 
             autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
                 ctorArgs: [network.address, masterPool.address]
@@ -433,8 +429,8 @@ describe('AutoCompoundingStakingRewards', () => {
             await transfer(lp, poolToken, externalRewardsVault, amount);
         };
 
-        const ownableToken = async (
-            user: { address: string },
+        const tokenFromPoolToken = async (
+            user_: { address: string },
             poolCollection: TestPoolCollection,
             token: TokenWithAddress,
             poolToken: PoolToken
@@ -442,71 +438,104 @@ describe('AutoCompoundingStakingRewards', () => {
             const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
             return Number(
                 mulDivF(
-                    await poolToken.balanceOf(user.address),
+                    await poolToken.balanceOf(user_.address),
                     tokenStakedBalance,
                     await poolToken.totalSupply()
                 ).toString()
             );
         };
 
-        const TOTAL_DURATION = 10 * DAY;
-        const TOTAL_REWARDS = 90_000;
-        const INITIAL_STAKE = 10_000;
-
-        for (const distributionType of [0]) {
-            const distributionTypeName = distributionType === 0 ? 'FLAT' : 'EXPONENTIAL_DECAY';
-
-            context(distributionTypeName, () => {
-                beforeEach(async () => {
-                    ({ token, poolToken } = await setupSimplePool(
-                        {
-                            symbol: 'TKN',
-                            balance: INITIAL_STAKE,
-                            initialRate: INITIAL_RATE
-                        },
-                        user1,
-                        network,
-                        networkSettings,
-                        poolCollection
-                    ));
-
-                    await depositAndTransferToSR(
-                        stakingRewardsProvider,
-                        token,
-                        poolToken,
-                        TOTAL_REWARDS,
-                        network,
-                        externalRewardsVault
-                    );
-
-                    await autoCompoundingStakingRewards.createProgram(
-                        token.address,
-                        externalRewardsVault.address,
-                        TOTAL_REWARDS,
-                        distributionType,
-                        currentTime,
-                        currentTime.add(TOTAL_DURATION)
-                    );
-                });
-
-                it.only('', async () => {
-                    for (let i = 1; i <= 10; i++) {
-                        await autoCompoundingStakingRewards.setTime(currentTime.add(i * DAY));
-                        await autoCompoundingStakingRewards.processRewards(token.address);
-
-                        const user1OwnableTokens = await ownableToken(user1, poolCollection, token, poolToken);
-                        const externalRewardsVaultOwnableTokens = await ownableToken(
-                            externalRewardsVault,
-                            poolCollection,
-                            token,
-                            poolToken
-                        );
-
-                        console.log(user1OwnableTokens);
-                        console.log(externalRewardsVaultOwnableTokens);
-                    }
-                });
-            });
+        function getPerc(num: number, percent: number) {
+            return Math.floor(num - (percent / 100) * num);
         }
+
+        context('FLAT', () => {
+            const distributionType = 0;
+            const INITIAL_STAKE = 10_000;
+            const TOTAL_REWARDS = 90_000_000_000_000;
+            const PROGRAM_TIME = 10 * DAY;
+
+            let currentTime: BigNumber;
+
+            beforeEach(async () => {
+                currentTime = BigNumber.from(0);
+
+                ({ token, poolToken } = await setupSimplePool(
+                    {
+                        symbol: 'TKN',
+                        balance: INITIAL_STAKE,
+                        initialRate: INITIAL_RATE
+                    },
+                    user,
+                    network,
+                    networkSettings,
+                    poolCollection
+                ));
+
+                await depositAndTransferToSR(
+                    stakingRewardsProvider,
+                    token,
+                    poolToken,
+                    TOTAL_REWARDS,
+                    network,
+                    externalRewardsVault
+                );
+
+                await autoCompoundingStakingRewards.createProgram(
+                    token.address,
+                    externalRewardsVault.address,
+                    TOTAL_REWARDS,
+                    distributionType,
+                    currentTime,
+                    currentTime.add(PROGRAM_TIME)
+                );
+            });
+
+            const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
+                if (!actual.eq(expected)) {
+                    const accuracy = actual.lte(expected) ? actual.div(expected) : expected.div(actual);
+                    expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
+                        true,
+                        '\n' +
+                            [
+                                `expected = ${expected.toFixed(minAccuracy.length)}`,
+                                `actual   = ${actual.toFixed(minAccuracy.length)}`,
+                                `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
+                            ].join('\n')
+                    );
+                }
+            };
+
+            for (const programTimePercent of [0, 13, 25, 43, 50, 65, 75, 86, 98, 100]) {
+                const currentTime = PROGRAM_TIME - getPerc(PROGRAM_TIME, programTimePercent);
+
+                it(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
+                    await autoCompoundingStakingRewards.setTime(currentTime);
+                    await autoCompoundingStakingRewards.processRewards(token.address);
+
+                    const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
+                    const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
+                        externalRewardsVault,
+                        poolCollection,
+                        token,
+                        poolToken
+                    );
+
+                    assertAccuracy(
+                        new Decimal(userTokenOwned.toString()),
+                        new Decimal(
+                            (INITIAL_STAKE + (TOTAL_REWARDS - getPerc(TOTAL_REWARDS, programTimePercent))).toString()
+                        ),
+                        '0.995'
+                    );
+
+                    assertAccuracy(
+                        new Decimal(externalRewardsVaultTokenOwned.toString()),
+                        new Decimal((TOTAL_REWARDS - getPerc(TOTAL_REWARDS, 100 - programTimePercent)).toString()),
+                        '0.995'
+                    );
+                });
+            }
+        });
     });
 });

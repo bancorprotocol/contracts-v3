@@ -13,7 +13,7 @@ contract StakingRewardsMath {
     uint256 internal constant LAMBDA_D = 10000000000000000000000;
 
     /**
-     * @dev process the number of pool token to burn to match the number of token to distribute
+     * @dev return the number of pool token to burn in order to match a number of token to distribute
      */
     function _processPoolTokenToBurn(
         uint256 a, // totalAmountOfTokenStaked
@@ -26,12 +26,12 @@ contract StakingRewardsMath {
     }
 
     /**
-     * @dev process rewards on a flat amount ratio
+     * @dev return the amount of rewards distributed on a flat amount ratio
      */
     function _processFlatRewards(
-        uint256 timeElapsedSinceLastDistribution, // time elapsed since last distribution
-        uint256 remainingProgramTime, // remaining time of the program
-        uint256 availableRewards // available rewards
+        uint256 timeElapsedSinceLastDistribution,
+        uint256 remainingProgramTime,
+        uint256 availableRewards
     ) internal pure returns (uint256) {
         return MathEx.mulDivF(availableRewards, timeElapsedSinceLastDistribution, remainingProgramTime);
     }

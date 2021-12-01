@@ -22,8 +22,6 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-import "hardhat/console.sol";
-
 enum DistributionType {
     FLAT,
     EXPONENTIAL_DECAY
@@ -236,9 +234,9 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
-        // if rewards vault address is different from address(0) then they was a previous program
-        if (address(currentProgram.rewardsVault) != address(0)) {
-            // process rewards to make sure there's no rewards left for that pool
+        // if current program's pool address is different from address(0), then process
+        // the last batch of rewards to make sure there's no rewards left for that pool
+        if (address(currentProgram.pool) != address(0)) {
             processRewards(pool);
         }
 
@@ -299,6 +297,9 @@ contract AutoCompoundingStakingRewards is
         currentProgram.isEnabled = status;
     }
 
+    /**
+     * @dev fetch a pool's information
+     */
     function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
         ReserveToken reserveToken = ReserveToken.wrap(currentProgram.pool);
         if (_networkToken == reserveToken.toIERC20()) {
@@ -313,31 +314,29 @@ contract AutoCompoundingStakingRewards is
             );
         }
         poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
-        return poolInfo;
     }
 
-    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
-        uint256 currentTime = _time();
+    /**
+     * @dev fetch a pool's time information
+     */
+    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory timeInfo) {
+        timeInfo.currentTime = _time();
 
-        uint256 totalProgramTime = currentProgram.endTime - currentProgram.startTime;
+        timeInfo.totalProgramTime = currentProgram.endTime - currentProgram.startTime;
 
-        uint256 timeElapsed = currentTime - currentProgram.startTime;
+        uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
+
         // if time spent is higher than the total program time, set time to total program time
-        timeElapsed = timeElapsed > totalProgramTime ? totalProgramTime : timeElapsed;
+        timeInfo.timeElapsed = timeElapsed > timeInfo.totalProgramTime ? timeInfo.totalProgramTime : timeElapsed;
 
-        uint256 prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
+        timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
             ? currentProgram.prevDistributionTimestamp
             : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
-
-        return
-            TimeInfo({
-                currentTime: currentTime,
-                timeElapsed: timeElapsed,
-                prevTimeElapsed: prevTimeElapsed,
-                totalProgramTime: totalProgramTime
-            });
     }
 
+    /**
+     * @dev process a pool's flat rewards program
+     */
     function processFlatRewards(
         uint256 timeElapsedSinceLastDistribution,
         uint256 remainingProgramTime,
@@ -346,6 +345,9 @@ contract AutoCompoundingStakingRewards is
         return (_processFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
     }
 
+    /**
+     * @dev process a pool's exponential decay rewards program
+     */
     function processExponentialDecayRewards(
         uint256 timeElapsed,
         uint256 prevTimeElapsed,
@@ -363,10 +365,10 @@ contract AutoCompoundingStakingRewards is
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
         if (!isProgramActive(ReserveToken.unwrap(pool))) {
-            // if the program is inactive but the previous distributionTimeStamp
-            // is lower than the program end time it means that the latest batch of rewards
-            // hasn't been sent
+            // if the program is inactive and is a flat distribution
             if (currentProgram.distributionType == DistributionType.FLAT) {
+                // if the previous distributionTimeStamp is lower than the program end time
+                // it means that the latest batch of rewards hasn't been sent
                 if (!(currentProgram.prevDistributionTimestamp < currentProgram.endTime)) {
                     return;
                 }
