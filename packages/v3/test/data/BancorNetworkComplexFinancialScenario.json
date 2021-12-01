@@ -21,12 +21,48 @@
         }
     ],
     "pool": {
-        "tknProvider": "tknProvider",
-        "tknBalance": "3000000",
-        "bntBalance": "1000000",
-        "bntMintLimit": "50000000"
+        "tknInitialRate": "3000000",
+        "bntInitialRate": "1000000",
+        "bntMinLiquidity": "50000000",
+        "bntMintingLimit": "50000000"
     },
     "operations": [
+        {
+            "type": "depositTKN",
+            "userId": "tknProvider",
+            "elapsed": 0,
+            "amount": "3000000",
+            "expected": {
+                "tknBalances": {
+                    "masterVault": "3000000",
+                    "epVault": "0",
+                    "dayTrader": "10000",
+                    "tknProvider": "7000000",
+                    "bntProvider": "0"
+                },
+                "bntBalances": {
+                    "masterVault": "1000000",
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "10000000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "3000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "masterPool": "1000000",
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "0"
+                },
+                "bntStakedBalance": "1000000",
+                "tknStakedBalance": "3000000",
+                "tknTradingLiquidity": "3000000",
+                "bntTradingLiquidity": "1000000"
+            }
+        },
         {
             "type": "depositTKN",
             "userId": "tknProvider",

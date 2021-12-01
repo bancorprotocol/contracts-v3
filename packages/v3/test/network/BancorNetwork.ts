@@ -3039,10 +3039,10 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     interface Pool {
-        tknProvider: string;
-        tknBalance: string;
-        bntBalance: string;
-        bntMintLimit: string;
+        tknInitialRate: string;
+        bntInitialRate: string;
+        bntMinLiquidity: string;
+        bntMintingLimit: string;
     }
 
     interface State {
@@ -3226,40 +3226,6 @@ describe('BancorNetwork Financial Verification', () => {
             fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
         );
 
-        // insert an initial operation of depositing the same amount of TKN specified in the call to function `setInitialRate`
-        flow.operations.unshift({
-            type: 'depositTKN',
-            userId: flow.pool.tknProvider,
-            elapsed: 0,
-            amount: flow.pool.tknBalance,
-            expected: {
-                tknBalances: flow.users.reduce(
-                    (tknBalances, user) => ({ ...tknBalances, [user.id]: user.tknBalance }),
-                    { masterVault: flow.pool.tknBalance, epVault: flow.epVaultBalance }
-                ),
-                bntBalances: flow.users.reduce(
-                    (bntBalances, user) => ({ ...bntBalances, [user.id]: user.bntBalance }),
-                    { masterVault: flow.pool.bntBalance }
-                ),
-                bntknBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {}),
-                bnbntBalances: flow.users.reduce((tknBalances, user) => ({ ...tknBalances, [user.id]: '0' }), {
-                    masterPool: flow.pool.bntBalance
-                }),
-                bntStakedBalance: flow.pool.bntBalance,
-                tknStakedBalance: flow.pool.tknBalance,
-                tknTradingLiquidity: flow.pool.tknBalance,
-                bntTradingLiquidity: flow.pool.bntBalance
-            }
-        });
-
-        // update the expected state of the system following the initial operation (i.e., after this operation is executed during runtime)
-        flow.operations[0].expected.tknBalances[flow.pool.tknProvider] = new Decimal(
-            flow.operations[0].expected.tknBalances[flow.pool.tknProvider]
-        )
-            .sub(flow.pool.tknBalance)
-            .toFixed();
-        flow.operations[0].expected.bntknBalances[flow.pool.tknProvider] = flow.pool.tknBalance;
-
         ({
             network,
             networkToken,
@@ -3287,22 +3253,22 @@ describe('BancorNetwork Financial Verification', () => {
         bnbntDecimals = DEFAULT_DECIMALS.toNumber();
         await baseToken.updateDecimals(tknDecimals);
 
-        const tknInitialBalance = decimalToInteger(flow.pool.tknBalance, tknDecimals);
-        const bntInitialBalance = decimalToInteger(flow.pool.bntBalance, bntDecimals);
-
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
         await networkSettings.setPoolMintingLimit(
             baseToken.address,
-            decimalToInteger(flow.pool.bntMintLimit, bntDecimals)
+            decimalToInteger(flow.pool.bntMintingLimit, bntDecimals)
         );
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
-        await networkSettings.setMinLiquidityForTrading(bntInitialBalance);
+        await networkSettings.setMinLiquidityForTrading(flow.pool.bntMinLiquidity);
 
         await pendingWithdrawals.setLockDuration(0);
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
-        await poolCollection.setInitialRate(baseToken.address, { n: bntInitialBalance, d: tknInitialBalance });
+        await poolCollection.setInitialRate(baseToken.address, {
+            n: decimalToInteger(flow.pool.bntInitialRate, bntDecimals),
+            d: decimalToInteger(flow.pool.tknInitialRate, tknDecimals)
+        });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 
