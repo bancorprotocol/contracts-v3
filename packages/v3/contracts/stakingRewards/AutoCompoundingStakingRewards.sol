@@ -41,6 +41,20 @@ struct ProgramData {
     bool isEnabled;
 }
 
+struct TimeInfo {
+    uint256 timeElapsed;
+    uint256 prevTimeElapsed;
+    uint256 totalProgramTime;
+    uint256 currentTime;
+}
+
+struct PoolInfo {
+    uint256 stakedBalance;
+    uint256 amountOfPoolTokenOwnedByProtocol;
+    uint256 poolTokenTotalSupply;
+    IPoolToken poolToken;
+}
+
 error ProgramActive();
 error ProgramNotActive();
 error InvalidParam();
@@ -100,7 +114,7 @@ contract AutoCompoundingStakingRewards is
      * @dev triggered when rewards are distributed
      */
     event RewardsDistributed(
-        address indexed pool,
+        ReserveToken indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
         uint256 timeElapsed,
@@ -285,6 +299,63 @@ contract AutoCompoundingStakingRewards is
         currentProgram.isEnabled = status;
     }
 
+    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
+        ReserveToken reserveToken = ReserveToken.wrap(currentProgram.pool);
+        if (_networkToken == reserveToken.toIERC20()) {
+            poolInfo.stakedBalance = _networkTokenPool.stakedBalance();
+            poolInfo.poolToken = _networkTokenPool.poolToken();
+            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_network.masterPool()));
+        } else {
+            poolInfo.stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
+            poolInfo.poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
+            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(
+                address(currentProgram.rewardsVault)
+            );
+        }
+        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
+        return poolInfo;
+    }
+
+    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
+        uint256 currentTime = _time();
+
+        uint256 totalProgramTime = currentProgram.endTime - currentProgram.startTime;
+
+        uint256 timeElapsed = currentTime - currentProgram.startTime;
+        // if time spent is higher than the total program time, set time to total program time
+        timeElapsed = timeElapsed > totalProgramTime ? totalProgramTime : timeElapsed;
+
+        uint256 prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
+            ? currentProgram.prevDistributionTimestamp
+            : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
+
+        return
+            TimeInfo({
+                currentTime: currentTime,
+                timeElapsed: timeElapsed,
+                prevTimeElapsed: prevTimeElapsed,
+                totalProgramTime: totalProgramTime
+            });
+    }
+
+    function processFlatRewards(
+        uint256 timeElapsedSinceLastDistribution,
+        uint256 remainingProgramTime,
+        uint256 availableRewards
+    ) internal pure returns (uint256) {
+        return (_processFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
+    }
+
+    function processExponentialDecayRewards(
+        uint256 timeElapsed,
+        uint256 prevTimeElapsed,
+        uint256 totalRewards
+    ) internal pure returns (uint256) {
+        return
+            _processExponentialDecayRewards(timeElapsed, totalRewards) -
+            _processExponentialDecayRewards(prevTimeElapsed, totalRewards);
+    }
+
     /**
      * @dev process a pool's rewards
      */
@@ -302,73 +373,48 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        uint256 timeElapsed = _time() - currentProgram.startTime;
-        uint256 totalProgramTime = currentProgram.endTime - currentProgram.startTime;
+        PoolInfo memory poolInfo = fetchPoolInfo(currentProgram);
+        TimeInfo memory timeInfo = fetchTimeInfo(currentProgram);
 
-        uint256 tokenToBeDistributed;
-
+        uint256 tokenToDistribute;
         if (currentProgram.distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokenToBeDistributed =
-                processExponentialDecayReward(timeElapsed, currentProgram.totalRewards) -
-                (currentProgram.totalRewards - currentProgram.availableRewards);
+            tokenToDistribute = processExponentialDecayRewards(
+                timeInfo.timeElapsed,
+                timeInfo.prevTimeElapsed,
+                currentProgram.totalRewards
+            );
         } else if (currentProgram.distributionType == DistributionType.FLAT) {
-            uint256 effectiveTimeElapsed = timeElapsed > totalProgramTime ? totalProgramTime : timeElapsed;
-
-            uint256 effectivePrevDistributionTimestamp = currentProgram.prevDistributionTimestamp == 0
-                ? currentProgram.prevDistributionTimestamp
-                : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
-
-            tokenToBeDistributed = processFlatReward(
-                effectiveTimeElapsed,
-                totalProgramTime,
-                effectivePrevDistributionTimestamp,
+            tokenToDistribute = processFlatRewards(
+                timeInfo.timeElapsed - timeInfo.prevTimeElapsed,
+                timeInfo.totalProgramTime - timeInfo.prevTimeElapsed,
                 currentProgram.availableRewards
             );
         }
-        console.log("---> token to be distributed: ", tokenToBeDistributed);
 
-        ReserveToken reserveToken = ReserveToken(pool);
-
-        uint256 stakedBalance;
-        uint256 amountOfPoolTokenOwnedByProtocol;
-        IPoolToken poolToken;
-
-        if (_networkToken == reserveToken.toIERC20()) {
-            stakedBalance = _networkTokenPool.stakedBalance();
-            poolToken = _networkTokenPool.poolToken();
-            amountOfPoolTokenOwnedByProtocol = poolToken.balanceOf(address(_network.masterPool()));
-        } else {
-            stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
-            poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
-            amountOfPoolTokenOwnedByProtocol = poolToken.balanceOf(address(currentProgram.rewardsVault));
-        }
-
-        uint256 poolTokenTotalSupply = poolToken.totalSupply();
-
-        uint256 poolTokenToBurn = processPoolTokenToBurn(
-            stakedBalance,
-            tokenToBeDistributed,
-            poolTokenTotalSupply,
-            amountOfPoolTokenOwnedByProtocol
+        uint256 poolTokenToBurn = _processPoolTokenToBurn(
+            poolInfo.stakedBalance,
+            tokenToDistribute,
+            poolInfo.poolTokenTotalSupply,
+            poolInfo.amountOfPoolTokenOwnedByProtocol
         );
 
         currentProgram.rewardsVault.withdrawFunds(
-            ReserveToken.wrap(address(poolToken)),
+            ReserveToken.wrap(address(poolInfo.poolToken)),
             payable(address(this)),
             poolTokenToBurn
         );
 
-        currentProgram.availableRewards -= tokenToBeDistributed;
-        currentProgram.prevDistributionTimestamp = _time();
+        currentProgram.availableRewards -= tokenToDistribute;
+        currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
-        poolToken.approve(address(this), poolTokenToBurn);
-        poolToken.burnFrom(address(this), poolTokenToBurn);
+        poolInfo.poolToken.approve(address(this), poolTokenToBurn);
+        poolInfo.poolToken.burnFrom(address(this), poolTokenToBurn);
 
         emit RewardsDistributed(
-            ReserveToken.unwrap(pool),
-            tokenToBeDistributed,
+            pool,
+            tokenToDistribute,
             poolTokenToBurn,
-            timeElapsed,
+            timeInfo.timeElapsed,
             currentProgram.availableRewards
         );
     }

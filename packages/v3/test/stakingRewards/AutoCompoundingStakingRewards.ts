@@ -53,9 +53,6 @@ describe('AutoCompoundingStakingRewards', () => {
     let poolCollection: TestPoolCollection;
     let externalRewardsVault: ExternalRewardsVault;
 
-    let token: TokenWithAddress;
-    let poolToken: PoolToken;
-
     let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
 
     before(async () => {
@@ -106,7 +103,6 @@ describe('AutoCompoundingStakingRewards', () => {
         const TOTAL_DURATION = 10 * MONTH;
 
         let token: TokenWithAddress;
-        let poolToken: PoolToken;
 
         beforeEach(async () => {
             ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
@@ -119,7 +115,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ctorArgs: [network.address, masterPool.address]
             });
 
-            ({ token, poolToken } = await setupSimplePool(
+            ({ token } = await setupSimplePool(
                 {
                     symbol: 'TKN',
                     balance: BigNumber.from(10_000),
@@ -271,7 +267,6 @@ describe('AutoCompoundingStakingRewards', () => {
         const TOTAL_DURATION = 10 * MONTH;
 
         let token: TokenWithAddress;
-        let poolToken: PoolToken;
 
         beforeEach(async () => {
             ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
@@ -284,7 +279,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ctorArgs: [network.address, masterPool.address]
             });
 
-            ({ token, poolToken } = await setupSimplePool(
+            ({ token } = await setupSimplePool(
                 {
                     symbol: 'TKN',
                     balance: BigNumber.from(10_000),
@@ -351,7 +346,6 @@ describe('AutoCompoundingStakingRewards', () => {
         const TOTAL_DURATION = 10 * MONTH;
 
         let token: TokenWithAddress;
-        let poolToken: PoolToken;
 
         beforeEach(async () => {
             ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
@@ -364,7 +358,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ctorArgs: [network.address, masterPool.address]
             });
 
-            ({ token, poolToken } = await setupSimplePool(
+            ({ token } = await setupSimplePool(
                 {
                     symbol: 'TKN',
                     balance: BigNumber.from(10_000),
@@ -410,29 +404,6 @@ describe('AutoCompoundingStakingRewards', () => {
         let token: TokenWithAddress;
         let poolToken: PoolToken;
 
-        const depositAndTransferToSR = async (
-            lp: SignerWithAddress,
-            token: TokenWithAddress,
-            poolToken: TokenWithAddress,
-            amount: BigNumberish,
-            network: TestBancorNetwork,
-            externalRewardsVault: ExternalRewardsVault
-        ) => {
-            await depositToPool(lp, token, amount, network);
-            await transfer(lp, poolToken, externalRewardsVault, amount);
-        };
-
-        const ownableToken = async (user: { address: string }, token: TokenWithAddress, poolToken: PoolToken) => {
-            const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-            return Number(
-                mulDivF(
-                    await poolToken.balanceOf(user.address),
-                    tokenStakedBalance,
-                    await poolToken.totalSupply()
-                ).toString()
-            );
-        };
-
         beforeEach(async () => {
             ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
 
@@ -450,11 +421,39 @@ describe('AutoCompoundingStakingRewards', () => {
             );
         });
 
+        const depositAndTransferToSR = async (
+            lp: SignerWithAddress,
+            token: TokenWithAddress,
+            poolToken: TokenWithAddress,
+            amount: BigNumberish,
+            network: TestBancorNetwork,
+            externalRewardsVault: ExternalRewardsVault
+        ) => {
+            await depositToPool(lp, token, amount, network);
+            await transfer(lp, poolToken, externalRewardsVault, amount);
+        };
+
+        const ownableToken = async (
+            user: { address: string },
+            poolCollection: TestPoolCollection,
+            token: TokenWithAddress,
+            poolToken: PoolToken
+        ) => {
+            const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
+            return Number(
+                mulDivF(
+                    await poolToken.balanceOf(user.address),
+                    tokenStakedBalance,
+                    await poolToken.totalSupply()
+                ).toString()
+            );
+        };
+
         const TOTAL_DURATION = 10 * DAY;
         const TOTAL_REWARDS = 90_000;
         const INITIAL_STAKE = 10_000;
 
-        for (const distributionType of [1]) {
+        for (const distributionType of [0]) {
             const distributionTypeName = distributionType === 0 ? 'FLAT' : 'EXPONENTIAL_DECAY';
 
             context(distributionTypeName, () => {
@@ -491,23 +490,20 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 it.only('', async () => {
-                    for (let i = 1; i <= 100; i++) {
-                        await autoCompoundingStakingRewards.setTime(currentTime.add(i * MONTH));
+                    for (let i = 1; i <= 10; i++) {
+                        await autoCompoundingStakingRewards.setTime(currentTime.add(i * DAY));
                         await autoCompoundingStakingRewards.processRewards(token.address);
 
-                        const user1OwnableTokens = await ownableToken(user1, token, poolToken);
+                        const user1OwnableTokens = await ownableToken(user1, poolCollection, token, poolToken);
                         const externalRewardsVaultOwnableTokens = await ownableToken(
                             externalRewardsVault,
+                            poolCollection,
                             token,
                             poolToken
                         );
 
                         console.log(user1OwnableTokens);
                         console.log(externalRewardsVaultOwnableTokens);
-
-                        // expect(user1OwnableTokens + externalRewardsVaultOwnableTokens).to.equal(
-                        //     INITIAL_STAKE + TOTAL_REWARDS
-                        // );
                     }
                 });
             });
