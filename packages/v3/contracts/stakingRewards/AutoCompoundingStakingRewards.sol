@@ -8,7 +8,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { IAutoCompoundingStakingRewards } from "./interfaces/IAutoCompoundingStakingRewards.sol";
+import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { Utils } from "../utility/Utils.sol";
@@ -21,23 +21,6 @@ import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
-
-enum DistributionType {
-    FLAT,
-    EXPONENTIAL_DECAY
-}
-
-struct ProgramData {
-    address pool;
-    IVault rewardsVault;
-    uint256 totalRewards;
-    uint256 availableRewards;
-    DistributionType distributionType;
-    uint256 startTime;
-    uint256 endTime;
-    uint256 prevDistributionTimestamp;
-    bool isEnabled;
-}
 
 struct TimeInfo {
     uint256 timeElapsed;
@@ -163,14 +146,14 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns the program data of a pool
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function program(address pool) external view returns (ProgramData memory) {
         return _programs[pool];
     }
 
     /**
-     * @dev returns a list of all pools' program data
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
         uint256 totalProgram = _programByPool.length();
@@ -182,7 +165,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns wether a program is active or not
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(address pool) public view returns (bool) {
         ProgramData storage currentProgram = _programs[pool];
@@ -205,12 +188,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev create a program for a pool
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     * - pool's program must not be active
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function createProgram(
         ReserveToken pool,
@@ -261,11 +239,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev terminate a pool's program
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function terminateProgram(address pool) external onlyAdmin {
         if (!isProgramActive(pool)) {
@@ -285,11 +259,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev enable or disable a pool's program
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function enableProgram(address pool, bool status) external onlyAdmin {
         ProgramData storage currentProgram = _programs[pool];
@@ -298,68 +268,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev fetch a pool's information
-     */
-    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
-        ReserveToken reserveToken = ReserveToken.wrap(currentProgram.pool);
-        if (_networkToken == reserveToken.toIERC20()) {
-            poolInfo.stakedBalance = _networkTokenPool.stakedBalance();
-            poolInfo.poolToken = _networkTokenPool.poolToken();
-            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_network.masterPool()));
-        } else {
-            poolInfo.stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
-            poolInfo.poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
-            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(
-                address(currentProgram.rewardsVault)
-            );
-        }
-        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
-    }
-
-    /**
-     * @dev fetch a pool's time information
-     */
-    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory timeInfo) {
-        timeInfo.currentTime = _time();
-
-        timeInfo.totalProgramTime = currentProgram.endTime - currentProgram.startTime;
-
-        uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
-
-        // if time spent is higher than the total program time, set time to total program time
-        timeInfo.timeElapsed = timeElapsed > timeInfo.totalProgramTime ? timeInfo.totalProgramTime : timeElapsed;
-
-        timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
-            ? currentProgram.prevDistributionTimestamp
-            : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
-    }
-
-    /**
-     * @dev process a pool's flat rewards program
-     */
-    function processFlatRewards(
-        uint256 timeElapsedSinceLastDistribution,
-        uint256 remainingProgramTime,
-        uint256 availableRewards
-    ) internal pure returns (uint256) {
-        return (_processFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
-    }
-
-    /**
-     * @dev process a pool's exponential decay rewards program
-     */
-    function processExponentialDecayRewards(
-        uint256 timeElapsed,
-        uint256 prevTimeElapsed,
-        uint256 totalRewards
-    ) internal pure returns (uint256) {
-        return
-            _processExponentialDecayRewards(timeElapsed, totalRewards) -
-            _processExponentialDecayRewards(prevTimeElapsed, totalRewards);
-    }
-
-    /**
-     * @dev process a pool's rewards
+     * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) public nonReentrant {
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
@@ -419,5 +328,66 @@ contract AutoCompoundingStakingRewards is
             timeInfo.timeElapsed,
             currentProgram.availableRewards
         );
+    }
+
+    /**
+     * @dev process a pool's flat rewards program
+     */
+    function processFlatRewards(
+        uint256 timeElapsedSinceLastDistribution,
+        uint256 remainingProgramTime,
+        uint256 availableRewards
+    ) internal pure returns (uint256) {
+        return (_processFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
+    }
+
+    /**
+     * @dev process a pool's exponential decay rewards program
+     */
+    function processExponentialDecayRewards(
+        uint256 timeElapsed,
+        uint256 prevTimeElapsed,
+        uint256 totalRewards
+    ) internal pure returns (uint256) {
+        return
+            _processExponentialDecayRewards(timeElapsed, totalRewards) -
+            _processExponentialDecayRewards(prevTimeElapsed, totalRewards);
+    }
+
+    /**
+     * @dev fetch a pool's information
+     */
+    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
+        ReserveToken reserveToken = ReserveToken.wrap(currentProgram.pool);
+        if (_networkToken == reserveToken.toIERC20()) {
+            poolInfo.stakedBalance = _networkTokenPool.stakedBalance();
+            poolInfo.poolToken = _networkTokenPool.poolToken();
+            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_network.masterPool()));
+        } else {
+            poolInfo.stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
+            poolInfo.poolToken = _network.collectionByPool(reserveToken).poolData(reserveToken).poolToken;
+            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(
+                address(currentProgram.rewardsVault)
+            );
+        }
+        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
+    }
+
+    /**
+     * @dev fetch a pool's time information
+     */
+    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory timeInfo) {
+        timeInfo.currentTime = _time();
+
+        timeInfo.totalProgramTime = currentProgram.endTime - currentProgram.startTime;
+
+        uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
+
+        // if time spent is higher than the total program time, set time to total program time
+        timeInfo.timeElapsed = timeElapsed > timeInfo.totalProgramTime ? timeInfo.totalProgramTime : timeElapsed;
+
+        timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
+            ? currentProgram.prevDistributionTimestamp
+            : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
     }
 }
