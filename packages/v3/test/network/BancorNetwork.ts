@@ -3046,10 +3046,10 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     interface State {
-        tknBalances: any;
-        bntBalances: any;
-        bntknBalances: any;
-        bnbntBalances: any;
+        tknBalances: Record<string, string>;
+        bntBalances: Record<string, string>;
+        bntknBalances: Record<string, string>;
+        bnbntBalances: Record<string, string>;
         bntStakedBalance: string;
         tknStakedBalance: string;
         tknTradingLiquidity: string;
