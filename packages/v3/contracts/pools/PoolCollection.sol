@@ -870,7 +870,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     ) internal view returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
 
-        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.formula(
+        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             params.networkTokenAvgTradingLiquidity,
             params.baseTokenAvgTradingLiquidity,
             MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),

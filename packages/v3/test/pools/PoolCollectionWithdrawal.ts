@@ -13,7 +13,7 @@ describe('PoolCollectionWithdrawal', () => {
         poolCollectionWithdrawal = await Contracts.TestPoolCollectionWithdrawal.deploy();
     });
 
-    describe('formula', () => {
+    describe('calculateWithdrawalAmounts', () => {
         interface Row {
             a: string;
             b: string;

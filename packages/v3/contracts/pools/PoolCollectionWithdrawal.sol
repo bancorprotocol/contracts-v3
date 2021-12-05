@@ -81,7 +81,7 @@ library PoolCollectionWithdrawal {
      * in default deficit, we also calculate the values of `t` and `u` (which are otherwise zero)
      * the value of `v` is calculated as `x*n` in all cases
      */
-    function formula(
+    function calculateWithdrawalAmounts(
         uint256 a, // <= 2**128-1
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
