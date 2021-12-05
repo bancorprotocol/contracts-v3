@@ -169,7 +169,7 @@ library PoolCollectionWithdrawal {
         // given the restrictions above, everything below can be declared `unchecked`
         Uint512 memory lhs = MathEx.mul512(b * e, (f * m + e * n) * M);
         Uint512 memory rhs = MathEx.mul512(f * x, (f * M + e * n) * (M - m));
-        return MathEx.gt512(lhs, rhs); // `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
+        return MathEx.gt512(lhs, rhs); // `x < e*c/(b+c)` --> `f*x < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
     }
 
     /**
