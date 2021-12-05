@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
-import { Sint256 } from "../utility/Types.sol";
+import { Sint256, Uint512 } from "../utility/Types.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
@@ -150,10 +150,9 @@ library PoolCollectionWithdrawal {
         uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
         // given the restrictions above, everything below can be declared `unchecked`
-        return MathEx.gt512(
-            MathEx.mul512(b * e, f * m + e * n),
-            MathEx.mul512(f * x, g * (M - m))
-        );
+        Uint512 memory lhs = MathEx.mul512(b * e, f * m + e * n);
+        Uint512 memory rhs = MathEx.mul512(f * x, g * (M - m));
+        return MathEx.gt512(lhs, rhs);
     }
 
     /**
@@ -168,11 +167,9 @@ library PoolCollectionWithdrawal {
         uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
         // given the restrictions above, everything below can be declared `unchecked`
-        return MathEx.gt512(
-            MathEx.mul512(b * e, (f * m + e * n) * M),
-            MathEx.mul512(f * x, (f * M + e * n) * (M - m))
-            // `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
-        );
+        Uint512 memory lhs = MathEx.mul512(b * e, (f * m + e * n) * M);
+        Uint512 memory rhs = MathEx.mul512(f * x, (f * M + e * n) * (M - m));
+        return MathEx.gt512(lhs, rhs); // `x < e*c/(b+c)` --> `x*f < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
     }
 
     /**
