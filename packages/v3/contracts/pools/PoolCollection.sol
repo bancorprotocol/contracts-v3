@@ -591,7 +591,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         nonReentrant
         returns (WithdrawalAmounts memory amounts)
     {
-        // obtain all withdrawal-related amounts
+        // obtain the withdrawal amounts
         amounts = _poolWithdrawalAmounts(
             pool,
             basePoolTokenAmount,
@@ -599,8 +599,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             externalProtectionVaultBalance
         );
 
-        // execute all withdrawal-related actions
-        _executeWithdrawalActions(
+        // execute the actual withdrawal
+        _executeWithdrawal(
             pool,
             basePoolTokenAmount,
             amounts.baseTokenAmountToAddToLiquidity,
@@ -919,15 +919,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @dev executes the following actions:
      *
-     * - burns the network's base pool tokens
-     * - updates the pool's base token staked balance
-     * - updates the pool's base token trading liquidity
-     * - updates the pool's network token trading liquidity
-     * - updates the pool's trading liquidity product
-     * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
-     * or below it)
+     * - burn the network's base pool tokens
+     * - update the pool's base token staked balance
+     * - update the pool's base token trading liquidity
+     * - update the pool's network token trading liquidity
+     * - update the pool's trading liquidity product
+     * - emit an event if the pool's network token trading liquidity has crossed the minimum threshold
+     *   (either above the threshold or below the threshold)
      */
-    function _executeWithdrawalActions(
+    function _executeWithdrawal(
         ReserveToken pool,
         uint256 basePoolTokenAmount,
         Sint256 memory baseTokenTradingLiquidityDelta,
