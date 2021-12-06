@@ -98,7 +98,7 @@ contract AutoCompoundingStakingRewards is
         ReserveToken indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
-        uint256 timeElapsed,
+        uint256 programTimeElapsed,
         uint256 availableRewards
     );
 

@@ -4,6 +4,15 @@ pragma solidity 0.8.10;
 import { StakingRewardsMath } from "../stakingRewards/StakingRewardsMath.sol";
 
 contract TestStakingRewardsMath is StakingRewardsMath {
+    function processPoolTokenToBurnT(
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 d
+    ) external pure returns (uint256) {
+        return _processPoolTokenToBurn(a, b, c, d);
+    }
+
     function processFlatRewardT(
         uint256 timeElapsed,
         uint256 remainingProgramTime,

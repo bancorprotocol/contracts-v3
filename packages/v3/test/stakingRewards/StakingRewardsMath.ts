@@ -198,4 +198,32 @@ describe('StakingRewardsMath', () => {
             processFlatRewardTest(1000, 10000, 10000, '0.999999999999999999');
         });
     });
+
+    describe('Process Pool Token Burn', () => {
+        const processPoolTokenToBurnTest = (
+            a: BigNumber,
+            b: BigNumber,
+            c: BigNumber,
+            d: BigNumber,
+            minAccuracy: string
+        ) => {
+            it(`processPoolTokenToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
+                const actual = new Decimal((await stakingRewardsMath.processPoolTokenToBurnT(a, b, c, d)).toString());
+
+                const bc = b.mul(c);
+                const expected = mulDivF(bc, c, a.mul(c.sub(d)).add(bc));
+                assertAccuracy(actual, expected, minAccuracy);
+            });
+        };
+
+        describe('regular tests', () => {
+            processPoolTokenToBurnTest(
+                BigNumber.from(1000),
+                BigNumber.from(1000),
+                BigNumber.from(1000),
+                BigNumber.from(1000),
+                '0.999999999999999999'
+            );
+        });
+    });
 });
