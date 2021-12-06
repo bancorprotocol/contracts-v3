@@ -1,26 +1,17 @@
 import { BancorNetwork } from '../../../v2/typechain';
 import Contracts from '../../components/Contracts';
 import {
-    IERC20,
-    BancorVault,
     NetworkSettings,
     PoolToken,
-    PoolTokenFactory,
     TestBancorNetwork,
-    TestFlashLoanRecipient,
     TestMasterPool,
-    TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader,
-    ExternalProtectionVault,
     TestAutoCompoundingStakingRewards,
     ExternalRewardsVault
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from '../helpers/Constants';
-import { createPool, createProxy, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
-import { mulDivF } from '../helpers/MathUtils';
-import { latest } from '../helpers/Time';
+import { ZERO_ADDRESS } from '../helpers/Constants';
+import { createProxy, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { toWei } from '../helpers/Types';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -31,16 +22,11 @@ import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-const ONE = new Decimal(1);
-
-const EXP_VAL_TOO_HIGH = 16;
-
 const SECOND = 1;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const MONTH = 30 * DAY;
-const YEAR = 365 * DAY;
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
@@ -347,24 +333,21 @@ describe('AutoCompoundingStakingRewards', () => {
         };
 
         const tokenFromPoolToken = async (
-            user_: { address: string },
+            user: { address: string },
             poolCollection: TestPoolCollection,
             token: TokenWithAddress,
             poolToken: PoolToken
         ) => {
             const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-            return (await poolToken.balanceOf(user_.address))
-                .mul(tokenStakedBalance)
-                .div(await poolToken.totalSupply());
+            return (await poolToken.balanceOf(user.address)).mul(tokenStakedBalance).div(await poolToken.totalSupply());
         };
 
-        const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
+        const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy = '0.999999999999999999') => {
             const actualDec = new Decimal(actual.toString());
             const actualExp = new Decimal(expected.toString());
 
             if (!actualDec.eq(actualExp)) {
                 const accuracy = actualDec.gt(actualExp) ? actualExp.div(actualDec) : actualDec.div(actualExp);
-
                 expect(accuracy.gte(new Decimal(minAccuracy)) && accuracy.lte(1)).to.equal(
                     true,
                     '\n' +
@@ -385,7 +368,7 @@ describe('AutoCompoundingStakingRewards', () => {
             return num.sub(num.sub(num.mul(percent).div(100)));
         }
 
-        context.only('FLAT', () => {
+        context('FLAT', () => {
             const distributionType = 0;
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
@@ -460,8 +443,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, INITIAL_STAKE, '0.9999999999999999999999');
-                    assertAccuracy(externalRewardsVaultTokenOwned, TOTAL_REWARDS, '0.9999999999999999999999');
+                    assertAccuracy(userTokenOwned, INITIAL_STAKE);
+                    assertAccuracy(externalRewardsVaultTokenOwned, TOTAL_REWARDS);
                 });
 
                 it('should have distributed all rewards at the end of a program', async () => {
@@ -476,62 +459,36 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, TOTAL_TOKEN, '0.9999999999999999999999');
-                    assertAccuracy(externalRewardsVaultTokenOwned, BigNumber.from(0), '0.9999999999999999999999');
+                    assertAccuracy(userTokenOwned, TOTAL_TOKEN);
+                    assertAccuracy(externalRewardsVaultTokenOwned, BigNumber.from(0));
                 });
+            });
 
+            describe('advanced tests', () => {
                 for (const programTimePercent of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
                     const currentTime = getPerc(PROGRAM_TIME, programTimePercent);
 
-                    it.only(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
+                    it(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
                         await autoCompoundingStakingRewards.setTime(currentTime);
                         await autoCompoundingStakingRewards.processRewards(token.address);
 
                         const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                        const rewardsVaultTokenOwned = await tokenFromPoolToken(
+                        const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
                             externalRewardsVault,
                             poolCollection,
                             token,
                             poolToken
                         );
 
-                        const userExpectedTokenOwned = INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent));
-                        const rewardsVaultExpectedTokenOwned = getPerc(TOTAL_REWARDS, 100 - programTimePercent);
+                        assertAccuracy(userTokenOwned, INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)));
 
-                        assertAccuracy(userTokenOwned, userExpectedTokenOwned, '0.999999999999999999');
-                        assertAccuracy(rewardsVaultTokenOwned, rewardsVaultExpectedTokenOwned, '0.999999999999999999');
+                        assertAccuracy(
+                            externalRewardsVaultTokenOwned,
+                            getPerc(TOTAL_REWARDS, 100 - programTimePercent)
+                        );
                     });
                 }
             });
         });
     });
 });
-
-// for (const programTimePercent of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
-//     const currentTime = PROGRAM_TIME - getPerc(PROGRAM_TIME, programTimePercent);
-
-//     it(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
-//         await autoCompoundingStakingRewards.setTime(currentTime);
-//         await autoCompoundingStakingRewards.processRewards(token.address);
-
-//         const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-//         const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
-//             externalRewardsVault,
-//             poolCollection,
-//             token,
-//             poolToken
-//         );
-
-//         assertAccuracy(
-//             userTokenOwned,
-//             INITIAL_STAKE.add(TOTAL_REWARDS.sub(getPerc2(TOTAL_REWARDS, programTimePercent))),
-//             '0.999999999999999999'
-//         );
-
-//         assertAccuracy(
-//             externalRewardsVaultTokenOwned,
-//             TOTAL_REWARDS.sub(getPerc2(TOTAL_REWARDS, 100 - programTimePercent)),
-//             '0.999999999999999999'
-//         );
-//     });
-// }
