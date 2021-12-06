@@ -176,7 +176,7 @@ describe('StakingRewardsMath', () => {
             timeElapsedSinceLastDistribution: number,
             remainingProgramTime: number,
             availableRewards: number,
-            minAccuracy: string
+            minAccuracy = '0.999999999999999999'
         ) => {
             it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramTime}, ${availableRewards})`, async () => {
                 const actual = new Decimal(
@@ -195,7 +195,7 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            processFlatRewardTest(1000, 10000, 10000, '0.999999999999999999');
+            processFlatRewardTest(1000, 10000, 10000);
         });
     });
 
@@ -205,7 +205,7 @@ describe('StakingRewardsMath', () => {
             b: BigNumber,
             c: BigNumber,
             d: BigNumber,
-            minAccuracy: string
+            minAccuracy = '0.999999999999999999'
         ) => {
             it(`processPoolTokenToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
                 const actual = new Decimal((await stakingRewardsMath.processPoolTokenToBurnT(a, b, c, d)).toString());
@@ -221,8 +221,7 @@ describe('StakingRewardsMath', () => {
                 BigNumber.from(1000),
                 BigNumber.from(1000),
                 BigNumber.from(1000),
-                BigNumber.from(1000),
-                '0.999999999999999999'
+                BigNumber.from(1000)
             );
         });
     });

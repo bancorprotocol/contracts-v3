@@ -337,6 +337,82 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
             });
         });
+
+        describe('program fetching', () => {
+            describe('single', () => {
+                it('shouldnt be able to fetch an empty program', async () => {
+                    const program = await autoCompoundingStakingRewards.program(token.address);
+
+                    expect(program.pool).to.equal(ZERO_ADDRESS);
+                });
+
+                it('should correctly fetch an existing program program', async () => {
+                    await autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS,
+                        0,
+                        currentTime,
+                        currentTime.add(TOTAL_DURATION)
+                    );
+
+                    const program = await autoCompoundingStakingRewards.program(token.address);
+
+                    expect(program.pool).to.equal(token.address);
+                });
+            });
+
+            describe('multiples', () => {
+                let token1: TokenWithAddress;
+                let token2: TokenWithAddress;
+
+                beforeEach(async () => {
+                    ({ token: token1 } = await setupSimplePool(
+                        {
+                            symbol: 'TKN',
+                            balance: BigNumber.from(10_000),
+                            initialRate: INITIAL_RATE
+                        },
+                        deployer,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
+
+                    ({ token: token2 } = await setupSimplePool(
+                        {
+                            symbol: 'TKN',
+                            balance: BigNumber.from(10_000),
+                            initialRate: INITIAL_RATE
+                        },
+                        deployer,
+                        network,
+                        networkSettings,
+                        poolCollection
+                    ));
+
+                    for (const currToken of [token, token1, token2]) {
+                        await autoCompoundingStakingRewards.createProgram(
+                            currToken.address,
+                            externalRewardsVault.address,
+                            TOTAL_REWARDS,
+                            0,
+                            currentTime,
+                            currentTime.add(TOTAL_DURATION)
+                        );
+                    }
+                });
+
+                it('should return multiples program', async () => {
+                    const programs = await autoCompoundingStakingRewards.programs();
+
+                    expect(programs.length).to.equal(3);
+                    expect(programs[0].pool).to.equal(token.address);
+                    expect(programs[1].pool).to.equal(token1.address);
+                    expect(programs[2].pool).to.equal(token2.address);
+                });
+            });
+        });
     });
 
     describe('process rewards', () => {

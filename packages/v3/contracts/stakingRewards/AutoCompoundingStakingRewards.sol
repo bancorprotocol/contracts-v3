@@ -66,7 +66,7 @@ contract AutoCompoundingStakingRewards is
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
 
-    // a set of all pool that have a program
+    // a set of all pool that have a program associated
     EnumerableSetUpgradeable.AddressSet private _programByPool;
 
     /**
@@ -198,7 +198,9 @@ contract AutoCompoundingStakingRewards is
         uint256 startTime,
         uint256 endTime
     ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
-        if (isProgramActive(ReserveToken.unwrap(pool))) {
+        address poolAddress = ReserveToken.unwrap(pool);
+
+        if (isProgramActive(poolAddress)) {
             revert ProgramActive();
         }
 
@@ -210,7 +212,7 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+        ProgramData storage currentProgram = _programs[poolAddress];
 
         // if current program's pool address is different from address(0), then process
         // the last batch of rewards to make sure there's no rewards left for that pool
@@ -218,7 +220,7 @@ contract AutoCompoundingStakingRewards is
             processRewards(pool);
         }
 
-        currentProgram.pool = ReserveToken.unwrap(pool);
+        currentProgram.pool = poolAddress;
         currentProgram.rewardsVault = rewardsVault;
         currentProgram.totalRewards = totalRewards;
         currentProgram.availableRewards = totalRewards;
@@ -228,14 +230,8 @@ contract AutoCompoundingStakingRewards is
         currentProgram.prevDistributionTimestamp = 0;
         currentProgram.isEnabled = true;
 
-        emit ProgramCreated(
-            ReserveToken.unwrap(pool),
-            rewardsVault,
-            totalRewards,
-            distributionType,
-            startTime,
-            endTime
-        );
+        _programByPool.add(poolAddress);
+        emit ProgramCreated(poolAddress, rewardsVault, totalRewards, distributionType, startTime, endTime);
     }
 
     /**
