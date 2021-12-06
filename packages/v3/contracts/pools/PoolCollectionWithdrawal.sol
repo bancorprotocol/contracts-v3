@@ -7,12 +7,6 @@ import { MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
 
-function validate(bool valid) pure {
-    if (!valid) {
-        revert PoolCollectionWithdrawalInputInvalid();
-    }
-}
-
 /**
  * @dev This library implements the mathematics behind base-token withdrawal.
  * It exposes a single function which takes the following input values:
@@ -323,5 +317,14 @@ library PoolCollectionWithdrawal {
         uint256 z
     ) private pure returns (uint256) {
         return a * b - MathEx.mulDivF(x, y, z);
+    }
+
+    /**
+     * @dev validates the input
+     */
+    function validate(bool valid) private pure {
+        if (!valid) {
+            revert PoolCollectionWithdrawalInputInvalid();
+        }
     }
 }
