@@ -13,6 +13,6 @@
             "*": ["node_modules/*"]
         }
     },
-    "include": ["./test", "./tasks", "./components", "./migration"],
+    "include": ["./test", "./tasks", "./components"],
     "files": ["./hardhat.config.ts"]
 }

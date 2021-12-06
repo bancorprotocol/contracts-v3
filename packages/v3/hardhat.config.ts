@@ -1,5 +1,3 @@
-import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
-import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
@@ -15,6 +13,10 @@ import { HardhatUserConfig } from 'hardhat/config';
 import { NetworkUserConfig } from 'hardhat/types';
 import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
+
+export const getEnvKey = <T>(envKeyName: string) => {
+    return process.env[envKeyName] as unknown as T;
+};
 
 const hardhatDefaultConfig: NetworkUserConfig = {
     accounts: {
@@ -60,10 +62,8 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
-        localhost: { url: 'http://localhost:8545', chainId: 31337 },
-
-        ...CONFIG.networks
+        hardhat: hardhatDefaultConfig,
+        localhost: { url: 'http://localhost:8545', chainId: 31337 }
     },
 
     solidity: {
@@ -96,7 +96,7 @@ const config: HardhatUserConfig = {
     },
 
     etherscan: {
-        apiKey: loadConfigFileKey('etherscan')
+        apiKey: ''
     },
 
     contractSizer: {
