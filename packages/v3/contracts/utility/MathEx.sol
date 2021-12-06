@@ -52,7 +52,7 @@ library MathEx {
     }
 
     /**
-     * @dev returns an `Sint256` negative representation of a unsigned integer
+     * @dev returns an `Sint256` negative representation of an unsigned integer
      */
     function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
         return Sint256({ value: n, isNeg: true });
