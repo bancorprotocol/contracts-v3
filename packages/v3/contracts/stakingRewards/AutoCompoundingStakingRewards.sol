@@ -69,6 +69,9 @@ contract AutoCompoundingStakingRewards is
     // a set of all pool that have a program associated
     EnumerableSetUpgradeable.AddressSet private _programByPool;
 
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 3] private __gap;
+
     /**
      * @dev triggered when a program is created
      */
@@ -170,17 +173,19 @@ contract AutoCompoundingStakingRewards is
     function isProgramActive(address pool) public view returns (bool) {
         ProgramData storage currentProgram = _programs[pool];
 
-        if (currentProgram.availableRewards <= 0) {
+        if (currentProgram.availableRewards == 0) {
             return false;
         }
 
-        if (_time() < currentProgram.startTime) {
+        uint256 currentTime = _time();
+
+        if (currentTime < currentProgram.startTime) {
             return false;
         }
 
         if (currentProgram.distributionType == DistributionType.FLAT) {
             // if the program end time has already been passed
-            if (_time() > currentProgram.endTime) {
+            if (currentTime > currentProgram.endTime) {
                 return false;
             }
         }
@@ -204,7 +209,7 @@ contract AutoCompoundingStakingRewards is
             revert ProgramActive();
         }
 
-        if (totalRewards <= 0) {
+        if (totalRewards == 0) {
             revert InvalidParam();
         }
 
@@ -214,13 +219,14 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData storage currentProgram = _programs[poolAddress];
 
-        // if current program's pool address is different from address(0), then process
-        // the last batch of rewards to make sure there's no rewards left for that pool
-        if (address(currentProgram.pool) != address(0)) {
+        // if no existing program existed for that pool, do additional set up
+        if (address(currentProgram.pool) == address(0)) {
+            currentProgram.pool = poolAddress;
+        } else {
+            // otherwise process rewards one last time to make sure all rewards have been distributed
             processRewards(pool);
         }
 
-        currentProgram.pool = poolAddress;
         currentProgram.rewardsVault = rewardsVault;
         currentProgram.totalRewards = totalRewards;
         currentProgram.availableRewards = totalRewards;
@@ -272,9 +278,9 @@ contract AutoCompoundingStakingRewards is
         if (!isProgramActive(ReserveToken.unwrap(pool))) {
             // if the program is inactive and is a flat distribution
             if (currentProgram.distributionType == DistributionType.FLAT) {
-                // if the previous distributionTimeStamp is lower than the program end time
-                // it means that the latest batch of rewards hasn't been sent
-                if (!(currentProgram.prevDistributionTimestamp < currentProgram.endTime)) {
+                // if the previous distributionTimeStamp is higher than or equal to the program end time
+                // it means that the latest batch of rewards has been distributed, otherwise process the last distribution
+                if (currentProgram.prevDistributionTimestamp >= currentProgram.endTime) {
                     return;
                 }
             }

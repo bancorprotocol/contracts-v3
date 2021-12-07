@@ -12,8 +12,9 @@ import {
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
-import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
+import { TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -40,6 +41,8 @@ describe('AutoCompoundingStakingRewards', () => {
     let externalRewardsVault: ExternalRewardsVault;
 
     let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
+
+    shouldHaveGap('AutoCompoundingStakingRewards', '_programs');
 
     before(async () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
