@@ -13,11 +13,11 @@ import {
 import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { createTokenBySymbol, getBalance, getTransactionCost } from '../helpers/Utils';
+import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
-import { ethers, waffle } from 'hardhat';
+import { ethers } from 'hardhat';
 
 const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 const MAX_DEVIATION = BigNumber.from(10_000);
@@ -45,9 +45,9 @@ describe('BancorV1Migration', () => {
     let bancorV1Migration: BancorV1Migration;
     let converter: TestStandardPoolConverter;
     let poolToken: DSToken;
-    let baseToken: any;
+    let baseToken: TokenWithAddress;
 
-    const setup = async () => {
+    beforeEach(async () => {
         ({
             networkTokenGovernance,
             govTokenGovernance,
@@ -60,7 +60,9 @@ describe('BancorV1Migration', () => {
             poolCollection,
             bancorVault
         } = await createSystem());
-    };
+
+        bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address);
+    });
 
     const initLegacySystem = async (networkAmount: BigNumber, baseAmount: BigNumber, isETH: boolean) => {
         baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
@@ -86,8 +88,9 @@ describe('BancorV1Migration', () => {
 
         await networkToken.connect(provider).approve(converter.address, networkAmount);
         if (!isETH) {
-            await baseToken.transfer(provider.address, baseAmount);
-            await baseToken.connect(provider).approve(converter.address, baseAmount);
+            const token = await Contracts.TestERC20Token.attach(baseToken.address);
+            await token.transfer(provider.address, baseAmount);
+            await token.connect(provider).approve(converter.address, baseAmount);
         }
 
         await converter
@@ -99,25 +102,6 @@ describe('BancorV1Migration', () => {
 
     const totalCost = async (txs: ContractTransaction[]) =>
         (await Promise.all(txs.map((tx) => getTransactionCost(tx)))).reduce((a, b) => a.add(b), BigNumber.from(0));
-
-    const init = async (withdrawalFee: BigNumber, networkAmount: BigNumber, baseAmount: BigNumber, isETH: boolean) => {
-        await waffle.loadFixture(setup);
-
-        bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address);
-
-        await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
-        await networkSettings.setWithdrawalFeePPM(withdrawalFee);
-        await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
-
-        await initLegacySystem(networkAmount, baseAmount, isETH);
-
-        if (isETH) {
-            await network.deposit(baseToken.address, DEPOSIT_AMOUNT, { value: DEPOSIT_AMOUNT });
-        } else {
-            await baseToken.approve(network.address, DEPOSIT_AMOUNT);
-            await network.deposit(baseToken.address, DEPOSIT_AMOUNT);
-        }
-    };
 
     const verify = async (
         withdrawalFee: BigNumber,
@@ -161,28 +145,29 @@ describe('BancorV1Migration', () => {
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
         const prevProviderNetworkBalance = await getBalance(networkToken, provider);
-        const prevProviderBaseBalance = await getBalance(baseToken, provider);
-
-        const txs: ContractTransaction[] = [];
 
         const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
-        txs.push(await masterPoolToken.connect(provider).approve(pendingWithdrawals.address, masterPoolTokenAmount));
-        txs.push(
-            await pendingWithdrawals.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount)
-        );
+        await masterPoolToken.connect(provider).approve(pendingWithdrawals.address, masterPoolTokenAmount);
+
+        await pendingWithdrawals.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
+
         const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-        txs.push(
-            await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address))
-        );
-        txs.push(await network.connect(provider).withdraw(networkIds[0]));
+        await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address));
+        await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
-        txs.push(await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount));
-        txs.push(await pendingWithdrawals.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount));
+        await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount);
+        await pendingWithdrawals.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
         const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-        txs.push(await network.connect(provider).withdraw(baseIds[0]));
 
-        const cost = isETH ? await totalCost(txs) : BigNumber.from(0);
+        const prevProviderBaseBalance = await getBalance(baseToken, provider);
+
+        const res = await network.connect(provider).withdraw(baseIds[0]);
+
+        let transactionCost = BigNumber.from(0);
+        if (isETH) {
+            transactionCost = await getTransactionCost(res);
+        }
 
         const currProviderNetworkBalance = await getBalance(networkToken, provider);
         const currProviderBaseBalance = await getBalance(baseToken, provider);
@@ -190,7 +175,7 @@ describe('BancorV1Migration', () => {
         expect(currProviderNetworkBalance).to.equal(
             prevProviderNetworkBalance.add(deductFee(portionOf(networkAmount)))
         );
-        expect(currProviderBaseBalance.add(cost)).to.equal(
+        expect(currProviderBaseBalance.add(transactionCost)).to.equal(
             prevProviderBaseBalance.add(deductFee(portionOf(baseAmount)))
         );
     };
@@ -210,9 +195,23 @@ describe('BancorV1Migration', () => {
             describe(`network amount = ${networkAmountM}M`, () => {
                 describe(`base amount = ${baseAmountM}M`, () => {
                     describe(`base token = ${isETH ? 'ETH' : 'ERC20'}`, () => {
-                        before(async () => {
-                            await init(withdrawalFee, networkAmount, baseAmount, isETH);
+                        beforeEach(async () => {
+                            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
+                            await networkSettings.setWithdrawalFeePPM(withdrawalFee);
+                            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
+
+                            await initLegacySystem(networkAmount, baseAmount, isETH);
+
+                            if (isETH) {
+                                await network.deposit(baseToken.address, DEPOSIT_AMOUNT, { value: DEPOSIT_AMOUNT });
+                            } else {
+                                const token = await Contracts.TestERC20Token.attach(baseToken.address);
+                                await token.approve(network.address, DEPOSIT_AMOUNT);
+
+                                await network.deposit(baseToken.address, DEPOSIT_AMOUNT);
+                            }
                         });
+
                         it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
                             await verify(withdrawalFee, networkAmount, baseAmount, isETH, percent);
                         });
