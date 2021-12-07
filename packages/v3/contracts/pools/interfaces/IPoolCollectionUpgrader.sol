@@ -15,11 +15,6 @@ import { IPoolCollection } from "./IPoolCollection.sol";
  */
 interface IPoolCollectionUpgrader is IVersioned {
     /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
      * @dev upgrades a pool and returns the new pool collection it exists in
      *
      * notes:

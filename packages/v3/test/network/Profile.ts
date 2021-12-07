@@ -1,13 +1,12 @@
 import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
-    BancorVault,
+    BancorNetworkInformation,
     IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
@@ -43,13 +42,14 @@ describe('Profile @profile', () => {
         sender: Wallet,
         tokenAddress: string,
         network: TestBancorNetwork,
+        networkToken: IERC20,
         amount: BigNumber,
         deadline: BigNumber
     ) => {
         if (
             tokenAddress === NATIVE_TOKEN_ADDRESS ||
             tokenAddress === ZERO_ADDRESS ||
-            tokenAddress === (await network.networkToken())
+            tokenAddress === networkToken.address
         ) {
             return {
                 v: BigNumber.from(0),
@@ -354,6 +354,7 @@ describe('Profile @profile', () => {
                                     sender,
                                     poolAddress,
                                     network,
+                                    networkToken,
                                     amount,
                                     DEADLINE
                                 );
@@ -614,6 +615,7 @@ describe('Profile @profile', () => {
 
     describe('trade', () => {
         let network: TestBancorNetwork;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -628,7 +630,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -640,6 +642,7 @@ describe('Profile @profile', () => {
                 source,
                 deployer,
                 network,
+                networkInformation,
                 networkSettings,
                 poolCollection
             ));
@@ -648,6 +651,7 @@ describe('Profile @profile', () => {
                 target,
                 deployer,
                 network,
+                networkInformation,
                 networkSettings,
                 poolCollection
             ));
@@ -708,6 +712,7 @@ describe('Profile @profile', () => {
                 trader,
                 sourceTokenAddress,
                 network,
+                networkToken,
                 approvedAmount,
                 deadline
             );
@@ -893,11 +898,10 @@ describe('Profile @profile', () => {
 
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
-        let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
@@ -907,8 +911,7 @@ describe('Profile @profile', () => {
         const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
-            ({ network, networkSettings, networkToken, masterPool, poolCollection, bancorVault } =
-                await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
@@ -942,6 +945,7 @@ describe('Profile @profile', () => {
                         },
                         deployer,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));

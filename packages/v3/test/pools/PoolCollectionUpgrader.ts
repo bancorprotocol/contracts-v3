@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
+    IERC20,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -26,14 +27,13 @@ describe('PoolCollectionUpgrader', () => {
     });
 
     describe('construction', () => {
-        let network: TestBancorNetwork;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
 
         beforeEach(async () => {
-            ({ network, poolCollectionUpgrader } = await createSystem());
+            ({ poolCollectionUpgrader } = await createSystem());
         });
 
-        it('should revert when attempting to initialize with an invalid network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(Contracts.TestPoolCollectionUpgrader.deploy(ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
@@ -47,14 +47,13 @@ describe('PoolCollectionUpgrader', () => {
 
         it('should be properly initialized', async () => {
             expect(await poolCollectionUpgrader.version()).to.equal(1);
-
-            expect(await poolCollectionUpgrader.network()).to.equal(network.address);
         });
     });
 
     describe('pool upgrade', () => {
-        let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolTokenFactory: PoolTokenFactory;
@@ -62,7 +61,7 @@ describe('PoolCollectionUpgrader', () => {
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
+            ({ network, networkToken, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
                 await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
@@ -99,12 +98,21 @@ describe('PoolCollectionUpgrader', () => {
 
         it('should revert when attempting upgrade a pool with an unsupported version', async () => {
             const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
-            const poolCollection2 = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader, 1000);
+            const poolCollection2 = await createPoolCollection(
+                network,
+                networkToken,
+                networkSettings,
+                poolTokenFactory,
+                poolCollectionUpgrader,
+                1000
+            );
             await createPool(reserveToken2, network, networkSettings, poolCollection2);
 
             const reserveToken3 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
             const poolCollection3 = await createPoolCollection(
                 network,
+                networkToken,
+                networkSettings,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection2.version()) + 1
@@ -122,6 +130,8 @@ describe('PoolCollectionUpgrader', () => {
             beforeEach(async () => {
                 targetPoolCollection = await createPoolCollection(
                     network,
+                    networkToken,
+                    networkSettings,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1

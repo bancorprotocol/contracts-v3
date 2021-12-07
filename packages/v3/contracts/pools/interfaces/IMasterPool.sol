@@ -34,41 +34,6 @@ struct WithdrawalAmounts {
  */
 interface IMasterPool is IVault {
     /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the network token governance contract
-     */
-    function networkTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the governance token contract
-     */
-    function govToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the governance token governance contract
-     */
-    function govTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
-     * @dev returns the vault contract
-     */
-    function vault() external view returns (IBancorVault);
-
-    /**
      * @dev returns the master pool token contract
      */
     function poolToken() external view returns (IPoolToken);

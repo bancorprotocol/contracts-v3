@@ -39,21 +39,6 @@ struct CompletedWithdrawal {
  */
 interface IPendingWithdrawals is IUpgradeable {
     /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the master pool contract
-     */
-    function masterPool() external view returns (IMasterPool);
-
-    /**
      * @dev returns the lock duration
      */
     function lockDuration() external view returns (uint32);
