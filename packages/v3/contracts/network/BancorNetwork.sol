@@ -73,6 +73,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
 
+    // the migration manager role is required for migrating liquidity
+    bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
+
     // the address of the network token
     IERC20 private immutable _networkToken;
 
@@ -211,7 +214,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ReserveToken indexed token,
         address indexed provider,
         uint256 amount,
-        uint256 availableTokens
+        uint256 availableAmount
     );
 
     /**
@@ -342,6 +345,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _masterPool = initMasterPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
+
+        // set up administrative roles
+        _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
     }
 
     // solhint-enable func-name-mixedcase
@@ -924,9 +930,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
 
         if (_isNetworkToken(pool)) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, false, 0);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender, tokenAmount);
         }
     }
 
@@ -941,7 +947,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
-        address sender
+        address sender,
+        bool isMigrating,
+        uint256 originalAmount
     ) private {
         IMasterPool cachedMasterPool = _masterPool;
 
@@ -952,8 +960,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         MasterPoolDepositAmounts memory depositAmounts = cachedMasterPool.depositFor(
             provider,
             networkTokenAmount,
-            false,
-            0
+            isMigrating,
+            originalAmount
         );
 
         emit NetworkTokenDeposited({
@@ -985,7 +993,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 baseTokenAmount,
-        address sender
+        address sender,
+        uint256 availableAmount
     ) private {
         IMasterPool cachedMasterPool = _masterPool;
 
@@ -1002,7 +1011,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the sender to the vault
-        _depositToVault(pool, sender, baseTokenAmount);
+        _depositToVault(pool, sender, availableAmount);
 
         // process deposit to the base token pool (taking into account the ETH pool)
         PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
@@ -1110,7 +1119,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             provider,
             pool,
             tokenAmount,
-            sender
+            sender,
+            tokenAmount
         );
     }
 
@@ -1495,5 +1505,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function _isNetworkToken(ReserveToken token) private view returns (bool) {
         return token.toIERC20() == _networkToken;
+    }
+
+    function migrateLiquidity(
+        ReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableAmount,
+        uint256 originalAmount
+    ) external payable nonReentrant onlyRole(ROLE_MIGRATION_MANAGER) {
+        bytes32 contextId = keccak256(
+            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableAmount, originalAmount)
+        );
+
+        if (_isNetworkToken(reserveToken)) {
+            _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
+        } else {
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableAmount);
+        }
+
+        emit FundsMigrated(contextId, reserveToken, provider, amount, availableAmount);
     }
 }
