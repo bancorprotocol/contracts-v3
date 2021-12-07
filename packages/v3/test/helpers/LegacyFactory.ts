@@ -78,7 +78,7 @@ export const createLegacySystem = async (
 
     const anchorCount = await converterRegistry.getAnchorCount();
     const poolTokenAddress = await converterRegistry.getAnchor(anchorCount.sub(1));
-    const poolToken = await LegacyContracts.GovToken.attach(poolTokenAddress);
+    const poolToken = await LegacyContracts.DSToken.attach(poolTokenAddress);
     const converterAddress = await poolToken.owner();
     const converter = await LegacyContracts.TestStandardPoolConverter.attach(converterAddress);
 
