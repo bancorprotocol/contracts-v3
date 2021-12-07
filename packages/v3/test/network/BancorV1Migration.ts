@@ -41,7 +41,7 @@ describe('BancorV1Migration', () => {
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
-    let bancorVault: BancorVault;
+    let masterVault: BancorVault;
     let bancorV1Migration: BancorV1Migration;
     let converter: TestStandardPoolConverter;
     let poolToken: DSToken;
@@ -58,7 +58,7 @@ describe('BancorV1Migration', () => {
             masterPoolToken,
             pendingWithdrawals,
             poolCollection,
-            bancorVault
+            masterVault
         } = await createSystem());
 
         bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address);
@@ -70,7 +70,7 @@ describe('BancorV1Migration', () => {
         ({ poolToken, converter } = await createLegacySystem(
             deployer,
             network,
-            bancorVault,
+            masterVault,
             networkToken,
             networkTokenGovernance,
             govTokenGovernance,
@@ -116,8 +116,8 @@ describe('BancorV1Migration', () => {
         const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const prevConverterNetworkBalance = await getBalance(networkToken, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
-        const prevVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-        const prevVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
+        const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
 
         const poolTokenAmount = portionOf(await getBalance(poolToken, provider.address));
@@ -127,8 +127,8 @@ describe('BancorV1Migration', () => {
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const currConverterNetworkBalance = await getBalance(networkToken, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
-        const currVaultNetworkBalance = await getBalance(networkToken, bancorVault.address);
-        const currVaultBaseBalance = await getBalance(baseToken, bancorVault.address);
+        const currVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+        const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
 
         expect(currProviderPoolTokenBalance).to.equal(prevProviderPoolTokenBalance.sub(poolTokenAmount));
