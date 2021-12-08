@@ -219,9 +219,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should revert when setting the network fee to an invalid value', async () => {
-            await expect(networkSettings.setNetworkFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee'
-            );
+            await expect(networkSettings.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
         });
 
         it('should be able to set and update network vault params', async () => {
@@ -248,9 +246,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should revert when setting the withdrawal fee to an invalid value', async () => {
-            await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee'
-            );
+            await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
         });
 
         it('should ignore updating to the same withdrawal fee', async () => {
@@ -291,9 +287,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should revert when setting the flash-loan fee to an invalid value', async () => {
-            await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))).to.be.revertedWith(
-                'InvalidFee'
-            );
+            await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
         });
 
         it('should ignore updating to the same flash-loan fee', async () => {
@@ -338,9 +332,9 @@ describe('NetworkSettings', () => {
                 'InvalidPortion'
             );
 
-            await expect(
-                networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith('InvalidPortion');
+            await expect(networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION + 1)).to.be.revertedWith(
+                'InvalidPortion'
+            );
         });
 
         it('should ignore updating to the same maximum deviation', async () => {

@@ -23,7 +23,7 @@ import {
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { roundDiv } from '../helpers/MathUtils';
-import { toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -34,7 +34,7 @@ import { ethers } from 'hardhat';
 import path from 'path';
 
 describe('PoolCollection', () => {
-    const DEFAULT_TRADING_FEE_PPM = BigNumber.from(2000);
+    const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
     const POOL_TYPE = BigNumber.from(1);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1000));
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -51,8 +51,8 @@ describe('PoolCollection', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkSettings: NetworkSettings;
         let networkToken: IERC20;
+        let networkSettings: NetworkSettings;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
@@ -62,21 +62,63 @@ describe('PoolCollection', () => {
                 await createSystem());
         });
 
-        it('should revert when initialized with an invalid network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(ZERO_ADDRESS, poolTokenFactory.address, poolCollectionUpgrader.address)
+                Contracts.PoolCollection.deploy(
+                    ZERO_ADDRESS,
+                    networkToken.address,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid pool token factory contract', async () => {
+        it('should revert when attempting to create with an invalid network token contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(network.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when initialized with an invalid pool collection upgrader contract', async () => {
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
-                Contracts.PoolCollection.deploy(network.address, poolTokenFactory.address, ZERO_ADDRESS)
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    ZERO_ADDRESS,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid pool token factory contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid pool collection upgrader contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
+                    poolTokenFactory.address,
+                    ZERO_ADDRESS
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -84,11 +126,6 @@ describe('PoolCollection', () => {
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
-            expect(await poolCollection.network()).to.equal(network.address);
-            expect(await poolCollection.networkToken()).to.equal(networkToken.address);
-            expect(await poolCollection.settings()).to.equal(networkSettings.address);
-            expect(await poolCollection.poolTokenFactory()).to.equal(poolTokenFactory.address);
-            expect(await poolCollection.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
 
@@ -122,9 +159,7 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(
-                poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION.add(BigNumber.from(1)))
-            ).to.be.revertedWith('InvalidFee');
+            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
         });
 
         it('should ignore updating to the same default trading fee', async () => {
@@ -338,7 +373,7 @@ describe('PoolCollection', () => {
         });
 
         describe('trading fee', () => {
-            const newTradingFee = BigNumber.from(50555);
+            const newTradingFee = toPPM(5.5);
 
             it('should revert when a non-owner attempts to set the trading fee', async () => {
                 await expect(
@@ -348,7 +383,7 @@ describe('PoolCollection', () => {
 
             it('should revert when setting an invalid trading fee', async () => {
                 await expect(
-                    poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION.add(BigNumber.from(1)))
+                    poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION + 1)
                 ).to.be.revertedWith('InvalidFee');
             });
 
@@ -379,7 +414,7 @@ describe('PoolCollection', () => {
                 ({ tradingFeePPM } = pool);
                 expect(tradingFeePPM).to.equal(newTradingFee);
 
-                const newTradingFee2 = BigNumber.from(0);
+                const newTradingFee2 = toPPM(0);
                 const res2 = await poolCollection.setTradingFeePPM(reserveToken.address, newTradingFee2);
                 await expect(res2)
                     .to.emit(poolCollection, 'TradingFeePPMUpdated')
@@ -1745,13 +1780,13 @@ describe('PoolCollection', () => {
 
                             context('with a trading fee', () => {
                                 beforeEach(async () => {
-                                    const tradingFeePPM = BigNumber.from(100_000);
+                                    const tradingFeePPM = toPPM(10);
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
                                     // derive a target amount such that adding a fee to it will result in an amount
                                     // greater than the target balance by solving the following two equations (left as an
                                     // exercise for the reader):
-                                    // - feeAmount = targetAmount * tradingFee / (PPM - tradingFee)
+                                    // - feeAmount = targetAmount * tradingFeePPM / (PPM - tradingFeePPM)
                                     // - targetAmount + feeAmount = targetBalance
                                     const fee = new Decimal(tradingFeePPM.toString());
                                     const factor = new Decimal(1).add(
@@ -1941,12 +1976,12 @@ describe('PoolCollection', () => {
                 describe('regular tests', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000]) {
-                            for (const tradingFeePPM of [0, 100_000]) {
+                            for (const tradingFeePercent of [0, 10]) {
                                 for (const amount of [1_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
-                                        tradingFeePPM,
+                                        tradingFeePPM: toPPM(tradingFeePercent),
                                         amount: toWei(BigNumber.from(amount)),
                                         intervals: [0, 200, 500]
                                     });
@@ -1959,12 +1994,12 @@ describe('PoolCollection', () => {
                 describe('@stress tests', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
-                            for (const tradingFeePPM of [0, 10_000, 100_000]) {
+                            for (const tradingFeePercent of [0, 1, 10]) {
                                 for (const amount of [1_000, 10_000, 100_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
-                                        tradingFeePPM,
+                                        tradingFeePPM: toPPM(tradingFeePercent),
                                         amount: toWei(BigNumber.from(amount)),
                                         intervals: [0, 1, 2, 10, 100, 200, 400, 500]
                                     });
@@ -2032,6 +2067,7 @@ describe('PoolCollection', () => {
 
     describe('pool migrations', () => {
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
         let networkSettings: NetworkSettings;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
@@ -2041,8 +2077,15 @@ describe('PoolCollection', () => {
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                networkSettings,
+                poolTokenFactory,
+                poolCollection,
+                poolCollectionUpgrader
+            } = await createSystem());
 
             reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
 
@@ -2050,6 +2093,8 @@ describe('PoolCollection', () => {
 
             targetPoolCollection = await createPoolCollection(
                 network,
+                networkToken,
+                networkSettings,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1
@@ -2145,7 +2190,13 @@ describe('PoolCollection', () => {
                     poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
                 ).to.be.revertedWith('InvalidAddress');
 
-                const newPoolCollection = await createPoolCollection(network, poolTokenFactory, poolCollectionUpgrader);
+                const newPoolCollection = await createPoolCollection(
+                    network,
+                    networkToken,
+                    networkSettings,
+                    poolTokenFactory,
+                    poolCollectionUpgrader
+                );
                 await expect(
                     poolCollectionUpgrader.migratePoolOutT(
                         poolCollection.address,

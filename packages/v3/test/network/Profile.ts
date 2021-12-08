@@ -1,22 +1,29 @@
 import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
-    BancorVault,
+    BancorNetworkInformation,
     IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
 import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
 import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createPool, createSystem, depositToPool, setupSimplePool, PoolSpec } from '../helpers/Factory';
-import { permitSignature } from '../helpers/Permit';
+import {
+    createPool,
+    createSystem,
+    depositToPool,
+    initWithdraw,
+    setupSimplePool,
+    PoolSpec,
+    specToString
+} from '../helpers/Factory';
+import { permitContractSignature } from '../helpers/Permit';
 import { latest } from '../helpers/Time';
-import { toDecimal, toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
@@ -27,6 +34,7 @@ const { formatBytes32String } = utils;
 
 describe('Profile @profile', () => {
     const profiler = new Profiler();
+
     let deployer: SignerWithAddress;
 
     const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -39,68 +47,6 @@ describe('Profile @profile', () => {
         profiler.printSummary();
     });
 
-    const networkPermitSignature = async (
-        sender: Wallet,
-        tokenAddress: string,
-        network: TestBancorNetwork,
-        amount: BigNumber,
-        deadline: BigNumber
-    ) => {
-        if (
-            tokenAddress === NATIVE_TOKEN_ADDRESS ||
-            tokenAddress === ZERO_ADDRESS ||
-            tokenAddress === (await network.networkToken())
-        ) {
-            return {
-                v: BigNumber.from(0),
-                r: formatBytes32String(''),
-                s: formatBytes32String('')
-            };
-        }
-
-        const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
-        const senderAddress = await sender.getAddress();
-
-        const nonce = await reserveToken.nonces(senderAddress);
-
-        return permitSignature(
-            sender,
-            await reserveToken.name(),
-            reserveToken.address,
-            network.address,
-            amount,
-            nonce,
-            deadline
-        );
-    };
-
-    const specToString = (spec: PoolSpec) => {
-        if (spec.tradingFeePPM !== undefined) {
-            return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
-        }
-
-        return `${spec.symbol} (balance=${spec.balance})`;
-    };
-
-    const initWithdraw = async (
-        provider: SignerWithAddress,
-        pendingWithdrawals: TestPendingWithdrawals,
-        poolToken: PoolToken,
-        amount: BigNumber
-    ) => {
-        await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
-        await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
-
-        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-        const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-        const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-        const creationTime = withdrawalRequest.createdAt;
-
-        return { id, creationTime };
-    };
-
-    const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
-
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
@@ -108,9 +54,9 @@ describe('Profile @profile', () => {
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
@@ -350,10 +296,11 @@ describe('Profile @profile', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 const { poolAddress = token.address } = overrides;
 
-                                const { v, r, s } = await networkPermitSignature(
+                                const { v, r, s } = await permitContractSignature(
                                     sender,
                                     poolAddress,
                                     network,
+                                    networkToken,
                                     amount,
                                     DEADLINE
                                 );
@@ -450,9 +397,9 @@ describe('Profile @profile', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
 
         const setTime = async (time: number) => {
@@ -477,7 +424,6 @@ describe('Profile @profile', () => {
 
         const testWithdraw = async (symbol: string) => {
             const isNetworkToken = symbol === BNT;
-            const isETH = symbol === ETH;
 
             context('with an initiated withdrawal request', () => {
                 let provider: SignerWithAddress;
@@ -584,9 +530,7 @@ describe('Profile @profile', () => {
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(
-                                                    PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
-                                                )
+                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                             },
                                             time: BigNumber.from(0)
                                         });
@@ -614,6 +558,7 @@ describe('Profile @profile', () => {
 
     describe('trade', () => {
         let network: TestBancorNetwork;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -628,7 +573,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -640,6 +585,7 @@ describe('Profile @profile', () => {
                 source,
                 deployer,
                 network,
+                networkInformation,
                 networkSettings,
                 poolCollection
             ));
@@ -648,6 +594,7 @@ describe('Profile @profile', () => {
                 target,
                 deployer,
                 network,
+                networkInformation,
                 networkSettings,
                 poolCollection
             ));
@@ -704,10 +651,11 @@ describe('Profile @profile', () => {
                 approvedAmount = amount
             } = overrides;
 
-            const { v, r, s } = await networkPermitSignature(
+            const { v, r, s } = await permitContractSignature(
                 trader,
                 sourceTokenAddress,
                 network,
+                networkToken,
                 approvedAmount,
                 deadline
             );
@@ -842,8 +790,8 @@ describe('Profile @profile', () => {
             for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                 for (const targetBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                     for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
-                        const TRADING_FEES = [0, 50_000];
-                        for (const tradingFeePPM of TRADING_FEES) {
+                        const TRADING_FEES = [0, 5];
+                        for (const tradingFeePercent of TRADING_FEES) {
                             const isSourceNetworkToken = sourceSymbol === BNT;
                             const isTargetNetworkToken = targetSymbol === BNT;
 
@@ -854,30 +802,30 @@ describe('Profile @profile', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
                             } else {
-                                for (const tradingFeePPM2 of TRADING_FEES) {
+                                for (const tradingFeePercent2 of TRADING_FEES) {
                                     testTrades(
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM,
+                                            tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: tradingFeePPM2,
+                                            tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
                                         amount
@@ -893,11 +841,10 @@ describe('Profile @profile', () => {
 
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
+        let networkInformation: BancorNetworkInformation;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
-        let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let bancorVault: BancorVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
@@ -907,8 +854,7 @@ describe('Profile @profile', () => {
         const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
-            ({ network, networkSettings, networkToken, masterPool, poolCollection, bancorVault } =
-                await createSystem());
+            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
@@ -920,7 +866,7 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testFlashLoan = async (symbol: string, flashLoanFeePPM: BigNumber) => {
+        const testFlashLoan = async (symbol: string, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
@@ -942,6 +888,7 @@ describe('Profile @profile', () => {
                         },
                         deployer,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));
@@ -973,9 +920,9 @@ describe('Profile @profile', () => {
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
-            for (const flashLoanFeePPM of [0, 10_000, 100_000]) {
-                context(`${symbol} with fee=${feeToString(flashLoanFeePPM)}`, () => {
-                    testFlashLoan(symbol, BigNumber.from(flashLoanFeePPM));
+            for (const flashLoanFee of [0, 1, 10]) {
+                context(`${symbol} with fee=${flashLoanFee}%`, () => {
+                    testFlashLoan(symbol, toPPM(flashLoanFee));
                 });
             }
         }

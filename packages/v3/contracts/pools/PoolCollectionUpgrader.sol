@@ -109,13 +109,6 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolCollectionUpgrader
      */
-    function network() external view returns (IBancorNetwork) {
-        return _network;
-    }
-
-    /**
-     * @inheritdoc IPoolCollectionUpgrader
-     */
     function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
         if (ReserveToken.unwrap(pool) == address(0)) {
             revert InvalidPool();
