@@ -28,7 +28,7 @@
         "profiled": "DEBUG=1 yarn profile",
         "migrate": "MIGRATION=1 hardhat migrate",
         "create-migration": "MIGRATION=1 hardhat create-migration",
-        "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
+        "test-migration": "NODE_OPTIONS=${CI:+'--max-old-space-size=30000 --openssl-legacy-provider'} yarn build && hardhat test migration/test/Engine.ts",
         "size": "yarn rebuild && hardhat size-contracts",
         "verify": "hardhat verify",
         "coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=30000 --openssl-legacy-provider'} hardhat coverage",
