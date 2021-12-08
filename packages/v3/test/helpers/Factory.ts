@@ -21,8 +21,8 @@ import {
     TestPendingWithdrawals
 } from '../../typechain-types';
 import { roles } from './AccessControl';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { fromPPM, Fraction } from './Types';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
+import { fromPPM, Fraction, toWei } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -34,7 +34,7 @@ const {
     ExternalProtectionVault: ExternalProtectionVaultRoles
 } = roles;
 
-const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
+const TOTAL_SUPPLY = toWei(1_000_000_000);
 const V1 = 1;
 
 type CtorArgs = Parameters<any>;
@@ -92,7 +92,7 @@ const createGovernedToken = async (
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
     name: string,
     symbol: string,
-    decimals: BigNumber,
+    decimals: number,
     totalSupply: BigNumber
 ) => {
     const deployer = await getDeployer();
@@ -133,6 +133,7 @@ const createGovernedTokens = async () => {
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
+
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
         vBNT,
@@ -331,7 +332,7 @@ export const depositToPool = async (
 export interface PoolSpec {
     symbol: string;
     balance: BigNumber;
-    initialRate: Fraction<BigNumber>;
+    initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }
 
@@ -369,7 +370,7 @@ export const setupSimplePool = async (
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setInitialRate(token.address, spec.initialRate);
-    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
+    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
 
