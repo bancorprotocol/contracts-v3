@@ -11,22 +11,22 @@ enum DistributionType {
 }
 
 struct ProgramData {
-    address pool;
-    IVault rewardsVault;
-    uint256 totalRewards;
-    uint256 availableRewards;
-    DistributionType distributionType;
     uint256 startTime;
     uint256 endTime;
     uint256 prevDistributionTimestamp;
+    uint256 totalRewards;
+    uint256 availableRewards;
+    IVault rewardsVault;
+    ReserveToken pool;
     bool isEnabled;
+    DistributionType distributionType;
 }
 
 interface IAutoCompoundingStakingRewards is IUpgradeable {
     /**
      * @dev returns the program data of a pool
      */
-    function program(address pool) external view returns (ProgramData memory);
+    function program(ReserveToken pool) external view returns (ProgramData memory);
 
     /**
      * @dev returns a list of all pools' program data
@@ -36,7 +36,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     /**
      * @dev returns wether a program is active or not
      */
-    function isProgramActive(address pool) external view returns (bool);
+    function isProgramActive(ReserveToken pool) external view returns (bool);
 
     /**
      * @dev create a program for a pool
@@ -62,7 +62,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      *
      * - the caller must be the admin of the contract
      */
-    function terminateProgram(address pool) external;
+    function terminateProgram(ReserveToken pool) external;
 
     /**
      * @dev enable or disable a pool's program
@@ -71,7 +71,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      *
      * - the caller must be the admin of the contract
      */
-    function enableProgram(address pool, bool status) external;
+    function enableProgram(ReserveToken pool, bool status) external;
 
     /**
      * @dev process a pool's rewards
