@@ -7,13 +7,13 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { Vault } from "./Vault.sol";
-import { IBancorVault } from "./interfaces/IBancorVault.sol";
+import { IMasterVault } from "./interfaces/IMasterVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
 
 /**
- * @dev Bancor Vault contract
+ * @dev Master Vault contract
  */
-contract BancorVault is IBancorVault, Vault {
+contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
@@ -40,7 +40,7 @@ contract BancorVault is IBancorVault, Vault {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __BancorVault_init();
+        __MasterVault_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -48,16 +48,16 @@ contract BancorVault is IBancorVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorVault_init() internal initializer {
+    function __MasterVault_init() internal initializer {
         __Vault_init();
 
-        __BancorVault_init_unchained();
+        __MasterVault_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorVault_init_unchained() internal initializer {
+    function __MasterVault_init_unchained() internal initializer {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);

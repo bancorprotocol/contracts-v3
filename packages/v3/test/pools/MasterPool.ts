@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
-    BancorVault,
+    MasterVault,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -52,7 +52,7 @@ describe('MasterPool', () => {
         let networkSettings: NetworkSettings;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
 
@@ -221,7 +221,7 @@ describe('MasterPool', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
 
         const amount = toWei(BigNumber.from(12345));
 
@@ -385,7 +385,7 @@ describe('MasterPool', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
@@ -563,7 +563,7 @@ describe('MasterPool', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 

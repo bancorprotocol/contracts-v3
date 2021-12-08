@@ -13,7 +13,7 @@ import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
