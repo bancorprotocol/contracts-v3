@@ -10,7 +10,7 @@ import {
     TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes } from '../helpers/Constants';
+import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes, DEFAULT_DECIMALS } from '../helpers/Constants';
 import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { permitSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -297,7 +297,7 @@ describe('PendingWithdrawals', () => {
                             const poolToken = await Contracts.PoolToken.deploy(
                                 'POOL',
                                 'POOL',
-                                18,
+                                DEFAULT_DECIMALS,
                                 reserveToken.address
                             );
                             const amount = BigNumber.from(1);

@@ -1,6 +1,6 @@
-import { PPM_RESOLUTION } from './Constants';
+import { PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber } from 'ethers';
 
 export interface Fraction<T = Decimal> {
     n: T;
@@ -99,10 +99,10 @@ type ToWeiInput = Decimal | BigNumber | number;
 
 export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
     if (Decimal.isDecimal(v)) {
-        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(18)).toFixed());
+        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(DEFAULT_DECIMALS)).toFixed());
     }
 
-    return BigNumber.from(v).mul(BigNumber.from(10).pow(18));
+    return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
 };
 
 export const toPPM = (percent: number): number => percent * (PPM_RESOLUTION / 100);
