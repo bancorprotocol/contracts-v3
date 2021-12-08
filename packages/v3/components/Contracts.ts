@@ -2,6 +2,7 @@
 import {
     BancorNetwork__factory,
     BancorNetworkInformation__factory,
+    BancorV1Migration__factory,
     ERC20__factory,
     ExternalProtectionVault__factory,
     ExternalRewardsVault__factory,
@@ -35,8 +36,6 @@ import {
     TransparentUpgradeableProxy__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
-
-/* eslint-enable camelcase */
 import { Signer } from 'ethers';
 
 const getContracts = (signer?: Signer) => ({
@@ -44,6 +43,7 @@ const getContracts = (signer?: Signer) => ({
 
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInformation: deployOrAttach('BancorNetworkInformation', BancorNetworkInformation__factory, signer),
+    BancorV1Migration: deployOrAttach('BancorV1Migration', BancorV1Migration__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
     ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),
     ExternalRewardsVault: deployOrAttach('ExternalRewardsVault', ExternalRewardsVault__factory, signer),

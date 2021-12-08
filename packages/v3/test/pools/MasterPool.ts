@@ -323,7 +323,7 @@ describe('MasterPool', () => {
                     await poolCollection.setAverageRateT(reserveToken.address, {
                         rate: {
                             n: spotRate.n.mul(PPM_RESOLUTION),
-                            d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + 1000)
+                            d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.1))
                         },
                         time: BigNumber.from(0)
                     });

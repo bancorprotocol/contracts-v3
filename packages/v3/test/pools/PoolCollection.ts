@@ -1786,7 +1786,7 @@ describe('PoolCollection', () => {
                                     // derive a target amount such that adding a fee to it will result in an amount
                                     // greater than the target balance by solving the following two equations (left as an
                                     // exercise for the reader):
-                                    // - feeAmount = targetAmount * tradingFee / (PPM - tradingFee)
+                                    // - feeAmount = targetAmount * tradingFeePPM / (PPM - tradingFeePPM)
                                     // - targetAmount + feeAmount = targetBalance
                                     const fee = new Decimal(tradingFeePPM.toString());
                                     const factor = new Decimal(1).add(
@@ -1976,12 +1976,12 @@ describe('PoolCollection', () => {
                 describe('regular tests', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000]) {
-                            for (const tradingFee of [0, 10]) {
+                            for (const tradingFeePercent of [0, 10]) {
                                 for (const amount of [1_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
-                                        tradingFeePPM: toPPM(tradingFee),
+                                        tradingFeePPM: toPPM(tradingFeePercent),
                                         amount: toWei(BigNumber.from(amount)),
                                         intervals: [0, 200, 500]
                                     });
@@ -1994,12 +1994,12 @@ describe('PoolCollection', () => {
                 describe('@stress tests', () => {
                     for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
                         for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
-                            for (const tradingFee of [0, 1, 10]) {
+                            for (const tradingFeePercent of [0, 1, 10]) {
                                 for (const amount of [1_000, 10_000, 100_000]) {
                                     testTrading({
                                         sourceBalance: toWei(BigNumber.from(sourceBalance)),
                                         targetBalance: toWei(BigNumber.from(targetBalance)),
-                                        tradingFeePPM: toPPM(tradingFee),
+                                        tradingFeePPM: toPPM(tradingFeePercent),
                                         amount: toWei(BigNumber.from(amount)),
                                         intervals: [0, 1, 2, 10, 100, 200, 400, 500]
                                     });

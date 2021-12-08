@@ -9,17 +9,33 @@ import {
     ConverterRegistry,
     ConverterRegistryData__factory,
     ConverterRegistryData,
+    LiquidityProtectionSettings__factory,
+    LiquidityProtectionSettings,
+    LiquidityProtectionStats__factory,
+    LiquidityProtectionStats,
+    LiquidityProtectionStore__factory,
+    LiquidityProtectionStore,
+    LiquidityProtectionSystemStore__factory,
+    LiquidityProtectionSystemStore,
     NetworkSettings__factory,
     NetworkSettings as LegacyNetworkSettings,
-    StandardPoolConverter__factory,
-    StandardPoolConverter,
-    StandardPoolConverterFactory__factory,
-    StandardPoolConverterFactory
+    TestCheckpointStore__factory,
+    TestCheckpointStore,
+    TestLiquidityProtection__factory,
+    TestLiquidityProtection,
+    TestStandardPoolConverter__factory,
+    TestStandardPoolConverter,
+    TestStandardPoolConverterFactory__factory,
+    TestStandardPoolConverterFactory,
+    TokenHolder__factory,
+    TokenHolder
 } from '../../v2/typechain';
 import { deployOrAttach } from './ContractBuilder';
 
 /* eslint-disable camelcase */
 import {
+    DSToken,
+    DSToken__factory,
     DSToken as GovToken,
     DSToken__factory as GovToken__factory,
     SmartToken as NetworkToken,
@@ -31,17 +47,28 @@ import { Signer } from 'ethers';
 
 /* eslint-enable camelcase */
 
-export { NetworkToken, NetworkToken__factory, GovToken, GovToken__factory, TokenGovernance };
-
 export {
+    NetworkToken,
+    NetworkToken__factory,
+    GovToken,
+    GovToken__factory,
     ConverterFactory,
     ContractRegistry,
     ConverterRegistry,
     ConverterRegistryData,
+    DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
-    StandardPoolConverter,
-    StandardPoolConverterFactory
+    TokenHolder,
+    LiquidityProtectionSettings,
+    LiquidityProtectionStats,
+    LiquidityProtectionStore,
+    LiquidityProtectionSystemStore,
+    TestCheckpointStore,
+    TestLiquidityProtection,
+    TestStandardPoolConverter,
+    TestStandardPoolConverterFactory,
+    TokenGovernance
 };
 
 const getContracts = (signer?: Signer) => ({
@@ -55,12 +82,20 @@ const getContracts = (signer?: Signer) => ({
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
     ConverterRegistryData: deployOrAttach('ConverterRegistryData', ConverterRegistryData__factory, signer),
+    DSToken: deployOrAttach('DSToken', DSToken__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
-    StandardPoolConverter: deployOrAttach('StandardPoolConverter', StandardPoolConverter__factory, signer),
-    StandardPoolConverterFactory: deployOrAttach(
-        'StandardPoolConverterFactory',
-        StandardPoolConverterFactory__factory,
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
+    LiquidityProtectionSettings: deployOrAttach('LiquidityProtectionSettings', LiquidityProtectionSettings__factory, signer),
+    LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
+    LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
+    LiquidityProtectionSystemStore: deployOrAttach('LiquidityProtectionSystemStore', LiquidityProtectionSystemStore__factory, signer),
+    TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
+    TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
+    TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),
+    TestStandardPoolConverterFactory: deployOrAttach(
+        'TestStandardPoolConverterFactory',
+        TestStandardPoolConverterFactory__factory,
         signer
     )
 });
