@@ -22,7 +22,7 @@ import {
 } from '../../typechain-types';
 import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { toDecimal, Fraction } from './Types';
+import { fromPPM, Fraction } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -335,11 +335,9 @@ export interface PoolSpec {
     tradingFeePPM?: number;
 }
 
-export const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
-
 export const specToString = (spec: PoolSpec) => {
     if (spec.tradingFeePPM !== undefined) {
-        return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
+        return `${spec.symbol} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
     }
 
     return `${spec.symbol} (balance=${spec.balance})`;

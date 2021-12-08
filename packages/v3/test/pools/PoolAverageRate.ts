@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
-import { toString, toWei, Fraction, AverageRate } from '../helpers/Types';
+import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -309,7 +309,7 @@ describe('PoolAverageRate', () => {
         const testVerifyAverageRate = async (
             averageRates: Fraction<BigNumber>[],
             scaleFactors: BigNumber[],
-            maxDeviations: BigNumber[]
+            maxDeviations: number[]
         ) => {
             for (const initAverageRate of averageRates) {
                 for (const averageRateScaleFactor of scaleFactors) {
@@ -448,7 +448,7 @@ describe('PoolAverageRate', () => {
                                                 await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
-                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION.add(maxDeviation))
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation)
                                                     },
                                                     averageRate,
                                                     maxDeviation
@@ -460,9 +460,7 @@ describe('PoolAverageRate', () => {
                                                 await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
-                                                        d: baseSpotRate.d.mul(
-                                                            PPM_RESOLUTION.add(maxDeviation.add(BigNumber.from(1)))
-                                                        )
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation + 1)
                                                     },
                                                     averageRate,
                                                     maxDeviation
@@ -474,7 +472,7 @@ describe('PoolAverageRate', () => {
                                                 await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
-                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION.sub(maxDeviation))
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION - maxDeviation)
                                                     },
                                                     averageRate,
                                                     maxDeviation
@@ -486,9 +484,7 @@ describe('PoolAverageRate', () => {
                                                 await poolAverageRate.isPoolRateStable(
                                                     {
                                                         n: baseSpotRate.n.mul(PPM_RESOLUTION),
-                                                        d: baseSpotRate.d.mul(
-                                                            PPM_RESOLUTION.sub(maxDeviation.add(BigNumber.from(1)))
-                                                        )
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION - (maxDeviation + 1))
                                                     },
                                                     averageRate,
                                                     maxDeviation
@@ -507,7 +503,7 @@ describe('PoolAverageRate', () => {
         describe('quick tests', () => {
             const AVERAGE_RATES = [{ n: BigNumber.from(1), d: BigNumber.from(10000) }];
             const SCALE_FACTORS = [0, 18].map((d) => BigNumber.from(d));
-            const MAX_DEVIATIONS = [10_000].map((d) => BigNumber.from(d));
+            const MAX_DEVIATIONS = [1].map((d) => toPPM(d));
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });
@@ -519,7 +515,7 @@ describe('PoolAverageRate', () => {
                 { n: BigNumber.from(10000), d: BigNumber.from(1) }
             ];
             const SCALE_FACTORS = [0, 2, 10, 18].map((d) => BigNumber.from(d));
-            const MAX_DEVIATIONS = [10_000, 100_000, 500_000].map((d) => BigNumber.from(d));
+            const MAX_DEVIATIONS = [1, 10, 50].map((d) => toPPM(d));
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });

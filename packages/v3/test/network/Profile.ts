@@ -19,12 +19,11 @@ import {
     initWithdraw,
     setupSimplePool,
     PoolSpec,
-    specToString,
-    feeToString
+    specToString
 } from '../helpers/Factory';
 import { permitContractSignature } from '../helpers/Permit';
 import { latest } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
@@ -55,9 +54,9 @@ describe('Profile @profile', () => {
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
         const DEPOSIT_LIMIT = toWei(BigNumber.from(100_000_000));
 
@@ -398,9 +397,9 @@ describe('Profile @profile', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-        const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+        const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
 
         const setTime = async (time: number) => {
@@ -531,9 +530,7 @@ describe('Profile @profile', () => {
                                         await poolCollection.setAverageRateT(token.address, {
                                             rate: {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(
-                                                    PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(5000)))
-                                                )
+                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                             },
                                             time: BigNumber.from(0)
                                         });
@@ -793,8 +790,8 @@ describe('Profile @profile', () => {
             for (const sourceBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                 for (const targetBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                     for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
-                        const TRADING_FEES = [0, 50_000];
-                        for (const tradingFeePPM of TRADING_FEES) {
+                        const TRADING_FEES = [0, 5];
+                        for (const tradingFeePercent of TRADING_FEES) {
                             const isSourceNetworkToken = sourceSymbol === BNT;
                             const isTargetNetworkToken = targetSymbol === BNT;
 
@@ -805,30 +802,30 @@ describe('Profile @profile', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : tradingFeePPM,
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
                             } else {
-                                for (const tradingFeePPM2 of TRADING_FEES) {
+                                for (const tradingFeePercent2 of TRADING_FEES) {
                                     testTrades(
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM,
+                                            tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: tradingFeePPM2,
+                                            tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
                                         amount
@@ -869,7 +866,7 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testFlashLoan = async (symbol: string, flashLoanFeePPM: BigNumber) => {
+        const testFlashLoan = async (symbol: string, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
@@ -923,9 +920,9 @@ describe('Profile @profile', () => {
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
-            for (const flashLoanFeePPM of [0, 10_000, 100_000]) {
-                context(`${symbol} with fee=${feeToString(flashLoanFeePPM)}`, () => {
-                    testFlashLoan(symbol, BigNumber.from(flashLoanFeePPM));
+            for (const flashLoanFee of [0, 1, 10]) {
+                context(`${symbol} with fee=${flashLoanFee}%`, () => {
+                    testFlashLoan(symbol, toPPM(flashLoanFee));
                 });
             }
         }
