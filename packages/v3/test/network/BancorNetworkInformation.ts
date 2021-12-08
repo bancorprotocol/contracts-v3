@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorNetworkInformation,
-    BancorVault,
+    MasterVault,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
@@ -46,7 +46,7 @@ describe('BancorNetworkInformation', () => {
         let masterPool: TestMasterPool;
         let masterPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;

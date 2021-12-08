@@ -7,7 +7,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { WithdrawalAmounts } from "../pools/interfaces/IMasterPool.sol";
@@ -19,8 +19,8 @@ contract TestMasterPool is MasterPool {
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMasterVault,
-        IPoolToken initMasterPoolTokenn
+        IMasterVault initMasterVault,
+        IPoolToken initMasterPoolToken
     )
         MasterPool(
             initNetwork,
@@ -28,7 +28,7 @@ contract TestMasterPool is MasterPool {
             initGovTokenGovernance,
             initNetworkSettings,
             initMasterVault,
-            initMasterPoolTokenn
+            initMasterPoolToken
         )
     {}
 

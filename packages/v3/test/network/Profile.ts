@@ -780,7 +780,7 @@ describe('Profile @profile', () => {
                 for (const targetBalance of [toWei(1_000_000), toWei(50_000_000)]) {
                     for (const amount of [10_000, toWei(500_000)]) {
                         const TRADING_FEES = [0, 5];
-                        for (const tradingFee of TRADING_FEES) {
+                        for (const tradingFeePercent of TRADING_FEES) {
                             const isSourceNetworkToken = sourceSymbol === BNT;
                             const isTargetNetworkToken = targetSymbol === BNT;
 
@@ -791,30 +791,30 @@ describe('Profile @profile', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFee),
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFee),
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     BigNumber.from(amount)
                                 );
                             } else {
-                                for (const tradingFee2 of TRADING_FEES) {
+                                for (const tradingFeePercent2 of TRADING_FEES) {
                                     testTrades(
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM: toPPM(tradingFee),
+                                            tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: toPPM(tradingFee2),
+                                            tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
                                         BigNumber.from(amount)

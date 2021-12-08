@@ -9,7 +9,11 @@ export const roles = {
         ROLE_ADMIN: id('ROLE_ADMIN')
     },
 
-    BancorVault: {
+    BancorNetwork: {
+        ROLE_MIGRATION_MANAGER: id('ROLE_MIGRATION_MANAGER')
+    },
+
+    MasterVault: {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
     },
