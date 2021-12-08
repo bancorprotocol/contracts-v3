@@ -21,7 +21,7 @@ describe('PoolAverageRate', () => {
                 n: BigNumber.from(0),
                 d: BigNumber.from(0)
             },
-            time: BigNumber.from(0)
+            time: 0
         };
 
         it('should update the average rate to the spot rate at the beginning', async () => {
@@ -316,7 +316,7 @@ describe('PoolAverageRate', () => {
                                 n: initAverageRate.n.mul(averageRateScale),
                                 d: initAverageRate.d.mul(averageRateScale)
                             },
-                            time: BigNumber.from(0)
+                            time: 0
                         };
                         const spotRateScale = BigNumber.from(10).pow(spotRateScaleFactor);
                         const baseSpotRate = {

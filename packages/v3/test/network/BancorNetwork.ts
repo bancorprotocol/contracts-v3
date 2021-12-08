@@ -1300,7 +1300,7 @@ describe('BancorNetwork', () => {
                                                                     PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5)
                                                                 )
                                                             },
-                                                            time: BigNumber.from(0)
+                                                            time: 0
                                                         });
 
                                                         it('should revert when attempting to deposit', async () => {
@@ -1567,7 +1567,7 @@ describe('BancorNetwork', () => {
                                                         n: spotRate.n.mul(PPM_RESOLUTION),
                                                         d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                                     },
-                                                    time: BigNumber.from(0)
+                                                    time: 0
                                                 });
 
                                                 it('should revert when attempting to deposit', async () => {
@@ -2432,7 +2432,7 @@ describe('BancorNetwork', () => {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
                                                 d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                             },
-                                            time: BigNumber.from(0)
+                                            time: 0
                                         });
                                     });
 
