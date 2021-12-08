@@ -22,7 +22,7 @@ import {
 } from '../../typechain-types';
 import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { fromPPM, Fraction } from './Types';
+import { fromPPM, Fraction, toWei } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -34,7 +34,7 @@ const {
     ExternalProtectionVault: ExternalProtectionVaultRoles
 } = roles;
 
-const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
+const TOTAL_SUPPLY = toWei(1_000_000_000);
 const V1 = 1;
 
 type CtorArgs = Parameters<any>;
