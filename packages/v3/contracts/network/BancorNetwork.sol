@@ -1130,8 +1130,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 payable(address(_masterVault)),
                 amounts.baseTokensToTransferFromExternalProtectionVault
             );
-            amounts.baseTokensToTransferFromMasterVault += amounts
-                .baseTokensToTransferFromExternalProtectionVault;
+            amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromExternalProtectionVault;
         }
 
         // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault and send
