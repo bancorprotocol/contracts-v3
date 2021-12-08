@@ -1,7 +1,8 @@
 import LegacyContracts from '../../components/LegacyContracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, TestBancorNetwork, BancorVault } from '../../typechain-types';
+import { IERC20, TestBancorNetwork, MasterVault } from '../../typechain-types';
 import { TokenWithAddress } from '../helpers/Utils';
+import { DEFAULT_DECIMALS } from './Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const {
@@ -13,7 +14,7 @@ const {
 export const createLegacySystem = async (
     owner: SignerWithAddress,
     network: TestBancorNetwork,
-    vault: BancorVault,
+    vault: MasterVault,
     networkToken: IERC20,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance,
@@ -70,7 +71,7 @@ export const createLegacySystem = async (
         3 /* Standard Pool Converter Type */,
         'PT',
         'PT',
-        18,
+        DEFAULT_DECIMALS,
         PPM_RESOLUTION,
         [baseToken.address, networkToken.address],
         [PPM_RESOLUTION.div(2), PPM_RESOLUTION.div(2)]

@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
     BancorNetworkInformation,
-    BancorVault,
+    MasterVault,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
@@ -23,7 +23,7 @@ import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('BancorNetworkInformation', () => {
@@ -46,7 +46,7 @@ describe('BancorNetworkInformation', () => {
         let masterPool: TestMasterPool;
         let masterPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -271,9 +271,9 @@ describe('BancorNetworkInformation', () => {
 
         let trader: Wallet;
 
-        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(100_000));
-        const NETWORK_TOKEN_LIQUIDITY = toWei(BigNumber.from(100_000));
+        const INITIAL_RATE = { n: 1, d: 2 };
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
 
         beforeEach(async () => {
             ({ network, networkToken, networkInformation, networkSettings, poolCollection } = await createSystem());
@@ -311,13 +311,13 @@ describe('BancorNetworkInformation', () => {
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
         }
-        const tradeTargetAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
+        const tradeTargetAmount = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
             const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
 
             return networkInformation.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
         };
 
-        const tradeSourceAmount = async (amount: BigNumber, overrides: TradeAmountsOverrides = {}) => {
+        const tradeSourceAmount = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
             const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
 
             return networkInformation.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
@@ -327,7 +327,7 @@ describe('BancorNetworkInformation', () => {
             const isSourceETH = source.symbol === ETH;
 
             context(`when trading from ${source.symbol} to ${target.symbol}`, () => {
-                const testAmount = BigNumber.from(1000);
+                const testAmount = 1000;
 
                 beforeEach(async () => {
                     await setupPools(source, target);
@@ -359,14 +359,14 @@ describe('BancorNetworkInformation', () => {
                 });
 
                 it('should revert when attempting to  query using an invalid amount', async () => {
-                    const amount = BigNumber.from(0);
+                    const amount = 0;
 
                     await expect(tradeTargetAmount(amount)).to.be.revertedWith('ZeroValue');
                     await expect(tradeSourceAmount(amount)).to.be.revertedWith('ZeroValue');
                 });
 
                 it('should revert when attempting to query using unsupported tokens', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
                     await reserveToken2.transfer(await trader.getAddress(), testAmount);
                     await reserveToken2.connect(trader).approve(network.address, testAmount);
@@ -412,12 +412,12 @@ describe('BancorNetworkInformation', () => {
             testTradesAmounts(
                 {
                     symbol: sourceSymbol,
-                    balance: toWei(BigNumber.from(1_000_000)),
+                    balance: toWei(1_000_000),
                     initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
-                    balance: toWei(BigNumber.from(5_000_000)),
+                    balance: toWei(5_000_000),
                     initialRate: INITIAL_RATE
                 }
             );

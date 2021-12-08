@@ -9,7 +9,7 @@ import { isProfiling } from '../../components/Profiler';
 import {
     BancorNetwork,
     BancorNetworkInformation,
-    BancorVault,
+    MasterVault,
     IERC20,
     NetworkSettings,
     PoolCollectionUpgrader,
@@ -17,11 +17,12 @@ import {
     PoolTokenFactory,
     ProxyAdmin,
     TestBancorNetwork,
-    TestPoolCollection
+    TestPoolCollection,
+    TestPendingWithdrawals
 } from '../../typechain-types';
 import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { Fraction } from './Types';
+import { fromPPM, Fraction, toWei } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -29,11 +30,11 @@ import { ethers, waffle } from 'hardhat';
 
 const {
     TokenGovernance: TokenGovernanceRoles,
-    BancorVault: BancorVaultRoles,
+    MasterVault: MasterVaultRoles,
     ExternalProtectionVault: ExternalProtectionVaultRoles
 } = roles;
 
-const TOTAL_SUPPLY = BigNumber.from(1_000_000_000).mul(BigNumber.from(10).pow(18));
+const TOTAL_SUPPLY = toWei(1_000_000_000);
 const V1 = 1;
 
 type CtorArgs = Parameters<any>;
@@ -91,7 +92,7 @@ const createGovernedToken = async (
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
     name: string,
     symbol: string,
-    decimals: BigNumber,
+    decimals: number,
     totalSupply: BigNumber
 ) => {
     const deployer = await getDeployer();
@@ -132,6 +133,7 @@ const createGovernedTokens = async () => {
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
+
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
         vBNT,
@@ -165,7 +167,7 @@ const createMasterPoolUninitialized = async (
     networkSettings: NetworkSettings,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance,
-    masterVault: BancorVault,
+    masterVault: MasterVault,
     masterPoolToken: PoolToken
 ) => {
     const masterPool = await createProxy(Contracts.TestMasterPool, {
@@ -186,7 +188,7 @@ const createMasterPoolUninitialized = async (
     await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
     await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
 
-    await masterVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
+    await masterVault.grantRole(MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
 
     return masterPool;
 };
@@ -220,7 +222,7 @@ export const createPool = async (
 const createSystemFixture = async () => {
     const { networkToken, networkTokenGovernance, govToken, govTokenGovernance } = await createGovernedTokens();
 
-    const masterVault = await createProxy(Contracts.BancorVault, { ctorArgs: [networkToken.address] });
+    const masterVault = await createProxy(Contracts.MasterVault, { ctorArgs: [networkToken.address] });
 
     const networkFeeVault = await createProxy(Contracts.NetworkFeeVault);
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault);
@@ -270,7 +272,7 @@ const createSystemFixture = async () => {
 
     await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await masterVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, network.address);
     await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
     const networkInformation = await Contracts.BancorNetworkInformation.deploy(
@@ -330,9 +332,17 @@ export const depositToPool = async (
 export interface PoolSpec {
     symbol: string;
     balance: BigNumber;
-    initialRate: Fraction<BigNumber>;
+    initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }
+
+export const specToString = (spec: PoolSpec) => {
+    if (spec.tradingFeePPM !== undefined) {
+        return `${spec.symbol} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
+    }
+
+    return `${spec.symbol} (balance=${spec.balance})`;
+};
 
 export const setupSimplePool = async (
     spec: PoolSpec,
@@ -360,9 +370,26 @@ export const setupSimplePool = async (
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setInitialRate(token.address, spec.initialRate);
-    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? BigNumber.from(0));
+    await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
 
     return { poolToken, token };
+};
+
+export const initWithdraw = async (
+    provider: SignerWithAddress,
+    pendingWithdrawals: TestPendingWithdrawals,
+    poolToken: PoolToken,
+    amount: BigNumber
+) => {
+    await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
+    await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
+
+    const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+    const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+    const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+    const creationTime = withdrawalRequest.createdAt;
+
+    return { id, creationTime };
 };

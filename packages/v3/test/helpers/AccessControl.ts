@@ -13,7 +13,7 @@ export const roles = {
         ROLE_MIGRATION_MANAGER: id('ROLE_MIGRATION_MANAGER')
     },
 
-    BancorVault: {
+    MasterVault: {
         ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
     },
@@ -51,7 +51,7 @@ export const expectRole = async (
     initialMembers: string[] = []
 ) => {
     expect(await contract.getRoleAdmin(role)).to.equal(adminRole);
-    expect(await contract.getRoleMemberCount(role)).to.equal(BigNumber.from(initialMembers?.length));
+    expect(await contract.getRoleMemberCount(role)).to.equal(initialMembers?.length);
 
     for (const initialMember of initialMembers) {
         expect(await contract.hasRole(role, initialMember)).to.be.true;

@@ -8,7 +8,7 @@ import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('ReserveToken', () => {
-    const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+    const TOTAL_SUPPLY = 1_000_000;
 
     let reserveToken: TestReserveToken;
 
@@ -37,12 +37,12 @@ describe('ReserveToken', () => {
 
                     await deployer.sendTransaction({
                         to: reserveToken.address,
-                        value: TOTAL_SUPPLY.div(BigNumber.from(2))
+                        value: TOTAL_SUPPLY / 2
                     });
                 } else {
                     token = await Contracts.TestERC20Token.deploy(symbol, symbol, TOTAL_SUPPLY);
 
-                    await token.transfer(sender, TOTAL_SUPPLY.div(BigNumber.from(2)));
+                    await token.transfer(sender, TOTAL_SUPPLY / 2);
                 }
             });
 
@@ -61,7 +61,7 @@ describe('ReserveToken', () => {
                     const decimals = await token.decimals();
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals);
 
-                    const decimals2 = BigNumber.from(4);
+                    const decimals2 = 4;
                     await token.updateDecimals(decimals2);
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals2);
                 }
@@ -71,7 +71,7 @@ describe('ReserveToken', () => {
                 expect(await reserveToken.balanceOf(token.address, sender)).to.equal(await getBalance(token, sender));
             });
 
-            for (const amount of [BigNumber.from(0), BigNumber.from(10000)]) {
+            for (const amount of [0, 10_000]) {
                 it('should properly transfer the reserve token', async () => {
                     const prevSenderBalance = await getBalance(token, sender);
                     const prevRecipientBalance = await getBalance(token, recipient);
@@ -88,7 +88,7 @@ describe('ReserveToken', () => {
                     const prevSenderBalance = await getBalance(token, sender);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
-                    const amount = BigNumber.from(100000);
+                    const amount = 100_000;
                     await reserveToken.ensureApprove(token.address, sender, amount);
                     await reserveToken.safeTransferFrom(token.address, sender, recipient.address, amount);
 
@@ -96,7 +96,7 @@ describe('ReserveToken', () => {
                     expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
                 });
             } else {
-                for (const amount of [BigNumber.from(0), BigNumber.from(10000)]) {
+                for (const amount of [0, 10_000]) {
                     it('should properly transfer the reserve token on behalf of a different account', async () => {
                         const prevSenderBalance = await getBalance(token, sender);
                         const prevRecipientBalance = await getBalance(token, recipient);
@@ -109,7 +109,7 @@ describe('ReserveToken', () => {
                     });
 
                     it('should setting the allowance', async () => {
-                        const allowance = BigNumber.from(1000000);
+                        const allowance = 1_000_000;
 
                         await reserveToken.ensureApprove(token.address, spender.address, allowance);
 

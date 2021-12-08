@@ -1,5 +1,5 @@
 import Contracts from '../../components/Contracts';
-import { IERC20, BancorVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
+import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
@@ -9,14 +9,14 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-const { Upgradeable: UpgradeableRoles, BancorVault: BancorVaultRoles } = roles;
+const { Upgradeable: UpgradeableRoles, MasterVault: MasterVaultRoles } = roles;
 
-describe('BancorVault', () => {
-    shouldHaveGap('BancorVault');
+describe('MasterVault', () => {
+    shouldHaveGap('MasterVault');
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let masterPool: TestMasterPool;
 
         beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('BancorVault', () => {
         });
 
         it('should revert when initialized with an invalid network token', async () => {
-            await expect(Contracts.BancorVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -38,10 +38,10 @@ describe('BancorVault', () => {
             expect(await masterVault.isPayable()).to.be.true;
 
             await expectRole(masterVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
-            await expectRole(masterVault, BancorVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(masterVault, MasterVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
                 network.address
             ]);
-            await expectRole(masterVault, BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(masterVault, MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
                 masterPool.address
             ]);
         });
@@ -50,7 +50,7 @@ describe('BancorVault', () => {
     describe('asset management', () => {
         const amount = 1_000_000;
 
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let networkToken: IERC20;
 
         let deployer: SignerWithAddress;
@@ -104,7 +104,7 @@ describe('BancorVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(BancorVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                        await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();
@@ -112,7 +112,7 @@ describe('BancorVault', () => {
 
                 context('with network token manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(BancorVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                        await masterVault.grantRole(MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });
 
                     isNetworkToken ? testWithdrawFunds() : testWithdrawFundsRestricted();
