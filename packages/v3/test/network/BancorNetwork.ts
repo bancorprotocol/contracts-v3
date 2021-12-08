@@ -57,7 +57,7 @@ import {
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
@@ -82,7 +82,7 @@ describe('BancorNetwork', () => {
         targetToken: TokenWithAddress,
         amount: BigNumber,
         minReturnAmount: BigNumber,
-        deadline: BigNumber,
+        deadline: BigNumberish,
         beneficiary: string,
         network: TestBancorNetwork
     ) => {
@@ -1228,10 +1228,7 @@ describe('BancorNetwork', () => {
                                         } else {
                                             context('when there is no unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
-                                                    await networkSettings.setPoolMintingLimit(
-                                                        token.address,
-                                                        BigNumber.from(0)
-                                                    );
+                                                    await networkSettings.setPoolMintingLimit(token.address, 0);
                                                 });
 
                                                 context('with a whitelisted token', async () => {
@@ -1505,7 +1502,7 @@ describe('BancorNetwork', () => {
 
                                     context('when there is no unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setPoolMintingLimit(token.address, BigNumber.from(0));
+                                            await networkSettings.setPoolMintingLimit(token.address, 0);
                                         });
 
                                         context('with a whitelisted token', async () => {
@@ -1627,7 +1624,7 @@ describe('BancorNetwork', () => {
             maxRelativeError: Decimal,
             maxOffset: { negative: number; positive: number }
         ) => {
-            let now: BigNumber;
+            let now: number;
             let checkpointStore: TestCheckpointStore;
             let liquidityProtectionSettings: LiquidityProtectionSettings;
             let liquidityProtectionStore: LiquidityProtectionStore;
@@ -1714,7 +1711,7 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const setTime = async (time: BigNumber) => {
+            const setTime = async (time: number) => {
                 now = time;
 
                 for (const t of [converter, checkpointStore, liquidityProtection]) {
@@ -1751,8 +1748,8 @@ describe('BancorNetwork', () => {
 
                 await networkTokenGovernance.mint(owner.address, totalSupply);
 
-                await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(BigNumber.from(100));
-                await liquidityProtectionSettings.setMinNetworkCompensation(BigNumber.from(3));
+                await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(100);
+                await liquidityProtectionSettings.setMinNetworkCompensation(3);
 
                 await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
                 await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
@@ -1802,7 +1799,7 @@ describe('BancorNetwork', () => {
 
                     it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await liquidityProtection.setTime(now + duration.seconds(1));
                         await expect(
                             liquidityProtection.migratePositions([protectionId, protectionId])
                         ).to.be.revertedWith('ERR_ACCESS_DENIED');
@@ -1810,7 +1807,7 @@ describe('BancorNetwork', () => {
 
                     it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await liquidityProtection.setTime(now + duration.seconds(1));
                         await liquidityProtection.migratePositions([protectionId]);
                         await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
                             'ERR_ACCESS_DENIED'
@@ -1829,7 +1826,7 @@ describe('BancorNetwork', () => {
                         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
                         const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
 
-                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await liquidityProtection.setTime(now + duration.seconds(1));
 
                         const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
                         const prevBalance = await getBalance(baseToken, owner.address);
@@ -1871,7 +1868,7 @@ describe('BancorNetwork', () => {
                         const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
 
                         // double since system balance was also liquidated
-                        const delta = protection.poolAmount.mul(BigNumber.from(2));
+                        const delta = protection.poolAmount.mul(2);
                         expectInRange(walletBalance, prevWalletBalance.sub(delta));
 
                         const balance = await getBalance(baseToken, owner.address);
@@ -1881,13 +1878,13 @@ describe('BancorNetwork', () => {
                         expect(govBalance).to.equal(prevGovBalance);
 
                         const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                        expect(protectionPoolBalance).to.equal(BigNumber.from(0));
+                        expect(protectionPoolBalance).to.equal(0);
 
                         const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                        expect(protectionBaseBalance).to.equal(BigNumber.from(0));
+                        expect(protectionBaseBalance).to.equal(0);
 
                         const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                        expect(protectionNetworkBalance).to.equal(BigNumber.from(0));
+                        expect(protectionNetworkBalance).to.equal(0);
                     });
 
                     it('verifies that the owner can migrate system pool tokens', async () => {
@@ -1899,7 +1896,7 @@ describe('BancorNetwork', () => {
                         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
                         const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
 
-                        await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                        await liquidityProtection.setTime(now + duration.seconds(1));
 
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
@@ -1918,13 +1915,13 @@ describe('BancorNetwork', () => {
                         expect(govBalance).to.equal(prevGovBalance);
 
                         const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                        expect(protectionPoolBalance).to.equal(BigNumber.from(0));
+                        expect(protectionPoolBalance).to.equal(0);
 
                         const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                        expect(protectionBaseBalance).to.equal(BigNumber.from(0));
+                        expect(protectionBaseBalance).to.equal(0);
 
                         const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                        expect(protectionNetworkBalance).to.equal(BigNumber.from(0));
+                        expect(protectionNetworkBalance).to.equal(0);
                     });
                 });
             }
@@ -1932,6 +1929,7 @@ describe('BancorNetwork', () => {
             describe('network token', () => {
                 beforeEach(async () => {
                     await initLegacySystem(false);
+
                     const amount = BigNumber.from(100_000);
                     await baseToken.transfer(provider.address, amount);
                     await baseToken.connect(provider).approve(network.address, amount);
@@ -1961,7 +1959,7 @@ describe('BancorNetwork', () => {
 
                 it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
                     const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                    await liquidityProtection.setTime(now + duration.seconds(1));
                     await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
                         'ERR_ACCESS_DENIED'
                     );
@@ -1969,7 +1967,7 @@ describe('BancorNetwork', () => {
 
                 it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
                     const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                    await liquidityProtection.setTime(now + duration.seconds(1));
                     await liquidityProtection.migratePositions([protectionId]);
                     await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
                         'ERR_ACCESS_DENIED'
@@ -1990,7 +1988,7 @@ describe('BancorNetwork', () => {
                     const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
                     const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
 
-                    await liquidityProtection.setTime(now.add(duration.seconds(1)));
+                    await liquidityProtection.setTime(now + duration.seconds(1));
                     await liquidityProtection.migratePositions([protectionId]);
 
                     // verify protected liquidities
@@ -2030,10 +2028,10 @@ describe('BancorNetwork', () => {
                     expect(govBalance).to.equal(prevGovBalance);
 
                     const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                    expect(protectionPoolBalance).to.equal(BigNumber.from(0));
+                    expect(protectionPoolBalance).to.equal(0);
 
                     const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                    expect(protectionBaseBalance).to.equal(BigNumber.from(0));
+                    expect(protectionBaseBalance).to.equal(0);
 
                     const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
                     expectInRange(protectionNetworkBalance, BigNumber.from(0));
@@ -2050,7 +2048,7 @@ describe('BancorNetwork', () => {
                 maxOffset: { negative: 0, positive: 0 }
             },
             {
-                totalSupply: toWei(BigNumber.from(10_000_000)),
+                totalSupply: toWei(10_000_000),
                 reserve1Amount: BigNumber.from(1_000_000),
                 reserve2Amount: BigNumber.from(2_500_000),
                 maxRelativeError: new Decimal('0.000000000000000000000001'),
@@ -2058,15 +2056,15 @@ describe('BancorNetwork', () => {
             },
             {
                 totalSupply: BigNumber.from(10_000_000),
-                reserve1Amount: toWei(BigNumber.from(1_000_000)),
-                reserve2Amount: toWei(BigNumber.from(2_500_000)),
+                reserve1Amount: toWei(1_000_000),
+                reserve2Amount: toWei(2_500_000),
                 maxRelativeError: new Decimal('0.000000000000000000000001003'),
                 maxOffset: { negative: 1, positive: 1 }
             },
             {
-                totalSupply: toWei(BigNumber.from(10_000_000)),
-                reserve1Amount: toWei(BigNumber.from(1_000_000)),
-                reserve2Amount: toWei(BigNumber.from(2_500_000)),
+                totalSupply: toWei(10_000_000),
+                reserve1Amount: toWei(1_000_000),
+                reserve2Amount: toWei(2_500_000),
                 maxRelativeError: new Decimal('0.000000000000000000000001'),
                 maxOffset: { negative: 1, positive: 1 }
             }
@@ -2152,7 +2150,7 @@ describe('BancorNetwork', () => {
                     }
 
                     // create a deposit
-                    const amount = toWei(BigNumber.from(222_222_222));
+                    const amount = toWei(222_222_222);
 
                     if (isNetworkToken) {
                         poolToken = masterPoolToken;
@@ -2516,7 +2514,7 @@ describe('BancorNetwork', () => {
         interface TradeOverrides {
             value?: BigNumber;
             minReturnAmount?: BigNumber;
-            deadline?: BigNumber;
+            deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
@@ -2548,7 +2546,7 @@ describe('BancorNetwork', () => {
 
         interface TradePermittedOverrides {
             minReturnAmount?: BigNumber;
-            deadline?: BigNumber;
+            deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
@@ -2922,7 +2920,7 @@ describe('BancorNetwork', () => {
                         });
 
                         it('should revert when attempting to trade using an expired deadline', async () => {
-                            const deadline = BigNumber.from((await latest()) - 1000);
+                            const deadline = (await latest()) - 1000;
 
                             await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
                                 permitted ? 'ERC20Permit: expired deadline' : 'DeadlineExpired'

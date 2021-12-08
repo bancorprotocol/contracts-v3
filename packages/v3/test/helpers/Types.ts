@@ -36,7 +36,7 @@ type ToDecimalReturn<T> = T extends Fraction<BigNumber>
 
 export interface AverageRate<T> {
     rate: Fraction<T>;
-    time: T;
+    time: number;
 }
 
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');

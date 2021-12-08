@@ -137,7 +137,7 @@ describe('PoolToken', () => {
 
         it('should reject an expired permit', async () => {
             const amount = BigNumber.from(500);
-            const deadline = BigNumber.from((await latest()) - duration.weeks(1));
+            const deadline = (await latest()) - duration.weeks(1);
             const { v, r, s } = await permitSignature(
                 wallet,
                 NAME,
