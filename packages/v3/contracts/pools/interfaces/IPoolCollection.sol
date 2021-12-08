@@ -46,13 +46,13 @@ struct DepositAmounts {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromMasterVault; // the base token amount to transfer from the master vault to the provider
-    uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
-    uint256 baseTokenAmountToTransferFromExternalProtectionVault; // the base token amount to transfer from the external protection vault to the provider
-    Sint256 baseTokenAmountToAddToLiquidity; // the base token amount to add to the trading liquidity
-    Sint256 networkTokenAmountToAddToLiquidity; // the network token amount to add to the trading liquidity and to the master vault
+    uint256 baseTokenAmountToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
+    uint256 networkTokenAmountToMintForProvider; // network token amount to mint directly for the provider
+    uint256 baseTokenAmountToTransferFromExternalProtectionVault; // base token amount to transfer from the external protection vault to the provider
+    Sint256 baseTokenAmountToAddToLiquidity; // base token amount to add to the trading liquidity
+    Sint256 networkTokenAmountToAddToLiquidity; // network token amount to add to the trading liquidity and to the master vault
     Sint256 networkTokenAmountToAddToProtocol; // network token amount add to the protocol
-    uint256 baseTokenWithdrawalFeeAmount; // the base token amount to keep in the pool as a withdrawal fee
+    uint256 baseTokenWithdrawalFeeAmount; // base token amount to keep in the pool as a withdrawal fee
 }
 
 struct TradeAmountsWithLiquidity {
