@@ -3,7 +3,7 @@ import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../compo
 import {
     IERC20,
     BancorV1Migration,
-    BancorVault,
+    MasterVault,
     NetworkSettings,
     TestBancorNetwork,
     TestPoolCollection,
@@ -42,7 +42,7 @@ describe('BancorV1Migration', () => {
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
-    let masterVault: BancorVault;
+    let masterVault: MasterVault;
     let bancorV1Migration: BancorV1Migration;
     let converter: TestStandardPoolConverter;
     let poolToken: DSToken;

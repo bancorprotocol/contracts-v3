@@ -1,6 +1,6 @@
 import LegacyContracts from '../../components/LegacyContracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, TestBancorNetwork, BancorVault } from '../../typechain-types';
+import { IERC20, TestBancorNetwork, MasterVault } from '../../typechain-types';
 import { TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -13,7 +13,7 @@ const {
 export const createLegacySystem = async (
     owner: SignerWithAddress,
     network: TestBancorNetwork,
-    vault: BancorVault,
+    vault: MasterVault,
     networkToken: IERC20,
     networkTokenGovernance: TokenGovernance,
     govTokenGovernance: TokenGovernance,
