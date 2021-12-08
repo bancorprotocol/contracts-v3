@@ -17,11 +17,12 @@ import {
     PoolTokenFactory,
     ProxyAdmin,
     TestBancorNetwork,
-    TestPoolCollection
+    TestPoolCollection,
+    TestPendingWithdrawals
 } from '../../typechain-types';
 import { roles } from './AccessControl';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { Fraction } from './Types';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
+import { toDecimal, Fraction } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory } from 'ethers';
@@ -334,6 +335,16 @@ export interface PoolSpec {
     tradingFeePPM?: number;
 }
 
+export const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
+
+export const specToString = (spec: PoolSpec) => {
+    if (spec.tradingFeePPM !== undefined) {
+        return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
+    }
+
+    return `${spec.symbol} (balance=${spec.balance})`;
+};
+
 export const setupSimplePool = async (
     spec: PoolSpec,
     provider: SignerWithAddress,
@@ -365,4 +376,21 @@ export const setupSimplePool = async (
     await depositToPool(provider, token, spec.balance, network);
 
     return { poolToken, token };
+};
+
+export const initWithdraw = async (
+    provider: SignerWithAddress,
+    pendingWithdrawals: TestPendingWithdrawals,
+    poolToken: PoolToken,
+    amount: BigNumber
+) => {
+    await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
+    await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
+
+    const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+    const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+    const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+    const creationTime = withdrawalRequest.createdAt;
+
+    return { id, creationTime };
 };

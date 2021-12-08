@@ -1,7 +1,11 @@
-import { MAX_UINT256 } from './Constants';
+import Contracts from '../../components/Contracts';
+import { IERC20 } from '../../typechain-types';
+import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from './Constants';
 import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
-import { BigNumber, Wallet } from 'ethers';
+import { BigNumber, Wallet, BaseContract, utils } from 'ethers';
+
+const { formatBytes32String } = utils;
 
 const VERSION = '1';
 const HARDHAT_CHAIN_ID = 31337;
@@ -60,4 +64,40 @@ export const permitSignature = async (
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
     const signature = signTypedMessage(Buffer.from(wallet.privateKey.slice(2), 'hex'), { data });
     return fromRpcSig(signature);
+};
+
+export const permitContractSignature = async (
+    sender: Wallet,
+    tokenAddress: string,
+    network: BaseContract,
+    networkToken: IERC20,
+    amount: BigNumber,
+    deadline: BigNumber
+) => {
+    if (
+        tokenAddress === NATIVE_TOKEN_ADDRESS ||
+        tokenAddress === ZERO_ADDRESS ||
+        tokenAddress === networkToken.address
+    ) {
+        return {
+            v: BigNumber.from(0),
+            r: formatBytes32String(''),
+            s: formatBytes32String('')
+        };
+    }
+
+    const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
+    const senderAddress = await sender.getAddress();
+
+    const nonce = await reserveToken.nonces(senderAddress);
+
+    return permitSignature(
+        sender,
+        await reserveToken.name(),
+        reserveToken.address,
+        network.address,
+        amount,
+        nonce,
+        deadline
+    );
 };

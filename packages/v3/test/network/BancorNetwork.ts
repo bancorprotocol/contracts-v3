@@ -35,14 +35,17 @@ import {
     createPoolCollection,
     createSystem,
     depositToPool,
+    initWithdraw,
     setupSimplePool,
-    PoolSpec
+    PoolSpec,
+    specToString,
+    feeToString
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { permitSignature } from '../helpers/Permit';
+import { permitContractSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { toDecimal, toWei } from '../helpers/Types';
+import { toWei } from '../helpers/Types';
 import {
     createTokenBySymbol,
     createWallet,
@@ -59,11 +62,7 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const {
-    Upgradeable: UpgradeableRoles,
-    BancorNetwork: BancorNetworkRoles,
-    ExternalProtectionVault: ExternalProtectionVaultRoles
-} = roles;
+const { Upgradeable: UpgradeableRoles, BancorNetwork: BancorNetworkRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -77,67 +76,6 @@ describe('BancorNetwork', () => {
     before(async () => {
         [deployer, nonOwner] = await ethers.getSigners();
     });
-
-    const networkPermitSignature = async (
-        sender: Wallet,
-        tokenAddress: string,
-        network: TestBancorNetwork,
-        networkToken: IERC20,
-        amount: BigNumber,
-        deadline: BigNumber
-    ) => {
-        if (
-            tokenAddress === NATIVE_TOKEN_ADDRESS ||
-            tokenAddress === ZERO_ADDRESS ||
-            tokenAddress === networkToken.address
-        ) {
-            return {
-                v: BigNumber.from(0),
-                r: formatBytes32String(''),
-                s: formatBytes32String('')
-            };
-        }
-
-        const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
-        const senderAddress = await sender.getAddress();
-
-        const nonce = await reserveToken.nonces(senderAddress);
-
-        return permitSignature(
-            sender,
-            await reserveToken.name(),
-            reserveToken.address,
-            network.address,
-            amount,
-            nonce,
-            deadline
-        );
-    };
-
-    const specToString = (spec: PoolSpec) => {
-        if (spec.tradingFeePPM !== undefined) {
-            return `${spec.symbol} (balance=${spec.balance}, fee=${feeToString(spec.tradingFeePPM)})`;
-        }
-
-        return `${spec.symbol} (balance=${spec.balance})`;
-    };
-
-    const initWithdraw = async (
-        provider: SignerWithAddress,
-        pendingWithdrawals: TestPendingWithdrawals,
-        poolToken: PoolToken,
-        amount: BigNumber
-    ) => {
-        await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
-        await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
-
-        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-        const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-        const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-        const creationTime = withdrawalRequest.createdAt;
-
-        return { id, creationTime };
-    };
 
     const trade = async (
         trader: SignerWithAddress,
@@ -165,8 +103,6 @@ describe('BancorNetwork', () => {
                 value
             });
     };
-
-    const feeToString = (feePPM: number) => `${toDecimal(feePPM).mul(100).div(toDecimal(PPM_RESOLUTION))}%`;
 
     describe('construction', () => {
         let network: TestBancorNetwork;
@@ -1469,7 +1405,7 @@ describe('BancorNetwork', () => {
 
                     it('should revert when attempting to deposit for an invalid provider', async () => {
                         const amount = BigNumber.from(1);
-                        const { v, r, s } = await networkPermitSignature(
+                        const { v, r, s } = await permitContractSignature(
                             provider,
                             token.address,
                             network,
@@ -1511,7 +1447,7 @@ describe('BancorNetwork', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 const { poolAddress = token.address } = overrides;
 
-                                const { v, r, s } = await networkPermitSignature(
+                                const { v, r, s } = await permitContractSignature(
                                     sender,
                                     poolAddress,
                                     network,
@@ -2651,7 +2587,7 @@ describe('BancorNetwork', () => {
                 approvedAmount = amount
             } = overrides;
 
-            const { v, r, s } = await networkPermitSignature(
+            const { v, r, s } = await permitContractSignature(
                 trader,
                 sourceTokenAddress,
                 network,
