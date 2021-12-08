@@ -572,8 +572,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         _executeWithdrawal(
             pool,
             basePoolTokenAmount,
-            amounts.baseTokenAmountToAddToLiquidity,
-            amounts.networkTokenAmountToAddToLiquidity
+            amounts.baseTokensToAddToLiquidity,
+            amounts.networkTokensToAddToLiquidity
         );
     }
 
@@ -850,13 +850,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
         );
 
-        amounts.baseTokenAmountToTransferFromMasterVault = output.s;
-        amounts.networkTokenAmountToMintForProvider = output.t;
-        amounts.baseTokenAmountToTransferFromExternalProtectionVault = output.u;
-        amounts.baseTokenAmountToAddToLiquidity = output.r;
-        amounts.networkTokenAmountToAddToLiquidity = output.p;
-        amounts.networkTokenAmountToAddToProtocol = output.q;
-        amounts.baseTokenWithdrawalFeeAmount = output.v;
+        amounts.baseTokensToTransferFromMasterVault = output.s;
+        amounts.networkTokensToMintForProvider = output.t;
+        amounts.baseTokensToTransferFromExternalProtectionVault = output.u;
+        amounts.baseTokensToAddToLiquidity = output.r;
+        amounts.networkTokensToAddToLiquidity = output.p;
+        amounts.networkTokensToAddToProtocol = output.q;
+        amounts.baseTokensWithdrawalFee = output.v;
     }
 
     /**

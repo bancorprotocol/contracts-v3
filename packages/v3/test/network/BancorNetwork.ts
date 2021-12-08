@@ -2357,13 +2357,13 @@ describe('BancorNetwork', () => {
                                             token.address,
                                             provider.address,
                                             poolCollection.address,
-                                            withdrawalAmounts.baseTokenAmountToTransferFromMasterVault.add(
-                                                withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVault
+                                            withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
+                                                withdrawalAmounts.baseTokensToTransferFromExternalProtectionVault
                                             ),
                                             poolTokenAmount,
-                                            withdrawalAmounts.baseTokenAmountToTransferFromExternalProtectionVault,
-                                            withdrawalAmounts.networkTokenAmountToMintForProvider,
-                                            withdrawalAmounts.baseTokenWithdrawalFeeAmount
+                                            withdrawalAmounts.baseTokensToTransferFromExternalProtectionVault,
+                                            withdrawalAmounts.networkTokensToMintForProvider,
+                                            withdrawalAmounts.baseTokensWithdrawalFee
                                         );
 
                                     const poolLiquidity = await poolCollection.poolLiquidity(token.address);
