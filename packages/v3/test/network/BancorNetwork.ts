@@ -1283,7 +1283,9 @@ describe('BancorNetwork', () => {
                                                         await poolCollection.setAverageRateT(token.address, {
                                                             rate: {
                                                                 n: spotRate.n.mul(PPM_RESOLUTION),
-                                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
+                                                                d: spotRate.d.mul(
+                                                                    PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5)
+                                                                )
                                                             },
                                                             time: BigNumber.from(0)
                                                         });
@@ -2643,7 +2645,7 @@ describe('BancorNetwork', () => {
                 for (const targetBalance of [toWei(BigNumber.from(1_000_000)), toWei(BigNumber.from(50_000_000))]) {
                     for (const amount of [BigNumber.from(10_000), toWei(BigNumber.from(500_000))]) {
                         const TRADING_FEES = [0, 5];
-                        for (const tradingFee of TRADING_FEES) {
+                        for (const tradingFeePercent of TRADING_FEES) {
                             const isSourceNetworkToken = sourceSymbol === BNT;
                             const isTargetNetworkToken = targetSymbol === BNT;
 
@@ -2654,30 +2656,30 @@ describe('BancorNetwork', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFee),
+                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFee),
+                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     amount
                                 );
                             } else {
-                                for (const tradingFee2 of TRADING_FEES) {
+                                for (const tradingFeePercent2 of TRADING_FEES) {
                                     testTrades(
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
-                                            tradingFeePPM: toPPM(tradingFee),
+                                            tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
-                                            tradingFeePPM: toPPM(tradingFee2),
+                                            tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
                                         amount
