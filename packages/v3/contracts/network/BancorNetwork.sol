@@ -1124,13 +1124,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
         // external protection vault and send them to the master vault
-        if (amounts.baseTokensToTransferFromExternalProtectionVault > 0) {
+        if (amounts.baseTokensToTransferFromEPV > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
                 payable(address(_masterVault)),
-                amounts.baseTokensToTransferFromExternalProtectionVault
+                amounts.baseTokensToTransferFromEPV
             );
-            amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromExternalProtectionVault;
+            amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromEPV;
         }
 
         // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault and send
@@ -1146,7 +1146,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             poolCollection: poolCollection,
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: completedRequest.poolTokenAmount,
-            externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromExternalProtectionVault,
+            externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
             networkTokenAmount: amounts.networkTokensToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });

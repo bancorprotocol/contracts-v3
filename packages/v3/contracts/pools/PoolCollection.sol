@@ -852,7 +852,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
 
         amounts.baseTokensToTransferFromMasterVault = output.s;
         amounts.networkTokensToMintForProvider = output.t;
-        amounts.baseTokensToTransferFromExternalProtectionVault = output.u;
+        amounts.baseTokensToTransferFromEPV = output.u;
         amounts.baseTokensTradingLiquidityDelta = output.r;
         amounts.networkTokensTradingLiquidityDelta = output.p;
         amounts.networkTokensProtocolHoldingsDelta = output.q;

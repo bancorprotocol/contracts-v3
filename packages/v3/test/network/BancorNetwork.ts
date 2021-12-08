@@ -2358,10 +2358,10 @@ describe('BancorNetwork', () => {
                                             provider.address,
                                             poolCollection.address,
                                             withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
-                                                withdrawalAmounts.baseTokensToTransferFromExternalProtectionVault
+                                                withdrawalAmounts.baseTokensToTransferFromEPV
                                             ),
                                             poolTokenAmount,
-                                            withdrawalAmounts.baseTokensToTransferFromExternalProtectionVault,
+                                            withdrawalAmounts.baseTokensToTransferFromEPV,
                                             withdrawalAmounts.networkTokensToMintForProvider,
                                             withdrawalAmounts.baseTokensWithdrawalFee
                                         );
