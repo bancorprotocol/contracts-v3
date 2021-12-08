@@ -61,11 +61,7 @@ import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
-const {
-    Upgradeable: UpgradeableRoles,
-    BancorNetwork: BancorNetworkRoles,
-    ExternalProtectionVault: ExternalProtectionVaultRoles
-} = roles;
+const { Upgradeable: UpgradeableRoles, BancorNetwork: BancorNetworkRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
