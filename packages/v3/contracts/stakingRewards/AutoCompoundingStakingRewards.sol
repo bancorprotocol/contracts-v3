@@ -321,7 +321,8 @@ contract AutoCompoundingStakingRewards is
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(poolInfo.poolToken)),
             payable(address(this)),
-            // avoid burning more pool token than the rewards vault holds
+            // if there is more pool token to burn that pool token in the rewards vault,
+            // burn the number of token in the rewards vault
             poolTokenToBurn > poolTokensInRewardsVault ? poolTokensInRewardsVault : poolTokenToBurn
         );
 
