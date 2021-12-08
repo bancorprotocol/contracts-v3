@@ -2,7 +2,10 @@
 pragma solidity 0.8.10;
 pragma abicoder v2;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
@@ -22,9 +25,19 @@ contract TestPoolCollection is PoolCollection, TestTime {
     constructor(
         uint16 initVersion,
         IBancorNetwork initNetwork,
+        IERC20 initNetworkToken,
+        INetworkSettings initNetworkSettings,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) PoolCollection(initNetwork, initPoolTokenFactory, initPoolCollectionUpgrader) {
+    )
+        PoolCollection(
+            initNetwork,
+            initNetworkToken,
+            initNetworkSettings,
+            initPoolTokenFactory,
+            initPoolCollectionUpgrader
+        )
+    {
         _version = initVersion;
     }
 

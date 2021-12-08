@@ -1,5 +1,4 @@
 import Contracts from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, ETH, TKN } from '../helpers/Constants';
