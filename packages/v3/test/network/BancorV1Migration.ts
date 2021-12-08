@@ -3,7 +3,7 @@ import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../compo
 import {
     IERC20,
     BancorV1Migration,
-    BancorVault,
+    MasterVault,
     NetworkSettings,
     TestBancorNetwork,
     TestPoolCollection,
@@ -13,6 +13,7 @@ import {
 import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
 import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
+import { toPPM } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -41,7 +42,7 @@ describe('BancorV1Migration', () => {
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
-    let masterVault: BancorVault;
+    let masterVault: MasterVault;
     let bancorV1Migration: BancorV1Migration;
     let converter: TestStandardPoolConverter;
     let poolToken: DSToken;
@@ -100,11 +101,8 @@ describe('BancorV1Migration', () => {
             });
     };
 
-    const totalCost = async (txs: ContractTransaction[]) =>
-        (await Promise.all(txs.map((tx) => getTransactionCost(tx)))).reduce((a, b) => a.add(b), BigNumber.from(0));
-
     const verify = async (
-        withdrawalFee: BigNumber,
+        withdrawalFee: number,
         networkAmount: BigNumber,
         baseAmount: BigNumber,
         isETH: boolean,
@@ -181,23 +179,23 @@ describe('BancorV1Migration', () => {
     };
 
     const test = (
-        withdrawalFeeP: number,
+        withdrawalFeePercent: number,
         networkAmountM: number,
         baseAmountM: number,
         isETH: boolean,
         percent: number
     ) => {
-        const withdrawalFee = BigNumber.from(withdrawalFeeP * 10_000);
+        const withdrawalFeePPM = toPPM(withdrawalFeePercent);
         const networkAmount = BigNumber.from(networkAmountM * 1_000_000);
         const baseAmount = BigNumber.from(baseAmountM * 1_000_000);
 
-        describe(`withdrawal fee = ${withdrawalFeeP}%`, () => {
+        describe(`withdrawal fee = ${withdrawalFeePercent}%`, () => {
             describe(`network amount = ${networkAmountM}M`, () => {
                 describe(`base amount = ${baseAmountM}M`, () => {
                     describe(`base token = ${isETH ? 'ETH' : 'ERC20'}`, () => {
                         beforeEach(async () => {
                             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
-                            await networkSettings.setWithdrawalFeePPM(withdrawalFee);
+                            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 
                             await initLegacySystem(networkAmount, baseAmount, isETH);
@@ -213,7 +211,7 @@ describe('BancorV1Migration', () => {
                         });
 
                         it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
-                            await verify(withdrawalFee, networkAmount, baseAmount, isETH, percent);
+                            await verify(withdrawalFeePPM, networkAmount, baseAmount, isETH, percent);
                         });
                     });
                 });

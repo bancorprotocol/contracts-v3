@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
-    BancorVault,
+    MasterVault,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -24,7 +24,7 @@ import {
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { toWei } from '../helpers/Types';
+import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -52,7 +52,7 @@ describe('MasterPool', () => {
         let networkSettings: NetworkSettings;
         let networkTokenGovernance: TokenGovernance;
         let govTokenGovernance: TokenGovernance;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
 
@@ -221,7 +221,7 @@ describe('MasterPool', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
 
         const amount = toWei(BigNumber.from(12345));
 
@@ -300,7 +300,7 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
             beforeEach(async () => {
@@ -323,7 +323,7 @@ describe('MasterPool', () => {
                     await poolCollection.setAverageRateT(reserveToken.address, {
                         rate: {
                             n: spotRate.n.mul(PPM_RESOLUTION),
-                            d: spotRate.d.mul(PPM_RESOLUTION.add(MAX_DEVIATION.add(BigNumber.from(1000))))
+                            d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.1))
                         },
                         time: BigNumber.from(0)
                     });
@@ -385,11 +385,11 @@ describe('MasterPool', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
         const contextId = formatBytes32String('CTX');
@@ -563,11 +563,11 @@ describe('MasterPool', () => {
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let masterPoolToken: PoolToken;
-        let masterVault: BancorVault;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        const MAX_DEVIATION = BigNumber.from(10_000); // %1
+        const MAX_DEVIATION = toPPM(1);
         const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
         const contextId = formatBytes32String('CTX');
@@ -734,7 +734,7 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
 
             beforeEach(async () => {
@@ -914,9 +914,9 @@ describe('MasterPool', () => {
         });
 
         context('with a whitelisted and registered pool', () => {
-            const MAX_DEVIATION = BigNumber.from(10_000); // %1
+            const MAX_DEVIATION = toPPM(1);
             const MINTING_LIMIT = toWei(BigNumber.from(10_000_000));
-            const WITHDRAWAL_FEE = BigNumber.from(50_000); // 5%
+            const WITHDRAWAL_FEE = toPPM(5);
 
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
@@ -983,7 +983,7 @@ describe('MasterPool', () => {
                         const expectedTokenAmount = BigNumber.from(
                             mulDivF(
                                 poolTokenAmount,
-                                prevStakedBalance.mul(PPM_RESOLUTION.sub(WITHDRAWAL_FEE)),
+                                prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE),
                                 prevPoolTokenTotalSupply.mul(PPM_RESOLUTION)
                             ).toFixed()
                         );
