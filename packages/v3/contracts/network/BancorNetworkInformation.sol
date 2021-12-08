@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
@@ -52,7 +52,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     INetworkSettings private immutable _networkSettings;
 
     // the master vault contract
-    IBancorVault private immutable _masterVault;
+    IMasterVault private immutable _masterVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -83,7 +83,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
         INetworkSettings initNetworkSettings,
-        IBancorVault initMasterVault,
+        IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IExternalRewardsVault initExternalRewardsVault,
         IMasterPool initMasterPool,
@@ -211,7 +211,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function masterVault() external view returns (IBancorVault) {
+    function masterVault() external view returns (IMasterVault) {
         return _masterVault;
     }
 
