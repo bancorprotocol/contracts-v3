@@ -10,7 +10,7 @@ import {
     ExternalRewardsVault
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS } from '../helpers/Constants';
+import { DAY, MONTH, ZERO_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei } from '../helpers/Types';
@@ -22,12 +22,6 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
-
-const SECOND = 1;
-const MINUTE = 60 * SECOND;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
-const MONTH = 30 * DAY;
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
@@ -119,7 +113,7 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         describe('program creation', () => {
-            it('should revert when reserve token is not valid', async () => {
+            it('should revert when reserve token is invalid', async () => {
                 await expect(
                     autoCompoundingStakingRewards.createProgram(
                         ZERO_ADDRESS,
@@ -132,7 +126,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ).to.revertedWith('InvalidAddress');
             });
 
-            it('should revert when rewards vault contract is not valid', async () => {
+            it('should revert when rewards vault contract is invalid', async () => {
                 await expect(
                     autoCompoundingStakingRewards.createProgram(
                         token.address,
@@ -164,7 +158,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         currentTime,
                         currentTime.add(TOTAL_DURATION)
                     )
-                ).to.revertedWith('ProgramActive');
+                ).to.revertedWith('ProgramAlreadyActive');
             });
 
             it('should revert when total rewards is lower or equal to 0', async () => {
@@ -254,7 +248,7 @@ describe('AutoCompoundingStakingRewards', () => {
             context('when program is not running', () => {
                 it('should revert when there is no program running', async () => {
                     await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
-                        'ProgramNotActive'
+                        'ProgramInactive'
                     );
                 });
             });
@@ -321,7 +315,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
             });
 
-            context('when program time has ended', () => {
+            context('when the program end time has passed', () => {
                 beforeEach(async () => {
                     await autoCompoundingStakingRewards.createProgram(
                         token.address,
@@ -341,8 +335,8 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         });
 
-        describe('program fetching', () => {
-            describe('single', () => {
+        describe('query program data', () => {
+            describe('single program', () => {
                 it('shouldnt be able to fetch an empty program', async () => {
                     const program = await autoCompoundingStakingRewards.program(token.address);
 
@@ -365,7 +359,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
             });
 
-            describe('multiples', () => {
+            describe('multiple programs', () => {
                 let token1: TokenWithAddress;
                 let token2: TokenWithAddress;
 

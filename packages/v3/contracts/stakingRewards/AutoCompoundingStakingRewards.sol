@@ -37,7 +37,8 @@ struct PoolInfo {
 }
 
 error ProgramActive();
-error ProgramNotActive();
+error ProgramInactive();
+error ProgramAlreadyActive();
 error InvalidParam();
 
 /**
@@ -61,12 +62,12 @@ contract AutoCompoundingStakingRewards is
     IERC20 private immutable _networkToken;
 
     // the network token pool contract
-    IMasterPool private immutable _networkTokenPool;
+    IMasterPool private immutable _masterPool;
 
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
 
-    // a set of all pool that have a program associated
+    // a set of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _programByPool;
 
     // upgrade forward-compatibility storage gap
@@ -85,12 +86,12 @@ contract AutoCompoundingStakingRewards is
     );
 
     /**
-     * @dev triggered when a program is terminated
+     * @dev triggered when a program is terminated prematurely
      */
     event ProgramTerminated(ReserveToken indexed pool, uint256 prevEndTime, uint256 availableRewards);
 
     /**
-     * @dev triggered when a program status is updated
+     * @dev triggered when a program is enabled/disabled
      */
     event ProgramEnabled(ReserveToken indexed pool, bool status, uint256 availableRewards);
 
@@ -114,7 +115,7 @@ contract AutoCompoundingStakingRewards is
     {
         _network = initNetwork;
         _networkToken = initNetwork.networkToken();
-        _networkTokenPool = initNetworkTokenPool;
+        _masterPool = initNetworkTokenPool;
     }
 
     /**
@@ -161,9 +162,9 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 totalProgram = _programByPool.length();
-        ProgramData[] memory list = new ProgramData[](totalProgram);
-        for (uint256 i = 0; i < totalProgram; i = uncheckedInc(i)) {
+        uint256 numPrograms = _programByPool.length();
+        ProgramData[] memory list = new ProgramData[](numPrograms);
+        for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
             list[i] = _programs[_programByPool.at(i)];
         }
         return list;
@@ -186,7 +187,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         if (currentProgram.distributionType == DistributionType.FLAT) {
-            // if the program end time has already been passed
+            // if the program end time has already passed
             if (currentTime > currentProgram.endTime) {
                 return false;
             }
@@ -206,7 +207,7 @@ contract AutoCompoundingStakingRewards is
         uint256 endTime
     ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
         if (isProgramActive(pool)) {
-            revert ProgramActive();
+            revert ProgramAlreadyActive();
         }
 
         if (totalRewards == 0) {
@@ -221,7 +222,7 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData storage currentProgram = _programs[poolAsAddress];
 
-        // if no existing program existed for that pool, do additional set up
+        // it no program exists for the given pool, initialize it
         if (ReserveToken.unwrap(currentProgram.pool) == address(0)) {
             currentProgram.pool = pool;
         } else {
@@ -247,7 +248,7 @@ contract AutoCompoundingStakingRewards is
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
         if (!isProgramActive(pool)) {
-            revert ProgramNotActive();
+            revert ProgramInactive();
         }
 
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
@@ -280,9 +281,9 @@ contract AutoCompoundingStakingRewards is
         DistributionType distributionType = currentProgram.distributionType;
 
         if (!isProgramActive(pool)) {
-            // if the program is inactive and is a flat distribution
+            // if the program is inactive and has a flat distribution
             if (distributionType == DistributionType.FLAT) {
-                // if the previous distributionTimeStamp is higher than or equal to the program end time
+                // if the previous distribution timestamp is higher than or equal to the program end time
                 // it means that the latest batch of rewards has been distributed, otherwise process the last distribution
                 if (currentProgram.prevDistributionTimestamp >= currentProgram.endTime) {
                     return;
@@ -293,15 +294,15 @@ contract AutoCompoundingStakingRewards is
         PoolInfo memory poolInfo = fetchPoolInfo(currentProgram);
         TimeInfo memory timeInfo = fetchTimeInfo(currentProgram);
 
-        uint256 tokenToDistribute;
+        uint256 tokensToDistribute;
         if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokenToDistribute = processExponentialDecayRewards(
+            tokensToDistribute = calculateExponentialDecayRewards(
                 timeInfo.timeElapsed,
                 timeInfo.prevTimeElapsed,
                 currentProgram.totalRewards
             );
         } else if (distributionType == DistributionType.FLAT) {
-            tokenToDistribute = processFlatRewards(
+            tokensToDistribute = calculateFlatRewards(
                 timeInfo.timeElapsed - timeInfo.prevTimeElapsed,
                 timeInfo.totalProgramTime - timeInfo.prevTimeElapsed,
                 currentProgram.availableRewards
@@ -310,26 +311,28 @@ contract AutoCompoundingStakingRewards is
 
         uint256 poolTokenToBurn = _processPoolTokenToBurn(
             poolInfo.stakedBalance,
-            tokenToDistribute,
+            tokensToDistribute,
             poolInfo.poolTokenTotalSupply,
             poolInfo.amountOfPoolTokenOwnedByProtocol
         );
 
+        uint256 poolTokensInRewardsVault = poolInfo.poolToken.balanceOf(address(currentProgram.rewardsVault));
+
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(poolInfo.poolToken)),
             payable(address(this)),
-            poolTokenToBurn
+            // avoid burning more pool token than the rewards vault holds
+            poolTokenToBurn > poolTokensInRewardsVault ? poolTokensInRewardsVault : poolTokenToBurn
         );
 
-        currentProgram.availableRewards -= tokenToDistribute;
+        currentProgram.availableRewards -= tokensToDistribute;
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
-        poolInfo.poolToken.approve(address(this), poolTokenToBurn);
-        poolInfo.poolToken.burnFrom(address(this), poolTokenToBurn);
+        poolInfo.poolToken.burn(poolTokenToBurn);
 
         emit RewardsDistributed(
             pool,
-            tokenToDistribute,
+            tokensToDistribute,
             poolTokenToBurn,
             timeInfo.timeElapsed,
             currentProgram.availableRewards
@@ -337,9 +340,9 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev process a pool's flat rewards program
+     * @dev returns the flat rewards of a given time period
      */
-    function processFlatRewards(
+    function calculateFlatRewards(
         uint256 timeElapsedSinceLastDistribution,
         uint256 remainingProgramTime,
         uint256 availableRewards
@@ -348,9 +351,9 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev process a pool's exponential decay rewards program
+     * @dev returns the exponential decay rewards of a given time period
      */
-    function processExponentialDecayRewards(
+    function calculateExponentialDecayRewards(
         uint256 timeElapsed,
         uint256 prevTimeElapsed,
         uint256 totalRewards
@@ -365,8 +368,8 @@ contract AutoCompoundingStakingRewards is
      */
     function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
         if (currentProgram.pool.toIERC20() == _networkToken) {
-            poolInfo.stakedBalance = _networkTokenPool.stakedBalance();
-            poolInfo.poolToken = _networkTokenPool.poolToken();
+            poolInfo.stakedBalance = _masterPool.stakedBalance();
+            poolInfo.poolToken = _masterPool.poolToken();
             poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_network.masterPool()));
         } else {
             poolInfo.stakedBalance = _network

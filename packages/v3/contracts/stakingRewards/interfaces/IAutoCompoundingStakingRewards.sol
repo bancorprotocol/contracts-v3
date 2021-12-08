@@ -44,7 +44,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      * requirements:
      *
      * - the caller must be the admin of the contract
-     * - pool's program must not be active
+     * - the pool must not already have an active program
      */
     function createProgram(
         ReserveToken pool,
@@ -56,7 +56,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     ) external;
 
     /**
-     * @dev terminate a pool's program
+     * @dev terminate a rewards program
      *
      * requirements:
      *

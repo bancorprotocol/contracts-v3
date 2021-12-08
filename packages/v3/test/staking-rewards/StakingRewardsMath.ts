@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
+import { SECOND, HOUR, MINUTE, DAY, YEAR } from '../helpers/Constants';
 import { mulDivF } from '../helpers/MathUtils';
 import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
@@ -12,13 +13,6 @@ const LAMBDA = new Decimal('0.0000000142857142857143');
 
 const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
-
-const SECOND = 1;
-const MINUTE = 60 * SECOND;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
-const MONTH = 30 * DAY;
-const YEAR = 365 * DAY;
 
 const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
     if (!actual.eq(expected)) {
