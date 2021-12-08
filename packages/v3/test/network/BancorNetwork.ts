@@ -3702,6 +3702,18 @@ describe('BancorNetwork Financial Verification', () => {
             fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
         );
 
+        tknDecimals = flow.tknDecimals;
+        bntDecimals = DEFAULT_DECIMALS.toNumber();
+        bntknDecimals = DEFAULT_DECIMALS.toNumber();
+        bnbntDecimals = DEFAULT_DECIMALS.toNumber();
+
+        const tknAmount = flow.users
+            .reduce((sum, user) => sum.add(user.tknBalance), BigNumber.from(flow.epVaultBalance))
+            .mul(BigNumber.from(10).pow(tknDecimals));
+        const bntAmount = flow.users
+            .reduce((sum, user) => sum.add(user.bntBalance), BigNumber.from(0))
+            .mul(BigNumber.from(10).pow(bntDecimals));
+
         ({
             network,
             networkToken,
@@ -3716,18 +3728,13 @@ describe('BancorNetwork Financial Verification', () => {
             externalProtectionVault
         } = await createSystem());
 
-        baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, MAX_UINT256);
+        baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, tknAmount);
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
-        await networkTokenGovernance.mint(
-            signers[0].address,
-            MAX_UINT256.sub(await networkToken.balanceOf(signers[0].address))
-        );
 
-        tknDecimals = flow.tknDecimals;
-        bntDecimals = DEFAULT_DECIMALS.toNumber();
-        bntknDecimals = DEFAULT_DECIMALS.toNumber();
-        bnbntDecimals = DEFAULT_DECIMALS.toNumber();
         await baseToken.updateDecimals(tknDecimals);
+
+        await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
+        await networkTokenGovernance.mint(signers[0].address, bntAmount);
 
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
         await networkSettings.setPoolMintingLimit(
@@ -3760,8 +3767,8 @@ describe('BancorNetwork Financial Verification', () => {
             await networkToken.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
 
-        await baseToken.burn(await baseToken.balanceOf(signers[0].address));
-        await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
+        expect(await baseToken.balanceOf(signers[0].address)).to.equal(0);
+        expect(await networkToken.balanceOf(signers[0].address)).to.equal(0);
     };
 
     const execute = async () => {
