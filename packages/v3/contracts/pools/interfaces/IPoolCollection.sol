@@ -49,9 +49,9 @@ struct WithdrawalAmounts {
     uint256 baseTokensToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
     uint256 networkTokensToMintForProvider; // network token amount to mint directly for the provider
     uint256 baseTokensToTransferFromExternalProtectionVault; // base token amount to transfer from the external protection vault to the provider
-    Sint256 baseTokensToAddToLiquidity; // base token amount to add to the trading liquidity
-    Sint256 networkTokensToAddToLiquidity; // network token amount to add to the trading liquidity and to the master vault
-    Sint256 networkTokensToAddToProtocol; // network token amount add to the protocol
+    Sint256 baseTokensTradingLiquidityDelta; // base token amount to add to the trading liquidity
+    Sint256 networkTokensTradingLiquidityDelta; // network token amount to add to the trading liquidity and to the master vault
+    Sint256 networkTokensProtocolHoldingsDelta; // network token amount add to the protocol equity
     uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
 }
 

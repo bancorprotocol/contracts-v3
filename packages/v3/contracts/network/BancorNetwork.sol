@@ -1103,16 +1103,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(_externalProtectionVault))
         );
 
-        if (amounts.networkTokensToAddToProtocol.value > 0) {
-            assert(amounts.networkTokensToAddToProtocol.isNeg); // currently no support for requesting liquidity here
-            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokensToAddToProtocol.value);
+        if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
+            assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting liquidity here
+            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
         }
 
-        if (amounts.networkTokensToAddToLiquidity.value > 0) {
-            if (amounts.networkTokensToAddToLiquidity.isNeg) {
-                cachedMasterPool.burnFromVault(amounts.networkTokensToAddToLiquidity.value);
+        if (amounts.networkTokensTradingLiquidityDelta.value > 0) {
+            if (amounts.networkTokensTradingLiquidityDelta.isNeg) {
+                cachedMasterPool.burnFromVault(amounts.networkTokensTradingLiquidityDelta.value);
             } else {
-                cachedMasterPool.mint(address(_masterVault), amounts.networkTokensToAddToLiquidity.value);
+                cachedMasterPool.mint(address(_masterVault), amounts.networkTokensTradingLiquidityDelta.value);
             }
         }
 

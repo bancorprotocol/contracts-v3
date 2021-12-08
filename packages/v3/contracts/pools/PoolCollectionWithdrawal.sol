@@ -20,7 +20,7 @@ error PoolCollectionWithdrawalInputInvalid();
  * `x` - base token withdrawal amount
  * And returns the following output values:
  * `p` - network token amount to add to the trading liquidity and to the master vault
- * `q` - network token amount to add to the protocol
+ * `q` - network token amount to add to the protocol equity
  * `r` - base token amount to add to the trading liquidity
  * `s` - base token amount to transfer from the master vault to the provider
  * `t` - network token amount to mint directly for the provider
