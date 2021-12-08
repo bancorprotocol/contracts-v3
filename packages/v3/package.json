@@ -21,7 +21,7 @@
     "scripts": {
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
-        "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
+        "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=16384'} hardhat test",
         "testb": "BAIL=1 yarn test",
         "dev": "hardhat node",
         "profile": "PROFILE=1 yarn test ${DEBUG:+--network localhost}",
@@ -31,7 +31,7 @@
         "test-migration": "yarn build && hardhat test migration/test/Engine.ts",
         "size": "yarn rebuild && hardhat size-contracts",
         "verify": "hardhat verify",
-        "coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat coverage",
+        "coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=16384'} hardhat coverage",
         "flatten": "hardhat flatten",
         "lint": "solhint --max-warnings 0 contracts/**/*.sol",
         "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
