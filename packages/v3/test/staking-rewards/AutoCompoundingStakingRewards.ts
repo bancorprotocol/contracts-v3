@@ -455,16 +455,18 @@ describe('AutoCompoundingStakingRewards', () => {
 
         const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
             const actualDec = new Decimal(actual.toString());
-            const actualExp = new Decimal(expected.toString());
+            const expectedDec = new Decimal(expected.toString());
 
-            if (!actualDec.eq(actualExp)) {
-                const accuracy = actualDec.gt(actualExp) ? actualExp.div(actualDec) : actualDec.div(actualExp);
+            if (!actualDec.eq(expectedDec)) {
+                const accuracy = actualDec.gt(expectedDec) ? expectedDec.div(actualDec) : actualDec.div(expectedDec);
                 expect(accuracy.gte(new Decimal(minAccuracy)) && accuracy.lte(1)).to.equal(
                     true,
                     '\n' +
-                        [`expected = ${actualExp}`, `actual   = ${actualDec}`, `accuracy = ${minAccuracy.length}`].join(
-                            '\n'
-                        )
+                        [
+                            `expected = ${expectedDec}`,
+                            `actual   = ${actualDec}`,
+                            `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
+                        ].join('\n')
                 );
             }
         };
@@ -555,8 +557,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, INITIAL_STAKE, '0.999999999999999999');
-                    assertAccuracy(externalRewardsVaultTokenOwned, TOTAL_REWARDS, '0.999999999999999999');
+                    expect(userTokenOwned).to.equal(INITIAL_STAKE);
+                    expect(externalRewardsVaultTokenOwned).to.equal(TOTAL_REWARDS);
                 });
 
                 it('should have distributed all rewards at the end of a program', async () => {
@@ -571,8 +573,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, TOTAL_TOKEN, '0.999999999999999999');
-                    assertAccuracy(externalRewardsVaultTokenOwned, BigNumber.from(0), '0.999999999999999999');
+                    expect(userTokenOwned).to.equal(TOTAL_TOKEN);
+                    expect(externalRewardsVaultTokenOwned).to.equal(BigNumber.from(0));
                 });
             });
 
@@ -595,13 +597,13 @@ describe('AutoCompoundingStakingRewards', () => {
                         assertAccuracy(
                             userTokenOwned,
                             INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
-                            '0.999999999999999999'
+                            '0.999999999999999999999'
                         );
 
                         assertAccuracy(
                             externalRewardsVaultTokenOwned,
                             getPerc(TOTAL_REWARDS, 100 - programTimePercent),
-                            '0.999999999999999999'
+                            '0.999999999999999999999'
                         );
                     });
                 }
