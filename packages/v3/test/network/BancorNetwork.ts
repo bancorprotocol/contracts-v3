@@ -3392,15 +3392,15 @@ describe('BancorNetwork', () => {
 describe('BancorNetwork Financial Verification', () => {
     interface User {
         id: string;
-        tknBalance: string;
-        bntBalance: string;
+        tknBalance: number;
+        bntBalance: number;
     }
 
     interface Pool {
-        tknInitialRate: string;
-        bntInitialRate: string;
-        bntMinLiquidity: string;
-        bntMintingLimit: string;
+        tknInitialRate: number;
+        bntInitialRate: number;
+        bntMinLiquidity: number;
+        bntMintingLimit: number;
     }
 
     interface State {
@@ -3425,7 +3425,7 @@ describe('BancorNetwork Financial Verification', () => {
     interface Flow {
         tradingFee: string;
         withdrawalFee: string;
-        epVaultBalance: string;
+        epVaultBalance: number;
         tknDecimals: number;
         users: User[];
         pool: Pool;
@@ -3459,7 +3459,7 @@ describe('BancorNetwork Financial Verification', () => {
         await network.setTime(timestamp);
     };
 
-    const decimalToInteger = (value: string, decimals: number) => {
+    const decimalToInteger = (value: string | number, decimals: number) => {
         return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
     };
 
