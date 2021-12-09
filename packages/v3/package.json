@@ -42,7 +42,6 @@
     },
     "devDependencies": {
         "@bancor/token-governance": "^0.1.6",
-        "@ethersproject/hardware-wallets": "^5.5.0",
         "@nomiclabs/hardhat-ethers": "^2.0.2",
         "@nomiclabs/hardhat-etherscan": "^2.1.7",
         "@nomiclabs/hardhat-solhint": "^2.0.0",
@@ -62,7 +61,6 @@
         "@typescript-eslint/parser": "^5.4.0",
         "chai": "^4.3.4",
         "chai-arrays": "^2.2.0",
-        "chalk": "^4.1.2",
         "decimal.js": "10.3.1",
         "eslint": "^8.2.0",
         "eth-sig-util": "^3.0.1",

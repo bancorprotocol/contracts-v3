@@ -18,14 +18,6 @@ export const getEnvKey = <T>(envKeyName: string) => {
     return process.env[envKeyName] as unknown as T;
 };
 
-const hardhatDefaultConfig: NetworkUserConfig = {
-    accounts: {
-        count: 10,
-        accountsBalance: '10000000000000000000000000000000000000000000000'
-    },
-    allowUnlimitedContractSize: true
-};
-
 const mochaOptions = (): MochaOptions => {
     const ci = getEnvKey<boolean>('CI');
     const profile = getEnvKey<boolean>('PROFILE');
@@ -62,7 +54,13 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: hardhatDefaultConfig,
+        hardhat: {
+            accounts: {
+                count: 10,
+                accountsBalance: '10000000000000000000000000000000000000000000000'
+            },
+            allowUnlimitedContractSize: true
+        },
         localhost: { url: 'http://localhost:8545', chainId: 31337 }
     },
 
