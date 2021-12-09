@@ -11,9 +11,10 @@ import {
     ExternalRewardsVault
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { DAY, MONTH, ZERO_ADDRESS } from '../helpers/Constants';
+import { ZERO_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
+import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -21,6 +22,8 @@ import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
+
+const { seconds, days, minutes, hours, years } = duration;
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
@@ -94,13 +97,14 @@ describe('AutoCompoundingStakingRewards', () => {
         let currentTime: BigNumber;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
-        const TOTAL_DURATION = 10 * MONTH;
+        const TOTAL_DURATION = days(10);
         const TOTAL_REWARDS = 10;
 
         let token: TokenWithAddress;
 
         beforeEach(async () => {
-            ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
+            ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
+                await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -483,7 +487,7 @@ describe('AutoCompoundingStakingRewards', () => {
             const INITIAL_STAKE = toWei(BigNumber.from(10_000));
             const TOTAL_REWARDS = toWei(BigNumber.from(90_000));
             const TOTAL_TOKEN = INITIAL_STAKE.add(TOTAL_REWARDS);
-            const PROGRAM_TIME = 10 * DAY;
+            const PROGRAM_TIME = days(10);
 
             let currentTime: BigNumber;
 
@@ -491,7 +495,8 @@ describe('AutoCompoundingStakingRewards', () => {
             let poolToken: PoolToken;
 
             beforeEach(async () => {
-                ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
+                ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
+                    await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 

@@ -9,7 +9,7 @@ import { uncheckedInc } from "../utility/MathEx.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
-
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
@@ -322,9 +322,8 @@ contract AutoCompoundingStakingRewards is
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(poolInfo.poolToken)),
             payable(address(this)),
-            // if there is more pool token to burn that pool token in the rewards vault,
-            // burn the number of token in the rewards vault
-            poolTokenToBurn > poolTokensInRewardsVault ? poolTokensInRewardsVault : poolTokenToBurn
+            // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burn
+            Math.min(poolTokenToBurn, poolTokensInRewardsVault)
         );
 
         currentProgram.availableRewards -= tokensToDistribute;
@@ -402,8 +401,8 @@ contract AutoCompoundingStakingRewards is
 
         uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
 
-        // if time spent is higher than the total program time, set time to total program time
-        timeInfo.timeElapsed = timeElapsed > timeInfo.totalProgramTime ? timeInfo.totalProgramTime : timeElapsed;
+        // set time elapsed to the least time between the actual time elapsed and the total program time
+        timeInfo.timeElapsed = Math.min(timeInfo.totalProgramTime, timeElapsed);
 
         timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
             ? currentProgram.prevDistributionTimestamp

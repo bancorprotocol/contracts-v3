@@ -1,12 +1,14 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
-import { SECOND, HOUR, MINUTE, DAY, YEAR } from '../helpers/Constants';
 import { mulDivF } from '../helpers/MathUtils';
+import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 import { EOL } from 'os';
+
+const { seconds, days, minutes, hours, years } = duration;
 
 const ONE = new Decimal(1);
 const LAMBDA = new Decimal('0.0000000142857142857143');
@@ -116,21 +118,21 @@ describe('StakingRewardsMath', () => {
 
             for (const numOfSeconds of [
                 0,
-                1 * SECOND,
-                10 * SECOND,
-                1 * MINUTE,
-                10 * MINUTE,
-                1 * HOUR,
-                10 * HOUR,
-                1 * DAY,
-                10 * DAY,
-                100 * DAY,
-                1 * YEAR,
-                2 * YEAR,
-                4 * YEAR,
-                8 * YEAR,
-                16 * YEAR,
-                32 * YEAR,
+                seconds(1),
+                seconds(10),
+                minutes(1),
+                minutes(10),
+                hours(1),
+                hours(10),
+                days(1),
+                days(10),
+                days(100),
+                years(1),
+                years(2),
+                years(4),
+                years(8),
+                years(16),
+                years(32),
                 SECONDS_TOO_HIGH - 1,
                 SECONDS_TOO_HIGH
             ]) {
@@ -152,7 +154,11 @@ describe('StakingRewardsMath', () => {
                             for (let years = 0; years < 5; years++) {
                                 for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
                                     processExponentialDecayRewardTest(
-                                        seconds * SECOND + minutes * MINUTE + hours * HOUR + days * DAY + years * YEAR,
+                                        duration.seconds(seconds) +
+                                            duration.minutes(minutes) +
+                                            duration.hours(hours) +
+                                            duration.days(days) +
+                                            duration.years(years),
                                         totalRewards,
                                         '0.999999999999999999'
                                     );
