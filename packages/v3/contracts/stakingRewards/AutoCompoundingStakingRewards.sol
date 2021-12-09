@@ -109,13 +109,14 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initNetwork, IMasterPool initNetworkTokenPool)
-        validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenPool))
-    {
+    constructor(
+        IBancorNetwork initNetwork,
+        IERC20 initNetworkToken,
+        IMasterPool initMasterPool
+    ) validAddress(address(initNetwork)) validAddress(address(initNetworkToken)) validAddress(address(initMasterPool)) {
         _network = initNetwork;
-        _networkToken = initNetwork.networkToken();
-        _masterPool = initNetworkTokenPool;
+        _networkToken = initNetworkToken;
+        _masterPool = initMasterPool;
     }
 
     /**
@@ -371,7 +372,7 @@ contract AutoCompoundingStakingRewards is
         if (currentProgram.pool.toIERC20() == _networkToken) {
             poolInfo.stakedBalance = _masterPool.stakedBalance();
             poolInfo.poolToken = _masterPool.poolToken();
-            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_network.masterPool()));
+            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_masterPool));
         } else {
             poolInfo.stakedBalance = _network
                 .collectionByPool(currentProgram.pool)

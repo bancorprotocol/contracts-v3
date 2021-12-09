@@ -13,7 +13,7 @@ import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
@@ -33,41 +33,6 @@ struct WithdrawalAmounts {
  * @dev Master Pool interface
  */
 interface IMasterPool is IVault {
-    /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the network token governance contract
-     */
-    function networkTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the governance token contract
-     */
-    function govToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the governance token governance contract
-     */
-    function govTokenGovernance() external view returns (ITokenGovernance);
-
-    /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
-     * @dev returns the vault contract
-     */
-    function vault() external view returns (IBancorVault);
-
     /**
      * @dev returns the master pool token contract
      */

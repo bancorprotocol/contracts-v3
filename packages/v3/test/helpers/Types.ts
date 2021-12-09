@@ -1,3 +1,4 @@
+import { PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 
@@ -33,7 +34,11 @@ type ToDecimalReturn<T> = T extends Fraction<BigNumber>
     ? Decimal
     : never;
 
-// eslint-disable-next-line no-prototype-builtins
+export interface AverageRate<T> {
+    rate: Fraction<T>;
+    time: number;
+}
+
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
 export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn<T> => {
@@ -74,7 +79,7 @@ export const toDecimal = <T extends ToDecimalInput>(v: T): ToDecimalReturn<T> =>
     return new Decimal(v.toString()) as Decimal as ToDecimalReturn<T>;
 };
 
-export const toString = <T extends BigNumber | Decimal>(fraction: Fraction<T>) => {
+export const toString = <T extends BigNumber | Decimal | number>(fraction: Fraction<T>) => {
     if (Decimal.isDecimal(fraction.n)) {
         return `{n: ${(fraction as Fraction<Decimal>).n.toFixed()}, d: ${(fraction as Fraction<Decimal>).d.toFixed()}}`;
     }
@@ -90,18 +95,15 @@ export const fromUint512 = (hi: BigNumber, lo: BigNumber) => {
     return hi.shl(256).or(lo);
 };
 
-type ToWeiInput = Decimal | BigNumber;
-type ToWeiReturn<T> = T extends BigNumber ? BigNumber : T extends Decimal ? Decimal : never;
+type ToWeiInput = Decimal | BigNumber | number;
 
-export const toWei = <T extends ToWeiInput>(v: T): ToWeiReturn<T> => {
+export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
     if (Decimal.isDecimal(v)) {
-        return (v as Decimal).mul(new Decimal(10).pow(18)) as ToWeiReturn<T>;
+        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(DEFAULT_DECIMALS)).toFixed());
     }
 
-    return (v as BigNumber).mul(BigNumber.from(10).pow(BigNumber.from(18))) as ToWeiReturn<T>;
+    return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
 };
 
-export interface AverageRate<T> {
-    rate: Fraction<T>;
-    time: T;
-}
+export const toPPM = (percent: number): number => percent * (PPM_RESOLUTION / 100);
+export const fromPPM = (ppm: number): number => ppm / (PPM_RESOLUTION / 100);

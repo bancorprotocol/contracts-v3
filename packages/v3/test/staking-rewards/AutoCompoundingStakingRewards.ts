@@ -1,8 +1,9 @@
-import { BancorNetwork } from '../../../v2/typechain';
 import Contracts from '../../components/Contracts';
 import {
     NetworkSettings,
+    BancorNetworkInformation,
     PoolToken,
+    IERC20,
     TestBancorNetwork,
     TestMasterPool,
     TestPoolCollection,
@@ -29,12 +30,16 @@ describe('AutoCompoundingStakingRewards', () => {
     let stakingRewardsProvider: SignerWithAddress;
 
     let network: TestBancorNetwork;
+    let networkInformation: BancorNetworkInformation;
     let networkSettings: NetworkSettings;
     let masterPool: TestMasterPool;
+    let networkToken: IERC20;
     let poolCollection: TestPoolCollection;
     let externalRewardsVault: ExternalRewardsVault;
 
     let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
+
+    const INITIAL_RATE = { n: 1, d: 2 };
 
     shouldHaveGap('AutoCompoundingStakingRewards', '_programs');
 
@@ -44,10 +49,11 @@ describe('AutoCompoundingStakingRewards', () => {
 
     describe('construction', () => {
         beforeEach(async () => {
-            ({ network, networkSettings, masterPool, poolCollection, externalRewardsVault } = await createSystem());
+            ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
+                await createSystem());
 
             autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-                ctorArgs: [network.address, masterPool.address]
+                ctorArgs: [network.address, networkToken.address, masterPool.address]
             });
         });
 
@@ -59,13 +65,19 @@ describe('AutoCompoundingStakingRewards', () => {
 
         it('should revert when initialized with an invalid bancor network contract', async () => {
             await expect(
-                Contracts.AutoCompoundingStakingRewards.deploy(ZERO_ADDRESS, masterPool.address)
+                Contracts.AutoCompoundingStakingRewards.deploy(ZERO_ADDRESS, networkToken.address, masterPool.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when initialized with an invalid network token contract', async () => {
+            await expect(
+                Contracts.AutoCompoundingStakingRewards.deploy(network.address, ZERO_ADDRESS, masterPool.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when initialized with an invalid master pool contract', async () => {
             await expect(
-                Contracts.AutoCompoundingStakingRewards.deploy(network.address, ZERO_ADDRESS)
+                Contracts.AutoCompoundingStakingRewards.deploy(network.address, networkToken.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -82,7 +94,6 @@ describe('AutoCompoundingStakingRewards', () => {
         let currentTime: BigNumber;
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
-        const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
         const TOTAL_DURATION = 10 * MONTH;
         const TOTAL_REWARDS = 10;
 
@@ -96,7 +107,7 @@ describe('AutoCompoundingStakingRewards', () => {
             currentTime = BigNumber.from(0);
 
             autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-                ctorArgs: [network.address, masterPool.address]
+                ctorArgs: [network.address, networkToken.address, masterPool.address]
             });
 
             ({ token } = await setupSimplePool(
@@ -107,6 +118,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 },
                 deployer,
                 network,
+                networkInformation,
                 networkSettings,
                 poolCollection
             ));
@@ -372,6 +384,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         },
                         deployer,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));
@@ -384,6 +397,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         },
                         deployer,
                         network,
+                        networkInformation,
                         networkSettings,
                         poolCollection
                     ));
@@ -465,7 +479,6 @@ describe('AutoCompoundingStakingRewards', () => {
             const distributionType = 0;
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
-            const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
 
             const INITIAL_STAKE = toWei(BigNumber.from(10_000));
             const TOTAL_REWARDS = toWei(BigNumber.from(90_000));
@@ -483,7 +496,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-                    ctorArgs: [network.address, masterPool.address]
+                    ctorArgs: [network.address, networkToken.address, masterPool.address]
                 });
 
                 await externalRewardsVault.grantRole(
@@ -501,6 +514,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     },
                     user,
                     network,
+                    networkInformation,
                     networkSettings,
                     poolCollection
                 ));

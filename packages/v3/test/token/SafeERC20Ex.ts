@@ -6,7 +6,7 @@ import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('SafeERC20Ex', () => {
-    const TOTAL_SUPPLY = BigNumber.from(1_000_000);
+    const TOTAL_SUPPLY = 1_000_000;
 
     let safeERC20: TestSafeERC20Ex;
     let token: TestERC20Token;
@@ -24,13 +24,13 @@ describe('SafeERC20Ex', () => {
 
         token = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', TOTAL_SUPPLY);
 
-        await token.transfer(safeERC20.address, TOTAL_SUPPLY.div(BigNumber.from(2)));
+        await token.transfer(safeERC20.address, TOTAL_SUPPLY / 2);
     });
 
     it('should set allowance', async () => {
-        const amount = BigNumber.from(100);
+        const amount = 100;
 
-        expect(await token.allowance(sender, spender.address)).to.equal(BigNumber.from(0));
+        expect(await token.allowance(sender, spender.address)).to.equal(0);
 
         await safeERC20.ensureApprove(token.address, spender.address, amount);
 
@@ -38,20 +38,20 @@ describe('SafeERC20Ex', () => {
     });
 
     context('with existing allowance', () => {
-        const allowance = BigNumber.from(1000);
+        const allowance = 1000;
 
         beforeEach(async () => {
             await safeERC20.ensureApprove(token.address, spender.address, allowance);
         });
 
         it('should ignore the request when the allowance is sufficient', async () => {
-            await safeERC20.ensureApprove(token.address, spender.address, allowance.sub(BigNumber.from(10)));
+            await safeERC20.ensureApprove(token.address, spender.address, allowance - 10);
 
             expect(await token.allowance(sender, spender.address)).to.equal(allowance);
         });
 
         it('should allow increasing the allowance', async () => {
-            const newAllowance = allowance.add(BigNumber.from(100));
+            const newAllowance = allowance + 100;
 
             await safeERC20.ensureApprove(token.address, spender.address, newAllowance);
 
@@ -59,7 +59,7 @@ describe('SafeERC20Ex', () => {
         });
 
         it('should ignore the request when the allowance is zero', async () => {
-            await safeERC20.ensureApprove(token.address, spender.address, BigNumber.from(0));
+            await safeERC20.ensureApprove(token.address, spender.address, 0);
 
             expect(await token.allowance(sender, spender.address)).to.equal(allowance);
         });

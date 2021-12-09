@@ -46,7 +46,7 @@ struct DepositAmounts {
 
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
-    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the vault to the provider
+    uint256 baseTokenAmountToTransferFromVaultToProvider; // the base token amount to transfer from the master vault to the provider
     uint256 networkTokenAmountToMintForProvider; // the network token amount to mint directly for the provider
     uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProvider; // the base token amount to transfer from the external protection vault to the provider
     uint256 baseTokenAmountToDeductFromLiquidity; // the base token amount to deduct from the trading liquidity
@@ -74,31 +74,6 @@ interface IPoolCollection is IVersioned {
      * @dev returns the type of the pool
      */
     function poolType() external pure returns (uint16);
-
-    /**
-     * @dev returns the network contract
-     */
-    function network() external view returns (IBancorNetwork);
-
-    /**
-     * @dev returns the network token contract
-     */
-    function networkToken() external view returns (IERC20);
-
-    /**
-     * @dev returns the network settings contract
-     */
-    function settings() external view returns (INetworkSettings);
-
-    /**
-     * @dev returns the pool token factory contract
-     */
-    function poolTokenFactory() external view returns (IPoolTokenFactory);
-
-    /**
-     * @dev returns the pool collection upgrader contract
-     */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
 
     /**
      * @dev returns the default trading fee (in units of PPM)

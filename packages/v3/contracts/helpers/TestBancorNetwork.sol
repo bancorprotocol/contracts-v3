@@ -10,7 +10,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IBancorVault } from "../vaults/interfaces/IBancorVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
@@ -44,18 +44,18 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     constructor(
         ITokenGovernance initNetworkTokenGovernance,
         ITokenGovernance initGovTokenGovernance,
-        INetworkSettings initSettings,
-        IBancorVault initVault,
-        IPoolToken initMasterPoolToken,
-        IExternalProtectionVault initExternalProtectionVault
+        INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IExternalProtectionVault initExternalProtectionVault,
+        IPoolToken initMasterPoolToken
     )
         BancorNetwork(
             initNetworkTokenGovernance,
             initGovTokenGovernance,
-            initSettings,
-            initVault,
-            initMasterPoolToken,
-            initExternalProtectionVault
+            initNetworkSettings,
+            initMasterVault,
+            initExternalProtectionVault,
+            initMasterPoolToken
         )
     {}
 

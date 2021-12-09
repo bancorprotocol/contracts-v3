@@ -3,4 +3,4 @@ pragma solidity 0.8.10;
 
 import { IVault } from "./IVault.sol";
 
-interface IBancorVault is IVault {}
+interface IMasterVault is IVault {}

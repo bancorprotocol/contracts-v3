@@ -62,7 +62,7 @@ export const createWallet = async () => {
     const wallet = Wallet.createRandom().connect(waffle.provider);
     const deployer = (await ethers.getSigners())[0];
     await deployer.sendTransaction({
-        value: toWei(BigNumber.from(10_000_000)),
+        value: toWei(10_000_000),
         to: await wallet.getAddress()
     });
 
@@ -77,7 +77,7 @@ export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddr
         case TKN:
         case `${TKN}1`:
         case `${TKN}2`:
-            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(BigNumber.from(1_000_000_000)));
+            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(1_000_000_000));
 
         default:
             throw new Error(`Unsupported type ${symbol}`);
