@@ -3,23 +3,21 @@ pragma solidity 0.8.10;
 
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
-import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { StakingRewardsMath } from "./StakingRewardsMath.sol";
-import { MathEx } from "../utility/MathEx.sol";
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
 struct TimeInfo {
@@ -325,7 +323,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
-            // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burn
+            // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burnt
             Math.min(poolTokenToBurn, poolTokensInRewardsVault)
         );
 
