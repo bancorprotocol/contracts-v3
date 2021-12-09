@@ -101,6 +101,7 @@ describe('AutoCompoundingStakingRewards', () => {
         const TOTAL_REWARDS = 10;
 
         let token: TokenWithAddress;
+        let poolToken: TokenWithAddress;
 
         beforeEach(async () => {
             ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
@@ -114,7 +115,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ctorArgs: [network.address, networkToken.address, masterPool.address]
             });
 
-            ({ token } = await setupSimplePool(
+            ({ token, poolToken } = await setupSimplePool(
                 {
                     symbol: 'TKN',
                     balance: BigNumber.from(10_000),
@@ -248,7 +249,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 const program = await autoCompoundingStakingRewards.program(token.address);
 
-                expect(program.pool).to.equal(token.address);
+                expect(program.poolToken).to.equal(poolToken.address);
                 expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                 expect(program.totalRewards).to.equal(10);
                 expect(program.availableRewards).to.equal(10);
@@ -294,7 +295,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     const program = await autoCompoundingStakingRewards.program(token.address);
 
-                    expect(program.pool).to.equal(token.address);
+                    expect(program.poolToken).to.equal(poolToken.address);
                     expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                     expect(program.totalRewards).to.equal(10);
                     expect(program.availableRewards).to.equal(0);
@@ -356,7 +357,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 it('shouldnt be able to fetch an empty program', async () => {
                     const program = await autoCompoundingStakingRewards.program(token.address);
 
-                    expect(program.pool).to.equal(ZERO_ADDRESS);
+                    expect(program.poolToken).to.equal(ZERO_ADDRESS);
                 });
 
                 it('should correctly fetch an existing program program', async () => {
@@ -371,16 +372,18 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     const program = await autoCompoundingStakingRewards.program(token.address);
 
-                    expect(program.pool).to.equal(token.address);
+                    expect(program.poolToken).to.equal(poolToken.address);
                 });
             });
 
             describe('multiple programs', () => {
                 let token1: TokenWithAddress;
                 let token2: TokenWithAddress;
+                let poolToken1: TokenWithAddress;
+                let poolToken2: TokenWithAddress;
 
                 beforeEach(async () => {
-                    ({ token: token1 } = await setupSimplePool(
+                    ({ token: token1, poolToken: poolToken1 } = await setupSimplePool(
                         {
                             symbol: 'TKN',
                             balance: BigNumber.from(10_000),
@@ -393,7 +396,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolCollection
                     ));
 
-                    ({ token: token2 } = await setupSimplePool(
+                    ({ token: token2, poolToken: poolToken2 } = await setupSimplePool(
                         {
                             symbol: 'TKN',
                             balance: BigNumber.from(10_000),
@@ -422,9 +425,9 @@ describe('AutoCompoundingStakingRewards', () => {
                     const programs = await autoCompoundingStakingRewards.programs();
 
                     expect(programs.length).to.equal(3);
-                    expect(programs[0].pool).to.equal(token.address);
-                    expect(programs[1].pool).to.equal(token1.address);
-                    expect(programs[2].pool).to.equal(token2.address);
+                    expect(programs[0].poolToken).to.equal(poolToken.address);
+                    expect(programs[1].poolToken).to.equal(poolToken1.address);
+                    expect(programs[2].poolToken).to.equal(poolToken2.address);
                 });
             });
         });

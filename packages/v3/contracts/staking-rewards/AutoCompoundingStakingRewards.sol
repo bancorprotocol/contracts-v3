@@ -33,7 +33,6 @@ struct PoolInfo {
     uint256 stakedBalance;
     uint256 amountOfPoolTokenOwnedByProtocol;
     uint256 poolTokenTotalSupply;
-    IPoolToken poolToken;
 }
 
 error ProgramActive();
@@ -224,8 +223,12 @@ contract AutoCompoundingStakingRewards is
         ProgramData storage currentProgram = _programs[poolAsAddress];
 
         // it no program exists for the given pool, initialize it
-        if (ReserveToken.unwrap(currentProgram.pool) == address(0)) {
-            currentProgram.pool = pool;
+        if (address(currentProgram.poolToken) == address(0)) {
+            if (poolAsAddress == address(_networkToken)) {
+                currentProgram.poolToken = _masterPool.poolToken();
+            } else {
+                currentProgram.poolToken = _network.collectionByPool(pool).poolData(pool).poolToken;
+            }
         } else {
             // otherwise process rewards one last time to make sure all rewards have been distributed
             processRewards(pool);
@@ -292,7 +295,7 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        PoolInfo memory poolInfo = fetchPoolInfo(currentProgram);
+        PoolInfo memory poolInfo = fetchPoolInfo(pool, currentProgram);
         TimeInfo memory timeInfo = fetchTimeInfo(currentProgram);
 
         uint256 tokensToDistribute;
@@ -317,10 +320,10 @@ contract AutoCompoundingStakingRewards is
             poolInfo.amountOfPoolTokenOwnedByProtocol
         );
 
-        uint256 poolTokensInRewardsVault = poolInfo.poolToken.balanceOf(address(currentProgram.rewardsVault));
+        uint256 poolTokensInRewardsVault = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
 
         currentProgram.rewardsVault.withdrawFunds(
-            ReserveToken.wrap(address(poolInfo.poolToken)),
+            ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
             // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burn
             Math.min(poolTokenToBurn, poolTokensInRewardsVault)
@@ -329,7 +332,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.availableRewards -= tokensToDistribute;
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
-        poolInfo.poolToken.burn(poolTokenToBurn);
+        currentProgram.poolToken.burn(poolTokenToBurn);
 
         emit RewardsDistributed(
             pool,
@@ -367,24 +370,23 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev fetch a pool's information
      */
-    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory) {
+    function fetchPoolInfo(ReserveToken pool, ProgramData memory currentProgram)
+        internal
+        view
+        returns (PoolInfo memory)
+    {
         PoolInfo memory poolInfo;
 
-        if (currentProgram.pool.toIERC20() == _networkToken) {
+        if (pool.toIERC20() == _networkToken) {
             poolInfo.stakedBalance = _masterPool.stakedBalance();
-            poolInfo.poolToken = _masterPool.poolToken();
-            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(address(_masterPool));
+            poolInfo.amountOfPoolTokenOwnedByProtocol = currentProgram.poolToken.balanceOf(address(_masterPool));
         } else {
-            poolInfo.stakedBalance = _network
-                .collectionByPool(currentProgram.pool)
-                .poolLiquidity(currentProgram.pool)
-                .stakedBalance;
-            poolInfo.poolToken = _network.collectionByPool(currentProgram.pool).poolData(currentProgram.pool).poolToken;
-            poolInfo.amountOfPoolTokenOwnedByProtocol = poolInfo.poolToken.balanceOf(
+            poolInfo.stakedBalance = _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance;
+            poolInfo.amountOfPoolTokenOwnedByProtocol = currentProgram.poolToken.balanceOf(
                 address(currentProgram.rewardsVault)
             );
         }
-        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
+        poolInfo.poolTokenTotalSupply = currentProgram.poolToken.totalSupply();
 
         return poolInfo;
     }

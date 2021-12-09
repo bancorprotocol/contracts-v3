@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IVault } from "../../vaults/interfaces/IVault.sol";
+import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../../token/ReserveToken.sol";
 
 enum DistributionType {
@@ -17,7 +18,7 @@ struct ProgramData {
     uint256 totalRewards;
     uint256 availableRewards;
     IVault rewardsVault;
-    ReserveToken pool;
+    IPoolToken poolToken;
     bool isEnabled;
     DistributionType distributionType;
 }
