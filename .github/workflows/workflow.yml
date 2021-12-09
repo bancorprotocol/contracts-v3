@@ -16,10 +16,16 @@ jobs:
         working-directory: packages/v3
 
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: '17'
 
       - name: Install V2 NPM Dependencies
         run: yarn install
@@ -35,6 +41,7 @@ jobs:
       # temporary remove lint check from CI since solhint doesn't fully support Solidity 0.8.10
       # - name: Lint
       #   run: yarn lint
+      #
 
       - name: Test
         run: CI=1 yarn test
