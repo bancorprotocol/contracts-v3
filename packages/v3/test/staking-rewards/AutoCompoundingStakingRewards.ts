@@ -449,7 +449,7 @@ describe('AutoCompoundingStakingRewards', () => {
             return (await poolToken.balanceOf(user.address)).mul(tokenStakedBalance).div(await poolToken.totalSupply());
         };
 
-        const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy = '0.999999999999999999') => {
+        const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
             const actualDec = new Decimal(actual.toString());
             const actualExp = new Decimal(expected.toString());
 
@@ -550,8 +550,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, INITIAL_STAKE);
-                    assertAccuracy(externalRewardsVaultTokenOwned, TOTAL_REWARDS);
+                    assertAccuracy(userTokenOwned, INITIAL_STAKE, '0.999999999999999999');
+                    assertAccuracy(externalRewardsVaultTokenOwned, TOTAL_REWARDS, '0.999999999999999999');
                 });
 
                 it('should have distributed all rewards at the end of a program', async () => {
@@ -566,8 +566,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         poolToken
                     );
 
-                    assertAccuracy(userTokenOwned, TOTAL_TOKEN);
-                    assertAccuracy(externalRewardsVaultTokenOwned, BigNumber.from(0));
+                    assertAccuracy(userTokenOwned, TOTAL_TOKEN, '0.999999999999999999');
+                    assertAccuracy(externalRewardsVaultTokenOwned, BigNumber.from(0), '0.999999999999999999');
                 });
             });
 
@@ -587,11 +587,16 @@ describe('AutoCompoundingStakingRewards', () => {
                             poolToken
                         );
 
-                        assertAccuracy(userTokenOwned, INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)));
+                        assertAccuracy(
+                            userTokenOwned,
+                            INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
+                            '0.999999999999999999'
+                        );
 
                         assertAccuracy(
                             externalRewardsVaultTokenOwned,
-                            getPerc(TOTAL_REWARDS, 100 - programTimePercent)
+                            getPerc(TOTAL_REWARDS, 100 - programTimePercent),
+                            '0.999999999999999999'
                         );
                     });
                 }

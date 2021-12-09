@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { AutoCompoundingStakingRewards } from "../stakingRewards/AutoCompoundingStakingRewards.sol";
+import { AutoCompoundingStakingRewards } from "../staking-rewards/AutoCompoundingStakingRewards.sol";
 import { TestTime } from "./TestTime.sol";
 import { Time } from "../utility/Time.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";

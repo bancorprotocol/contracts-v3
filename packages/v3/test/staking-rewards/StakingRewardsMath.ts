@@ -205,8 +205,8 @@ describe('StakingRewardsMath', () => {
                 const actual = new Decimal((await stakingRewardsMath.processPoolTokenToBurnT(a, b, c, d)).toString());
 
                 const bc = b.mul(c);
-                const expected = mulDivF(bc, c, a.mul(c.sub(d)).add(bc));
-                assertAccuracy(actual, expected, minAccuracy);
+                const expected = bc.mul(c).div(a.mul(c.sub(d)).add(bc));
+                assertAccuracy(actual, new Decimal(expected.toString()), minAccuracy);
             });
         };
 

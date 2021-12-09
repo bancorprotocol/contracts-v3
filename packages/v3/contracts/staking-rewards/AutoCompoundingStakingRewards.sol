@@ -368,7 +368,9 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev fetch a pool's information
      */
-    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory poolInfo) {
+    function fetchPoolInfo(ProgramData memory currentProgram) internal view returns (PoolInfo memory) {
+        PoolInfo memory poolInfo;
+
         if (currentProgram.pool.toIERC20() == _networkToken) {
             poolInfo.stakedBalance = _masterPool.stakedBalance();
             poolInfo.poolToken = _masterPool.poolToken();
@@ -384,12 +386,16 @@ contract AutoCompoundingStakingRewards is
             );
         }
         poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
+
+        return poolInfo;
     }
 
     /**
      * @dev fetch a pool's time information
      */
-    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory timeInfo) {
+    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
+        TimeInfo memory timeInfo;
+
         timeInfo.currentTime = _time();
 
         timeInfo.totalProgramTime = currentProgram.endTime - currentProgram.startTime;
@@ -402,5 +408,7 @@ contract AutoCompoundingStakingRewards is
         timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
             ? currentProgram.prevDistributionTimestamp
             : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
+
+        return timeInfo;
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { StakingRewardsMath } from "../stakingRewards/StakingRewardsMath.sol";
+import { StakingRewardsMath } from "../staking-rewards/StakingRewardsMath.sol";
 
 contract TestStakingRewardsMath is StakingRewardsMath {
     function processPoolTokenToBurnT(
