@@ -3,7 +3,7 @@ import { IERC20 } from '../../typechain-types';
 import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from './Constants';
 import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
-import { BigNumber, Wallet, BaseContract, utils } from 'ethers';
+import { BigNumber, BigNumberish, Wallet, BaseContract, utils } from 'ethers';
 
 const { formatBytes32String } = utils;
 
@@ -43,8 +43,8 @@ export const permitData = (
     owner: string,
     spender: string,
     amount: BigNumber,
-    nonce: BigNumber,
-    deadline: BigNumber = MAX_UINT256
+    nonce: number,
+    deadline: BigNumberish = MAX_UINT256
 ) => ({
     primaryType: PERMIT_TYPE,
     types: { EIP712Domain: EIP712_DOMAIN, Permit: PERMIT },
@@ -58,8 +58,8 @@ export const permitSignature = async (
     verifyingContract: string,
     spender: string,
     amount: BigNumber,
-    nonce: BigNumber,
-    deadline: BigNumber
+    nonce: number,
+    deadline: BigNumberish
 ) => {
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
     const signature = signTypedMessage(Buffer.from(wallet.privateKey.slice(2), 'hex'), { data });
@@ -72,7 +72,7 @@ export const permitContractSignature = async (
     network: BaseContract,
     networkToken: IERC20,
     amount: BigNumber,
-    deadline: BigNumber
+    deadline: BigNumberish
 ) => {
     if (
         tokenAddress === NATIVE_TOKEN_ADDRESS ||
@@ -80,7 +80,7 @@ export const permitContractSignature = async (
         tokenAddress === networkToken.address
     ) {
         return {
-            v: BigNumber.from(0),
+            v: 0,
             r: formatBytes32String(''),
             s: formatBytes32String('')
         };
@@ -97,7 +97,7 @@ export const permitContractSignature = async (
         reserveToken.address,
         network.address,
         amount,
-        nonce,
+        nonce.toNumber(),
         deadline
     );
 };

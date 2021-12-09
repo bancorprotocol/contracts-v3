@@ -33,9 +33,9 @@ import { ethers } from 'hardhat';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
-    const POOL_TYPE = BigNumber.from(1);
-    const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1000));
-    const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
+    const POOL_TYPE = 1;
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
+    const INITIAL_RATE = { n: 1, d: 2 };
 
     const TRADING_STATUS_UPDATE_OWNER = 0;
     const TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
@@ -130,12 +130,12 @@ describe('PoolCollection', () => {
         it('should emit events on initialization', async () => {
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
-                .withArgs(BigNumber.from(0), DEFAULT_TRADING_FEE_PPM);
+                .withArgs(0, DEFAULT_TRADING_FEE_PPM);
         });
     });
 
     describe('default trading fee', () => {
-        const newDefaultTradingFree = BigNumber.from(100000);
+        const newDefaultTradingFree = 100_000;
 
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
@@ -147,7 +147,7 @@ describe('PoolCollection', () => {
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
         });
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
@@ -237,7 +237,7 @@ describe('PoolCollection', () => {
                         .withArgs(pool.poolToken, reserveToken.address);
                     await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
-                        .withArgs(reserveToken.address, BigNumber.from(0), pool.tradingFeePPM);
+                        .withArgs(reserveToken.address, 0, pool.tradingFeePPM);
                     await expect(res)
                         .to.emit(poolCollection, 'TradingEnabled')
                         .withArgs(reserveToken.address, false, TRADING_STATUS_UPDATE_OWNER);
@@ -249,11 +249,11 @@ describe('PoolCollection', () => {
                         .withArgs(reserveToken.address, INVALID_FRACTION, pool.initialRate);
                     await expect(res)
                         .to.emit(poolCollection, 'DepositLimitUpdated')
-                        .withArgs(reserveToken.address, BigNumber.from(0), pool.depositLimit);
+                        .withArgs(reserveToken.address, 0, pool.depositLimit);
 
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await poolCollection.pools()).to.include(reserveToken.address);
-                    expect(await poolCollection.poolCount()).to.equal(prevPoolCount.add(BigNumber.from(1)));
+                    expect(await poolCollection.poolCount()).to.equal(prevPoolCount.add(1));
 
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
                     expect(poolToken).not.to.equal(ZERO_ADDRESS);
@@ -262,16 +262,16 @@ describe('PoolCollection', () => {
                     expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                     expect(pool.tradingEnabled).to.be.true;
                     expect(pool.depositingEnabled).to.be.true;
-                    expect(pool.averageRate.time).to.equal(BigNumber.from(0));
+                    expect(pool.averageRate.time).to.equal(0);
                     expect(pool.averageRate.rate).to.equal(ZERO_FRACTION);
                     expect(pool.initialRate).to.equal(ZERO_FRACTION);
-                    expect(pool.depositLimit).to.equal(BigNumber.from(0));
+                    expect(pool.depositLimit).to.equal(0);
 
                     const { liquidity } = pool;
-                    expect(liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                    expect(liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                    expect(liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
-                    expect(liquidity.stakedBalance).to.equal(BigNumber.from(0));
+                    expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
+                    expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
+                    expect(liquidity.tradingLiquidityProduct).to.equal(0);
+                    expect(liquidity.stakedBalance).to.equal(0);
 
                     const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
                     expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
@@ -299,15 +299,15 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
-            newReserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            newReserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
         });
 
         describe('initial rate', () => {
-            const newInitialRate = { n: BigNumber.from(1000), d: BigNumber.from(5000) };
+            const newInitialRate = { n: 1000, d: 5000 };
 
             it('should revert when a non-owner attempts to set the initial rate', async () => {
                 await expect(
@@ -318,15 +318,15 @@ describe('PoolCollection', () => {
             it('should revert when setting an invalid rate', async () => {
                 await expect(
                     poolCollection.setInitialRate(reserveToken.address, {
-                        n: BigNumber.from(1000),
-                        d: BigNumber.from(0)
+                        n: 1000,
+                        d: 0
                     })
                 ).to.be.revertedWith('InvalidRate');
 
                 await expect(
                     poolCollection.setInitialRate(reserveToken.address, {
-                        n: BigNumber.from(0),
-                        d: BigNumber.from(1000)
+                        n: 0,
+                        d: 1000
                     })
                 ).to.be.revertedWith('InvalidRate');
             });
@@ -358,7 +358,7 @@ describe('PoolCollection', () => {
                 ({ initialRate } = pool);
                 expect(initialRate).to.equal(newInitialRate);
 
-                const newInitialRate2 = { n: BigNumber.from(100000), d: BigNumber.from(50) };
+                const newInitialRate2 = { n: 100_000, d: 50 };
                 const res2 = await poolCollection.setInitialRate(reserveToken.address, newInitialRate2);
                 await expect(res2)
                     .to.emit(poolCollection, 'InitialRateUpdated')
@@ -511,7 +511,7 @@ describe('PoolCollection', () => {
         });
 
         describe('deposit limit', () => {
-            const newDepositLimit = BigNumber.from(99999);
+            const newDepositLimit = 99_999;
 
             it('should revert when a non-owner attempts to set the deposit limit', async () => {
                 await expect(
@@ -535,7 +535,7 @@ describe('PoolCollection', () => {
             it('should allow setting and updating the deposit limit', async () => {
                 let pool = await poolCollection.poolData(reserveToken.address);
                 let { depositLimit } = pool;
-                expect(depositLimit).to.equal(BigNumber.from(0));
+                expect(depositLimit).to.equal(0);
 
                 const res = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit);
                 await expect(res)
@@ -546,7 +546,7 @@ describe('PoolCollection', () => {
                 ({ depositLimit } = pool);
                 expect(depositLimit).to.equal(newDepositLimit);
 
-                const newDepositLimit2 = BigNumber.from(1);
+                const newDepositLimit2 = 1;
                 const res2 = await poolCollection.setDepositLimit(reserveToken.address, newDepositLimit2);
                 await expect(res2)
                     .to.emit(poolCollection, 'DepositLimitUpdated')
@@ -582,9 +582,7 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(
-                    poolCollection
-                        .connect(nonNetwork)
-                        .depositFor(provider.address, reserveToken.address, BigNumber.from(1), BigNumber.from(2))
+                    poolCollection.connect(nonNetwork).depositFor(provider.address, reserveToken.address, 1, 2)
                 ).to.be.revertedWith('AccessDenied');
             });
 
@@ -594,21 +592,15 @@ describe('PoolCollection', () => {
                         poolCollection.address,
                         ZERO_ADDRESS,
                         reserveToken.address,
-                        BigNumber.from(1),
-                        BigNumber.from(2)
+                        1,
+                        2
                     )
                 ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to deposit for an invalid pool', async () => {
                 await expect(
-                    network.depositToPoolCollectionForT(
-                        poolCollection.address,
-                        provider.address,
-                        ZERO_ADDRESS,
-                        BigNumber.from(1),
-                        BigNumber.from(2)
-                    )
+                    network.depositToPoolCollectionForT(poolCollection.address, provider.address, ZERO_ADDRESS, 1, 2)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
@@ -618,8 +610,8 @@ describe('PoolCollection', () => {
                         poolCollection.address,
                         provider.address,
                         reserveToken.address,
-                        BigNumber.from(1),
-                        BigNumber.from(2)
+                        1,
+                        2
                     )
                 ).to.be.revertedWith('DoesNotExist');
             });
@@ -630,8 +622,8 @@ describe('PoolCollection', () => {
                         poolCollection.address,
                         provider.address,
                         reserveToken.address,
-                        BigNumber.from(0),
-                        BigNumber.from(2)
+                        0,
+                        2
                     )
                 ).to.be.revertedWith('ZeroValue');
             });
@@ -644,7 +636,7 @@ describe('PoolCollection', () => {
                 });
 
                 context('when at the deposit limit', () => {
-                    const DEPOSIT_LIMIT = toWei(BigNumber.from(12345));
+                    const DEPOSIT_LIMIT = toWei(12_345);
 
                     beforeEach(async () => {
                         await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -667,7 +659,7 @@ describe('PoolCollection', () => {
                                 poolCollection.address,
                                 provider.address,
                                 reserveToken.address,
-                                BigNumber.from(1),
+                                1,
                                 MAX_UINT256
                             )
                         ).to.be.revertedWith('DepositLimitExceeded');
@@ -786,7 +778,7 @@ describe('PoolCollection', () => {
                                     poolCollection.address,
                                     provider.address,
                                     reserveToken.address,
-                                    BigNumber.from(1),
+                                    1,
                                     MAX_UINT256
                                 )
                             ).to.be.revertedWith('MinLiquidityNotSet');
@@ -808,7 +800,7 @@ describe('PoolCollection', () => {
                                             poolCollection.address,
                                             provider.address,
                                             reserveToken.address,
-                                            BigNumber.from(1),
+                                            1,
                                             MAX_UINT256
                                         )
                                     ).to.be.revertedWith('NoInitialRate');
@@ -821,23 +813,15 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should deposit', async () => {
-                                    for (const amount of [
-                                        BigNumber.from(1),
-                                        BigNumber.from(10_000),
-                                        toWei(BigNumber.from(1_000_000))
-                                    ]) {
-                                        await testDepositFor(amount);
+                                    for (const amount of [1, 10_000, toWei(1_000_000)]) {
+                                        await testDepositFor(BigNumber.from(amount));
                                     }
                                 });
 
                                 context('when exceeding the unallocated network token liquidity', () => {
                                     it('should deposit', async () => {
-                                        for (const amount of [
-                                            toWei(BigNumber.from(1_000_000)),
-                                            toWei(BigNumber.from(10_000_000)),
-                                            toWei(BigNumber.from(50_000_000))
-                                        ]) {
-                                            await testDepositFor(amount, toWei(BigNumber.from(20_000)));
+                                        for (const amount of [toWei(1_000_000), toWei(10_000_000), toWei(50_000_000)]) {
+                                            await testDepositFor(amount, toWei(20_000));
                                         }
                                     });
                                 });
@@ -860,23 +844,15 @@ describe('PoolCollection', () => {
                             });
 
                             it('should deposit', async () => {
-                                for (const amount of [
-                                    BigNumber.from(1),
-                                    BigNumber.from(10_000),
-                                    toWei(BigNumber.from(1_000_000))
-                                ]) {
-                                    await testDepositFor(amount);
+                                for (const amount of [1, 10_000, toWei(1_000_000)]) {
+                                    await testDepositFor(BigNumber.from(amount));
                                 }
                             });
 
                             context('when exceeding the unallocated network token liquidity', () => {
                                 it('should deposit', async () => {
-                                    for (const amount of [
-                                        toWei(BigNumber.from(1_000_000)),
-                                        toWei(BigNumber.from(10_000_000)),
-                                        toWei(BigNumber.from(50_000_000))
-                                    ]) {
-                                        await testDepositFor(amount, toWei(BigNumber.from(20_000)));
+                                    for (const amount of [toWei(1_000_000), toWei(10_000_000), toWei(50_000_000)]) {
+                                        await testDepositFor(amount, toWei(20_000));
                                     }
                                 });
                             });
@@ -925,38 +901,24 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(
-                    poolCollection
-                        .connect(nonNetwork)
-                        .withdraw(reserveToken.address, BigNumber.from(1), BigNumber.from(1), BigNumber.from(1))
+                    poolCollection.connect(nonNetwork).withdraw(reserveToken.address, 1, 1, 1)
                 ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when attempting to withdraw from an invalid pool', async () => {
                 await expect(
-                    network.withdrawFromPoolCollectionT(
-                        poolCollection.address,
-                        ZERO_ADDRESS,
-                        BigNumber.from(1),
-                        BigNumber.from(1),
-                        BigNumber.from(1)
-                    )
+                    network.withdrawFromPoolCollectionT(poolCollection.address, ZERO_ADDRESS, 1, 1, 1)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to withdraw an invalid amount', async () => {
                 await expect(
-                    network.withdrawFromPoolCollectionT(
-                        poolCollection.address,
-                        reserveToken.address,
-                        BigNumber.from(0),
-                        BigNumber.from(1),
-                        BigNumber.from(1)
-                    )
+                    network.withdrawFromPoolCollectionT(poolCollection.address, reserveToken.address, 0, 1, 1)
                 ).to.be.revertedWith('ZeroValue');
             });
 
             it('should reset the pool data when the pool is emptied', async () => {
-                const baseTokenAmount = BigNumber.from(1000);
+                const baseTokenAmount = 1000;
 
                 await network.depositToPoolCollectionForT(
                     poolCollection.address,
@@ -984,14 +946,14 @@ describe('PoolCollection', () => {
                     reserveToken.address,
                     poolTokenAmount,
                     baseTokenAmount,
-                    BigNumber.from(0)
+                    0
                 );
 
                 const poolData = await poolCollection.poolData(reserveToken.address);
-                expect(poolData.liquidity.stakedBalance).to.equal(BigNumber.from(0));
-                expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(BigNumber.from(0));
-                expect(poolData.liquidity.tradingLiquidityProduct).to.equal(BigNumber.from(0));
+                expect(poolData.liquidity.stakedBalance).to.equal(0);
+                expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(0);
+                expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(0);
+                expect(poolData.liquidity.tradingLiquidityProduct).to.equal(0);
                 expect(poolData.averageRate.rate).to.equal(ZERO_FRACTION);
             });
 
@@ -1056,14 +1018,14 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
-        const MIN_RETURN_AMOUNT = BigNumber.from(1);
+        const MIN_RETURN_AMOUNT = 1;
 
         beforeEach(async () => {
             ({ network, networkToken, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
@@ -1097,7 +1059,7 @@ describe('PoolCollection', () => {
                     await expect(
                         poolCollection
                             .connect(nonNetwork)
-                            .trade(sourceToken.address, targetToken.address, BigNumber.from(1), MIN_RETURN_AMOUNT)
+                            .trade(sourceToken.address, targetToken.address, 1, MIN_RETURN_AMOUNT)
                     ).to.be.revertedWith('AccessDenied');
                 });
 
@@ -1107,19 +1069,14 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             ZERO_ADDRESS,
                             targetToken.address,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('InvalidAddress');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
-                            poolCollection.tradeAmountAndFee(
-                                ZERO_ADDRESS,
-                                targetToken.address,
-                                BigNumber.from(1),
-                                targetAmount
-                            )
+                            poolCollection.tradeAmountAndFee(ZERO_ADDRESS, targetToken.address, 1, targetAmount)
                         ).to.be.revertedWith('InvalidAddress');
                     }
                 });
@@ -1130,32 +1087,27 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             sourceToken.address,
                             ZERO_ADDRESS,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('InvalidAddress');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
-                            poolCollection.tradeAmountAndFee(
-                                sourceToken.address,
-                                ZERO_ADDRESS,
-                                BigNumber.from(1),
-                                targetAmount
-                            )
+                            poolCollection.tradeAmountAndFee(sourceToken.address, ZERO_ADDRESS, 1, targetAmount)
                         ).to.be.revertedWith('InvalidAddress');
                     }
                 });
 
                 it('should revert when attempting to trade or query using a non-existing source pool', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
                             reserveToken2.address,
                             networkToken.address,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('DoesNotExist');
@@ -1165,7 +1117,7 @@ describe('PoolCollection', () => {
                             poolCollection.tradeAmountAndFee(
                                 reserveToken2.address,
                                 networkToken.address,
-                                BigNumber.from(1),
+                                1,
                                 targetAmount
                             )
                         ).to.be.revertedWith('DoesNotExist');
@@ -1173,14 +1125,14 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to trade or query using a non-existing target pool', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
                             networkToken.address,
                             reserveToken2.address,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('DoesNotExist');
@@ -1190,7 +1142,7 @@ describe('PoolCollection', () => {
                             poolCollection.tradeAmountAndFee(
                                 networkToken.address,
                                 reserveToken2.address,
-                                BigNumber.from(1),
+                                1,
                                 targetAmount
                             )
                         ).to.be.revertedWith('DoesNotExist');
@@ -1198,14 +1150,14 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to trade or query without using the network token as one of the pools', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
                     await expect(
                         network.tradePoolCollectionT(
                             poolCollection.address,
                             reserveToken.address,
                             reserveToken2.address,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('InvalidPoo');
@@ -1215,7 +1167,7 @@ describe('PoolCollection', () => {
                             poolCollection.tradeAmountAndFee(
                                 reserveToken.address,
                                 reserveToken2.address,
-                                BigNumber.from(1),
+                                1,
                                 targetAmount
                             )
                         ).to.be.revertedWith('InvalidPoo');
@@ -1228,7 +1180,7 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             networkToken.address,
                             networkToken.address,
-                            BigNumber.from(1),
+                            1,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('InvalidPoo');
@@ -1238,7 +1190,7 @@ describe('PoolCollection', () => {
                             poolCollection.tradeAmountAndFee(
                                 networkToken.address,
                                 networkToken.address,
-                                BigNumber.from(1),
+                                1,
                                 targetAmount
                             )
                         ).to.be.revertedWith('InvalidPoo');
@@ -1251,19 +1203,14 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             sourceToken.address,
                             targetToken.address,
-                            BigNumber.from(0),
+                            0,
                             MIN_RETURN_AMOUNT
                         )
                     ).to.be.revertedWith('ZeroValue');
 
                     for (const targetAmount of [true, false]) {
                         await expect(
-                            poolCollection.tradeAmountAndFee(
-                                sourceToken.address,
-                                targetToken.address,
-                                BigNumber.from(0),
-                                targetAmount
-                            )
+                            poolCollection.tradeAmountAndFee(sourceToken.address, targetToken.address, 0, targetAmount)
                         ).to.be.revertedWith('ZeroValue');
                     }
                 });
@@ -1274,8 +1221,8 @@ describe('PoolCollection', () => {
                             poolCollection.address,
                             sourceToken.address,
                             targetToken.address,
-                            BigNumber.from(1),
-                            BigNumber.from(0)
+                            1,
+                            0
                         )
                     ).to.be.revertedWith('ZeroValue');
                 });
@@ -1291,7 +1238,7 @@ describe('PoolCollection', () => {
                                 poolCollection.address,
                                 sourceToken.address,
                                 targetToken.address,
-                                BigNumber.from(1),
+                                1,
                                 MIN_RETURN_AMOUNT
                             )
                         ).to.be.revertedWith('TradingDisabled');
@@ -1301,7 +1248,7 @@ describe('PoolCollection', () => {
                                 poolCollection.tradeAmountAndFee(
                                     sourceToken.address,
                                     targetToken.address,
-                                    BigNumber.from(1),
+                                    1,
                                     targetAmount
                                 )
                             ).to.be.revertedWith('TradingDisabled');
@@ -1316,7 +1263,7 @@ describe('PoolCollection', () => {
                                 poolCollection.address,
                                 sourceToken.address,
                                 targetToken.address,
-                                BigNumber.from(1),
+                                1,
                                 MIN_RETURN_AMOUNT
                             )
                         ).to.be.revertedWith('LiquidityTooLow');
@@ -1326,7 +1273,7 @@ describe('PoolCollection', () => {
                                 poolCollection.tradeAmountAndFee(
                                     sourceToken.address,
                                     targetToken.address,
-                                    BigNumber.from(1),
+                                    1,
                                     targetAmount
                                 )
                             ).to.be.revertedWith('LiquidityTooLow');
@@ -1341,13 +1288,13 @@ describe('PoolCollection', () => {
 
                     context('with sufficient target and source pool balances', () => {
                         beforeEach(async () => {
-                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BigNumber.from(1000));
+                            const networkTokenTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(1000);
 
                             // for the tests below, ensure that the source to target ratio above 1, such that a zero
                             // trading result is possible
                             const baseTokenTradingLiquidity = isSourceNetworkToken
-                                ? networkTokenTradingLiquidity.div(BigNumber.from(2))
-                                : networkTokenTradingLiquidity.mul(BigNumber.from(2));
+                                ? networkTokenTradingLiquidity.div(2)
+                                : networkTokenTradingLiquidity.mul(2);
 
                             await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                         });
@@ -1358,7 +1305,7 @@ describe('PoolCollection', () => {
                                     poolCollection.address,
                                     sourceToken.address,
                                     targetToken.address,
-                                    BigNumber.from(1),
+                                    1,
                                     MIN_RETURN_AMOUNT
                                 )
                             ).to.be.revertedWith('ZeroTargetAmount');
@@ -1370,7 +1317,7 @@ describe('PoolCollection', () => {
                                     poolCollection.address,
                                     sourceToken.address,
                                     targetToken.address,
-                                    toWei(BigNumber.from(12345)),
+                                    toWei(12_345),
                                     MAX_UINT256
                                 )
                             ).to.be.revertedWith('ReturnAmountTooLow');
@@ -1380,15 +1327,15 @@ describe('PoolCollection', () => {
 
                 context('with insufficient pool balances', () => {
                     beforeEach(async () => {
-                        await networkSettings.setMinLiquidityForTrading(BigNumber.from(0));
+                        await networkSettings.setMinLiquidityForTrading(0);
                     });
 
                     context('source pool', () => {
-                        const amount = BigNumber.from(12345);
+                        const amount = BigNumber.from(12_345);
 
                         context('empty', () => {
                             beforeEach(async () => {
-                                const targetBalance = amount.mul(BigNumber.from(999999999999));
+                                const targetBalance = amount.mul(999_999_999_999);
                                 const networkTokenTradingLiquidity = isSourceNetworkToken
                                     ? BigNumber.from(0)
                                     : targetBalance;
@@ -1425,10 +1372,10 @@ describe('PoolCollection', () => {
 
                     context('target pool', () => {
                         context('empty', () => {
-                            const amount = BigNumber.from(12345);
+                            const amount = 12_345;
 
                             beforeEach(async () => {
-                                const sourceBalance = BigNumber.from(12345);
+                                const sourceBalance = BigNumber.from(12_345);
                                 const networkTokenTradingLiquidity = isSourceNetworkToken
                                     ? sourceBalance
                                     : BigNumber.from(0);
@@ -1469,8 +1416,8 @@ describe('PoolCollection', () => {
                         });
 
                         context('insufficient', () => {
-                            const sourceBalance = BigNumber.from(12345);
-                            const targetBalance = BigNumber.from(9999999);
+                            const sourceBalance = BigNumber.from(12_345);
+                            const targetBalance = BigNumber.from(9_999_999);
 
                             let targetAmount: BigNumber;
 
@@ -1694,10 +1641,10 @@ describe('PoolCollection', () => {
                             for (const tradingFeePercent of [0, 10]) {
                                 for (const amount of [1_000]) {
                                     testTrading({
-                                        sourceBalance: toWei(BigNumber.from(sourceBalance)),
-                                        targetBalance: toWei(BigNumber.from(targetBalance)),
+                                        sourceBalance: toWei(sourceBalance),
+                                        targetBalance: toWei(targetBalance),
                                         tradingFeePPM: toPPM(tradingFeePercent),
-                                        amount: toWei(BigNumber.from(amount)),
+                                        amount: toWei(amount),
                                         intervals: [0, 200, 500]
                                     });
                                 }
@@ -1712,10 +1659,10 @@ describe('PoolCollection', () => {
                             for (const tradingFeePercent of [0, 1, 10]) {
                                 for (const amount of [1_000, 10_000, 100_000]) {
                                     testTrading({
-                                        sourceBalance: toWei(BigNumber.from(sourceBalance)),
-                                        targetBalance: toWei(BigNumber.from(targetBalance)),
+                                        sourceBalance: toWei(sourceBalance),
+                                        targetBalance: toWei(targetBalance),
                                         tradingFeePPM: toPPM(tradingFeePercent),
-                                        amount: toWei(BigNumber.from(amount)),
+                                        amount: toWei(amount),
                                         intervals: [0, 1, 2, 10, 100, 200, 400, 500]
                                     });
                                 }
@@ -1740,7 +1687,7 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
@@ -1749,25 +1696,25 @@ describe('PoolCollection', () => {
             const nonNetwork = deployer;
 
             await expect(
-                poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, BigNumber.from(1))
+                poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, 1)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
-                network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, BigNumber.from(1))
+                network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, 1)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to notify about collected fee from a non-existing pool', async () => {
-            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
             await expect(
-                network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, BigNumber.from(1))
+                network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, 1)
             ).to.be.revertedWith('DoesNotExist');
         });
 
-        for (const feeAmount of [BigNumber.from(0), BigNumber.from(12345), toWei(BigNumber.from(12345))]) {
+        for (const feeAmount of [0, 12_345, toWei(12_345)]) {
             it(`should collect fees of ${feeAmount.toString()}`, async () => {
                 const prevPoolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
@@ -1802,7 +1749,7 @@ describe('PoolCollection', () => {
                 poolCollectionUpgrader
             } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
 
             poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -1922,7 +1869,7 @@ describe('PoolCollection', () => {
             });
 
             it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {
-                const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, BigNumber.from(1_000_000));
+                const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
                 await expect(
                     poolCollectionUpgrader.migratePoolOutT(
                         poolCollection.address,
