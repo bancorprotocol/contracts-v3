@@ -10,7 +10,6 @@ import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
-import { NetworkUserConfig } from 'hardhat/types';
 import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
 
