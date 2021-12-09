@@ -3585,9 +3585,9 @@ describe('BancorNetwork Financial Verification', () => {
         );
 
         tknDecimals = flow.tknDecimals;
-        bntDecimals = DEFAULT_DECIMALS.toNumber();
-        bntknDecimals = DEFAULT_DECIMALS.toNumber();
-        bnbntDecimals = DEFAULT_DECIMALS.toNumber();
+        bntDecimals = DEFAULT_DECIMALS;
+        bntknDecimals = DEFAULT_DECIMALS;
+        bnbntDecimals = DEFAULT_DECIMALS;
 
         const tknAmount = flow.users
             .reduce((sum, user) => sum.add(user.tknBalance), BigNumber.from(flow.epVaultBalance))
