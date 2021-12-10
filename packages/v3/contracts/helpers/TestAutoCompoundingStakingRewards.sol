@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { AutoCompoundingStakingRewards } from "../staking-rewards/AutoCompoundingStakingRewards.sol";
-import { TestTime } from "./TestTime.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { Time } from "../utility/Time.sol";
+
+import { AutoCompoundingStakingRewards } from "../staking-rewards/AutoCompoundingStakingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { TestTime } from "./TestTime.sol";
 
 contract TestAutoCompoundingStakingRewards is AutoCompoundingStakingRewards, TestTime {
     constructor(

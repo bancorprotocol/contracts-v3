@@ -11,8 +11,6 @@ import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
-import { StakingRewardsMath } from "./StakingRewardsMath.sol";
-import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -20,10 +18,8 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-error ProgramActive();
-error ProgramInactive();
-error ProgramAlreadyActive();
-error InvalidParam();
+import { StakingRewardsMath } from "./StakingRewardsMath.sol";
+import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 /**
  * @dev Auto Compounding Staking Rewards contract
@@ -40,10 +36,10 @@ contract AutoCompoundingStakingRewards is
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     struct TimeInfo {
-        uint256 timeElapsed;
-        uint256 prevTimeElapsed;
-        uint256 totalProgramTime;
-        uint256 currentTime;
+        uint32 timeElapsed;
+        uint32 prevTimeElapsed;
+        uint32 totalProgramTime;
+        uint32 currentTime;
     }
 
     struct PoolInfo {
@@ -51,6 +47,11 @@ contract AutoCompoundingStakingRewards is
         uint256 amountOfPoolTokenOwnedByProtocol;
         uint256 poolTokenTotalSupply;
     }
+
+    error ProgramActive();
+    error ProgramInactive();
+    error ProgramAlreadyActive();
+    error InvalidParam();
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -77,7 +78,7 @@ contract AutoCompoundingStakingRewards is
         ReserveToken indexed pool,
         IVault rewardsVault,
         uint256 totalRewards,
-        DistributionType distributionType,
+        DistributionType indexed distributionType,
         uint256 startTime,
         uint256 endTime
     );
@@ -85,7 +86,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(ReserveToken indexed pool, uint256 prevEndTime, uint256 availableRewards);
+    event ProgramTerminated(ReserveToken indexed pool, uint32 prevEndTime, uint256 availableRewards);
 
     /**
      * @dev triggered when a program is enabled/disabled
@@ -99,7 +100,7 @@ contract AutoCompoundingStakingRewards is
         ReserveToken indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
-        uint256 programTimeElapsed,
+        uint32 programTimeElapsed,
         uint256 availableRewards
     );
 
@@ -129,8 +130,8 @@ contract AutoCompoundingStakingRewards is
      * @dev initializes the contract and its parents
      */
     function __AutoCompoundingStakingRewards_init() internal initializer {
-        __Upgradeable_init();
         __ReentrancyGuard_init();
+        __Upgradeable_init();
 
         __AutoCompoundingStakingRewards_init_unchained();
     }
@@ -160,9 +161,9 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 numPrograms = _programByPool.length();
-        ProgramData[] memory list = new ProgramData[](numPrograms);
-        for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
+        uint256 programsLength = _programByPool.length();
+        ProgramData[] memory list = new ProgramData[](programsLength);
+        for (uint256 i = 0; i < programsLength; i = uncheckedInc(i)) {
             list[i] = _programs[_programByPool.at(i)];
         }
         return list;
@@ -172,7 +173,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) public view returns (bool) {
-        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory currentProgram = _programs[ReserveToken.unwrap(pool)];
 
         if (currentProgram.availableRewards == 0) {
             return false;
@@ -201,8 +202,8 @@ contract AutoCompoundingStakingRewards is
         IVault rewardsVault,
         uint256 totalRewards,
         DistributionType distributionType,
-        uint256 startTime,
-        uint256 endTime
+        uint32 startTime,
+        uint32 endTime
     ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
         if (isProgramActive(pool)) {
             revert ProgramAlreadyActive();
@@ -216,13 +217,13 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        address poolAsAddress = ReserveToken.unwrap(pool);
+        address poolAddress = ReserveToken.unwrap(pool);
 
-        ProgramData storage currentProgram = _programs[poolAsAddress];
+        ProgramData storage currentProgram = _programs[poolAddress];
 
         // it no program exists for the given pool, initialize it
         if (address(currentProgram.poolToken) == address(0)) {
-            if (poolAsAddress == address(_networkToken)) {
+            if (poolAddress == address(_networkToken)) {
                 currentProgram.poolToken = _masterPool.poolToken();
             } else {
                 currentProgram.poolToken = _network.collectionByPool(pool).poolData(pool).poolToken;
@@ -241,7 +242,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.prevDistributionTimestamp = 0;
         currentProgram.isEnabled = true;
 
-        _programByPool.add(poolAsAddress);
+        _programByPool.add(poolAddress);
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
     }
 
@@ -272,6 +273,8 @@ contract AutoCompoundingStakingRewards is
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
         currentProgram.isEnabled = status;
+
+        emit ProgramEnabled(pool, status, currentProgram.availableRewards);
     }
 
     /**
@@ -345,19 +348,19 @@ contract AutoCompoundingStakingRewards is
      * @dev returns the flat rewards of a given time period
      */
     function calculateFlatRewards(
-        uint256 timeElapsedSinceLastDistribution,
-        uint256 remainingProgramTime,
+        uint32 timeElapsedSinceLastDistribution,
+        uint32 remainingProgramTime,
         uint256 availableRewards
     ) internal pure returns (uint256) {
-        return (_calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
+        return _calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards);
     }
 
     /**
      * @dev returns the exponential decay rewards between two time
      */
     function calculateExponentialDecayRewards(
-        uint256 timeElapsed,
-        uint256 prevTimeElapsed,
+        uint32 timeElapsed,
+        uint32 prevTimeElapsed,
         uint256 totalRewards
     ) internal pure returns (uint256) {
         return
@@ -402,7 +405,7 @@ contract AutoCompoundingStakingRewards is
         uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
 
         // set time elapsed to the least time between the actual time elapsed and the total program time
-        timeInfo.timeElapsed = Math.min(timeInfo.totalProgramTime, timeElapsed);
+        timeInfo.timeElapsed = uint32(Math.min(uint256(timeInfo.totalProgramTime), uint256(timeElapsed)));
 
         timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
             ? currentProgram.prevDistributionTimestamp

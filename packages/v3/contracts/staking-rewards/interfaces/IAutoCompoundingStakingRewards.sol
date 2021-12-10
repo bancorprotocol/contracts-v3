@@ -12,9 +12,9 @@ enum DistributionType {
 }
 
 struct ProgramData {
-    uint256 startTime;
-    uint256 endTime;
-    uint256 prevDistributionTimestamp;
+    uint32 startTime;
+    uint32 endTime;
+    uint32 prevDistributionTimestamp;
     uint256 totalRewards;
     uint256 availableRewards;
     IVault rewardsVault;
@@ -52,8 +52,8 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
         IVault rewardsVault,
         uint256 totalRewards,
         DistributionType distributionType,
-        uint256 startTime,
-        uint256 endTime
+        uint32 startTime,
+        uint32 endTime
     ) external;
 
     /**
@@ -62,6 +62,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      * requirements:
      *
      * - the caller must be the admin of the contract
+     * - program should be active
      */
     function terminateProgram(ReserveToken pool) external;
 

@@ -16,24 +16,29 @@ contract StakingRewardsMath {
      * @dev return the number of pool token to burn in order to match a number of token to distribute
      */
     function _calculatePoolTokenToBurn(
-        uint256 a, // totalAmountOfTokenStaked
-        uint256 b, // amountOfTokenToDistribute
-        uint256 c, // totalSupplyOfPoolToken
-        uint256 d // amountOfPoolTokenOwnedByProtocol
+        uint256 totalAmountOfTokenStaked,
+        uint256 amountOfTokenToDistribute,
+        uint256 totalSupplyOfPoolToken,
+        uint256 amountOfPoolTokenOwnedByProtocol
     ) internal pure returns (uint256) {
-        uint256 bc = b * c;
-        return MathEx.mulDivF(bc, c, bc + a * (c - d));
+        uint256 bc = amountOfTokenToDistribute * totalSupplyOfPoolToken;
+        return
+            MathEx.mulDivF(
+                bc,
+                totalSupplyOfPoolToken,
+                bc + totalAmountOfTokenStaked * (totalSupplyOfPoolToken - amountOfPoolTokenOwnedByProtocol)
+            );
     }
 
     /**
      * @dev return the amount of rewards distributed on a flat amount ratio
      */
     function _calculateFlatRewards(
-        uint256 timeElapsedSinceLastDistribution,
-        uint256 remainingProgramTime,
+        uint32 timeElapsedSinceLastDistribution,
+        uint32 remainingProgramTime,
         uint256 availableRewards
     ) internal pure returns (uint256) {
-        return MathEx.mulDivF(availableRewards, timeElapsedSinceLastDistribution, remainingProgramTime);
+        return (availableRewards * timeElapsedSinceLastDistribution) / remainingProgramTime;
     }
 
     /**
@@ -43,7 +48,7 @@ contract StakingRewardsMath {
      * input value to this function is limited by `LAMBDA * timeElapsed < 16` --> `timeElapsed < 1120000000`.
      * For `timeElapsed = 1120000000 - 1`, the formula above returns more than 99.9999% of `totalRewards`.
      */
-    function _calculateExponentialDecayRewardsAfterTimeElapsed(uint256 timeElapsed, uint256 totalRewards)
+    function _calculateExponentialDecayRewardsAfterTimeElapsed(uint32 timeElapsed, uint256 totalRewards)
         internal
         pure
         returns (uint256)
