@@ -52,13 +52,20 @@ describe('StakingRewardsMath', () => {
             });
         };
 
-        const processExponentialDecayRewardTest = (numOfSeconds: number, totalRewards: number, minAccuracy: string) => {
+        const calculateExponentialDecayRewardsAfterTimeElapsedTest = (
+            numOfSeconds: number,
+            totalRewards: number,
+            minAccuracy: string
+        ) => {
             it(`processExponentialDecayReward(${numOfSeconds}, ${totalRewards})`, async () => {
                 const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
                 if (numOfSeconds < SECONDS_TOO_HIGH) {
                     const actual = new Decimal(
                         (
-                            await stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                            await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsed(
+                                numOfSeconds,
+                                totalRewardsInWei
+                            )
                         ).toString()
                     );
                     const expected = new Decimal(totalRewardsInWei.toString()).mul(
@@ -67,7 +74,10 @@ describe('StakingRewardsMath', () => {
                     assertAccuracy(actual, expected, minAccuracy);
                 } else {
                     await expect(
-                        stakingRewardsMath.processExponentialDecayRewardT(numOfSeconds, totalRewardsInWei)
+                        stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsed(
+                            numOfSeconds,
+                            totalRewardsInWei
+                        )
                     ).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
                 }
             });
@@ -136,7 +146,7 @@ describe('StakingRewardsMath', () => {
                 SECONDS_TOO_HIGH - 1,
                 SECONDS_TOO_HIGH
             ]) {
-                processExponentialDecayRewardTest(numOfSeconds, 40_000_000, '0.999999999999999999');
+                calculateExponentialDecayRewardsAfterTimeElapsedTest(numOfSeconds, 40_000_000, '0.999999999999999999');
             }
         });
 
@@ -153,7 +163,7 @@ describe('StakingRewardsMath', () => {
                         for (let days = 0; days < 5; days++) {
                             for (let years = 0; years < 5; years++) {
                                 for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
-                                    processExponentialDecayRewardTest(
+                                    calculateExponentialDecayRewardsAfterTimeElapsedTest(
                                         duration.seconds(seconds) +
                                             duration.minutes(minutes) +
                                             duration.hours(hours) +
@@ -181,7 +191,7 @@ describe('StakingRewardsMath', () => {
             it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramTime}, ${availableRewards})`, async () => {
                 const actual = new Decimal(
                     (
-                        await stakingRewardsMath.processFlatRewardT(
+                        await stakingRewardsMath.calculateFlatRewards(
                             timeElapsedSinceLastDistribution,
                             remainingProgramTime,
                             availableRewards
@@ -208,7 +218,7 @@ describe('StakingRewardsMath', () => {
             minAccuracy = '0.999999999999999999'
         ) => {
             it(`processPoolTokenToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
-                const actual = new Decimal((await stakingRewardsMath.processPoolTokenToBurnT(a, b, c, d)).toString());
+                const actual = new Decimal((await stakingRewardsMath.calculatePoolTokenToBurnT(a, b, c, d)).toString());
 
                 const bc = b.mul(c);
                 const expected = bc.mul(c).div(a.mul(c.sub(d)).add(bc));

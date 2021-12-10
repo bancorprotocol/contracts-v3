@@ -50,6 +50,24 @@ describe('AutoCompoundingStakingRewards', () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
+    const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
+        const actualDec = new Decimal(actual.toString());
+        const expectedDec = new Decimal(expected.toString());
+
+        if (!actualDec.eq(expectedDec)) {
+            const accuracy = actualDec.gt(expectedDec) ? expectedDec.div(actualDec) : actualDec.div(expectedDec);
+            expect(accuracy.gte(new Decimal(minAccuracy)) && accuracy.lte(1)).to.equal(
+                true,
+                '\n' +
+                    [
+                        `expected = ${expectedDec}`,
+                        `actual   = ${actualDec}`,
+                        `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
+                    ].join('\n')
+            );
+        }
+    };
+
     describe('construction', () => {
         beforeEach(async () => {
             ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
@@ -454,24 +472,6 @@ describe('AutoCompoundingStakingRewards', () => {
         ) => {
             const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
             return (await poolToken.balanceOf(user.address)).mul(tokenStakedBalance).div(await poolToken.totalSupply());
-        };
-
-        const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
-            const actualDec = new Decimal(actual.toString());
-            const expectedDec = new Decimal(expected.toString());
-
-            if (!actualDec.eq(expectedDec)) {
-                const accuracy = actualDec.gt(expectedDec) ? expectedDec.div(actualDec) : actualDec.div(expectedDec);
-                expect(accuracy.gte(new Decimal(minAccuracy)) && accuracy.lte(1)).to.equal(
-                    true,
-                    '\n' +
-                        [
-                            `expected = ${expectedDec}`,
-                            `actual   = ${actualDec}`,
-                            `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
-                        ].join('\n')
-                );
-            }
         };
 
         function getPerc(num: number, percent: number): number;

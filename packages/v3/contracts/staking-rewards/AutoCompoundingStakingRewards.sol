@@ -20,19 +20,6 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-struct TimeInfo {
-    uint256 timeElapsed;
-    uint256 prevTimeElapsed;
-    uint256 totalProgramTime;
-    uint256 currentTime;
-}
-
-struct PoolInfo {
-    uint256 stakedBalance;
-    uint256 amountOfPoolTokenOwnedByProtocol;
-    uint256 poolTokenTotalSupply;
-}
-
 error ProgramActive();
 error ProgramInactive();
 error ProgramAlreadyActive();
@@ -51,6 +38,19 @@ contract AutoCompoundingStakingRewards is
 {
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+
+    struct TimeInfo {
+        uint256 timeElapsed;
+        uint256 prevTimeElapsed;
+        uint256 totalProgramTime;
+        uint256 currentTime;
+    }
+
+    struct PoolInfo {
+        uint256 stakedBalance;
+        uint256 amountOfPoolTokenOwnedByProtocol;
+        uint256 poolTokenTotalSupply;
+    }
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -311,7 +311,7 @@ contract AutoCompoundingStakingRewards is
             );
         }
 
-        uint256 poolTokenToBurn = _processPoolTokenToBurn(
+        uint256 poolTokenToBurn = _calculatePoolTokenToBurn(
             poolInfo.stakedBalance,
             tokensToDistribute,
             poolInfo.poolTokenTotalSupply,
@@ -349,11 +349,11 @@ contract AutoCompoundingStakingRewards is
         uint256 remainingProgramTime,
         uint256 availableRewards
     ) internal pure returns (uint256) {
-        return (_processFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
+        return (_calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards));
     }
 
     /**
-     * @dev returns the exponential decay rewards of a given time period
+     * @dev returns the exponential decay rewards between two time
      */
     function calculateExponentialDecayRewards(
         uint256 timeElapsed,
@@ -361,8 +361,8 @@ contract AutoCompoundingStakingRewards is
         uint256 totalRewards
     ) internal pure returns (uint256) {
         return
-            _processExponentialDecayRewards(timeElapsed, totalRewards) -
-            _processExponentialDecayRewards(prevTimeElapsed, totalRewards);
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, totalRewards) -
+            _calculateExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, totalRewards);
     }
 
     /**

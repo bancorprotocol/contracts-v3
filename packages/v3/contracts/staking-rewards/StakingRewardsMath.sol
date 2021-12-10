@@ -15,7 +15,7 @@ contract StakingRewardsMath {
     /**
      * @dev return the number of pool token to burn in order to match a number of token to distribute
      */
-    function _processPoolTokenToBurn(
+    function _calculatePoolTokenToBurn(
         uint256 a, // totalAmountOfTokenStaked
         uint256 b, // amountOfTokenToDistribute
         uint256 c, // totalSupplyOfPoolToken
@@ -28,7 +28,7 @@ contract StakingRewardsMath {
     /**
      * @dev return the amount of rewards distributed on a flat amount ratio
      */
-    function _processFlatRewards(
+    function _calculateFlatRewards(
         uint256 timeElapsedSinceLastDistribution,
         uint256 remainingProgramTime,
         uint256 availableRewards
@@ -43,7 +43,7 @@ contract StakingRewardsMath {
      * input value to this function is limited by `LAMBDA * timeElapsed < 16` --> `timeElapsed < 1120000000`.
      * For `timeElapsed = 1120000000 - 1`, the formula above returns more than 99.9999% of `totalRewards`.
      */
-    function _processExponentialDecayRewards(uint256 timeElapsed, uint256 totalRewards)
+    function _calculateExponentialDecayRewardsAfterTimeElapsed(uint256 timeElapsed, uint256 totalRewards)
         internal
         pure
         returns (uint256)
