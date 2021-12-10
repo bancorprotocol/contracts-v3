@@ -331,7 +331,7 @@ export const depositToPool = async (
 
 export interface PoolSpec {
     symbol: string;
-    balance: BigNumber;
+    balance: BigNumberish;
     initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import { EnumerableMapUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -33,7 +33,7 @@ contract AutoCompoundingStakingRewards is
     Upgradeable
 {
     using ReserveTokenLibrary for ReserveToken;
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
 
     struct TimeInfo {
         uint32 timeElapsed;
@@ -52,6 +52,7 @@ contract AutoCompoundingStakingRewards is
     error ProgramInactive();
     error ProgramAlreadyActive();
     error InvalidParam();
+    error InsufficientFunds();
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -65,11 +66,11 @@ contract AutoCompoundingStakingRewards is
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
 
-    // a set of all pools that have a rewards program associated with them
-    EnumerableSetUpgradeable.AddressSet private _programByPool;
+    // a map of all pools that have a rewards program associated with them
+    EnumerableMapUpgradeable.UintToAddressMap private _programByPool;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint256[MAX_GAP - 4] private __gap;
 
     /**
      * @dev triggered when a program is created
@@ -164,7 +165,8 @@ contract AutoCompoundingStakingRewards is
         uint256 programsLength = _programByPool.length();
         ProgramData[] memory list = new ProgramData[](programsLength);
         for (uint256 i = 0; i < programsLength; i = uncheckedInc(i)) {
-            list[i] = _programs[_programByPool.at(i)];
+            (, address value) = _programByPool.at(i);
+            list[i] = _programs[value];
         }
         return list;
     }
@@ -232,11 +234,20 @@ contract AutoCompoundingStakingRewards is
             if (poolAddress == address(_networkToken)) {
                 currentProgram.poolToken = _masterPool.poolToken();
             } else {
-                currentProgram.poolToken = _network.collectionByPool(pool).poolData(pool).poolToken;
+                currentProgram.poolToken = _network.collectionByPool(pool).poolToken(pool);
             }
         } else {
             // otherwise process rewards one last time to make sure all rewards have been distributed
             processRewards(pool);
+        }
+
+        // checking that the rewards vault hold enough pool token for the amount of total rewards token
+        if (
+            ((currentProgram.poolToken.balanceOf(address(rewardsVault)) *
+                _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance) /
+                currentProgram.poolToken.totalSupply()) < totalRewards
+        ) {
+            revert InsufficientFunds();
         }
 
         currentProgram.rewardsVault = rewardsVault;
@@ -248,7 +259,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.prevDistributionTimestamp = 0;
         currentProgram.isEnabled = true;
 
-        _programByPool.add(poolAddress);
+        _programByPool.set(_programByPool.length(), poolAddress);
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
     }
 
@@ -291,19 +302,19 @@ contract AutoCompoundingStakingRewards is
 
         DistributionType distributionType = currentProgram.distributionType;
 
+        // if program is disabled, doesn't process rewards
         if (!currentProgram.isEnabled) {
-            // if program is disabled, doesn't process rewards
             return;
         }
 
+        // if the program is inactive, has a flat distribution and the its end time is lower than the previous distribution timestamp,
+        // process the rewards, in any other case it should return
         if (!isProgramActive(pool)) {
-            // if the program is inactive and has a flat distribution
-            if (distributionType == DistributionType.FLAT) {
-                // if the previous distribution timestamp is higher than or equal to the program end time
-                // it means that the latest batch of rewards has been distributed, otherwise process the last distribution
-                if (currentProgram.prevDistributionTimestamp >= currentProgram.endTime) {
-                    return;
-                }
+            if (
+                distributionType == DistributionType.FLAT &&
+                currentProgram.endTime < currentProgram.prevDistributionTimestamp
+            ) {} else {
+                return;
             }
         }
 
@@ -319,7 +330,9 @@ contract AutoCompoundingStakingRewards is
             );
         } else if (distributionType == DistributionType.FLAT) {
             tokensToDistribute = calculateFlatRewards(
+                // calculating the time elapsed since the last distribution
                 timeInfo.timeElapsed - timeInfo.prevTimeElapsed,
+                // calculating remaining program time
                 timeInfo.totalProgramTime - timeInfo.prevTimeElapsed,
                 currentProgram.availableRewards
             );

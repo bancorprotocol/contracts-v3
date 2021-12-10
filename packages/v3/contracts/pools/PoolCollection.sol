@@ -243,6 +243,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
+    function poolToken(ReserveToken reserveToken) external view returns (IPoolToken) {
+        return _poolData[reserveToken].poolToken;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
     function pools() external view returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);

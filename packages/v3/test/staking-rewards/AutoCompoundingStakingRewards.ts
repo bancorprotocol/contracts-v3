@@ -23,7 +23,7 @@ import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
-const { seconds, days, minutes, hours, years } = duration;
+const { days } = duration;
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
@@ -66,6 +66,47 @@ describe('AutoCompoundingStakingRewards', () => {
                     ].join('\n')
             );
         }
+    };
+
+    const setupSimplePoolAndTransferPoolTokenForProgramCreation = async (
+        initialStake: BigNumberish,
+        totalRewards: BigNumberish
+    ) => {
+        const { token, poolToken } = await setupSimplePool(
+            {
+                symbol: 'TKN',
+                balance: initialStake,
+                initialRate: INITIAL_RATE
+            },
+            user,
+            network,
+            networkInformation,
+            networkSettings,
+            poolCollection
+        );
+
+        await depositAndTransferToSR(
+            stakingRewardsProvider,
+            token,
+            poolToken,
+            totalRewards,
+            network,
+            externalRewardsVault
+        );
+
+        return { token, poolToken };
+    };
+
+    const depositAndTransferToSR = async (
+        lp: SignerWithAddress,
+        token: TokenWithAddress,
+        poolToken: TokenWithAddress,
+        amount: BigNumberish,
+        network: TestBancorNetwork,
+        externalRewardsVault: ExternalRewardsVault
+    ) => {
+        await depositToPool(lp, token, amount, network);
+        await transfer(lp, poolToken, externalRewardsVault, amount);
     };
 
     describe('construction', () => {
@@ -117,6 +158,7 @@ describe('AutoCompoundingStakingRewards', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
         const TOTAL_DURATION = days(10);
         const TOTAL_REWARDS = 10;
+        const INITIAL_STAKE = 10;
 
         let token: TokenWithAddress;
         let poolToken: TokenWithAddress;
@@ -133,17 +175,9 @@ describe('AutoCompoundingStakingRewards', () => {
                 ctorArgs: [network.address, networkToken.address, masterPool.address]
             });
 
-            ({ token, poolToken } = await setupSimplePool(
-                {
-                    symbol: 'TKN',
-                    balance: BigNumber.from(10_000),
-                    initialRate: INITIAL_RATE
-                },
-                deployer,
-                network,
-                networkInformation,
-                networkSettings,
-                poolCollection
+            ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
+                INITIAL_STAKE,
+                TOTAL_REWARDS
             ));
         });
 
@@ -235,6 +269,19 @@ describe('AutoCompoundingStakingRewards', () => {
                         currentTime.add(TOTAL_DURATION)
                     )
                 ).to.revertedWith('InvalidParam');
+            });
+
+            it('should revert when there is not enough funds in the external rewards vault', async () => {
+                await expect(
+                    autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS + 1,
+                        0,
+                        0,
+                        currentTime.add(TOTAL_DURATION)
+                    )
+                ).to.revertedWith('InsufficientFunds');
             });
 
             it('should create the program', async () => {
@@ -432,31 +479,11 @@ describe('AutoCompoundingStakingRewards', () => {
                 let poolToken2: TokenWithAddress;
 
                 beforeEach(async () => {
-                    ({ token: token1, poolToken: poolToken1 } = await setupSimplePool(
-                        {
-                            symbol: 'TKN',
-                            balance: BigNumber.from(10_000),
-                            initialRate: INITIAL_RATE
-                        },
-                        deployer,
-                        network,
-                        networkInformation,
-                        networkSettings,
-                        poolCollection
-                    ));
+                    ({ token: token1, poolToken: poolToken1 } =
+                        await setupSimplePoolAndTransferPoolTokenForProgramCreation(INITIAL_STAKE, TOTAL_REWARDS));
 
-                    ({ token: token2, poolToken: poolToken2 } = await setupSimplePool(
-                        {
-                            symbol: 'TKN',
-                            balance: BigNumber.from(10_000),
-                            initialRate: INITIAL_RATE
-                        },
-                        deployer,
-                        network,
-                        networkInformation,
-                        networkSettings,
-                        poolCollection
-                    ));
+                    ({ token: token2, poolToken: poolToken2 } =
+                        await setupSimplePoolAndTransferPoolTokenForProgramCreation(INITIAL_STAKE, TOTAL_REWARDS));
 
                     for (const currToken of [token, token1, token2]) {
                         await autoCompoundingStakingRewards.createProgram(
@@ -483,18 +510,6 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('process rewards', () => {
-        const depositAndTransferToSR = async (
-            lp: SignerWithAddress,
-            token: TokenWithAddress,
-            poolToken: TokenWithAddress,
-            amount: BigNumberish,
-            network: TestBancorNetwork,
-            externalRewardsVault: ExternalRewardsVault
-        ) => {
-            await depositToPool(lp, token, amount, network);
-            await transfer(lp, poolToken, externalRewardsVault, amount);
-        };
-
         const tokenFromPoolToken = async (
             user: { address: string },
             poolCollection: TestPoolCollection,
@@ -547,27 +562,10 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 currentTime = BigNumber.from(0);
 
-                ({ token, poolToken } = await setupSimplePool(
-                    {
-                        symbol: 'TKN',
-                        balance: INITIAL_STAKE,
-                        initialRate: INITIAL_RATE
-                    },
-                    user,
-                    network,
-                    networkInformation,
-                    networkSettings,
-                    poolCollection
+                ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
+                    INITIAL_STAKE,
+                    TOTAL_REWARDS
                 ));
-
-                await depositAndTransferToSR(
-                    stakingRewardsProvider,
-                    token,
-                    poolToken,
-                    TOTAL_REWARDS,
-                    network,
-                    externalRewardsVault
-                );
 
                 await autoCompoundingStakingRewards.createProgram(
                     token.address,

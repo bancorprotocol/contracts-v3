@@ -259,6 +259,7 @@ describe('PoolCollection', () => {
 
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
                     expect(poolToken).not.to.equal(ZERO_ADDRESS);
+                    expect(await poolCollection.poolToken(reserveToken.address)).to.equal(pool.poolToken);
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
 
                     expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
