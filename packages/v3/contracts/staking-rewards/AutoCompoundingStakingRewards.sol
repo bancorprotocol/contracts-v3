@@ -291,6 +291,11 @@ contract AutoCompoundingStakingRewards is
 
         DistributionType distributionType = currentProgram.distributionType;
 
+        if (!currentProgram.isEnabled) {
+            // if program is disabled, doesn't process rewards
+            return;
+        }
+
         if (!isProgramActive(pool)) {
             // if the program is inactive and has a flat distribution
             if (distributionType == DistributionType.FLAT) {

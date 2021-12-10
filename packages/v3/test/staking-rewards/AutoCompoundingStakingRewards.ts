@@ -315,9 +315,34 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         });
 
+        describe('program enable / disable', () => {
+            beforeEach(async () => {
+                await autoCompoundingStakingRewards.createProgram(
+                    token.address,
+                    externalRewardsVault.address,
+                    TOTAL_REWARDS,
+                    0,
+                    currentTime.add(1),
+                    currentTime.add(TOTAL_DURATION)
+                );
+            });
+
+            it('should correctly enable a program', async () => {
+                await expect(autoCompoundingStakingRewards.enableProgram(token.address, true))
+                    .to.emit(autoCompoundingStakingRewards, 'ProgramEnabled')
+                    .withArgs(token.address, true, TOTAL_REWARDS);
+            });
+
+            it('should correctly disable a program', async () => {
+                await expect(autoCompoundingStakingRewards.enableProgram(token.address, false))
+                    .to.emit(autoCompoundingStakingRewards, 'ProgramEnabled')
+                    .withArgs(token.address, false, TOTAL_REWARDS);
+            });
+        });
+
         describe('program status', () => {
-            context("when program doesn't exist", () => {
-                it('should return false when program is not active', async () => {
+            context('when program is non-existent', () => {
+                it('should return false when program is non-existent', async () => {
                     expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                 });
             });
