@@ -357,6 +357,23 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                 });
             });
+
+            context('when the program is active', () => {
+                beforeEach(async () => {
+                    await autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS,
+                        0,
+                        currentTime,
+                        currentTime.add(TOTAL_DURATION)
+                    );
+                });
+
+                it('should return true when program is active', async () => {
+                    expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
+                });
+            });
         });
 
         describe('query program data', () => {
