@@ -418,9 +418,9 @@ contract AutoCompoundingStakingRewards is
         // set time elapsed to the least time between the actual time elapsed and the total program time
         timeInfo.timeElapsed = uint32(Math.min(uint256(timeInfo.totalProgramTime), uint256(timeElapsed)));
 
-        timeInfo.prevTimeElapsed = currentProgram.prevDistributionTimestamp == 0
-            ? currentProgram.prevDistributionTimestamp
-            : currentProgram.prevDistributionTimestamp - currentProgram.startTime;
+        timeInfo.prevTimeElapsed = uint32(
+            MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
+        );
 
         return timeInfo;
     }

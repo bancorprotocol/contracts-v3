@@ -62,7 +62,7 @@ describe('StakingRewardsMath', () => {
                 if (numOfSeconds < SECONDS_TOO_HIGH) {
                     const actual = new Decimal(
                         (
-                            await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsed(
+                            await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
                                 numOfSeconds,
                                 totalRewardsInWei
                             )
@@ -74,7 +74,7 @@ describe('StakingRewardsMath', () => {
                     assertAccuracy(actual, expected, minAccuracy);
                 } else {
                     await expect(
-                        stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsed(
+                        stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
                             numOfSeconds,
                             totalRewardsInWei
                         )
@@ -182,7 +182,7 @@ describe('StakingRewardsMath', () => {
     });
 
     describe('Flat', () => {
-        const processFlatRewardTest = (
+        const calculateFlatRewardTest = (
             timeElapsedSinceLastDistribution: number,
             remainingProgramTime: number,
             availableRewards: number,
@@ -191,7 +191,7 @@ describe('StakingRewardsMath', () => {
             it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramTime}, ${availableRewards})`, async () => {
                 const actual = new Decimal(
                     (
-                        await stakingRewardsMath.calculateFlatRewards(
+                        await stakingRewardsMath.calculateFlatRewardsT(
                             timeElapsedSinceLastDistribution,
                             remainingProgramTime,
                             availableRewards
@@ -205,12 +205,12 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            processFlatRewardTest(1000, 10000, 10000);
+            calculateFlatRewardTest(1000, 10000, 10000);
         });
     });
 
     describe('Process Pool Token Burn', () => {
-        const processPoolTokenToBurnTest = (
+        const calculatePoolTokenToBurnTest = (
             a: BigNumber,
             b: BigNumber,
             c: BigNumber,
@@ -227,7 +227,7 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            processPoolTokenToBurnTest(
+            calculatePoolTokenToBurnTest(
                 BigNumber.from(1000),
                 BigNumber.from(1000),
                 BigNumber.from(1000),
