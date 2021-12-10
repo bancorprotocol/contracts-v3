@@ -196,18 +196,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ).to.revertedWith('ProgramAlreadyActive');
             });
 
-            it('should revert when total rewards is lower or equal to 0', async () => {
-                await expect(
-                    autoCompoundingStakingRewards.createProgram(
-                        token.address,
-                        externalRewardsVault.address,
-                        -1,
-                        0,
-                        currentTime,
-                        currentTime.add(TOTAL_DURATION)
-                    )
-                ).to.be.reverted;
-
+            it('should revert when total rewards is equal to 0', async () => {
                 await expect(
                     autoCompoundingStakingRewards.createProgram(
                         token.address,

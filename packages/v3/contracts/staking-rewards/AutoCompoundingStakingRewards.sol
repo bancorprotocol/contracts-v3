@@ -213,7 +213,13 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (startTime > endTime || startTime < _time()) {
+        if (distributionType == DistributionType.FLAT) {
+            if (startTime > endTime) {
+                revert InvalidParam();
+            }
+        }
+
+        if (startTime < _time()) {
             revert InvalidParam();
         }
 
