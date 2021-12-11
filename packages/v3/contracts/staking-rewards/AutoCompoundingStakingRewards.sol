@@ -309,7 +309,7 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        // if the program is inactive, has a flat distribution and the its end time is lower than the previous distribution timestamp,
+        // if the program is inactive, has a flat distribution and its end time is lower than the previous distribution timestamp,
         // process the rewards, in any other case it should return
         if (!isProgramActive(pool)) {
             if (
