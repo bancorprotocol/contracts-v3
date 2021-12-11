@@ -21,10 +21,10 @@ contract TestStakingRewardsMath is StakingRewardsMath {
 
     function calculateFlatRewardsT(
         uint32 timeElapsed,
-        uint32 remainingProgramTime,
+        uint32 remainingProgramDuration,
         uint256 availableRewards
     ) external pure returns (uint256) {
-        return _calculateFlatRewards(timeElapsed, remainingProgramTime, availableRewards);
+        return _calculateFlatRewards(timeElapsed, remainingProgramDuration, availableRewards);
     }
 
     function calculateExponentialDecayRewardsAfterTimeElapsedT(uint32 timeElapsed, uint256 totalRewards)

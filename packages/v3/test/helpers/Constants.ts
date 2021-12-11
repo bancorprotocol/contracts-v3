@@ -23,3 +23,7 @@ export const FeeTypes = {
     Withdrawal: 1,
     FlashLoan: 2
 };
+export const StackingRewardsDistributionTypes = {
+    Flat: 0,
+    ExponentialDecay: 1
+};

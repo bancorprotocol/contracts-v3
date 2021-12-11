@@ -18,7 +18,10 @@ import {
     ProxyAdmin,
     TestBancorNetwork,
     TestPoolCollection,
-    TestPendingWithdrawals
+    TestPendingWithdrawals,
+    TestMasterPool,
+    MasterPool,
+    ExternalRewardsVault
 } from '../../typechain-types';
 import { roles } from './AccessControl';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
@@ -87,6 +90,32 @@ export const createProxy = async <F extends ContractFactory>(
 };
 
 const getDeployer = async () => (await ethers.getSigners())[0];
+
+export const createStakingRewardsWithERV = async (
+    network: TestBancorNetwork | BancorNetwork,
+    networkToken: IERC20,
+    masterPool: TestMasterPool | MasterPool,
+    externalRewardsVault: ExternalRewardsVault
+) => {
+    const autoCompoundingStakingRewards = await createStakingRewards(network, networkToken, masterPool);
+
+    await externalRewardsVault.grantRole(
+        roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+        autoCompoundingStakingRewards.address
+    );
+
+    return autoCompoundingStakingRewards;
+};
+
+export const createStakingRewards = async (
+    network: TestBancorNetwork | BancorNetwork,
+    networkToken: IERC20,
+    masterPool: TestMasterPool | MasterPool
+) => {
+    return await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+        ctorArgs: [network.address, networkToken.address, masterPool.address]
+    });
+};
 
 const createGovernedToken = async (
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,

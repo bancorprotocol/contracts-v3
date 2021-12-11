@@ -375,10 +375,10 @@ contract AutoCompoundingStakingRewards is
      */
     function calculateFlatRewards(
         uint32 timeElapsedSinceLastDistribution,
-        uint32 remainingProgramTime,
+        uint32 remainingProgramDuration,
         uint256 availableRewards
     ) internal pure returns (uint256) {
-        return _calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramTime, availableRewards);
+        return _calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramDuration, availableRewards);
     }
 
     /**
