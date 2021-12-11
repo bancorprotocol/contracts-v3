@@ -618,7 +618,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         expect(externalRewardsVaultTokenOwned).to.almostEqual(
                             getPerc(TOTAL_REWARDS, 100 - programTimePercent),
-                            { maxRelativeError: new Decimal('0.000000000000000000009') }
+                            { maxRelativeError: new Decimal('0.0000000000000000000009') }
                         );
                     });
                 }
