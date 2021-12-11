@@ -86,7 +86,7 @@ print('        uint256 x = MathEx.mulDivF(ONE, a, b);')
 print('        uint256 y;')
 print('        uint256 z;')
 print('')
-print('        require(x < 0x{:x}, "ERR_EXP_VAL_TOO_HIGH");'.format(hiTerms[-1].bit))
+print('        require(x < 0x{:x}, "ExpValueTooHigh");'.format(hiTerms[-1].bit))
 print('')
 print('        z = y = x % 0x{:x}; // get the input modulo 2^({:+d})'.format(hiTerms[0].bit,EXP_MAX_HI_TERM_VAL-EXP_NUM_OF_HI_TERMS))
 for n in range(1,len(loTerms)):

@@ -12,6 +12,9 @@ contract StakingRewardsMath {
     uint256 internal constant LAMBDA_N = 142857142857143;
     uint256 internal constant LAMBDA_D = 10000000000000000000000;
 
+    error ExpValueTooHigh();
+    error SecondsTooHigh();
+
     /**
      * @dev return the number of pool token to burn in order to match a number of token to distribute
      */
@@ -35,10 +38,10 @@ contract StakingRewardsMath {
      */
     function _calculateFlatRewards(
         uint32 timeElapsedSinceLastDistribution,
-        uint32 remainingProgramTime,
+        uint32 remainingProgramDuration,
         uint256 availableRewards
     ) internal pure returns (uint256) {
-        return (availableRewards * timeElapsedSinceLastDistribution) / remainingProgramTime;
+        return (availableRewards * timeElapsedSinceLastDistribution) / remainingProgramDuration;
     }
 
     /**
@@ -54,7 +57,9 @@ contract StakingRewardsMath {
         returns (uint256)
     {
         unchecked {
-            require(timeElapsed <= type(uint256).max / LAMBDA_N, "ERR_SECONDS_TOO_HIGH");
+            if (!(timeElapsed <= type(uint256).max / LAMBDA_N)) {
+                revert SecondsTooHigh();
+            }
             uint256 n = exp(timeElapsed * LAMBDA_N, LAMBDA_D);
             return MathEx.mulDivF(totalRewards, n - ONE, n);
         }
@@ -75,7 +80,9 @@ contract StakingRewardsMath {
             uint256 y;
             uint256 z;
 
-            require(x < (ONE << 4), "ERR_EXP_VAL_TOO_HIGH");
+            if (!(x < (ONE << 4))) {
+                revert ExpValueTooHigh();
+            }
 
             z = y = x % (ONE >> 3); // get the input modulo 2^(-3)
             z = (z * y) / ONE;

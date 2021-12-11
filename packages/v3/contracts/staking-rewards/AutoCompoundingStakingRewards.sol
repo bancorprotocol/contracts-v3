@@ -38,13 +38,13 @@ contract AutoCompoundingStakingRewards is
     struct TimeInfo {
         uint32 timeElapsed;
         uint32 prevTimeElapsed;
-        uint32 totalProgramTime;
+        uint32 programDuration;
         uint32 currentTime;
     }
 
     struct PoolInfo {
         uint256 stakedBalance;
-        uint256 amountOfPoolTokenOwnedByProtocol;
+        uint256 protocolPoolTokenAmount;
         uint256 poolTokenTotalSupply;
     }
 
@@ -243,9 +243,11 @@ contract AutoCompoundingStakingRewards is
 
         // checking that the rewards vault hold enough pool token for the amount of total rewards token
         if (
-            ((currentProgram.poolToken.balanceOf(address(rewardsVault)) *
-                _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance) /
-                currentProgram.poolToken.totalSupply()) < totalRewards
+            MathEx.mulDivF(
+                currentProgram.poolToken.balanceOf(address(rewardsVault)),
+                _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance,
+                currentProgram.poolToken.totalSupply()
+            ) < totalRewards
         ) {
             revert InsufficientFunds();
         }
@@ -318,8 +320,8 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        PoolInfo memory poolInfo = fetchPoolInfo(pool, currentProgram);
-        TimeInfo memory timeInfo = fetchTimeInfo(currentProgram);
+        PoolInfo memory poolInfo = _getPoolInfo(pool, currentProgram);
+        TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
 
         uint256 tokensToDistribute;
         if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
@@ -333,7 +335,7 @@ contract AutoCompoundingStakingRewards is
                 // calculating the time elapsed since the last distribution
                 timeInfo.timeElapsed - timeInfo.prevTimeElapsed,
                 // calculating remaining program time
-                timeInfo.totalProgramTime - timeInfo.prevTimeElapsed,
+                timeInfo.programDuration - timeInfo.prevTimeElapsed,
                 currentProgram.availableRewards
             );
         }
@@ -342,7 +344,7 @@ contract AutoCompoundingStakingRewards is
             poolInfo.stakedBalance,
             tokensToDistribute,
             poolInfo.poolTokenTotalSupply,
-            poolInfo.amountOfPoolTokenOwnedByProtocol
+            poolInfo.protocolPoolTokenAmount
         );
 
         uint256 poolTokensInRewardsVault = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
@@ -395,7 +397,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev fetch a pool's information
      */
-    function fetchPoolInfo(ReserveToken pool, ProgramData memory currentProgram)
+    function _getPoolInfo(ReserveToken pool, ProgramData memory currentProgram)
         internal
         view
         returns (PoolInfo memory)
@@ -404,12 +406,10 @@ contract AutoCompoundingStakingRewards is
 
         if (pool.toIERC20() == _networkToken) {
             poolInfo.stakedBalance = _masterPool.stakedBalance();
-            poolInfo.amountOfPoolTokenOwnedByProtocol = currentProgram.poolToken.balanceOf(address(_masterPool));
+            poolInfo.protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(_masterPool));
         } else {
             poolInfo.stakedBalance = _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance;
-            poolInfo.amountOfPoolTokenOwnedByProtocol = currentProgram.poolToken.balanceOf(
-                address(currentProgram.rewardsVault)
-            );
+            poolInfo.protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
         }
         poolInfo.poolTokenTotalSupply = currentProgram.poolToken.totalSupply();
 
@@ -419,17 +419,17 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev fetch a pool's time information
      */
-    function fetchTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
+    function _getTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
         TimeInfo memory timeInfo;
 
         timeInfo.currentTime = _time();
 
-        timeInfo.totalProgramTime = currentProgram.endTime - currentProgram.startTime;
+        timeInfo.programDuration = currentProgram.endTime - currentProgram.startTime;
 
         uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
 
         // set time elapsed to the least time between the actual time elapsed and the total program time
-        timeInfo.timeElapsed = uint32(Math.min(uint256(timeInfo.totalProgramTime), uint256(timeElapsed)));
+        timeInfo.timeElapsed = uint32(Math.min(timeInfo.programDuration, timeElapsed));
 
         timeInfo.prevTimeElapsed = uint32(
             MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)

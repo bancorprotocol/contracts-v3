@@ -47,7 +47,7 @@ describe('StakingRewardsMath', () => {
                     const expected = new Decimal(a).div(b).exp();
                     assertAccuracy(actual, expected, minAccuracy);
                 } else {
-                    await expect(stakingRewardsMath.expT(a, b)).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                    await expect(stakingRewardsMath.expT(a, b)).to.revertedWith('ExpValueTooHigh');
                 }
             });
         };
@@ -78,7 +78,7 @@ describe('StakingRewardsMath', () => {
                             numOfSeconds,
                             totalRewardsInWei
                         )
-                    ).to.revertedWith('ERR_EXP_VAL_TOO_HIGH');
+                    ).to.revertedWith('ExpValueTooHigh');
                 }
             });
         };

@@ -119,12 +119,6 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         });
 
-        it('should revert when attempting to reinitialize', async () => {
-            await expect(autoCompoundingStakingRewards.initialize()).to.be.revertedWith(
-                'Initializable: contract is already initialized'
-            );
-        });
-
         it('should revert when initialized with an invalid bancor network contract', async () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(ZERO_ADDRESS, networkToken.address, masterPool.address)
@@ -141,6 +135,12 @@ describe('AutoCompoundingStakingRewards', () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(network.address, networkToken.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to reinitialize', async () => {
+            await expect(autoCompoundingStakingRewards.initialize()).to.be.revertedWith(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should be properly initialized', async () => {
