@@ -1,14 +1,14 @@
 import Contracts from '../../components/Contracts';
 import {
     BancorNetworkInformation,
-    ExternalRewardsVault
+    ExternalRewardsVault,
     IERC20,
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
     TestMasterPool,
     TestPoolCollection,
-    TestAutoCompoundingStakingRewards,
+    TestAutoCompoundingStakingRewards
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { StackingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
