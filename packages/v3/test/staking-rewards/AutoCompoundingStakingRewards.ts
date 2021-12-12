@@ -50,24 +50,6 @@ describe('AutoCompoundingStakingRewards', () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
-    const assertAccuracy = (actual: BigNumber, expected: BigNumber, minAccuracy: string) => {
-        const actualDec = new Decimal(actual.toString());
-        const expectedDec = new Decimal(expected.toString());
-
-        if (!actualDec.eq(expectedDec)) {
-            const accuracy = actualDec.gt(expectedDec) ? expectedDec.div(actualDec) : actualDec.div(expectedDec);
-            expect(accuracy.gte(new Decimal(minAccuracy)) && accuracy.lte(1)).to.equal(
-                true,
-                '\n' +
-                    [
-                        `expected = ${expectedDec}`,
-                        `actual   = ${actualDec}`,
-                        `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
-                    ].join('\n')
-            );
-        }
-    };
-
     const setupSimplePoolAndTransferPoolTokenForProgramCreation = async (
         initialStake: BigNumberish,
         totalRewards: BigNumberish
@@ -629,16 +611,14 @@ describe('AutoCompoundingStakingRewards', () => {
                             poolToken
                         );
 
-                        assertAccuracy(
-                            userTokenOwned,
+                        expect(userTokenOwned).to.almostEqual(
                             INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
-                            '0.999999999999999999999'
+                            { maxRelativeError: new Decimal('0.0000000000000000000001') }
                         );
 
-                        assertAccuracy(
-                            externalRewardsVaultTokenOwned,
+                        expect(externalRewardsVaultTokenOwned).to.almostEqual(
                             getPerc(TOTAL_REWARDS, 100 - programTimePercent),
-                            '0.999999999999999999999'
+                            { maxRelativeError: new Decimal('0.0000000000000000000009') }
                         );
                     });
                 }
