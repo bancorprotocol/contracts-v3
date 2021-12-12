@@ -613,12 +613,12 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         expect(userTokenOwned).to.almostEqual(
                             INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
-                            { maxRelativeError: new Decimal('0.0000000000000000000001') }
+                            { maxRelativeError: new Decimal('0.0000000000000000000001'), notLargerThan: true }
                         );
 
                         expect(externalRewardsVaultTokenOwned).to.almostEqual(
                             getPerc(TOTAL_REWARDS, 100 - programTimePercent),
-                            { maxRelativeError: new Decimal('0.0000000000000000000009') }
+                            { maxRelativeError: new Decimal('0.0000000000000000000009'), notSmallerThan: true }
                         );
                     });
                 }
@@ -626,21 +626,6 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         context('Exponential-Decay', () => {
-            const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
-                if (!actual.eq(expected)) {
-                    const accuracy = actual.div(expected);
-                    expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
-                        true,
-                        '\n' +
-                            [
-                                `expected = ${expected.toFixed(minAccuracy.length)}`,
-                                `actual   = ${actual.toFixed(minAccuracy.length)}`,
-                                `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
-                            ].join('\n')
-                    );
-                }
-            };
-
             const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
             const INITIAL_STAKE = toWei(BigNumber.from(10_000));
             const TOTAL_REWARDS = toWei(BigNumber.from(90_000));
@@ -726,16 +711,14 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(userTokenOwnedBefore).to.equal(INITIAL_STAKE);
                     expect(vaultTokenOwnedBefore).to.equal(TOTAL_REWARDS);
 
-                    assertAccuracy(
-                        new Decimal(userTokenOwnedAfter.sub(userTokenOwnedBefore).toString()),
-                        new Decimal(TOTAL_REWARDS.toString()),
-                        '0.999999'
-                    );
-                    assertAccuracy(
-                        new Decimal(vaultTokenOwnedBefore.sub(vaultTokenOwnedAfter).toString()),
-                        new Decimal(TOTAL_REWARDS.toString()),
-                        '0.999999'
-                    );
+                    expect(userTokenOwnedAfter.sub(userTokenOwnedBefore)).to.be.almostEqual(TOTAL_REWARDS, {
+                        maxRelativeError: new Decimal('0.999999'),
+                        notLargerThan: true
+                    });
+                    expect(vaultTokenOwnedBefore.sub(vaultTokenOwnedAfter)).to.be.almostEqual(TOTAL_REWARDS, {
+                        maxRelativeError: new Decimal('0.999999'),
+                        notLargerThan: true
+                    });
                 });
             });
         });

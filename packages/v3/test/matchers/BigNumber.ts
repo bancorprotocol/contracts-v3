@@ -42,7 +42,15 @@ function overrideAlmostEqual(utils: Chai.ChaiUtils) {
 
 function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
-        const [expected, { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0) }] = args;
+        const [
+            expected,
+            {
+                maxAbsoluteError = new Decimal(0),
+                maxRelativeError = new Decimal(0),
+                notLargerThan = false,
+                notSmallerThan = false
+            }
+        ] = args;
         const obj = chaiUtils.flag(this, 'object');
 
         expect(maxAbsoluteError).to.be.instanceOf(Decimal);
@@ -54,6 +62,26 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
 
             if (objDec.eq(expectedDec)) {
                 return;
+            }
+
+            if (notLargerThan) {
+                this.assert(
+                    objDec.lte(expectedDec),
+                    `Expected ${objDec} to be smaller than or equal to ${expectedDec}`,
+                    `Expected ${objDec} NOT to be smaller than or equal to ${expectedDec}`,
+                    expectedDec.toString(),
+                    objDec.toString()
+                );
+            }
+
+            if (notSmallerThan) {
+                this.assert(
+                    objDec.gte(expectedDec),
+                    `Expected ${objDec} to be larger than or equal to ${expectedDec}`,
+                    `Expected ${objDec} NOT to be larger than or equal to ${expectedDec}`,
+                    expectedDec.toString(),
+                    objDec.toString()
+                );
             }
 
             const absoluteError = objDec.sub(expectedDec).abs();

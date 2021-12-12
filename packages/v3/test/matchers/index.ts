@@ -8,6 +8,8 @@ declare global {
         interface AlmostEqualOptions {
             maxAbsoluteError?: Decimal;
             maxRelativeError?: Decimal;
+            notLargerThan?: boolean;
+            notSmallerThan?: boolean;
         }
         interface Assertion {
             almostEqual(expected: any, options: AlmostEqualOptions): void;
