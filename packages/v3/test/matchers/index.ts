@@ -3,12 +3,13 @@ import supportBigNumber from './BigNumber';
 import supportFraction from './Fraction';
 import Decimal from 'decimal.js';
 
+export interface AlmostEqualOptions {
+    maxAbsoluteError?: Decimal;
+    maxRelativeError?: Decimal;
+}
+
 declare global {
     export namespace Chai {
-        interface AlmostEqualOptions {
-            maxAbsoluteError?: Decimal;
-            maxRelativeError?: Decimal;
-        }
         interface Assertion {
             almostEqual(expected: any, options: AlmostEqualOptions): void;
         }

@@ -28,6 +28,7 @@ import {
     TestPoolAverageRate__factory,
     TestPoolCollection__factory,
     TestPoolCollectionUpgrader__factory,
+    TestPoolCollectionWithdrawal__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestTokenGovernance__factory,
@@ -73,6 +74,7 @@ const getContracts = (signer?: Signer) => ({
         TestPoolCollectionUpgrader__factory,
         signer
     ),
+    TestPoolCollectionWithdrawal: deployOrAttach('TestPoolCollectionWithdrawal', TestPoolCollectionWithdrawal__factory, signer),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),

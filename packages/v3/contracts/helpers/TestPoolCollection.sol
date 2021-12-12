@@ -68,31 +68,6 @@ contract TestPoolCollection is PoolCollection, TestTime {
             );
     }
 
-    function withdrawalAmountsT(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenExcessAmount,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenStakedAmount,
-        uint256 baseTokenWalletBalance,
-        uint32 tradeFeePPM,
-        uint32 withdrawalFeePPM,
-        uint256 basePoolTokenWithdrawalAmount
-    ) external pure returns (WithdrawalAmounts memory) {
-        return
-            _withdrawalAmounts(
-                networkTokenLiquidity,
-                baseTokenLiquidity,
-                baseTokenExcessAmount,
-                basePoolTokenTotalSupply,
-                baseTokenStakedAmount,
-                baseTokenWalletBalance,
-                tradeFeePPM,
-                withdrawalFeePPM,
-                basePoolTokenWithdrawalAmount
-            );
-    }
-
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }
