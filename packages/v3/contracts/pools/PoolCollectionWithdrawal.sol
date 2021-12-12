@@ -100,7 +100,7 @@ library PoolCollectionWithdrawal {
         if (e * (M - n) / M > b + c) {
             uint256 f = e * (M - n) / M - (b + c);
             uint256 g = e - (b + c);
-            if (hlim(b, c, e, x) && hmaxDeficit(b, e, f, g, m, n, x)) {
+            if (isStable(b, c, e, x) && affordableDeficit(b, e, f, g, m, n, x)) {
                 output = arbitrageDeficit(a, b, e, f, m, x, y);
             } else {
                 output = defaultDeficit(a, b, c, e, y);
@@ -108,7 +108,7 @@ library PoolCollectionWithdrawal {
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
-            if (f > 0 && hlim(b, c, e, x) && hmaxSurplus(b, e, f, m, n, x)) {
+            if (f > 0 && isStable(b, c, e, x) && affordableSurplus(b, e, f, m, n, x)) {
                 output = arbitrageSurplus(a, b, e, f, m, n, x, y);
             } else {
                 output = defaultSurplus(a, b, c, y);
@@ -121,7 +121,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `x < e*c/(b+c)`
      */
-    function hlim(
+    function isStable(
         uint256 b, // <= 2**128-1
         uint256 c, // <= 2**128-1
         uint256 e, // <= 2**128-1
@@ -134,7 +134,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
-    function hmaxDeficit(
+    function affordableDeficit(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
         uint256 f, // == e*(1-n)-b-c <= e <= 2**128-1
@@ -152,7 +152,7 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e+e*n)*(1-m)`
      */
-    function hmaxSurplus(
+    function affordableSurplus(
         uint256 b, // <= 2**128-1
         uint256 e, // <= 2**128-1
         uint256 f, // == b+c-e <= 2**129-2
