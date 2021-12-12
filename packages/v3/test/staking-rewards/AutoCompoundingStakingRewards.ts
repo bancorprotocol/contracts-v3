@@ -16,7 +16,7 @@ import { createStakingRewardsWithERV, createSystem, depositToPool, setupSimplePo
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { OnChainObjectWithAddress, TokenWithAddress, transfer } from '../helpers/Utils';
+import { Addressable, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -498,7 +498,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
     describe('process rewards', () => {
         const tokenFromPoolToken = async (
-            user: OnChainObjectWithAddress,
+            user: Addressable,
             poolCollection: TestPoolCollection,
             token: TokenWithAddress,
             poolToken: PoolToken
