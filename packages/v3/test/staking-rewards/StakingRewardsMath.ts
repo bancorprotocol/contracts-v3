@@ -185,20 +185,20 @@ describe('StakingRewardsMath', () => {
         const calculateFlatRewardTest = (
             timeElapsedSinceLastDistribution: number,
             remainingProgramDuration: number,
-            availableRewards: number,
+            remainingRewards: number,
             minAccuracy = '0.999999999999999999'
         ) => {
-            it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${availableRewards})`, async () => {
+            it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
                 const actual = new Decimal(
                     (
                         await stakingRewardsMath.calculateFlatRewardsT(
                             timeElapsedSinceLastDistribution,
                             remainingProgramDuration,
-                            availableRewards
+                            remainingRewards
                         )
                     ).toString()
                 );
-                const expected = mulDivF(availableRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
+                const expected = mulDivF(remainingRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
 
                 assertAccuracy(actual, expected, minAccuracy);
             });

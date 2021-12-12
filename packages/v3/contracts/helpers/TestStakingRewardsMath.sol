@@ -5,26 +5,20 @@ import { StakingRewardsMath } from "../staking-rewards/StakingRewardsMath.sol";
 
 contract TestStakingRewardsMath is StakingRewardsMath {
     function calculatePoolTokenToBurnT(
-        uint256 totalAmountOfTokenStaked,
-        uint256 amountOfTokenToDistribute,
-        uint256 totalSupplyOfPoolToken,
-        uint256 amountOfPoolTokenOwnedByProtocol
+        uint256 totalStaked,
+        uint256 totalToDistribute,
+        uint256 poolTokenSupply,
+        uint256 poolTokenProtocolShare
     ) external pure returns (uint256) {
-        return
-            _calculatePoolTokenToBurn(
-                totalAmountOfTokenStaked,
-                amountOfTokenToDistribute,
-                totalSupplyOfPoolToken,
-                amountOfPoolTokenOwnedByProtocol
-            );
+        return _calculatePoolTokenToBurn(totalStaked, totalToDistribute, poolTokenSupply, poolTokenProtocolShare);
     }
 
     function calculateFlatRewardsT(
         uint32 timeElapsed,
         uint32 remainingProgramDuration,
-        uint256 availableRewards
+        uint256 remainingRewards
     ) external pure returns (uint256) {
-        return _calculateFlatRewards(timeElapsed, remainingProgramDuration, availableRewards);
+        return _calculateFlatRewards(timeElapsed, remainingProgramDuration, remainingRewards);
     }
 
     function calculateExponentialDecayRewardsAfterTimeElapsedT(uint32 timeElapsed, uint256 totalRewards)

@@ -293,7 +293,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 expect(program.poolToken).to.equal(poolToken.address);
                 expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                 expect(program.totalRewards).to.equal(TOTAL_REWARDS);
-                expect(program.availableRewards).to.equal(TOTAL_REWARDS);
+                expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                 expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
                 expect(program.startTime).to.equal(now);
                 expect(program.endTime).to.equal(endTime);
@@ -339,7 +339,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.poolToken).to.equal(poolToken.address);
                     expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                     expect(program.totalRewards).to.equal(10);
-                    expect(program.availableRewards).to.equal(0);
+                    expect(program.remainingRewards).to.equal(0);
                     expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
                     expect(program.startTime).to.equal(now);
                     expect(program.endTime).to.equal(newEndTime);
