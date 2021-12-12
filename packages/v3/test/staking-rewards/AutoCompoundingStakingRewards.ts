@@ -5,10 +5,10 @@ import {
     IERC20,
     NetworkSettings,
     PoolToken,
+    TestAutoCompoundingStakingRewards,
     TestBancorNetwork,
     TestMasterPool,
-    TestPoolCollection,
-    TestAutoCompoundingStakingRewards
+    TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { StackingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
