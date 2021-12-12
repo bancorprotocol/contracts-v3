@@ -38,7 +38,6 @@ contract AutoCompoundingStakingRewards is
     struct TimeInfo {
         uint32 timeElapsed;
         uint32 prevTimeElapsed;
-        uint32 programDuration;
         uint32 currentTime;
     }
 
@@ -371,8 +370,11 @@ contract AutoCompoundingStakingRewards is
         pure
         returns (uint256)
     {
-        uint32 timeElapsedSinceLastDistribution = timeInfo.timeElapsed - timeInfo.prevTimeElapsed;
-        uint32 remainingProgramDuration = timeInfo.programDuration - timeInfo.prevTimeElapsed;
+        // cap the time elapsed to no more than the total duration of the program
+        uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
+        uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
+        uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
+        uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
 
         return
             _calculateFlatRewards(
@@ -425,12 +427,7 @@ contract AutoCompoundingStakingRewards is
 
         timeInfo.currentTime = _time();
 
-        timeInfo.programDuration = currentProgram.endTime - currentProgram.startTime;
-
-        uint256 timeElapsed = timeInfo.currentTime - currentProgram.startTime;
-
-        // set time elapsed to the least time between the actual time elapsed and the total program time
-        timeInfo.timeElapsed = uint32(Math.min(timeInfo.programDuration, timeElapsed));
+        timeInfo.timeElapsed = timeInfo.currentTime - currentProgram.startTime;
 
         timeInfo.prevTimeElapsed = uint32(
             MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
