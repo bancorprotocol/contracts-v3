@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { Fraction, Uint512 } from "./Types.sol";
+import { Fraction, Uint512, Sint256 } from "./Types.sol";
 
 error Overflow();
 
@@ -42,6 +42,20 @@ library MathEx {
             uint256 x = floorSqrt(n);
             return x * x == n ? x : x + 1;
         }
+    }
+
+    /**
+     * @dev returns an `Sint256` positive representation of an unsigned integer
+     */
+    function toPos256(uint256 n) internal pure returns (Sint256 memory) {
+        return Sint256({ value: n, isNeg: false });
+    }
+
+    /**
+     * @dev returns an `Sint256` negative representation of an unsigned integer
+     */
+    function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
+        return Sint256({ value: n, isNeg: true });
     }
 
     /**

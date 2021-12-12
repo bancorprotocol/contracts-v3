@@ -25,12 +25,4 @@ contracts/hardhat-dependency-compiler
 
 config.json
 
-migration/data/hardhat
-migration/data/localhost
-migration/data/fork*
-
-migration/test/migration/data/hardhat
-migration/test/migration/data/localhost
-migration/test/migration/data/fork*
-
 tenderly.yaml

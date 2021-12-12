@@ -1,5 +1,3 @@
-import { getEnvKey, CONFIG, loadConfigFileKey } from './hardhat.extended.config';
-import './migration';
 import './test/Setup.ts';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
@@ -12,16 +10,11 @@ import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
 import { HardhatUserConfig } from 'hardhat/config';
-import { NetworkUserConfig } from 'hardhat/types';
 import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
 
-const hardhatDefaultConfig: NetworkUserConfig = {
-    accounts: {
-        count: 10,
-        accountsBalance: '10000000000000000000000000000000000000000000000'
-    },
-    allowUnlimitedContractSize: true
+export const getEnvKey = <T>(envKeyName: string) => {
+    return process.env[envKeyName] as unknown as T;
 };
 
 const mochaOptions = (): MochaOptions => {
@@ -60,10 +53,14 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: CONFIG.hardhatForkConfig?.hardhatConfig || hardhatDefaultConfig,
-        localhost: { url: 'http://localhost:8545', chainId: 31337 },
-
-        ...CONFIG.networks
+        hardhat: {
+            accounts: {
+                count: 10,
+                accountsBalance: '10000000000000000000000000000000000000000000000'
+            },
+            allowUnlimitedContractSize: true
+        },
+        localhost: { url: 'http://localhost:8545', chainId: 31337 }
     },
 
     solidity: {
@@ -96,7 +93,7 @@ const config: HardhatUserConfig = {
     },
 
     etherscan: {
-        apiKey: loadConfigFileKey('etherscan')
+        apiKey: ''
     },
 
     contractSizer: {
