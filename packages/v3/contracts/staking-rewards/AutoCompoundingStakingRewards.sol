@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { EnumerableMapUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -33,7 +33,7 @@ contract AutoCompoundingStakingRewards is
     Upgradeable
 {
     using ReserveTokenLibrary for ReserveToken;
-    using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     struct TimeInfo {
         uint32 timeElapsed;
@@ -67,10 +67,10 @@ contract AutoCompoundingStakingRewards is
     mapping(address => ProgramData) private _programs;
 
     // a map of all pools that have a rewards program associated with them
-    EnumerableMapUpgradeable.UintToAddressMap private _programByPool;
+    EnumerableSetUpgradeable.AddressSet private _programByPool;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 4] private __gap;
+    uint256[MAX_GAP - 3] private __gap;
 
     /**
      * @dev triggered when a program is created
@@ -165,8 +165,7 @@ contract AutoCompoundingStakingRewards is
         uint256 programsLength = _programByPool.length();
         ProgramData[] memory list = new ProgramData[](programsLength);
         for (uint256 i = 0; i < programsLength; i = uncheckedInc(i)) {
-            (, address value) = _programByPool.at(i);
-            list[i] = _programs[value];
+            list[i] = _programs[_programByPool.at(i)];
         }
         return list;
     }
@@ -261,7 +260,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.prevDistributionTimestamp = 0;
         currentProgram.isEnabled = true;
 
-        _programByPool.set(_programByPool.length(), poolAddress);
+        _programByPool.add(poolAddress);
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
     }
 
