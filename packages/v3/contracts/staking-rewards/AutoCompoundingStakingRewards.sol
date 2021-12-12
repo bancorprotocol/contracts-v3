@@ -214,14 +214,18 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
+        if (startTime < _time()) {
+            revert InvalidParam();
+        }
+
         if (distributionType == DistributionType.FLAT) {
             if (startTime > endTime) {
                 revert InvalidParam();
             }
-        }
-
-        if (startTime < _time()) {
-            revert InvalidParam();
+        } else if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
+            if (endTime != 0) {
+                revert InvalidParam();
+            }
         }
 
         address poolAddress = ReserveToken.unwrap(pool);
@@ -324,19 +328,9 @@ contract AutoCompoundingStakingRewards is
 
         uint256 tokensToDistribute;
         if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokensToDistribute = calculateExponentialDecayRewards(
-                timeInfo.timeElapsed,
-                timeInfo.prevTimeElapsed,
-                currentProgram.totalRewards
-            );
+            tokensToDistribute = calculateExponentialDecayRewards(currentProgram, timeInfo);
         } else if (distributionType == DistributionType.FLAT) {
-            tokensToDistribute = calculateFlatRewards(
-                // calculating the time elapsed since the last distribution
-                timeInfo.timeElapsed - timeInfo.prevTimeElapsed,
-                // calculating remaining program time
-                timeInfo.programDuration - timeInfo.prevTimeElapsed,
-                currentProgram.availableRewards
-            );
+            tokensToDistribute = calculateFlatRewards(currentProgram, timeInfo);
         }
 
         uint256 poolTokenToBurn = _calculatePoolTokenToBurn(
@@ -370,27 +364,35 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns the flat rewards of a given time period
+     * @dev returns the flat rewards
      */
-    function calculateFlatRewards(
-        uint32 timeElapsedSinceLastDistribution,
-        uint32 remainingProgramDuration,
-        uint256 availableRewards
-    ) internal pure returns (uint256) {
-        return _calculateFlatRewards(timeElapsedSinceLastDistribution, remainingProgramDuration, availableRewards);
+    function calculateFlatRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint32 timeElapsedSinceLastDistribution = timeInfo.timeElapsed - timeInfo.prevTimeElapsed;
+        uint32 remainingProgramDuration = timeInfo.programDuration - timeInfo.prevTimeElapsed;
+
+        return
+            _calculateFlatRewards(
+                timeElapsedSinceLastDistribution,
+                remainingProgramDuration,
+                currentProgram.availableRewards
+            );
     }
 
     /**
-     * @dev returns the exponential decay rewards between two time
+     * @dev returns the exponential decay rewards
      */
-    function calculateExponentialDecayRewards(
-        uint32 timeElapsed,
-        uint32 prevTimeElapsed,
-        uint256 totalRewards
-    ) internal pure returns (uint256) {
+    function calculateExponentialDecayRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+        internal
+        pure
+        returns (uint256)
+    {
         return
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, totalRewards) -
-            _calculateExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, totalRewards);
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.timeElapsed, currentProgram.totalRewards) -
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.prevTimeElapsed, currentProgram.totalRewards);
     }
 
     /**
