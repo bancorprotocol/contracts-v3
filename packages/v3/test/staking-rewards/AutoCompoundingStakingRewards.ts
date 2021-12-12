@@ -5,10 +5,10 @@ import {
     IERC20,
     NetworkSettings,
     PoolToken,
+    TestAutoCompoundingStakingRewards,
     TestBancorNetwork,
     TestMasterPool,
-    TestPoolCollection,
-    TestAutoCompoundingStakingRewards
+    TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { StackingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
@@ -16,7 +16,7 @@ import { createStakingRewardsWithERV, createSystem, depositToPool, setupSimplePo
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { OnChainObjectWithAddress, TokenWithAddress, transfer } from '../helpers/Utils';
+import { Addressable, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -497,8 +497,8 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('process rewards', () => {
-        const tokenFromPoolToken = async (
-            user: OnChainObjectWithAddress,
+        const getPoolTokenUnderlying = async (
+            user: Addressable,
             poolCollection: TestPoolCollection,
             token: TokenWithAddress,
             poolToken: PoolToken
@@ -566,8 +566,8 @@ describe('AutoCompoundingStakingRewards', () => {
                 it('should not have distributed any rewards at the beginning of a program', async () => {
                     await autoCompoundingStakingRewards.processRewards(token.address);
 
-                    const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
+                    const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,
@@ -582,8 +582,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     await autoCompoundingStakingRewards.setTime(PROGRAM_TIME);
                     await autoCompoundingStakingRewards.processRewards(token.address);
 
-                    const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
+                    const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,
@@ -603,8 +603,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(now);
                         await autoCompoundingStakingRewards.processRewards(token.address);
 
-                        const userTokenOwned = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                        const externalRewardsVaultTokenOwned = await tokenFromPoolToken(
+                        const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                        const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
                             externalRewardsVault,
                             poolCollection,
                             token,
@@ -664,8 +664,8 @@ describe('AutoCompoundingStakingRewards', () => {
 
             describe('basic tests', () => {
                 it('should not have distributed any rewards at the beginning of a program', async () => {
-                    const userTokenOwnedBefore = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedBefore = await tokenFromPoolToken(
+                    const userTokenOwnedBefore = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const vaultTokenOwnedBefore = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,
@@ -674,8 +674,8 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     await autoCompoundingStakingRewards.processRewards(token.address);
 
-                    const userTokenOwnedAfter = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedAfter = await tokenFromPoolToken(
+                    const userTokenOwnedAfter = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const vaultTokenOwnedAfter = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,
@@ -689,8 +689,8 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 it('should have distributed all rewards at the end of a program', async () => {
-                    const userTokenOwnedBefore = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedBefore = await tokenFromPoolToken(
+                    const userTokenOwnedBefore = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const vaultTokenOwnedBefore = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,
@@ -700,8 +700,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     await autoCompoundingStakingRewards.setTime(START_TIME + duration.years(35.5));
                     await autoCompoundingStakingRewards.processRewards(token.address);
 
-                    const userTokenOwnedAfter = await tokenFromPoolToken(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedAfter = await tokenFromPoolToken(
+                    const userTokenOwnedAfter = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+                    const vaultTokenOwnedAfter = await getPoolTokenUnderlying(
                         externalRewardsVault,
                         poolCollection,
                         token,

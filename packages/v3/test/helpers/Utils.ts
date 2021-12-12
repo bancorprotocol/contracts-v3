@@ -6,9 +6,9 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
-export type OnChainObjectWithAddress = { address: string };
+export type Addressable = { address: string };
 
-export type TokenWithAddress = TestERC20Token | OnChainObjectWithAddress;
+export type TokenWithAddress = TestERC20Token | Addressable;
 
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;

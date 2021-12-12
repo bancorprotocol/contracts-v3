@@ -370,6 +370,7 @@ contract AutoCompoundingStakingRewards is
         pure
         returns (uint256)
     {
+        // cap the time elapsed to no more than the total duration of the program
         uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
         uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
         uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
