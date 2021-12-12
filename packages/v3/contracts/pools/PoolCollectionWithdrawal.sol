@@ -95,10 +95,10 @@ library PoolCollectionWithdrawal {
         validate(n <= M);
         validate(x <= e);
 
-        uint256 y = x * (M - n) / M;
+        uint256 y = (x * (M - n)) / M;
 
-        if (e * (M - n) / M > b + c) {
-            uint256 f = e * (M - n) / M - (b + c);
+        if ((e * (M - n)) / M > b + c) {
+            uint256 f = (e * (M - n)) / M - (b + c);
             uint256 g = e - (b + c);
             if (isStable(b, c, e, x) && affordableDeficit(b, e, f, g, m, n, x)) {
                 output = arbitrageDeficit(a, b, e, f, m, x, y);
@@ -285,7 +285,7 @@ library PoolCollectionWithdrawal {
                 u = w;
             } else {
                 t = 0;
-                u = y * g / e;
+                u = (y * g) / e;
             }
         } else {
             t = MathEx.mulDivF(a * y, g, b * e);
