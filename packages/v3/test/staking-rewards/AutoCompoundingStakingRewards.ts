@@ -430,7 +430,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         });
 
-        describe('program status', () => {
+        describe('is program active', () => {
             context('when program is non-existent', () => {
                 it('should return false when program is non-existent', async () => {
                     expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
@@ -449,7 +449,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     );
                 });
 
-                it("should return false if program hasn't started", async () => {
+                it("should return false when program hasn't started", async () => {
                     expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                 });
             });
