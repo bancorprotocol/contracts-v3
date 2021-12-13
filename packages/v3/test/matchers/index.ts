@@ -3,9 +3,15 @@ import supportBigNumber from './BigNumber';
 import supportFraction from './Fraction';
 import Decimal from 'decimal.js';
 
+export enum Relation {
+    LesserOrEqual,
+    GreaterOrEqual
+}
+
 export interface AlmostEqualOptions {
     maxAbsoluteError?: Decimal;
     maxRelativeError?: Decimal;
+    relation?: Relation;
 }
 
 declare global {
