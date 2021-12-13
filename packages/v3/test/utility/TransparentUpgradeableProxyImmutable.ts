@@ -133,7 +133,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
                 expect(await contract.connect(nonAdmin).initialized()).to.be.true;
                 expect(await contract.connect(nonAdmin).version()).to.equal(VERSION);
 
-                const newVersion = 2;
+                const newVersion = VERSION + 1;
                 const newLogic2 = await Contracts.TestLogic.deploy();
                 await proxy.upgradeToAndCall(
                     newLogic2.address,
