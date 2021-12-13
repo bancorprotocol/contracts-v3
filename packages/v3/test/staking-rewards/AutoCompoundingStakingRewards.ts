@@ -719,11 +719,11 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(vaultTokenOwnedBefore).to.equal(TOTAL_REWARDS);
 
                     expect(userTokenOwnedAfter.sub(userTokenOwnedBefore)).to.be.almostEqual(TOTAL_REWARDS, {
-                        maxRelativeError: new Decimal('0.999999'),
+                        maxRelativeError: new Decimal('0.0000002'),
                         relation: Relation.LesserOrEqual
                     });
                     expect(vaultTokenOwnedBefore.sub(vaultTokenOwnedAfter)).to.be.almostEqual(TOTAL_REWARDS, {
-                        maxRelativeError: new Decimal('0.999999'),
+                        maxRelativeError: new Decimal('0.0000002'),
                         relation: Relation.LesserOrEqual
                     });
                 });
