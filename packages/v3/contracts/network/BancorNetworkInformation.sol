@@ -258,7 +258,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the target amount by specifying the source amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeTargetAmount(
         ReserveToken sourceToken,
@@ -269,7 +269,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the source amount by specifying the target amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeSourceAmount(
         ReserveToken sourceToken,

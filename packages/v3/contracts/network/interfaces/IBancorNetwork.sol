@@ -145,7 +145,7 @@ interface IBancorNetwork is IUpgradeable {
      * requirements:
      *
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - the specified withdrawal request is eligble for completion
+     * - the specified withdrawal request is eligible for completion
      * - the provider must have approved the network to transfer the governance token amount on its behalf, when
      * withdrawing network token liquidity
      */
