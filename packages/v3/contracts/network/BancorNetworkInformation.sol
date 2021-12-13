@@ -280,6 +280,13 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
+     * @inheritdoc IBancorNetworkInformation
+     */
+    function readyForWithdrawal(uint256 id) external view returns (bool) {
+        return _pendingWithdrawals.readyForWithdrawal(id);
+    }
+
+    /**
      * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're
      * interested in the target or source amount
      */

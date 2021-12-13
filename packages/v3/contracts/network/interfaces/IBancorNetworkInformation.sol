@@ -108,4 +108,9 @@ interface IBancorNetworkInformation is IUpgradeable {
         ReserveToken targetToken,
         uint256 targetAmount
     ) external view returns (uint256);
+
+    /**
+     * @dev returns whether the given request is ready for withdrawal
+     */
+    function readyForWithdrawal(uint256 id) external view returns (bool);
 }

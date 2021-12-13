@@ -238,47 +238,38 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
-        external
-        validAddress(address(poolToken))
-        greaterThanZero(poolTokenAmount)
-        nonReentrant
-    {
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    function initWithdrawal(
+        address provider,
+        IPoolToken poolToken,
+        uint256 poolTokenAmount
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) only(address(_network)) nonReentrant {
+        _initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
     function initWithdrawalPermitted(
+        address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
-        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) only(address(_network)) nonReentrant {
+        poolToken.permit(provider, address(this), poolTokenAmount, deadline, v, r, s);
 
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+        _initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function readyForWithdrawal(uint256 id) external view returns (bool) {
+    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) nonReentrant {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
-        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function cancelWithdrawal(uint256 id) external nonReentrant {
-        WithdrawalRequest memory request = _withdrawalRequests[id];
-        address provider = request.provider;
-        if (provider != msg.sender) {
+        if (request.provider != provider) {
             revert AccessDenied();
         }
 
@@ -288,10 +279,10 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function reinitWithdrawal(uint256 id) external nonReentrant {
+    function reinitWithdrawal(address provider, uint256 id) external only(address(_network)) nonReentrant {
         WithdrawalRequest storage request = _withdrawalRequests[id];
-        address provider = request.provider;
-        if (provider != msg.sender) {
+
+        if (request.provider != provider) {
             revert AccessDenied();
         }
 
@@ -368,6 +359,15 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         });
 
         return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
+    }
+
+    /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function readyForWithdrawal(uint256 id) external view returns (bool) {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+
+        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
     }
 
     /**

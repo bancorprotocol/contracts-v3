@@ -769,6 +769,41 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @inheritdoc IBancorNetwork
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external {
+        _pendingWithdrawals.initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function initWithdrawalPermitted(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        _pendingWithdrawals.initWithdrawalPermitted(msg.sender, poolToken, poolTokenAmount, deadline, v, r, s);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function cancelWithdrawal(uint256 id) external {
+        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function reinitWithdrawal(uint256 id) external {
+        _pendingWithdrawals.reinitWithdrawal(msg.sender, id);
+    }
+
+    /**
      * @dev sets the new latest pool collection for the given type
      *
      * requirements:

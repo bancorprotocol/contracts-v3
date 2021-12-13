@@ -459,6 +459,7 @@ describe('Profile @profile', () => {
 
                     ({ id, creationTime } = await initWithdraw(
                         provider,
+                        network,
                         pendingWithdrawals,
                         poolToken,
                         await poolToken.balanceOf(provider.address)
