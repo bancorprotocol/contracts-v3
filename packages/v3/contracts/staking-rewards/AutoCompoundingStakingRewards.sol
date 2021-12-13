@@ -220,8 +220,6 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyActive();
         }
 
-        address poolAddress = ReserveToken.unwrap(pool);
-
         if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
@@ -244,6 +242,7 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
+        address poolAddress = ReserveToken.unwrap(pool);
         IPoolToken poolToken = _programs[poolAddress].poolToken;
 
         // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have been distributed
