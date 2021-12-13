@@ -24,8 +24,6 @@ contract TransparentUpgradeableProxyImmutable is ERC1967Proxy, Utils {
         address initAdmin,
         bytes memory data
     ) payable ERC1967Proxy(logic, data) validAddress(initAdmin) {
-        assert(_ADMIN_SLOT == bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1));
-
         _admin = initAdmin;
 
         // still store it to work with EIP-1967
