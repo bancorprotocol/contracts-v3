@@ -200,6 +200,21 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         describe('program creation', () => {
+            it('should revert when non-admin attempts to create a program', async () => {
+                await expect(
+                    autoCompoundingStakingRewards
+                        .connect(user)
+                        .createProgram(
+                            token.address,
+                            externalRewardsVault.address,
+                            TOTAL_REWARDS,
+                            StackingRewardsDistributionTypes.Flat,
+                            now,
+                            endTime
+                        )
+                ).to.be.revertedWith('AccessDenied');
+            });
+
             it('should revert when reserve token is invalid', async () => {
                 await expect(
                     autoCompoundingStakingRewards.createProgram(
@@ -359,6 +374,12 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         describe('program termination', () => {
+            it('should revert when non-admin attempts to terminate a program', async () => {
+                await expect(
+                    autoCompoundingStakingRewards.connect(user).terminateProgram(token.address)
+                ).to.be.revertedWith('AccessDenied');
+            });
+
             context('when program is inactive', () => {
                 it('should revert when program is inactive', async () => {
                     await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
@@ -417,16 +438,38 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
             });
 
+            it('should revert when non-admin attempts to enable / disable a program', async () => {
+                await expect(
+                    autoCompoundingStakingRewards.connect(user).enableProgram(token.address, true)
+                ).to.be.revertedWith('AccessDenied');
+            });
+
             it('should correctly enable a program', async () => {
+                let program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.true;
+
                 await expect(autoCompoundingStakingRewards.enableProgram(token.address, true))
                     .to.emit(autoCompoundingStakingRewards, 'ProgramEnabled')
                     .withArgs(token.address, true, TOTAL_REWARDS);
+
+                program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.true;
             });
 
             it('should correctly disable a program', async () => {
+                let program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.true;
+
                 await expect(autoCompoundingStakingRewards.enableProgram(token.address, false))
                     .to.emit(autoCompoundingStakingRewards, 'ProgramEnabled')
                     .withArgs(token.address, false, TOTAL_REWARDS);
+
+                program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.false;
             });
         });
 
