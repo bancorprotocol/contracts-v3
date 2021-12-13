@@ -40,7 +40,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     function isProgramActive(ReserveToken pool) external view returns (bool);
 
     /**
-     * @dev create a program for a pool
+     * @dev creates a program for a pool
      *
      * requirements:
      *
@@ -57,7 +57,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     ) external;
 
     /**
-     * @dev terminate a rewards program
+     * @dev terminates a rewards program
      *
      * requirements:
      *
@@ -67,7 +67,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     function terminateProgram(ReserveToken pool) external;
 
     /**
-     * @dev enable or disable a pool's program
+     * @dev enables or disables a pool's program
      *
      * requirements:
      *
@@ -76,7 +76,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     function enableProgram(ReserveToken pool, bool status) external;
 
     /**
-     * @dev process a pool's rewards
+     * @dev processes a pool's rewards
      */
     function processRewards(ReserveToken pool) external;
 }

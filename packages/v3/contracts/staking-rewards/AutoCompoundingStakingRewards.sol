@@ -235,7 +235,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         if (distributionType == DistributionType.FLAT) {
-            if (startTime > endTime) {
+            if (startTime > endTime || endTime == 0) {
                 revert InvalidParam();
             }
         } else if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
@@ -370,7 +370,7 @@ contract AutoCompoundingStakingRewards is
             pool,
             tokensToDistribute,
             poolTokenToBurn,
-            timeInfo.timeElapsed,
+            timeInfo.timeElapsed, // TODO
             currentProgram.remainingRewards
         );
     }
@@ -411,7 +411,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev fetch a pool's information
+     * @dev get a pool's information
      */
     function _getPoolInfo(ReserveToken pool, ProgramData memory currentProgram)
         internal
@@ -433,7 +433,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev fetch a pool's time information
+     * @dev get a pool's time information
      */
     function _getTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
         TimeInfo memory timeInfo;
