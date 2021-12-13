@@ -8,9 +8,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, NotWhitelisted } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -55,6 +56,9 @@ contract AutoCompoundingStakingRewards is
 
     // the network contract
     IBancorNetwork private immutable _network;
+
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
 
     // the network token contract
     IERC20 private immutable _networkToken;
@@ -109,10 +113,17 @@ contract AutoCompoundingStakingRewards is
      */
     constructor(
         IBancorNetwork initNetwork,
+        INetworkSettings initNetworkSettings,
         IERC20 initNetworkToken,
         IMasterPool initMasterPool
-    ) validAddress(address(initNetwork)) validAddress(address(initNetworkToken)) validAddress(address(initMasterPool)) {
+    )
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkSettings))
+        validAddress(address(initNetworkToken))
+        validAddress(address(initMasterPool))
+    {
         _network = initNetwork;
+        _networkSettings = initNetworkSettings;
         _networkToken = initNetworkToken;
         _masterPool = initMasterPool;
     }
@@ -209,6 +220,12 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyActive();
         }
 
+        address poolAddress = ReserveToken.unwrap(pool);
+
+        if (!_networkSettings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+
         if (totalRewards == 0) {
             revert InvalidParam();
         }
@@ -226,8 +243,6 @@ contract AutoCompoundingStakingRewards is
                 revert InvalidParam();
             }
         }
-
-        address poolAddress = ReserveToken.unwrap(pool);
 
         ProgramData storage currentProgram = _programs[poolAddress];
 

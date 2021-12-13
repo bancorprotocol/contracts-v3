@@ -93,11 +93,17 @@ const getDeployer = async () => (await ethers.getSigners())[0];
 
 export const createStakingRewardsWithERV = async (
     network: TestBancorNetwork | BancorNetwork,
+    networkSettings: NetworkSettings,
     networkToken: IERC20,
     masterPool: TestMasterPool | MasterPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const autoCompoundingStakingRewards = await createStakingRewards(network, networkToken, masterPool);
+    const autoCompoundingStakingRewards = await createStakingRewards(
+        network,
+        networkSettings,
+        networkToken,
+        masterPool
+    );
 
     await externalRewardsVault.grantRole(
         roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
@@ -109,11 +115,12 @@ export const createStakingRewardsWithERV = async (
 
 export const createStakingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
+    networkSettings: NetworkSettings,
     networkToken: IERC20,
     masterPool: TestMasterPool | MasterPool
 ) => {
     return await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-        ctorArgs: [network.address, networkToken.address, masterPool.address]
+        ctorArgs: [network.address, networkSettings.address, networkToken.address, masterPool.address]
     });
 };
 
