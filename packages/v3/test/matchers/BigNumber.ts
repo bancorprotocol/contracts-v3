@@ -1,4 +1,5 @@
 import { toBigNumber } from '../helpers/Types';
+import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -44,12 +45,7 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [
             expected,
-            {
-                maxAbsoluteError = new Decimal(0),
-                maxRelativeError = new Decimal(0),
-                notLargerThan = false,
-                notSmallerThan = false
-            }
+            { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0), relation = undefined }
         ] = args;
         const obj = chaiUtils.flag(this, 'object');
 
@@ -64,24 +60,25 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
                 return;
             }
 
-            if (notLargerThan) {
-                this.assert(
-                    objDec.lte(expectedDec),
-                    `Expected ${objDec} to be smaller than or equal to ${expectedDec}`,
-                    `Expected ${objDec} NOT to be smaller than or equal to ${expectedDec}`,
-                    expectedDec.toString(),
-                    objDec.toString()
-                );
-            }
-
-            if (notSmallerThan) {
-                this.assert(
-                    objDec.gte(expectedDec),
-                    `Expected ${objDec} to be larger than or equal to ${expectedDec}`,
-                    `Expected ${objDec} NOT to be larger than or equal to ${expectedDec}`,
-                    expectedDec.toString(),
-                    objDec.toString()
-                );
+            switch (relation) {
+                case Relation.LesserOrEqual:
+                    this.assert(
+                        objDec.lte(expectedDec),
+                        `Expected ${objDec} to be lesser than or equal to ${expectedDec}`,
+                        `Expected ${objDec} NOT to be lesser than or equal to ${expectedDec}`,
+                        expectedDec.toString(),
+                        objDec.toString()
+                    );
+                    break;
+                case Relation.GreaterOrEqual:
+                    this.assert(
+                        objDec.gte(expectedDec),
+                        `Expected ${objDec} to be greater than or equal to ${expectedDec}`,
+                        `Expected ${objDec} NOT to be greater than or equal to ${expectedDec}`,
+                        expectedDec.toString(),
+                        objDec.toString()
+                    );
+                    break;
             }
 
             const absoluteError = objDec.sub(expectedDec).abs();

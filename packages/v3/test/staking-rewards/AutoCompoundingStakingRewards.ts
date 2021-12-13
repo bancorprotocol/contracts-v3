@@ -17,6 +17,7 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, TokenWithAddress, transfer } from '../helpers/Utils';
+import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -613,12 +614,18 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         expect(userTokenOwned).to.almostEqual(
                             INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
-                            { maxRelativeError: new Decimal('0.0000000000000000000001'), notLargerThan: true }
+                            {
+                                maxRelativeError: new Decimal('0.0000000000000000000001'),
+                                relation: Relation.LesserOrEqual
+                            }
                         );
 
                         expect(externalRewardsVaultTokenOwned).to.almostEqual(
                             getPerc(TOTAL_REWARDS, 100 - programTimePercent),
-                            { maxRelativeError: new Decimal('0.0000000000000000000009'), notSmallerThan: true }
+                            {
+                                maxRelativeError: new Decimal('0.0000000000000000000009'),
+                                relation: Relation.GreaterOrEqual
+                            }
                         );
                     });
                 }
@@ -713,11 +720,11 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     expect(userTokenOwnedAfter.sub(userTokenOwnedBefore)).to.be.almostEqual(TOTAL_REWARDS, {
                         maxRelativeError: new Decimal('0.999999'),
-                        notLargerThan: true
+                        relation: Relation.LesserOrEqual
                     });
                     expect(vaultTokenOwnedBefore.sub(vaultTokenOwnedAfter)).to.be.almostEqual(TOTAL_REWARDS, {
                         maxRelativeError: new Decimal('0.999999'),
-                        notLargerThan: true
+                        relation: Relation.LesserOrEqual
                     });
                 });
             });
