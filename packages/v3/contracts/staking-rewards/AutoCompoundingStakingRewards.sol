@@ -244,39 +244,42 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        ProgramData storage currentProgram = _programs[poolAddress];
+        IPoolToken poolToken = _programs[poolAddress].poolToken;
 
         // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have been distributed
-        if (address(currentProgram.poolToken) != address(0)) {
+        if (address(poolToken) != address(0)) {
             processRewards(pool);
         } else {
             // it no program exists for the given pool, initialize it
             if (poolAddress == address(_networkToken)) {
-                currentProgram.poolToken = _masterPool.poolToken();
+                poolToken = _masterPool.poolToken();
             } else {
-                currentProgram.poolToken = _network.collectionByPool(pool).poolToken(pool);
+                poolToken = _network.collectionByPool(pool).poolToken(pool);
             }
         }
 
         // check whether the rewards vault holds enough funds to cover the total rewards
         if (
             MathEx.mulDivF(
-                currentProgram.poolToken.balanceOf(address(rewardsVault)),
+                poolToken.balanceOf(address(rewardsVault)),
                 _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance,
-                currentProgram.poolToken.totalSupply()
+                poolToken.totalSupply()
             ) < totalRewards
         ) {
             revert InsufficientFunds();
         }
 
-        currentProgram.rewardsVault = rewardsVault;
-        currentProgram.totalRewards = totalRewards;
-        currentProgram.remainingRewards = totalRewards;
-        currentProgram.distributionType = distributionType;
-        currentProgram.startTime = startTime;
-        currentProgram.endTime = endTime;
-        currentProgram.prevDistributionTimestamp = 0;
-        currentProgram.isEnabled = true;
+        _programs[poolAddress] = ProgramData({
+            startTime: startTime,
+            endTime: endTime,
+            prevDistributionTimestamp: 0,
+            totalRewards: totalRewards,
+            remainingRewards: totalRewards,
+            rewardsVault: rewardsVault,
+            poolToken: poolToken,
+            isEnabled: true,
+            distributionType: distributionType
+        });
 
         _programByPool.add(poolAddress);
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
