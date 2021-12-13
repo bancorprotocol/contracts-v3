@@ -16,7 +16,7 @@ struct ProgramData {
     uint32 endTime;
     uint32 prevDistributionTimestamp;
     uint256 totalRewards;
-    uint256 availableRewards;
+    uint256 remainingRewards;
     IVault rewardsVault;
     IPoolToken poolToken;
     bool isEnabled;

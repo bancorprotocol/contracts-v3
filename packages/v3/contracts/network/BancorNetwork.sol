@@ -1103,41 +1103,40 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool.balanceOf(address(_externalProtectionVault))
         );
 
-        // if network token trading liquidity should be lowered - renounce liquidity
-        if (amounts.networkTokenAmountToDeductFromLiquidity > 0) {
-            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokenAmountToDeductFromLiquidity);
+        if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
+            assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting liquidity here
+            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
         }
 
-        // if the network token arbitrage is positive - ask the master pool to mint network tokens into the vault
-        if (amounts.networkTokenArbitrageAmount > 0) {
-            cachedMasterPool.mint(address(_masterVault), uint256(amounts.networkTokenArbitrageAmount));
-        }
-        // if the network token arbitrage is negative - ask the master pool to burn network tokens from the vault
-        else if (amounts.networkTokenArbitrageAmount < 0) {
-            cachedMasterPool.burnFromVault(uint256(-amounts.networkTokenArbitrageAmount));
+        if (amounts.networkTokensTradingLiquidityDelta.value > 0) {
+            if (amounts.networkTokensTradingLiquidityDelta.isNeg) {
+                cachedMasterPool.burnFromVault(amounts.networkTokensTradingLiquidityDelta.value);
+            } else {
+                cachedMasterPool.mint(address(_masterVault), amounts.networkTokensTradingLiquidityDelta.value);
+            }
         }
 
         // if the provider should receive some network tokens - ask the master pool to mint network tokens to the
         // provider
-        if (amounts.networkTokenAmountToMintForProvider > 0) {
-            cachedMasterPool.mint(address(provider), amounts.networkTokenAmountToMintForProvider);
-        }
-
-        // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault
-        // and send them to the provider
-        if (amounts.baseTokenAmountToTransferFromVaultToProvider > 0) {
-            // base token amount to transfer from the master vault to the provider
-            _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokenAmountToTransferFromVaultToProvider);
+        if (amounts.networkTokensToMintForProvider > 0) {
+            cachedMasterPool.mint(address(provider), amounts.networkTokensToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
-        // external protection vault and send them to the provider
-        if (amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider > 0) {
+        // external protection vault and send them to the master vault
+        if (amounts.baseTokensToTransferFromEPV > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
-                payable(provider),
-                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider
+                payable(address(_masterVault)),
+                amounts.baseTokensToTransferFromEPV
             );
+            amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromEPV;
+        }
+
+        // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault and send
+        // them to the provider
+        if (amounts.baseTokensToTransferFromMasterVault > 0) {
+            _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokensToTransferFromMasterVault);
         }
 
         emit BaseTokenWithdrawn({
@@ -1145,12 +1144,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             token: pool,
             provider: provider,
             poolCollection: poolCollection,
-            baseTokenAmount: amounts.baseTokenAmountToTransferFromVaultToProvider +
-                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
+            baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: completedRequest.poolTokenAmount,
-            externalProtectionBaseTokenAmount: amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-            networkTokenAmount: amounts.networkTokenAmountToMintForProvider,
-            withdrawalFeeAmount: amounts.baseTokenWithdrawalFeeAmount
+            externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
+            networkTokenAmount: amounts.networkTokensToMintForProvider,
+            withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 
         // TODO: reduce this external call by receiving these updated amounts as well

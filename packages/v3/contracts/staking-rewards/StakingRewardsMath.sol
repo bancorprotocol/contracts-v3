@@ -19,18 +19,13 @@ contract StakingRewardsMath {
      * @dev return the number of pool token to burn in order to match a number of token to distribute
      */
     function _calculatePoolTokenToBurn(
-        uint256 totalAmountOfTokenStaked,
-        uint256 amountOfTokenToDistribute,
-        uint256 totalSupplyOfPoolToken,
-        uint256 amountOfPoolTokenOwnedByProtocol
+        uint256 totalStaked,
+        uint256 totalToDistribute,
+        uint256 poolTokenSupply,
+        uint256 poolTokenProtocolShare
     ) internal pure returns (uint256) {
-        uint256 val = amountOfTokenToDistribute * totalSupplyOfPoolToken;
-        return
-            MathEx.mulDivF(
-                val,
-                totalSupplyOfPoolToken,
-                val + totalAmountOfTokenStaked * (totalSupplyOfPoolToken - amountOfPoolTokenOwnedByProtocol)
-            );
+        uint256 val = totalToDistribute * poolTokenSupply;
+        return MathEx.mulDivF(val, poolTokenSupply, val + totalStaked * (poolTokenSupply - poolTokenProtocolShare));
     }
 
     /**
@@ -39,9 +34,9 @@ contract StakingRewardsMath {
     function _calculateFlatRewards(
         uint32 timeElapsedSinceLastDistribution,
         uint32 remainingProgramDuration,
-        uint256 availableRewards
+        uint256 remainingRewards
     ) internal pure returns (uint256) {
-        return (availableRewards * timeElapsedSinceLastDistribution) / remainingProgramDuration;
+        return (remainingRewards * timeElapsedSinceLastDistribution) / remainingProgramDuration;
     }
 
     /**

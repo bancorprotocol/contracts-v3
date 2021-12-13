@@ -5,11 +5,10 @@ pragma abicoder v2;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -47,6 +46,8 @@ import {
 
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
+import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
+
 error InvalidRate();
 error ZeroTargetAmount();
 error ReturnAmountTooLow();
@@ -64,7 +65,6 @@ error LiquidityTooLow();
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Time, Utils {
-    using SafeCast for uint256;
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
@@ -567,7 +567,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         nonReentrant
         returns (WithdrawalAmounts memory amounts)
     {
-        // obtain all withdrawal-related amounts
+        // obtain the withdrawal amounts
         amounts = _poolWithdrawalAmounts(
             pool,
             basePoolTokenAmount,
@@ -575,12 +575,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             externalProtectionVaultBalance
         );
 
-        // execute post-withdrawal actions
-        _postWithdrawal(
+        // execute the actual withdrawal
+        _executeWithdrawal(
             pool,
             basePoolTokenAmount,
-            amounts.baseTokenAmountToDeductFromLiquidity,
-            amounts.networkTokenAmountToDeductFromLiquidity
+            amounts.baseTokensTradingLiquidityDelta,
+            amounts.networkTokensTradingLiquidityDelta
         );
     }
 
@@ -846,18 +846,24 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     ) internal view returns (WithdrawalAmounts memory amounts) {
         PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
 
-        return
-            _withdrawalAmounts(
-                params.networkTokenAvgTradingLiquidity,
-                params.baseTokenAvgTradingLiquidity,
-                MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-                params.basePoolTokenTotalSupply,
-                params.baseTokenStakedAmount,
-                externalProtectionVaultBalance,
-                params.tradeFeePPM,
-                _networkSettings.withdrawalFeePPM(),
-                basePoolTokenAmount
-            );
+        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
+            params.networkTokenAvgTradingLiquidity,
+            params.baseTokenAvgTradingLiquidity,
+            MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
+            params.baseTokenStakedAmount,
+            externalProtectionVaultBalance,
+            params.tradeFeePPM,
+            _networkSettings.withdrawalFeePPM(),
+            MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
+        );
+
+        amounts.baseTokensToTransferFromMasterVault = output.s;
+        amounts.networkTokensToMintForProvider = output.t;
+        amounts.baseTokensToTransferFromEPV = output.u;
+        amounts.baseTokensTradingLiquidityDelta = output.r;
+        amounts.networkTokensTradingLiquidityDelta = output.p;
+        amounts.networkTokensProtocolHoldingsDelta = output.q;
+        amounts.baseTokensWithdrawalFee = output.v;
     }
 
     /**
@@ -887,21 +893,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     }
 
     /**
-     * @dev executes post-withdrawal actions:
+     * @dev executes the following actions:
      *
-     * - burns the network's base pool tokens
-     * - updates the pool's base token staked balance
-     * - updates the pool's base token trading liquidity
-     * - updates the pool's network token trading liquidity
-     * - updates the pool's trading liquidity product
-     * - emits an event if the pool's network token trading liquidity has crossed the minimum threshold (either above it
-     * or below it)
+     * - burn the network's base pool tokens
+     * - update the pool's base token staked balance
+     * - update the pool's base token trading liquidity
+     * - update the pool's network token trading liquidity
+     * - update the pool's trading liquidity product
+     * - emit an event if the pool's network token trading liquidity has crossed the minimum threshold
+     *   (either above the threshold or below the threshold)
      */
-    function _postWithdrawal(
+    function _executeWithdrawal(
         ReserveToken pool,
         uint256 basePoolTokenAmount,
-        uint256 baseTokenTradingLiquidityDelta,
-        uint256 networkTokenTradingLiquidityDelta
+        Sint256 memory baseTokenTradingLiquidityDelta,
+        Sint256 memory networkTokenTradingLiquidityDelta
     ) private {
         Pool storage data = _poolData[pool];
         uint256 totalSupply = data.poolToken.totalSupply();
@@ -910,8 +916,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         // overflows
         uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
         uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta;
-        uint256 networkTokenNewTradingLiquidity = networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta;
+        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidityDelta.isNeg
+            ? baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta.value
+            : baseTokenCurrTradingLiquidity + baseTokenTradingLiquidityDelta.value;
+        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta.isNeg
+            ? networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta.value
+            : networkTokenCurrTradingLiquidity + networkTokenTradingLiquidityDelta.value;
 
         data.poolToken.burnFrom(address(_network), basePoolTokenAmount);
 
@@ -938,418 +948,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             if (newEnabled != currEnabled) {
                 emit TradingEnabled({ pool: pool, newStatus: newEnabled, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
             }
-        }
-    }
-
-    /**
-     * @dev returns all amounts related to base token withdrawal, where each amount includes the withdrawal fee, which
-     * may need to be deducted (depending on usage)
-     */
-    function _withdrawalAmounts(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenExcessAmount,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenStakedAmount,
-        uint256 baseTokenexternalProtectionVaultBalance,
-        uint32 tradeFeePPM,
-        uint32 withdrawalFeePPM,
-        uint256 basePoolTokenWithdrawalAmount
-    ) internal pure returns (WithdrawalAmounts memory amounts) {
-        uint256 baseTokenVaultBalance = baseTokenLiquidity + baseTokenExcessAmount;
-
-        if (baseTokenStakedAmount > baseTokenVaultBalance) {
-            uint256 baseTokenOffsetAmount;
-            unchecked {
-                baseTokenOffsetAmount = _deductFee(
-                    baseTokenStakedAmount - baseTokenVaultBalance,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-            }
-
-            amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider = baseTokenOffsetAmount <
-                baseTokenexternalProtectionVaultBalance
-                ? baseTokenOffsetAmount
-                : baseTokenexternalProtectionVaultBalance;
-
-            (basePoolTokenWithdrawalAmount, basePoolTokenTotalSupply, baseTokenStakedAmount) = _reviseInput(
-                amounts.baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                baseTokenStakedAmount,
-                withdrawalFeePPM
-            );
-        }
-
-        uint256 baseTokenShare = baseTokenStakedAmount * basePoolTokenWithdrawalAmount;
-
-        amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
-            1,
-            baseTokenShare,
-            basePoolTokenTotalSupply,
-            withdrawalFeePPM
-        );
-
-        amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
-            baseTokenLiquidity,
-            baseTokenShare,
-            basePoolTokenTotalSupply * baseTokenVaultBalance,
-            withdrawalFeePPM
-        );
-
-        amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
-            networkTokenLiquidity,
-            baseTokenShare,
-            basePoolTokenTotalSupply * baseTokenVaultBalance,
-            0
-        );
-
-        if (baseTokenVaultBalance >= baseTokenStakedAmount) {
-            // the pool is not in a base token deficit
-            uint256 baseTokenOffsetAmount = _deductFee(
-                baseTokenVaultBalance - baseTokenStakedAmount,
-                basePoolTokenWithdrawalAmount,
-                basePoolTokenTotalSupply,
-                withdrawalFeePPM
-            );
-
-            uint256 networkTokenArbitrageAmount = _posArbitrage(
-                MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                tradeFeePPM,
-                withdrawalFeePPM,
-                baseTokenShare
-            );
-
-            if (
-                networkTokenArbitrageAmount + amounts.networkTokenAmountToDeductFromLiquidity <= networkTokenLiquidity
-            ) {
-                amounts.networkTokenArbitrageAmount = -networkTokenArbitrageAmount.toInt256();
-            }
-        } else {
-            // the pool is in a base token deficit
-            if (amounts.baseTokenAmountToTransferFromVaultToProvider <= baseTokenVaultBalance) {
-                uint256 baseTokenOffsetAmount;
-                unchecked {
-                    baseTokenOffsetAmount = _deductFee(
-                        baseTokenStakedAmount - baseTokenVaultBalance,
-                        basePoolTokenWithdrawalAmount,
-                        basePoolTokenTotalSupply,
-                        withdrawalFeePPM
-                    );
-                }
-
-                amounts.networkTokenArbitrageAmount = _negArbitrage(
-                    MathEx.subMax0(networkTokenLiquidity, amounts.networkTokenAmountToDeductFromLiquidity),
-                    MathEx.subMax0(baseTokenLiquidity, amounts.baseTokenAmountToDeductFromLiquidity),
-                    basePoolTokenTotalSupply,
-                    baseTokenOffsetAmount,
-                    tradeFeePPM,
-                    withdrawalFeePPM,
-                    baseTokenShare
-                ).toInt256();
-            }
-
-            if (amounts.networkTokenArbitrageAmount == 0) {
-                // the withdrawal amount is larger than the vault's balance
-                uint256 aMx = networkTokenLiquidity * basePoolTokenWithdrawalAmount;
-                uint256 bMd = baseTokenLiquidity * basePoolTokenTotalSupply;
-
-                unchecked {
-                    amounts.networkTokenAmountToMintForProvider = _deductFee(
-                        baseTokenStakedAmount - baseTokenVaultBalance,
-                        aMx,
-                        bMd,
-                        withdrawalFeePPM
-                    );
-                }
-
-                amounts.baseTokenAmountToTransferFromVaultToProvider = _deductFee(
-                    baseTokenVaultBalance,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-
-                amounts.baseTokenAmountToDeductFromLiquidity = _deductFee(
-                    baseTokenLiquidity,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    withdrawalFeePPM
-                );
-
-                amounts.networkTokenAmountToDeductFromLiquidity = _deductFee(
-                    networkTokenLiquidity,
-                    basePoolTokenWithdrawalAmount,
-                    basePoolTokenTotalSupply,
-                    0
-                );
-            }
-        }
-
-        // TODO: withdrawal fee
-        amounts.baseTokenWithdrawalFeeAmount = 0;
-    }
-
-    /**
-     * @dev returns `xy * (1 - n) / z`, assuming `n` is normalized
-     */
-    function _deductFee(
-        uint256 x,
-        uint256 y,
-        uint256 z,
-        uint32 n
-    ) internal pure returns (uint256) {
-        uint32 remainingPPM;
-        unchecked {
-            remainingPPM = PPM_RESOLUTION - n;
-        }
-        return MathEx.mulDivF(x, y * remainingPPM, z * PPM_RESOLUTION);
-    }
-
-    /**
-     * @dev recalculates the values of `x`, `d` and `e`
-     *
-     * let the following denote the input:
-     * E = base token amount to transfer from the external protection vault to the provider
-     * x = base pool token withdrawal amount
-     * d = base pool token total supply
-     * e = base token staked amount
-     * n = withdrawal fee in ppm units
-     *
-     * output, assuming `n` is normalized:
-     * x = x - E / (1 - n) * d / e
-     * d = d - E / (1 - n) * d / e
-     * e = e - E / (1 - n)
-     */
-    function _reviseInput(
-        uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-        uint256 basePoolTokenWithdrawalAmount,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenStakedAmount,
-        uint32 withdrawalFeePPM
-    )
-        internal
-        pure
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFee;
-        unchecked {
-            baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFee = MathEx.mulDivF(
-                baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-                PPM_RESOLUTION,
-                PPM_RESOLUTION - withdrawalFeePPM
-            );
-        }
-        uint256 baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFeeMulRatio = MathEx.mulDivF(
-            baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFee,
-            basePoolTokenTotalSupply,
-            baseTokenStakedAmount
-        );
-        return (
-            basePoolTokenWithdrawalAmount -
-                baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFeeMulRatio,
-            basePoolTokenTotalSupply - baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFeeMulRatio,
-            baseTokenStakedAmount - baseTokenAmountToTransferFromExternalProtectionVaultToProviderPlusFee
-        );
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be removed from the pool in order to create an optimal
-     * arbitrage incentive
-     *
-     * let the following denote the input:
-     * a = network token hypothetical trading liquidity
-     * b = base token hypothetical trading liquidity
-     * d = base pool token total supply
-     * e = base token staked amount
-     * f = base token redundant amount
-     * m = trade fee in ppm units
-     * n = withdrawal fee in ppm units
-     * x = base pool token withdrawal amount
-     * ex = base token share
-     *
-     * output, assuming `m` and `n` are normalized:
-     * if `f(f + bm - 2fm) / (b - fm) <  exn / d` return `af(b(2 - m) - f) / (b(b - fm))`
-     * if `f(f + bm - 2fm) / (b - fm) >= exn / d` return `0`
-     */
-    function _posArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint32 tradeFeePPM,
-        uint32 withdrawalFeePPM,
-        uint256 baseTokenShare
-    ) internal pure returns (uint256) {
-        return
-            _calcArbitrage(
-                networkTokenLiquidity,
-                baseTokenLiquidity,
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                withdrawalFeePPM,
-                baseTokenShare,
-                _posArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
-            );
-    }
-
-    /**
-     * @dev returns the amount of network tokens which should be added to the pool in order to create an optimal
-     * arbitrage incentive
-     *
-     * let the following denote the input:
-     * a = network token hypothetical trading liquidity
-     * b = base token hypothetical trading liquidity
-     * d = base pool token total supply
-     * e = base token staked amount
-     * f = base token required amount
-     * m = trade fee in ppm units
-     * n = withdrawal fee in ppm units
-     * x = base pool token withdrawal amount
-     * ex = base token share
-     *
-     * output, assuming `m` and `n` are normalized:
-     * if `f(f - bm - 2fm) / (b + fm) <  exn / d` return `af(b(2 - m) + f) / (b(b + fm))`
-     * if `f(f - bm - 2fm) / (b + fm) >= exn / d` return `0`
-     */
-    function _negArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint32 tradeFeePPM,
-        uint32 withdrawalFeePPM,
-        uint256 baseTokenShare
-    ) internal pure returns (uint256) {
-        return
-            _calcArbitrage(
-                networkTokenLiquidity,
-                baseTokenLiquidity,
-                basePoolTokenTotalSupply,
-                baseTokenOffsetAmount,
-                withdrawalFeePPM,
-                baseTokenShare,
-                _negArbitrage(baseTokenLiquidity, baseTokenOffsetAmount, tradeFeePPM)
-            );
-    }
-
-    /**
-     * @dev returns a pair of quotients
-     *
-     * let the following denote the input:
-     * b = base token hypothetical trading liquidity
-     * f = base token redundant amount
-     * m = trade fee in ppm units
-     *
-     * output, assuming `m` is normalized:
-     * 1. `(f + bm - 2fm) / (b - fm)`
-     * 2. `(2b - bm - f) / (b - fm)`
-     */
-    function _posArbitrage(
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenOffsetAmount,
-        uint32 tradeFeePPM
-    ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity * tradeFeePPM;
-        uint256 fm = baseTokenOffsetAmount * tradeFeePPM;
-        uint256 bM = baseTokenLiquidity * PPM_RESOLUTION;
-        uint256 fM = baseTokenOffsetAmount * PPM_RESOLUTION;
-        uint32 remainingPPM;
-        unchecked {
-            remainingPPM = 2 * PPM_RESOLUTION - tradeFeePPM;
-        }
-        return [
-            Quotient({ n1: fM + bm, n2: 2 * fm, d1: bM, d2: fm }),
-            Quotient({ n1: baseTokenLiquidity * remainingPPM, n2: fM, d1: bM, d2: fm })
-        ];
-    }
-
-    /**
-     * @dev returns a pair of quotients
-     *
-     * let the following denote the input:
-     * b = base token hypothetical trading liquidity
-     * f = base token required amount
-     * m = trade fee in ppm units
-     *
-     * output, assuming `m` is normalized:
-     * 1. `(f - bm - 2fm) / (b + fm)`
-     * 2. `(2b - bm + f) / (b + fm)`
-     */
-    function _negArbitrage(
-        uint256 baseTokenLiquidity,
-        uint256 baseTokenOffsetAmount,
-        uint32 tradeFeePPM
-    ) internal pure returns (Quotient[2] memory) {
-        uint256 bm = baseTokenLiquidity * tradeFeePPM;
-        uint256 fm = baseTokenOffsetAmount * tradeFeePPM;
-        uint256 bM = baseTokenLiquidity * PPM_RESOLUTION;
-        uint256 fM = baseTokenOffsetAmount * PPM_RESOLUTION;
-        uint32 remainingPPM;
-        unchecked {
-            remainingPPM = 2 * PPM_RESOLUTION - tradeFeePPM;
-        }
-        return [
-            Quotient({ n1: fM, n2: bm + 2 * fm, d1: bM + fm, d2: 0 }),
-            Quotient({ n1: baseTokenLiquidity * remainingPPM + fM, n2: 0, d1: bM + fm, d2: 0 })
-        ];
-    }
-
-    /**
-     * @dev returns the arbitrage if it is smaller than the fee paid, and 0 otherwise
-     */
-    function _calcArbitrage(
-        uint256 networkTokenLiquidity,
-        uint256 baseTokenLiquidity,
-        uint256 basePoolTokenTotalSupply,
-        uint256 baseTokenOffsetAmount,
-        uint256 withdrawalFeePPM,
-        uint256 baseTokenShare,
-        Quotient[2] memory quotients
-    ) internal pure returns (uint256) {
-        Fraction memory y = _subMax0(quotients[0]);
-
-        if (
-            MathEx.mulDivF(baseTokenOffsetAmount, y.n, y.d) <
-            MathEx.mulDivF(baseTokenShare, withdrawalFeePPM, basePoolTokenTotalSupply * PPM_RESOLUTION)
-        ) {
-            Fraction memory z = _subMax0(quotients[1]);
-            return MathEx.mulDivF(networkTokenLiquidity * baseTokenOffsetAmount, z.n, baseTokenLiquidity * z.d);
-        }
-        return 0;
-    }
-
-    /**
-     * @dev returns the maximum of `(q.n1 - q.n2) / (q.d1 - q.d2)` and 0
-     */
-    function _subMax0(Quotient memory q) internal pure returns (Fraction memory) {
-        unchecked {
-            if (q.n1 > q.n2 && q.d1 > q.d2) {
-                // the quotient is finite and positive
-                return Fraction({ n: q.n1 - q.n2, d: q.d1 - q.d2 });
-            }
-
-            if (q.n2 > q.n1 && q.d2 > q.d1) {
-                // the quotient is finite and positive
-                return Fraction({ n: q.n2 - q.n1, d: q.d2 - q.d1 });
-            }
-
-            if (q.n2 == q.n1 && q.d2 == q.d1) {
-                // the quotient is 1
-                return Fraction({ n: 1, d: 1 });
-            }
-
-            // the quotient is not finite or not positive
-            return Fraction({ n: 0, d: q.d1 == q.d2 ? 0 : 1 });
         }
     }
 

@@ -16,7 +16,7 @@ import { createStakingRewardsWithERV, createSystem, depositToPool, setupSimplePo
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
-import { Addressable, TokenWithAddress, transfer } from '../helpers/Utils';
+import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -99,6 +99,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
             autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                 network,
+                networkSettings,
                 networkToken,
                 masterPool,
                 externalRewardsVault
@@ -107,19 +108,45 @@ describe('AutoCompoundingStakingRewards', () => {
 
         it('should revert when attempting to create with an invalid bancor network contract', async () => {
             await expect(
-                Contracts.AutoCompoundingStakingRewards.deploy(ZERO_ADDRESS, networkToken.address, masterPool.address)
+                Contracts.AutoCompoundingStakingRewards.deploy(
+                    ZERO_ADDRESS,
+                    networkSettings.address,
+                    networkToken.address,
+                    masterPool.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid bancor network settings contract', async () => {
+            await expect(
+                Contracts.AutoCompoundingStakingRewards.deploy(
+                    network.address,
+                    ZERO_ADDRESS,
+                    networkToken.address,
+                    masterPool.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network token contract', async () => {
             await expect(
-                Contracts.AutoCompoundingStakingRewards.deploy(network.address, ZERO_ADDRESS, masterPool.address)
+                Contracts.AutoCompoundingStakingRewards.deploy(
+                    network.address,
+                    networkSettings.address,
+                    ZERO_ADDRESS,
+                    masterPool.address
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid master pool contract', async () => {
             await expect(
-                Contracts.AutoCompoundingStakingRewards.deploy(network.address, networkToken.address, ZERO_ADDRESS)
+                Contracts.AutoCompoundingStakingRewards.deploy(
+                    network.address,
+                    networkSettings.address,
+                    networkToken.address,
+                    ZERO_ADDRESS
+                )
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -161,6 +188,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
             autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                 network,
+                networkSettings,
                 networkToken,
                 masterPool,
                 externalRewardsVault
@@ -263,6 +291,21 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             it('should revert when there is not enough funds in the external rewards vault', async () => {
+                const nonWhitelistedToken = await createTokenBySymbol(TKN);
+
+                await expect(
+                    autoCompoundingStakingRewards.createProgram(
+                        nonWhitelistedToken.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS,
+                        StackingRewardsDistributionTypes.Flat,
+                        now,
+                        endTime
+                    )
+                ).to.revertedWith('NotWhitelisted');
+            });
+
+            it('should revert when there is not enough funds in the external rewards vault', async () => {
                 await expect(
                     autoCompoundingStakingRewards.createProgram(
                         token.address,
@@ -294,7 +337,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 expect(program.poolToken).to.equal(poolToken.address);
                 expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                 expect(program.totalRewards).to.equal(TOTAL_REWARDS);
-                expect(program.availableRewards).to.equal(TOTAL_REWARDS);
+                expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                 expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
                 expect(program.startTime).to.equal(now);
                 expect(program.endTime).to.equal(endTime);
@@ -340,7 +383,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.poolToken).to.equal(poolToken.address);
                     expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                     expect(program.totalRewards).to.equal(10);
-                    expect(program.availableRewards).to.equal(0);
+                    expect(program.remainingRewards).to.equal(0);
                     expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
                     expect(program.startTime).to.equal(now);
                     expect(program.endTime).to.equal(newEndTime);
@@ -541,6 +584,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                     network,
+                    networkSettings,
                     networkToken,
                     masterPool,
                     externalRewardsVault
@@ -649,6 +693,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                     network,
+                    networkSettings,
                     networkToken,
                     masterPool,
                     externalRewardsVault

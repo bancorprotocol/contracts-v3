@@ -8,9 +8,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, NotWhitelisted } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -56,6 +57,9 @@ contract AutoCompoundingStakingRewards is
     // the network contract
     IBancorNetwork private immutable _network;
 
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
+
     // the network token contract
     IERC20 private immutable _networkToken;
 
@@ -86,12 +90,12 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(ReserveToken indexed pool, uint32 prevEndTime, uint256 availableRewards);
+    event ProgramTerminated(ReserveToken indexed pool, uint32 prevEndTime, uint256 remainingRewards);
 
     /**
      * @dev triggered when a program is enabled/disabled
      */
-    event ProgramEnabled(ReserveToken indexed pool, bool status, uint256 availableRewards);
+    event ProgramEnabled(ReserveToken indexed pool, bool status, uint256 remainingRewards);
 
     /**
      * @dev triggered when rewards are distributed
@@ -101,7 +105,7 @@ contract AutoCompoundingStakingRewards is
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
         uint32 programTimeElapsed,
-        uint256 availableRewards
+        uint256 remainingRewards
     );
 
     /**
@@ -109,10 +113,17 @@ contract AutoCompoundingStakingRewards is
      */
     constructor(
         IBancorNetwork initNetwork,
+        INetworkSettings initNetworkSettings,
         IERC20 initNetworkToken,
         IMasterPool initMasterPool
-    ) validAddress(address(initNetwork)) validAddress(address(initNetworkToken)) validAddress(address(initMasterPool)) {
+    )
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkSettings))
+        validAddress(address(initNetworkToken))
+        validAddress(address(initMasterPool))
+    {
         _network = initNetwork;
+        _networkSettings = initNetworkSettings;
         _networkToken = initNetworkToken;
         _masterPool = initMasterPool;
     }
@@ -161,9 +172,9 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 programsLength = _programByPool.length();
-        ProgramData[] memory list = new ProgramData[](programsLength);
-        for (uint256 i = 0; i < programsLength; i = uncheckedInc(i)) {
+        uint256 numPrograms = _programByPool.length();
+        ProgramData[] memory list = new ProgramData[](numPrograms);
+        for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
             list[i] = _programs[_programByPool.at(i)];
         }
         return list;
@@ -175,7 +186,7 @@ contract AutoCompoundingStakingRewards is
     function isProgramActive(ReserveToken pool) public view returns (bool) {
         ProgramData memory currentProgram = _programs[ReserveToken.unwrap(pool)];
 
-        if (currentProgram.availableRewards == 0) {
+        if (currentProgram.remainingRewards == 0) {
             return false;
         }
 
@@ -209,6 +220,12 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyActive();
         }
 
+        address poolAddress = ReserveToken.unwrap(pool);
+
+        if (!_networkSettings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+
         if (totalRewards == 0) {
             revert InvalidParam();
         }
@@ -227,23 +244,21 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        address poolAddress = ReserveToken.unwrap(pool);
-
         ProgramData storage currentProgram = _programs[poolAddress];
 
-        // it no program exists for the given pool, initialize it
-        if (address(currentProgram.poolToken) == address(0)) {
+        // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have been distributed
+        if (address(currentProgram.poolToken) != address(0)) {
+            processRewards(pool);
+        } else {
+            // it no program exists for the given pool, initialize it
             if (poolAddress == address(_networkToken)) {
                 currentProgram.poolToken = _masterPool.poolToken();
             } else {
                 currentProgram.poolToken = _network.collectionByPool(pool).poolToken(pool);
             }
-        } else {
-            // otherwise process rewards one last time to make sure all rewards have been distributed
-            processRewards(pool);
         }
 
-        // checking that the rewards vault hold enough pool token for the amount of total rewards token
+        // check whether the rewards vault holds enough funds to cover the total rewards
         if (
             MathEx.mulDivF(
                 currentProgram.poolToken.balanceOf(address(rewardsVault)),
@@ -256,7 +271,7 @@ contract AutoCompoundingStakingRewards is
 
         currentProgram.rewardsVault = rewardsVault;
         currentProgram.totalRewards = totalRewards;
-        currentProgram.availableRewards = totalRewards;
+        currentProgram.remainingRewards = totalRewards;
         currentProgram.distributionType = distributionType;
         currentProgram.startTime = startTime;
         currentProgram.endTime = endTime;
@@ -277,14 +292,12 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
 
-        if (currentProgram.distributionType == DistributionType.FLAT) {
-            currentProgram.endTime = _time();
-        }
+        currentProgram.endTime = _time();
 
-        uint256 cachedAvailableRewards = currentProgram.availableRewards;
-        currentProgram.availableRewards = 0;
+        uint256 cachedRemainingRewards = currentProgram.remainingRewards;
+        currentProgram.remainingRewards = 0;
 
-        emit ProgramTerminated(pool, currentProgram.endTime, cachedAvailableRewards);
+        emit ProgramTerminated(pool, currentProgram.endTime, cachedRemainingRewards);
     }
 
     /**
@@ -295,7 +308,7 @@ contract AutoCompoundingStakingRewards is
 
         currentProgram.isEnabled = status;
 
-        emit ProgramEnabled(pool, status, currentProgram.availableRewards);
+        emit ProgramEnabled(pool, status, currentProgram.remainingRewards);
     }
 
     /**
@@ -306,13 +319,13 @@ contract AutoCompoundingStakingRewards is
 
         DistributionType distributionType = currentProgram.distributionType;
 
-        // if program is disabled, doesn't process rewards
+        // if program is disabled, don't process rewards
         if (!currentProgram.isEnabled) {
             return;
         }
 
-        // if the program is inactive, has a flat distribution and its end time is lower than the previous distribution timestamp,
-        // process the rewards, in any other case it should return
+        // if the program is inactive, return
+        // for flat distribution if its end time is lower than the previous distribution timestamp, process the rewards, in any other case it should return
         if (!isProgramActive(pool)) {
             if (
                 distributionType == DistributionType.FLAT &&
@@ -348,7 +361,7 @@ contract AutoCompoundingStakingRewards is
             Math.min(poolTokenToBurn, poolTokensInRewardsVault)
         );
 
-        currentProgram.availableRewards -= tokensToDistribute;
+        currentProgram.remainingRewards -= tokensToDistribute;
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
         currentProgram.poolToken.burn(poolTokenToBurn);
@@ -358,7 +371,7 @@ contract AutoCompoundingStakingRewards is
             tokensToDistribute,
             poolTokenToBurn,
             timeInfo.timeElapsed,
-            currentProgram.availableRewards
+            currentProgram.remainingRewards
         );
     }
 
@@ -380,7 +393,7 @@ contract AutoCompoundingStakingRewards is
             _calculateFlatRewards(
                 timeElapsedSinceLastDistribution,
                 remainingProgramDuration,
-                currentProgram.availableRewards
+                currentProgram.remainingRewards
             );
     }
 
