@@ -5,7 +5,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 
 contract TestLogic is Upgradeable {
     bool private _initialized;
-    uint8 private _version;
+    uint16 private _version;
 
     uint256[MAX_GAP - 1] private __gap;
 
