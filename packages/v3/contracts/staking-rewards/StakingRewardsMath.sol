@@ -16,7 +16,7 @@ contract StakingRewardsMath {
     error SecondsTooHigh();
 
     /**
-     * @dev return the number of pool token to burn in order to match a number of token to distribute
+     * @dev returns the number of pool token to burn in order to match a number of token to distribute
      */
     function _calculatePoolTokenToBurn(
         uint256 totalStaked,
@@ -29,7 +29,7 @@ contract StakingRewardsMath {
     }
 
     /**
-     * @dev return the amount of rewards distributed on a flat amount ratio
+     * @dev returns the amount of rewards distributed on a flat amount ratio
      */
     function _calculateFlatRewards(
         uint32 timeElapsedSinceLastDistribution,

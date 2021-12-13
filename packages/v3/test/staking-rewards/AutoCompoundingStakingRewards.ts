@@ -274,6 +274,19 @@ describe('AutoCompoundingStakingRewards', () => {
                 ).to.be.revertedWith('InvalidParam');
             });
 
+            it('should revert when end time is equal to 0', async () => {
+                await expect(
+                    autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        externalRewardsVault.address,
+                        TOTAL_REWARDS,
+                        StackingRewardsDistributionTypes.Flat,
+                        now,
+                        0
+                    )
+                ).to.be.revertedWith('InvalidParam');
+            });
+
             it('should revert when start time is lower than current time', async () => {
                 await autoCompoundingStakingRewards.setTime(1);
 
