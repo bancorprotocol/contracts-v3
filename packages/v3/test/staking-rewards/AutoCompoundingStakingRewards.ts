@@ -472,6 +472,28 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 expect(program.isEnabled).to.be.false;
             });
+
+            it('should ignore updating to the same status', async () => {
+                let program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.true;
+
+                await expect(autoCompoundingStakingRewards.enableProgram(token.address, true)).not.to.emit(
+                    autoCompoundingStakingRewards,
+                    'ProgramEnabled'
+                );
+
+                await autoCompoundingStakingRewards.enableProgram(token.address, false);
+
+                program = await autoCompoundingStakingRewards.program(token.address);
+
+                expect(program.isEnabled).to.be.false;
+
+                await expect(autoCompoundingStakingRewards.enableProgram(token.address, false)).not.to.emit(
+                    autoCompoundingStakingRewards,
+                    'ProgramEnabled'
+                );
+            });
         });
 
         describe('is program active', () => {
