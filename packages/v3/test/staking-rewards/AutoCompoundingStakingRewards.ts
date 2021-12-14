@@ -446,9 +446,11 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             it('should enable a program', async () => {
+                await autoCompoundingStakingRewards.enableProgram(token.address, false);
+
                 let program = await autoCompoundingStakingRewards.program(token.address);
 
-                expect(program.isEnabled).to.be.true;
+                expect(program.isEnabled).to.be.false;
 
                 await expect(autoCompoundingStakingRewards.enableProgram(token.address, true))
                     .to.emit(autoCompoundingStakingRewards, 'ProgramEnabled')
