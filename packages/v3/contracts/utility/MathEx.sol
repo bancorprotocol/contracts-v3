@@ -35,16 +35,6 @@ library MathEx {
     }
 
     /**
-     * @dev returns the smallest integer larger than or equal to the square root of a positive integer
-     */
-    function ceilSqrt(uint256 n) internal pure returns (uint256) {
-        unchecked {
-            uint256 x = floorSqrt(n);
-            return x * x == n ? x : x + 1;
-        }
-    }
-
-    /**
      * @dev returns an `Sint256` positive representation of an unsigned integer
      */
     function toPos256(uint256 n) internal pure returns (Sint256 memory) {
@@ -56,21 +46,6 @@ library MathEx {
      */
     function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
         return Sint256({ value: n, isNeg: true });
-    }
-
-    /**
-     * @dev computes the product of two given ratios
-     */
-    function productRatio(Fraction memory x, Fraction memory y) internal pure returns (Fraction memory) {
-        unchecked {
-            uint256 n = mulDivC(x.n, y.n, type(uint256).max);
-            uint256 d = mulDivC(x.d, y.d, type(uint256).max);
-            uint256 z = n > d ? n : d;
-            if (z > 1) {
-                return Fraction({ n: mulDivC(x.n, y.n, z), d: mulDivC(x.d, y.d, z) });
-            }
-            return Fraction({ n: x.n * y.n, d: x.d * y.d });
-        }
     }
 
     /**
