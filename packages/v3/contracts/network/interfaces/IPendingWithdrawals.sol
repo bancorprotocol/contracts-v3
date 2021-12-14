@@ -68,7 +68,7 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the contract to transfer the pool token amount on its behalf
+     * - the caller must be the network contract
      */
     function initWithdrawal(
         address provider,
