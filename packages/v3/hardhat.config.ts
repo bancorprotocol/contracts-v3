@@ -86,10 +86,7 @@ const config: HardhatUserConfig = {
     },
 
     dependencyCompiler: {
-        paths: [
-            '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
-            '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol'
-        ]
+        paths: ['@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol']
     },
 
     etherscan: {

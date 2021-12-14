@@ -73,7 +73,7 @@ const createTransparentProxy = async (
 ) => {
     const admin = await proxyAdmin();
     const data = skipInitialization ? [] : logicContract.interface.encodeFunctionData('initialize', initArgs);
-    return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
+    return Contracts.TransparentUpgradeableProxyImmutable.deploy(logicContract.address, admin.address, data);
 };
 
 export const createProxy = async <F extends ContractFactory>(
