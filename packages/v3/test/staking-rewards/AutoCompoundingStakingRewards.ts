@@ -445,7 +445,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 ).to.be.revertedWith('AccessDenied');
             });
 
-            it('should correctly enable a program', async () => {
+            it('should enable a program', async () => {
                 let program = await autoCompoundingStakingRewards.program(token.address);
 
                 expect(program.isEnabled).to.be.true;
@@ -459,7 +459,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 expect(program.isEnabled).to.be.true;
             });
 
-            it('should correctly disable a program', async () => {
+            it('should disable a program', async () => {
                 let program = await autoCompoundingStakingRewards.program(token.address);
 
                 expect(program.isEnabled).to.be.true;
