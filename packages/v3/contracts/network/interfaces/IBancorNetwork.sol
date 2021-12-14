@@ -244,4 +244,15 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have already initiated a withdrawal and received the specified id
      */
     function reinitWithdrawal(uint256 id) external;
+
+    /**
+     * @dev deposits liquidity during a migration
+     */
+    function migrateLiquidity(
+        ReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableAmount,
+        uint256 originalAmount
+    ) external payable;
 }

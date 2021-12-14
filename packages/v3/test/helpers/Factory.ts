@@ -384,7 +384,7 @@ export const initWithdraw = async (
     poolToken: PoolToken,
     amount: BigNumber
 ) => {
-    await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
+    await poolToken.connect(provider).approve(network.address, amount);
     await network.connect(provider).initWithdrawal(poolToken.address, amount);
 
     const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);

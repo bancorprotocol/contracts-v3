@@ -3452,7 +3452,7 @@ describe('BancorNetwork', () => {
             const { v, r, s } = await permitContractSignature(
                 provider as Wallet,
                 poolToken.address,
-                pendingWithdrawals,
+                network,
                 networkToken,
                 poolTokenAmount,
                 MAX_UINT256
@@ -3753,8 +3753,8 @@ describe('BancorNetwork Financial Verification', () => {
             await govToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await networkToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await basePoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
-            await masterPoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
+            await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            await masterPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await networkToken.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }

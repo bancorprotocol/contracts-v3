@@ -960,7 +960,7 @@ describe('Profile @profile', () => {
         });
 
         it('should initiate a withdrawal request', async () => {
-            await poolToken.connect(provider).approve(pendingWithdrawals.address, poolTokenAmount);
+            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
 
             await profiler.profile(
                 'init withdrawal',

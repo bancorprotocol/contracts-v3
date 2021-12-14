@@ -145,7 +145,7 @@ describe('BancorV1Migration', () => {
         const prevProviderNetworkBalance = await getBalance(networkToken, provider);
 
         const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
-        await masterPoolToken.connect(provider).approve(pendingWithdrawals.address, masterPoolTokenAmount);
+        await masterPoolToken.connect(provider).approve(network.address, masterPoolTokenAmount);
 
         await network.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
 
@@ -154,7 +154,7 @@ describe('BancorV1Migration', () => {
         await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
-        await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount);
+        await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
         await network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
         const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
 

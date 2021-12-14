@@ -77,23 +77,6 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external;
 
     /**
-     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function initWithdrawalPermitted(
-        address provider,
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-
-    /**
      * @dev cancels a withdrawal request
      *
      * requirements:
