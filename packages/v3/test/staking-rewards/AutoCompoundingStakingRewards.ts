@@ -631,14 +631,12 @@ describe('AutoCompoundingStakingRewards', () => {
             return (await poolToken.balanceOf(user.address)).mul(tokenStakedBalance).div(await poolToken.totalSupply());
         };
 
-        function getPerc(num: number, percent: number): number;
-        function getPerc(num: BigNumber, percent: number): BigNumber;
-
-        function getPerc(num: number | BigNumber, percent: number): number | BigNumber {
+        function getPercent(num: number | BigNumber, percent: number): number | BigNumber {
             if (typeof num === 'number') {
-                return num - Math.floor(num - (percent / 100) * num);
+                return (num * percent) / 100;
             }
-            return num.sub(num.sub(num.mul(percent).div(100)));
+
+            return num.mul(percent).div(100);
         }
 
         context('FLAT', () => {
@@ -722,7 +720,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
             describe('advanced tests', () => {
                 for (const programTimePercent of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
-                    const now = getPerc(PROGRAM_TIME, programTimePercent);
+                    const now = getPercent(PROGRAM_TIME, programTimePercent);
 
                     it(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
                         await autoCompoundingStakingRewards.setTime(now);
@@ -737,7 +735,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
 
                         expect(userTokenOwned).to.almostEqual(
-                            INITIAL_STAKE.add(getPerc(TOTAL_REWARDS, programTimePercent)),
+                            INITIAL_STAKE.add(getPercent(TOTAL_REWARDS, programTimePercent)),
                             {
                                 maxRelativeError: new Decimal('0.0000000000000000000001'),
                                 relation: Relation.LesserOrEqual
@@ -745,7 +743,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
 
                         expect(externalRewardsVaultTokenOwned).to.almostEqual(
-                            getPerc(TOTAL_REWARDS, 100 - programTimePercent),
+                            getPercent(TOTAL_REWARDS, 100 - programTimePercent),
                             {
                                 maxRelativeError: new Decimal('0.0000000000000000000009'),
                                 relation: Relation.GreaterOrEqual
