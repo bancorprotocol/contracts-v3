@@ -32,7 +32,7 @@ contract TestLogic is Upgradeable {
         return _version;
     }
 
-    function setVersion(uint8 newVersion) external {
+    function setVersion(uint16 newVersion) external {
         _version = newVersion;
     }
 }
