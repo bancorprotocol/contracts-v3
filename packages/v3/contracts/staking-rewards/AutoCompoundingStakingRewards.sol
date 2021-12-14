@@ -365,10 +365,10 @@ contract AutoCompoundingStakingRewards is
 
         uint256 poolTokensInRewardsVault = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
 
+        // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burnt
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
-            // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to be burnt
             Math.min(poolTokenToBurn, poolTokensInRewardsVault)
         );
 
