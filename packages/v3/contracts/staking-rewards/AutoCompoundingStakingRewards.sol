@@ -326,7 +326,8 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) public nonReentrant {
-        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+        address poolAddress = ReserveToken.unwrap(pool);
+        ProgramData memory currentProgram = _programs[poolAddress];
 
         DistributionType distributionType = currentProgram.distributionType;
 
@@ -376,6 +377,8 @@ contract AutoCompoundingStakingRewards is
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
         currentProgram.poolToken.burn(poolTokenToBurn);
+
+        _programs[poolAddress] = currentProgram;
 
         emit RewardsDistributed(
             pool,
