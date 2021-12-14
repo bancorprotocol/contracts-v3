@@ -173,10 +173,12 @@ contract AutoCompoundingStakingRewards is
      */
     function programs() external view returns (ProgramData[] memory) {
         uint256 numPrograms = _programByPool.length();
+
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
             list[i] = _programs[_programByPool.at(i)];
         }
+
         return list;
     }
 
@@ -245,7 +247,8 @@ contract AutoCompoundingStakingRewards is
         address poolAddress = ReserveToken.unwrap(pool);
         IPoolToken poolToken = _programs[poolAddress].poolToken;
 
-        // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have been distributed
+        // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
+        // been distributed
         if (address(poolToken) != address(0)) {
             processRewards(pool);
         } else {
@@ -281,6 +284,7 @@ contract AutoCompoundingStakingRewards is
         });
 
         _programByPool.add(poolAddress);
+
         emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
     }
 
