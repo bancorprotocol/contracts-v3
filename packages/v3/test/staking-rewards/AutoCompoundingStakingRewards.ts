@@ -169,7 +169,7 @@ describe('AutoCompoundingStakingRewards', () => {
         let now: number;
         let endTime: number;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
         const TOTAL_DURATION = days(10);
         const TOTAL_REWARDS = 10;
         const INITIAL_STAKE = 10;
@@ -644,14 +644,14 @@ describe('AutoCompoundingStakingRewards', () => {
         context('FLAT', () => {
             const distributionType = StackingRewardsDistributionTypes.Flat;
 
-            const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
+            const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
 
-            const INITIAL_STAKE = toWei(BigNumber.from(10_000));
-            const TOTAL_REWARDS = toWei(BigNumber.from(90_000));
+            const INITIAL_STAKE = toWei(10_000);
+            const TOTAL_REWARDS = toWei(90_000);
             const TOTAL_TOKEN = INITIAL_STAKE.add(TOTAL_REWARDS);
             const PROGRAM_TIME = days(10);
 
-            let now: BigNumber;
+            let now: number;
 
             let token: TokenWithAddress;
             let poolToken: PoolToken;
@@ -670,7 +670,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     externalRewardsVault
                 );
 
-                now = BigNumber.from(0);
+                now = 0;
 
                 ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
                     INITIAL_STAKE,
@@ -683,7 +683,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     TOTAL_REWARDS,
                     distributionType,
                     now,
-                    now.add(PROGRAM_TIME)
+                    now + PROGRAM_TIME
                 );
             });
 
@@ -716,7 +716,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     );
 
                     expect(userTokenOwned).to.equal(TOTAL_TOKEN);
-                    expect(externalRewardsVaultTokenOwned).to.equal(BigNumber.from(0));
+                    expect(externalRewardsVaultTokenOwned).to.equal(0);
                 });
             });
 
@@ -757,9 +757,9 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         context('Exponential-Decay', () => {
-            const MIN_LIQUIDITY_FOR_TRADING = toWei(BigNumber.from(1_000));
-            const INITIAL_STAKE = toWei(BigNumber.from(10_000));
-            const TOTAL_REWARDS = toWei(BigNumber.from(90_000));
+            const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
+            const INITIAL_STAKE = toWei(10_000);
+            const TOTAL_REWARDS = toWei(90_000);
             const START_TIME = 0;
 
             let token: TokenWithAddress;
