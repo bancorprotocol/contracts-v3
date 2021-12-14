@@ -2,8 +2,6 @@ import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain-types';
 import {
     floorSqrt,
-    ceilSqrt,
-    productRatio,
     reducedRatio,
     normalizedRatio,
     accurateRatio,
@@ -42,23 +40,6 @@ describe('MathEx', () => {
             const expected = floorSqrt(x);
             const actual = await mathContract.floorSqrt(x);
             expect(actual).to.equal(expected);
-        });
-    };
-
-    const testCeilSqrt = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(n).add(k);
-        it(`ceilSqrt(${x.toHexString()})`, async () => {
-            const expected = ceilSqrt(x);
-            const actual = await mathContract.ceilSqrt(x);
-            expect(actual).to.equal(expected);
-        });
-    };
-
-    const testProductRatio = (x: Fraction, y: Fraction, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
-        it(`productRatio(${toString(x)}, ${toString(y)}`, async () => {
-            const expected = productRatio(x, y);
-            const actual = await mathContract.productRatio(toBigNumber(x), toBigNumber(y));
-            expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
 
@@ -164,22 +145,6 @@ describe('MathEx', () => {
             }
         }
 
-        for (const n of [1, 64, 128, 192, 256]) {
-            for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                testCeilSqrt(n, k);
-            }
-        }
-
-        for (const xn of PR_TEST_ARRAY.slice(-2)) {
-            for (const yn of PR_TEST_ARRAY.slice(-2)) {
-                for (const xd of PR_TEST_ARRAY.slice(-2)) {
-                    for (const yd of PR_TEST_ARRAY.slice(-2)) {
-                        testProductRatio({ n: xn, d: xd }, { n: yn, d: yd }, new Decimal(0), PR_MAX_ERROR);
-                    }
-                }
-            }
-        }
-
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = 1; b <= 5; b++) {
@@ -255,22 +220,6 @@ describe('MathEx', () => {
         for (let n = 1; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testFloorSqrt(n, k);
-            }
-        }
-
-        for (let n = 1; n <= 256; n++) {
-            for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                testCeilSqrt(n, k);
-            }
-        }
-
-        for (const xn of PR_TEST_ARRAY) {
-            for (const yn of PR_TEST_ARRAY) {
-                for (const xd of PR_TEST_ARRAY) {
-                    for (const yd of PR_TEST_ARRAY) {
-                        testProductRatio({ n: xn, d: xd }, { n: yn, d: yd }, new Decimal(0), PR_MAX_ERROR);
-                    }
-                }
             }
         }
 

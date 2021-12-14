@@ -10,14 +10,6 @@ contract TestMathEx {
         return MathEx.floorSqrt(num);
     }
 
-    function ceilSqrt(uint256 num) external pure returns (uint256) {
-        return MathEx.ceilSqrt(num);
-    }
-
-    function productRatio(Fraction memory x, Fraction memory y) external pure returns (Fraction memory) {
-        return MathEx.productRatio(x, y);
-    }
-
     function reducedRatio(Fraction memory r, uint256 max) external pure returns (Fraction memory) {
         return MathEx.reducedRatio(r, max);
     }
