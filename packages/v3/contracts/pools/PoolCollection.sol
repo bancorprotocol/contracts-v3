@@ -243,13 +243,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolToken(ReserveToken reserveToken) external view returns (IPoolToken) {
-        return _poolData[reserveToken].poolToken;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
     function pools() external view returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
@@ -367,6 +360,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      */
     function poolLiquidity(ReserveToken reserveToken) external view returns (PoolLiquidity memory) {
         return _poolData[reserveToken].liquidity;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function poolToken(ReserveToken reserveToken) external view returns (IPoolToken) {
+        return _poolData[reserveToken].poolToken;
     }
 
     /**
@@ -530,9 +530,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             data.liquidity.baseTokenTradingLiquidity;
 
         // calculate the pool token amount to mint
-        IPoolToken poolToken = data.poolToken;
         uint256 currentStakedBalance = data.liquidity.stakedBalance;
-        uint256 poolTokenAmount = _calcPoolTokenAmount(poolToken, baseTokenAmount, currentStakedBalance);
+        uint256 poolTokenAmount = _calcPoolTokenAmount(data.poolToken, baseTokenAmount, currentStakedBalance);
 
         // update the staked balance with the full base token amount
         data.liquidity.stakedBalance = currentStakedBalance + baseTokenAmount;
@@ -540,14 +539,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         _poolData[pool] = data;
 
         // mint pool tokens to the provider
-        poolToken.mint(provider, poolTokenAmount);
+        data.poolToken.mint(provider, poolTokenAmount);
 
         return
             DepositAmounts({
                 networkTokenDeltaAmount: depositParams.networkTokenDeltaAmount,
                 baseTokenDeltaAmount: depositParams.baseTokenDeltaAmount,
                 poolTokenAmount: poolTokenAmount,
-                poolToken: poolToken
+                poolToken: data.poolToken
             });
     }
 
@@ -734,11 +733,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert InvalidPoolCollection();
         }
 
-        IPoolToken poolToken = _poolData[pool].poolToken;
+        IPoolToken cachedPoolToken = _poolData[pool].poolToken;
 
         _removePool(pool);
 
-        poolToken.transferOwnership(address(targetPoolCollection));
+        cachedPoolToken.transferOwnership(address(targetPoolCollection));
 
         emit PoolMigratedOut({ reserveToken: pool });
     }
@@ -1002,11 +1001,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
      * @dev calculates pool tokens amount
      */
     function _calcPoolTokenAmount(
-        IPoolToken poolToken,
+        IPoolToken basePoolToken,
         uint256 baseTokenAmount,
         uint256 stakedBalance
     ) private view returns (uint256) {
-        uint256 poolTokenTotalSupply = poolToken.totalSupply();
+        uint256 poolTokenTotalSupply = basePoolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
             // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
             if (stakedBalance > 0) {
