@@ -10,12 +10,6 @@ const decimalize = <C>(func: Function) => {
 
 export const floorSqrt = decimalize<Decimal>((n: Decimal) => n.sqrt().floor());
 
-export const ceilSqrt = decimalize<Decimal>((n: Decimal) => n.sqrt().ceil());
-
-export const productRatio = decimalize<Decimal>(
-    (a: Fraction, b: Fraction): Fraction => ({ n: a.n.mul(b.n), d: a.d.mul(b.d) })
-);
-
 export const reducedRatio = decimalize<Fraction<Decimal>>((r: Fraction, max: Decimal): Fraction => {
     if (r.n.gt(max) || r.d.gt(max)) {
         return normalizedRatio(r, max);
