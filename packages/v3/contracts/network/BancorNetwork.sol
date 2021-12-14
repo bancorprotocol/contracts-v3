@@ -777,6 +777,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
+        nonReentrant
     {
         _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
@@ -791,7 +792,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) {
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
         poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
         _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
@@ -800,14 +801,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function cancelWithdrawal(uint256 id) external {
+    function cancelWithdrawal(uint256 id) external nonReentrant {
         _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function reinitWithdrawal(uint256 id) external {
+    function reinitWithdrawal(uint256 id) external nonReentrant {
         _pendingWithdrawals.reinitWithdrawal(msg.sender, id);
     }
 

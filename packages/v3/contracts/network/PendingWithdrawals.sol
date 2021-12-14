@@ -27,7 +27,7 @@ error WithdrawalNotAllowed();
 /**
  * @dev Pending Withdrawals contract
  */
-contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using ReserveTokenLibrary for ReserveToken;
@@ -143,7 +143,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     function __PendingWithdrawals_init() internal initializer {
         __Upgradeable_init();
-        __ReentrancyGuard_init();
 
         __PendingWithdrawals_init_unchained();
     }
@@ -242,14 +241,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) only(address(_network)) nonReentrant {
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) only(address(_network)) {
         _initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) nonReentrant {
+    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         if (request.provider != provider) {
@@ -262,7 +261,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function reinitWithdrawal(address provider, uint256 id) external only(address(_network)) nonReentrant {
+    function reinitWithdrawal(address provider, uint256 id) external only(address(_network)) {
         WithdrawalRequest storage request = _withdrawalRequests[id];
 
         if (request.provider != provider) {
