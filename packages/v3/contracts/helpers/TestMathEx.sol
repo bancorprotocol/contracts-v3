@@ -18,8 +18,8 @@ contract TestMathEx {
         return MathEx.normalizedRatio(r, scale);
     }
 
-    function accurateRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
-        return MathEx.accurateRatio(r, scale);
+    function estimatedRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
+        return MathEx.estimatedRatio(r, scale);
     }
 
     function roundDiv(uint256 n, uint256 d) external pure returns (uint256) {

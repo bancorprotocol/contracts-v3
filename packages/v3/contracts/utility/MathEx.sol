@@ -69,16 +69,16 @@ library MathEx {
      */
     function normalizedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
         if (r.n <= r.d) {
-            return accurateRatio(r, scale);
+            return estimatedRatio(r, scale);
         }
 
-        return _inv(accurateRatio(_inv(r), scale));
+        return _inversedRatio(estimatedRatio(_inversedRatio(r), scale));
     }
 
     /**
      * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)", assuming that "r.n <= r.d".
      */
-    function accurateRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
+    function estimatedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
         unchecked {
             uint256 maxVal = type(uint256).max / scale;
             Fraction memory ratio = r;
@@ -334,7 +334,7 @@ library MathEx {
     /**
      * @dev returns the inverse of a given fraction
      */
-    function _inv(Fraction memory r) private pure returns (Fraction memory) {
+    function _inversedRatio(Fraction memory r) private pure returns (Fraction memory) {
         return Fraction({ n: r.d, d: r.n });
     }
 }
