@@ -972,7 +972,7 @@ describe('Profile @profile', () => {
             const { v, r, s } = await permitContractSignature(
                 provider as Wallet,
                 poolToken.address,
-                pendingWithdrawals,
+                network,
                 networkToken,
                 poolTokenAmount,
                 MAX_UINT256
