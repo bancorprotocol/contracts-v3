@@ -352,7 +352,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function readyForWithdrawal(uint256 id) external view returns (bool) {
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);

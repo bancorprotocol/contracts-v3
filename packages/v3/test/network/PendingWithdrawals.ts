@@ -248,7 +248,7 @@ describe('PendingWithdrawals', () => {
                         .to.emit(pendingWithdrawals, 'WithdrawalInitiated')
                         .withArgs(reserveToken.address, providerAddress, id, amount, reserveTokenAmount);
 
-                    expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                    expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
 
                     expect(await poolToken.balanceOf(providerAddress)).to.equal(providerBalance.sub(amount));
                     expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
@@ -404,7 +404,7 @@ describe('PendingWithdrawals', () => {
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
-                        expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                        expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
 
                         expect(await poolToken.balanceOf(provider.address)).to.equal(
                             providerBalance.add(withdrawalRequest.poolTokenAmount)
@@ -527,7 +527,7 @@ describe('PendingWithdrawals', () => {
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
-                        expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                        expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
 
                         expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
                         expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
@@ -678,7 +678,7 @@ describe('PendingWithdrawals', () => {
                                 .withArgs(pendingWithdrawals.address, ZERO_ADDRESS, extraPoolTokenAmount);
                         }
 
-                        expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                        expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
 
                         expect(await poolToken.totalSupply()).to.equal(prevTotalSupply.sub(extraPoolTokenAmount));
                         expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
@@ -720,7 +720,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should mark the request as not ready for withdrawal', async () => {
-                            expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                            expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
@@ -738,7 +738,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should mark the request as not ready for withdrawal', async () => {
-                            expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.false;
+                            expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
@@ -755,7 +755,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should mark the request as ready for withdrawal', async () => {
-                            expect(await pendingWithdrawals.readyForWithdrawal(id)).to.be.true;
+                            expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.true;
                         });
 
                         it('should revert when attempting to cancel a completed withdrawal request', async () => {

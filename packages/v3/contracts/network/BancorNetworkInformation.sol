@@ -282,8 +282,8 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @inheritdoc IBancorNetworkInformation
      */
-    function readyForWithdrawal(uint256 id) external view returns (bool) {
-        return _pendingWithdrawals.readyForWithdrawal(id);
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
+        return _pendingWithdrawals.isReadyForWithdrawal(id);
     }
 
     /**

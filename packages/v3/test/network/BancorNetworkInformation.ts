@@ -477,13 +477,13 @@ describe('BancorNetworkInformation', () => {
                 poolTokenAmount
             );
 
-            expect(await networkInformation.readyForWithdrawal(id)).to.be.false;
+            expect(await networkInformation.isReadyForWithdrawal(id)).to.be.false;
 
             const withdrawalDuration =
                 (await pendingWithdrawals.lockDuration()) + (await pendingWithdrawals.withdrawalWindowDuration());
             await pendingWithdrawals.setTime(creationTime + withdrawalDuration - 1);
 
-            expect(await networkInformation.readyForWithdrawal(id)).to.be.true;
+            expect(await networkInformation.isReadyForWithdrawal(id)).to.be.true;
         });
     });
 });

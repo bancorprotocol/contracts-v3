@@ -112,5 +112,5 @@ interface IBancorNetworkInformation is IUpgradeable {
     /**
      * @dev returns whether the given request is ready for withdrawal
      */
-    function readyForWithdrawal(uint256 id) external view returns (bool);
+    function isReadyForWithdrawal(uint256 id) external view returns (bool);
 }
