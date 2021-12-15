@@ -4,7 +4,7 @@ import {
     floorSqrt,
     reducedRatio,
     normalizedRatio,
-    accurateRatio,
+    estimatedRatio,
     roundDiv,
     mulDivC,
     mulDivF
@@ -59,10 +59,10 @@ describe('MathEx', () => {
         });
     };
 
-    const testAccurateRatio = (r: Fraction, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
-        it(`accurateRatio(${toString(r)}, ${scale.toString()}})`, async () => {
-            const expected = accurateRatio(r, scale);
-            const actual = await mathContract.accurateRatio(toBigNumber(r), toBigNumber(scale));
+    const testEstimatedRatio = (r: Fraction, scale: Decimal, maxAbsoluteError: Decimal, maxRelativeError: Decimal) => {
+        it(`estimatedRatio(${toString(r)}, ${scale.toString()}})`, async () => {
+            const expected = estimatedRatio(r, scale);
+            const actual = await mathContract.estimatedRatio(toBigNumber(r), toBigNumber(scale));
             expect(expected).to.almostEqual({ n: actual[0], d: actual[1] }, { maxAbsoluteError, maxRelativeError });
         });
     };
@@ -169,7 +169,7 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 5; a++) {
                 for (let b = Math.max(a, 1); b <= 5; b++) {
-                    testAccurateRatio(
+                    testEstimatedRatio(
                         { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal(0),
@@ -277,7 +277,7 @@ describe('MathEx', () => {
         for (const scale of SCALES) {
             for (let a = 0; a < 10; a++) {
                 for (let b = Math.max(a, 1); b <= 10; b++) {
-                    testAccurateRatio(
+                    testEstimatedRatio(
                         { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal(0),
@@ -292,7 +292,7 @@ describe('MathEx', () => {
                 const a = MAX_UINT256.divToInt(scale).mul(i).add(1);
                 for (let j = new Decimal(i); j.lte(scale); j = j.mul(10)) {
                     const b = MAX_UINT256.divToInt(scale).mul(j).add(1);
-                    testAccurateRatio(
+                    testEstimatedRatio(
                         { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal(0),
@@ -316,7 +316,7 @@ describe('MathEx', () => {
                 MAX_UINT256
             ]) {
                 for (const b of [MAX_UINT256.sub(1), MAX_UINT256].filter((b) => b.gt(a))) {
-                    testAccurateRatio(
+                    testEstimatedRatio(
                         { n: new Decimal(a), d: new Decimal(b) },
                         scale,
                         new Decimal('1.6'),

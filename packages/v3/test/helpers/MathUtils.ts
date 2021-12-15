@@ -20,15 +20,15 @@ export const reducedRatio = decimalize<Fraction<Decimal>>((r: Fraction, max: Dec
 
 export const normalizedRatio = decimalize<Fraction<Decimal>>((r: Fraction, scale: Decimal): Fraction => {
     if (r.n.lte(r.d)) {
-        return accurateRatio(r, scale);
+        return estimatedRatio(r, scale);
     }
 
     const invR = { n: r.d, d: r.n };
-    const res = accurateRatio(invR, scale);
+    const res = estimatedRatio(invR, scale);
     return { n: res.d, d: res.n };
 });
 
-export const accurateRatio = decimalize<Fraction<Decimal>>(
+export const estimatedRatio = decimalize<Fraction<Decimal>>(
     (r: Fraction, scale: Decimal): Fraction => ({
         n: r.n.div(r.n.add(r.d)).mul(scale),
         d: r.d.div(r.n.add(r.d)).mul(scale)
