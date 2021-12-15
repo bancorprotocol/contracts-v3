@@ -23,7 +23,7 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
     /**
      * @dev initializes the contract and its parents
      */
-    function __Upgradeable_init() internal initializer {
+    function __Upgradeable_init() internal onlyInitializing {
         __AccessControl_init();
 
         __Upgradeable_init_unchained();
@@ -32,7 +32,7 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
     /**
      * @dev performs contract-specific initialization
      */
-    function __Upgradeable_init_unchained() internal initializer {
+    function __Upgradeable_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
 

@@ -327,7 +327,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
@@ -341,7 +341,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) internal initializer {
+    ) internal onlyInitializing {
         _masterPool = initMasterPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;

@@ -128,7 +128,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetworkInformation_init() internal initializer {
+    function __BancorNetworkInformation_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __BancorNetworkInformation_init_unchained();
@@ -137,7 +137,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetworkInformation_init_unchained() internal initializer {}
+    function __BancorNetworkInformation_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 

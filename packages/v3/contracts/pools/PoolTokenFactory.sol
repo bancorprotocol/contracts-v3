@@ -46,7 +46,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @dev initializes the contract and its parents
      */
-    function __PoolTokenFactory_init() internal initializer {
+    function __PoolTokenFactory_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __PoolTokenFactory_init_unchained();
@@ -55,7 +55,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __PoolTokenFactory_init_unchained() internal initializer {}
+    function __PoolTokenFactory_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 

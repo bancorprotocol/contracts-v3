@@ -195,6 +195,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         validAddress(address(initNetworkSettings))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
+        initializer
     {
         __ReentrancyGuard_init();
 
