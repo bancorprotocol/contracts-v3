@@ -1,4 +1,4 @@
-import { Fraction, toDecimal } from './Types';
+import { toDecimal } from './Types';
 import Decimal from 'decimal.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
