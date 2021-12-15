@@ -521,7 +521,7 @@ describe('PoolAverageRate', () => {
         const THRESHOLD = BigNumber.from(2).pow(112).sub(1);
 
         const reducedRatioTest = (ratio: Fraction<BigNumber>, maxRelativeError: Decimal) => {
-            it(`reducedRatio(${toString(ratio)})`, async () => {
+            it(`ratio = ${toString(ratio)}`, async () => {
                 const newRatio = await poolAverageRate.reducedRatio(ratio);
                 expect(newRatio[0]).to.be.lte(THRESHOLD);
                 expect(newRatio[1]).to.be.lte(THRESHOLD);
