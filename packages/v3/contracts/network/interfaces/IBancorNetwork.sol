@@ -209,7 +209,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the contract to transfer the pool token amount on its behalf
      */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external;
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external returns (uint256);
 
     /**
      * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
@@ -225,7 +225,7 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev cancels a withdrawal request

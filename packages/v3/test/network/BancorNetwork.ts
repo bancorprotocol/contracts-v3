@@ -3431,21 +3431,18 @@ describe('BancorNetwork', () => {
         });
 
         it('should initiate a withdrawal request', async () => {
-            const { id, creationTime } = await initWithdraw(
-                provider as any as SignerWithAddress,
-                network,
-                pendingWithdrawals,
-                poolToken,
-                poolTokenAmount
-            );
+            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+
+            const retId = await network.connect(provider).callStatic.initWithdrawal(poolToken.address, poolTokenAmount);
+            await network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
 
             const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-
-            expect(id).to.equal(withdrawalRequestIds[withdrawalRequestIds.length - 1]);
+            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
 
             const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
             expect(withdrawalRequest.provider).to.equal(provider.address);
-            expect(withdrawalRequest.createdAt).to.equal(creationTime);
+            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
         });
 
         it('should initiate a permitted withdrawal request', async () => {
@@ -3458,12 +3455,16 @@ describe('BancorNetwork', () => {
                 MAX_UINT256
             );
 
+            const retId = await network
+                .connect(provider)
+                .callStatic.initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
             await network
                 .connect(provider)
                 .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
 
             const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
             const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
 
             const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
             expect(withdrawalRequest.provider).to.equal(provider.address);

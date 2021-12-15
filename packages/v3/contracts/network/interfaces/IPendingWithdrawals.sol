@@ -74,7 +74,7 @@ interface IPendingWithdrawals is IUpgradeable {
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev cancels a withdrawal request

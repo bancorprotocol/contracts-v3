@@ -778,8 +778,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
         nonReentrant
+        returns (uint256)
     {
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
 
     /**
@@ -792,10 +793,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant returns (uint256) {
         poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
 
     /**
@@ -1441,11 +1442,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) private {
+    ) private returns (uint256) {
         // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
         // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
 
-        _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
+        return _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 }

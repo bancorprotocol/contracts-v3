@@ -231,20 +231,17 @@ describe('PendingWithdrawals', () => {
                     providerAddress = await provider.getAddress();
                 });
 
-                const initWithdrawal = async (poolToken: PoolToken, amount: BigNumberish) => {
-                    await poolToken.connect(provider).approve(network.address, amount);
-
-                    return network.connect(provider).initWithdrawal(poolToken.address, amount);
-                };
-
                 const testInitWithdrawal = async (poolToken: PoolToken, amount: BigNumber) => {
                     const providerBalance = await poolToken.balanceOf(providerAddress);
                     const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
                     const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(providerAddress);
 
-                    const res = await initWithdrawal(poolToken, amount);
+                    const retId = await network.connect(provider).callStatic.initWithdrawal(poolToken.address, amount);
+                    const res = await network.connect(provider).initWithdrawal(poolToken.address, amount);
                     const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(providerAddress);
                     const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                    expect(id).to.equal(retId);
+
                     const reserveTokenAmount = await poolTokenUnderlying(poolToken, amount);
 
                     await expect(res)
@@ -311,6 +308,8 @@ describe('PendingWithdrawals', () => {
                         ));
 
                         poolTokenAmount = await poolToken.balanceOf(provider.address);
+
+                        await poolToken.connect(provider).approve(network.address, poolTokenAmount);
                     });
 
                     it('should revert when attempting to initiate a withdrawal request from a a non-network', async () => {
@@ -324,20 +323,22 @@ describe('PendingWithdrawals', () => {
                     });
 
                     it('should revert when attempting to withdraw a zero amount of pool tokens', async () => {
-                        await expect(initWithdrawal(poolToken, 0)).to.be.revertedWith('ZeroValue');
+                        await expect(network.connect(provider).initWithdrawal(poolToken.address, 0)).to.be.revertedWith(
+                            'ZeroValue'
+                        );
                     });
 
                     it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
-                        await expect(initWithdrawal(poolToken, poolTokenAmount.add(1))).to.be.revertedWith(
-                            'ERC20: transfer amount exceeds balance'
-                        );
+                        await expect(
+                            network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount.add(1))
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should revert when attempting to withdraw an insufficient amount of pool tokens', async () => {
                         const providerBalance = await poolToken.balanceOf(providerAddress);
-                        await expect(initWithdrawal(poolToken, providerBalance.add(1))).to.be.revertedWith(
-                            'ERC20: transfer amount exceeds balance'
-                        );
+                        await expect(
+                            network.connect(provider).initWithdrawal(poolToken.address, providerBalance.add(1))
+                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
                     it('should init a withdraw', async () => {

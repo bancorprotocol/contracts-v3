@@ -241,8 +241,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) only(address(_network)) {
-        _initWithdrawal(provider, poolToken, poolTokenAmount);
+    )
+        external
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        only(address(_network))
+        returns (uint256)
+    {
+        return _initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 
     /**
@@ -399,7 +405,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) private {
+    ) private returns (uint256) {
         // make sure that the pool is valid
         ReserveToken pool = poolToken.reserveToken();
         if (!_network.isPoolValid(pool)) {
@@ -432,6 +438,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
             poolTokenAmount: poolTokenAmount,
             reserveTokenAmount: reserveTokenAmount
         });
+
+        return id;
     }
 
     /**
