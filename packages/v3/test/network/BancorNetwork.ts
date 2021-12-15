@@ -26,8 +26,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
-    TestERC20Burnable,
-    PendingWithdrawals
+    TestERC20Burnable
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
@@ -803,6 +802,7 @@ describe('BancorNetwork', () => {
                 const poolTokenAmount = await toWei(1);
                 const { id, creationTime } = await initWithdraw(
                     deployer,
+                    network,
                     pendingWithdrawals,
                     poolToken,
                     poolTokenAmount
@@ -1628,463 +1628,6 @@ describe('BancorNetwork', () => {
                 testDeposits(symbol);
             });
         }
-
-        const testLiquidityMigration = (
-            totalSupply: BigNumber,
-            reserve1Amount: BigNumber,
-            reserve2Amount: BigNumber,
-            maxRelativeError: Decimal,
-            maxOffset: { negative: number; positive: number }
-        ) => {
-            let now: number;
-            let checkpointStore: TestCheckpointStore;
-            let liquidityProtectionSettings: LiquidityProtectionSettings;
-            let liquidityProtectionStore: LiquidityProtectionStore;
-            let liquidityProtectionStats: LiquidityProtectionStats;
-            let liquidityProtectionSystemStore: LiquidityProtectionSystemStore;
-            let liquidityProtectionWallet: TokenHolder;
-            let liquidityProtection: TestLiquidityProtection;
-            let converter: TestStandardPoolConverter;
-            let poolToken: DSToken;
-            let baseToken: IERC20;
-            let owner: SignerWithAddress;
-            let provider: SignerWithAddress;
-
-            const expectInRange = (x: BigNumber, y: BigNumber) => {
-                expect(x).to.gte(y.sub(maxOffset.negative));
-                expect(x).to.lte(y.add(maxOffset.positive));
-            };
-
-            const addProtectedLiquidity = async (
-                poolTokenAddress: string,
-                token: IERC20,
-                tokenAddress: string,
-                amount: BigNumber,
-                isETH: boolean,
-                from: SignerWithAddress
-            ) => {
-                let value = BigNumber.from(0);
-                if (isETH) {
-                    value = amount;
-                } else {
-                    await token.connect(from).approve(liquidityProtection.address, amount);
-                }
-
-                return liquidityProtection
-                    .connect(from)
-                    .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
-            };
-
-            const getProtection = async (protectionId: BigNumber) => {
-                const protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
-                return {
-                    provider: protection[0],
-                    poolToken: protection[1],
-                    reserveToken: protection[2],
-                    poolAmount: protection[3],
-                    reserveAmount: protection[4],
-                    reserveRateN: protection[5],
-                    reserveRateD: protection[6],
-                    timestamp: protection[7]
-                };
-            };
-
-            const getPoolStats = async (
-                poolToken: TokenWithAddress,
-                reserveToken: TokenWithAddress,
-                isETH: boolean
-            ) => {
-                const poolTokenAddress = poolToken.address;
-                const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
-                return {
-                    totalPoolAmount: await liquidityProtectionStats.totalPoolAmount(poolTokenAddress),
-                    totalReserveAmount: await liquidityProtectionStats.totalReserveAmount(
-                        poolTokenAddress,
-                        reserveTokenAddress
-                    )
-                };
-            };
-
-            const getProviderStats = async (
-                provider: SignerWithAddress,
-                poolToken: TokenWithAddress,
-                reserveToken: TokenWithAddress,
-                isETH: boolean
-            ) => {
-                const poolTokenAddress = poolToken.address;
-                const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
-                return {
-                    totalProviderAmount: await liquidityProtectionStats.totalProviderAmount(
-                        provider.address,
-                        poolTokenAddress,
-                        reserveTokenAddress
-                    ),
-                    providerPools: await liquidityProtectionStats.providerPools(provider.address)
-                };
-            };
-
-            const setTime = async (time: number) => {
-                now = time;
-
-                for (const t of [converter, checkpointStore, liquidityProtection]) {
-                    if (t) {
-                        await t.setTime(now);
-                    }
-                }
-            };
-
-            const initLegacySystem = async (isETH: boolean) => {
-                [owner, provider] = await ethers.getSigners();
-
-                baseToken = (await createTokenBySymbol(isETH ? ETH : TKN)) as IERC20;
-
-                ({
-                    checkpointStore,
-                    liquidityProtectionStore,
-                    liquidityProtectionStats,
-                    liquidityProtectionSystemStore,
-                    liquidityProtectionWallet,
-                    liquidityProtectionSettings,
-                    liquidityProtection,
-                    poolToken,
-                    converter
-                } = await createLegacySystem(
-                    owner,
-                    network,
-                    masterVault,
-                    networkToken,
-                    networkTokenGovernance,
-                    govTokenGovernance,
-                    baseToken
-                ));
-
-                await networkTokenGovernance.mint(owner.address, totalSupply);
-
-                await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(100);
-                await liquidityProtectionSettings.setMinNetworkCompensation(3);
-
-                await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
-                await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
-                await govTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
-
-                await createPool(baseToken, network, networkSettings, poolCollection);
-                await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
-                await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
-                await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
-
-                await networkToken.approve(converter.address, reserve2Amount);
-
-                let value = BigNumber.from(0);
-                if (isETH) {
-                    value = reserve1Amount;
-                } else {
-                    await baseToken.approve(converter.address, reserve1Amount);
-                }
-
-                await converter.addLiquidity(
-                    [baseToken.address, networkToken.address],
-                    [reserve1Amount, reserve2Amount],
-                    1,
-                    {
-                        value: value
-                    }
-                );
-
-                await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
-
-                await setTime(await latest());
-            };
-
-            for (const isETH of [false, true]) {
-                describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
-                    beforeEach(async () => {
-                        await initLegacySystem(isETH);
-                        await addProtectedLiquidity(
-                            poolToken.address,
-                            baseToken,
-                            baseToken.address,
-                            BigNumber.from(1000),
-                            isETH,
-                            owner
-                        );
-                    });
-
-                    it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await expect(
-                            liquidityProtection.migratePositions([protectionId, protectionId])
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
-                    });
-
-                    it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await liquidityProtection.migratePositions([protectionId]);
-                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                            'ERR_ACCESS_DENIED'
-                        );
-                    });
-
-                    it('verifies that the caller can migrate positions', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        const protection = await getProtection(protectionId);
-
-                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isETH);
-                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isETH);
-
-                        const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-
-                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                        const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-
-                        const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
-                        const prevBalance = await getBalance(baseToken, owner.address);
-                        const prevGovBalance = await govToken.balanceOf(owner.address);
-
-                        const res = await liquidityProtection.migratePositions([protectionId]);
-                        const transactionCost = isETH ? await getTransactionCost(res) : BigNumber.from(0);
-
-                        // verify protected liquidities
-                        expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
-
-                        // verify stats
-                        const poolStats = await getPoolStats(poolToken, baseToken, isETH);
-                        expect(poolStats.totalPoolAmount).to.equal(
-                            prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
-                        );
-                        expect(poolStats.totalReserveAmount).to.equal(
-                            prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
-                        );
-
-                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isETH);
-                        expect(providerStats.totalProviderAmount).to.equal(
-                            prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
-                        );
-                        expect(providerStats.providerPools).to.deep.equal([poolToken.address]);
-
-                        // verify balances
-                        const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-                        expectInRange(systemBalance, prevSystemBalance.sub(protection.poolAmount));
-
-                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                        const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-                        expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
-                        expectInRange(
-                            vaultNetworkBalance,
-                            prevVaultNetworkBalance.add(protection.reserveAmount.div(2))
-                        );
-
-                        const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
-
-                        // double since system balance was also liquidated
-                        const delta = protection.poolAmount.mul(2);
-                        expectInRange(walletBalance, prevWalletBalance.sub(delta));
-
-                        const balance = await getBalance(baseToken, owner.address);
-                        expect(balance).to.equal(prevBalance.sub(transactionCost));
-
-                        const govBalance = await govToken.balanceOf(owner.address);
-                        expect(govBalance).to.equal(prevGovBalance);
-
-                        const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                        expect(protectionPoolBalance).to.equal(0);
-
-                        const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                        expect(protectionBaseBalance).to.equal(0);
-
-                        const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                        expect(protectionNetworkBalance).to.equal(0);
-                    });
-
-                    it('verifies that the owner can migrate system pool tokens', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        const protection = await getProtection(protectionId);
-
-                        const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-
-                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                        const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-
-                        const prevGovBalance = await govToken.balanceOf(owner.address);
-
-                        await liquidityProtection.migrateSystemPoolTokens([poolToken.address]);
-
-                        // verify balances
-                        const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-                        expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
-
-                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                        const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
-                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
-
-                        const govBalance = await govToken.balanceOf(owner.address);
-                        expect(govBalance).to.equal(prevGovBalance);
-
-                        const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                        expect(protectionPoolBalance).to.equal(0);
-
-                        const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                        expect(protectionBaseBalance).to.equal(0);
-
-                        const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                        expect(protectionNetworkBalance).to.equal(0);
-                    });
-                });
-            }
-
-            describe('network token', () => {
-                beforeEach(async () => {
-                    await initLegacySystem(false);
-
-                    const amount = BigNumber.from(100_000);
-                    await baseToken.transfer(provider.address, amount);
-                    await baseToken.connect(provider).approve(network.address, amount);
-                    await network.connect(provider).deposit(baseToken.address, amount);
-
-                    const amount1 = BigNumber.from(5000);
-                    await baseToken.transfer(provider.address, amount1);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        baseToken,
-                        baseToken.address,
-                        amount1,
-                        false,
-                        provider
-                    );
-
-                    const amount2 = BigNumber.from(1000);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        networkToken,
-                        networkToken.address,
-                        amount2,
-                        false,
-                        owner
-                    );
-                });
-
-                it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
-                });
-
-                it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await liquidityProtection.migratePositions([protectionId]);
-                    await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
-                });
-
-                it('verifies that the caller can migrate positions', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    const protection = await getProtection(protectionId);
-
-                    const prevPoolStats = await getPoolStats(poolToken, networkToken, false);
-                    const prevProviderStats = await getProviderStats(owner, poolToken, networkToken, false);
-                    const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-                    const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
-                    const prevBalance = await getBalance(networkToken, owner.address);
-                    const prevGovBalance = await govToken.balanceOf(owner.address);
-
-                    const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                    const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await liquidityProtection.migratePositions([protectionId]);
-
-                    // verify protected liquidities
-                    expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
-
-                    // verify stats
-                    const poolStats = await getPoolStats(poolToken, networkToken, false);
-                    expect(poolStats.totalPoolAmount).to.equal(prevSystemBalance.add(protection.poolAmount));
-                    expect(poolStats.totalReserveAmount).to.equal(
-                        prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
-                    );
-
-                    const providerStats = await getProviderStats(owner, poolToken, networkToken, false);
-                    expect(providerStats.totalProviderAmount).to.equal(
-                        prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
-                    );
-                    expect(prevProviderStats.providerPools).to.deep.equal([poolToken.address]);
-
-                    // verify balances
-                    const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
-                    expect(systemBalance).to.equal(prevSystemBalance.add(protection.poolAmount));
-
-                    const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
-                    const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
-                    expect(vaultBaseBalance).to.equal(prevVaultBaseBalance);
-                    expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
-
-                    const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
-                    expect(walletBalance).to.equal(prevWalletBalance);
-
-                    const balance = await getBalance(networkToken, owner.address);
-                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
-                        maxRelativeError
-                    });
-
-                    const govBalance = await govToken.balanceOf(owner.address);
-                    expect(govBalance).to.equal(prevGovBalance);
-
-                    const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
-                    expect(protectionPoolBalance).to.equal(0);
-
-                    const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
-                    expect(protectionBaseBalance).to.equal(0);
-
-                    const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
-                    expectInRange(protectionNetworkBalance, BigNumber.from(0));
-                });
-            });
-        };
-
-        for (const { totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset } of [
-            {
-                totalSupply: BigNumber.from(10_000_000),
-                reserve1Amount: BigNumber.from(1_000_000),
-                reserve2Amount: BigNumber.from(2_500_000),
-                maxRelativeError: new Decimal('0.000000000000000000000001'),
-                maxOffset: { negative: 0, positive: 0 }
-            },
-            {
-                totalSupply: toWei(10_000_000),
-                reserve1Amount: BigNumber.from(1_000_000),
-                reserve2Amount: BigNumber.from(2_500_000),
-                maxRelativeError: new Decimal('0.000000000000000000000001'),
-                maxOffset: { negative: 0, positive: 0 }
-            },
-            {
-                totalSupply: BigNumber.from(10_000_000),
-                reserve1Amount: toWei(1_000_000),
-                reserve2Amount: toWei(2_500_000),
-                maxRelativeError: new Decimal('0.000000000000000000000001003'),
-                maxOffset: { negative: 1, positive: 1 }
-            },
-            {
-                totalSupply: toWei(10_000_000),
-                reserve1Amount: toWei(1_000_000),
-                reserve2Amount: toWei(2_500_000),
-                maxRelativeError: new Decimal('0.000000000000000000000001'),
-                maxOffset: { negative: 1, positive: 1 }
-            }
-        ]) {
-            describe(`migrate liquidity (totalSupply = ${totalSupply}, reserve1Amount = ${reserve1Amount}, reserve2Amount = ${reserve2Amount})`, () => {
-                testLiquidityMigration(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset);
-            });
-        }
     });
 
     describe('withdraw', () => {
@@ -2187,6 +1730,7 @@ describe('BancorNetwork', () => {
 
                     ({ id, creationTime } = await initWithdraw(
                         provider,
+                        network,
                         pendingWithdrawals,
                         poolToken,
                         await poolToken.balanceOf(provider.address)
@@ -3387,6 +2931,612 @@ describe('BancorNetwork', () => {
             }
         }
     });
+
+    describe('migrate liquidity', () => {
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let networkToken: IERC20;
+        let govToken: IERC20;
+        let poolCollection: TestPoolCollection;
+        let masterVault: MasterVault;
+
+        const MAX_DEVIATION = toPPM(1);
+        const MINTING_LIMIT = toWei(10_000_000);
+        const WITHDRAWAL_FEE = toPPM(5);
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const DEPOSIT_LIMIT = toWei(100_000_000);
+
+        const setup = async () => {
+            ({
+                networkTokenGovernance,
+                govTokenGovernance,
+                network,
+                networkSettings,
+                networkToken,
+                govToken,
+                poolCollection,
+                masterVault
+            } = await createSystem());
+
+            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
+            await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+        };
+
+        beforeEach(async () => {
+            await waffle.loadFixture(setup);
+        });
+
+        const testLiquidityMigration = (
+            totalSupply: BigNumber,
+            reserve1Amount: BigNumber,
+            reserve2Amount: BigNumber,
+            maxRelativeError: Decimal,
+            maxOffset: { negative: number; positive: number }
+        ) => {
+            let now: number;
+            let checkpointStore: TestCheckpointStore;
+            let liquidityProtectionSettings: LiquidityProtectionSettings;
+            let liquidityProtectionStore: LiquidityProtectionStore;
+            let liquidityProtectionStats: LiquidityProtectionStats;
+            let liquidityProtectionSystemStore: LiquidityProtectionSystemStore;
+            let liquidityProtectionWallet: TokenHolder;
+            let liquidityProtection: TestLiquidityProtection;
+            let converter: TestStandardPoolConverter;
+            let poolToken: DSToken;
+            let baseToken: IERC20;
+            let owner: SignerWithAddress;
+            let provider: SignerWithAddress;
+
+            const expectInRange = (x: BigNumber, y: BigNumber) => {
+                expect(x).to.gte(y.sub(maxOffset.negative));
+                expect(x).to.lte(y.add(maxOffset.positive));
+            };
+
+            const addProtectedLiquidity = async (
+                poolTokenAddress: string,
+                token: IERC20,
+                tokenAddress: string,
+                amount: BigNumber,
+                isETH: boolean,
+                from: SignerWithAddress
+            ) => {
+                let value = BigNumber.from(0);
+                if (isETH) {
+                    value = amount;
+                } else {
+                    await token.connect(from).approve(liquidityProtection.address, amount);
+                }
+
+                return liquidityProtection
+                    .connect(from)
+                    .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
+            };
+
+            const getProtection = async (protectionId: BigNumber) => {
+                const protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
+                return {
+                    provider: protection[0],
+                    poolToken: protection[1],
+                    reserveToken: protection[2],
+                    poolAmount: protection[3],
+                    reserveAmount: protection[4],
+                    reserveRateN: protection[5],
+                    reserveRateD: protection[6],
+                    timestamp: protection[7]
+                };
+            };
+
+            const getPoolStats = async (
+                poolToken: TokenWithAddress,
+                reserveToken: TokenWithAddress,
+                isETH: boolean
+            ) => {
+                const poolTokenAddress = poolToken.address;
+                const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
+                return {
+                    totalPoolAmount: await liquidityProtectionStats.totalPoolAmount(poolTokenAddress),
+                    totalReserveAmount: await liquidityProtectionStats.totalReserveAmount(
+                        poolTokenAddress,
+                        reserveTokenAddress
+                    )
+                };
+            };
+
+            const getProviderStats = async (
+                provider: SignerWithAddress,
+                poolToken: TokenWithAddress,
+                reserveToken: TokenWithAddress,
+                isETH: boolean
+            ) => {
+                const poolTokenAddress = poolToken.address;
+                const reserveTokenAddress = isETH ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
+                return {
+                    totalProviderAmount: await liquidityProtectionStats.totalProviderAmount(
+                        provider.address,
+                        poolTokenAddress,
+                        reserveTokenAddress
+                    ),
+                    providerPools: await liquidityProtectionStats.providerPools(provider.address)
+                };
+            };
+
+            const setTime = async (time: number) => {
+                now = time;
+
+                for (const t of [converter, checkpointStore, liquidityProtection]) {
+                    if (t) {
+                        await t.setTime(now);
+                    }
+                }
+            };
+
+            const initLegacySystem = async (isETH: boolean) => {
+                [owner, provider] = await ethers.getSigners();
+
+                baseToken = (await createTokenBySymbol(isETH ? ETH : TKN)) as IERC20;
+
+                ({
+                    checkpointStore,
+                    liquidityProtectionStore,
+                    liquidityProtectionStats,
+                    liquidityProtectionSystemStore,
+                    liquidityProtectionWallet,
+                    liquidityProtectionSettings,
+                    liquidityProtection,
+                    poolToken,
+                    converter
+                } = await createLegacySystem(
+                    owner,
+                    network,
+                    masterVault,
+                    networkToken,
+                    networkTokenGovernance,
+                    govTokenGovernance,
+                    baseToken
+                ));
+
+                await networkTokenGovernance.mint(owner.address, totalSupply);
+
+                await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(100);
+                await liquidityProtectionSettings.setMinNetworkCompensation(3);
+
+                await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
+                await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
+                await govTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
+
+                await createPool(baseToken, network, networkSettings, poolCollection);
+                await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
+                await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
+                await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
+
+                await networkToken.approve(converter.address, reserve2Amount);
+
+                let value = BigNumber.from(0);
+                if (isETH) {
+                    value = reserve1Amount;
+                } else {
+                    await baseToken.approve(converter.address, reserve1Amount);
+                }
+
+                await converter.addLiquidity(
+                    [baseToken.address, networkToken.address],
+                    [reserve1Amount, reserve2Amount],
+                    1,
+                    {
+                        value: value
+                    }
+                );
+
+                await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
+
+                await setTime(await latest());
+            };
+
+            for (const isETH of [false, true]) {
+                describe(`base token (${isETH ? 'ETH' : 'ERC20'})`, () => {
+                    beforeEach(async () => {
+                        await initLegacySystem(isETH);
+                        await addProtectedLiquidity(
+                            poolToken.address,
+                            baseToken,
+                            baseToken.address,
+                            BigNumber.from(1000),
+                            isETH,
+                            owner
+                        );
+                    });
+
+                    it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        await liquidityProtection.setTime(now + duration.seconds(1));
+                        await expect(
+                            liquidityProtection.migratePositions([protectionId, protectionId])
+                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
+                    });
+
+                    it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        await liquidityProtection.setTime(now + duration.seconds(1));
+                        await liquidityProtection.migratePositions([protectionId]);
+                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                            'ERR_ACCESS_DENIED'
+                        );
+                    });
+
+                    it('verifies that the caller can migrate positions', async () => {
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        const protection = await getProtection(protectionId);
+
+                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isETH);
+                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isETH);
+
+                        const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+
+                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+
+                        await liquidityProtection.setTime(now + duration.seconds(1));
+
+                        const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+                        const prevBalance = await getBalance(baseToken, owner.address);
+                        const prevGovBalance = await govToken.balanceOf(owner.address);
+
+                        const res = await liquidityProtection.migratePositions([protectionId]);
+                        const transactionCost = isETH ? await getTransactionCost(res) : BigNumber.from(0);
+
+                        // verify protected liquidities
+                        expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
+
+                        // verify stats
+                        const poolStats = await getPoolStats(poolToken, baseToken, isETH);
+                        expect(poolStats.totalPoolAmount).to.equal(
+                            prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
+                        );
+                        expect(poolStats.totalReserveAmount).to.equal(
+                            prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
+                        );
+
+                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isETH);
+                        expect(providerStats.totalProviderAmount).to.equal(
+                            prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
+                        );
+                        expect(providerStats.providerPools).to.deep.equal([poolToken.address]);
+
+                        // verify balances
+                        const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+                        expectInRange(systemBalance, prevSystemBalance.sub(protection.poolAmount));
+
+                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+                        expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
+                        expectInRange(
+                            vaultNetworkBalance,
+                            prevVaultNetworkBalance.add(protection.reserveAmount.div(2))
+                        );
+
+                        const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+
+                        // double since system balance was also liquidated
+                        const delta = protection.poolAmount.mul(2);
+                        expectInRange(walletBalance, prevWalletBalance.sub(delta));
+
+                        const balance = await getBalance(baseToken, owner.address);
+                        expect(balance).to.equal(prevBalance.sub(transactionCost));
+
+                        const govBalance = await govToken.balanceOf(owner.address);
+                        expect(govBalance).to.equal(prevGovBalance);
+
+                        const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
+                        expect(protectionPoolBalance).to.equal(0);
+
+                        const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
+                        expect(protectionBaseBalance).to.equal(0);
+
+                        const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
+                        expect(protectionNetworkBalance).to.equal(0);
+                    });
+
+                    it('verifies that the owner can migrate system pool tokens', async () => {
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                        const protection = await getProtection(protectionId);
+
+                        const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+
+                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+
+                        await liquidityProtection.setTime(now + duration.seconds(1));
+
+                        const prevGovBalance = await govToken.balanceOf(owner.address);
+
+                        await liquidityProtection.migrateSystemPoolTokens([poolToken.address]);
+
+                        // verify balances
+                        const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+                        expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
+
+                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+                        expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
+                        expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
+
+                        const govBalance = await govToken.balanceOf(owner.address);
+                        expect(govBalance).to.equal(prevGovBalance);
+
+                        const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
+                        expect(protectionPoolBalance).to.equal(0);
+
+                        const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
+                        expect(protectionBaseBalance).to.equal(0);
+
+                        const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
+                        expect(protectionNetworkBalance).to.equal(0);
+                    });
+                });
+            }
+
+            describe('network token', () => {
+                beforeEach(async () => {
+                    await initLegacySystem(false);
+
+                    const amount = BigNumber.from(100_000);
+                    await baseToken.transfer(provider.address, amount);
+                    await baseToken.connect(provider).approve(network.address, amount);
+                    await network.connect(provider).deposit(baseToken.address, amount);
+
+                    const amount1 = BigNumber.from(5000);
+                    await baseToken.transfer(provider.address, amount1);
+                    await addProtectedLiquidity(
+                        poolToken.address,
+                        baseToken,
+                        baseToken.address,
+                        amount1,
+                        false,
+                        provider
+                    );
+
+                    const amount2 = BigNumber.from(1000);
+                    await addProtectedLiquidity(
+                        poolToken.address,
+                        networkToken,
+                        networkToken.address,
+                        amount2,
+                        false,
+                        owner
+                    );
+                });
+
+                it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                    await liquidityProtection.setTime(now + duration.seconds(1));
+                    await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
+                        'ERR_ACCESS_DENIED'
+                    );
+                });
+
+                it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                    await liquidityProtection.setTime(now + duration.seconds(1));
+                    await liquidityProtection.migratePositions([protectionId]);
+                    await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                        'ERR_ACCESS_DENIED'
+                    );
+                });
+
+                it('verifies that the caller can migrate positions', async () => {
+                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+                    const protection = await getProtection(protectionId);
+
+                    const prevPoolStats = await getPoolStats(poolToken, networkToken, false);
+                    const prevProviderStats = await getProviderStats(owner, poolToken, networkToken, false);
+                    const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+                    const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+                    const prevBalance = await getBalance(networkToken, owner.address);
+                    const prevGovBalance = await govToken.balanceOf(owner.address);
+
+                    const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                    const prevVaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+
+                    await liquidityProtection.setTime(now + duration.seconds(1));
+                    await liquidityProtection.migratePositions([protectionId]);
+
+                    // verify protected liquidities
+                    expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
+
+                    // verify stats
+                    const poolStats = await getPoolStats(poolToken, networkToken, false);
+                    expect(poolStats.totalPoolAmount).to.equal(prevSystemBalance.add(protection.poolAmount));
+                    expect(poolStats.totalReserveAmount).to.equal(
+                        prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
+                    );
+
+                    const providerStats = await getProviderStats(owner, poolToken, networkToken, false);
+                    expect(providerStats.totalProviderAmount).to.equal(
+                        prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
+                    );
+                    expect(prevProviderStats.providerPools).to.deep.equal([poolToken.address]);
+
+                    // verify balances
+                    const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
+                    expect(systemBalance).to.equal(prevSystemBalance.add(protection.poolAmount));
+
+                    const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                    const vaultNetworkBalance = await getBalance(networkToken, masterVault.address);
+                    expect(vaultBaseBalance).to.equal(prevVaultBaseBalance);
+                    expect(vaultNetworkBalance).to.equal(prevVaultNetworkBalance);
+
+                    const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+                    expect(walletBalance).to.equal(prevWalletBalance);
+
+                    const balance = await getBalance(networkToken, owner.address);
+                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
+                        maxRelativeError
+                    });
+
+                    const govBalance = await govToken.balanceOf(owner.address);
+                    expect(govBalance).to.equal(prevGovBalance);
+
+                    const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
+                    expect(protectionPoolBalance).to.equal(0);
+
+                    const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
+                    expect(protectionBaseBalance).to.equal(0);
+
+                    const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
+                    expectInRange(protectionNetworkBalance, BigNumber.from(0));
+                });
+            });
+        };
+
+        for (const { totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset } of [
+            {
+                totalSupply: BigNumber.from(10_000_000),
+                reserve1Amount: BigNumber.from(1_000_000),
+                reserve2Amount: BigNumber.from(2_500_000),
+                maxRelativeError: new Decimal('0.000000000000000000000001'),
+                maxOffset: { negative: 0, positive: 0 }
+            },
+            {
+                totalSupply: toWei(10_000_000),
+                reserve1Amount: BigNumber.from(1_000_000),
+                reserve2Amount: BigNumber.from(2_500_000),
+                maxRelativeError: new Decimal('0.000000000000000000000001'),
+                maxOffset: { negative: 0, positive: 0 }
+            },
+            {
+                totalSupply: BigNumber.from(10_000_000),
+                reserve1Amount: toWei(1_000_000),
+                reserve2Amount: toWei(2_500_000),
+                maxRelativeError: new Decimal('0.000000000000000000000001003'),
+                maxOffset: { negative: 1, positive: 1 }
+            },
+            {
+                totalSupply: toWei(10_000_000),
+                reserve1Amount: toWei(1_000_000),
+                reserve2Amount: toWei(2_500_000),
+                maxRelativeError: new Decimal('0.000000000000000000000001'),
+                maxOffset: { negative: 1, positive: 1 }
+            }
+        ]) {
+            context(
+                `totalSupply = ${totalSupply}, reserve1Amount = ${reserve1Amount}, reserve2Amount = ${reserve2Amount}`,
+                () => {
+                    testLiquidityMigration(totalSupply, reserve1Amount, reserve2Amount, maxRelativeError, maxOffset);
+                }
+            );
+        }
+    });
+
+    describe('pending withdrawals', () => {
+        let poolToken: PoolToken;
+        let networkInformation: BancorNetworkInformation;
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let poolCollection: TestPoolCollection;
+
+        let provider: Wallet;
+        let poolTokenAmount: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+                await createSystem());
+
+            provider = await createWallet();
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+
+            await pendingWithdrawals.setTime(await latest());
+
+            ({ poolToken } = await setupSimplePool(
+                {
+                    symbol: TKN,
+                    balance: toWei(1_000_000),
+                    initialRate: { n: 1, d: 2 }
+                },
+                provider as any as SignerWithAddress,
+                network,
+                networkInformation,
+                networkSettings,
+                poolCollection
+            ));
+
+            poolTokenAmount = await poolToken.balanceOf(provider.address);
+        });
+
+        it('should initiate a withdrawal request', async () => {
+            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+
+            const retId = await network.connect(provider).callStatic.initWithdrawal(poolToken.address, poolTokenAmount);
+            await network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+
+            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
+
+            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+            expect(withdrawalRequest.provider).to.equal(provider.address);
+            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+        });
+
+        it('should initiate a permitted withdrawal request', async () => {
+            const { v, r, s } = await permitContractSignature(
+                provider as Wallet,
+                poolToken.address,
+                network,
+                networkToken,
+                poolTokenAmount,
+                MAX_UINT256
+            );
+
+            const retId = await network
+                .connect(provider)
+                .callStatic.initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
+            await network
+                .connect(provider)
+                .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
+
+            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
+
+            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+            expect(withdrawalRequest.provider).to.equal(provider.address);
+            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+        });
+
+        context('with an initiated withdrawal request', () => {
+            let id: BigNumber;
+
+            beforeEach(async () => {
+                ({ id } = await initWithdraw(provider, network, pendingWithdrawals, poolToken, poolTokenAmount));
+            });
+
+            it('should cancel a pending withdrawal request', async () => {
+                await network.connect(provider).cancelWithdrawal(id);
+
+                const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                expect(withdrawalRequestIds).to.be.empty;
+            });
+
+            it('should reinitiate a pending withdrawal request', async () => {
+                const newTime = (await latest()) + duration.weeks(1);
+                await pendingWithdrawals.setTime(newTime);
+
+                await network.connect(provider).reinitWithdrawal(id);
+
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                expect(withdrawalRequest.createdAt).to.equal(newTime);
+            });
+        });
+    });
 });
 
 describe('BancorNetwork Financial Verification', () => {
@@ -3404,14 +3554,14 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     interface State {
-        tknBalances: Record<string, string>;
-        bntBalances: Record<string, string>;
-        bntknBalances: Record<string, string>;
-        bnbntBalances: Record<string, string>;
-        bntStakedBalance: string;
-        tknStakedBalance: string;
-        tknTradingLiquidity: string;
-        bntTradingLiquidity: string;
+        tknBalances: Record<string, Decimal>;
+        bntBalances: Record<string, Decimal>;
+        bntknBalances: Record<string, Decimal>;
+        bnbntBalances: Record<string, Decimal>;
+        bntStakedBalance: Decimal;
+        tknStakedBalance: Decimal;
+        tknTradingLiquidity: Decimal;
+        bntTradingLiquidity: Decimal;
     }
 
     interface Operation {
@@ -3441,7 +3591,7 @@ describe('BancorNetwork Financial Verification', () => {
     let networkSettings: NetworkSettings;
     let masterPool: TestMasterPool;
     let networkTokenGovernance: TokenGovernance;
-    let pendingWithdrawals: PendingWithdrawals;
+    let pendingWithdrawals: TestPendingWithdrawals;
     let poolCollection: TestPoolCollection;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
@@ -3464,7 +3614,7 @@ describe('BancorNetwork Financial Verification', () => {
     };
 
     const integerToDecimal = (value: BigNumber, decimals: number) => {
-        return new Decimal(`${value}e-${decimals}`).toFixed();
+        return new Decimal(`${value}e-${decimals}`);
     };
 
     const percentageToPPM = (percentage: string) => {
@@ -3491,16 +3641,14 @@ describe('BancorNetwork Financial Verification', () => {
 
     const withdrawTKN = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntknDecimals, basePoolToken);
-        await pendingWithdrawals.connect(users[userId]).initWithdrawal(basePoolToken.address, wei);
-        const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
-        await network.connect(users[userId]).withdraw(ids[0]);
+        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, basePoolToken, wei);
+        await network.connect(users[userId]).withdraw(id);
     };
 
     const withdrawBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bnbntDecimals, masterPoolToken);
-        await pendingWithdrawals.connect(users[userId]).initWithdrawal(masterPoolToken.address, wei);
-        const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
-        await network.connect(users[userId]).withdraw(ids[0]);
+        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, masterPoolToken, wei);
+        await network.connect(users[userId]).withdraw(id);
     };
 
     const tradeTKN = async (userId: string, amount: string) => {
@@ -3517,16 +3665,23 @@ describe('BancorNetwork Financial Verification', () => {
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
+    const decimalize = (obj: any): any =>
+        Array.isArray(obj)
+            ? obj.map(decimalize)
+            : Object(obj) === obj
+            ? Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, decimalize(v)]))
+            : new Decimal(obj);
+
     const verifyState = async (expected: State) => {
         const actual: State = {
             tknBalances: {},
             bntBalances: {},
             bntknBalances: {},
             bnbntBalances: {},
-            bntStakedBalance: '',
-            tknStakedBalance: '',
-            tknTradingLiquidity: '',
-            bntTradingLiquidity: ''
+            bntStakedBalance: new Decimal(0),
+            tknStakedBalance: new Decimal(0),
+            tknTradingLiquidity: new Decimal(0),
+            bntTradingLiquidity: new Decimal(0)
         };
 
         const poolData = await poolCollection.poolData(baseToken.address);
@@ -3550,19 +3705,16 @@ describe('BancorNetwork Financial Verification', () => {
             );
         }
 
-        actual.tknBalances['masterVault'] = integerToDecimal(
-            await baseToken.balanceOf(masterVault.address),
-            tknDecimals
-        );
-        actual.tknBalances['epVault'] = integerToDecimal(
+        actual.tknBalances.masterVault = integerToDecimal(await baseToken.balanceOf(masterVault.address), tknDecimals);
+        actual.tknBalances.epVault = integerToDecimal(
             await baseToken.balanceOf(externalProtectionVault.address),
             tknDecimals
         );
-        actual.bntBalances['masterVault'] = integerToDecimal(
+        actual.bntBalances.masterVault = integerToDecimal(
             await networkToken.balanceOf(masterVault.address),
             bntDecimals
         );
-        actual.bnbntBalances['masterPool'] = integerToDecimal(
+        actual.bnbntBalances.masterPool = integerToDecimal(
             await masterPoolToken.balanceOf(masterPool.address),
             bnbntDecimals
         );
@@ -3643,8 +3795,8 @@ describe('BancorNetwork Financial Verification', () => {
             await govToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await networkToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await basePoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
-            await masterPoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
+            await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            await masterPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await networkToken.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
@@ -3656,28 +3808,36 @@ describe('BancorNetwork Financial Verification', () => {
     const execute = async () => {
         for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
             console.log(`${n + 1} out of ${flow.operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
+
             await timeIncrease(elapsed);
+
             switch (type) {
                 case 'depositTKN':
                     await depositTKN(userId, amount);
                     break;
+
                 case 'depositBNT':
                     await depositBNT(userId, amount);
                     break;
+
                 case 'withdrawTKN':
                     await withdrawTKN(userId, amount);
                     break;
+
                 case 'withdrawBNT':
                     await withdrawBNT(userId, amount);
                     break;
+
                 case 'tradeTKN':
                     await tradeTKN(userId, amount);
                     break;
+
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
                     break;
             }
-            await verifyState(expected);
+
+            await verifyState(decimalize(expected) as State);
         }
     };
 

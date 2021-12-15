@@ -258,7 +258,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the target amount by specifying the source amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeTargetAmount(
         ReserveToken sourceToken,
@@ -269,7 +269,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the source amount by specifying the target amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeSourceAmount(
         ReserveToken sourceToken,
@@ -277,6 +277,13 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         uint256 targetAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, targetAmount, false);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInformation
+     */
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
+        return _pendingWithdrawals.isReadyForWithdrawal(id);
     }
 
     /**
