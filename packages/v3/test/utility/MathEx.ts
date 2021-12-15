@@ -18,7 +18,6 @@ const MAX_UINT128 = new Decimal(2).pow(128).sub(1);
 const MAX_UINT256 = new Decimal(2).pow(256).sub(1);
 const SCALES = [6, 18, 30].map((n) => new Decimal(10).pow(n)).concat(MAX_UINT128);
 const PR_TEST_ARRAY = [MAX_UINT128, MAX_UINT256.divToInt(2), MAX_UINT256.sub(MAX_UINT128), MAX_UINT256];
-const PR_MAX_ERROR = new Decimal('0.00000000000000000000000000000000000001');
 
 const BN_TEST_ARRAY = [
     BigNumber.from(0),

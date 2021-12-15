@@ -36,9 +36,11 @@ import {
     MAX_UINT256,
     NATIVE_TOKEN_ADDRESS,
     PPM_RESOLUTION,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    BNT,
+    ETH,
+    TKN
 } from '../helpers/Constants';
-import { BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
     createPoolCollection,
@@ -532,6 +534,7 @@ describe('BancorNetwork', () => {
                     ).to.be.revertedWith('NotEmpty');
                 });
 
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
                 it.skip('should revert when attempting to remove a pool collection with an alternative with a different type', async () => {});
             });
         });

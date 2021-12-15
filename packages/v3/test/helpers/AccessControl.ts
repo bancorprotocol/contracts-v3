@@ -1,6 +1,6 @@
 import { AccessControlEnumerableUpgradeable } from '../../typechain-types';
 import { expect } from 'chai';
-import { utils, BigNumber } from 'ethers';
+import { utils } from 'ethers';
 
 const { id } = utils;
 

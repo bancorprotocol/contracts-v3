@@ -4,7 +4,6 @@ import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS, ETH, TKN } from '../helper
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('ReserveToken', () => {

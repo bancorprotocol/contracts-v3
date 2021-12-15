@@ -14,8 +14,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../helpers/Constants';
-import { BNT, ETH, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem, depositToPool, setupSimplePool, PoolSpec } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
