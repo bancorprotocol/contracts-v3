@@ -49,71 +49,62 @@ library MathEx {
     }
 
     /**
-     * @dev computes a reduced-scalar ratio
+     * @dev reduces the components of a given ratio
      */
-    function reducedRatio(Fraction memory r, uint256 max) internal pure returns (Fraction memory) {
-        Fraction memory newR = r;
-        if (newR.n > max || newR.d > max) {
-            newR = normalizedRatio(newR, max);
+    function reducedRatio(Fraction memory ratio, uint256 max) internal pure returns (Fraction memory) {
+        if (ratio.n > max || ratio.d > max) {
+            return normalizedRatio(ratio, max);
         }
 
-        if (newR.n != newR.d) {
-            return newR;
-        }
-
-        return Fraction({ n: 1, d: 1 });
+        return ratio;
     }
 
     /**
-     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)".
+     * @dev computes a normalized ratio as `scale * n / (n + d)` and `scale * d / (n + d)`
      */
-    function normalizedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
-        if (r.n <= r.d) {
-            return estimatedRatio(r, scale);
+    function normalizedRatio(Fraction memory ratio, uint256 scale) internal pure returns (Fraction memory) {
+        if (ratio.n <= ratio.d) {
+            return estimatedRatio(ratio, scale);
         }
 
-        return _inversedRatio(estimatedRatio(_inversedRatio(r), scale));
+        return _inversedRatio(estimatedRatio(_inversedRatio(ratio), scale));
     }
 
     /**
-     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)", assuming that "r.n <= r.d".
+     * @dev computes an estimated ratio as `scale * n / (n + d)` and `scale * d / (n + d)`, assuming that `n <= d`
      */
-    function estimatedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
+    function estimatedRatio(Fraction memory ratio, uint256 scale) internal pure returns (Fraction memory) {
         unchecked {
-            uint256 maxVal = type(uint256).max / scale;
-            Fraction memory ratio = r;
-            if (r.n > maxVal) {
-                uint256 c = r.n / (maxVal + 1) + 1;
-
-                // we can now safely compute `r.n * scale`
-                ratio.n /= c;
+            uint256 maxN = type(uint256).max / scale; // `max_uint256 >= scale` hence `maxN >= 1`
+            if (ratio.n > maxN) {
+                // `maxN < ratio.n <= max_uint256` hence `maxN < max_uint256` hence `maxN + 1` is safe
+                // `maxN + 1 >= 2` hence `ratio.n / (maxN + 1) < max_uint256` hence `ratio.n / (maxN + 1) + 1` is safe
+                uint256 c = ratio.n / (maxN + 1) + 1;
+                ratio.n /= c; // we can now safely compute `ratio.n * scale`
                 ratio.d /= c;
             }
 
             if (ratio.n != ratio.d) {
-                Fraction memory newRatio = Fraction({ n: ratio.n * scale, d: _unsafeAdd(ratio.n, ratio.d) });
+                uint256 p = ratio.n * scale;
+                uint256 q = _unsafeAdd(ratio.n, ratio.d); // `ratio.n + ratio.d` can overflow
 
-                if (newRatio.d >= ratio.n) {
-                    // no overflow in `ratio.n + ratio.d`
-                    uint256 x = roundDiv(newRatio.n, newRatio.d);
-
-                    // we can now safely compute `scale - x`
-                    uint256 y = scale - x;
-
-                    return Fraction({ n: x, d: y });
+                if (q >= ratio.n) {
+                    // `ratio.n + ratio.d` did not overflow
+                    uint256 x = roundDiv(p, q); // we can now safely compute `scale - x`
+                    return Fraction({ n: x, d: scale - x });
                 }
 
-                if (newRatio.n < ratio.d - (ratio.d - ratio.n) / 2) {
-                    // `ratio.n * scale < (ratio.n + ratio.d) / 2 < type(uint256).max < ratio.n + ratio.d`
+                if (p < ratio.d - (ratio.d - ratio.n) / 2) {
+                    // `ratio.n * scale < (ratio.n + ratio.d) / 2 < max_uint256 < ratio.n + ratio.d`
                     return Fraction({ n: 0, d: scale });
                 }
 
-                // `(ratio.n + ratio.d) / 2 < ratio.n * scale < type(uint256).max < ratio.n + ratio.d`
+                // `(ratio.n + ratio.d) / 2 < ratio.n * scale < max_uint256 < ratio.n + ratio.d`
                 return Fraction({ n: 1, d: scale - 1 });
             }
 
-            // allow reduction to `(1, 1)` in the calling function
-            return Fraction({ n: scale / 2, d: scale / 2 });
+            // reflect the fact that initially `ratio.n <= ratio.d`
+            return Fraction({ n: scale / 2, d: scale - scale / 2 });
         }
     }
 
@@ -332,9 +323,9 @@ library MathEx {
     }
 
     /**
-     * @dev returns the inverse of a given fraction
+     * @dev returns the inverse of a given ratio
      */
-    function _inversedRatio(Fraction memory r) private pure returns (Fraction memory) {
-        return Fraction({ n: r.d, d: r.n });
+    function _inversedRatio(Fraction memory ratio) private pure returns (Fraction memory) {
+        return Fraction({ n: ratio.d, d: ratio.n });
     }
 }
