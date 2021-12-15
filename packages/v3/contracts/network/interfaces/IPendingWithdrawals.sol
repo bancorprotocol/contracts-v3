@@ -81,7 +81,8 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have already initiated a withdrawal and received the specified id
+     * - the caller must be the network contract
+     * - the provider must have already initiated a withdrawal and received the specified id
      */
     function cancelWithdrawal(address provider, uint256 id) external;
 
@@ -90,7 +91,8 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have already initiated a withdrawal and received the specified id
+     * - the caller must be the network contract
+     * - the provider must have already initiated a withdrawal and received the specified id
      */
     function reinitWithdrawal(address provider, uint256 id) external;
 
