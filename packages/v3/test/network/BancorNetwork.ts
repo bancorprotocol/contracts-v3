@@ -873,8 +873,6 @@ describe('BancorNetwork', () => {
     });
 
     describe('deposit', () => {
-        let networkTokenGovernance: TokenGovernance;
-        let govTokenGovernance: TokenGovernance;
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
@@ -893,8 +891,6 @@ describe('BancorNetwork', () => {
 
         const setup = async () => {
             ({
-                networkTokenGovernance,
-                govTokenGovernance,
                 network,
                 networkSettings,
                 networkToken,
