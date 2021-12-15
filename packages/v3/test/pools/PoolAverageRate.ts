@@ -1,8 +1,9 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
-import { PPM_RESOLUTION } from '../helpers/Constants';
+import { PPM_RESOLUTION, MAX_UINT256 } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
+import { AlmostEqualOptions } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -515,6 +516,59 @@ describe('PoolAverageRate', () => {
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });
+    });
+
+    describe('reduced ratio', () => {
+        const THRESHOLD = BigNumber.from(2).pow(112).sub(1);
+
+        const reducedRatioTest = (ratio: Fraction<BigNumber>, options: AlmostEqualOptions) => {
+            it(`reducedRatio(${toString(ratio)})`, async () => {
+                const newRatio = await poolAverageRate.reducedRatio(ratio);
+                expect(newRatio[0]).to.be.lte(THRESHOLD);
+                expect(newRatio[1]).to.be.lte(THRESHOLD);
+                expect(ratio).to.almostEqual({ n: newRatio[0], d: newRatio[1] }, options);
+            });
+        };
+
+        for (let n = 0; n < 10; n++) {
+            for (let d = 1; d <= 10; d++) {
+                reducedRatioTest({ n: BigNumber.from(n), d: BigNumber.from(d) }, {});
+            }
+        }
+
+        for (let i = BigNumber.from(1); i.lte(THRESHOLD); i = i.mul(10)) {
+            for (let j = BigNumber.from(1); j.lte(THRESHOLD); j = j.mul(10)) {
+                const n = MAX_UINT256.div(THRESHOLD).mul(i).add(1);
+                const d = MAX_UINT256.div(THRESHOLD).mul(j).add(1);
+                reducedRatioTest({ n, d }, { maxRelativeError: new Decimal('0.04') });
+            }
+        }
+
+        for (let i = 96; i <= 256; i += 16) {
+            for (let j = i - 64; j <= i + 64; j += 16) {
+                const iMax = BigNumber.from(2).pow(i).sub(1);
+                const jMax = BigNumber.from(2).pow(j).sub(1);
+                for (const n of [
+                    iMax.div(3),
+                    iMax.div(2),
+                    iMax.mul(2).div(3),
+                    iMax.mul(3).div(4),
+                    iMax.sub(1),
+                    iMax,
+                    iMax.add(1),
+                    iMax.mul(4).div(3),
+                    iMax.mul(3).div(2),
+                    iMax.mul(2),
+                    iMax.mul(3)
+                ]) {
+                    for (const d of [jMax.sub(1), jMax, jMax.add(1)]) {
+                        if (n.lte(MAX_UINT256) && d.lte(MAX_UINT256)) {
+                            reducedRatioTest({ n, d }, { maxRelativeError: new Decimal('0.000000000000008') });
+                        }
+                    }
+                }
+            }
+        }
     });
 
     describe('equality', () => {

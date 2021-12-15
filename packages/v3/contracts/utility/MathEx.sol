@@ -49,75 +49,6 @@ library MathEx {
     }
 
     /**
-     * @dev reduces the components of a given ratio
-     */
-    function reducedRatio(Fraction memory ratio, uint256 max) internal pure returns (Fraction memory) {
-        if (ratio.n > max || ratio.d > max) {
-            return normalizedRatio(ratio, max);
-        }
-
-        return ratio;
-    }
-
-    /**
-     * @dev computes a normalized ratio as `scale * n / (n + d)` and `scale * d / (n + d)`
-     */
-    function normalizedRatio(Fraction memory ratio, uint256 scale) internal pure returns (Fraction memory) {
-        if (ratio.n <= ratio.d) {
-            return estimatedRatio(ratio, scale);
-        }
-
-        return _inversedRatio(estimatedRatio(_inversedRatio(ratio), scale));
-    }
-
-    /**
-     * @dev computes an estimated ratio as `scale * n / (n + d)` and `scale * d / (n + d)`, assuming that `n <= d`
-     */
-    function estimatedRatio(Fraction memory ratio, uint256 scale) internal pure returns (Fraction memory) {
-        unchecked {
-            uint256 maxN = type(uint256).max / scale; // `max_uint256 >= scale` hence `maxN >= 1`
-            if (ratio.n > maxN) {
-                // `maxN < ratio.n <= max_uint256` hence `maxN < max_uint256` hence `maxN + 1` is safe
-                // `maxN + 1 >= 2` hence `ratio.n / (maxN + 1) < max_uint256` hence `ratio.n / (maxN + 1) + 1` is safe
-                uint256 c = ratio.n / (maxN + 1) + 1;
-                ratio.n /= c; // we can now safely compute `ratio.n * scale`
-                ratio.d /= c;
-            }
-
-            if (ratio.n != ratio.d) {
-                uint256 p = ratio.n * scale;
-                uint256 q = _unsafeAdd(ratio.n, ratio.d); // `ratio.n + ratio.d` can overflow
-
-                if (q >= ratio.n) {
-                    // `ratio.n + ratio.d` did not overflow
-                    uint256 x = roundDiv(p, q); // we can now safely compute `scale - x`
-                    return Fraction({ n: x, d: scale - x });
-                }
-
-                if (p < ratio.d - (ratio.d - ratio.n) / 2) {
-                    // `ratio.n * scale < (ratio.n + ratio.d) / 2 < max_uint256 < ratio.n + ratio.d`
-                    return Fraction({ n: 0, d: scale });
-                }
-
-                // `(ratio.n + ratio.d) / 2 < ratio.n * scale < max_uint256 < ratio.n + ratio.d`
-                return Fraction({ n: 1, d: scale - 1 });
-            }
-
-            // reflect the fact that initially `ratio.n <= ratio.d`
-            return Fraction({ n: scale / 2, d: scale - scale / 2 });
-        }
-    }
-
-    /**
-     * @dev computes the nearest integer to a given quotient without overflowing or underflowing.
-     */
-    function roundDiv(uint256 n, uint256 d) internal pure returns (uint256) {
-        unchecked {
-            return n / d + (n % d) / (d - d / 2);
-        }
-    }
-
-    /**
      * @dev returns the largest integer smaller than or equal to `x * y / z`
      */
     function mulDivF(
@@ -320,12 +251,5 @@ library MathEx {
         uint256 z
     ) private pure returns (uint256) {
         return mulmod(x, y, z);
-    }
-
-    /**
-     * @dev returns the inverse of a given ratio
-     */
-    function _inversedRatio(Fraction memory ratio) private pure returns (Fraction memory) {
-        return Fraction({ n: ratio.d, d: ratio.n });
     }
 }
