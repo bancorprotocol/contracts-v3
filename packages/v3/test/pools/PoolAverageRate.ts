@@ -3,7 +3,6 @@ import { TestPoolAverageRate } from '../../typechain-types';
 import { PPM_RESOLUTION, MAX_UINT256 } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
-import { AlmostEqualOptions } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -521,18 +520,30 @@ describe('PoolAverageRate', () => {
     describe('reduced ratio', () => {
         const THRESHOLD = BigNumber.from(2).pow(112).sub(1);
 
-        const reducedRatioTest = (ratio: Fraction<BigNumber>, options: AlmostEqualOptions) => {
+        const reducedRatioTest = (ratio: Fraction<BigNumber>, maxRelativeError: Decimal) => {
             it(`reducedRatio(${toString(ratio)})`, async () => {
                 const newRatio = await poolAverageRate.reducedRatio(ratio);
                 expect(newRatio[0]).to.be.lte(THRESHOLD);
                 expect(newRatio[1]).to.be.lte(THRESHOLD);
-                expect(ratio).to.almostEqual({ n: newRatio[0], d: newRatio[1] }, options);
+                expect(ratio).to.almostEqual({ n: newRatio[0], d: newRatio[1] }, { maxRelativeError });
             });
         };
 
         for (let n = 0; n < 10; n++) {
-            for (let d = 1; d <= 10; d++) {
-                reducedRatioTest({ n: BigNumber.from(n), d: BigNumber.from(d) }, {});
+            for (let d = 0; d < 10; d++) {
+                reducedRatioTest({ n: THRESHOLD.sub(n), d: THRESHOLD.sub(d) }, new Decimal('0'));
+                reducedRatioTest(
+                    { n: THRESHOLD.sub(n), d: THRESHOLD.add(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
+                reducedRatioTest(
+                    { n: THRESHOLD.add(n), d: THRESHOLD.sub(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
+                reducedRatioTest(
+                    { n: THRESHOLD.add(n), d: THRESHOLD.add(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
             }
         }
 
@@ -540,7 +551,7 @@ describe('PoolAverageRate', () => {
             for (let j = BigNumber.from(1); j.lte(THRESHOLD); j = j.mul(10)) {
                 const n = MAX_UINT256.div(THRESHOLD).mul(i).add(1);
                 const d = MAX_UINT256.div(THRESHOLD).mul(j).add(1);
-                reducedRatioTest({ n, d }, { maxRelativeError: new Decimal('0.04') });
+                reducedRatioTest({ n, d }, new Decimal('0.04'));
             }
         }
 
@@ -563,7 +574,7 @@ describe('PoolAverageRate', () => {
                 ]) {
                     for (const d of [jMax.sub(1), jMax, jMax.add(1)]) {
                         if (n.lte(MAX_UINT256) && d.lte(MAX_UINT256)) {
-                            reducedRatioTest({ n, d }, { maxRelativeError: new Decimal('0.000000000000008') });
+                            reducedRatioTest({ n, d }, new Decimal('0.000000000000008'));
                         }
                     }
                 }
