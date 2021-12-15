@@ -27,7 +27,7 @@ error WithdrawalNotAllowed();
 /**
  * @dev Pending Withdrawals contract
  */
-contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using ReserveTokenLibrary for ReserveToken;
@@ -143,7 +143,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
      */
     function __PendingWithdrawals_init() internal onlyInitializing {
         __Upgradeable_init();
-        __ReentrancyGuard_init();
 
         __PendingWithdrawals_init_unchained();
     }
@@ -238,47 +237,27 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
+    function initWithdrawal(
+        address provider,
+        IPoolToken poolToken,
+        uint256 poolTokenAmount
+    )
         external
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
-        nonReentrant
+        only(address(_network))
+        returns (uint256)
     {
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+        return _initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function initWithdrawalPermitted(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant {
-        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
-
-        _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function readyForWithdrawal(uint256 id) external view returns (bool) {
+    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
-        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function cancelWithdrawal(uint256 id) external nonReentrant {
-        WithdrawalRequest memory request = _withdrawalRequests[id];
-        address provider = request.provider;
-        if (provider != msg.sender) {
+        if (request.provider != provider) {
             revert AccessDenied();
         }
 
@@ -288,10 +267,10 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function reinitWithdrawal(uint256 id) external nonReentrant {
+    function reinitWithdrawal(address provider, uint256 id) external only(address(_network)) {
         WithdrawalRequest storage request = _withdrawalRequests[id];
-        address provider = request.provider;
-        if (provider != msg.sender) {
+
+        if (request.provider != provider) {
             revert AccessDenied();
         }
 
@@ -371,6 +350,15 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
     }
 
     /**
+     * @inheritdoc IPendingWithdrawals
+     */
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
+        WithdrawalRequest memory request = _withdrawalRequests[id];
+
+        return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
+    }
+
+    /**
      * @dev sets the lock duration
      *
      * notes:
@@ -417,7 +405,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
         address provider,
         IPoolToken poolToken,
         uint256 poolTokenAmount
-    ) private {
+    ) private returns (uint256) {
         // make sure that the pool is valid
         ReserveToken pool = poolToken.reserveToken();
         if (!_network.isPoolValid(pool)) {
@@ -443,10 +431,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             revert AlreadyExists();
         }
 
-        // transfer the pool tokens from the provider. Note, that the provider should have either previously
-        // approved the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
-        poolToken.safeTransferFrom(provider, address(this), poolTokenAmount);
-
         emit WithdrawalInitiated({
             pool: pool,
             provider: provider,
@@ -454,6 +438,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, ReentrancyGuard
             poolTokenAmount: poolTokenAmount,
             reserveTokenAmount: reserveTokenAmount
         });
+
+        return id;
     }
 
     /**

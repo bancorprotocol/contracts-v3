@@ -68,48 +68,33 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the contract to transfer the pool token amount on its behalf
+     * - the caller must be the network contract
      */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external;
-
-    /**
-     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function initWithdrawalPermitted(
+    function initWithdrawal(
+        address provider,
         IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-
-    /**
-     * @dev returns whether the given request is ready for withdrawal
-     */
-    function readyForWithdrawal(uint256 id) external view returns (bool);
+        uint256 poolTokenAmount
+    ) external returns (uint256);
 
     /**
      * @dev cancels a withdrawal request
      *
      * requirements:
      *
-     * - the caller must have already initiated a withdrawal and received the specified id
+     * - the caller must be the network contract
+     * - the provider must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(uint256 id) external;
+    function cancelWithdrawal(address provider, uint256 id) external;
 
     /**
      * @dev reinitiates a withdrawal request and restarts its cooldown durations
      *
      * requirements:
      *
-     * - the caller must have already initiated a withdrawal and received the specified id
+     * - the caller must be the network contract
+     * - the provider must have already initiated a withdrawal and received the specified id
      */
-    function reinitWithdrawal(uint256 id) external;
+    function reinitWithdrawal(address provider, uint256 id) external;
 
     /**
      * @dev completes a withdrawal request and returns the pool token and its transferred amount
@@ -125,4 +110,9 @@ interface IPendingWithdrawals is IUpgradeable {
         address provider,
         uint256 id
     ) external returns (CompletedWithdrawal memory);
+
+    /**
+     * @dev returns whether the given request is ready for withdrawal
+     */
+    function isReadyForWithdrawal(uint256 id) external view returns (bool);
 }

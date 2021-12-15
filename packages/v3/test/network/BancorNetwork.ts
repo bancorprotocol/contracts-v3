@@ -26,8 +26,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
-    TestERC20Burnable,
-    PendingWithdrawals
+    TestERC20Burnable
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
@@ -806,6 +805,7 @@ describe('BancorNetwork', () => {
                 const poolTokenAmount = await toWei(1);
                 const { id, creationTime } = await initWithdraw(
                     deployer,
+                    network,
                     pendingWithdrawals,
                     poolToken,
                     poolTokenAmount
@@ -1729,6 +1729,7 @@ describe('BancorNetwork', () => {
 
                     ({ id, creationTime } = await initWithdraw(
                         provider,
+                        network,
                         pendingWithdrawals,
                         poolToken,
                         await poolToken.balanceOf(provider.address)
@@ -3427,6 +3428,114 @@ describe('BancorNetwork', () => {
             );
         }
     });
+
+    describe('pending withdrawals', () => {
+        let poolToken: PoolToken;
+        let networkInformation: BancorNetworkInformation;
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let poolCollection: TestPoolCollection;
+
+        let provider: Wallet;
+        let poolTokenAmount: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+                await createSystem());
+
+            provider = await createWallet();
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+
+            await pendingWithdrawals.setTime(await latest());
+
+            ({ poolToken } = await setupSimplePool(
+                {
+                    symbol: TKN,
+                    balance: toWei(1_000_000),
+                    initialRate: { n: 1, d: 2 }
+                },
+                provider as any as SignerWithAddress,
+                network,
+                networkInformation,
+                networkSettings,
+                poolCollection
+            ));
+
+            poolTokenAmount = await poolToken.balanceOf(provider.address);
+        });
+
+        it('should initiate a withdrawal request', async () => {
+            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+
+            const retId = await network.connect(provider).callStatic.initWithdrawal(poolToken.address, poolTokenAmount);
+            await network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+
+            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
+
+            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+            expect(withdrawalRequest.provider).to.equal(provider.address);
+            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+        });
+
+        it('should initiate a permitted withdrawal request', async () => {
+            const { v, r, s } = await permitContractSignature(
+                provider as Wallet,
+                poolToken.address,
+                network,
+                networkToken,
+                poolTokenAmount,
+                MAX_UINT256
+            );
+
+            const retId = await network
+                .connect(provider)
+                .callStatic.initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
+            await network
+                .connect(provider)
+                .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s);
+
+            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+            expect(id).to.equal(retId);
+
+            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+            expect(withdrawalRequest.provider).to.equal(provider.address);
+            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+        });
+
+        context('with an initiated withdrawal request', () => {
+            let id: BigNumber;
+
+            beforeEach(async () => {
+                ({ id } = await initWithdraw(provider, network, pendingWithdrawals, poolToken, poolTokenAmount));
+            });
+
+            it('should cancel a pending withdrawal request', async () => {
+                await network.connect(provider).cancelWithdrawal(id);
+
+                const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                expect(withdrawalRequestIds).to.be.empty;
+            });
+
+            it('should reinitiate a pending withdrawal request', async () => {
+                const newTime = (await latest()) + duration.weeks(1);
+                await pendingWithdrawals.setTime(newTime);
+
+                await network.connect(provider).reinitWithdrawal(id);
+
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                expect(withdrawalRequest.createdAt).to.equal(newTime);
+            });
+        });
+    });
 });
 
 describe('BancorNetwork Financial Verification', () => {
@@ -3444,14 +3553,14 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     interface State {
-        tknBalances: Record<string, string>;
-        bntBalances: Record<string, string>;
-        bntknBalances: Record<string, string>;
-        bnbntBalances: Record<string, string>;
-        bntStakedBalance: string;
-        tknStakedBalance: string;
-        tknTradingLiquidity: string;
-        bntTradingLiquidity: string;
+        tknBalances: Record<string, Decimal>;
+        bntBalances: Record<string, Decimal>;
+        bntknBalances: Record<string, Decimal>;
+        bnbntBalances: Record<string, Decimal>;
+        bntStakedBalance: Decimal;
+        tknStakedBalance: Decimal;
+        tknTradingLiquidity: Decimal;
+        bntTradingLiquidity: Decimal;
     }
 
     interface Operation {
@@ -3481,7 +3590,7 @@ describe('BancorNetwork Financial Verification', () => {
     let networkSettings: NetworkSettings;
     let masterPool: TestMasterPool;
     let networkTokenGovernance: TokenGovernance;
-    let pendingWithdrawals: PendingWithdrawals;
+    let pendingWithdrawals: TestPendingWithdrawals;
     let poolCollection: TestPoolCollection;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
@@ -3504,7 +3613,7 @@ describe('BancorNetwork Financial Verification', () => {
     };
 
     const integerToDecimal = (value: BigNumber, decimals: number) => {
-        return new Decimal(`${value}e-${decimals}`).toFixed();
+        return new Decimal(`${value}e-${decimals}`);
     };
 
     const percentageToPPM = (percentage: string) => {
@@ -3531,16 +3640,14 @@ describe('BancorNetwork Financial Verification', () => {
 
     const withdrawTKN = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntknDecimals, basePoolToken);
-        await pendingWithdrawals.connect(users[userId]).initWithdrawal(basePoolToken.address, wei);
-        const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
-        await network.connect(users[userId]).withdraw(ids[0]);
+        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, basePoolToken, wei);
+        await network.connect(users[userId]).withdraw(id);
     };
 
     const withdrawBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bnbntDecimals, masterPoolToken);
-        await pendingWithdrawals.connect(users[userId]).initWithdrawal(masterPoolToken.address, wei);
-        const ids = await pendingWithdrawals.withdrawalRequestIds(users[userId].address);
-        await network.connect(users[userId]).withdraw(ids[0]);
+        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, masterPoolToken, wei);
+        await network.connect(users[userId]).withdraw(id);
     };
 
     const tradeTKN = async (userId: string, amount: string) => {
@@ -3557,16 +3664,23 @@ describe('BancorNetwork Financial Verification', () => {
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
+    const decimalize = (obj: any): any =>
+        Array.isArray(obj)
+            ? obj.map(decimalize)
+            : Object(obj) === obj
+            ? Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, decimalize(v)]))
+            : new Decimal(obj);
+
     const verifyState = async (expected: State) => {
         const actual: State = {
             tknBalances: {},
             bntBalances: {},
             bntknBalances: {},
             bnbntBalances: {},
-            bntStakedBalance: '',
-            tknStakedBalance: '',
-            tknTradingLiquidity: '',
-            bntTradingLiquidity: ''
+            bntStakedBalance: new Decimal(0),
+            tknStakedBalance: new Decimal(0),
+            tknTradingLiquidity: new Decimal(0),
+            bntTradingLiquidity: new Decimal(0)
         };
 
         const poolData = await poolCollection.poolData(baseToken.address);
@@ -3590,19 +3704,16 @@ describe('BancorNetwork Financial Verification', () => {
             );
         }
 
-        actual.tknBalances['masterVault'] = integerToDecimal(
-            await baseToken.balanceOf(masterVault.address),
-            tknDecimals
-        );
-        actual.tknBalances['epVault'] = integerToDecimal(
+        actual.tknBalances.masterVault = integerToDecimal(await baseToken.balanceOf(masterVault.address), tknDecimals);
+        actual.tknBalances.epVault = integerToDecimal(
             await baseToken.balanceOf(externalProtectionVault.address),
             tknDecimals
         );
-        actual.bntBalances['masterVault'] = integerToDecimal(
+        actual.bntBalances.masterVault = integerToDecimal(
             await networkToken.balanceOf(masterVault.address),
             bntDecimals
         );
-        actual.bnbntBalances['masterPool'] = integerToDecimal(
+        actual.bnbntBalances.masterPool = integerToDecimal(
             await masterPoolToken.balanceOf(masterPool.address),
             bnbntDecimals
         );
@@ -3683,8 +3794,8 @@ describe('BancorNetwork Financial Verification', () => {
             await govToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await networkToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await basePoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
-            await masterPoolToken.connect(users[id]).approve(pendingWithdrawals.address, MAX_UINT256);
+            await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            await masterPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await networkToken.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
@@ -3696,28 +3807,36 @@ describe('BancorNetwork Financial Verification', () => {
     const execute = async () => {
         for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
             console.log(`${n + 1} out of ${flow.operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
+
             await timeIncrease(elapsed);
+
             switch (type) {
                 case 'depositTKN':
                     await depositTKN(userId, amount);
                     break;
+
                 case 'depositBNT':
                     await depositBNT(userId, amount);
                     break;
+
                 case 'withdrawTKN':
                     await withdrawTKN(userId, amount);
                     break;
+
                 case 'withdrawBNT':
                     await withdrawBNT(userId, amount);
                     break;
+
                 case 'tradeTKN':
                     await tradeTKN(userId, amount);
                     break;
+
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
                     break;
             }
-            await verifyState(expected);
+
+            await verifyState(decimalize(expected) as State);
         }
     };
 
