@@ -3546,13 +3546,6 @@ describe('BancorNetwork Financial Verification', () => {
         bntBalance: number;
     }
 
-    interface Pool {
-        tknInitialRate: number;
-        bntInitialRate: number;
-        bntMinLiquidity: number;
-        bntMintingLimit: number;
-    }
-
     interface State {
         tknBalances: Record<string, Decimal>;
         bntBalances: Record<string, Decimal>;
@@ -3577,8 +3570,11 @@ describe('BancorNetwork Financial Verification', () => {
         withdrawalFee: string;
         epVaultBalance: number;
         tknDecimals: number;
+        tknInitialRate: number;
+        bntInitialRate: number;
+        bntMinLiquidity: number;
+        bntMintingLimit: number;
         users: User[];
-        pool: Pool;
         operations: Operation[];
     }
 
@@ -3773,18 +3769,18 @@ describe('BancorNetwork Financial Verification', () => {
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
         await networkSettings.setPoolMintingLimit(
             baseToken.address,
-            decimalToInteger(flow.pool.bntMintingLimit, bntDecimals)
+            decimalToInteger(flow.bntMintingLimit, bntDecimals)
         );
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
-        await networkSettings.setMinLiquidityForTrading(flow.pool.bntMinLiquidity);
+        await networkSettings.setMinLiquidityForTrading(flow.bntMinLiquidity);
 
         await pendingWithdrawals.setLockDuration(0);
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
         await poolCollection.setInitialRate(baseToken.address, {
-            n: decimalToInteger(flow.pool.bntInitialRate, bntDecimals),
-            d: decimalToInteger(flow.pool.tknInitialRate, tknDecimals)
+            n: decimalToInteger(flow.bntInitialRate, bntDecimals),
+            d: decimalToInteger(flow.tknInitialRate, tknDecimals)
         });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
