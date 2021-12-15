@@ -121,7 +121,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         }
 
         // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
-        // note that it's currenty not possible to add two pool collections with the same version or type
+        // note that it's currently not possible to add two pool collections with the same version or type
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {

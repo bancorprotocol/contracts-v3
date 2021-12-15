@@ -395,7 +395,7 @@ contract MasterPool is IMasterPool, Vault {
         uint256 poolTokenAmount = MathEx.mulDivF(renouncedAmount, _poolToken.totalSupply(), currentStakedBalance);
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
-        // request shouldn’t fail (and the minted amount cannot get negative)
+        // request shouldn't fail (and the minted amount cannot get negative)
         unchecked {
             _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
         }

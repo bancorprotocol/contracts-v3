@@ -777,7 +777,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert MinLiquidityNotSet();
         }
 
-        // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
+        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
         if (data.liquidity.stakedBalance + baseTokenAmount > data.depositLimit) {
             revert DepositLimitExceeded();
         }

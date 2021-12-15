@@ -21,7 +21,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the address of the network fee vault
     INetworkFeeVault private immutable _networkFeeVault;
 
-    // a set of tokens which are eligeble for protection
+    // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token minting limits per pool

@@ -13,7 +13,7 @@ import { AccessDenied } from "./Utils.sol";
  */
 abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnumerableUpgradeable {
     // the admin role is used to allow a non-proxy admin to perform additional initialization/setup during contract
-    // upgrages
+    // upgrades
     bytes32 public constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
 
     uint32 internal constant MAX_GAP = 50;

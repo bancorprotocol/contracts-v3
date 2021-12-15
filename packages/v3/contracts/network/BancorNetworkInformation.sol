@@ -295,7 +295,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
                 _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
-        // return the trade amount and fee when trading the bsase token to the network token
+        // return the trade amount and fee when trading the base token to the network token
         if (_isNetworkToken(targetToken)) {
             return
                 _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
