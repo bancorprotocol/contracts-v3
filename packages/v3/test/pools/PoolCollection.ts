@@ -22,7 +22,6 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { roundDiv } from '../helpers/MathUtils';
 import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -1446,17 +1445,10 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
                                     // derive a target amount such that adding a fee to it will result in an amount
-                                    // greater than the target balance by solving the following two equations (left as an
-                                    // exercise for the reader):
-                                    // - feeAmount = targetAmount * tradingFeePPM / (PPM - tradingFeePPM)
-                                    // - targetAmount + feeAmount = targetBalance
-                                    const fee = new Decimal(tradingFeePPM.toString());
-                                    const factor = new Decimal(1).add(
-                                        fee.div(new Decimal(PPM_RESOLUTION.toString()).sub(fee))
-                                    );
-                                    targetAmount = BigNumber.from(
-                                        roundDiv(targetBalance, factor).add(new Decimal(1)).toFixed()
-                                    );
+                                    // greater than the target balance, by solving the following two equations:
+                                    // 1. `feeAmount = targetAmount * tradingFee / (1 - tradingFee)`
+                                    // 2. `targetAmount + feeAmount > targetBalance`
+                                    targetAmount = targetBalance.mul(PPM_RESOLUTION - tradingFeePPM).div(PPM_RESOLUTION).add(1);
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
