@@ -874,7 +874,6 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: IERC20;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;
@@ -886,7 +885,7 @@ describe('PoolCollection', () => {
             });
 
             beforeEach(async () => {
-                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+                ({ network, networkSettings, poolCollection } = await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -1410,7 +1409,7 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith(
                                         targetAmount
                                             ? 'InvalidPoolBalance'
-                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)' // eslint-disable-line max-len
                                     );
                                 }
                             });

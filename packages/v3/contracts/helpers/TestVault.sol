@@ -17,13 +17,13 @@ contract TestVault is Vault {
 
     // solhint-disable func-name-mixedcase
 
-    function __TestVault_init() internal initializer {
+    function __TestVault_init() internal onlyInitializing {
         __Vault_init();
 
         __TestVault_init_unchained();
     }
 
-    function __TestVault_init_unchained() internal initializer {}
+    function __TestVault_init_unchained() internal onlyInitializing {}
 
     function setAuthenticateWithdrawal(bool state) external {
         _authenticateWithdrawal = state;

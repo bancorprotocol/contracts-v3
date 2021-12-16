@@ -69,9 +69,9 @@ export const permitSignature = async (
 export const permitContractSignature = async (
     sender: Wallet,
     tokenAddress: string,
-    network: BaseContract,
+    contract: BaseContract,
     networkToken: IERC20,
-    amount: BigNumber,
+    amount: BigNumberish,
     deadline: BigNumberish
 ) => {
     if (
@@ -95,9 +95,9 @@ export const permitContractSignature = async (
         sender,
         await reserveToken.name(),
         reserveToken.address,
-        network.address,
-        amount,
+        contract.address,
+        BigNumber.from(amount),
         nonce.toNumber(),
-        deadline
+        BigNumber.from(deadline)
     );
 };

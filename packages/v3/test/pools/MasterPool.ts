@@ -1058,7 +1058,7 @@ describe('MasterPool', () => {
     });
 
     describe('asset management', () => {
-        let amount = 1_000_000;
+        const amount = 1_000_000;
 
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;

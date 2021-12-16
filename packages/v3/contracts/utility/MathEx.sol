@@ -35,16 +35,6 @@ library MathEx {
     }
 
     /**
-     * @dev returns the smallest integer larger than or equal to the square root of a positive integer
-     */
-    function ceilSqrt(uint256 n) internal pure returns (uint256) {
-        unchecked {
-            uint256 x = floorSqrt(n);
-            return x * x == n ? x : x + 1;
-        }
-    }
-
-    /**
      * @dev returns an `Sint256` positive representation of an unsigned integer
      */
     function toPos256(uint256 n) internal pure returns (Sint256 memory) {
@@ -56,99 +46,6 @@ library MathEx {
      */
     function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
         return Sint256({ value: n, isNeg: true });
-    }
-
-    /**
-     * @dev computes the product of two given ratios
-     */
-    function productRatio(Fraction memory x, Fraction memory y) internal pure returns (Fraction memory) {
-        unchecked {
-            uint256 n = mulDivC(x.n, y.n, type(uint256).max);
-            uint256 d = mulDivC(x.d, y.d, type(uint256).max);
-            uint256 z = n > d ? n : d;
-            if (z > 1) {
-                return Fraction({ n: mulDivC(x.n, y.n, z), d: mulDivC(x.d, y.d, z) });
-            }
-            return Fraction({ n: x.n * y.n, d: x.d * y.d });
-        }
-    }
-
-    /**
-     * @dev computes a reduced-scalar ratio
-     */
-    function reducedRatio(Fraction memory r, uint256 max) internal pure returns (Fraction memory) {
-        Fraction memory newR = r;
-        if (newR.n > max || newR.d > max) {
-            newR = normalizedRatio(newR, max);
-        }
-
-        if (newR.n != newR.d) {
-            return newR;
-        }
-
-        return Fraction({ n: 1, d: 1 });
-    }
-
-    /**
-     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)".
-     */
-    function normalizedRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
-        if (r.n <= r.d) {
-            return accurateRatio(r, scale);
-        }
-
-        return _inv(accurateRatio(_inv(r), scale));
-    }
-
-    /**
-     * @dev computes "scale * r.n / (r.n + r.d)" and "scale * r.d / (r.n + r.d)", assuming that "r.n <= r.d".
-     */
-    function accurateRatio(Fraction memory r, uint256 scale) internal pure returns (Fraction memory) {
-        unchecked {
-            uint256 maxVal = type(uint256).max / scale;
-            Fraction memory ratio = r;
-            if (r.n > maxVal) {
-                uint256 c = r.n / (maxVal + 1) + 1;
-
-                // we can now safely compute `r.n * scale`
-                ratio.n /= c;
-                ratio.d /= c;
-            }
-
-            if (ratio.n != ratio.d) {
-                Fraction memory newRatio = Fraction({ n: ratio.n * scale, d: _unsafeAdd(ratio.n, ratio.d) });
-
-                if (newRatio.d >= ratio.n) {
-                    // no overflow in `ratio.n + ratio.d`
-                    uint256 x = roundDiv(newRatio.n, newRatio.d);
-
-                    // we can now safely compute `scale - x`
-                    uint256 y = scale - x;
-
-                    return Fraction({ n: x, d: y });
-                }
-
-                if (newRatio.n < ratio.d - (ratio.d - ratio.n) / 2) {
-                    // `ratio.n * scale < (ratio.n + ratio.d) / 2 < type(uint256).max < ratio.n + ratio.d`
-                    return Fraction({ n: 0, d: scale });
-                }
-
-                // `(ratio.n + ratio.d) / 2 < ratio.n * scale < type(uint256).max < ratio.n + ratio.d`
-                return Fraction({ n: 1, d: scale - 1 });
-            }
-
-            // allow reduction to `(1, 1)` in the calling function
-            return Fraction({ n: scale / 2, d: scale / 2 });
-        }
-    }
-
-    /**
-     * @dev computes the nearest integer to a given quotient without overflowing or underflowing.
-     */
-    function roundDiv(uint256 n, uint256 d) internal pure returns (uint256) {
-        unchecked {
-            return n / d + (n % d) / (d - d / 2);
-        }
     }
 
     /**
@@ -354,12 +251,5 @@ library MathEx {
         uint256 z
     ) private pure returns (uint256) {
         return mulmod(x, y, z);
-    }
-
-    /**
-     * @dev returns the inverse of a given fraction
-     */
-    function _inv(Fraction memory r) private pure returns (Fraction memory) {
-        return Fraction({ n: r.d, d: r.n });
     }
 }

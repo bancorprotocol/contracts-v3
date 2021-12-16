@@ -39,6 +39,7 @@ export interface AverageRate<T> {
     time: number;
 }
 
+// eslint-disable-next-line no-prototype-builtins
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
 export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn<T> => {

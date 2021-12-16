@@ -10,8 +10,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
-import { BNT, ETH, TKN } from '../helpers/Constants';
+import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
     createSystem,
@@ -22,7 +21,7 @@ import {
     specToString
 } from '../helpers/Factory';
 import { permitContractSignature } from '../helpers/Permit';
-import { latest } from '../helpers/Time';
+import { latest, duration } from '../helpers/Time';
 import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -459,6 +458,7 @@ describe('Profile @profile', () => {
 
                     ({ id, creationTime } = await initWithdraw(
                         provider,
+                        network,
                         pendingWithdrawals,
                         poolToken,
                         await poolToken.balanceOf(provider.address)
@@ -678,7 +678,6 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = sourceToken.address === networkToken.address;
             const isTargetNetworkToken = targetToken.address === networkToken.address;
 
-            const traderAddress = await trader.getAddress();
             const minReturnAmount = MIN_RETURN_AMOUNT;
             const deadline = MAX_UINT256;
 
@@ -689,11 +688,6 @@ describe('Profile @profile', () => {
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
         };
-
-        interface TradeAmountsOverrides {
-            sourceTokenAddress?: string;
-            targetTokenAddress?: string;
-        }
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceETH = source.symbol === ETH;
@@ -915,5 +909,93 @@ describe('Profile @profile', () => {
                 });
             }
         }
+    });
+
+    describe('pending withdrawals', () => {
+        let poolToken: PoolToken;
+        let networkInformation: BancorNetworkInformation;
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let poolCollection: TestPoolCollection;
+
+        let provider: Wallet;
+        let poolTokenAmount: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+                await createSystem());
+
+            provider = await createWallet();
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+
+            await pendingWithdrawals.setTime(await latest());
+
+            ({ poolToken } = await setupSimplePool(
+                {
+                    symbol: TKN,
+                    balance: toWei(1_000_000),
+                    initialRate: { n: 1, d: 2 }
+                },
+                provider as any as SignerWithAddress,
+                network,
+                networkInformation,
+                networkSettings,
+                poolCollection
+            ));
+
+            poolTokenAmount = await poolToken.balanceOf(provider.address);
+        });
+
+        it('should initiate a withdrawal request', async () => {
+            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+
+            await profiler.profile(
+                'init withdrawal',
+                network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount)
+            );
+        });
+
+        it('should initiate a permitted withdrawal request', async () => {
+            const { v, r, s } = await permitContractSignature(
+                provider as Wallet,
+                poolToken.address,
+                network,
+                networkToken,
+                poolTokenAmount,
+                MAX_UINT256
+            );
+
+            await profiler.profile(
+                'init withdrawal permitted',
+                network
+                    .connect(provider)
+                    .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s)
+            );
+        });
+
+        context('with an initiated withdrawal request', () => {
+            let id: BigNumber;
+
+            beforeEach(async () => {
+                ({ id } = await initWithdraw(provider, network, pendingWithdrawals, poolToken, poolTokenAmount));
+            });
+
+            it('should cancel a pending withdrawal request', async () => {
+                await profiler.profile('cancel withdrawal', network.connect(provider).cancelWithdrawal(id));
+            });
+
+            it('should reinitiate a pending withdrawal request', async () => {
+                const newTime = (await latest()) + duration.weeks(1);
+                await pendingWithdrawals.setTime(newTime);
+
+                await profiler.profile('reinit withdrawal', network.connect(provider).reinitWithdrawal(id));
+            });
+        });
     });
 });

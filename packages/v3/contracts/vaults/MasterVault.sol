@@ -48,7 +48,7 @@ contract MasterVault is IMasterVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __MasterVault_init() internal initializer {
+    function __MasterVault_init() internal onlyInitializing {
         __Vault_init();
 
         __MasterVault_init_unchained();
@@ -57,7 +57,7 @@ contract MasterVault is IMasterVault, Vault {
     /**
      * @dev performs contract-specific initialization
      */
-    function __MasterVault_init_unchained() internal initializer {
+    function __MasterVault_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);

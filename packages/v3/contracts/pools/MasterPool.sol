@@ -136,7 +136,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __MasterPool_init() internal initializer {
+    function __MasterPool_init() internal onlyInitializing {
         __Vault_init();
 
         __MasterPool_init_unchained();
@@ -145,7 +145,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev performs contract-specific initialization
      */
-    function __MasterPool_init_unchained() internal initializer {
+    function __MasterPool_init_unchained() internal onlyInitializing {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
@@ -395,7 +395,7 @@ contract MasterPool is IMasterPool, Vault {
         uint256 poolTokenAmount = MathEx.mulDivF(renouncedAmount, _poolToken.totalSupply(), currentStakedBalance);
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
-        // request shouldn’t fail (and the minted amount cannot get negative)
+        // request shouldn't fail (and the minted amount cannot get negative)
         unchecked {
             _mintedAmounts[pool] = currentMintedAmount - renouncedAmount;
         }

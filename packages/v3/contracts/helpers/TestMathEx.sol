@@ -10,30 +10,6 @@ contract TestMathEx {
         return MathEx.floorSqrt(num);
     }
 
-    function ceilSqrt(uint256 num) external pure returns (uint256) {
-        return MathEx.ceilSqrt(num);
-    }
-
-    function productRatio(Fraction memory x, Fraction memory y) external pure returns (Fraction memory) {
-        return MathEx.productRatio(x, y);
-    }
-
-    function reducedRatio(Fraction memory r, uint256 max) external pure returns (Fraction memory) {
-        return MathEx.reducedRatio(r, max);
-    }
-
-    function normalizedRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
-        return MathEx.normalizedRatio(r, scale);
-    }
-
-    function accurateRatio(Fraction memory r, uint256 scale) external pure returns (Fraction memory) {
-        return MathEx.accurateRatio(r, scale);
-    }
-
-    function roundDiv(uint256 n, uint256 d) external pure returns (uint256) {
-        return MathEx.roundDiv(n, d);
-    }
-
     function mulDivF(
         uint256 x,
         uint256 y,

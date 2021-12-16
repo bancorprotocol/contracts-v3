@@ -29,7 +29,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __ExternalRewardsVault_init() internal initializer {
+    function __ExternalRewardsVault_init() internal onlyInitializing {
         __Vault_init();
 
         __ExternalRewardsVault_init_unchained();
@@ -38,7 +38,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     /**
      * @dev performs contract-specific initialization
      */
-    function __ExternalRewardsVault_init_unchained() internal initializer {
+    function __ExternalRewardsVault_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
     }
