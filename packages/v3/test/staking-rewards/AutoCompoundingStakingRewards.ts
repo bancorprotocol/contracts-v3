@@ -11,7 +11,7 @@ import {
     TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { StackingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
+import { StakingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
 import { createStakingRewardsWithERV, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration } from '../helpers/Time';
@@ -209,7 +209,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             token.address,
                             externalRewardsVault.address,
                             TOTAL_REWARDS,
-                            StackingRewardsDistributionTypes.Flat,
+                            StakingRewardsDistributionTypes.Flat,
                             now,
                             endTime
                         )
@@ -222,7 +222,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         ZERO_ADDRESS,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     )
@@ -235,7 +235,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         ZERO_ADDRESS,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     )
@@ -247,7 +247,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     token.address,
                     externalRewardsVault.address,
                     TOTAL_REWARDS,
-                    StackingRewardsDistributionTypes.Flat,
+                    StakingRewardsDistributionTypes.Flat,
                     now,
                     endTime
                 );
@@ -257,7 +257,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     )
@@ -270,7 +270,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         0,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     )
@@ -283,7 +283,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         endTime,
                         now
                     )
@@ -296,7 +296,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         0
                     )
@@ -311,7 +311,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         0,
                         endTime
                     )
@@ -326,7 +326,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         nonWhitelistedToken.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     )
@@ -339,7 +339,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS + 1,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         0,
                         endTime
                     )
@@ -351,7 +351,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     token.address,
                     externalRewardsVault.address,
                     TOTAL_REWARDS,
-                    StackingRewardsDistributionTypes.Flat,
+                    StakingRewardsDistributionTypes.Flat,
                     now,
                     endTime
                 );
@@ -366,7 +366,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                 expect(program.totalRewards).to.equal(TOTAL_REWARDS);
                 expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
-                expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
+                expect(program.distributionType).to.equal(StakingRewardsDistributionTypes.Flat);
                 expect(program.startTime).to.equal(now);
                 expect(program.endTime).to.equal(endTime);
                 expect(program.prevDistributionTimestamp).to.equal(0);
@@ -395,7 +395,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     );
@@ -418,7 +418,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.rewardsVault).to.equal(externalRewardsVault.address);
                     expect(program.totalRewards).to.equal(10);
                     expect(program.remainingRewards).to.equal(0);
-                    expect(program.distributionType).to.equal(StackingRewardsDistributionTypes.Flat);
+                    expect(program.distributionType).to.equal(StakingRewardsDistributionTypes.Flat);
                     expect(program.startTime).to.equal(now);
                     expect(program.endTime).to.equal(newEndTime);
                     expect(program.prevDistributionTimestamp).to.equal(0);
@@ -433,7 +433,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     token.address,
                     externalRewardsVault.address,
                     TOTAL_REWARDS,
-                    StackingRewardsDistributionTypes.Flat,
+                    StakingRewardsDistributionTypes.Flat,
                     now + 1,
                     endTime
                 );
@@ -511,7 +511,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now + 1,
                         endTime
                     );
@@ -528,7 +528,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     );
@@ -547,7 +547,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     );
@@ -572,7 +572,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         token.address,
                         externalRewardsVault.address,
                         TOTAL_REWARDS,
-                        StackingRewardsDistributionTypes.Flat,
+                        StakingRewardsDistributionTypes.Flat,
                         now,
                         endTime
                     );
@@ -601,7 +601,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             currToken.address,
                             externalRewardsVault.address,
                             TOTAL_REWARDS,
-                            StackingRewardsDistributionTypes.Flat,
+                            StakingRewardsDistributionTypes.Flat,
                             now,
                             endTime
                         );
@@ -640,7 +640,7 @@ describe('AutoCompoundingStakingRewards', () => {
         }
 
         context('FLAT', () => {
-            const distributionType = StackingRewardsDistributionTypes.Flat;
+            const distributionType = StakingRewardsDistributionTypes.Flat;
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
 
@@ -786,8 +786,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     token.address,
                     externalRewardsVault.address,
                     TOTAL_REWARDS,
-                    StackingRewardsDistributionTypes.ExponentialDecay,
-                    START_TIME,
+                    StakingRewardsDistributionTypes.ExponentialDecay,
+                    startTime,
                     0
                 );
             });
