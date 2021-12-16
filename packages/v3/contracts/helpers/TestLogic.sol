@@ -15,11 +15,11 @@ contract TestLogic is Upgradeable {
 
     // solhint-disable func-name-mixedcase
 
-    function __TestLogic_init() internal initializer {
+    function __TestLogic_init() internal onlyInitializing {
         __TestLogic_init_unchained();
     }
 
-    function __TestLogic_init_unchained() internal initializer {
+    function __TestLogic_init_unchained() internal onlyInitializing {
         _initialized = true;
         _version = 1;
     }

@@ -46,11 +46,6 @@ interface ProxyArguments {
     ctorArgs?: CtorArgs;
 }
 
-interface Logic {
-    ctorArgs: CtorArgs;
-    contract: BaseContract;
-}
-
 let admin: ProxyAdmin;
 
 export const proxyAdmin = async () => {
@@ -89,6 +84,7 @@ export const createProxy = async <F extends ContractFactory>(
 const getDeployer = async () => (await ethers.getSigners())[0];
 
 const createGovernedToken = async (
+    // eslint-disable-next-line camelcase
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
     name: string,
     symbol: string,

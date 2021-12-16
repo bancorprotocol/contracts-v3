@@ -10,8 +10,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS } from '../helpers/Constants';
-import { BNT, ETH, TKN } from '../helpers/Constants';
+import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import {
     createPool,
     createSystem,
@@ -679,7 +678,6 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = sourceToken.address === networkToken.address;
             const isTargetNetworkToken = targetToken.address === networkToken.address;
 
-            const traderAddress = await trader.getAddress();
             const minReturnAmount = MIN_RETURN_AMOUNT;
             const deadline = MAX_UINT256;
 
@@ -690,11 +688,6 @@ describe('Profile @profile', () => {
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
         };
-
-        interface TradeAmountsOverrides {
-            sourceTokenAddress?: string;
-            targetTokenAddress?: string;
-        }
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceETH = source.symbol === ETH;

@@ -17,7 +17,7 @@ import { toPPM } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };

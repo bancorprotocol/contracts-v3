@@ -86,7 +86,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @dev initializes the contract and its parents
      */
-    function __PoolCollectionUpgrader_init() internal initializer {
+    function __PoolCollectionUpgrader_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __PoolCollectionUpgrader_init_unchained();
@@ -95,7 +95,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __PoolCollectionUpgrader_init_unchained() internal initializer {}
+    function __PoolCollectionUpgrader_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
@@ -121,7 +121,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         }
 
         // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
-        // note that it's currenty not possible to add two pool collections with the same version or type
+        // note that it's currently not possible to add two pool collections with the same version or type
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {

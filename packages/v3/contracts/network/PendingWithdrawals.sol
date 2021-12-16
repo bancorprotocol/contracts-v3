@@ -141,7 +141,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev initializes the contract and its parents
      */
-    function __PendingWithdrawals_init() internal initializer {
+    function __PendingWithdrawals_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __PendingWithdrawals_init_unchained();
@@ -150,7 +150,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __PendingWithdrawals_init_unchained() internal initializer {
+    function __PendingWithdrawals_init_unchained() internal onlyInitializing {
         _setLockDuration(DEFAULT_LOCK_DURATION);
         _setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
     }

@@ -10,7 +10,6 @@ yarn-error.log*
 /cache
 /artifacts
 /typechain-types
-/data
 /deployments
 
 .coverage_artifacts

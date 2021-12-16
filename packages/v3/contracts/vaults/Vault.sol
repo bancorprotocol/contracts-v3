@@ -24,7 +24,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @dev initializes the contract and its parents
      */
-    function __Vault_init() internal initializer {
+    function __Vault_init() internal onlyInitializing {
         __Upgradeable_init();
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -35,7 +35,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @dev performs contract-specific initialization
      */
-    function __Vault_init_unchained() internal initializer {}
+    function __Vault_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev returns whether withdrawals are currently paused

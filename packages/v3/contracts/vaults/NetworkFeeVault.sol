@@ -35,7 +35,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkFeeVault_init() internal initializer {
+    function __NetworkFeeVault_init() internal onlyInitializing {
         __Vault_init();
 
         __NetworkFeeVault_init_unchained();
@@ -44,7 +44,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkFeeVault_init_unchained() internal initializer {
+    function __NetworkFeeVault_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
     }

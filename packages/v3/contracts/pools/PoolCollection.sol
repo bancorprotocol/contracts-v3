@@ -195,6 +195,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         validAddress(address(initNetworkSettings))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
+        initializer
     {
         __ReentrancyGuard_init();
 
@@ -777,7 +778,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert MinLiquidityNotSet();
         }
 
-        // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
+        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
         if (data.liquidity.stakedBalance + baseTokenAmount > data.depositLimit) {
             revert DepositLimitExceeded();
         }
