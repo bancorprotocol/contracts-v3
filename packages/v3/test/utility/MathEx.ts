@@ -96,7 +96,7 @@ describe('MathEx', () => {
     };
 
     describe('quick tests', () => {
-        for (const n of [1, 64, 128, 192, 256]) {
+        for (let n = 0; n <= 256; n += 64) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testFloorSqrt(n, k);
             }
@@ -134,7 +134,7 @@ describe('MathEx', () => {
     });
 
     describe('@stress tests', () => {
-        for (let n = 1; n <= 256; n++) {
+        for (let n = 0; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testFloorSqrt(n, k);
             }
