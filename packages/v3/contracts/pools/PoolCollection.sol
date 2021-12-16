@@ -181,7 +181,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
+     * @dev initializes a new PoolCollection contract
      */
     constructor(
         IBancorNetwork initNetwork,
