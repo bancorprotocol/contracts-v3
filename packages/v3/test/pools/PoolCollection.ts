@@ -1415,13 +1415,17 @@ describe('PoolCollection', () => {
                         });
 
                         context('insufficient', () => {
-                            const sourceBalance = BigNumber.from(12_345);
-                            const targetBalance = BigNumber.from(9_999_999);
+                            const networkTokenTradingLiquidity = BigNumber.from(12_345);
+                            const baseTokenTradingLiquidity = BigNumber.from(9_999_999);
+
+                            const targetBalance = isSourceNetworkToken
+                                ? baseTokenTradingLiquidity
+                                : networkTokenTradingLiquidity;
 
                             let targetAmount: BigNumber;
 
                             beforeEach(async () => {
-                                await setTradingLiquidity(sourceBalance, targetBalance);
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
 
                                 targetAmount = targetBalance;
                             });
@@ -1445,13 +1449,24 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
                                     // derive a target amount such that adding a fee to it will result in an amount
-                                    // greater than the target balance, by solving the following two equations:
+                                    // equal to the target balance, by solving the following two equations:
                                     // 1. `feeAmount = targetAmount * tradingFee / (1 - tradingFee)`
-                                    // 2. `targetAmount + feeAmount > targetBalance`
+                                    // 2. `targetAmount + feeAmount = targetBalance`
                                     targetAmount = targetBalance
                                         .mul(PPM_RESOLUTION - tradingFeePPM)
-                                        .div(PPM_RESOLUTION)
-                                        .add(1);
+                                        .div(PPM_RESOLUTION);
+                                    // Note that due to the integer-division, we expect:
+                                    // - `targetAmount + feeAmount` to be slightly smaller than `targetBalance`
+                                    // - `targetAmount + feeAmount + 1` to be equal to or larger than `targetBalance`
+                                });
+
+                                it('should not revert when attempting to query the source amount', async () => {
+                                    await poolCollection.tradeAmountAndFee(
+                                        sourceToken.address,
+                                        targetToken.address,
+                                        targetAmount,
+                                        false
+                                    );
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
@@ -1459,12 +1474,10 @@ describe('PoolCollection', () => {
                                         poolCollection.tradeAmountAndFee(
                                             sourceToken.address,
                                             targetToken.address,
-                                            targetAmount,
+                                            targetAmount.add(1),
                                             false
                                         )
-                                    ).to.be.revertedWith(
-                                        'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
-                                    );
+                                    ).to.be.revertedWith('reverted with panic code'); // either division by zero or subtraction underflow
                                 });
                             });
                         });
