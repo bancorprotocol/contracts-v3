@@ -20,10 +20,13 @@ function uncheckedInc(uint256 i) pure returns (uint256) {
  */
 library MathEx {
     /**
-     * @dev returns the largest integer smaller than or equal to the square root of a positive integer
+     * @dev returns the largest integer smaller than or equal to the square root of an unsigned integer
      */
     function floorSqrt(uint256 n) internal pure returns (uint256) {
         unchecked {
+            if (n == 0) {
+                return 0;
+            }
             uint256 x = n / 2 + 1;
             uint256 y = (x + n / x) / 2;
             while (x > y) {
