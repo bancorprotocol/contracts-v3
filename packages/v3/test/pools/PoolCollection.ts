@@ -1448,7 +1448,10 @@ describe('PoolCollection', () => {
                                     // greater than the target balance, by solving the following two equations:
                                     // 1. `feeAmount = targetAmount * tradingFee / (1 - tradingFee)`
                                     // 2. `targetAmount + feeAmount > targetBalance`
-                                    targetAmount = targetBalance.mul(PPM_RESOLUTION - tradingFeePPM).div(PPM_RESOLUTION).add(1);
+                                    targetAmount = targetBalance
+                                        .mul(PPM_RESOLUTION - tradingFeePPM)
+                                        .div(PPM_RESOLUTION)
+                                        .add(1);
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
