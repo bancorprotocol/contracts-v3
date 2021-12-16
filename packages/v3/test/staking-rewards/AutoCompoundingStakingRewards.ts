@@ -561,7 +561,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
         describe('query program data', () => {
             describe('single program', () => {
-                it('shouldnt be able to fetch an empty program', async () => {
+                it('should not be able to fetch an empty program', async () => {
                     const program = await autoCompoundingStakingRewards.program(token.address);
 
                     expect(program.poolToken).to.equal(ZERO_ADDRESS);
