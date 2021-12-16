@@ -10,10 +10,6 @@ const decimalize = <C>(func: Function) => {
 
 export const floorSqrt = decimalize<Decimal>((n: Decimal) => n.sqrt().floor());
 
-export const roundDiv = decimalize<Decimal>(
-    (a: Decimal, b: Decimal) => new Decimal(a.div(b).toFixed(0, Decimal.ROUND_HALF_UP))
-);
-
 export const mulDivF = decimalize<Decimal>((a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).floor());
 
 export const mulDivC = decimalize<Decimal>((a: Decimal, b: Decimal, c: Decimal) => a.mul(b).div(c).ceil());
