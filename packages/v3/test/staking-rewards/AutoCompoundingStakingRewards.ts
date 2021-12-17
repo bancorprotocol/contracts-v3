@@ -639,7 +639,7 @@ describe('AutoCompoundingStakingRewards', () => {
             const program = await autoCompoundingStakingRewards.program(pool.address);
             const duration = program.endTime - program.startTime;
             const currentTime = await autoCompoundingStakingRewards.currentTime();
-            if (currentTime < program.startTime) {
+            if (!program.isEnabled || currentTime < program.startTime) {
                 return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
             }
 
@@ -722,12 +722,13 @@ describe('AutoCompoundingStakingRewards', () => {
             const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
             switch (distributionType) {
                 case StakingRewardsDistributionTypes.Flat:
-                    expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).to.equal(
-                        prevUserTokenOwned.add(tokenAmountToDistribute)
+                    expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).to.be.closeTo(
+                        prevUserTokenOwned.add(tokenAmountToDistribute),
+                        1
                     );
                     expect(
                         await getPoolTokenUnderlying(externalRewardsVault, poolCollection, token, poolToken)
-                    ).to.equal(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute));
+                    ).to.be.closeTo(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute), 1);
 
                     break;
 
@@ -788,7 +789,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
                     });
 
-                    it('should not have distributed any rewards', async () => {
+                    it('should not distribute any rewards', async () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.equal(0);
                     });
@@ -799,7 +800,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(startTime);
                     });
 
-                    it('should not have distributed any rewards', async () => {
+                    it('should not distribute any rewards', async () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.equal(0);
                     });
@@ -824,6 +825,36 @@ describe('AutoCompoundingStakingRewards', () => {
                     it('should have distributed all rewards', async () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
+                    });
+                });
+
+                context('while the program is active', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION / 2);
+                    });
+
+                    it('should distribute rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.gt(0);
+                    });
+
+                    it('should not distribute any rewards if no time has elapsed since the last distribution', async () => {
+                        let { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.gt(0);
+
+                        ({ tokenAmountToDistribute } = await testDistribution());
+                        expect(tokenAmountToDistribute).to.equal(0);
+                    });
+
+                    context('disabled', () => {
+                        beforeEach(async () => {
+                            await autoCompoundingStakingRewards.enableProgram(token.address, false);
+                        });
+
+                        it('should not distribute any rewards', async () => {
+                            const { tokenAmountToDistribute } = await testDistribution();
+                            expect(tokenAmountToDistribute).to.equal(0);
+                        });
                     });
                 });
             });
@@ -862,10 +893,6 @@ describe('AutoCompoundingStakingRewards', () => {
                                 );
 
                                 await testDistribution();
-
-                                // should not distribute any rewards if no time has elapsed since the last distribution
-                                const { tokenAmountToDistribute } = await testDistribution();
-                                expect(tokenAmountToDistribute).to.equal(0);
                             }
                         });
                     });
@@ -909,7 +936,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
                     });
 
-                    it('should not have distributed any rewards', async () => {
+                    it('should not distribute any rewards', async () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.equal(0);
                     });
@@ -920,7 +947,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(startTime);
                     });
 
-                    it('should not have distributed any rewards', async () => {
+                    it('should not distribute any rewards', async () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.equal(0);
                     });
@@ -950,6 +977,36 @@ describe('AutoCompoundingStakingRewards', () => {
                         const { tokenAmountToDistribute } = await testDistribution();
                         expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
                             maxRelativeError: new Decimal('0.0000002')
+                        });
+                    });
+                });
+
+                context('while the program is active', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime + duration.years(1));
+                    });
+
+                    it('should distribute rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.gt(0);
+                    });
+
+                    it('should not distribute any rewards if no time has elapsed since the last distribution', async () => {
+                        let { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.gt(0);
+
+                        ({ tokenAmountToDistribute } = await testDistribution());
+                        expect(tokenAmountToDistribute).to.equal(0);
+                    });
+
+                    context('disabled', () => {
+                        beforeEach(async () => {
+                            await autoCompoundingStakingRewards.enableProgram(token.address, false);
+                        });
+
+                        it('should not distribute any rewards', async () => {
+                            const { tokenAmountToDistribute } = await testDistribution();
+                            expect(tokenAmountToDistribute).to.equal(0);
                         });
                     });
                 });
@@ -987,10 +1044,6 @@ describe('AutoCompoundingStakingRewards', () => {
                                 await autoCompoundingStakingRewards.setTime(time);
 
                                 await testDistribution();
-
-                                // should not distribute any rewards if no time has elapsed since the last distribution
-                                const { tokenAmountToDistribute } = await testDistribution();
-                                expect(tokenAmountToDistribute).to.equal(0);
                             }
                         });
                     });
