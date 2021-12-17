@@ -30,6 +30,6 @@ contract TestStakingRewardsMath is StakingRewardsMath {
     }
 
     function expT(uint256 a, uint256 b) external pure returns (uint256, uint256) {
-        return (exp(a, b), ONE);
+        return (_exp(a, b), ONE);
     }
 }

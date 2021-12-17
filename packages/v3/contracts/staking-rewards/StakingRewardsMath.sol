@@ -57,7 +57,7 @@ contract StakingRewardsMath {
                 revert SecondsTooHigh();
             }
 
-            uint256 n = exp(timeElapsed * LAMBDA_N, LAMBDA_D);
+            uint256 n = _exp(timeElapsed * LAMBDA_N, LAMBDA_D);
             return MathEx.mulDivF(totalRewards, n - ONE, n);
         }
     }
@@ -70,7 +70,7 @@ contract StakingRewardsMath {
      * - The exponentiation of the input is calculated by multiplying the intermediate results above
      * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
      */
-    function exp(uint256 a, uint256 b) internal pure returns (uint256 n) {
+    function _exp(uint256 a, uint256 b) internal pure returns (uint256 n) {
         unchecked {
             uint256 x = MathEx.mulDivF(ONE, a, b);
             uint256 y;

@@ -353,9 +353,9 @@ contract AutoCompoundingStakingRewards is
 
         uint256 tokenAmountToDistribute;
         if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokenAmountToDistribute = calculateExponentialDecayRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = _calculateExponentialDecayRewards(currentProgram, timeInfo);
         } else if (distributionType == DistributionType.FLAT) {
-            tokenAmountToDistribute = calculateFlatRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = _calculateFlatRewards(currentProgram, timeInfo);
         }
 
         if (tokenAmountToDistribute == 0) {
@@ -402,7 +402,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns the flat rewards
      */
-    function calculateFlatRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+    function _calculateFlatRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
         internal
         pure
         returns (uint256)
@@ -425,7 +425,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns the exponential decay rewards
      */
-    function calculateExponentialDecayRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+    function _calculateExponentialDecayRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
         internal
         pure
         returns (uint256)
