@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
+import { ExponentialDecay } from '..//helpers/Constants';
 import { mulDivF } from '../helpers/MathUtils';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
@@ -9,9 +10,7 @@ import { BigNumber } from 'ethers';
 import { EOL } from 'os';
 
 const { seconds, days, minutes, hours, years } = duration;
-
-const ONE = new Decimal(1);
-const LAMBDA = new Decimal('0.0000000142857142857143');
+const { ONE, LAMBDA } = ExponentialDecay;
 
 const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();

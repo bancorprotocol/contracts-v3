@@ -11,13 +11,12 @@ import {
     TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { StakingRewardsDistributionTypes, TKN, ZERO_ADDRESS } from '../helpers/Constants';
+import { StakingRewardsDistributionTypes, TKN, ZERO_ADDRESS, ExponentialDecay } from '../helpers/Constants';
 import { createStakingRewardsWithERV, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { duration } from '../helpers/Time';
+import { latest, duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
-import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -25,6 +24,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { days } = duration;
+const { ONE, LAMBDA } = ExponentialDecay;
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
@@ -43,23 +43,18 @@ describe('AutoCompoundingStakingRewards', () => {
 
     let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
 
-    const INITIAL_RATE = { n: 1, d: 2 };
-
     shouldHaveGap('AutoCompoundingStakingRewards', '_programs');
 
     before(async () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
-    const setupSimplePoolAndTransferPoolTokenForProgramCreation = async (
-        initialStake: BigNumberish,
-        totalRewards: BigNumberish
-    ) => {
+    const prepareSimplePool = async (initialStake: BigNumberish, totalRewards: BigNumberish) => {
         const { token, poolToken } = await setupSimplePool(
             {
                 symbol: TKN,
                 balance: initialStake,
-                initialRate: INITIAL_RATE
+                initialRate: { n: 1, d: 2 }
             },
             user,
             network,
@@ -68,28 +63,13 @@ describe('AutoCompoundingStakingRewards', () => {
             poolCollection
         );
 
-        await depositAndTransferToERV(
-            stakingRewardsProvider,
-            token,
-            poolToken,
-            totalRewards,
-            network,
-            externalRewardsVault
-        );
+        await depositToPool(stakingRewardsProvider, token, totalRewards, network);
 
-        return { token, poolToken };
-    };
+        const poolTokenAmount = await poolToken.balanceOf(stakingRewardsProvider.address);
 
-    const depositAndTransferToERV = async (
-        lp: SignerWithAddress,
-        token: TokenWithAddress,
-        poolToken: TokenWithAddress,
-        amount: BigNumberish,
-        network: TestBancorNetwork,
-        externalRewardsVault: ExternalRewardsVault
-    ) => {
-        await depositToPool(lp, token, amount, network);
-        await transfer(lp, poolToken, externalRewardsVault, amount);
+        await transfer(stakingRewardsProvider, poolToken, externalRewardsVault, poolTokenAmount);
+
+        return { token, poolToken, poolTokenAmount };
     };
 
     describe('construction', () => {
@@ -172,7 +152,7 @@ describe('AutoCompoundingStakingRewards', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
         const TOTAL_DURATION = days(10);
         const TOTAL_REWARDS = 10;
-        const INITIAL_STAKE = 10;
+        const INITIAL_USER_STAKE = 10;
 
         let token: TokenWithAddress;
         let poolToken: TokenWithAddress;
@@ -194,10 +174,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 externalRewardsVault
             );
 
-            ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
-                INITIAL_STAKE,
-                TOTAL_REWARDS
-            ));
+            ({ token, poolToken } = await prepareSimplePool(INITIAL_USER_STAKE, TOTAL_REWARDS));
         });
 
         describe('program creation', () => {
@@ -590,11 +567,15 @@ describe('AutoCompoundingStakingRewards', () => {
                 let poolToken2: TokenWithAddress;
 
                 beforeEach(async () => {
-                    ({ token: token1, poolToken: poolToken1 } =
-                        await setupSimplePoolAndTransferPoolTokenForProgramCreation(INITIAL_STAKE, TOTAL_REWARDS));
+                    ({ token: token1, poolToken: poolToken1 } = await prepareSimplePool(
+                        INITIAL_USER_STAKE,
+                        TOTAL_REWARDS
+                    ));
 
-                    ({ token: token2, poolToken: poolToken2 } =
-                        await setupSimplePoolAndTransferPoolTokenForProgramCreation(INITIAL_STAKE, TOTAL_REWARDS));
+                    ({ token: token2, poolToken: poolToken2 } = await prepareSimplePool(
+                        INITIAL_USER_STAKE,
+                        TOTAL_REWARDS
+                    ));
 
                     for (const currToken of [token, token1, token2]) {
                         await autoCompoundingStakingRewards.createProgram(
@@ -621,45 +602,165 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('process rewards', () => {
+        let token: TokenWithAddress;
+        let poolToken: PoolToken;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
+        const INITIAL_USER_STAKE = toWei(10_000);
+        const TOTAL_REWARDS = toWei(90_000);
+
+        beforeEach(async () => {
+            ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
+                await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            ({ token, poolToken } = await prepareSimplePool(INITIAL_USER_STAKE, TOTAL_REWARDS));
+        });
+
         const getPoolTokenUnderlying = async (
             user: Addressable,
             poolCollection: TestPoolCollection,
-            token: TokenWithAddress,
+            pool: TokenWithAddress,
             poolToken: PoolToken
         ) => {
-            const tokenStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-            return (await poolToken.balanceOf(user.address)).mul(tokenStakedBalance).div(await poolToken.totalSupply());
+            const { stakedBalance } = await poolCollection.poolLiquidity(pool.address);
+            return (await poolToken.balanceOf(user.address)).mul(stakedBalance).div(await poolToken.totalSupply());
         };
 
-        function getPercent(num: number | BigNumber, percent: number): number | BigNumber {
-            if (typeof num === 'number') {
-                return (num * percent) / 100;
+        const getExponentialDecayRewardsAfterTimeElapsed = (timeElapsed: number, totalRewards: BigNumber) =>
+            new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(timeElapsed).exp()));
+
+        const getRewards = async (pool: TokenWithAddress) => {
+            let tokenAmountToDistribute = BigNumber.from(0);
+            let poolTokenAmountToBurn = BigNumber.from(0);
+            let timeElapsed = 0;
+
+            const program = await autoCompoundingStakingRewards.program(pool.address);
+            const duration = program.endTime - program.startTime;
+            const currentTime = await autoCompoundingStakingRewards.currentTime();
+            if (currentTime < program.startTime) {
+                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
             }
 
-            return num.mul(percent).div(100);
-        }
+            timeElapsed = currentTime - program.startTime;
+            if (program.distributionType === StakingRewardsDistributionTypes.Flat) {
+                timeElapsed = Math.min(timeElapsed, duration);
+            }
 
-        context('FLAT', () => {
-            const distributionType = StakingRewardsDistributionTypes.Flat;
+            const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
 
-            const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
+            switch (program.distributionType) {
+                case StakingRewardsDistributionTypes.Flat:
+                    tokenAmountToDistribute = program.remainingRewards
+                        .mul(timeElapsed - prevTimeElapsed)
+                        .div(duration - prevTimeElapsed);
 
-            const INITIAL_STAKE = toWei(10_000);
-            const TOTAL_REWARDS = toWei(90_000);
-            const TOTAL_TOKEN = INITIAL_STAKE.add(TOTAL_REWARDS);
-            const PROGRAM_TIME = days(10);
+                    break;
 
-            let now: number;
+                case StakingRewardsDistributionTypes.ExponentialDecay:
+                    tokenAmountToDistribute = BigNumber.from(
+                        getExponentialDecayRewardsAfterTimeElapsed(timeElapsed, program.totalRewards)
+                            .sub(getExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, program.totalRewards))
+                            .toFixed(0)
+                    );
 
-            let token: TokenWithAddress;
-            let poolToken: PoolToken;
+                    break;
+
+                default:
+                    throw new Error(`Unsupported type ${program.distributionType}`);
+            }
+
+            const poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(pool.address));
+
+            const { stakedBalance } = await poolCollection.poolLiquidity(pool.address);
+            const protocolPoolTokenAmount = await poolToken.balanceOf(externalRewardsVault.address);
+            const poolTokenSupply = await poolToken.totalSupply();
+            const val = tokenAmountToDistribute.mul(await poolToken.totalSupply());
+
+            poolTokenAmountToBurn = val
+                .mul(poolTokenSupply)
+                .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
+
+            return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
+        };
+
+        const testDistribution = async () => {
+            const prevPoolTokenBalance = await poolToken.balanceOf(externalRewardsVault.address);
+            const prevPoolTokenTotalSupply = await poolToken.totalSupply();
+            const prevUserTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
+            const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
+                externalRewardsVault,
+                poolCollection,
+                token,
+                poolToken
+            );
+
+            const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(token);
+
+            const res = await autoCompoundingStakingRewards.processRewards(token.address);
+
+            if (tokenAmountToDistribute.eq(BigNumber.from(0)) || poolTokenAmountToBurn.eq(BigNumber.from(0))) {
+                await expect(res).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+            } else {
+                await expect(res)
+                    .to.emit(autoCompoundingStakingRewards, 'RewardsDistributed')
+                    .withArgs(
+                        token.address,
+                        tokenAmountToDistribute,
+                        poolTokenAmountToBurn,
+                        timeElapsed,
+                        TOTAL_REWARDS.sub(tokenAmountToDistribute)
+                    );
+            }
+
+            expect(await poolToken.balanceOf(externalRewardsVault.address)).to.equal(
+                prevPoolTokenBalance.sub(poolTokenAmountToBurn)
+            );
+            expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
+
+            const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
+            switch (distributionType) {
+                case StakingRewardsDistributionTypes.Flat:
+                    expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).to.equal(
+                        prevUserTokenOwned.add(tokenAmountToDistribute)
+                    );
+                    expect(
+                        await getPoolTokenUnderlying(externalRewardsVault, poolCollection, token, poolToken)
+                    ).to.equal(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute));
+
+                    break;
+
+                case StakingRewardsDistributionTypes.ExponentialDecay:
+                    expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).be.almostEqual(
+                        prevUserTokenOwned.add(tokenAmountToDistribute),
+                        {
+                            maxRelativeError: new Decimal('0.0000002')
+                        }
+                    );
+
+                    expect(
+                        await getPoolTokenUnderlying(externalRewardsVault, poolCollection, token, poolToken)
+                    ).to.be.almostEqual(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute), {
+                        maxRelativeError: new Decimal('0.0000002')
+                    });
+
+                    break;
+
+                default:
+                    throw new Error(`Unsupported type ${distributionType}`);
+            }
+
+            return { tokenAmountToDistribute };
+        };
+
+        context('flat', () => {
+            const PROGRAM_DURATION = days(10);
+
+            let startTime: number;
+            let endTime: number;
 
             beforeEach(async () => {
-                ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
-                    await createSystem());
-
-                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
                 autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                     network,
                     networkSettings,
@@ -668,107 +769,120 @@ describe('AutoCompoundingStakingRewards', () => {
                     externalRewardsVault
                 );
 
-                now = 0;
-
-                ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
-                    INITIAL_STAKE,
-                    TOTAL_REWARDS
-                ));
+                startTime = await latest();
+                endTime = startTime + PROGRAM_DURATION;
 
                 await autoCompoundingStakingRewards.createProgram(
                     token.address,
                     externalRewardsVault.address,
                     TOTAL_REWARDS,
-                    distributionType,
-                    now,
-                    now + PROGRAM_TIME
+                    StakingRewardsDistributionTypes.Flat,
+                    startTime,
+                    endTime
                 );
             });
 
             describe('basic tests', () => {
-                it('should not have distributed any rewards at the beginning of a program', async () => {
-                    await autoCompoundingStakingRewards.processRewards(token.address);
+                context('before the beginning of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
+                    });
 
-                    const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
-
-                    expect(userTokenOwned).to.equal(INITIAL_STAKE);
-                    expect(externalRewardsVaultTokenOwned).to.equal(TOTAL_REWARDS);
+                    it('should not have distributed any rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(0);
+                    });
                 });
 
-                it('should have distributed all rewards at the end of a program', async () => {
-                    await autoCompoundingStakingRewards.setTime(PROGRAM_TIME);
-                    await autoCompoundingStakingRewards.processRewards(token.address);
+                context('at the beginning of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime);
+                    });
 
-                    const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
+                    it('should not have distributed any rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(0);
+                    });
+                });
 
-                    expect(userTokenOwned).to.equal(TOTAL_TOKEN);
-                    expect(externalRewardsVaultTokenOwned).to.equal(0);
+                context('at the end of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION);
+                    });
+
+                    it('should have distributed all rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
+                    });
+                });
+
+                context('after the end of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION + duration.days(1));
+                    });
+
+                    it('should have distributed all rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
+                    });
                 });
             });
 
-            describe('advanced tests', () => {
-                for (const programTimePercent of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
-                    const now = getPercent(PROGRAM_TIME, programTimePercent);
+            describe('single distribution', () => {
+                const testSingleDistribution = (step: number) => {
+                    context(`in ${step}% steps`, () => {
+                        for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
+                            context(`at ${programTimePercent}% of a program`, () => {
+                                beforeEach(async () => {
+                                    await autoCompoundingStakingRewards.setTime(
+                                        (PROGRAM_DURATION * programTimePercent) / 100
+                                    );
+                                });
 
-                    it(`should have distributed ${programTimePercent}% of all rewards at ${programTimePercent}% of a program`, async () => {
-                        await autoCompoundingStakingRewards.setTime(now);
-                        await autoCompoundingStakingRewards.processRewards(token.address);
-
-                        const userTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                        const externalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
-                            externalRewardsVault,
-                            poolCollection,
-                            token,
-                            poolToken
-                        );
-
-                        expect(userTokenOwned).to.almostEqual(
-                            INITIAL_STAKE.add(getPercent(TOTAL_REWARDS, programTimePercent)),
-                            {
-                                maxRelativeError: new Decimal('0.0000000000000000000001'),
-                                relation: Relation.LesserOrEqual
-                            }
-                        );
-
-                        expect(externalRewardsVaultTokenOwned).to.almostEqual(
-                            getPercent(TOTAL_REWARDS, 100 - programTimePercent),
-                            {
-                                maxRelativeError: new Decimal('0.0000000000000000000009'),
-                                relation: Relation.GreaterOrEqual
-                            }
-                        );
+                                it(`should distribute rewards`, async () => {
+                                    await testDistribution();
+                                });
+                            });
+                        }
                     });
+                };
+
+                for (const step of [5, 10, 25]) {
+                    testSingleDistribution(step);
+                }
+            });
+
+            describe('multiple distributions', () => {
+                const testMultipleDistributions = (step: number) => {
+                    context(`in ${step}% steps`, () => {
+                        it('should distribute rewards', async () => {
+                            for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
+                                await autoCompoundingStakingRewards.setTime(
+                                    (PROGRAM_DURATION * programTimePercent) / 100
+                                );
+
+                                await testDistribution();
+
+                                // should not distribute any rewards if no time has elapsed since the last distribution
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(0);
+                            }
+                        });
+                    });
+                };
+
+                for (const step of [5, 10, 25]) {
+                    testMultipleDistributions(step);
                 }
             });
         });
 
-        context('Exponential-Decay', () => {
-            const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
-            const INITIAL_STAKE = toWei(10_000);
-            const TOTAL_REWARDS = toWei(90_000);
-            const START_TIME = 0;
+        context('exponential decay', () => {
+            const ESTIMATED_PROGRAM_DURATION = duration.years(35.5);
 
-            let token: TokenWithAddress;
-            let poolToken: PoolToken;
+            let startTime: number;
 
             beforeEach(async () => {
-                ({ network, networkSettings, networkToken, masterPool, poolCollection, externalRewardsVault } =
-                    await createSystem());
-
-                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-
                 autoCompoundingStakingRewards = await createStakingRewardsWithERV(
                     network,
                     networkSettings,
@@ -777,10 +891,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     externalRewardsVault
                 );
 
-                ({ token, poolToken } = await setupSimplePoolAndTransferPoolTokenForProgramCreation(
-                    INITIAL_STAKE,
-                    TOTAL_REWARDS
-                ));
+                startTime = await latest();
 
                 await autoCompoundingStakingRewards.createProgram(
                     token.address,
@@ -793,63 +904,103 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             describe('basic tests', () => {
-                it('should not have distributed any rewards at the beginning of a program', async () => {
-                    const userTokenOwnedBefore = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedBefore = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
-
-                    await autoCompoundingStakingRewards.processRewards(token.address);
-
-                    const userTokenOwnedAfter = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedAfter = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
-
-                    expect(userTokenOwnedBefore).to.equal(INITIAL_STAKE);
-                    expect(vaultTokenOwnedBefore).to.equal(TOTAL_REWARDS);
-                    expect(userTokenOwnedAfter).to.equal(INITIAL_STAKE);
-                    expect(vaultTokenOwnedAfter).to.equal(TOTAL_REWARDS);
-                });
-
-                it('should have distributed all rewards at the end of a program', async () => {
-                    const userTokenOwnedBefore = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedBefore = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
-
-                    await autoCompoundingStakingRewards.setTime(START_TIME + duration.years(35.5));
-                    await autoCompoundingStakingRewards.processRewards(token.address);
-
-                    const userTokenOwnedAfter = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                    const vaultTokenOwnedAfter = await getPoolTokenUnderlying(
-                        externalRewardsVault,
-                        poolCollection,
-                        token,
-                        poolToken
-                    );
-
-                    expect(userTokenOwnedBefore).to.equal(INITIAL_STAKE);
-                    expect(vaultTokenOwnedBefore).to.equal(TOTAL_REWARDS);
-
-                    expect(userTokenOwnedAfter.sub(userTokenOwnedBefore)).to.be.almostEqual(TOTAL_REWARDS, {
-                        maxRelativeError: new Decimal('0.0000002'),
-                        relation: Relation.LesserOrEqual
+                context('before the beginning of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
                     });
-                    expect(vaultTokenOwnedBefore.sub(vaultTokenOwnedAfter)).to.be.almostEqual(TOTAL_REWARDS, {
-                        maxRelativeError: new Decimal('0.0000002'),
-                        relation: Relation.LesserOrEqual
+
+                    it('should not have distributed any rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(0);
                     });
                 });
+
+                context('at the beginning of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime);
+                    });
+
+                    it('should not have distributed any rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.equal(0);
+                    });
+                });
+
+                context('at the end of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(startTime + ESTIMATED_PROGRAM_DURATION);
+                    });
+
+                    it('should have distributed all rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
+                            maxRelativeError: new Decimal('0.0000002')
+                        });
+                    });
+                });
+
+                context('after the end of a program', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.setTime(
+                            startTime + ESTIMATED_PROGRAM_DURATION + duration.days(1)
+                        );
+                    });
+
+                    it('should have distributed all rewards', async () => {
+                        const { tokenAmountToDistribute } = await testDistribution();
+                        expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
+                            maxRelativeError: new Decimal('0.0000002')
+                        });
+                    });
+                });
+            });
+
+            describe('single distribution', () => {
+                const testSingleDistribution = (step: number, totalSteps: number) => {
+                    context(`in ${totalSteps} steps of ${step} second long steps`, () => {
+                        for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
+                            context(`after ${time} seconds`, () => {
+                                beforeEach(async () => {
+                                    await autoCompoundingStakingRewards.setTime(time);
+                                });
+
+                                it(`should distribute rewards`, async () => {
+                                    await testDistribution();
+                                });
+                            });
+                        }
+                    });
+                };
+
+                for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
+                    for (const totalSteps of [50]) {
+                        testSingleDistribution(step, totalSteps);
+                    }
+                }
+            });
+
+            describe('multiple distributions', () => {
+                const testMultipleDistributions = (step: number, totalSteps: number) => {
+                    context(`in ${totalSteps} steps of ${step} second long steps`, () => {
+                        it('should distribute rewards', async () => {
+                            for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
+                                await autoCompoundingStakingRewards.setTime(time);
+
+                                await testDistribution();
+
+                                // should not distribute any rewards if no time has elapsed since the last distribution
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(0);
+                            }
+                        });
+                    });
+                };
+
+                for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
+                    for (const totalSteps of [50]) {
+                        testMultipleDistributions(step, totalSteps);
+                    }
+                }
             });
         });
     });

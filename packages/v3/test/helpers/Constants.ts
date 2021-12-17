@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
 const {
@@ -29,3 +30,8 @@ export enum StakingRewardsDistributionTypes {
     Flat = 0,
     ExponentialDecay = 1
 }
+
+export const ExponentialDecay = {
+    ONE: new Decimal(1),
+    LAMBDA: new Decimal('0.0000000142857142857143')
+};
