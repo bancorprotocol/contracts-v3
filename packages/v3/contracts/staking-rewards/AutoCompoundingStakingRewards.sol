@@ -23,7 +23,7 @@ import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 /**
- * @dev Auto Compounding Staking Rewards contract
+ * @dev Auto-compounding Staking Rewards contract
  */
 contract AutoCompoundingStakingRewards is
     IAutoCompoundingStakingRewards,
