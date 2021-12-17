@@ -24,12 +24,14 @@ import {
     ExternalRewardsVault
 } from '../../typechain-types';
 import { roles } from './AccessControl';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, TKN, vBNT } from './Constants';
 import { fromPPM, Fraction, toWei } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet } from 'ethers';
+import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
 import { ethers, waffle } from 'hardhat';
+
+const { formatBytes32String } = utils;
 
 const {
     TokenGovernance: TokenGovernanceRoles,
@@ -86,19 +88,18 @@ export const createProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createStakingRewardsWithERV = async (
+export const createStakingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     networkToken: IERC20,
     masterPool: TestMasterPool | MasterPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const autoCompoundingStakingRewards = await createStakingRewards(
-        network,
-        networkSettings,
-        networkToken,
-        masterPool
-    );
+    const autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+        ctorArgs: [network.address, networkSettings.address, networkToken.address, masterPool.address]
+    });
+
+    await masterPool.grantRole(roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
     await externalRewardsVault.grantRole(
         roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
@@ -106,17 +107,6 @@ export const createStakingRewardsWithERV = async (
     );
 
     return autoCompoundingStakingRewards;
-};
-
-export const createStakingRewards = async (
-    network: TestBancorNetwork | BancorNetwork,
-    networkSettings: NetworkSettings,
-    networkToken: IERC20,
-    masterPool: TestMasterPool | MasterPool
-) => {
-    return await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-        ctorArgs: [network.address, networkSettings.address, networkToken.address, masterPool.address]
-    });
 };
 
 const createGovernedToken = async (
@@ -384,19 +374,28 @@ export const setupSimplePool = async (
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
-    const isNetworkToken = spec.symbol === BNT;
-
-    if (isNetworkToken) {
+    if (spec.symbol === BNT) {
         const poolToken = await Contracts.PoolToken.attach(await networkInformation.masterPoolToken());
 
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
         const networkToken = await factory.attach(await networkInformation.networkToken());
 
+        // ensure that there is enough space to deposit the network token
+        const reserveToken = await createTokenBySymbol(TKN);
+
+        await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+        await network.requestLiquidityT(
+            formatBytes32String(''),
+            reserveToken.address,
+            BigNumber.from(spec.balance).mul(1000)
+        );
+
+        await depositToPool(provider, networkToken, spec.balance, network);
+
         return { poolToken, token: networkToken };
     }
 
     const token = await createTokenBySymbol(spec.symbol);
-
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);

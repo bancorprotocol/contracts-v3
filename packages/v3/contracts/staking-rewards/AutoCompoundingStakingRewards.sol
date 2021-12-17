@@ -43,8 +43,8 @@ contract AutoCompoundingStakingRewards is
     }
 
     struct PoolInfo {
+        IPoolToken poolToken;
         uint256 stakedBalance;
-        uint256 protocolPoolTokenAmount;
         uint256 poolTokenTotalSupply;
     }
 
@@ -222,7 +222,11 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyActive();
         }
 
-        if (!_networkSettings.isTokenWhitelisted(pool)) {
+        if (_isNetworkToken(pool)) {
+            if (rewardsVault != _masterPool) {
+                revert InvalidParam();
+            }
+        } else if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
 
@@ -251,21 +255,16 @@ contract AutoCompoundingStakingRewards is
         // been distributed
         if (address(poolToken) != address(0)) {
             processRewards(pool);
-        } else {
-            // it no program exists for the given pool, initialize it
-            if (poolAddress == address(_networkToken)) {
-                poolToken = _masterPool.poolToken();
-            } else {
-                poolToken = _network.collectionByPool(pool).poolToken(pool);
-            }
         }
+
+        PoolInfo memory poolInfo = _getPoolInfo(pool);
 
         // check whether the rewards vault holds enough funds to cover the total rewards
         if (
             MathEx.mulDivF(
-                poolToken.balanceOf(address(rewardsVault)),
-                _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance,
-                poolToken.totalSupply()
+                poolInfo.poolToken.balanceOf(address(rewardsVault)),
+                poolInfo.stakedBalance,
+                poolInfo.poolTokenTotalSupply
             ) < totalRewards
         ) {
             revert InsufficientFunds();
@@ -278,7 +277,7 @@ contract AutoCompoundingStakingRewards is
             totalRewards: totalRewards,
             remainingRewards: totalRewards,
             rewardsVault: rewardsVault,
-            poolToken: poolToken,
+            poolToken: poolInfo.poolToken,
             isEnabled: true,
             distributionType: distributionType
         });
@@ -348,7 +347,6 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        PoolInfo memory poolInfo = _getPoolInfo(pool, currentProgram);
         TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
 
         uint256 tokenAmountToDistribute;
@@ -362,25 +360,28 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
+        PoolInfo memory poolInfo = _getPoolInfo(pool);
+
+        uint256 protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
         uint256 poolTokenAmountToBurn = _calculatePoolTokenAmountToBurn(
             poolInfo.stakedBalance,
             tokenAmountToDistribute,
             poolInfo.poolTokenTotalSupply,
-            poolInfo.protocolPoolTokenAmount
+            protocolPoolTokenAmount
         );
 
         if (poolTokenAmountToBurn == 0) {
             return;
         }
 
-        uint256 poolTokensInRewardsVault = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
-
         // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to
         // be burned
+        poolTokenAmountToBurn = Math.min(poolTokenAmountToBurn, protocolPoolTokenAmount);
+
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
-            Math.min(poolTokenAmountToBurn, poolTokensInRewardsVault)
+            poolTokenAmountToBurn
         );
 
         currentProgram.remainingRewards -= tokenAmountToDistribute;
@@ -403,7 +404,7 @@ contract AutoCompoundingStakingRewards is
      * @dev returns the flat rewards
      */
     function _calculateFlatRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
-        internal
+        private
         pure
         returns (uint256)
     {
@@ -426,7 +427,7 @@ contract AutoCompoundingStakingRewards is
      * @dev returns the exponential decay rewards
      */
     function _calculateExponentialDecayRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
-        internal
+        private
         pure
         returns (uint256)
     {
@@ -438,22 +439,19 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev get a pool's information
      */
-    function _getPoolInfo(ReserveToken pool, ProgramData memory currentProgram)
-        internal
-        view
-        returns (PoolInfo memory)
-    {
+    function _getPoolInfo(ReserveToken pool) private view returns (PoolInfo memory) {
         PoolInfo memory poolInfo;
 
-        if (pool.toIERC20() == _networkToken) {
+        if (_isNetworkToken(pool)) {
+            poolInfo.poolToken = _masterPool.poolToken();
             poolInfo.stakedBalance = _masterPool.stakedBalance();
-            poolInfo.protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(_masterPool));
         } else {
-            poolInfo.stakedBalance = _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance;
-            poolInfo.protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
+            IPoolCollection poolCollection = _network.collectionByPool(pool);
+            poolInfo.poolToken = poolCollection.poolToken(pool);
+            poolInfo.stakedBalance = poolCollection.poolLiquidity(pool).stakedBalance;
         }
 
-        poolInfo.poolTokenTotalSupply = currentProgram.poolToken.totalSupply();
+        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
 
         return poolInfo;
     }
@@ -461,7 +459,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev get a pool's time information
      */
-    function _getTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
+    function _getTimeInfo(ProgramData memory currentProgram) private view returns (TimeInfo memory) {
         uint32 currentTime = _time();
         uint32 timeElapsed = currentTime - currentProgram.startTime;
 
@@ -479,5 +477,12 @@ contract AutoCompoundingStakingRewards is
                     MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
                 )
             });
+    }
+
+    /**
+     * @dev returns whether the specified token is the network token
+     */
+    function _isNetworkToken(ReserveToken token) private view returns (bool) {
+        return token.toIERC20() == _networkToken;
     }
 }
