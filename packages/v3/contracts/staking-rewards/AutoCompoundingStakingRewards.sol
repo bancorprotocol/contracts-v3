@@ -351,25 +351,25 @@ contract AutoCompoundingStakingRewards is
         PoolInfo memory poolInfo = _getPoolInfo(pool, currentProgram);
         TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
 
-        uint256 tokensToDistribute;
+        uint256 tokenAmountToDistribute;
         if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
-            tokensToDistribute = calculateExponentialDecayRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = calculateExponentialDecayRewards(currentProgram, timeInfo);
         } else if (distributionType == DistributionType.FLAT) {
-            tokensToDistribute = calculateFlatRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = calculateFlatRewards(currentProgram, timeInfo);
         }
 
-        if (tokensToDistribute == 0) {
+        if (tokenAmountToDistribute == 0) {
             return;
         }
 
-        uint256 poolTokenToBurn = _calculatePoolTokenToBurn(
+        uint256 poolTokenAmountToBurn = _calculatePoolTokenAmountToBurn(
             poolInfo.stakedBalance,
-            tokensToDistribute,
+            tokenAmountToDistribute,
             poolInfo.poolTokenTotalSupply,
             poolInfo.protocolPoolTokenAmount
         );
 
-        if (poolTokenToBurn == 0) {
+        if (poolTokenAmountToBurn == 0) {
             return;
         }
 
@@ -380,21 +380,21 @@ contract AutoCompoundingStakingRewards is
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
-            Math.min(poolTokenToBurn, poolTokensInRewardsVault)
+            Math.min(poolTokenAmountToBurn, poolTokensInRewardsVault)
         );
 
-        currentProgram.remainingRewards -= tokensToDistribute;
+        currentProgram.remainingRewards -= tokenAmountToDistribute;
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
-        currentProgram.poolToken.burn(poolTokenToBurn);
+        currentProgram.poolToken.burn(poolTokenAmountToBurn);
 
         _programs[poolAddress] = currentProgram;
 
         emit RewardsDistributed(
             pool,
-            tokensToDistribute,
-            poolTokenToBurn,
-            timeInfo.timeElapsed, // TODO
+            tokenAmountToDistribute,
+            poolTokenAmountToBurn,
+            timeInfo.timeElapsed,
             currentProgram.remainingRewards
         );
     }
@@ -407,9 +407,10 @@ contract AutoCompoundingStakingRewards is
         pure
         returns (uint256)
     {
-        // cap the time elapsed to no more than the total duration of the program
+        // ensure that the elapsed time isn't longer than the duration of the program
         uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
         uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
+
         uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
         uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
 
@@ -451,6 +452,7 @@ contract AutoCompoundingStakingRewards is
             poolInfo.stakedBalance = _network.collectionByPool(pool).poolLiquidity(pool).stakedBalance;
             poolInfo.protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
         }
+
         poolInfo.poolTokenTotalSupply = currentProgram.poolToken.totalSupply();
 
         return poolInfo;
@@ -461,11 +463,18 @@ contract AutoCompoundingStakingRewards is
      */
     function _getTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
         uint32 currentTime = _time();
+        uint32 timeElapsed = currentTime - currentProgram.startTime;
+
+        // if this is a flat distribution program, // ensure that the elapsed time isn't longer than the duration of the
+        // program
+        if (currentProgram.distributionType == DistributionType.FLAT) {
+            timeElapsed = uint32(Math.min(timeElapsed, currentProgram.endTime - currentProgram.startTime));
+        }
 
         return
             TimeInfo({
                 currentTime: currentTime,
-                timeElapsed: currentTime - currentProgram.startTime,
+                timeElapsed: timeElapsed,
                 prevTimeElapsed: uint32(
                     MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
                 )
