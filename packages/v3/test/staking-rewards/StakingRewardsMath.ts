@@ -38,12 +38,40 @@ describe('StakingRewardsMath', () => {
         stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
     });
 
-    describe('Exponential Decay', () => {
+    describe('flat', () => {
+        const calculateFlatRewardTest = (
+            timeElapsedSinceLastDistribution: number,
+            remainingProgramDuration: number,
+            remainingRewards: number,
+            minAccuracy = '0.999999999999999999'
+        ) => {
+            it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
+                const actual = new Decimal(
+                    (
+                        await stakingRewardsMath.calculateFlatRewardsT(
+                            timeElapsedSinceLastDistribution,
+                            remainingProgramDuration,
+                            remainingRewards
+                        )
+                    ).toString()
+                );
+                const expected = mulDivF(remainingRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
+
+                assertAccuracy(actual, expected, minAccuracy);
+            });
+        };
+
+        describe('regular tests', () => {
+            calculateFlatRewardTest(1000, 10000, 10000);
+        });
+    });
+
+    describe('exponential Decay', () => {
         const expTest = (a: number, b: number, minAccuracy: string) => {
             it(`exp(${a}, ${b})`, async () => {
                 if (a / b < EXP_VAL_TOO_HIGH) {
-                    const retval = await stakingRewardsMath.expT(a, b);
-                    const actual = new Decimal(retval[0].toString()).div(retval[1].toString());
+                    const retVal = await stakingRewardsMath.expT(a, b);
+                    const actual = new Decimal(retVal[0].toString()).div(retVal[1].toString());
                     const expected = new Decimal(a).div(b).exp();
                     assertAccuracy(actual, expected, minAccuracy);
                 } else {
@@ -181,44 +209,18 @@ describe('StakingRewardsMath', () => {
         });
     });
 
-    describe('Flat', () => {
-        const calculateFlatRewardTest = (
-            timeElapsedSinceLastDistribution: number,
-            remainingProgramDuration: number,
-            remainingRewards: number,
-            minAccuracy = '0.999999999999999999'
-        ) => {
-            it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
-                const actual = new Decimal(
-                    (
-                        await stakingRewardsMath.calculateFlatRewardsT(
-                            timeElapsedSinceLastDistribution,
-                            remainingProgramDuration,
-                            remainingRewards
-                        )
-                    ).toString()
-                );
-                const expected = mulDivF(remainingRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
-
-                assertAccuracy(actual, expected, minAccuracy);
-            });
-        };
-
-        describe('regular tests', () => {
-            calculateFlatRewardTest(1000, 10000, 10000);
-        });
-    });
-
-    describe('Process Pool Token Burn', () => {
-        const calculatePoolTokenToBurnTest = (
+    describe('pool token amount to burn', () => {
+        const calculatePoolTokenAmountToBurnTest = (
             a: BigNumber,
             b: BigNumber,
             c: BigNumber,
             d: BigNumber,
             minAccuracy = '0.999999999999999999'
         ) => {
-            it(`processPoolTokenToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
-                const actual = new Decimal((await stakingRewardsMath.calculatePoolTokenToBurnT(a, b, c, d)).toString());
+            it(`calculatePoolTokenAmountToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
+                const actual = new Decimal(
+                    (await stakingRewardsMath.calculatePoolTokenAmountToBurnT(a, b, c, d)).toString()
+                );
 
                 const bc = b.mul(c);
                 const expected = bc.mul(c).div(a.mul(c.sub(d)).add(bc));
@@ -227,7 +229,7 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            calculatePoolTokenToBurnTest(
+            calculatePoolTokenAmountToBurnTest(
                 BigNumber.from(1000),
                 BigNumber.from(1000),
                 BigNumber.from(1000),
