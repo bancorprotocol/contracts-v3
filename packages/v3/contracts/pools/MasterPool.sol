@@ -171,8 +171,8 @@ contract MasterPool is IMasterPool, Vault {
      *
      * requirements:
      *
-     *   - reserve token must be the master pool token
-     *   - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER permission
+     * - reserve token must be the master pool token
+     * - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER permission
      */
     function authenticateWithdrawal(
         address caller,
