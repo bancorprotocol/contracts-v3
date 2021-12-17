@@ -18,12 +18,14 @@ export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
 export const MASTER_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
 export const MASTER_POOL_TOKEN_SYMBOL = `bn${BNT}`;
-export const FeeTypes = {
-    Trading: 0,
-    Withdrawal: 1,
-    FlashLoan: 2
-};
-export const StakingRewardsDistributionTypes = {
-    Flat: 0,
-    ExponentialDecay: 1
-};
+
+export enum FeeTypes {
+    Trading = 0,
+    Withdrawal = 1,
+    FlashLoan = 2
+}
+
+export enum StakingRewardsDistributionTypes {
+    Flat = 0,
+    ExponentialDecay = 1
+}
