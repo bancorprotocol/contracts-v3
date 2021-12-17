@@ -194,16 +194,16 @@ contract AutoCompoundingStakingRewards is
 
         uint256 currentTime = _time();
 
+        // if the program hasn't started yet
         if (currentTime < currentProgram.startTime) {
             return false;
         }
 
-        if (currentProgram.distributionType == DistributionType.FLAT) {
-            // if the program end time has already passed
-            if (currentTime > currentProgram.endTime) {
-                return false;
-            }
+        // if a flat distribution program has already finished
+        if (currentProgram.distributionType == DistributionType.FLAT && currentTime > currentProgram.endTime) {
+            return false;
         }
+
         return true;
     }
 
@@ -451,16 +451,15 @@ contract AutoCompoundingStakingRewards is
      * @dev get a pool's time information
      */
     function _getTimeInfo(ProgramData memory currentProgram) internal view returns (TimeInfo memory) {
-        TimeInfo memory timeInfo;
+        uint32 currentTime = _time();
 
-        timeInfo.currentTime = _time();
-
-        timeInfo.timeElapsed = timeInfo.currentTime - currentProgram.startTime;
-
-        timeInfo.prevTimeElapsed = uint32(
-            MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
-        );
-
-        return timeInfo;
+        return
+            TimeInfo({
+                currentTime: currentTime,
+                timeElapsed: currentTime - currentProgram.startTime,
+                prevTimeElapsed: uint32(
+                    MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
+                )
+            });
     }
 }
