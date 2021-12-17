@@ -358,12 +358,20 @@ contract AutoCompoundingStakingRewards is
             tokensToDistribute = calculateFlatRewards(currentProgram, timeInfo);
         }
 
+        if (tokensToDistribute == 0) {
+            return;
+        }
+
         uint256 poolTokenToBurn = _calculatePoolTokenToBurn(
             poolInfo.stakedBalance,
             tokensToDistribute,
             poolInfo.poolTokenTotalSupply,
             poolInfo.protocolPoolTokenAmount
         );
+
+        if (poolTokenToBurn == 0) {
+            return;
+        }
 
         uint256 poolTokensInRewardsVault = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
 
