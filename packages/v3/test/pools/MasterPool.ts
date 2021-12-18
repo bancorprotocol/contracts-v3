@@ -1035,7 +1035,7 @@ describe('MasterPool', () => {
             );
         });
 
-        for (const [name, type] of Object.entries(FeeTypes)) {
+        for (const [name, type] of Object.entries(FeeTypes).filter(([, v]) => typeof v === 'number')) {
             for (const feeAmount of [0, 12_345, toWei(12_345)]) {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await masterPool.stakedBalance();

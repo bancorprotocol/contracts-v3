@@ -834,7 +834,6 @@ describe('Profile @profile', () => {
         const amount = toWei(123_456);
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-        const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
             ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
@@ -853,29 +852,18 @@ describe('Profile @profile', () => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
-                if (symbol === BNT) {
-                    token = networkToken;
-
-                    const reserveToken = await createTokenBySymbol(TKN);
-
-                    await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
-                    await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
-
-                    await depositToPool(deployer, networkToken, amount, network);
-                } else {
-                    ({ token } = await setupSimplePool(
-                        {
-                            symbol,
-                            balance: amount,
-                            initialRate: INITIAL_RATE
-                        },
-                        deployer,
-                        network,
-                        networkInformation,
-                        networkSettings,
-                        poolCollection
-                    ));
-                }
+                ({ token } = await setupSimplePool(
+                    {
+                        symbol,
+                        balance: amount,
+                        initialRate: INITIAL_RATE
+                    },
+                    deployer,
+                    network,
+                    networkInformation,
+                    networkSettings,
+                    poolCollection
+                ));
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
 
