@@ -19,8 +19,9 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
+
+import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 
 /**
  * @dev Auto-compounding Staking Rewards contract
@@ -42,12 +43,6 @@ contract AutoCompoundingStakingRewards is
         uint32 currentTime;
     }
 
-    struct PoolInfo {
-        IPoolToken poolToken;
-        uint256 stakedBalance;
-        uint256 poolTokenTotalSupply;
-    }
-
     error ProgramActive();
     error ProgramInactive();
     error ProgramAlreadyActive();
@@ -63,8 +58,11 @@ contract AutoCompoundingStakingRewards is
     // the network token contract
     IERC20 private immutable _networkToken;
 
-    // the network token pool contract
+    // the master pool contract
     IMasterPool private immutable _masterPool;
+
+    // the master pool took contract
+    IPoolToken private immutable _masterPoolToken;
 
     // a mapping between a pool address and a program
     mapping(address => ProgramData) private _programs;
@@ -126,6 +124,7 @@ contract AutoCompoundingStakingRewards is
         _networkSettings = initNetworkSettings;
         _networkToken = initNetworkToken;
         _masterPool = initMasterPool;
+        _masterPoolToken = initMasterPool.poolToken();
     }
 
     /**
@@ -222,7 +221,8 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyActive();
         }
 
-        if (_isNetworkToken(pool)) {
+        bool isNetworkToken = _isNetworkToken(pool);
+        if (isNetworkToken) {
             if (rewardsVault != _masterPool) {
                 revert InvalidParam();
             }
@@ -250,23 +250,26 @@ contract AutoCompoundingStakingRewards is
 
         address poolAddress = ReserveToken.unwrap(pool);
         IPoolToken poolToken = _programs[poolAddress].poolToken;
+        bool programExists = address(poolToken) != address(0);
+        uint256 requiredPoolTokenAmount;
+
+        if (isNetworkToken) {
+            poolToken = programExists ? poolToken : _masterPoolToken;
+            requiredPoolTokenAmount = _masterPool.underlyingToPoolToken(totalRewards);
+        } else {
+            IPoolCollection poolCollection = _network.collectionByPool(pool);
+            poolToken = programExists ? poolToken : poolCollection.poolToken(pool);
+            requiredPoolTokenAmount = poolCollection.underlyingToPoolToken(pool, totalRewards);
+        }
 
         // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
         // been distributed
-        if (address(poolToken) != address(0)) {
+        if (programExists) {
             processRewards(pool);
         }
 
-        PoolInfo memory poolInfo = _getPoolInfo(pool);
-
         // check whether the rewards vault holds enough funds to cover the total rewards
-        if (
-            MathEx.mulDivF(
-                poolInfo.poolToken.balanceOf(address(rewardsVault)),
-                poolInfo.stakedBalance,
-                poolInfo.poolTokenTotalSupply
-            ) < totalRewards
-        ) {
+        if (requiredPoolTokenAmount > poolToken.balanceOf(address(rewardsVault))) {
             revert InsufficientFunds();
         }
 
@@ -277,7 +280,7 @@ contract AutoCompoundingStakingRewards is
             totalRewards: totalRewards,
             remainingRewards: totalRewards,
             rewardsVault: rewardsVault,
-            poolToken: poolInfo.poolToken,
+            poolToken: poolToken,
             isEnabled: true,
             distributionType: distributionType
         });
@@ -360,23 +363,24 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        PoolInfo memory poolInfo = _getPoolInfo(pool);
+        uint256 poolTokenAmountToBurn;
+        if (_isNetworkToken(pool)) {
+            poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
+        } else {
+            uint256 protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
 
-        uint256 protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
-        uint256 poolTokenAmountToBurn = _calculatePoolTokenAmountToBurn(
-            poolInfo.stakedBalance,
-            tokenAmountToDistribute,
-            poolInfo.poolTokenTotalSupply,
-            protocolPoolTokenAmount
-        );
+            // burn the least number of pool token between its balance in the rewards vault and the number of it
+            // supposed to be burned
+            IPoolCollection poolCollection = _network.collectionByPool(pool);
+            poolTokenAmountToBurn = Math.min(
+                poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, protocolPoolTokenAmount),
+                protocolPoolTokenAmount
+            );
+        }
 
         if (poolTokenAmountToBurn == 0) {
             return;
         }
-
-        // burn the least number of pool token between its balance in the rewards vault and the number of it supposed to
-        // be burned
-        poolTokenAmountToBurn = Math.min(poolTokenAmountToBurn, protocolPoolTokenAmount);
 
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
@@ -434,26 +438,6 @@ contract AutoCompoundingStakingRewards is
         return
             _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.timeElapsed, currentProgram.totalRewards) -
             _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.prevTimeElapsed, currentProgram.totalRewards);
-    }
-
-    /**
-     * @dev get a pool's information
-     */
-    function _getPoolInfo(ReserveToken pool) private view returns (PoolInfo memory) {
-        PoolInfo memory poolInfo;
-
-        if (_isNetworkToken(pool)) {
-            poolInfo.poolToken = _masterPool.poolToken();
-            poolInfo.stakedBalance = _masterPool.stakedBalance();
-        } else {
-            IPoolCollection poolCollection = _network.collectionByPool(pool);
-            poolInfo.poolToken = poolCollection.poolToken(pool);
-            poolInfo.stakedBalance = poolCollection.poolLiquidity(pool).stakedBalance;
-        }
-
-        poolInfo.poolTokenTotalSupply = poolInfo.poolToken.totalSupply();
-
-        return poolInfo;
     }
 
     /**

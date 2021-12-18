@@ -16,20 +16,6 @@ contract StakingRewardsMath {
     error SecondsTooHigh();
 
     /**
-     * @dev returns the number of pool token to burn in order to match a number of token to distribute
-     */
-    function _calculatePoolTokenAmountToBurn(
-        uint256 totalStaked,
-        uint256 totalTokenAmountToDistribute,
-        uint256 poolTokenSupply,
-        uint256 protocolPoolTokenAmount
-    ) internal pure returns (uint256) {
-        uint256 val = totalTokenAmountToDistribute * poolTokenSupply;
-
-        return MathEx.mulDivF(val, poolTokenSupply, val + totalStaked * (poolTokenSupply - protocolPoolTokenAmount));
-    }
-
-    /**
      * @dev returns the amount of rewards distributed on a flat amount ratio
      */
     function _calculateFlatRewards(

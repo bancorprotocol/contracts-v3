@@ -225,6 +225,39 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
+    function poolTokenToUnderlying(uint256 poolTokenAmount) external view returns (uint256) {
+        return _poolTokenToUnderlying(poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IMasterPool
+     */
+    function underlyingToPoolToken(uint256 networkTokenAmount) external view returns (uint256) {
+        return _underlyingToPoolToken(networkTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IMasterPool
+     */
+    function poolTokenAmountToBurn(uint256 networkTokenAmountToDistribute) external view returns (uint256) {
+        if (networkTokenAmountToDistribute == 0) {
+            return 0;
+        }
+
+        uint256 poolTokenSupply = _poolToken.totalSupply();
+        uint256 val = networkTokenAmountToDistribute * poolTokenSupply;
+
+        return
+            MathEx.mulDivF(
+                val,
+                poolTokenSupply,
+                val + _stakedBalance * (poolTokenSupply - _poolToken.balanceOf(address(this)))
+            );
+    }
+
+    /**
+     * @inheritdoc IMasterPool
+     */
     function mint(address recipient, uint256 networkTokenAmount)
         external
         only(address(_network))
@@ -267,7 +300,7 @@ contract MasterPool is IMasterPool, Vault {
         returns (DepositAmounts memory)
     {
         // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = MathEx.mulDivF(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
+        uint256 poolTokenAmount = _underlyingToPoolToken(networkTokenAmount);
 
         // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
         // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
@@ -354,7 +387,7 @@ contract MasterPool is IMasterPool, Vault {
 
             poolTokenAmount = networkTokenAmount;
         } else {
-            poolTokenAmount = MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            poolTokenAmount = _underlyingToPoolToken(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
         }
 
         // update the staked balance
@@ -392,7 +425,11 @@ contract MasterPool is IMasterPool, Vault {
         uint256 renouncedAmount = Math.min(currentMintedAmount, networkTokenAmount);
 
         // calculate the pool token amount to burn
-        uint256 poolTokenAmount = MathEx.mulDivF(renouncedAmount, _poolToken.totalSupply(), currentStakedBalance);
+        uint256 poolTokenAmount = _underlyingToPoolToken(
+            renouncedAmount,
+            _poolToken.totalSupply(),
+            currentStakedBalance
+        );
 
         // update the current minted amount. Note that the given amount can be higher than the minted amount but the
         // request shouldn't fail (and the minted amount cannot get negative)
@@ -444,11 +481,36 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
+     * @dev converts the specified pool token amount to the underlying network token amount
+     */
+    function _poolTokenToUnderlying(uint256 poolTokenAmount) private view returns (uint256) {
+        return MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+    }
+
+    /**
+     * @dev converts the specified underlying network token amount to pool token amount
+     */
+    function _underlyingToPoolToken(uint256 networkTokenAmount) private view returns (uint256) {
+        return _underlyingToPoolToken(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
+    }
+
+    /**
+     * @dev converts the specified underlying network token amount to pool token amount
+     */
+    function _underlyingToPoolToken(
+        uint256 networkTokenAmount,
+        uint256 poolTokenTotalSupply,
+        uint256 currentStakedBalance
+    ) private pure returns (uint256) {
+        return MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+    }
+
+    /**
      * @dev returns withdrawal amounts
      */
     function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
         // calculate the network token amount to transfer
-        uint256 networkTokenAmount = MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+        uint256 networkTokenAmount = _poolTokenToUnderlying(poolTokenAmount);
 
         // deduct the exit fee from the network token amount
         uint256 withdrawalFeeAmount = MathEx.mulDivF(

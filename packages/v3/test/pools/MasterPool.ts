@@ -19,7 +19,8 @@ import {
     MASTER_POOL_TOKEN_SYMBOL,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
-    TKN
+    TKN,
+    MAX_UINT256
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { mulDivF } from '../helpers/MathUtils';
@@ -1145,6 +1146,64 @@ describe('MasterPool', () => {
                     } else {
                         testWithdrawFundsRestricted();
                     }
+                });
+            });
+        }
+    });
+
+    describe('pool token calculations', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let masterPool: TestMasterPool;
+        let masterPoolToken: PoolToken;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        const MAX_DEVIATION = toPPM(1);
+        const NETWORK_TOKEN_LIQUIDITY = toWei(1_000_000_000);
+
+        beforeEach(async () => {
+            ({ networkSettings, network, masterPool, masterPoolToken, poolCollection } = await createSystem());
+
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, toWei(1_000_000_000));
+
+            await createPool(reserveToken, network, networkSettings, poolCollection);
+
+            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
+            await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+
+            await network.requestLiquidityT(formatBytes32String('CTX'), reserveToken.address, NETWORK_TOKEN_LIQUIDITY);
+        });
+
+        for (const networkTokenAmount of [0, 1000, toWei(10_000), toWei(1_000_000)]) {
+            context(`underlying amount of ${networkTokenAmount.toString()}`, () => {
+                it('should properly convert between underlying amount and pool token amount', async () => {
+                    const poolTokenTotalSupply = await masterPoolToken.totalSupply();
+                    const stakedBalance = await masterPool.stakedBalance();
+
+                    const poolTokenAmount = await masterPool.underlyingToPoolToken(networkTokenAmount);
+                    expect(poolTokenAmount).to.equal(
+                        BigNumber.from(networkTokenAmount).mul(poolTokenTotalSupply).div(stakedBalance)
+                    );
+
+                    const underlyingAmount = await masterPool.poolTokenToUnderlying(poolTokenAmount);
+                    expect(underlyingAmount).to.be.closeTo(BigNumber.from(networkTokenAmount), 1);
+                });
+
+                it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
+                    const poolTokenAmount = toWei(100_000);
+                    await masterPool.mintT(deployer.address, poolTokenAmount);
+
+                    const prevUnderlying = await masterPool.poolTokenToUnderlying(poolTokenAmount);
+                    const poolTokenAmountToBurn = await masterPool.poolTokenAmountToBurn(networkTokenAmount);
+
+                    // ensure that burning the resulted pool token amount increases the underlying by the
+                    // specified network amount while taking into account pool tokens owned by the protocol
+                    await masterPool.burnT(poolTokenAmountToBurn);
+
+                    expect(await masterPool.poolTokenToUnderlying(poolTokenAmount)).to.equal(
+                        prevUnderlying.add(networkTokenAmount)
+                    );
                 });
             });
         }

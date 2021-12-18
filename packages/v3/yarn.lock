@@ -1122,6 +1122,11 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/humanize-duration@^3.27.0":
+  version "3.27.0"
+  resolved "https://registry.yarnpkg.com/@types/humanize-duration/-/humanize-duration-3.27.0.tgz#067ae92e001c97af8a7e7c7df977e91ff1b19b57"
+  integrity sha512-ivv1EIdXz20vHPB9xftPvogUEjGLSSlgz2fipK2yyHQZvZeIgUQBZc23Kcuxa4zGbiUcRtr36Sw96CF+TO30Fw==
+
 "@types/json-schema@^7.0.9":
   version "7.0.9"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.9.tgz#97edc9037ea0c38585320b28964dde3b39e4660d"
@@ -5630,6 +5635,11 @@ https-proxy-agent@^5.0.0:
   dependencies:
     agent-base "6"
     debug "4"
+
+humanize-duration@^3.27.1:
+  version "3.27.1"
+  resolved "https://registry.yarnpkg.com/humanize-duration/-/humanize-duration-3.27.1.tgz#2cd4ea4b03bd92184aee6d90d77a8f3d7628df69"
+  integrity sha512-jCVkMl+EaM80rrMrAPl96SGG4NRac53UyI1o/yAzebDntEY6K6/Fj2HOjdPg8omTqIe5Y0wPBai2q5xXrIbarA==
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24:
   version "0.4.24"

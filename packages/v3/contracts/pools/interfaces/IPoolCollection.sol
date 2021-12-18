@@ -93,27 +93,47 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns whether a pool is valid
      */
-    function isPoolValid(ReserveToken reserveToken) external view returns (bool);
+    function isPoolValid(ReserveToken pool) external view returns (bool);
 
     /**
      * @dev returns whether a pool's rate is stable
      */
-    function isPoolRateStable(ReserveToken reserveToken) external view returns (bool);
+    function isPoolRateStable(ReserveToken pool) external view returns (bool);
 
     /**
      * @dev returns specific pool's data
      */
-    function poolData(ReserveToken reserveToken) external view returns (Pool memory);
+    function poolData(ReserveToken pool) external view returns (Pool memory);
 
     /**
      * @dev returns the overall liquidity in the pool
      */
-    function poolLiquidity(ReserveToken reserveToken) external view returns (PoolLiquidity memory);
+    function poolLiquidity(ReserveToken pool) external view returns (PoolLiquidity memory);
 
     /**
      * @dev returns the pool token of the pool
      */
-    function poolToken(ReserveToken reserverToken) external view returns (IPoolToken);
+    function poolToken(ReserveToken pool) external view returns (IPoolToken);
+
+    /**
+     * @dev converts the specified pool token amount to the underlying network token amount
+     */
+    function poolTokenToUnderlying(ReserveToken pool, uint256 poolTokenAmount) external view returns (uint256);
+
+    /**
+     * @dev converts the specified underlying base token amount to pool token amount
+     */
+    function underlyingToPoolToken(ReserveToken pool, uint256 baseTokenAmount) external view returns (uint256);
+
+    /**
+     * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
+     * amount
+     */
+    function poolTokenAmountToBurn(
+        ReserveToken pool,
+        uint256 baseTokenAmountToDistribute,
+        uint256 protocolPoolTokenAmount
+    ) external view returns (uint256);
 
     /**
      * @dev creates a new pool

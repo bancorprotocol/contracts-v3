@@ -207,33 +207,4 @@ describe('StakingRewardsMath', () => {
             }
         });
     });
-
-    describe('pool token amount to burn', () => {
-        const calculatePoolTokenAmountToBurnTest = (
-            a: BigNumber,
-            b: BigNumber,
-            c: BigNumber,
-            d: BigNumber,
-            minAccuracy = '0.999999999999999999'
-        ) => {
-            it(`calculatePoolTokenAmountToBurn(${a}, ${b}, ${c},  ${d})`, async () => {
-                const actual = new Decimal(
-                    (await stakingRewardsMath.calculatePoolTokenAmountToBurnT(a, b, c, d)).toString()
-                );
-
-                const bc = b.mul(c);
-                const expected = bc.mul(c).div(a.mul(c.sub(d)).add(bc));
-                assertAccuracy(actual, new Decimal(expected.toString()), minAccuracy);
-            });
-        };
-
-        describe('regular tests', () => {
-            calculatePoolTokenAmountToBurnTest(
-                BigNumber.from(1000),
-                BigNumber.from(1000),
-                BigNumber.from(1000),
-                BigNumber.from(1000)
-            );
-        });
-    });
 });

@@ -23,6 +23,7 @@ import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
+import humanizeDuration from 'humanize-duration';
 
 const { days } = duration;
 const { ONE, LAMBDA } = ExponentialDecay;
@@ -66,14 +67,18 @@ describe('AutoCompoundingStakingRewards', () => {
             poolCollection
         );
 
-        // deposit pool tokens as staking rewards
-        await depositToPool(stakingRewardsProvider, token, totalRewards, network);
-        await transfer(
-            stakingRewardsProvider,
-            poolToken,
-            externalRewardsVault,
-            await poolToken.balanceOf(stakingRewardsProvider.address)
-        );
+        // if we're rewarding the network token - no additional if funding is needed
+        if (symbol !== BNT) {
+            // deposit pool tokens as staking rewards
+            await depositToPool(stakingRewardsProvider, token, totalRewards, network);
+
+            await transfer(
+                stakingRewardsProvider,
+                poolToken,
+                externalRewardsVault,
+                await poolToken.balanceOf(stakingRewardsProvider.address)
+            );
+        }
 
         return { token, poolToken };
     };
@@ -701,20 +706,14 @@ describe('AutoCompoundingStakingRewards', () => {
                 rewardsVault = isNetworkToken ? masterPool : externalRewardsVault;
             });
 
-            const getPoolTokenUnderlying = async (
-                user: Addressable,
-                poolCollection: TestPoolCollection,
-                pool: TokenWithAddress,
-                poolToken: PoolToken
-            ) => {
-                let stakedBalance: BigNumber;
+            const getPoolTokenUnderlying = async (user: Addressable) => {
+                const userPoolTokenBalance = await poolToken.balanceOf(user.address);
+
                 if (isNetworkToken) {
-                    stakedBalance = await masterPool.stakedBalance();
-                } else {
-                    ({ stakedBalance } = await poolCollection.poolLiquidity(pool.address));
+                    return masterPool.poolTokenToUnderlying(userPoolTokenBalance);
                 }
 
-                return (await poolToken.balanceOf(user.address)).mul(stakedBalance).div(await poolToken.totalSupply());
+                return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
             };
 
             const getExponentialDecayRewardsAfterTimeElapsed = (timeElapsed: number, totalRewards: BigNumber) =>
@@ -785,13 +784,8 @@ describe('AutoCompoundingStakingRewards', () => {
             const testDistribution = async () => {
                 const prevPoolTokenBalance = await poolToken.balanceOf(rewardsVault.address);
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                const prevUserTokenOwned = await getPoolTokenUnderlying(user, poolCollection, token, poolToken);
-                const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(
-                    rewardsVault,
-                    poolCollection,
-                    token,
-                    poolToken
-                );
+                const prevUserTokenOwned = await getPoolTokenUnderlying(user);
+                const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
                 const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(token);
 
@@ -819,29 +813,31 @@ describe('AutoCompoundingStakingRewards', () => {
                 const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
                 switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).to.be.closeTo(
+                        expect(await getPoolTokenUnderlying(user)).to.be.closeTo(
                             prevUserTokenOwned.add(tokenAmountToDistribute),
                             1
                         );
-                        expect(
-                            await getPoolTokenUnderlying(rewardsVault, poolCollection, token, poolToken)
-                        ).to.be.closeTo(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute), 1);
+                        expect(await getPoolTokenUnderlying(rewardsVault)).to.be.closeTo(
+                            prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
+                            1
+                        );
 
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        expect(await getPoolTokenUnderlying(user, poolCollection, token, poolToken)).be.almostEqual(
+                        expect(await getPoolTokenUnderlying(user)).be.almostEqual(
                             prevUserTokenOwned.add(tokenAmountToDistribute),
                             {
                                 maxRelativeError: new Decimal('0.0000002')
                             }
                         );
 
-                        expect(
-                            await getPoolTokenUnderlying(rewardsVault, poolCollection, token, poolToken)
-                        ).to.be.almostEqual(prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute), {
-                            maxRelativeError: new Decimal('0.0000002')
-                        });
+                        expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
+                            prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
+                            {
+                                maxRelativeError: new Decimal('0.0000002')
+                            }
+                        );
 
                         break;
 
@@ -1113,9 +1109,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 describe('single distribution', () => {
                     const testSingleDistribution = (step: number, totalSteps: number) => {
-                        context(`in ${totalSteps} steps of ${step} second long steps`, () => {
+                        context(`in ${totalSteps} steps of ${humanizeDuration(step * 1000)} long steps`, () => {
                             for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
-                                context(`after ${time} seconds`, () => {
+                                context(`after ${humanizeDuration(time * 1000)}`, () => {
                                     beforeEach(async () => {
                                         await autoCompoundingStakingRewards.setTime(time);
                                     });
@@ -1137,7 +1133,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 describe('multiple distributions', () => {
                     const testMultipleDistributions = (step: number, totalSteps: number) => {
-                        context(`in ${totalSteps} steps of ${step} second long steps`, () => {
+                        context(`in ${totalSteps} steps of ${humanizeDuration(step * 1000)} long steps`, () => {
                             it('should distribute rewards', async () => {
                                 for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
                                     await autoCompoundingStakingRewards.setTime(time);
@@ -1157,8 +1153,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         };
 
-        // TODO: enable BNT
-        for (const symbol of [/* BNT */ TKN, ETH]) {
+        for (const symbol of [BNT, TKN, ETH]) {
             context(symbol, () => {
                 testRewards(symbol);
             });

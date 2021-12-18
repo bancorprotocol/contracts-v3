@@ -35,4 +35,12 @@ contract TestMasterPool is MasterPool {
     function withdrawalAmountsT(uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory) {
         return _withdrawalAmounts(poolTokenAmount);
     }
+
+    function mintT(address recipient, uint256 poolTokenAmount) external {
+        return _poolToken.mint(recipient, poolTokenAmount);
+    }
+
+    function burnT(uint256 poolTokenAmount) external {
+        return _poolToken.burn(poolTokenAmount);
+    }
 }

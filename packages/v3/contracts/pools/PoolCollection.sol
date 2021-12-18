@@ -321,15 +321,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolValid(ReserveToken reserveToken) external view returns (bool) {
-        return _validPool(_poolData[reserveToken]);
+    function isPoolValid(ReserveToken pool) external view returns (bool) {
+        return _validPool(_poolData[pool]);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateStable(ReserveToken reserveToken) external view returns (bool) {
-        Pool memory data = _poolData[reserveToken];
+    function isPoolRateStable(ReserveToken pool) external view returns (bool) {
+        Pool memory data = _poolData[pool];
         if (!_validPool(data)) {
             return false;
         }
@@ -349,22 +349,65 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolData(ReserveToken reserveToken) external view returns (Pool memory) {
-        return _poolData[reserveToken];
+    function poolData(ReserveToken pool) external view returns (Pool memory) {
+        return _poolData[pool];
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolLiquidity(ReserveToken reserveToken) external view returns (PoolLiquidity memory) {
-        return _poolData[reserveToken].liquidity;
+    function poolLiquidity(ReserveToken pool) external view returns (PoolLiquidity memory) {
+        return _poolData[pool].liquidity;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolToken(ReserveToken reserveToken) external view returns (IPoolToken) {
-        return _poolData[reserveToken].poolToken;
+    function poolToken(ReserveToken pool) external view returns (IPoolToken) {
+        return _poolData[pool].poolToken;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function poolTokenToUnderlying(ReserveToken pool, uint256 poolTokenAmount) external view returns (uint256) {
+        Pool memory data = _poolData[pool];
+
+        return MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, data.poolToken.totalSupply());
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function underlyingToPoolToken(ReserveToken pool, uint256 baseTokenAmount) external view returns (uint256) {
+        Pool memory data = _poolData[pool];
+
+        return _underlyingToPoolToken(data.poolToken, baseTokenAmount, data.liquidity.stakedBalance);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function poolTokenAmountToBurn(
+        ReserveToken pool,
+        uint256 baseTokenAmountToDistribute,
+        uint256 protocolPoolTokenAmount
+    ) external view returns (uint256) {
+        if (baseTokenAmountToDistribute == 0) {
+            return 0;
+        }
+
+        Pool memory data = _poolData[pool];
+
+        uint256 poolTokenSupply = data.poolToken.totalSupply();
+        uint256 val = baseTokenAmountToDistribute * poolTokenSupply;
+
+        return
+            MathEx.mulDivF(
+                val,
+                poolTokenSupply,
+                val + data.liquidity.stakedBalance * (poolTokenSupply - protocolPoolTokenAmount)
+            );
     }
 
     /**
@@ -529,7 +572,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = data.liquidity.stakedBalance;
-        uint256 poolTokenAmount = _calcPoolTokenAmount(data.poolToken, baseTokenAmount, currentStakedBalance);
+        uint256 poolTokenAmount = _underlyingToPoolToken(data.poolToken, baseTokenAmount, currentStakedBalance);
 
         // update the staked balance with the full base token amount
         data.liquidity.stakedBalance = currentStakedBalance + baseTokenAmount;
@@ -998,7 +1041,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev calculates pool tokens amount
      */
-    function _calcPoolTokenAmount(
+    function _underlyingToPoolToken(
         IPoolToken basePoolToken,
         uint256 baseTokenAmount,
         uint256 stakedBalance
