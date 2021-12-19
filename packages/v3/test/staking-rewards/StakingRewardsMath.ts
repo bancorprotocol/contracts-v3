@@ -1,6 +1,5 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
-import { mulDivF } from '../helpers/MathUtils';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
@@ -185,22 +184,19 @@ describe('StakingRewardsMath', () => {
         const calculateFlatRewardTest = (
             timeElapsedSinceLastDistribution: number,
             remainingProgramDuration: number,
-            remainingRewards: number,
-            minAccuracy = '0.999999999999999999'
+            remainingRewards: number
         ) => {
             it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
-                const actual = new Decimal(
-                    (
-                        await stakingRewardsMath.calculateFlatRewardsT(
-                            timeElapsedSinceLastDistribution,
-                            remainingProgramDuration,
-                            remainingRewards
-                        )
-                    ).toString()
+                const actual = await stakingRewardsMath.calculateFlatRewardsT(
+                    timeElapsedSinceLastDistribution,
+                    remainingProgramDuration,
+                    remainingRewards
                 );
-                const expected = mulDivF(remainingRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
+                const expected = BigNumber.from(remainingRewards)
+                    .mul(timeElapsedSinceLastDistribution)
+                    .div(remainingProgramDuration);
 
-                assertAccuracy(actual, expected, minAccuracy);
+                expect(actual).to.equal(expected);
             });
         };
 
