@@ -311,11 +311,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         _removeWithdrawalRequest(request, id);
 
         // get the pool token value in reserve tokens
-        uint256 currentReserveTokenAmount = _poolTokenUnderlying(
-            request.poolToken,
-            request.poolTokenAmount,
-            request.reserveToken
-        );
+        uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
 
         // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
         // of the request
@@ -417,7 +413,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
 
         // get the pool token value in reserve tokens
-        uint256 reserveTokenAmount = _poolTokenUnderlying(poolToken, poolTokenAmount, pool);
+        uint256 reserveTokenAmount = _poolTokenUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
@@ -445,20 +441,12 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev returns the pool token value in reserve tokens
      */
-    function _poolTokenUnderlying(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        ReserveToken reserveToken
-    ) private view returns (uint256) {
-        uint256 stakedBalance;
-        if (_networkToken == reserveToken.toIERC20()) {
-            stakedBalance = _masterPool.stakedBalance();
-        } else {
-            // note that we don't need to verify that the pool exists, since it has been already checked before this call
-            stakedBalance = _network.collectionByPool(reserveToken).poolLiquidity(reserveToken).stakedBalance;
+    function _poolTokenUnderlying(ReserveToken pool, uint256 poolTokenAmount) private view returns (uint256) {
+        if (_networkToken == pool.toIERC20()) {
+            return _masterPool.poolTokenToUnderlying(poolTokenAmount);
         }
 
-        return MathEx.mulDivF(poolTokenAmount, stakedBalance, poolToken.totalSupply());
+        return _network.collectionByPool(pool).poolTokenToUnderlying(pool, poolTokenAmount);
     }
 
     /**
