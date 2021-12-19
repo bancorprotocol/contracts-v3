@@ -448,7 +448,7 @@ describe('PendingWithdrawals', () => {
                     it("should revert when attempting to cancel another provider's request", async () => {
                         const provider2 = (await ethers.getSigners())[5];
 
-                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        await depositToPool(provider2, reserveToken, 1000, network);
                         const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
 
                         await poolToken.connect(provider2).approve(network.address, poolTokenAmount2);
@@ -573,7 +573,7 @@ describe('PendingWithdrawals', () => {
                     it("should revert when attempting to reinitiate another provider's request", async () => {
                         const provider2 = (await ethers.getSigners())[5];
 
-                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        await depositToPool(provider2, reserveToken, 1000, network);
                         const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
 
                         await poolToken.connect(provider2).approve(network.address, poolTokenAmount2);
