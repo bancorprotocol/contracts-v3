@@ -240,8 +240,8 @@ describe('MasterPool', () => {
             await expect(network.burnFromVaultT(0)).to.be.revertedWith('ZeroValue');
         });
 
-        it('should revert when attempting to burn more than balance of the master vault', async () => {
-            await expect(network.burnFromVaultT(amount.add(1))).to.be.revertedWith('SafeERC20: low-level call failed');
+        it('should revert when attempting to burn more than the balance of the master vault', async () => {
+            await expect(network.burnFromVaultT(amount.add(1))).to.be.reverted; // legacy network token reverts without a reason
         });
 
         it('should burn from the master vault', async () => {

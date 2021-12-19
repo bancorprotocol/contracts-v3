@@ -397,13 +397,7 @@ contract AutoCompoundingStakingRewards is
         currentProgram.remainingRewards -= tokenAmountToDistribute;
         currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
-        currentProgram.rewardsVault.withdrawFunds(
-            ReserveToken.wrap(address(currentProgram.poolToken)),
-            payable(address(this)),
-            poolTokenAmountToBurn
-        );
-
-        currentProgram.poolToken.burn(poolTokenAmountToBurn);
+        currentProgram.rewardsVault.burn(ReserveToken.wrap(address(currentProgram.poolToken)), poolTokenAmountToBurn);
 
         _programs[poolAddress] = currentProgram;
 

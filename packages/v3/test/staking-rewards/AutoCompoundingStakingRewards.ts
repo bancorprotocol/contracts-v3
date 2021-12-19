@@ -1122,7 +1122,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     const testSingleDistribution = (step: number, totalSteps: number) => {
                         context(`in ${totalSteps} steps of ${humanizeDuration(step * 1000)} long steps`, () => {
                             for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
-                                context(`after ${humanizeDuration(time * 1000)}`, () => {
+                                context(`after ${humanizeDuration(time * 1000, { units: ['d'] })}`, () => {
                                     beforeEach(async () => {
                                         await autoCompoundingStakingRewards.setTime(time);
                                     });
@@ -1144,15 +1144,18 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 describe('multiple distributions', () => {
                     const testMultipleDistributions = (step: number, totalSteps: number) => {
-                        context(`in ${totalSteps} steps of ${humanizeDuration(step * 1000)} long steps`, () => {
-                            it('should distribute rewards', async () => {
-                                for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
-                                    await autoCompoundingStakingRewards.setTime(time);
+                        context(
+                            `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
+                            () => {
+                                it('should distribute rewards', async () => {
+                                    for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
+                                        await autoCompoundingStakingRewards.setTime(time);
 
-                                    await testDistribution();
-                                }
-                            });
-                        });
+                                        await testDistribution();
+                                    }
+                                });
+                            }
+                        );
                     };
 
                     for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {

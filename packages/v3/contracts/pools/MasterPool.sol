@@ -258,13 +258,7 @@ contract MasterPool is IMasterPool, Vault {
         only(address(_network))
         greaterThanZero(networkTokenAmount)
     {
-        _masterVault.withdrawFunds(
-            ReserveToken.wrap(address(_networkToken)),
-            payable(address(this)),
-            networkTokenAmount
-        );
-
-        _networkTokenGovernance.burn(networkTokenAmount);
+        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
     }
 
     /**
@@ -427,12 +421,7 @@ contract MasterPool is IMasterPool, Vault {
         _poolToken.burn(poolTokenAmount);
 
         // withdraw network tokens from the master vault and burn them
-        _masterVault.withdrawFunds(
-            ReserveToken.wrap(address(_networkToken)),
-            payable(address(this)),
-            networkTokenAmount
-        );
-        _networkTokenGovernance.burn(networkTokenAmount);
+        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
 
         emit LiquidityRenounced({
             contextId: contextId,
