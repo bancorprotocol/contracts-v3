@@ -2,16 +2,16 @@
 pragma solidity 0.8.10;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { IVault } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
+import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import { Utils, AccessDenied, NotPayable } from "../utility/Utils.sol";
 
 abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
