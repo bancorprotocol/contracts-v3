@@ -190,7 +190,7 @@ describe('TestVault', () => {
         }
     });
 
-    describe.only('burning funds', async () => {
+    describe('burning funds', async () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
