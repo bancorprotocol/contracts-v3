@@ -7,8 +7,8 @@ import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../../token/ReserveToken.sol";
 
 enum DistributionType {
-    FLAT,
-    EXPONENTIAL_DECAY
+    Flat,
+    ExponentialDecay
 }
 
 struct ProgramData {

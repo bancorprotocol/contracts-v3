@@ -199,7 +199,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         // if a flat distribution program has already finished
-        if (currentProgram.distributionType == DistributionType.FLAT && currentTime > currentProgram.endTime) {
+        if (currentProgram.distributionType == DistributionType.Flat && currentTime > currentProgram.endTime) {
             return false;
         }
 
@@ -238,11 +238,11 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (distributionType == DistributionType.FLAT) {
+        if (distributionType == DistributionType.Flat) {
             if (startTime > endTime || endTime == 0) {
                 revert InvalidParam();
             }
-        } else if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
+        } else if (distributionType == DistributionType.ExponentialDecay) {
             if (endTime != 0) {
                 revert InvalidParam();
             }
@@ -342,7 +342,7 @@ contract AutoCompoundingStakingRewards is
         // whose rewards weren't distributed yet in full
         if (!isProgramActive(pool)) {
             if (
-                distributionType == DistributionType.FLAT &&
+                distributionType == DistributionType.Flat &&
                 currentProgram.endTime < _time() &&
                 currentProgram.prevDistributionTimestamp < currentProgram.endTime
             ) {} else {
@@ -353,9 +353,9 @@ contract AutoCompoundingStakingRewards is
         TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
 
         uint256 tokenAmountToDistribute;
-        if (distributionType == DistributionType.EXPONENTIAL_DECAY) {
+        if (distributionType == DistributionType.ExponentialDecay) {
             tokenAmountToDistribute = _calculateExponentialDecayRewards(currentProgram, timeInfo);
-        } else if (distributionType == DistributionType.FLAT) {
+        } else if (distributionType == DistributionType.Flat) {
             tokenAmountToDistribute = _calculateFlatRewards(currentProgram, timeInfo);
         }
 
@@ -447,9 +447,9 @@ contract AutoCompoundingStakingRewards is
         uint32 currentTime = _time();
         uint32 timeElapsed = currentTime - currentProgram.startTime;
 
-        // if this is a flat distribution program, // ensure that the elapsed time isn't longer than the duration of the
+        // if this is a flat distribution program, ensure that the elapsed time isn't longer than the duration of the
         // program
-        if (currentProgram.distributionType == DistributionType.FLAT) {
+        if (currentProgram.distributionType == DistributionType.Flat) {
             timeElapsed = uint32(Math.min(timeElapsed, currentProgram.endTime - currentProgram.startTime));
         }
 
