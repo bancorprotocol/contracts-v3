@@ -285,7 +285,8 @@ contract AutoCompoundingStakingRewards is
             distributionType: distributionType
         });
 
-        _programByPool.add(poolAddress);
+        bool programAdded = _programByPool.add(poolAddress);
+        assert(programAdded != programExists);
 
         emit ProgramCreated({
             pool: pool,
