@@ -382,14 +382,14 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
+        currentProgram.remainingRewards -= tokenAmountToDistribute;
+        currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
+
         currentProgram.rewardsVault.withdrawFunds(
             ReserveToken.wrap(address(currentProgram.poolToken)),
             payable(address(this)),
             poolTokenAmountToBurn
         );
-
-        currentProgram.remainingRewards -= tokenAmountToDistribute;
-        currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
 
         currentProgram.poolToken.burn(poolTokenAmountToBurn);
 
