@@ -3,8 +3,6 @@ pragma solidity 0.8.10;
 
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
 
-error Overflow();
-
 /**
  * @dev an unchecked version of i++
  */
@@ -19,6 +17,8 @@ function uncheckedInc(uint256 i) pure returns (uint256) {
  * @dev this library provides a set of complex math operations
  */
 library MathEx {
+    error Overflow();
+
     /**
      * @dev returns the largest integer smaller than or equal to the square root of a positive integer
      */

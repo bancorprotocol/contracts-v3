@@ -7,13 +7,13 @@ import { MathEx } from "../utility/MathEx.sol";
  * @dev This contract contains the functions necessary to process staking rewards
  */
 contract StakingRewardsMath {
+    error ExpValueTooHigh();
+    error SecondsTooHigh();
+
     uint256 internal constant ONE = 1 << 127;
 
     uint256 internal constant LAMBDA_N = 142857142857143;
     uint256 internal constant LAMBDA_D = 10000000000000000000000;
-
-    error ExpValueTooHigh();
-    error SecondsTooHigh();
 
     /**
      * @dev returns the amount of rewards distributed on a flat amount ratio

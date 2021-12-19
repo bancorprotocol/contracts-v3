@@ -37,17 +37,17 @@ contract AutoCompoundingStakingRewards is
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    struct TimeInfo {
-        uint32 timeElapsed;
-        uint32 prevTimeElapsed;
-        uint32 currentTime;
-    }
-
     error ProgramActive();
     error ProgramInactive();
     error ProgramAlreadyActive();
     error InvalidParam();
     error InsufficientFunds();
+
+    struct TimeInfo {
+        uint32 timeElapsed;
+        uint32 prevTimeElapsed;
+        uint32 currentTime;
+    }
 
     // the network contract
     IBancorNetwork private immutable _network;

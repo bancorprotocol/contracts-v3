@@ -22,8 +22,6 @@ import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
-error WithdrawalNotAllowed();
-
 /**
  * @dev Pending Withdrawals contract
  */
@@ -31,6 +29,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using ReserveTokenLibrary for ReserveToken;
+
+    error WithdrawalNotAllowed();
 
     uint32 private constant DEFAULT_LOCK_DURATION = 7 days;
     uint32 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;

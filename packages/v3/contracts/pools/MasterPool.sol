@@ -32,13 +32,13 @@ import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 
-error MintingLimitExceeded();
-
 /**
  * @dev Master Pool contract
  */
 contract MasterPool is IMasterPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
+
+    error MintingLimitExceeded();
 
     // the master pool token manager role is required to access the master pool token reserve
     bytes32 public constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");

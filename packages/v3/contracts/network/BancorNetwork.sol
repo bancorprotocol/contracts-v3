@@ -63,17 +63,17 @@ import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
  * @dev Bancor Network contract
  */
 contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+    using Address for address payable;
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using ReserveTokenLibrary for ReserveToken;
+    using SafeERC20 for IPoolToken;
+
     error DeadlineExpired();
     error EthAmountMismatch();
     error InvalidTokens();
     error NetworkLiquidityDisabled();
     error PermitUnsupported();
     error InsufficientFlashLoanReturn();
-
-    using Address for address payable;
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-    using ReserveTokenLibrary for ReserveToken;
-    using SafeERC20 for IPoolToken;
 
     // the migration manager role is required for migrating liquidity
     bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");

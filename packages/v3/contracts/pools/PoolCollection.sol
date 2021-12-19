@@ -48,15 +48,6 @@ import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
-error InvalidRate();
-error ZeroTargetAmount();
-error ReturnAmountTooLow();
-error MinLiquidityNotSet();
-error DepositLimitExceeded();
-error NoInitialRate();
-error TradingDisabled();
-error LiquidityTooLow();
-
 /**
  * @dev Pool Collection contract
  *
@@ -67,6 +58,15 @@ error LiquidityTooLow();
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils {
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    error InvalidRate();
+    error ZeroTargetAmount();
+    error ReturnAmountTooLow();
+    error MinLiquidityNotSet();
+    error DepositLimitExceeded();
+    error NoInitialRate();
+    error TradingDisabled();
+    error LiquidityTooLow();
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
