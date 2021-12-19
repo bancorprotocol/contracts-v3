@@ -23,7 +23,6 @@ import {
     MAX_UINT256
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { mulDivF } from '../helpers/MathUtils';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
@@ -916,13 +915,9 @@ describe('MasterPool', () => {
                         const prevGovTotalSupply = await govToken.totalSupply();
                         const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
                         const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
-                        const expectedTokenAmount = BigNumber.from(
-                            mulDivF(
-                                poolTokenAmount,
-                                prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE),
-                                prevPoolTokenTotalSupply.mul(PPM_RESOLUTION)
-                            ).toFixed()
-                        );
+                        const expectedTokenAmount = poolTokenAmount
+                            .mul(prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE))
+                            .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
 
                         const withdrawalAmounts = await network.callStatic.withdrawFromNetworkPoolT(
                             provider.address,

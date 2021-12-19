@@ -3766,10 +3766,7 @@ describe('BancorNetwork Financial Verification', () => {
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
-        await poolCollection.setInitialRate(baseToken.address, {
-            n: decimalToInteger(flow.bntInitialRate, bntDecimals),
-            d: decimalToInteger(flow.tknInitialRate, tknDecimals)
-        });
+        await poolCollection.setInitialRate(baseToken.address, { n: flow.bntInitialRate, d: flow.tknInitialRate });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 

@@ -1,12 +1,11 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
-import { ExponentialDecay } from '..//helpers/Constants';
-import { mulDivF } from '../helpers/MathUtils';
+import { ExponentialDecay } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { EOL } from 'os';
 
 const { seconds, days, minutes, hours, years } = duration;
@@ -41,22 +40,19 @@ describe('StakingRewardsMath', () => {
         const calculateFlatRewardTest = (
             timeElapsedSinceLastDistribution: number,
             remainingProgramDuration: number,
-            remainingRewards: number,
-            minAccuracy = '0.999999999999999999'
+            remainingRewards: number
         ) => {
             it(`calculateFlatRewards(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
-                const actual = new Decimal(
-                    (
-                        await stakingRewardsMath.calculateFlatRewardsT(
-                            timeElapsedSinceLastDistribution,
-                            remainingProgramDuration,
-                            remainingRewards
-                        )
-                    ).toString()
+                const actual = await stakingRewardsMath.calculateFlatRewardsT(
+                    timeElapsedSinceLastDistribution,
+                    remainingProgramDuration,
+                    remainingRewards
                 );
-                const expected = mulDivF(remainingRewards, timeElapsedSinceLastDistribution, remainingProgramDuration);
+                const expected = BigNumber.from(remainingRewards)
+                    .mul(timeElapsedSinceLastDistribution)
+                    .div(remainingProgramDuration);
 
-                assertAccuracy(actual, expected, minAccuracy);
+                expect(actual).to.equal(expected);
             });
         };
 
@@ -65,7 +61,7 @@ describe('StakingRewardsMath', () => {
         });
     });
 
-    describe('exponential Decay', () => {
+    describe('exponential decay', () => {
         const expTest = (a: number, b: number, minAccuracy: string) => {
             it(`exp(${a}, ${b})`, async () => {
                 if (a / b < EXP_VAL_TOO_HIGH) {
