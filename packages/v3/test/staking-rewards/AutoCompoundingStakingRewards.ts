@@ -97,7 +97,7 @@ describe('AutoCompoundingStakingRewards', () => {
             );
         });
 
-        it('should revert when attempting to create with an invalid bancor network contract', async () => {
+        it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(
                     ZERO_ADDRESS,
@@ -108,7 +108,7 @@ describe('AutoCompoundingStakingRewards', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid bancor network settings contract', async () => {
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(
                     network.address,
@@ -202,7 +202,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             describe('creation', () => {
-                it('should revert when non-admin attempts to create a program', async () => {
+                it('should revert when a non-admin attempts to create a program', async () => {
                     await expect(
                         autoCompoundingStakingRewards
                             .connect(user)
@@ -217,7 +217,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.be.revertedWith('AccessDenied');
                 });
 
-                it('should revert when reserve token is invalid', async () => {
+                it('should revert when the reserve token is invalid', async () => {
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
                             ZERO_ADDRESS,
@@ -230,7 +230,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidAddress');
                 });
 
-                it('should revert when rewards vault contract is invalid', async () => {
+                it('should revert when the rewards vault contract is invalid', async () => {
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -243,7 +243,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidAddress');
                 });
 
-                it('should revert when rewards vault is incompatible', async () => {
+                it('should revert when the rewards vault is incompatible', async () => {
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
                             networkToken.address,
@@ -278,7 +278,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('ProgramAlreadyActive');
                 });
 
-                it('should revert when total rewards is equal to 0', async () => {
+                it('should revert when the total rewards are equal to 0', async () => {
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -292,7 +292,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 if (distributionType === StakingRewardsDistributionTypes.Flat) {
-                    it('should revert when start time is higher than end time', async () => {
+                    it('should revert when the start time is higher than the end time', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
@@ -305,7 +305,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         ).to.be.revertedWith('InvalidParam');
                     });
 
-                    it('should revert when end time is equal to 0', async () => {
+                    it('should revert when the end time is equal to 0', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
@@ -318,7 +318,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         ).to.be.revertedWith('InvalidParam');
                     });
                 } else {
-                    it('should revert when end time is not equal to 0', async () => {
+                    it('should revert when the end time is not equal to 0', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
@@ -332,7 +332,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                 }
 
-                it('should revert when start time is lower than current time', async () => {
+                it('should revert when the start time is lower than the current time', async () => {
                     await autoCompoundingStakingRewards.setTime(1);
 
                     await expect(
@@ -404,21 +404,21 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             describe('termination', () => {
-                it('should revert when non-admin attempts to terminate a program', async () => {
+                it('should revert when a non-admin attempts to terminate a program', async () => {
                     await expect(
                         autoCompoundingStakingRewards.connect(user).terminateProgram(token.address)
                     ).to.be.revertedWith('AccessDenied');
                 });
 
-                context('when program is inactive', () => {
-                    it('should revert when program is inactive', async () => {
+                context('when a program is inactive', () => {
+                    it('should revert', async () => {
                         await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
                             'ProgramInactive'
                         );
                     });
                 });
 
-                context('when program is active', () => {
+                context('when a program is active', () => {
                     beforeEach(async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -468,7 +468,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     );
                 });
 
-                it('should revert when non-admin attempts to enable / disable a program', async () => {
+                it('should revert when a non-admin attempts to enable / disable a program', async () => {
                     await expect(
                         autoCompoundingStakingRewards.connect(user).enableProgram(token.address, true)
                     ).to.be.revertedWith('AccessDenied');
@@ -528,13 +528,13 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             describe('is program active', () => {
-                context('when program is non-existent', () => {
-                    it('should return false when program is non-existent', async () => {
+                context('when a program does not exist', () => {
+                    it('should return false', async () => {
                         expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                     });
                 });
 
-                context("when program hasn't started", () => {
+                context("when a program hasn't started", () => {
                     beforeEach(async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -546,12 +546,12 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
                     });
 
-                    it("should return false when program hasn't started", async () => {
+                    it('should return false', async () => {
                         expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                     });
                 });
 
-                context('when the program is active', () => {
+                context('when a program is active', () => {
                     beforeEach(async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -563,13 +563,13 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
                     });
 
-                    it('should return true when program is active', async () => {
+                    it('should return true', async () => {
                         expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
                     });
                 });
 
                 if (distributionType === StakingRewardsDistributionTypes.Flat) {
-                    context('when the program end time has passed', () => {
+                    context('when a program has finished', () => {
                         beforeEach(async () => {
                             await autoCompoundingStakingRewards.createProgram(
                                 token.address,
@@ -583,7 +583,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             await autoCompoundingStakingRewards.setTime(endTime + 1);
                         });
 
-                        it('should return false when program has ended', async () => {
+                        it('should return false', async () => {
                             expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                         });
                     });
@@ -592,13 +592,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
             describe('query program data', () => {
                 describe('single program', () => {
-                    it('should not be able to fetch an empty program', async () => {
+                    it('should query a non-existing program', async () => {
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
                         expect(program.poolToken).to.equal(ZERO_ADDRESS);
                     });
 
-                    it('should correctly fetch an existing program program', async () => {
+                    it('should correctly query an existing program', async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
                             rewardsVault.address,
@@ -904,7 +904,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION);
                         });
 
-                        it('should have distributed all rewards', async () => {
+                        it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
                         });
@@ -917,7 +917,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             );
                         });
 
-                        it('should have distributed all rewards', async () => {
+                        it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
                         });
@@ -965,7 +965,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                         );
                                     });
 
-                                    it(`should distribute rewards`, async () => {
+                                    it('should distribute rewards', async () => {
                                         await testDistribution();
                                     });
                                 });
@@ -1053,7 +1053,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             await autoCompoundingStakingRewards.setTime(startTime + ESTIMATED_PROGRAM_DURATION);
                         });
 
-                        it('should have distributed all rewards', async () => {
+                        it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
                                 maxRelativeError: new Decimal('0.0000002')
@@ -1068,7 +1068,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             );
                         });
 
-                        it('should have distributed all rewards', async () => {
+                        it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
                                 maxRelativeError: new Decimal('0.0000002')
@@ -1116,7 +1116,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                         await autoCompoundingStakingRewards.setTime(time);
                                     });
 
-                                    it(`should distribute rewards`, async () => {
+                                    it('should distribute rewards', async () => {
                                         await testDistribution();
                                     });
                                 });
