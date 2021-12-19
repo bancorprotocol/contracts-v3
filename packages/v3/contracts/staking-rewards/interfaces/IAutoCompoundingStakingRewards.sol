@@ -15,12 +15,12 @@ struct ProgramData {
     uint32 startTime;
     uint32 endTime;
     uint32 prevDistributionTimestamp;
-    uint256 totalRewards;
-    uint256 remainingRewards;
-    IVault rewardsVault;
-    IPoolToken poolToken;
     bool isEnabled;
     DistributionType distributionType;
+    IVault rewardsVault;
+    IPoolToken poolToken;
+    uint256 totalRewards;
+    uint256 remainingRewards;
 }
 
 interface IAutoCompoundingStakingRewards is IUpgradeable {
