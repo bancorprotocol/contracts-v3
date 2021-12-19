@@ -446,7 +446,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev gets a pool's time information
+     * @dev gets a program's time information
      */
     function _getTimeInfo(ProgramData memory currentProgram) private view returns (TimeInfo memory) {
         uint32 currentTime = _time();
