@@ -6,7 +6,7 @@ import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
+import { BigNumberish } from 'ethers';
 import { EOL } from 'os';
 
 const { seconds, days, minutes, hours, years } = duration;
@@ -44,7 +44,7 @@ describe('StakingRewardsMath', () => {
             remainingRewards: number,
             minAccuracy = '0.999999999999999999'
         ) => {
-            it(`processFlatReward(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
+            it(`calculateFlatRewards(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
                 const actual = new Decimal(
                     (
                         await stakingRewardsMath.calculateFlatRewardsT(
@@ -81,30 +81,26 @@ describe('StakingRewardsMath', () => {
 
         const calculateExponentialDecayRewardsAfterTimeElapsedTest = (
             numOfSeconds: number,
-            totalRewards: number,
+            totalRewards: BigNumberish,
             minAccuracy: string
         ) => {
-            it(`processExponentialDecayReward(${numOfSeconds}, ${totalRewards})`, async () => {
-                const totalRewardsInWei = toWei(BigNumber.from(totalRewards));
+            it(`calculateExponentialDecayRewardsAfterTimeElapsed(${numOfSeconds}, ${totalRewards.toString()})`, async () => {
                 if (numOfSeconds < SECONDS_TOO_HIGH) {
                     const actual = new Decimal(
                         (
                             await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
                                 numOfSeconds,
-                                totalRewardsInWei
+                                totalRewards
                             )
                         ).toString()
                     );
-                    const expected = new Decimal(totalRewardsInWei.toString()).mul(
+                    const expected = new Decimal(totalRewards.toString()).mul(
                         ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp())
                     );
                     assertAccuracy(actual, expected, minAccuracy);
                 } else {
                     await expect(
-                        stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
-                            numOfSeconds,
-                            totalRewardsInWei
-                        )
+                        stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(numOfSeconds, totalRewards)
                     ).to.revertedWith('ExpValueTooHigh');
                 }
             });
@@ -173,7 +169,11 @@ describe('StakingRewardsMath', () => {
                 SECONDS_TOO_HIGH - 1,
                 SECONDS_TOO_HIGH
             ]) {
-                calculateExponentialDecayRewardsAfterTimeElapsedTest(numOfSeconds, 40_000_000, '0.999999999999999999');
+                calculateExponentialDecayRewardsAfterTimeElapsedTest(
+                    numOfSeconds,
+                    toWei(40_000_000),
+                    '0.999999999999999999'
+                );
             }
         });
 
@@ -189,7 +189,14 @@ describe('StakingRewardsMath', () => {
                     for (let hours = 0; hours < 5; hours++) {
                         for (let days = 0; days < 5; days++) {
                             for (let years = 0; years < 5; years++) {
-                                for (const totalRewards of [40_000_000, 400_000_000, 4_000_000_000]) {
+                                for (const totalRewards of [
+                                    40_000_000,
+                                    400_000_000,
+                                    4_000_000_000,
+                                    toWei(50_000_000),
+                                    toWei(500_000_000),
+                                    toWei(5_000_000_000)
+                                ]) {
                                     calculateExponentialDecayRewardsAfterTimeElapsedTest(
                                         duration.seconds(seconds) +
                                             duration.minutes(minutes) +

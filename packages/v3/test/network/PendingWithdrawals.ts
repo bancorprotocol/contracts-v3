@@ -18,7 +18,7 @@ import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
+import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
