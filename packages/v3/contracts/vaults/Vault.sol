@@ -7,6 +7,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { IVault } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
@@ -19,7 +21,32 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
+    // the address of the network token
+    IERC20 internal immutable _networkToken;
+
+    // the address of the network token governance
+    ITokenGovernance internal immutable _networkTokenGovernance;
+
+    // the address of the governance token
+    IERC20 internal immutable _govToken;
+
+    // the address of the governance token governance
+    ITokenGovernance internal immutable _govTokenGovernance;
+
     // solhint-disable func-name-mixedcase
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        validAddress(address(initNetworkTokenGovernance))
+        validAddress(address(initGovTokenGovernance))
+    {
+        _networkTokenGovernance = initNetworkTokenGovernance;
+        _networkToken = initNetworkTokenGovernance.token();
+        _govTokenGovernance = initGovTokenGovernance;
+        _govToken = initGovTokenGovernance.token();
+    }
 
     /**
      * @dev initializes the contract and its parents
@@ -126,7 +153,16 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         if (reserveToken.isNativeToken()) {
             target.transfer(amount);
         } else {
-            IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
+            IERC20 token = reserveToken.toIERC20();
+
+            // allow vaults to burn network and governance tokens via their respective token governance modules
+            if (token == _networkToken) {
+                _networkTokenGovernance.burn(amount);
+            } else if (token == _govToken) {
+                _govTokenGovernance.burn(amount);
+            } else {
+                IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
+            }
         }
 
         emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });

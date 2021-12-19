@@ -1,6 +1,8 @@
+import Contracts from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { BNT, ETH, TKN } from '../helpers/Constants';
+import { BNT, ETH, TKN, ZERO_ADDRESS } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
@@ -14,10 +16,24 @@ describe('ExternalRewardsVault', () => {
     shouldHaveGap('ExternalRewardsVault');
 
     describe('construction', () => {
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
         let externalRewardsVault: ExternalRewardsVault;
 
         beforeEach(async () => {
-            ({ externalRewardsVault } = await createSystem());
+            ({ networkTokenGovernance, externalRewardsVault, externalRewardsVault } = await createSystem());
+        });
+
+        it('should revert when attempting to create with an invalid network token governance contract', async () => {
+            await expect(
+                Contracts.ExternalRewardsVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid gov token governance contract', async () => {
+            await expect(
+                Contracts.ExternalRewardsVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {

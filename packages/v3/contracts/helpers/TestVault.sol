@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { ReserveToken } from "../token/ReserveToken.sol";
 
 import { Vault } from "../vaults/Vault.sol";
@@ -10,6 +12,10 @@ contract TestVault is Vault {
     bool private _payable;
 
     uint256[MAX_GAP - 1] private __gap;
+
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    {}
 
     function initialize() external initializer {
         __TestVault_init();

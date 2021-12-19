@@ -1,7 +1,8 @@
 import Contracts from '../../components/Contracts';
-import { IERC20, TestVault } from '../../typechain-types';
+import { TokenGovernance } from '../../components/LegacyContracts';
+import { IERC20, TestERC20Burnable, TestVault } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
+import { ETH, TKN, BNT, vBNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
@@ -23,17 +24,43 @@ describe('TestVault', () => {
     let target: SignerWithAddress;
     let admin: SignerWithAddress;
 
+    let networkTokenGovernance: TokenGovernance;
+    let govTokenGovernance: TokenGovernance;
+    let networkToken: IERC20;
+    let govToken: IERC20;
+
+    const createTestVault = async () =>
+        createProxy(Contracts.TestVault, {
+            ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
+        });
+
     shouldHaveGap('TestVault', '_authorizeWithdrawal');
 
     before(async () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
     });
 
+    beforeEach(async () => {
+        ({ networkToken, govToken, networkTokenGovernance, govTokenGovernance } = await createSystem());
+    });
+
     describe('construction', () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
+        });
+
+        it('should revert when attempting to create with an invalid network token governance contract', async () => {
+            await expect(Contracts.TestVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when attempting to create with an invalid governance token governance contract', async () => {
+            await expect(Contracts.TestVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -49,10 +76,11 @@ describe('TestVault', () => {
 
     describe('depositing ETH ', () => {
         let testVault: TestVault;
+
         const amount = 1_000_000;
 
         beforeEach(async () => {
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
         });
 
         context('payable', () => {
@@ -82,12 +110,9 @@ describe('TestVault', () => {
 
     describe('withdrawing funds', async () => {
         let testVault: TestVault;
-        let networkToken: IERC20;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
 
             await testVault.setAuthorizedWithdrawal(true);
             await testVault.setPayable(true);
@@ -106,14 +131,14 @@ describe('TestVault', () => {
             it('should withdraw funds to the target', async () => {
                 await transfer(deployer, { address: token.address }, testVault.address, amount);
 
-                const currentBalance = await getBalance({ address: token.address }, target);
+                const prevBalance = await getBalance({ address: token.address }, target);
 
                 const res = await testVault.withdrawFunds(token.address, target.address, amount);
                 await expect(res)
                     .to.emit(testVault, 'FundsWithdrawn')
                     .withArgs(token.address, deployer.address, target.address, amount);
 
-                expect(await getBalance({ address: token.address }, target)).to.equal(currentBalance.add(amount));
+                expect(await getBalance({ address: token.address }, target)).to.equal(prevBalance.add(amount));
             });
 
             it('should revert when withdrawing tokens to an invalid address', async () => {
@@ -165,22 +190,41 @@ describe('TestVault', () => {
         }
     });
 
-    describe('burning funds', async () => {
+    describe.only('burning funds', async () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
 
             await testVault.setAuthorizedWithdrawal(true);
             await testVault.setPayable(true);
         });
 
         const testBurn = (symbol: string) => {
+            const isETH = symbol === ETH;
             let token: TokenWithAddress;
+            let reserveToken: TestERC20Burnable;
+
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = await createTokenBySymbol(symbol, true);
+                switch (symbol) {
+                    case BNT:
+                        token = networkToken;
+                        break;
+
+                    case vBNT:
+                        token = govToken;
+                        break;
+
+                    default:
+                        token = await createTokenBySymbol(symbol, true);
+                        break;
+                }
+
+                if (!isETH) {
+                    reserveToken = await Contracts.TestERC20Burnable.attach(token.address);
+                }
 
                 await transfer(deployer, token, testVault.address, amount);
             });
@@ -188,14 +232,22 @@ describe('TestVault', () => {
             it('should burn funds', async () => {
                 await transfer(deployer, { address: token.address }, testVault.address, amount);
 
-                const currentBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
+                const prevBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
+                let prevTotalSupply;
+                if (!isETH) {
+                    prevTotalSupply = await reserveToken.totalSupply();
+                }
 
                 const res = await testVault.burn(token.address, amount);
                 await expect(res).to.emit(testVault, 'FundsBurned').withArgs(token.address, deployer.address, amount);
 
                 expect(await getBalance({ address: token.address }, ZERO_ADDRESS)).to.equal(
-                    symbol === TKN ? currentBalance : currentBalance.add(amount)
+                    isETH ? prevBalance.add(amount) : prevBalance
                 );
+
+                if (!isETH) {
+                    expect(await reserveToken.totalSupply()).to.equal(prevTotalSupply?.sub(amount));
+                }
             });
 
             it('should allow burning 0 tokens', async () => {
@@ -236,19 +288,16 @@ describe('TestVault', () => {
             });
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [BNT, vBNT, ETH, TKN]) {
             context(symbol, () => testBurn(symbol));
         }
     });
 
     describe('authorized/unauthorized', () => {
         let testVault: TestVault;
-        let networkToken: IERC20;
 
         beforeEach(async () => {
-            ({ networkToken } = await createSystem());
-
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
 
             await testVault.setPayable(true);
         });
@@ -292,7 +341,7 @@ describe('TestVault', () => {
         let testVault: TestVault;
 
         beforeEach(async () => {
-            testVault = await createProxy(Contracts.TestVault);
+            testVault = await createTestVault();
         });
 
         const testPause = () => {

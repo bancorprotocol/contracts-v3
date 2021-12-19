@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { Vault } from "./Vault.sol";
 import { IExternalProtectionVault } from "./interfaces/IExternalProtectionVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
+import { Vault } from "./Vault.sol";
 
 /**
  * @dev External Protection Vault contract
@@ -16,6 +18,13 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    {}
 
     /**
      * @dev fully initializes the contract and its parents

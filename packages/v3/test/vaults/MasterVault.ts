@@ -1,4 +1,5 @@
 import Contracts from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
@@ -16,19 +17,29 @@ describe('MasterVault', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
         let masterVault: MasterVault;
         let masterPool: TestMasterPool;
 
         beforeEach(async () => {
-            ({ network, masterVault, masterPool } = await createSystem());
+            ({ network, networkTokenGovernance, govTokenGovernance, masterVault, masterPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
             await expect(masterVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
-        it('should revert when initialized with an invalid network token', async () => {
-            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+        it('should revert when initialized with an invalid network token governance contract', async () => {
+            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when initialized with an invalid network token governance contract', async () => {
+            await expect(Contracts.MasterVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should be properly initialized', async () => {

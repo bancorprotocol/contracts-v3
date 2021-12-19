@@ -46,18 +46,6 @@ contract MasterPool is IMasterPool, Vault {
     // the network contract
     IBancorNetwork private immutable _network;
 
-    // the address of the network token
-    IERC20 private immutable _networkToken;
-
-    // the address of the network token governance
-    ITokenGovernance private immutable _networkTokenGovernance;
-
-    // the address of the governance token
-    IERC20 private immutable _govToken;
-
-    // the address of the governance token governance
-    ITokenGovernance private immutable _govTokenGovernance;
-
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
@@ -107,18 +95,13 @@ contract MasterPool is IMasterPool, Vault {
         IMasterVault initMasterVault,
         IPoolToken initMasterPoolToken
     )
+        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
         validAddress(address(initNetwork))
-        validAddress(address(initNetworkTokenGovernance))
-        validAddress(address(initGovTokenGovernance))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
         validAddress(address(initMasterPoolToken))
     {
         _network = initNetwork;
-        _networkTokenGovernance = initNetworkTokenGovernance;
-        _networkToken = initNetworkTokenGovernance.token();
-        _govTokenGovernance = initGovTokenGovernance;
-        _govToken = initGovTokenGovernance.token();
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
         _poolToken = initMasterPoolToken;
