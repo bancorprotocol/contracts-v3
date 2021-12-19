@@ -6,17 +6,16 @@ import { IVault } from "../../vaults/interfaces/IVault.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../../token/ReserveToken.sol";
 
-enum DistributionType {
-    Flat,
-    ExponentialDecay
-}
+// distribution types
+uint8 constant FLAT_DISTRIBUTION = 0;
+uint8 constant EXPONENTIAL_DECAY_DISTRIBUTION = 1;
 
 struct ProgramData {
     uint32 startTime;
     uint32 endTime;
     uint32 prevDistributionTimestamp;
     bool isEnabled;
-    DistributionType distributionType;
+    uint8 distributionType;
     IVault rewardsVault;
     IPoolToken poolToken;
     uint256 totalRewards;
@@ -51,7 +50,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
         ReserveToken pool,
         IVault rewardsVault,
         uint256 totalRewards,
-        DistributionType distributionType,
+        uint8 distributionType,
         uint32 startTime,
         uint32 endTime
     ) external;

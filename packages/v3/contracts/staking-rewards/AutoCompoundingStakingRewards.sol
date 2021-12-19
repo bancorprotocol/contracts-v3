@@ -19,7 +19,7 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-import { IAutoCompoundingStakingRewards, ProgramData, DistributionType } from "./interfaces/IAutoCompoundingStakingRewards.sol";
+import { IAutoCompoundingStakingRewards, ProgramData, FLAT_DISTRIBUTION, EXPONENTIAL_DECAY_DISTRIBUTION } from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 
@@ -78,7 +78,7 @@ contract AutoCompoundingStakingRewards is
      */
     event ProgramCreated(
         ReserveToken indexed pool,
-        DistributionType indexed distributionType,
+        uint8 indexed distributionType,
         IVault rewardsVault,
         uint256 totalRewards,
         uint256 startTime,
@@ -199,7 +199,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         // if a flat distribution program has already finished
-        if (currentProgram.distributionType == DistributionType.Flat && currentTime > currentProgram.endTime) {
+        if (currentProgram.distributionType == FLAT_DISTRIBUTION && currentTime > currentProgram.endTime) {
             return false;
         }
 
@@ -213,7 +213,7 @@ contract AutoCompoundingStakingRewards is
         ReserveToken pool,
         IVault rewardsVault,
         uint256 totalRewards,
-        DistributionType distributionType,
+        uint8 distributionType,
         uint32 startTime,
         uint32 endTime
     ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
@@ -238,11 +238,11 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (distributionType == DistributionType.Flat) {
+        if (distributionType == FLAT_DISTRIBUTION) {
             if (startTime > endTime || endTime == 0) {
                 revert InvalidParam();
             }
-        } else if (distributionType == DistributionType.ExponentialDecay) {
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
             if (endTime != 0) {
                 revert InvalidParam();
             }
@@ -343,7 +343,7 @@ contract AutoCompoundingStakingRewards is
         address poolAddress = ReserveToken.unwrap(pool);
         ProgramData memory currentProgram = _programs[poolAddress];
 
-        DistributionType distributionType = currentProgram.distributionType;
+        uint8 distributionType = currentProgram.distributionType;
 
         // if program is disabled, don't process rewards
         if (!currentProgram.isEnabled) {
@@ -354,7 +354,7 @@ contract AutoCompoundingStakingRewards is
         // whose rewards weren't distributed yet in full
         if (!isProgramActive(pool)) {
             if (
-                distributionType == DistributionType.Flat &&
+                distributionType == FLAT_DISTRIBUTION &&
                 currentProgram.endTime < _time() &&
                 currentProgram.prevDistributionTimestamp < currentProgram.endTime
             ) {} else {
@@ -365,9 +365,9 @@ contract AutoCompoundingStakingRewards is
         TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
 
         uint256 tokenAmountToDistribute;
-        if (distributionType == DistributionType.ExponentialDecay) {
+        if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
             tokenAmountToDistribute = _calculateExponentialDecayRewards(currentProgram, timeInfo);
-        } else if (distributionType == DistributionType.Flat) {
+        } else if (distributionType == FLAT_DISTRIBUTION) {
             tokenAmountToDistribute = _calculateFlatRewards(currentProgram, timeInfo);
         }
 
@@ -454,7 +454,7 @@ contract AutoCompoundingStakingRewards is
 
         // if this is a flat distribution program, ensure that the elapsed time isn't longer than the duration of the
         // program
-        if (currentProgram.distributionType == DistributionType.Flat) {
+        if (currentProgram.distributionType == FLAT_DISTRIBUTION) {
             timeElapsed = uint32(Math.min(timeElapsed, currentProgram.endTime - currentProgram.startTime));
         }
 
