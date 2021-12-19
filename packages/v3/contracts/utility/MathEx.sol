@@ -148,7 +148,7 @@ library MathEx {
     /**
      * @dev returns the value of `x * y`
      */
-    function mul512(uint256 x, uint256 y) private pure returns (Uint512 memory) {
+    function mul512(uint256 x, uint256 y) internal pure returns (Uint512 memory) {
         unchecked {
             uint256 p = _mulModMax(x, y);
             uint256 q = _unsafeMul(x, y);
