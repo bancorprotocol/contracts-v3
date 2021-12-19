@@ -782,6 +782,7 @@ describe('AutoCompoundingStakingRewards', () => {
             };
 
             const testDistribution = async () => {
+                const prevProgram = await autoCompoundingStakingRewards.program(token.address);
                 const prevPoolTokenBalance = await poolToken.balanceOf(rewardsVault.address);
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
@@ -790,9 +791,12 @@ describe('AutoCompoundingStakingRewards', () => {
                 const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(token);
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
+                const program = await autoCompoundingStakingRewards.program(token.address);
 
                 if (tokenAmountToDistribute.eq(BigNumber.from(0)) || poolTokenAmountToBurn.eq(BigNumber.from(0))) {
                     await expect(res).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+
+                    expect(program.prevDistributionTimestamp).to.equal(prevProgram.prevDistributionTimestamp);
                 } else {
                     await expect(res)
                         .to.emit(autoCompoundingStakingRewards, 'RewardsDistributed')
@@ -803,7 +807,14 @@ describe('AutoCompoundingStakingRewards', () => {
                             timeElapsed,
                             TOTAL_REWARDS.sub(tokenAmountToDistribute)
                         );
+
+                    expect(program.prevDistributionTimestamp).to.equal(
+                        await autoCompoundingStakingRewards.currentTime()
+                    );
                 }
+
+                expect(program.remainingRewards).to.equal(prevProgram.remainingRewards.sub(tokenAmountToDistribute));
+                expect(program.totalRewards).to.equal(prevProgram.totalRewards);
 
                 expect(await poolToken.balanceOf(rewardsVault.address)).to.equal(
                     prevPoolTokenBalance.sub(poolTokenAmountToBurn)
