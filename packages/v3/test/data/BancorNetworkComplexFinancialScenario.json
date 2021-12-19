@@ -3,8 +3,8 @@
     "withdrawalFee": "0.25%",
     "epVaultBalance": "0",
     "tknDecimals": 18,
-    "tknInitialRate": "3000000",
-    "bntInitialRate": "1000000",
+    "tknInitialRate": 3,
+    "bntInitialRate": 1,
     "bntMinLiquidity": "50000000",
     "bntMintingLimit": "50000000",
     "users": [
