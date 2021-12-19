@@ -95,6 +95,8 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         whenNotPaused
         whenAuthorized(msg.sender, reserveToken, target, amount)
     {
+        if (amount == 0) {
+            return;
         }
 
         if (reserveToken.isNativeToken()) {
