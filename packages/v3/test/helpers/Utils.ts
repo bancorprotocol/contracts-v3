@@ -71,7 +71,7 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (symbol: string, burnable = false): Promise<TokenWithAddress> => {
     switch (symbol) {
         case ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
@@ -79,7 +79,11 @@ export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddr
         case TKN:
         case `${TKN}1`:
         case `${TKN}2`:
-            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(1_000_000_000));
+            return (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
+                symbol,
+                symbol,
+                toWei(1_000_000_000)
+            );
 
         default:
             throw new Error(`Unsupported type ${symbol}`);

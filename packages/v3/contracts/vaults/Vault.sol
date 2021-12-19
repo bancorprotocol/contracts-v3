@@ -111,6 +111,28 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     }
 
     /**
+     * @inheritdoc IVault
+     */
+    function burn(ReserveToken reserveToken, uint256 amount)
+        external
+        whenAuthorized(msg.sender, reserveToken, payable(address(0)), amount)
+    {
+        address payable target = payable(address(0));
+
+        if (amount == 0) {
+            return;
+        }
+
+        if (reserveToken.isNativeToken()) {
+            target.transfer(amount);
+        } else {
+            IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
+        }
+
+        emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });
+    }
+
+    /**
      * @dev returns whether the given caller is allowed access to the given token
      */
     function authorizeWithdrawal(

@@ -17,13 +17,13 @@ import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-let deployer: SignerWithAddress;
-let sender: SignerWithAddress;
-let target: SignerWithAddress;
-let admin: SignerWithAddress;
-
 describe('TestVault', () => {
-    shouldHaveGap('TestVault', '_authenticateWithdrawal');
+    let deployer: SignerWithAddress;
+    let sender: SignerWithAddress;
+    let target: SignerWithAddress;
+    let admin: SignerWithAddress;
+
+    shouldHaveGap('TestVault', '_authorizeWithdrawal');
 
     before(async () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
@@ -47,21 +47,6 @@ describe('TestVault', () => {
         });
     });
 
-    it('should be able to send ETH to a transparent upgradeable proxy', async () => {
-        const amount = 1_000_000;
-
-        const transparentUpgradeableProxy = await createProxy(Contracts.TestVault);
-        await transparentUpgradeableProxy.setPayable(true);
-
-        const balance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, transparentUpgradeableProxy.address);
-
-        await expect(deployer.sendTransaction({ to: transparentUpgradeableProxy.address, value: amount })).to.not
-            .reverted;
-        expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, transparentUpgradeableProxy.address)).to.equal(
-            balance.add(amount)
-        );
-    });
-
     describe('depositing ETH ', () => {
         let testVault: TestVault;
         const amount = 1_000_000;
@@ -76,7 +61,13 @@ describe('TestVault', () => {
             });
 
             it('should be able to receive ETH', async () => {
+                const balance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address);
+
                 await deployer.sendTransaction({ value: amount, to: testVault.address });
+
+                expect(await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address)).to.equal(
+                    balance.add(amount)
+                );
             });
         });
 
@@ -108,15 +99,19 @@ describe('TestVault', () => {
 
             beforeEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+
                 await transfer(deployer, token, testVault.address, amount);
             });
 
-            it("withdrawing fund should change the target's balance", async () => {
+            it('should withdraw funds to the target', async () => {
                 await transfer(deployer, { address: token.address }, testVault.address, amount);
 
                 const currentBalance = await getBalance({ address: token.address }, target);
 
-                await testVault.withdrawFunds(token.address, target.address, amount);
+                const res = await testVault.withdrawFunds(token.address, target.address, amount);
+                await expect(res)
+                    .to.emit(testVault, 'FundsWithdrawn')
+                    .withArgs(token.address, deployer.address, target.address, amount);
 
                 expect(await getBalance({ address: token.address }, target)).to.equal(currentBalance.add(amount));
             });
@@ -130,7 +125,8 @@ describe('TestVault', () => {
             it('should allow withdrawing 0 tokens', async () => {
                 const prevVaultBalance = await getBalance(token, testVault.address);
 
-                await testVault.withdrawFunds(token.address, target.address, 0);
+                const res = await testVault.withdrawFunds(token.address, target.address, 0);
+                await expect(res).not.to.emit(testVault, 'FundsWithdrawn');
 
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
@@ -158,7 +154,7 @@ describe('TestVault', () => {
             });
 
             context('when not paused', () => {
-                it('should not revert when contract is not paused', async () => {
+                it('should not revert', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
                 });
             });
@@ -169,7 +165,83 @@ describe('TestVault', () => {
         }
     });
 
-    describe('authenticated/unauthenticated', () => {
+    describe('burning funds', async () => {
+        let testVault: TestVault;
+
+        beforeEach(async () => {
+            testVault = await createProxy(Contracts.TestVault);
+
+            await testVault.setAuthorizedWithdrawal(true);
+            await testVault.setPayable(true);
+        });
+
+        const testBurn = (symbol: string) => {
+            let token: TokenWithAddress;
+            const amount = 1_000_000;
+
+            beforeEach(async () => {
+                token = await createTokenBySymbol(symbol, true);
+
+                await transfer(deployer, token, testVault.address, amount);
+            });
+
+            it('should burn funds', async () => {
+                await transfer(deployer, { address: token.address }, testVault.address, amount);
+
+                const currentBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
+
+                const res = await testVault.burn(token.address, amount);
+                await expect(res).to.emit(testVault, 'FundsBurned').withArgs(token.address, deployer.address, amount);
+
+                expect(await getBalance({ address: token.address }, ZERO_ADDRESS)).to.equal(
+                    symbol === TKN ? currentBalance : currentBalance.add(amount)
+                );
+            });
+
+            it('should allow burning 0 tokens', async () => {
+                const prevVaultBalance = await getBalance(token, testVault.address);
+
+                const res = await testVault.burn(token.address, 0);
+                await expect(res).not.to.emit(testVault, 'FundsBurned');
+
+                expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
+            });
+
+            it('should revert when trying to withdraw more tokens than the vault holds', async () => {
+                await expect(
+                    testVault.withdrawFunds(
+                        token.address,
+                        target.address,
+                        (await getBalance({ address: token.address }, testVault.address)).add(1)
+                    )
+                ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await testVault.pause();
+                });
+
+                it('should revert', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
+            });
+
+            context('when not paused', () => {
+                it('should not revert', async () => {
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                });
+            });
+        };
+
+        for (const symbol of [ETH, TKN]) {
+            context(symbol, () => testBurn(symbol));
+        }
+    });
+
+    describe('authorized/unauthorized', () => {
         let testVault: TestVault;
         let networkToken: IERC20;
 
