@@ -70,7 +70,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
      *
      * - the caller must have the ROLE_ASSET_MANAGER permission
      */
-    function authenticateWithdrawal(
+    function authorizeWithdrawal(
         address caller,
         ReserveToken, /* reserveToken */
         address, /* target */

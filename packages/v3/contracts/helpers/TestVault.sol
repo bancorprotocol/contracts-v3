@@ -6,7 +6,7 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 import { Vault } from "../vaults/Vault.sol";
 
 contract TestVault is Vault {
-    bool private _authenticateWithdrawal;
+    bool private _authorizeWithdrawal;
     bool private _payable;
 
     uint256[MAX_GAP - 1] private __gap;
@@ -25,8 +25,8 @@ contract TestVault is Vault {
 
     function __TestVault_init_unchained() internal onlyInitializing {}
 
-    function setAuthenticateWithdrawal(bool state) external {
-        _authenticateWithdrawal = state;
+    function setAuthorizedWithdrawal(bool state) external {
+        _authorizeWithdrawal = state;
     }
 
     function setPayable(bool state) external {
@@ -41,12 +41,12 @@ contract TestVault is Vault {
         return _payable;
     }
 
-    function authenticateWithdrawal(
+    function authorizeWithdrawal(
         address, /* caller */
         ReserveToken, /* reserverToken */
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return _authenticateWithdrawal;
+        return _authorizeWithdrawal;
     }
 }

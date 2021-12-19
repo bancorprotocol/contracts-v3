@@ -78,14 +78,14 @@ contract MasterVault is IMasterVault, Vault {
     }
 
     /**
-     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
+     * @dev authorize the right of a caller to withdraw a specific amount of a token to a target
      *
      * requirements:
      *
      * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
      * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
      */
-    function authenticateWithdrawal(
+    function authorizeWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address, /* target */

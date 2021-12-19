@@ -37,6 +37,20 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      */
     function __Vault_init_unchained() internal onlyInitializing {}
 
+    // allows execution only by an authorized operation
+    modifier whenAuthorized(
+        address caller,
+        ReserveToken reserveToken,
+        address payable target,
+        uint256 amount
+    ) {
+        if (!authorizeWithdrawal(caller, reserveToken, target, amount)) {
+            revert AccessDenied();
+        }
+
+        _;
+    }
+
     /**
      * @dev returns whether withdrawals are currently paused
      */
@@ -73,9 +87,14 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         ReserveToken reserveToken,
         address payable target,
         uint256 amount
-    ) external override validAddress(target) nonReentrant whenNotPaused {
-        if (!authenticateWithdrawal(msg.sender, reserveToken, target, amount)) {
-            revert AccessDenied();
+    )
+        external
+        override
+        validAddress(target)
+        nonReentrant
+        whenNotPaused
+        whenAuthorized(msg.sender, reserveToken, target, amount)
+    {
         }
 
         if (reserveToken.isNativeToken()) {
@@ -92,7 +111,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @dev returns whether the given caller is allowed access to the given token
      */
-    function authenticateWithdrawal(
+    function authorizeWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address target,

@@ -98,7 +98,7 @@ describe('TestVault', () => {
 
             testVault = await createProxy(Contracts.TestVault);
 
-            await testVault.setAuthenticateWithdrawal(true);
+            await testVault.setAuthorizedWithdrawal(true);
             await testVault.setPayable(true);
         });
 
@@ -190,9 +190,9 @@ describe('TestVault', () => {
                 await transfer(deployer, token, testVault.address, amount);
             });
 
-            context('when authenticated', () => {
+            context('when authorized', () => {
                 beforeEach(async () => {
-                    await testVault.setAuthenticateWithdrawal(true);
+                    await testVault.setAuthorizedWithdrawal(true);
                 });
 
                 it('should allow to withdraw', async () => {
@@ -200,7 +200,7 @@ describe('TestVault', () => {
                 });
             });
 
-            context('when unauthenticated', () => {
+            context('when unauthorized', () => {
                 it('should revert', async () => {
                     await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.be.revertedWith(
                         'AccessDenied'
