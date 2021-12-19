@@ -40,7 +40,7 @@ describe('StakingRewardsMath', () => {
         const calculateFlatRewardTest = (
             timeElapsedSinceLastDistribution: number,
             remainingProgramDuration: number,
-            remainingRewards: number
+            remainingRewards: BigNumberish
         ) => {
             it(`calculateFlatRewards(${timeElapsedSinceLastDistribution}, ${remainingProgramDuration}, ${remainingRewards})`, async () => {
                 const actual = await stakingRewardsMath.calculateFlatRewardsT(
@@ -57,7 +57,24 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            calculateFlatRewardTest(1000, 10000, 10000);
+            for (const timeElapsedSinceLastDistribution of [1000, duration.days(1), duration.weeks(4)]) {
+                for (const remainingProgramDuration of [duration.hours(12), duration.days(3), duration.weeks(12)]) {
+                    for (const remainingRewards of [
+                        1000,
+                        10_000,
+                        100_000,
+                        toWei(1000),
+                        toWei(10_000),
+                        toWei(100_000)
+                    ]) {
+                        calculateFlatRewardTest(
+                            timeElapsedSinceLastDistribution,
+                            remainingProgramDuration,
+                            remainingRewards
+                        );
+                    }
+                }
+            }
         });
     });
 
