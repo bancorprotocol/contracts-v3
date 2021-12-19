@@ -147,7 +147,7 @@ interface IPoolCollection is IVersioned {
      * requirements:
      *
      * - the caller must be the network contract
-     * - the caller must have approved the collection to transfer/burn the pool token amount on its behal
+     * - the caller must have approved the collection to transfer/burn the pool token amount on its behalf
      */
     function withdraw(
         ReserveToken pool,

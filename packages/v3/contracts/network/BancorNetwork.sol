@@ -5,6 +5,7 @@ pragma abicoder v2;
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
@@ -72,6 +73,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using ReserveTokenLibrary for ReserveToken;
+    using SafeERC20 for IPoolToken;
 
     // the migration manager role is required for migrating liquidity
     bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
@@ -327,7 +329,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) internal initializer {
+    ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
@@ -341,7 +343,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterPool initMasterPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
-    ) internal initializer {
+    ) internal onlyInitializing {
         _masterPool = initMasterPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
@@ -766,6 +768,72 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             amount: feeAmount,
             stakedBalance: stakedBalance
         });
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
+        external
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        nonReentrant
+        returns (uint256)
+    {
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function initWithdrawalPermitted(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant returns (uint256) {
+        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
+
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function cancelWithdrawal(uint256 id) external nonReentrant {
+        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function reinitWithdrawal(uint256 id) external nonReentrant {
+        _pendingWithdrawals.reinitWithdrawal(msg.sender, id);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function migrateLiquidity(
+        ReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableAmount,
+        uint256 originalAmount
+    ) external payable nonReentrant onlyRole(ROLE_MIGRATION_MANAGER) {
+        bytes32 contextId = keccak256(
+            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableAmount, originalAmount)
+        );
+
+        if (_isNetworkToken(reserveToken)) {
+            _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
+        } else {
+            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableAmount);
+        }
+
+        emit FundsMigrated(contextId, reserveToken, provider, amount, availableAmount);
     }
 
     /**
@@ -1367,23 +1435,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         return token.toIERC20() == _networkToken;
     }
 
-    function migrateLiquidity(
-        ReserveToken reserveToken,
+    /**
+     * @dev initiates liquidity withdrawal
+     */
+    function _initWithdrawal(
         address provider,
-        uint256 amount,
-        uint256 availableAmount,
-        uint256 originalAmount
-    ) external payable nonReentrant onlyRole(ROLE_MIGRATION_MANAGER) {
-        bytes32 contextId = keccak256(
-            abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableAmount, originalAmount)
-        );
+        IPoolToken poolToken,
+        uint256 poolTokenAmount
+    ) private returns (uint256) {
+        // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
+        // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
+        poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
 
-        if (_isNetworkToken(reserveToken)) {
-            _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
-        } else {
-            _depositBaseTokenFor(contextId, provider, reserveToken, amount, msg.sender, availableAmount);
-        }
-
-        emit FundsMigrated(contextId, reserveToken, provider, amount, availableAmount);
+        return _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
     }
 }

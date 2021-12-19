@@ -5,7 +5,6 @@ import '@nomiclabs/hardhat-solhint';
 import '@nomiclabs/hardhat-waffle';
 import '@tenderly/hardhat-tenderly';
 import '@typechain/hardhat';
-import 'hardhat-abi-exporter';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
@@ -86,10 +85,7 @@ const config: HardhatUserConfig = {
     },
 
     dependencyCompiler: {
-        paths: [
-            '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
-            '@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol'
-        ]
+        paths: ['@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol']
     },
 
     etherscan: {
@@ -100,11 +96,6 @@ const config: HardhatUserConfig = {
         alphaSort: true,
         runOnCompile: false,
         disambiguatePaths: false
-    },
-
-    abiExporter: {
-        path: './data/abi',
-        clear: true
     },
 
     mocha: mochaOptions()

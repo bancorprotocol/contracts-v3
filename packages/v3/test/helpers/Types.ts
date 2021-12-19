@@ -1,4 +1,4 @@
-import { PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
+import { MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 
@@ -39,6 +39,7 @@ export interface AverageRate<T> {
     time: number;
 }
 
+// eslint-disable-next-line no-prototype-builtins
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
 export const toBigNumber = <T extends ToBigNumberInput>(v: T): ToBigNumberReturn<T> => {
@@ -87,12 +88,14 @@ export const toString = <T extends BigNumber | Decimal | number>(fraction: Fract
     return `{n: ${fraction.n.toString()}, d: ${fraction.d.toString()}}`;
 };
 
-export const toUint512 = (x: BigNumber) => {
-    return { hi: x.shr(256), lo: x.shl(256).shr(256) };
+type Uint512 = { hi: BigNumber; lo: BigNumber };
+
+export const toUint512 = (x: BigNumber): Uint512 => {
+    return { hi: x.shr(256), lo: x.and(MAX_UINT256) };
 };
 
-export const fromUint512 = (hi: BigNumber, lo: BigNumber) => {
-    return hi.shl(256).or(lo);
+export const fromUint512 = (x: Uint512): BigNumber => {
+    return x.hi.shl(256).or(x.lo);
 };
 
 type ToWeiInput = Decimal | BigNumber | number;

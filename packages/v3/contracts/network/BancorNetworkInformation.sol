@@ -128,7 +128,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetworkInformation_init() internal initializer {
+    function __BancorNetworkInformation_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __BancorNetworkInformation_init_unchained();
@@ -137,7 +137,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetworkInformation_init_unchained() internal initializer {}
+    function __BancorNetworkInformation_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
@@ -258,7 +258,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the target amount by specifying the source amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeTargetAmount(
         ReserveToken sourceToken,
@@ -269,7 +269,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @dev returns the source amount by specifying the target amount
+     * @inheritdoc IBancorNetworkInformation
      */
     function tradeSourceAmount(
         ReserveToken sourceToken,
@@ -277,6 +277,13 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
         uint256 targetAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, targetAmount, false);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInformation
+     */
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
+        return _pendingWithdrawals.isReadyForWithdrawal(id);
     }
 
     /**
@@ -295,7 +302,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
                 _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
         }
 
-        // return the trade amount and fee when trading the bsase token to the network token
+        // return the trade amount and fee when trading the base token to the network token
         if (_isNetworkToken(targetToken)) {
             return
                 _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;

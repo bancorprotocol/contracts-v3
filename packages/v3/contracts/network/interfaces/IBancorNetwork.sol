@@ -145,7 +145,7 @@ interface IBancorNetwork is IUpgradeable {
      * requirements:
      *
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - the specified withdrawal request is eligble for completion
+     * - the specified withdrawal request is eligible for completion
      * - the provider must have approved the network to transfer the governance token amount on its behalf, when
      * withdrawing network token liquidity
      */
@@ -201,4 +201,58 @@ interface IBancorNetwork is IUpgradeable {
         IFlashLoanRecipient recipient,
         bytes calldata data
     ) external;
+
+    /**
+     * @dev initiates liquidity withdrawal
+     *
+     * requirements:
+     *
+     * - the caller must have approved the contract to transfer the pool token amount on its behalf
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external returns (uint256);
+
+    /**
+     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+    function initWithdrawalPermitted(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256);
+
+    /**
+     * @dev cancels a withdrawal request
+     *
+     * requirements:
+     *
+     * - the caller must have already initiated a withdrawal and received the specified id
+     */
+    function cancelWithdrawal(uint256 id) external;
+
+    /**
+     * @dev reinitiates a withdrawal request and restarts its cooldown durations
+     *
+     * requirements:
+     *
+     * - the caller must have already initiated a withdrawal and received the specified id
+     */
+    function reinitWithdrawal(uint256 id) external;
+
+    /**
+     * @dev deposits liquidity during a migration
+     */
+    function migrateLiquidity(
+        ReserveToken reserveToken,
+        address provider,
+        uint256 amount,
+        uint256 availableAmount,
+        uint256 originalAmount
+    ) external payable;
 }

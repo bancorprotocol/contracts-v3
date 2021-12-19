@@ -2,8 +2,8 @@
 pragma solidity 0.8.10;
 pragma abicoder v2;
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
@@ -64,9 +64,9 @@ error LiquidityTooLow();
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, Time, Utils {
+contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils {
     using ReserveTokenLibrary for ReserveToken;
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
@@ -130,7 +130,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     mapping(ReserveToken => Pool) internal _poolData;
 
     // the set of all pools which are managed by this pool collection
-    EnumerableSetUpgradeable.AddressSet private _pools;
+    EnumerableSet.AddressSet private _pools;
 
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
@@ -181,7 +181,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
     event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
+     * @dev initializes a new PoolCollection contract
      */
     constructor(
         IBancorNetwork initNetwork,
@@ -196,8 +196,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
-        __ReentrancyGuard_init();
-
         _network = initNetwork;
         _networkToken = initNetworkToken;
         _networkSettings = initNetworkSettings;
@@ -784,7 +782,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuardUpgradeable, T
             revert MinLiquidityNotSet();
         }
 
-        // verify that the staked balance and the newly deposited amount isn’t higher than the deposit limit
+        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
         if (data.liquidity.stakedBalance + baseTokenAmount > data.depositLimit) {
             revert DepositLimitExceeded();
         }
