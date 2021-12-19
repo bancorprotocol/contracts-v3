@@ -162,10 +162,7 @@ library MathEx {
     /**
      * @dev returns the value of `2 ^ x - y`, given that `2 ^ x >= y`
      */
-    function _sub512(
-        Uint512 memory x,
-        uint256 y
-    ) private pure returns (Uint512 memory) {
+    function _sub512(Uint512 memory x, uint256 y) private pure returns (Uint512 memory) {
         unchecked {
             if (x.lo >= y) {
                 return Uint512({ hi: x.hi, lo: x.lo - y });
@@ -177,10 +174,7 @@ library MathEx {
     /**
      * @dev returns the value of `2 ^ x / pow2n`, given that `x` is divisible by `pow2n`
      */
-    function _div512(
-        Uint512 memory x,
-        uint256 pow2n
-    ) private pure returns (uint256) {
+    function _div512(Uint512 memory x, uint256 pow2n) private pure returns (uint256) {
         unchecked {
             uint256 pow2nInv = _unsafeAdd(_unsafeSub(0, pow2n) / pow2n, 1); // `1 << (256 - n)`
             return _unsafeMul(x.hi, pow2nInv) | (x.lo / pow2n); // `(x.hi << (256 - n)) | (x.lo >> n)`
