@@ -88,7 +88,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(ReserveToken indexed pool, uint32 prevEndTime, uint256 remainingRewards);
+    event ProgramTerminated(ReserveToken indexed pool, uint32 endTime, uint256 remainingRewards);
 
     /**
      * @dev triggered when a program is enabled/disabled
@@ -314,7 +314,7 @@ contract AutoCompoundingStakingRewards is
 
         emit ProgramTerminated({
             pool: pool,
-            prevEndTime: currentProgram.endTime,
+            endTime: currentProgram.endTime,
             remainingRewards: cachedRemainingRewards
         });
     }
