@@ -387,7 +387,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     await expect(res)
                         .to.emit(autoCompoundingStakingRewards, 'ProgramCreated')
-                        .withArgs(token.address, rewardsVault.address, TOTAL_REWARDS, distributionType, now, endTime);
+                        .withArgs(token.address, distributionType, rewardsVault.address, TOTAL_REWARDS, now, endTime);
 
                     const program = await autoCompoundingStakingRewards.program(token.address);
 

@@ -78,9 +78,9 @@ contract AutoCompoundingStakingRewards is
      */
     event ProgramCreated(
         ReserveToken indexed pool,
+        DistributionType indexed distributionType,
         IVault rewardsVault,
         uint256 totalRewards,
-        DistributionType indexed distributionType,
         uint256 startTime,
         uint256 endTime
     );
@@ -287,7 +287,14 @@ contract AutoCompoundingStakingRewards is
 
         _programByPool.add(poolAddress);
 
-        emit ProgramCreated(pool, rewardsVault, totalRewards, distributionType, startTime, endTime);
+        emit ProgramCreated({
+            pool: pool,
+            distributionType: distributionType,
+            rewardsVault: rewardsVault,
+            totalRewards: totalRewards,
+            startTime: startTime,
+            endTime: endTime
+        });
     }
 
     /**
@@ -305,7 +312,11 @@ contract AutoCompoundingStakingRewards is
         uint256 cachedRemainingRewards = currentProgram.remainingRewards;
         currentProgram.remainingRewards = 0;
 
-        emit ProgramTerminated(pool, currentProgram.endTime, cachedRemainingRewards);
+        emit ProgramTerminated({
+            pool: pool,
+            prevEndTime: currentProgram.endTime,
+            remainingRewards: cachedRemainingRewards
+        });
     }
 
     /**
@@ -321,7 +332,7 @@ contract AutoCompoundingStakingRewards is
 
         currentProgram.isEnabled = status;
 
-        emit ProgramEnabled(pool, status, currentProgram.remainingRewards);
+        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: currentProgram.remainingRewards });
     }
 
     /**
@@ -395,13 +406,13 @@ contract AutoCompoundingStakingRewards is
 
         _programs[poolAddress] = currentProgram;
 
-        emit RewardsDistributed(
-            pool,
-            tokenAmountToDistribute,
-            poolTokenAmountToBurn,
-            timeInfo.timeElapsed,
-            currentProgram.remainingRewards
-        );
+        emit RewardsDistributed({
+            pool: pool,
+            rewardsAmount: tokenAmountToDistribute,
+            poolTokenAmount: poolTokenAmountToBurn,
+            programTimeElapsed: timeInfo.timeElapsed,
+            remainingRewards: currentProgram.remainingRewards
+        });
     }
 
     /**
