@@ -362,6 +362,7 @@ export const depositToPool = async (
 export interface PoolSpec {
     symbol: string;
     balance: BigNumberish;
+    requestedLiquidity?: BigNumberish;
     initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }
@@ -384,7 +385,6 @@ export const setupSimplePool = async (
 ) => {
     if (spec.symbol === BNT) {
         const poolToken = await Contracts.PoolToken.attach(await networkInformation.masterPoolToken());
-
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
         const networkToken = await factory.attach(await networkInformation.networkToken());
 
@@ -395,7 +395,7 @@ export const setupSimplePool = async (
         await network.requestLiquidityT(
             formatBytes32String(''),
             reserveToken.address,
-            BigNumber.from(spec.balance).mul(1000)
+            spec.requestedLiquidity || BigNumber.from(spec.balance).mul(1000)
         );
 
         await depositToPool(provider, networkToken, spec.balance, network);

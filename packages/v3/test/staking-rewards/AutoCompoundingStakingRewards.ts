@@ -18,6 +18,7 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
+import { AlmostEqualOptions } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -52,12 +53,15 @@ describe('AutoCompoundingStakingRewards', () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
-    const prepareSimplePool = async (symbol: string, initialStake: BigNumberish, totalRewards: BigNumberish) => {
+    const prepareSimplePool = async (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
+        const isNetworkToken = symbol === BNT;
+
         // deposit initial stake so that the participating user would have some initial amount of pool tokens
         const { token, poolToken } = await setupSimplePool(
             {
                 symbol,
-                balance: initialStake,
+                balance: providerStake,
+                requestedLiquidity: isNetworkToken ? BigNumber.max(providerStake, totalRewards).mul(1000) : 0,
                 initialRate: { n: 1, d: 2 }
             },
             user,
@@ -68,7 +72,7 @@ describe('AutoCompoundingStakingRewards', () => {
         );
 
         // if we're rewarding the network token - no additional if funding is needed
-        if (symbol !== BNT) {
+        if (!isNetworkToken) {
             // deposit pool tokens as staking rewards
             await depositToPool(stakingRewardsProvider, token, totalRewards, network);
 
@@ -676,7 +680,7 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('process rewards', () => {
-        const testRewards = (symbol: string) => {
+        const testRewards = (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
             const isNetworkToken = symbol === BNT;
 
             let token: TokenWithAddress;
@@ -684,8 +688,6 @@ describe('AutoCompoundingStakingRewards', () => {
             let rewardsVault: IVault;
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
-            const INITIAL_USER_STAKE = toWei(10_000);
-            const TOTAL_REWARDS = toWei(90_000);
 
             beforeEach(async () => {
                 ({
@@ -701,7 +703,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                ({ token, poolToken } = await prepareSimplePool(symbol, INITIAL_USER_STAKE, TOTAL_REWARDS));
+                ({ token, poolToken } = await prepareSimplePool(symbol, providerStake, totalRewards));
 
                 rewardsVault = isNetworkToken ? masterPool : externalRewardsVault;
             });
@@ -805,7 +807,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             tokenAmountToDistribute,
                             poolTokenAmountToBurn,
                             timeElapsed,
-                            TOTAL_REWARDS.sub(tokenAmountToDistribute)
+                            BigNumber.from(totalRewards).sub(tokenAmountToDistribute)
                         );
 
                     expect(program.prevDistributionTimestamp).to.equal(
@@ -821,34 +823,22 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
                 expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
 
+                let options: AlmostEqualOptions;
                 const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
                 switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        expect(await getPoolTokenUnderlying(user)).to.be.closeTo(
-                            prevUserTokenOwned.add(tokenAmountToDistribute),
-                            1
-                        );
-                        expect(await getPoolTokenUnderlying(rewardsVault)).to.be.closeTo(
-                            prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                            1
-                        );
+                        options = {
+                            maxRelativeError: new Decimal('0.0000000000001'),
+                            maxAbsoluteError: new Decimal(1)
+                        };
 
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        expect(await getPoolTokenUnderlying(user)).be.almostEqual(
-                            prevUserTokenOwned.add(tokenAmountToDistribute),
-                            {
-                                maxRelativeError: new Decimal('0.0000002')
-                            }
-                        );
-
-                        expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
-                            prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                            {
-                                maxRelativeError: new Decimal('0.0000002')
-                            }
-                        );
+                        options = {
+                            maxRelativeError: new Decimal('0.0000003'),
+                            maxAbsoluteError: new Decimal(1)
+                        };
 
                         break;
 
@@ -856,105 +846,50 @@ describe('AutoCompoundingStakingRewards', () => {
                         throw new Error(`Unsupported type ${distributionType}`);
                 }
 
+                expect(await getPoolTokenUnderlying(user)).be.almostEqual(
+                    prevUserTokenOwned.add(tokenAmountToDistribute),
+                    options
+                );
+
+                expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
+                    prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
+                    options
+                );
+
                 return { tokenAmountToDistribute };
             };
 
             context('flat', () => {
-                const PROGRAM_DURATION = days(10);
+                const testFlat = (programDuration: number) => {
+                    let startTime: number;
+                    let endTime: number;
 
-                let startTime: number;
-                let endTime: number;
+                    beforeEach(async () => {
+                        autoCompoundingStakingRewards = await createStakingRewards(
+                            network,
+                            networkSettings,
+                            networkToken,
+                            masterPool,
+                            externalRewardsVault
+                        );
 
-                beforeEach(async () => {
-                    autoCompoundingStakingRewards = await createStakingRewards(
-                        network,
-                        networkSettings,
-                        networkToken,
-                        masterPool,
-                        externalRewardsVault
-                    );
+                        startTime = await latest();
+                        endTime = startTime + programDuration;
 
-                    startTime = await latest();
-                    endTime = startTime + PROGRAM_DURATION;
-
-                    await autoCompoundingStakingRewards.createProgram(
-                        token.address,
-                        rewardsVault.address,
-                        TOTAL_REWARDS,
-                        StakingRewardsDistributionTypes.Flat,
-                        startTime,
-                        endTime
-                    );
-                });
-
-                describe('basic tests', () => {
-                    context('before the beginning of a program', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
-                        });
-
-                        it('should not distribute any rewards', async () => {
-                            const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.equal(0);
-                        });
+                        await autoCompoundingStakingRewards.createProgram(
+                            token.address,
+                            rewardsVault.address,
+                            totalRewards,
+                            StakingRewardsDistributionTypes.Flat,
+                            startTime,
+                            endTime
+                        );
                     });
 
-                    context('at the beginning of a program', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.setTime(startTime);
-                        });
-
-                        it('should not distribute any rewards', async () => {
-                            const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.equal(0);
-                        });
-                    });
-
-                    context('at the end of a program', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION);
-                        });
-
-                        it('should distribute all the rewards', async () => {
-                            const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
-                        });
-                    });
-
-                    context('after the end of a program', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.setTime(
-                                startTime + PROGRAM_DURATION + duration.days(1)
-                            );
-                        });
-
-                        it('should distribute all the rewards', async () => {
-                            const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.equal(TOTAL_REWARDS);
-                        });
-                    });
-
-                    context('while the program is active', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.setTime(startTime + PROGRAM_DURATION / 2);
-                        });
-
-                        it('should distribute rewards', async () => {
-                            const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.be.gt(0);
-                        });
-
-                        it('should not distribute any rewards if no time has elapsed since the last distribution', async () => {
-                            let { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.be.gt(0);
-
-                            ({ tokenAmountToDistribute } = await testDistribution());
-                            expect(tokenAmountToDistribute).to.equal(0);
-                        });
-
-                        context('disabled', () => {
+                    describe('basic tests', () => {
+                        context('before the beginning of a program', () => {
                             beforeEach(async () => {
-                                await autoCompoundingStakingRewards.enableProgram(token.address, false);
+                                await autoCompoundingStakingRewards.setTime(startTime - duration.days(1));
                             });
 
                             it('should not distribute any rewards', async () => {
@@ -962,52 +897,127 @@ describe('AutoCompoundingStakingRewards', () => {
                                 expect(tokenAmountToDistribute).to.equal(0);
                             });
                         });
-                    });
-                });
 
-                describe('single distribution', () => {
-                    const testSingleDistribution = (step: number) => {
-                        context(`in ${step}% steps`, () => {
-                            for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
-                                context(`at ${programTimePercent}% of a program`, () => {
-                                    beforeEach(async () => {
-                                        await autoCompoundingStakingRewards.setTime(
-                                            (PROGRAM_DURATION * programTimePercent) / 100
-                                        );
-                                    });
+                        context('at the beginning of a program', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingStakingRewards.setTime(startTime);
+                            });
 
-                                    it('should distribute rewards', async () => {
-                                        await testDistribution();
-                                    });
-                                });
-                            }
-                        });
-                    };
-
-                    for (const step of [5, 10, 25]) {
-                        testSingleDistribution(step);
-                    }
-                });
-
-                describe('multiple distributions', () => {
-                    const testMultipleDistributions = (step: number) => {
-                        context(`in ${step}% steps`, () => {
-                            it('should distribute rewards', async () => {
-                                for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
-                                    await autoCompoundingStakingRewards.setTime(
-                                        (PROGRAM_DURATION * programTimePercent) / 100
-                                    );
-
-                                    await testDistribution();
-                                }
+                            it('should not distribute any rewards', async () => {
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(0);
                             });
                         });
-                    };
 
-                    for (const step of [5, 10, 25]) {
-                        testMultipleDistributions(step);
-                    }
-                });
+                        context('at the end of a program', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingStakingRewards.setTime(startTime + programDuration);
+                            });
+
+                            it('should distribute all the rewards', async () => {
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(totalRewards);
+                            });
+                        });
+
+                        context('after the end of a program', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingStakingRewards.setTime(
+                                    startTime + programDuration + duration.days(1)
+                                );
+                            });
+
+                            it('should distribute all the rewards', async () => {
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(totalRewards);
+                            });
+                        });
+
+                        context('while the program is active', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingStakingRewards.setTime(startTime + programDuration / 2);
+                            });
+
+                            it('should distribute rewards', async () => {
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.be.gt(0);
+                            });
+
+                            it('should not distribute any rewards if no time has elapsed since the last distribution', async () => {
+                                let { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.be.gt(0);
+
+                                ({ tokenAmountToDistribute } = await testDistribution());
+                                expect(tokenAmountToDistribute).to.equal(0);
+                            });
+
+                            context('disabled', () => {
+                                beforeEach(async () => {
+                                    await autoCompoundingStakingRewards.enableProgram(token.address, false);
+                                });
+
+                                it('should not distribute any rewards', async () => {
+                                    const { tokenAmountToDistribute } = await testDistribution();
+                                    expect(tokenAmountToDistribute).to.equal(0);
+                                });
+                            });
+                        });
+                    });
+
+                    describe('single distribution', () => {
+                        const testSingleDistribution = (step: number) => {
+                            context(`in steps of ${step}%`, () => {
+                                for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
+                                    context(`at ${programTimePercent}% of a program`, () => {
+                                        beforeEach(async () => {
+                                            await autoCompoundingStakingRewards.setTime(
+                                                (programDuration * programTimePercent) / 100
+                                            );
+                                        });
+
+                                        it('should distribute rewards', async () => {
+                                            await testDistribution();
+                                        });
+                                    });
+                                }
+                            });
+                        };
+
+                        for (const step of [6, 25]) {
+                            testSingleDistribution(step);
+                        }
+                    });
+
+                    describe('multiple distributions', () => {
+                        const testMultipleDistributions = (step: number) => {
+                            context(`in steps of ${step}%`, () => {
+                                it('should distribute rewards', async () => {
+                                    for (
+                                        let programTimePercent = 0;
+                                        programTimePercent < 100;
+                                        programTimePercent += step
+                                    ) {
+                                        await autoCompoundingStakingRewards.setTime(
+                                            (programDuration * programTimePercent) / 100
+                                        );
+
+                                        await testDistribution();
+                                    }
+                                });
+                            });
+                        };
+
+                        for (const step of [6, 25]) {
+                            testMultipleDistributions(step);
+                        }
+                    });
+                };
+
+                for (const programDuration of [duration.days(10), duration.weeks(12), duration.years(1)]) {
+                    context(`program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`, () => {
+                        testFlat(programDuration);
+                    });
+                }
             });
 
             context('exponential decay', () => {
@@ -1029,7 +1039,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     await autoCompoundingStakingRewards.createProgram(
                         token.address,
                         rewardsVault.address,
-                        TOTAL_REWARDS,
+                        totalRewards,
                         StakingRewardsDistributionTypes.ExponentialDecay,
                         startTime,
                         0
@@ -1066,8 +1076,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
-                                maxRelativeError: new Decimal('0.0000002')
+                            expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
+                                maxRelativeError: new Decimal('0.0000003'),
+                                maxAbsoluteError: new Decimal(1)
                             });
                         });
                     });
@@ -1081,8 +1092,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
-                            expect(tokenAmountToDistribute).to.be.almostEqual(TOTAL_REWARDS, {
-                                maxRelativeError: new Decimal('0.0000002')
+                            expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
+                                maxRelativeError: new Decimal('0.0000003'),
+                                maxAbsoluteError: new Decimal(1)
                             });
                         });
                     });
@@ -1136,7 +1148,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     };
 
                     for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
-                        for (const totalSteps of [50]) {
+                        for (const totalSteps of [10]) {
                             testSingleDistribution(step, totalSteps);
                         }
                     }
@@ -1159,7 +1171,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     };
 
                     for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
-                        for (const totalSteps of [50]) {
+                        for (const totalSteps of [10]) {
                             testMultipleDistributions(step, totalSteps);
                         }
                     }
@@ -1168,9 +1180,16 @@ describe('AutoCompoundingStakingRewards', () => {
         };
 
         for (const symbol of [BNT, TKN, ETH]) {
-            context(symbol, () => {
-                testRewards(symbol);
-            });
+            for (const providerStake of [toWei(5_000), toWei(100_000)]) {
+                for (const totalRewards of [100_000, toWei(10_000), toWei(200_000)]) {
+                    context(
+                        `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
+                        () => {
+                            testRewards(symbol, providerStake, totalRewards);
+                        }
+                    );
+                }
+            }
         }
     });
 });
