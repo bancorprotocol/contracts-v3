@@ -61,7 +61,9 @@ describe('AutoCompoundingStakingRewards', () => {
             {
                 symbol,
                 balance: providerStake,
-                requestedLiquidity: isNetworkToken ? BigNumber.max(providerStake, totalRewards).mul(1000) : 0,
+                requestedLiquidity: isNetworkToken
+                    ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
+                    : 0,
                 initialRate: { n: 1, d: 2 }
             },
             user,
