@@ -21,7 +21,7 @@ describe('ExternalRewardsVault', () => {
         let externalRewardsVault: ExternalRewardsVault;
 
         beforeEach(async () => {
-            ({ networkTokenGovernance, externalRewardsVault, externalRewardsVault } = await createSystem());
+            ({ networkTokenGovernance, govTokenGovernance, externalRewardsVault } = await createSystem());
         });
 
         it('should revert when attempting to create with an invalid network token governance contract', async () => {
