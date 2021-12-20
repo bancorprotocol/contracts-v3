@@ -72,12 +72,10 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
             const relativeError = x.sub(y).div(y).abs();
             this.assert(
                 relativeError.lte(maxRelativeError),
-                `Expected ${toString(objFraction)} to be almost equal to ${toString(
-                    expectedFraction
-                )} (relativeError = ${relativeError.toFixed(25)}`,
-                `Expected ${toString(objFraction)} NOT to be almost equal to to ${toString(
-                    expectedFraction
-                )} (relativeError = ${relativeError.toFixed(25)}`,
+                `Expected ${toString(objFraction)} to be almost equal to ${toString(expectedFraction)}:'
+                '\nrelativeError = ${relativeError.toFixed()}`,
+                `Expected ${toString(objFraction)} NOT to be almost equal to ${toString(expectedFraction)}:'
+                '\nrelativeError = ${relativeError.toFixed()}`,
                 toString(expectedFraction),
                 toString(objFraction)
             );

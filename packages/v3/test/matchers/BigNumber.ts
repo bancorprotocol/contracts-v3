@@ -86,10 +86,12 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
-                `Expected ${objDec.toFixed()} NOT to be almost equal to to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
+                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
+                `Expected ${objDec.toFixed()} NOT to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
                 expectedDec.toFixed(),
                 objDec.toFixed()
             );
