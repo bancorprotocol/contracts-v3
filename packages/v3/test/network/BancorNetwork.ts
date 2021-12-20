@@ -3371,9 +3371,7 @@ describe('BancorNetwork', () => {
                     expect(walletBalance).to.equal(prevWalletBalance);
 
                     const balance = await getBalance(networkToken, owner.address);
-                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
-                        maxRelativeError
-                    });
+                    expect(balance).to.almostEqual(prevBalance.add(protection.reserveAmount), { maxRelativeError });
 
                     const govBalance = await govToken.balanceOf(owner.address);
                     expect(govBalance).to.equal(prevGovBalance);

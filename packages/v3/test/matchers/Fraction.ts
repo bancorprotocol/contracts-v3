@@ -50,10 +50,9 @@ function overrideAlmostEqual(utils: Chai.ChaiUtils) {
 
 function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
-        const [expected, { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0) }] = args;
+        const [expected, { maxRelativeError = new Decimal(0) }] = args;
         const obj = chaiUtils.flag(this, 'object');
 
-        expect(maxAbsoluteError).to.be.instanceOf(Decimal);
         expect(maxRelativeError).to.be.instanceOf(Decimal);
 
         let objFraction;
@@ -70,16 +69,15 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
                 return;
             }
 
-            const absoluteError = x.sub(y).abs();
-            const relativeError = x.div(y).sub(1).abs();
+            const relativeError = x.sub(y).div(y).abs();
             this.assert(
-                absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
+                relativeError.lte(maxRelativeError),
                 `Expected ${toString(objFraction)} to be almost equal to ${toString(
                     expectedFraction
-                )} (absoluteError = ${absoluteError.toFixed()}, relativeError = ${relativeError.toFixed(25)}`,
+                )} (relativeError = ${relativeError.toFixed(25)}`,
                 `Expected ${toString(objFraction)} NOT to be almost equal to to ${toString(
                     expectedFraction
-                )} (absoluteError = ${absoluteError.toFixed()}, relativeError = ${relativeError.toFixed(25)}`,
+                )} (relativeError = ${relativeError.toFixed(25)}`,
                 toString(expectedFraction),
                 toString(objFraction)
             );
