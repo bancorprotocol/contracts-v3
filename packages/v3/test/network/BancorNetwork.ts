@@ -2715,7 +2715,6 @@ describe('BancorNetwork', () => {
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const ZERO_BYTES = '0x';
-        const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
             ({ network, networkInformation, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
