@@ -111,7 +111,7 @@ describe('PoolAverageRate', () => {
                         averageRate = await poolAverageRate.calcAverageRate(spotRate, prevAverageRate, currentTime);
 
                         expect(averageRate.rate).to.almostEqual(newAverageRate, {
-                            maxRelativeError: new Decimal(0.0000000000000001)
+                            maxRelativeError: new Decimal('0.00000000000000009')
                         });
                         expect(averageRate.time).to.equal(currentTime);
                     }
