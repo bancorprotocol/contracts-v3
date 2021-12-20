@@ -1517,10 +1517,12 @@ describe('PoolCollection', () => {
                                 ? liquidity.baseTokenTradingLiquidity
                                 : liquidity.networkTokenTradingLiquidity;
 
-                            const amount = targetTokenBalance
-                                .mul(sourceAmount)
-                                .div(sourceTokenBalance.add(sourceAmount));
-                            const feeAmount = amount.mul(poolData.tradingFeePPM).div(PPM_RESOLUTION);
+                            const amount = new Decimal(targetTokenBalance.toString())
+                                .mul(sourceAmount.toString())
+                                .div(sourceTokenBalance.add(sourceAmount).toString());
+                            const feeAmount = new Decimal(amount.toString())
+                                .mul(poolData.tradingFeePPM)
+                                .div(PPM_RESOLUTION);
 
                             return { amount: amount.sub(feeAmount), feeAmount };
                         };
@@ -1580,17 +1582,19 @@ describe('PoolCollection', () => {
 
                                 const expectedTargetAmounts = expectedTargetAmountAndFee(amount, prevPoolData);
                                 expect(targetAmountAndFee.amount).to.almostEqual(expectedTargetAmounts.amount, {
-                                    maxRelativeError: new Decimal('0.0001'), relation: Relation.LesserOrEqual
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
                                 });
                                 expect(targetAmountAndFee.feeAmount).to.almostEqual(expectedTargetAmounts.feeAmount, {
-                                    maxRelativeError: new Decimal('0.0001'), relation: Relation.LesserOrEqual
+                                    maxRelativeError: new Decimal('0.000000000000000006'),
+                                    relation: Relation.LesserOrEqual
                                 });
 
                                 expect(sourceAmountAndFee.amount).to.almostEqual(amount, {
-                                    maxRelativeError: new Decimal('0.0001')
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
                                 });
                                 expect(sourceAmountAndFee.feeAmount).to.almostEqual(targetAmountAndFee.feeAmount, {
-                                    maxRelativeError: new Decimal('0.0001'), relation: Relation.GreaterOrEqual
+                                    maxRelativeError: new Decimal('0.000000000000000002'),
+                                    relation: Relation.GreaterOrEqual
                                 });
 
                                 const poolData = await poolCollection.poolData(reserveToken.address);
