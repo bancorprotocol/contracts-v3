@@ -82,7 +82,7 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
             }
 
             const absoluteError = objDec.sub(expectedDec).abs();
-            const relativeError = objDec.div(expectedDec).sub(1).abs();
+            const relativeError = absoluteError.div(expectedDec);
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
