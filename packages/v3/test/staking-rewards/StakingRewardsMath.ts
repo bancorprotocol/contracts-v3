@@ -94,8 +94,7 @@ describe('StakingRewardsMath', () => {
 
         const calculateExponentialDecayRewardsAfterTimeElapsedTest = (
             numOfSeconds: number,
-            totalRewards: BigNumberish,
-            minAccuracy: string
+            totalRewards: BigNumberish
         ) => {
             it(`calculateExponentialDecayRewardsAfterTimeElapsed(${numOfSeconds}, ${totalRewards.toString()})`, async () => {
                 if (numOfSeconds < SECONDS_TOO_HIGH) {
@@ -110,7 +109,7 @@ describe('StakingRewardsMath', () => {
                     const expected = new Decimal(totalRewards.toString()).mul(
                         ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp())
                     );
-                    assertAccuracy(actual, expected, minAccuracy);
+                    expect(actual.sub(expected).abs().lte(1)).to.be.true;
                 } else {
                     await expect(
                         stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(numOfSeconds, totalRewards)
@@ -182,11 +181,7 @@ describe('StakingRewardsMath', () => {
                 SECONDS_TOO_HIGH - 1,
                 SECONDS_TOO_HIGH
             ]) {
-                calculateExponentialDecayRewardsAfterTimeElapsedTest(
-                    numOfSeconds,
-                    toWei(40_000_000),
-                    '0.999999999999999999'
-                );
+                calculateExponentialDecayRewardsAfterTimeElapsedTest(numOfSeconds, toWei(40_000_000));
             }
         });
 
@@ -216,8 +211,7 @@ describe('StakingRewardsMath', () => {
                                             duration.hours(hours) +
                                             duration.days(days) +
                                             duration.years(years),
-                                        totalRewards,
-                                        '0.999999999999999999'
+                                        totalRewards
                                     );
                                 }
                             }
