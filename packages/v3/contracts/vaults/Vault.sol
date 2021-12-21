@@ -14,7 +14,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Utils, AccessDenied, NotPayable } from "../utility/Utils.sol";
+import { Utils, AccessDenied, NotPayable, InvalidToken } from "../utility/Utils.sol";
 
 abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using Address for address payable;
@@ -144,25 +144,23 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         external
         whenAuthorized(msg.sender, reserveToken, payable(address(0)), amount)
     {
-        address payable target = payable(address(0));
-
         if (amount == 0) {
             return;
         }
 
         if (reserveToken.isNativeToken()) {
-            target.transfer(amount);
-        } else {
-            IERC20 token = reserveToken.toIERC20();
+            revert InvalidToken();
+        }
 
-            // allow vaults to burn network and governance tokens via their respective token governance modules
-            if (token == _networkToken) {
-                _networkTokenGovernance.burn(amount);
-            } else if (token == _govToken) {
-                _govTokenGovernance.burn(amount);
-            } else {
-                IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
-            }
+        IERC20 token = reserveToken.toIERC20();
+
+        // allow vaults to burn network and governance tokens via their respective token governance modules
+        if (token == _networkToken) {
+            _networkTokenGovernance.burn(amount);
+        } else if (token == _govToken) {
+            _govTokenGovernance.burn(amount);
+        } else {
+            IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
         }
 
         emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });
