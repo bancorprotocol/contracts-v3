@@ -67,8 +67,8 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
             objFraction = toDecimal(obj) as Fraction<Decimal>;
             expectedFraction = toDecimal(expected) as Fraction<Decimal>;
 
-            const x = objFraction.n.mul(expectedFraction.d.toString());
-            const y = objFraction.d.mul(expectedFraction.n.toString());
+            const x = objFraction.n.mul(expectedFraction.d);
+            const y = objFraction.d.mul(expectedFraction.n);
 
             if (x.eq(y)) {
                 return;
