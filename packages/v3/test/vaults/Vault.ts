@@ -10,6 +10,7 @@ import {
     getBalance,
     createTokenBySymbol,
     errorMessageTokenExceedsBalance,
+    errorMessageTokenBurnExceedsBalance,
     TokenWithAddress
 } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -18,7 +19,7 @@ import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-describe('TestVault', () => {
+describe('Vault', () => {
     let deployer: SignerWithAddress;
     let sender: SignerWithAddress;
     let target: SignerWithAddress;
@@ -34,7 +35,7 @@ describe('TestVault', () => {
             ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
         });
 
-    shouldHaveGap('TestVault', '_authorizeWithdrawal');
+    shouldHaveGap('TestVault', '_isAuthorizedWithdrawal');
 
     before(async () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
@@ -125,12 +126,10 @@ describe('TestVault', () => {
             beforeEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
 
-                await transfer(deployer, token, testVault.address, amount);
+                await transfer(deployer, token, testVault.address, amount + 1);
             });
 
             it('should withdraw funds to the target', async () => {
-                await transfer(deployer, { address: token.address }, testVault.address, amount);
-
                 const prevBalance = await getBalance({ address: token.address }, target);
 
                 const res = await testVault.withdrawFunds(token.address, target.address, amount);
@@ -177,12 +176,6 @@ describe('TestVault', () => {
                     );
                 });
             });
-
-            context('when not paused', () => {
-                it('should not revert', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
-                });
-            });
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
@@ -218,7 +211,7 @@ describe('TestVault', () => {
                         break;
 
                     default:
-                        token = await createTokenBySymbol(symbol, true);
+                        token = await createTokenBySymbol(symbol, amount, true);
                         break;
                 }
 
@@ -227,27 +220,6 @@ describe('TestVault', () => {
                 }
 
                 await transfer(deployer, token, testVault.address, amount);
-            });
-
-            it('should burn funds', async () => {
-                await transfer(deployer, { address: token.address }, testVault.address, amount);
-
-                const prevBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
-                let prevTotalSupply;
-                if (!isETH) {
-                    prevTotalSupply = await reserveToken.totalSupply();
-                }
-
-                const res = await testVault.burn(token.address, amount);
-                await expect(res).to.emit(testVault, 'FundsBurned').withArgs(token.address, deployer.address, amount);
-
-                expect(await getBalance({ address: token.address }, ZERO_ADDRESS)).to.equal(
-                    isETH ? prevBalance.add(amount) : prevBalance
-                );
-
-                if (!isETH) {
-                    expect(await reserveToken.totalSupply()).to.equal(prevTotalSupply?.sub(amount));
-                }
             });
 
             it('should allow burning 0 tokens', async () => {
@@ -259,15 +231,38 @@ describe('TestVault', () => {
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
 
-            it('should revert when trying to withdraw more tokens than the vault holds', async () => {
-                await expect(
-                    testVault.withdrawFunds(
-                        token.address,
-                        target.address,
-                        (await getBalance({ address: token.address }, testVault.address)).add(1)
-                    )
-                ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
-            });
+            if (isETH) {
+                it('should revert when attempting to burn ETH', async () => {
+                    await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
+                });
+            } else {
+                it('should burn funds', async () => {
+                    const prevBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
+                    let prevTotalSupply;
+                    if (!isETH) {
+                        prevTotalSupply = await reserveToken.totalSupply();
+                    }
+
+                    const res = await testVault.burn(token.address, amount);
+                    await expect(res)
+                        .to.emit(testVault, 'FundsBurned')
+                        .withArgs(token.address, deployer.address, amount);
+
+                    expect(await getBalance({ address: token.address }, ZERO_ADDRESS)).to.equal(
+                        isETH ? prevBalance.add(amount) : prevBalance
+                    );
+
+                    if (!isETH) {
+                        expect(await reserveToken.totalSupply()).to.equal(prevTotalSupply?.sub(amount));
+                    }
+                });
+
+                it('should revert when trying to burn more tokens than the vault holds', async () => {
+                    await expect(testVault.burn(token.address, amount + 1)).to.be.revertedWith(
+                        errorMessageTokenBurnExceedsBalance(symbol)
+                    );
+                });
+            }
 
             context('when paused', () => {
                 beforeEach(async () => {
@@ -275,15 +270,7 @@ describe('TestVault', () => {
                 });
 
                 it('should revert', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.revertedWith(
-                        'Pausable: paused'
-                    );
-                });
-            });
-
-            context('when not paused', () => {
-                it('should not revert', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                    await expect(testVault.burn(token.address, amount)).to.revertedWith('Pausable: paused');
                 });
             });
         };

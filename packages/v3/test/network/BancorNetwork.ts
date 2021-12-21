@@ -732,6 +732,7 @@ describe('BancorNetwork', () => {
                     {
                         symbol,
                         balance: toWei(50_000_000),
+                        requestedLiquidity: toWei(50_000_000).mul(1000),
                         initialRate: INITIAL_RATE
                     },
                     deployer,
@@ -2640,11 +2641,13 @@ describe('BancorNetwork', () => {
                 {
                     symbol: sourceSymbol,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
                     balance: toWei(5_000_000),
+                    requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 }
             );
@@ -2664,12 +2667,14 @@ describe('BancorNetwork', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
+                                        requestedLiquidity: sourceBalance.mul(1000),
                                         tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
+                                        requestedLiquidity: targetBalance.mul(1000),
                                         tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
@@ -2681,12 +2686,14 @@ describe('BancorNetwork', () => {
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
+                                            requestedLiquidity: sourceBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
+                                            requestedLiquidity: targetBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
@@ -2737,6 +2744,7 @@ describe('BancorNetwork', () => {
                     {
                         symbol: TKN,
                         balance: amount,
+                        requestedLiquidity: amount.mul(1000),
                         initialRate: INITIAL_RATE
                     },
                     deployer,
@@ -2799,6 +2807,7 @@ describe('BancorNetwork', () => {
                     {
                         symbol,
                         balance: amount,
+                        requestedLiquidity: amount.mul(1000),
                         initialRate: INITIAL_RATE
                     },
                     deployer,
@@ -3448,6 +3457,7 @@ describe('BancorNetwork', () => {
                 {
                     symbol: TKN,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }
                 },
                 provider as any as SignerWithAddress,
@@ -3650,12 +3660,14 @@ describe('BancorNetwork Financial Verification', () => {
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
+    /* eslint-disable indent */
     const decimalize = (obj: any): any =>
         Array.isArray(obj)
             ? obj.map(decimalize)
             : Object(obj) === obj
             ? Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, decimalize(v)]))
             : new Decimal(obj);
+    /* eslint-enable indent */
 
     const verifyState = async (expected: State) => {
         const actual: State = {

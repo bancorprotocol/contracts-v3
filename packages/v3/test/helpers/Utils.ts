@@ -71,7 +71,11 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const createTokenBySymbol = async (symbol: string, burnable = false): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (
+    symbol: string,
+    totalSupply: BigNumberish = toWei(1_000_000_000),
+    burnable = false
+): Promise<TokenWithAddress> => {
     switch (symbol) {
         case ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
@@ -82,7 +86,7 @@ export const createTokenBySymbol = async (symbol: string, burnable = false): Pro
             return (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
                 symbol,
                 symbol,
-                toWei(1_000_000_000)
+                totalSupply
             );
 
         default:
@@ -123,6 +127,27 @@ export const errorMessageTokenExceedsBalance = (symbol: string): string => {
         case `${TKN}1`:
         case `${TKN}2`:
             return 'ERC20: transfer amount exceeds balance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const errorMessageTokenBurnExceedsBalance = (symbol: string): string => {
+    switch (symbol) {
+        case BNT:
+            return '';
+
+        case vBNT:
+            return 'ERR_UNDERFLOW';
+
+        case ETH:
+            return '';
+
+        case TKN:
+        case `${TKN}1`:
+        case `${TKN}2`:
+            return 'ERC20: burn amount exceeds balance';
 
         default:
             throw new Error(`Unsupported type ${symbol}`);

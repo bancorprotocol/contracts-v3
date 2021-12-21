@@ -776,7 +776,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const protocolPoolTokenAmount = await poolToken.balanceOf(rewardsVault.address);
 
                 const poolTokenSupply = await poolToken.totalSupply();
-                const val = tokenAmountToDistribute.mul(await poolToken.totalSupply());
+                const val = tokenAmountToDistribute.mul(poolTokenSupply);
 
                 poolTokenAmountToBurn = val
                     .mul(poolTokenSupply)
@@ -843,7 +843,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         throw new Error(`Unsupported type ${distributionType}`);
                 }
 
-                expect(await getPoolTokenUnderlying(user)).be.almostEqual(
+                expect(await getPoolTokenUnderlying(user)).to.be.almostEqual(
                     prevUserTokenOwned.add(tokenAmountToDistribute),
                     { maxRelativeError: maxRelativeError1, relation: Relation.LesserOrEqual }
                 );
@@ -980,9 +980,17 @@ describe('AutoCompoundingStakingRewards', () => {
                             });
                         };
 
-                        for (const step of [6, 25]) {
-                            testSingleDistribution(step);
-                        }
+                        describe('regular tests', () => {
+                            for (const step of [25]) {
+                                testSingleDistribution(step);
+                            }
+                        });
+
+                        describe('@stress tests', () => {
+                            for (const step of [6, 15]) {
+                                testSingleDistribution(step);
+                            }
+                        });
                     });
 
                     describe('multiple distributions', () => {
@@ -1004,17 +1012,41 @@ describe('AutoCompoundingStakingRewards', () => {
                             });
                         };
 
-                        for (const step of [6, 25]) {
-                            testMultipleDistributions(step);
-                        }
+                        describe('regular tests', () => {
+                            for (const step of [25]) {
+                                testMultipleDistributions(step);
+                            }
+                        });
+
+                        describe('@stress tests', () => {
+                            for (const step of [6, 15]) {
+                                testMultipleDistributions(step);
+                            }
+                        });
                     });
                 };
 
-                for (const programDuration of [duration.days(10), duration.weeks(12), duration.years(1)]) {
-                    context(`program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`, () => {
-                        testFlat(programDuration);
-                    });
-                }
+                describe('regular tests', () => {
+                    for (const programDuration of [duration.days(10)]) {
+                        context(
+                            `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
+                            () => {
+                                testFlat(programDuration);
+                            }
+                        );
+                    }
+                });
+
+                describe('@stress tests', () => {
+                    for (const programDuration of [duration.days(20), duration.weeks(12), duration.years(1)]) {
+                        context(
+                            `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
+                            () => {
+                                testFlat(programDuration);
+                            }
+                        );
+                    }
+                });
             });
 
             context('exponential decay', () => {
@@ -1146,11 +1178,21 @@ describe('AutoCompoundingStakingRewards', () => {
                         });
                     };
 
-                    for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
-                        for (const totalSteps of [10]) {
-                            testSingleDistribution(step, totalSteps);
+                    describe('regular tests', () => {
+                        for (const step of [duration.days(1)]) {
+                            for (const totalSteps of [10]) {
+                                testSingleDistribution(step, totalSteps);
+                            }
                         }
-                    }
+                    });
+
+                    describe('@stress tests', () => {
+                        for (const step of [duration.hours(1), duration.days(2), duration.weeks(1)]) {
+                            for (const totalSteps of [10]) {
+                                testSingleDistribution(step, totalSteps);
+                            }
+                        }
+                    });
                 });
 
                 describe('multiple distributions', () => {
@@ -1169,26 +1211,53 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
                     };
 
-                    for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
-                        for (const totalSteps of [10]) {
-                            testMultipleDistributions(step, totalSteps);
+                    describe('regular tests', () => {
+                        for (const step of [duration.days(1)]) {
+                            for (const totalSteps of [10]) {
+                                testMultipleDistributions(step, totalSteps);
+                            }
                         }
-                    }
+                    });
+
+                    describe('@stress tests', () => {
+                        for (const step of [duration.hours(1), duration.days(2), duration.weeks(1)]) {
+                            for (const totalSteps of [10]) {
+                                testMultipleDistributions(step, totalSteps);
+                            }
+                        }
+                    });
                 });
             });
         };
 
-        for (const symbol of [BNT, TKN, ETH]) {
-            for (const providerStake of [toWei(5_000), toWei(100_000)]) {
-                for (const totalRewards of [100_000, toWei(10_000), toWei(200_000)]) {
-                    context(
-                        `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
-                        () => {
-                            testRewards(symbol, providerStake, totalRewards);
-                        }
-                    );
+        describe('regular tests', () => {
+            for (const symbol of [BNT, TKN, ETH]) {
+                for (const providerStake of [toWei(10_000)]) {
+                    for (const totalRewards of [toWei(100_000)]) {
+                        context(
+                            `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
+                            () => {
+                                testRewards(symbol, providerStake, totalRewards);
+                            }
+                        );
+                    }
                 }
             }
-        }
+        });
+
+        describe('@stress tests', () => {
+            for (const symbol of [BNT, TKN, ETH]) {
+                for (const providerStake of [toWei(5_000), toWei(100_000)]) {
+                    for (const totalRewards of [100_000, toWei(10_000), toWei(200_000)]) {
+                        context(
+                            `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
+                            () => {
+                                testRewards(symbol, providerStake, totalRewards);
+                            }
+                        );
+                    }
+                }
+            }
+        });
     });
 });

@@ -8,8 +8,8 @@ import { ReserveToken } from "../token/ReserveToken.sol";
 import { Vault } from "../vaults/Vault.sol";
 
 contract TestVault is Vault {
-    bool private _authorizeWithdrawal;
-    bool private _payable;
+    bool private _isAuthorizedWithdrawal;
+    bool private _isPayable;
 
     uint256[MAX_GAP - 1] private __gap;
 
@@ -32,11 +32,11 @@ contract TestVault is Vault {
     function __TestVault_init_unchained() internal onlyInitializing {}
 
     function setAuthorizedWithdrawal(bool state) external {
-        _authorizeWithdrawal = state;
+        _isAuthorizedWithdrawal = state;
     }
 
     function setPayable(bool state) external {
-        _payable = state;
+        _isPayable = state;
     }
 
     function version() external pure override returns (uint16) {
@@ -44,15 +44,15 @@ contract TestVault is Vault {
     }
 
     function isPayable() public view override returns (bool) {
-        return _payable;
+        return _isPayable;
     }
 
-    function authorizeWithdrawal(
+    function isAuthorizedWithdrawal(
         address, /* caller */
         ReserveToken, /* reserverToken */
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return _authorizeWithdrawal;
+        return _isAuthorizedWithdrawal;
     }
 }

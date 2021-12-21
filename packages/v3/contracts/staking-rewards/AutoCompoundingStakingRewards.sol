@@ -19,7 +19,13 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-import { IAutoCompoundingStakingRewards, ProgramData, FLAT_DISTRIBUTION, EXPONENTIAL_DECAY_DISTRIBUTION } from "./interfaces/IAutoCompoundingStakingRewards.sol";
+// prettier-ignore
+import {
+    IAutoCompoundingStakingRewards,
+    ProgramData,
+    FLAT_DISTRIBUTION,
+    EXPONENTIAL_DECAY_DISTRIBUTION
+} from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 
@@ -355,8 +361,8 @@ contract AutoCompoundingStakingRewards is
         if (!isProgramActive(pool)) {
             if (
                 distributionType == FLAT_DISTRIBUTION &&
-                currentProgram.endTime < _time() &&
-                currentProgram.prevDistributionTimestamp < currentProgram.endTime
+                currentProgram.prevDistributionTimestamp < currentProgram.endTime &&
+                currentProgram.endTime < _time()
             ) {} else {
                 return;
             }
@@ -418,10 +424,8 @@ contract AutoCompoundingStakingRewards is
         pure
         returns (uint256)
     {
-        // ensure that the elapsed time isn't longer than the duration of the program
         uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
-        uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
-        uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
+        uint32 timeElapsedSinceLastDistribution = timeInfo.timeElapsed - timeInfo.prevTimeElapsed;
         uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
 
         return

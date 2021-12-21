@@ -298,6 +298,7 @@ describe('PendingWithdrawals', () => {
                             {
                                 symbol: TKN,
                                 balance: toWei(1_000_000),
+                                requestedLiquidity: toWei(1_000_000).mul(1000),
                                 initialRate: { n: 1, d: 2 }
                             },
                             provider as any as SignerWithAddress,
@@ -367,6 +368,7 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider1,
@@ -488,6 +490,7 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider1,
@@ -609,6 +612,7 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider,
