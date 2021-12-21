@@ -73,7 +73,7 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
      *
      * - the caller must have the ROLE_ASSET_MANAGER permission
      */
-    function authorizeWithdrawal(
+    function isAuthorizedWithdrawal(
         address caller,
         ReserveToken, /* reserveToken */
         address, /* target */

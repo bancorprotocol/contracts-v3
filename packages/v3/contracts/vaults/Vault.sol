@@ -71,7 +71,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         address payable target,
         uint256 amount
     ) {
-        if (!authorizeWithdrawal(caller, reserveToken, target, amount)) {
+        if (!isAuthorizedWithdrawal(caller, reserveToken, target, amount)) {
             revert AccessDenied();
         }
 
@@ -171,7 +171,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @dev returns whether the given caller is allowed access to the given token
      */
-    function authorizeWithdrawal(
+    function isAuthorizedWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address target,

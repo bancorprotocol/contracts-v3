@@ -34,7 +34,7 @@ describe('TestVault', () => {
             ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
         });
 
-    shouldHaveGap('TestVault', '_authorizeWithdrawal');
+    shouldHaveGap('TestVault', '_isAuthorizedWithdrawal');
 
     before(async () => {
         [deployer, sender, target, admin] = await ethers.getSigners();
