@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolCollectionWithdrawal } from '../../typechain-types';
-import { AlmostEqualOptions } from '../matchers';
+import { AlmostEqualOptions, Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import fs from 'fs';
@@ -68,70 +68,70 @@ describe('PoolCollectionWithdrawal', () => {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage2', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage3', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage4', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000002') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage5', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage6', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000003') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
 
         test('PoolCollectionWithdrawalCoverage7', {
             p: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000006') },
             r: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000000000000000005') },
-            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003') },
+            s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000003'), relation: Relation.LesserOrEqual }, // prettier-ignore
             t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0') }
+            v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });
     };
 
