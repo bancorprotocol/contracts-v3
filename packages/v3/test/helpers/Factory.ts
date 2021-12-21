@@ -362,7 +362,7 @@ export const depositToPool = async (
 export interface PoolSpec {
     symbol: string;
     balance: BigNumberish;
-    requestedLiquidity?: BigNumberish;
+    requestedLiquidity: BigNumberish;
     initialRate: Fraction<number>;
     tradingFeePPM?: number;
 }
@@ -392,11 +392,7 @@ export const setupSimplePool = async (
         const reserveToken = await createTokenBySymbol(TKN);
 
         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
-        await network.requestLiquidityT(
-            formatBytes32String(''),
-            reserveToken.address,
-            spec.requestedLiquidity || BigNumber.from(spec.balance).mul(1000)
-        );
+        await network.requestLiquidityT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
 
         await depositToPool(provider, networkToken, spec.balance, network);
 

@@ -413,11 +413,13 @@ describe('BancorNetworkInformation', () => {
                 {
                     symbol: sourceSymbol,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
                     balance: toWei(5_000_000),
+                    requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 }
             );
@@ -455,6 +457,7 @@ describe('BancorNetworkInformation', () => {
                 {
                     symbol: TKN,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }
                 },
                 provider,

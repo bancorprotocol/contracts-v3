@@ -760,11 +760,13 @@ describe('Profile @profile', () => {
                 {
                     symbol: sourceSymbol,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
                     balance: toWei(5_000_000),
+                    requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 toWei(100_000)
@@ -785,12 +787,14 @@ describe('Profile @profile', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
+                                        requestedLiquidity: sourceBalance.mul(1000),
                                         tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
+                                        requestedLiquidity: targetBalance.mul(1000),
                                         tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
@@ -802,12 +806,14 @@ describe('Profile @profile', () => {
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
+                                            requestedLiquidity: sourceBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
+                                            requestedLiquidity: targetBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
@@ -856,6 +862,7 @@ describe('Profile @profile', () => {
                     {
                         symbol,
                         balance: amount,
+                        requestedLiquidity: amount.mul(1000),
                         initialRate: INITIAL_RATE
                     },
                     deployer,
@@ -928,6 +935,7 @@ describe('Profile @profile', () => {
                 {
                     symbol: TKN,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }
                 },
                 provider as any as SignerWithAddress,
