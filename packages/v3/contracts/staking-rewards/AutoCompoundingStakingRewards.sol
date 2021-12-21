@@ -19,7 +19,13 @@ import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
-import { IAutoCompoundingStakingRewards, ProgramData, FLAT_DISTRIBUTION, EXPONENTIAL_DECAY_DISTRIBUTION } from "./interfaces/IAutoCompoundingStakingRewards.sol";
+// prettier-ignore
+import {
+    IAutoCompoundingStakingRewards,
+    ProgramData,
+    FLAT_DISTRIBUTION,
+    EXPONENTIAL_DECAY_DISTRIBUTION
+} from "./interfaces/IAutoCompoundingStakingRewards.sol";
 
 import { StakingRewardsMath } from "./StakingRewardsMath.sol";
 
