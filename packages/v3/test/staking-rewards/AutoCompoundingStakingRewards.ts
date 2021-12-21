@@ -1073,7 +1073,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                maxRelativeError: new Decimal('0.0000003'),
+                                maxRelativeError: new Decimal('0.0000001133'),
                                 maxAbsoluteError: new Decimal(1)
                             });
                         });
@@ -1089,7 +1089,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                maxRelativeError: new Decimal('0.0000003'),
+                                maxRelativeError: new Decimal('0.0000001133'),
                                 maxAbsoluteError: new Decimal(1)
                             });
                         });
