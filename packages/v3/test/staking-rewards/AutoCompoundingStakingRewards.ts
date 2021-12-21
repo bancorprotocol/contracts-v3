@@ -18,7 +18,6 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
-import { AlmostEqualOptions } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -825,23 +824,18 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
                 expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
 
-                let options: AlmostEqualOptions;
+                let maxRelativeError1: Decimal;
+                let maxRelativeError2: Decimal;
                 const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
                 switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        options = {
-                            maxRelativeError: new Decimal('0.0000000000001'),
-                            maxAbsoluteError: new Decimal(1)
-                        };
-
+                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
+                        maxRelativeError2 = new Decimal('0.00000000000000000000001');
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        options = {
-                            maxRelativeError: new Decimal('0.0000003'),
-                            maxAbsoluteError: new Decimal(1)
-                        };
-
+                        maxRelativeError1 = new Decimal('0.00000000000000000000020000002');
+                        maxRelativeError2 = new Decimal('0.000000000000002');
                         break;
 
                     default:
@@ -850,12 +844,12 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 expect(await getPoolTokenUnderlying(user)).be.almostEqual(
                     prevUserTokenOwned.add(tokenAmountToDistribute),
-                    options
+                    { maxRelativeError: maxRelativeError1 }
                 );
 
                 expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
                     prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                    options
+                    { maxRelativeError: maxRelativeError2 }
                 );
 
                 return { tokenAmountToDistribute };
