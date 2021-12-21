@@ -845,12 +845,12 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 expect(await getPoolTokenUnderlying(user)).be.almostEqual(
                     prevUserTokenOwned.add(tokenAmountToDistribute),
-                    { maxRelativeError: maxRelativeError1 }
+                    { maxRelativeError: maxRelativeError1, relation: Relation.LesserOrEqual }
                 );
 
                 expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
                     prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                    { maxRelativeError: maxRelativeError2 }
+                    { maxRelativeError: maxRelativeError2, relation: Relation.GreaterOrEqual }
                 );
 
                 return { tokenAmountToDistribute };
