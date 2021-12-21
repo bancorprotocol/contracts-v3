@@ -10,6 +10,8 @@ on:
 jobs:
   test:
     runs-on: self-hosted
+    timeout-minutes: 600
+
     defaults:
       run:
         shell: bash
