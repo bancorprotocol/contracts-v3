@@ -82,14 +82,16 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
             }
 
             const absoluteError = objDec.sub(expectedDec).abs();
-            const relativeError = objDec.div(expectedDec).sub(1).abs();
+            const relativeError = absoluteError.div(expectedDec);
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
-                `Expected ${objDec.toFixed()} NOT to be almost equal to to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
+                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
+                `Expected ${objDec.toFixed()} NOT to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
                 expectedDec.toFixed(),
                 objDec.toFixed()
             );

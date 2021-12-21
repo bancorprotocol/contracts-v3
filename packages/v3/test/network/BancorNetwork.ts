@@ -64,6 +64,7 @@ import {
     transfer,
     TokenWithAddress
 } from '../helpers/Utils';
+import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -3359,8 +3360,9 @@ describe('BancorNetwork', () => {
                     expect(walletBalance).to.equal(prevWalletBalance);
 
                     const balance = await getBalance(networkToken, owner.address);
-                    expect(balance).to.almostEqual(new Decimal(prevBalance.add(protection.reserveAmount).toString()), {
-                        maxRelativeError
+                    expect(balance).to.almostEqual(prevBalance.add(protection.reserveAmount), {
+                        maxRelativeError,
+                        relation: Relation.LesserOrEqual
                     });
 
                     const govBalance = await govToken.balanceOf(owner.address);
