@@ -3650,12 +3650,14 @@ describe('BancorNetwork Financial Verification', () => {
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
+    /* eslint-disable indent */
     const decimalize = (obj: any): any =>
         Array.isArray(obj)
             ? obj.map(decimalize)
             : Object(obj) === obj
             ? Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, decimalize(v)]))
             : new Decimal(obj);
+    /* eslint-enable indent */
 
     const verifyState = async (expected: State) => {
         const actual: State = {
