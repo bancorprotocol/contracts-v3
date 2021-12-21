@@ -3,31 +3,16 @@ import { TestStakingRewardsMath } from '../../typechain-types';
 import { ExponentialDecay } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
+import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish } from 'ethers';
-import { EOL } from 'os';
 
 const { seconds, days, minutes, hours, years } = duration;
 const { ONE, LAMBDA } = ExponentialDecay;
 
 const EXP_VAL_TOO_HIGH = 16;
 const SECONDS_TOO_HIGH = ONE.div(LAMBDA).mul(EXP_VAL_TOO_HIGH).ceil().toNumber();
-
-const assertAccuracy = (actual: Decimal, expected: Decimal, minAccuracy: string) => {
-    if (!actual.eq(expected)) {
-        const accuracy = actual.div(expected);
-        expect(accuracy.gte(minAccuracy) && accuracy.lte(1)).to.equal(
-            true,
-            EOL +
-                [
-                    `expected = ${expected.toFixed(minAccuracy.length)}`,
-                    `actual   = ${actual.toFixed(minAccuracy.length)}`,
-                    `accuracy = ${accuracy.toFixed(minAccuracy.length)}`
-                ].join(EOL)
-        );
-    }
-};
 
 describe('StakingRewardsMath', () => {
     let stakingRewardsMath: TestStakingRewardsMath;
@@ -79,13 +64,16 @@ describe('StakingRewardsMath', () => {
     });
 
     describe('exponential decay', () => {
-        const expTest = (a: number, b: number, minAccuracy: string) => {
+        const expTest = (a: number, b: number, maxRelativeError: Decimal) => {
             it(`exp(${a}, ${b})`, async () => {
                 if (a / b < EXP_VAL_TOO_HIGH) {
                     const retVal = await stakingRewardsMath.expT(a, b);
-                    const actual = new Decimal(retVal[0].toString()).div(retVal[1].toString());
-                    const expected = new Decimal(a).div(b).exp();
-                    assertAccuracy(actual, expected, minAccuracy);
+                    const actual = { n: retVal[0], d: retVal[1] };
+                    const expected = { n: new Decimal(a).div(b).exp(), d: 1 };
+                    await expect(actual).to.be.almostEqual(expected, {
+                        maxRelativeError,
+                        relation: Relation.LesserOrEqual
+                    });
                 } else {
                     await expect(stakingRewardsMath.expT(a, b)).to.revertedWith('ExpValueTooHigh');
                 }
@@ -94,23 +82,21 @@ describe('StakingRewardsMath', () => {
 
         const calculateExponentialDecayRewardsAfterTimeElapsedTest = (
             numOfSeconds: number,
-            totalRewards: BigNumberish,
-            minAccuracy: string
+            totalRewards: BigNumberish
         ) => {
             it(`calculateExponentialDecayRewardsAfterTimeElapsed(${numOfSeconds}, ${totalRewards.toString()})`, async () => {
                 if (numOfSeconds < SECONDS_TOO_HIGH) {
-                    const actual = new Decimal(
-                        (
-                            await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
-                                numOfSeconds,
-                                totalRewards
-                            )
-                        ).toString()
+                    const actual = await stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(
+                        numOfSeconds,
+                        totalRewards
                     );
                     const expected = new Decimal(totalRewards.toString()).mul(
                         ONE.sub(LAMBDA.neg().mul(numOfSeconds).exp())
                     );
-                    assertAccuracy(actual, expected, minAccuracy);
+                    await expect(actual).to.be.almostEqual(expected, {
+                        maxAbsoluteError: new Decimal(1),
+                        relation: Relation.LesserOrEqual
+                    });
                 } else {
                     await expect(
                         stakingRewardsMath.calculateExponentialDecayRewardsAfterTimeElapsedT(numOfSeconds, totalRewards)
@@ -122,43 +108,43 @@ describe('StakingRewardsMath', () => {
         describe('regular tests', () => {
             for (let a = 0; a < 10; a++) {
                 for (let b = 1; b < 10; b++) {
-                    expTest(a, b, '0.99999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.000000000000000000000000000000000002'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = 1; a <= 10; a++) {
-                    expTest(a, b, '0.9999999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.00000000000000000000000000000000000002'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = b - 10; a <= b - 1; a++) {
-                    expTest(a, b, '0.9999999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.00000000000000000000000000000000000003'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = b + 1; a <= b + 10; a++) {
-                    expTest(a, b, '0.9999999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.00000000000000000000000000000000000002'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = 2 * b - 10; a <= 2 * b - 1; a++) {
-                    expTest(a, b, '0.9999999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.00000000000000000000000000000000000003'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = 2 * b + 1; a <= 2 * b + 10; a++) {
-                    expTest(a, b, '0.9999999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.00000000000000000000000000000000000002'));
                 }
             }
 
             for (let b = 1000; b < 1000000000; b *= 10) {
                 for (let a = EXP_VAL_TOO_HIGH * b - 10; a <= EXP_VAL_TOO_HIGH * b - 1; a++) {
-                    expTest(a, b, '0.99999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.000000000000000000000000000000000002'));
                 }
             }
 
@@ -182,18 +168,14 @@ describe('StakingRewardsMath', () => {
                 SECONDS_TOO_HIGH - 1,
                 SECONDS_TOO_HIGH
             ]) {
-                calculateExponentialDecayRewardsAfterTimeElapsedTest(
-                    numOfSeconds,
-                    toWei(40_000_000),
-                    '0.999999999999999999'
-                );
+                calculateExponentialDecayRewardsAfterTimeElapsedTest(numOfSeconds, toWei(40_000_000));
             }
         });
 
         describe('@stress tests', () => {
             for (let a = 0; a < 100; a++) {
                 for (let b = 1; b < 100; b++) {
-                    expTest(a, b, '0.99999999999999999999999999999999999');
+                    expTest(a, b, new Decimal('0.000000000000000000000000000000000002'));
                 }
             }
 
@@ -216,8 +198,7 @@ describe('StakingRewardsMath', () => {
                                             duration.hours(hours) +
                                             duration.days(days) +
                                             duration.years(years),
-                                        totalRewards,
-                                        '0.999999999999999999'
+                                        totalRewards
                                     );
                                 }
                             }
