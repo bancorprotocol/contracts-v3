@@ -81,19 +81,19 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
                 case Relation.LesserOrEqual:
                     this.assert(
                         objDec.lte(expectedDec),
-                        `Expected ${objDec} to be lesser than or equal to ${expectedDec}`,
-                        `Expected ${objDec} NOT to be lesser than or equal to ${expectedDec}`,
-                        expectedDec.toString(),
-                        objDec.toString()
+                        `Expected ${toString(objFraction)} to be lesser than or equal to ${toString(expectedFraction)}`,
+                        `Expected ${toString(objFraction)} NOT to be lesser than or equal to ${toString(expectedFraction)}`,
+                        toString(expectedFraction),
+                        toString(objFraction)
                     );
                     break;
                 case Relation.GreaterOrEqual:
                     this.assert(
                         objDec.gte(expectedDec),
-                        `Expected ${objDec} to be greater than or equal to ${expectedDec}`,
-                        `Expected ${objDec} NOT to be greater than or equal to ${expectedDec}`,
-                        expectedDec.toString(),
-                        objDec.toString()
+                        `Expected ${toString(objFraction)} to be greater than or equal to ${toString(expectedFraction)}`,
+                        `Expected ${toString(objFraction)} NOT to be greater than or equal to ${toString(expectedFraction)}`,
+                        toString(expectedFraction),
+                        toString(objFraction)
                     );
                     break;
             }
