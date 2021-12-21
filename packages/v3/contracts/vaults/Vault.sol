@@ -142,6 +142,8 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      */
     function burn(ReserveToken reserveToken, uint256 amount)
         external
+        nonReentrant
+        whenNotPaused
         whenAuthorized(msg.sender, reserveToken, payable(address(0)), amount)
     {
         if (amount == 0) {

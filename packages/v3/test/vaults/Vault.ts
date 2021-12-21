@@ -10,6 +10,7 @@ import {
     getBalance,
     createTokenBySymbol,
     errorMessageTokenExceedsBalance,
+    errorMessageTokenBurnExceedsBalance,
     TokenWithAddress
 } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -18,7 +19,7 @@ import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-describe('TestVault', () => {
+describe('Vault', () => {
     let deployer: SignerWithAddress;
     let sender: SignerWithAddress;
     let target: SignerWithAddress;
@@ -125,7 +126,7 @@ describe('TestVault', () => {
             beforeEach(async () => {
                 token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
 
-                await transfer(deployer, token, testVault.address, amount);
+                await transfer(deployer, token, testVault.address, amount + 1);
             });
 
             it('should withdraw funds to the target', async () => {
@@ -175,12 +176,6 @@ describe('TestVault', () => {
                     );
                 });
             });
-
-            context('when not paused', () => {
-                it('should not revert', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
-                });
-            });
         };
 
         for (const symbol of [BNT, ETH, TKN]) {
@@ -216,7 +211,7 @@ describe('TestVault', () => {
                         break;
 
                     default:
-                        token = await createTokenBySymbol(symbol, true);
+                        token = await createTokenBySymbol(symbol, amount, true);
                         break;
                 }
 
@@ -264,7 +259,7 @@ describe('TestVault', () => {
 
                 it('should revert when trying to burn more tokens than the vault holds', async () => {
                     await expect(testVault.burn(token.address, amount + 1)).to.be.revertedWith(
-                        errorMessageTokenExceedsBalance(symbol)
+                        errorMessageTokenBurnExceedsBalance(symbol)
                     );
                 });
             }
@@ -276,12 +271,6 @@ describe('TestVault', () => {
 
                 it('should revert', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('Pausable: paused');
-                });
-            });
-
-            context('when not paused', () => {
-                it('should not revert', async () => {
-                    await expect(testVault.burn(token.address, amount)).to.not.reverted;
                 });
             });
         };
