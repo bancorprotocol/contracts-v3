@@ -361,8 +361,8 @@ contract AutoCompoundingStakingRewards is
         if (!isProgramActive(pool)) {
             if (
                 distributionType == FLAT_DISTRIBUTION &&
-                currentProgram.endTime < _time() &&
-                currentProgram.prevDistributionTimestamp < currentProgram.endTime
+                currentProgram.prevDistributionTimestamp < currentProgram.endTime &&
+                currentProgram.endTime < _time()
             ) {} else {
                 return;
             }
