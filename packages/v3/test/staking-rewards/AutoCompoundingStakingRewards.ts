@@ -18,6 +18,7 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
+import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -1074,7 +1075,8 @@ describe('AutoCompoundingStakingRewards', () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
                                 maxRelativeError: new Decimal('0.0000001133'),
-                                maxAbsoluteError: new Decimal(1)
+                                maxAbsoluteError: new Decimal(1),
+                                relation: Relation.LesserOrEqual
                             });
                         });
                     });
@@ -1090,7 +1092,8 @@ describe('AutoCompoundingStakingRewards', () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
                                 maxRelativeError: new Decimal('0.0000001133'),
-                                maxAbsoluteError: new Decimal(1)
+                                maxAbsoluteError: new Decimal(1),
+                                relation: Relation.LesserOrEqual
                             });
                         });
                     });
