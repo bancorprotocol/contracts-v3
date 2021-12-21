@@ -776,7 +776,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const protocolPoolTokenAmount = await poolToken.balanceOf(rewardsVault.address);
 
                 const poolTokenSupply = await poolToken.totalSupply();
-                const val = tokenAmountToDistribute.mul(await poolToken.totalSupply());
+                const val = tokenAmountToDistribute.mul(poolTokenSupply);
 
                 poolTokenAmountToBurn = val
                     .mul(poolTokenSupply)
@@ -848,7 +848,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         throw new Error(`Unsupported type ${distributionType}`);
                 }
 
-                expect(await getPoolTokenUnderlying(user)).be.almostEqual(
+                expect(await getPoolTokenUnderlying(user)).to.be.almostEqual(
                     prevUserTokenOwned.add(tokenAmountToDistribute),
                     options
                 );
