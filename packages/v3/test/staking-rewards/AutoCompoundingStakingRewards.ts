@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
     IVault,
@@ -37,7 +37,7 @@ describe('AutoCompoundingStakingRewards', () => {
     let stakingRewardsProvider: SignerWithAddress;
 
     let network: TestBancorNetwork;
-    let networkInformation: BancorNetworkInformation;
+    let networkInfo: BancorNetworkInfo;
     let networkSettings: NetworkSettings;
     let masterPool: TestMasterPool;
     let masterPoolToken: PoolToken;
@@ -68,7 +68,7 @@ describe('AutoCompoundingStakingRewards', () => {
             },
             user,
             network,
-            networkInformation,
+            networkInfo,
             networkSettings,
             poolCollection
         );
@@ -181,7 +181,7 @@ describe('AutoCompoundingStakingRewards', () => {
             beforeEach(async () => {
                 ({
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     networkToken,
                     masterPool,
@@ -694,7 +694,7 @@ describe('AutoCompoundingStakingRewards', () => {
             beforeEach(async () => {
                 ({
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     networkToken,
                     masterPool,

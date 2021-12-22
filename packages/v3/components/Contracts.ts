@@ -2,7 +2,7 @@
 import {
     AutoCompoundingStakingRewards__factory,
     BancorNetwork__factory,
-    BancorNetworkInformation__factory,
+    BancorNetworkInfo__factory,
     BancorV1Migration__factory,
     ERC20__factory,
     ExternalProtectionVault__factory,
@@ -52,7 +52,7 @@ const getContracts = (signer?: Signer) => ({
         signer
     ),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
-    BancorNetworkInformation: deployOrAttach('BancorNetworkInformation', BancorNetworkInformation__factory, signer),
+    BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorV1Migration: deployOrAttach('BancorV1Migration', BancorV1Migration__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
     ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),
