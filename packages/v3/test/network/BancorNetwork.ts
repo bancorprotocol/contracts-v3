@@ -2217,11 +2217,7 @@ describe('BancorNetwork', () => {
                 );
             }
 
-            const targetAmount = await networkInfo.tradeTargetAmount(
-                sourceToken.address,
-                targetToken.address,
-                amount
-            );
+            const targetAmount = await networkInfo.tradeTargetAmount(sourceToken.address, targetToken.address, amount);
             expect(targetAmount).to.equal(tradeAmounts.amount);
 
             const res = await trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline });
