@@ -28,8 +28,9 @@ import humanizeDuration from 'humanize-duration';
 
 const { days } = duration;
 const { LAMBDA } = ExponentialDecay;
-
 const { Upgradeable: UpgradeableRoles } = roles;
+
+const ONE = new Decimal(1);
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
@@ -721,7 +722,7 @@ describe('AutoCompoundingStakingRewards', () => {
             };
 
             const getExponentialDecayRewardsAfterTimeElapsed = (timeElapsed: number, totalRewards: BigNumber) =>
-                new Decimal(totalRewards.toString()).mul(new Decimal(1).sub(LAMBDA.neg().mul(timeElapsed).exp()));
+                new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(timeElapsed).exp()));
 
             const getRewards = async (pool: TokenWithAddress) => {
                 let tokenAmountToDistribute = BigNumber.from(0);
