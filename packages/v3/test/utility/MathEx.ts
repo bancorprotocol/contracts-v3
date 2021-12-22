@@ -46,10 +46,13 @@ describe('MathEx', () => {
             if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
                 const actual = await mathContract.exp(f);
                 const expected = new Decimal(f.n).div(f.d).exp();
-                await expect(actual).to.be.almostEqual({ n: expected, d: 1 }, {
-                    maxRelativeError,
-                    relation: Relation.LesserOrEqual
-                });
+                await expect(actual).to.be.almostEqual(
+                    { n: expected, d: 1 },
+                    {
+                        maxRelativeError,
+                        relation: Relation.LesserOrEqual
+                    }
+                );
             } else {
                 await expect(mathContract.exp(f)).to.revertedWith('Overflow');
             }
