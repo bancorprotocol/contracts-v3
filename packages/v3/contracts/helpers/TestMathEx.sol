@@ -6,8 +6,12 @@ import { MathEx, Uint512 } from "../utility/MathEx.sol";
 import { Fraction } from "../utility/Types.sol";
 
 contract TestMathEx {
-    function floorSqrt(uint256 num) external pure returns (uint256) {
-        return MathEx.floorSqrt(num);
+    function exp(Fraction memory f) external pure returns (Fraction memory) {
+        return MathEx.exp(f);
+    }
+
+    function floorSqrt(uint256 n) external pure returns (uint256) {
+        return MathEx.floorSqrt(n);
     }
 
     function mulDivF(

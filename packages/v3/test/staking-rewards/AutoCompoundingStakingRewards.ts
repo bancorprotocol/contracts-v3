@@ -27,9 +27,10 @@ import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
 const { days } = duration;
-const { ONE, LAMBDA } = ExponentialDecay;
-
+const { LAMBDA } = ExponentialDecay;
 const { Upgradeable: UpgradeableRoles } = roles;
+
+const ONE = new Decimal(1);
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
