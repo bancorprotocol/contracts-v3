@@ -831,7 +831,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
                         maxRelativeError1 = new Decimal('0.0000000000000000000002');
-                        maxRelativeError2 = new Decimal('0.00000000000000000000001');
+                        maxRelativeError2 = new Decimal('0.00000000000000000000004');
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
