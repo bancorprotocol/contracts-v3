@@ -456,14 +456,14 @@ contract AutoCompoundingStakingRewards is
      */
     function _getTimeInfo(ProgramData memory currentProgram) private view returns (TimeInfo memory) {
         uint32 currentTime = _time();
-        uint32 startTime = currentProgram.startTime;
-        uint32 prevDistributionTimestamp = currentProgram.prevDistributionTimestamp;
 
         return
             TimeInfo({
                 currentTime: currentTime,
-                timeElapsed: currentTime - startTime,
-                prevTimeElapsed: prevDistributionTimestamp > startTime ? prevDistributionTimestamp - startTime : 0
+                timeElapsed: currentTime - currentProgram.startTime,
+                prevTimeElapsed: uint32(
+                    MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
+                )
             });
     }
 
