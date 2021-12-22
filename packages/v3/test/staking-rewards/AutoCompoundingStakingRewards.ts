@@ -721,24 +721,26 @@ describe('AutoCompoundingStakingRewards', () => {
                 return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
             };
 
-            const getExponentialDecayRewardsAfterTimeElapsed = (timeElapsed: number, totalRewards: BigNumber) =>
-                new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(timeElapsed).exp()));
+            const getExponentialDecayRewardsAfterTimeElapsed = (elapsedTime: number, totalRewards: BigNumber) =>
+                new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(elapsedTime).exp()));
 
             const getRewards = async (pool: TokenWithAddress) => {
                 let tokenAmountToDistribute = BigNumber.from(0);
                 let poolTokenAmountToBurn = BigNumber.from(0);
-                let timeElapsed = 0;
+                let elapsedTime = 0;
+                let effectiveTime = 0;
 
                 const program = await autoCompoundingStakingRewards.program(pool.address);
                 const duration = program.endTime - program.startTime;
                 const currentTime = await autoCompoundingStakingRewards.currentTime();
                 if (!program.isEnabled || currentTime < program.startTime) {
-                    return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
+                    return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
                 }
 
-                timeElapsed = currentTime - program.startTime;
+                elapsedTime = currentTime - program.startTime;
+                effectiveTime = elapsedTime;
                 if (program.distributionType === StakingRewardsDistributionTypes.Flat) {
-                    timeElapsed = Math.min(timeElapsed, duration);
+                    effectiveTime = Math.min(effectiveTime, duration);
                 }
 
                 const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
@@ -746,14 +748,14 @@ describe('AutoCompoundingStakingRewards', () => {
                 switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
                         tokenAmountToDistribute = program.remainingRewards
-                            .mul(timeElapsed - prevTimeElapsed)
+                            .mul(effectiveTime - prevTimeElapsed)
                             .div(duration - prevTimeElapsed);
 
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
                         tokenAmountToDistribute = BigNumber.from(
-                            getExponentialDecayRewardsAfterTimeElapsed(timeElapsed, program.totalRewards)
+                            getExponentialDecayRewardsAfterTimeElapsed(effectiveTime, program.totalRewards)
                                 .sub(getExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, program.totalRewards))
                                 .toFixed(0)
                         );
@@ -783,7 +785,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     .mul(poolTokenSupply)
                     .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 
-                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
+                return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
             };
 
             const testDistribution = async () => {
@@ -793,7 +795,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
-                const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(token);
+                const { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime } = await getRewards(token);
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
                 const program = await autoCompoundingStakingRewards.program(token.address);
@@ -809,7 +811,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             token.address,
                             tokenAmountToDistribute,
                             poolTokenAmountToBurn,
-                            timeElapsed,
+                            elapsedTime,
                             BigNumber.from(totalRewards).sub(tokenAmountToDistribute)
                         );
 

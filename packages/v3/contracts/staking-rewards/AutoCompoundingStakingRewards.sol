@@ -424,8 +424,10 @@ contract AutoCompoundingStakingRewards is
         pure
         returns (uint256)
     {
+        // ensure that the elapsed time isn't longer than the duration of the program
         uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
-        uint32 timeElapsedSinceLastDistribution = timeInfo.timeElapsed - timeInfo.prevTimeElapsed;
+        uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
+        uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
         uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
 
         return
@@ -454,18 +456,11 @@ contract AutoCompoundingStakingRewards is
      */
     function _getTimeInfo(ProgramData memory currentProgram) private view returns (TimeInfo memory) {
         uint32 currentTime = _time();
-        uint32 timeElapsed = currentTime - currentProgram.startTime;
-
-        // if this is a flat distribution program, ensure that the elapsed time isn't longer than the duration of the
-        // program
-        if (currentProgram.distributionType == FLAT_DISTRIBUTION) {
-            timeElapsed = uint32(Math.min(timeElapsed, currentProgram.endTime - currentProgram.startTime));
-        }
 
         return
             TimeInfo({
                 currentTime: currentTime,
-                timeElapsed: timeElapsed,
+                timeElapsed: currentTime - currentProgram.startTime,
                 prevTimeElapsed: uint32(
                     MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
                 )
