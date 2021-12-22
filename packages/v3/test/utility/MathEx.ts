@@ -1,9 +1,13 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain-types';
-import { toUint512, fromUint512 } from '../helpers/Types';
+import { Exponentiation } from '../helpers/Constants';
+import { Fraction, toUint512, fromUint512 } from '../helpers/Types';
+import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
+
+const EXP_INPUT_TOO_HIGH = Exponentiation.INPUT_TOO_HIGH;
 
 const MAX_UINT128 = BigNumber.from(2).pow(128).sub(1);
 const MAX_UINT256 = BigNumber.from(2).pow(256).sub(1);
@@ -36,6 +40,21 @@ describe('MathEx', () => {
     before(async () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
+
+    const testExp = (f: Fraction<number>, maxRelativeError: Decimal) => {
+        it(`exp(${f.n} / ${f.d})`, async () => {
+            if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
+                const actual = await mathContract.exp(f);
+                const expected = new Decimal(f.n).div(f.d).exp();
+                await expect(actual).to.be.almostEqual({ n: expected, d: 1 }, {
+                    maxRelativeError,
+                    relation: Relation.LesserOrEqual
+                });
+            } else {
+                await expect(mathContract.exp(f)).to.revertedWith('Overflow');
+            }
+        });
+    };
 
     const testFloorSqrt = (n: number, k: number) => {
         const x = BigNumber.from(2).pow(n).add(k);
@@ -95,6 +114,48 @@ describe('MathEx', () => {
     };
 
     describe('quick tests', () => {
+        for (let n = 0; n < 10; n++) {
+            for (let d = 1; d < 10; d++) {
+                testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = 1; n <= 10; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000002'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = d - 10; n <= d - 1; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000003'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = d + 1; n <= d + 10; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000002'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = 2 * d - 10; n <= 2 * d - 1; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000003'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = 2 * d + 1; n <= 2 * d + 10; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000002'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = EXP_INPUT_TOO_HIGH * d - 10; n <= EXP_INPUT_TOO_HIGH * d - 1; n++) {
+                testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            }
+        }
+
         for (let n = 0; n <= 256; n += 64) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testFloorSqrt(n, k);
@@ -128,6 +189,12 @@ describe('MathEx', () => {
     });
 
     describe('@stress tests', () => {
+        for (let n = 0; n < 100; n++) {
+            for (let d = 1; d < 100; d++) {
+                testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            }
+        }
+
         for (let n = 0; n <= 256; n++) {
             for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
                 testFloorSqrt(n, k);
