@@ -3552,8 +3552,9 @@ describe('BancorNetwork Financial Verification', () => {
         bntBalances: Record<string, Decimal>;
         bntknBalances: Record<string, Decimal>;
         bnbntBalances: Record<string, Decimal>;
-        bntStakedBalance: Decimal;
+        bntMintedAmount: Decimal;
         tknStakedBalance: Decimal;
+        bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
         bntTradingLiquidity: Decimal;
     }
@@ -3675,13 +3676,12 @@ describe('BancorNetwork Financial Verification', () => {
             bntBalances: {},
             bntknBalances: {},
             bnbntBalances: {},
-            bntStakedBalance: new Decimal(0),
+            bntMintedAmount: new Decimal(0),
             tknStakedBalance: new Decimal(0),
+            bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
             bntTradingLiquidity: new Decimal(0)
         };
-
-        const poolData = await poolCollection.poolData(baseToken.address);
 
         for (const userId in users) {
             actual.tknBalances[userId] = integerToDecimal(
@@ -3716,8 +3716,10 @@ describe('BancorNetwork Financial Verification', () => {
             bnbntDecimals
         );
 
-        actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
+        const poolData = await poolCollection.poolData(baseToken.address);
+        actual.bntMintedAmount = integerToDecimal(await masterPool.mintedAmount(baseToken.address), bntDecimals);
         actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
+        actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.networkTokenTradingLiquidity, bntDecimals);
 

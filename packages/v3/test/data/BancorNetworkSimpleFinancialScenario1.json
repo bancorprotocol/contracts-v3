@@ -32,17 +32,17 @@
             "amount": "1000000",
             "expected": {
                 "tknBalances": {
-                    "masterVault": "1000000",
-                    "epVault": "0",
                     "dayTrader": "10000",
                     "tknProvider": "9000000",
-                    "bntProvider": "0"
+                    "bntProvider": "0",
+                    "masterVault": "1000000",
+                    "epVault": "0"
                 },
                 "bntBalances": {
-                    "masterVault": "1000000",
                     "dayTrader": "10000",
                     "tknProvider": "0",
-                    "bntProvider": "10000000"
+                    "bntProvider": "10000000",
+                    "masterVault": "1000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -50,13 +50,14 @@
                     "bntProvider": "0"
                 },
                 "bnbntBalances": {
-                    "masterPool": "1000000",
                     "dayTrader": "0",
                     "tknProvider": "0",
-                    "bntProvider": "0"
+                    "bntProvider": "0",
+                    "masterPool": "1000000"
                 },
-                "bntStakedBalance": "1000000",
+                "bntMintedAmount": "1000000",
                 "tknStakedBalance": "1000000",
+                "bntStakedBalance": "1000000",
                 "tknTradingLiquidity": "1000000",
                 "bntTradingLiquidity": "1000000"
             }
@@ -91,8 +92,9 @@
                     "bntProvider": "0",
                     "masterPool": "10000000"
                 },
-                "bntStakedBalance": "10000000",
+                "bntMintedAmount": "10000000",
                 "tknStakedBalance": "10000000",
+                "bntStakedBalance": "10000000",
                 "tknTradingLiquidity": "10000000",
                 "bntTradingLiquidity": "10000000"
             }
@@ -127,8 +129,9 @@
                     "bntProvider": "1000000",
                     "masterPool": "9000000"
                 },
-                "bntStakedBalance": "10000000",
+                "bntMintedAmount": "10000000",
                 "tknStakedBalance": "10000000",
+                "bntStakedBalance": "10000000",
                 "tknTradingLiquidity": "10000000",
                 "bntTradingLiquidity": "10000000"
             }
@@ -163,8 +166,9 @@
                     "bntProvider": "1000000",
                     "masterPool": "4012500"
                 },
-                "bntStakedBalance": "5012500",
+                "bntMintedAmount": "5012500",
                 "tknStakedBalance": "5000000",
+                "bntStakedBalance": "5012500",
                 "tknTradingLiquidity": "5012500",
                 "bntTradingLiquidity": "5012500"
             }
@@ -199,8 +203,9 @@
                     "bntProvider": "500000",
                     "masterPool": "4512500"
                 },
-                "bntStakedBalance": "5012500",
+                "bntMintedAmount": "5012500",
                 "tknStakedBalance": "5000000",
+                "bntStakedBalance": "5012500",
                 "tknTradingLiquidity": "5012500",
                 "bntTradingLiquidity": "5012500"
             }
