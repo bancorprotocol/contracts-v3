@@ -18,7 +18,7 @@ import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
-import { AlmostEqualOptions } from '../matchers';
+import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -27,9 +27,10 @@ import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
 const { days } = duration;
-const { ONE, LAMBDA } = ExponentialDecay;
-
+const { LAMBDA } = ExponentialDecay;
 const { Upgradeable: UpgradeableRoles } = roles;
+
+const ONE = new Decimal(1);
 
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
@@ -827,23 +828,18 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
                 expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
 
-                let options: AlmostEqualOptions;
+                let maxRelativeError1: Decimal;
+                let maxRelativeError2: Decimal;
                 const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
                 switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        options = {
-                            maxRelativeError: new Decimal('0.0000000000001'),
-                            maxAbsoluteError: new Decimal(1)
-                        };
-
+                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
+                        maxRelativeError2 = new Decimal('0.00000000000000000000004');
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        options = {
-                            maxRelativeError: new Decimal('0.0000003'),
-                            maxAbsoluteError: new Decimal(1)
-                        };
-
+                        maxRelativeError1 = new Decimal('0.00000000000000000000020000002');
+                        maxRelativeError2 = new Decimal('0.000000000000002');
                         break;
 
                     default:
@@ -852,12 +848,12 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 expect(await getPoolTokenUnderlying(user)).to.be.almostEqual(
                     prevUserTokenOwned.add(tokenAmountToDistribute),
-                    options
+                    { maxRelativeError: maxRelativeError1, relation: Relation.LesserOrEqual }
                 );
 
                 expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
                     prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                    options
+                    { maxRelativeError: maxRelativeError2, relation: Relation.GreaterOrEqual }
                 );
 
                 return { tokenAmountToDistribute };
@@ -1113,8 +1109,9 @@ describe('AutoCompoundingStakingRewards', () => {
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                maxRelativeError: new Decimal('0.0000003'),
-                                maxAbsoluteError: new Decimal(1)
+                                maxRelativeError: new Decimal('0.0000001133'),
+                                maxAbsoluteError: new Decimal(1),
+                                relation: Relation.LesserOrEqual
                             });
                         });
                     });
@@ -1129,8 +1126,9 @@ describe('AutoCompoundingStakingRewards', () => {
                         it('should distribute all the rewards', async () => {
                             const { tokenAmountToDistribute } = await testDistribution();
                             expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                maxRelativeError: new Decimal('0.0000003'),
-                                maxAbsoluteError: new Decimal(1)
+                                maxRelativeError: new Decimal('0.0000001133'),
+                                maxAbsoluteError: new Decimal(1),
+                                relation: Relation.LesserOrEqual
                             });
                         });
                     });

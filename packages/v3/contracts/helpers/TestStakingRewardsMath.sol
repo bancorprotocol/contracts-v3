@@ -19,8 +19,4 @@ contract TestStakingRewardsMath is StakingRewardsMath {
     {
         return _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, totalRewards);
     }
-
-    function expT(uint256 a, uint256 b) external pure returns (uint256, uint256) {
-        return (_exp(a, b), ONE);
-    }
 }
