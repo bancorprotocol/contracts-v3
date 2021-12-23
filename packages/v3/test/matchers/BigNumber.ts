@@ -11,11 +11,11 @@ const supportBigNumber = (Assertion: Chai.AssertionStatic, utils: Chai.ChaiUtils
     Assertion.overwriteMethod('almostEqual', overrideAlmostEqual(utils));
 };
 
-function override(name: string, utils: Chai.ChaiUtils) {
+const override = (name: string, utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteBigNumberFunction(name, _super, utils);
-}
+};
 
-function overwriteBigNumberFunction(readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteBigNumberFunction = (readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected] = args;
         const actual = chaiUtils.flag(this, 'object');
@@ -35,13 +35,13 @@ function overwriteBigNumberFunction(readableName: string, _super: (...args: any[
             _super.apply(this, args);
         }
     };
-}
+};
 
-function overrideAlmostEqual(utils: Chai.ChaiUtils) {
+const overrideAlmostEqual = (utils: Chai.ChaiUtils) => {
     return (_super: (...args: never[]) => never) => overwriteBigNumberAlmostEqual(_super, utils);
-}
+};
 
-function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteBigNumberAlmostEqual = (_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [
             expected,
@@ -99,6 +99,6 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
             _super.apply(this, args);
         }
     };
-}
+};
 
 export default supportBigNumber;

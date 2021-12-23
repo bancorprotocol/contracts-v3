@@ -14,7 +14,7 @@ const override = (name: string, utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteFractionFunction(name, _super, utils);
 };
 
-function overwriteFractionFunction(readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteFractionFunction = (readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected] = args;
         const actual = chaiUtils.flag(this, 'object');
@@ -43,13 +43,13 @@ function overwriteFractionFunction(readableName: string, _super: (...args: any[]
             _super.apply(this, args);
         }
     };
-}
+};
 
-function overrideAlmostEqual(utils: Chai.ChaiUtils) {
+const overrideAlmostEqual = (utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteFractionAlmostEqual(_super, utils);
-}
+};
 
-function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteFractionAlmostEqual = (_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [
             expected,
@@ -122,6 +122,6 @@ function overwriteFractionAlmostEqual(_super: (...args: any[]) => any, chaiUtils
             return _super.apply(this, args);
         }
     };
-}
+};
 
 export default supportFraction;
