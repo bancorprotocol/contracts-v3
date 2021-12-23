@@ -964,68 +964,30 @@ describe('AutoCompoundingStakingRewards', () => {
                         });
                     });
 
-                    describe('single distribution', () => {
-                        const testSingleDistribution = (step: number) => {
-                            context(`in steps of ${step}%`, () => {
+                    const testMultipleDistributions = (step: number) => {
+                        context(`in steps of ${step}%`, () => {
+                            it('should distribute rewards', async () => {
                                 for (let programTimePercent = 0; programTimePercent < 100; programTimePercent += step) {
-                                    context(`at ${programTimePercent}% of a program`, () => {
-                                        beforeEach(async () => {
-                                            await autoCompoundingStakingRewards.setTime(
-                                                (programDuration * programTimePercent) / 100
-                                            );
-                                        });
+                                    await autoCompoundingStakingRewards.setTime(
+                                        (programDuration * programTimePercent) / 100
+                                    );
 
-                                        it('should distribute rewards', async () => {
-                                            await testDistribution();
-                                        });
-                                    });
+                                    await testDistribution();
                                 }
                             });
-                        };
-
-                        describe('regular tests', () => {
-                            for (const step of [25]) {
-                                testSingleDistribution(step);
-                            }
                         });
+                    };
 
-                        describe('@stress tests', () => {
-                            for (const step of [6, 15]) {
-                                testSingleDistribution(step);
-                            }
-                        });
+                    describe('regular tests', () => {
+                        for (const step of [25]) {
+                            testMultipleDistributions(step);
+                        }
                     });
 
-                    describe('multiple distributions', () => {
-                        const testMultipleDistributions = (step: number) => {
-                            context(`in steps of ${step}%`, () => {
-                                it('should distribute rewards', async () => {
-                                    for (
-                                        let programTimePercent = 0;
-                                        programTimePercent < 100;
-                                        programTimePercent += step
-                                    ) {
-                                        await autoCompoundingStakingRewards.setTime(
-                                            (programDuration * programTimePercent) / 100
-                                        );
-
-                                        await testDistribution();
-                                    }
-                                });
-                            });
-                        };
-
-                        describe('regular tests', () => {
-                            for (const step of [25]) {
-                                testMultipleDistributions(step);
-                            }
-                        });
-
-                        describe('@stress tests', () => {
-                            for (const step of [6, 15]) {
-                                testMultipleDistributions(step);
-                            }
-                        });
+                    describe('@stress tests', () => {
+                        for (const step of [6, 15]) {
+                            testMultipleDistributions(step);
+                        }
                     });
                 };
 
@@ -1041,7 +1003,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 describe('@stress tests', () => {
-                    for (const programDuration of [duration.days(20), duration.weeks(12), duration.years(1)]) {
+                    for (const programDuration of [duration.weeks(12), duration.years(1)]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
                             () => {
@@ -1164,71 +1126,35 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                 });
 
-                describe('single distribution', () => {
-                    const testSingleDistribution = (step: number, totalSteps: number) => {
-                        context(`in ${totalSteps} steps of ${humanizeDuration(step * 1000)} long steps`, () => {
-                            for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
-                                context(`after ${humanizeDuration(time * 1000, { units: ['d'] })}`, () => {
-                                    beforeEach(async () => {
-                                        await autoCompoundingStakingRewards.setTime(time);
-                                    });
+                const testMultipleDistributions = (step: number, totalSteps: number) => {
+                    context(
+                        `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
+                        () => {
+                            it('should distribute rewards', async () => {
+                                for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
+                                    await autoCompoundingStakingRewards.setTime(time);
 
-                                    it('should distribute rewards', async () => {
-                                        await testDistribution();
-                                    });
-                                });
-                            }
-                        });
-                    };
-
-                    describe('regular tests', () => {
-                        for (const step of [duration.days(1)]) {
-                            for (const totalSteps of [10]) {
-                                testSingleDistribution(step, totalSteps);
-                            }
+                                    await testDistribution();
+                                }
+                            });
                         }
-                    });
+                    );
+                };
 
-                    describe('@stress tests', () => {
-                        for (const step of [duration.hours(1), duration.days(2), duration.weeks(1)]) {
-                            for (const totalSteps of [10]) {
-                                testSingleDistribution(step, totalSteps);
-                            }
+                describe('regular tests', () => {
+                    for (const step of [duration.days(1)]) {
+                        for (const totalSteps of [5]) {
+                            testMultipleDistributions(step, totalSteps);
                         }
-                    });
+                    }
                 });
 
-                describe('multiple distributions', () => {
-                    const testMultipleDistributions = (step: number, totalSteps: number) => {
-                        context(
-                            `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
-                            () => {
-                                it('should distribute rewards', async () => {
-                                    for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
-                                        await autoCompoundingStakingRewards.setTime(time);
-
-                                        await testDistribution();
-                                    }
-                                });
-                            }
-                        );
-                    };
-
-                    describe('regular tests', () => {
-                        for (const step of [duration.days(1)]) {
-                            for (const totalSteps of [10]) {
-                                testMultipleDistributions(step, totalSteps);
-                            }
+                describe('@stress tests', () => {
+                    for (const step of [duration.hours(1), duration.weeks(1)]) {
+                        for (const totalSteps of [5]) {
+                            testMultipleDistributions(step, totalSteps);
                         }
-                    });
-
-                    describe('@stress tests', () => {
-                        for (const step of [duration.hours(1), duration.days(2), duration.weeks(1)]) {
-                            for (const totalSteps of [10]) {
-                                testMultipleDistributions(step, totalSteps);
-                            }
-                        }
-                    });
+                    }
                 });
             });
         };
@@ -1251,7 +1177,7 @@ describe('AutoCompoundingStakingRewards', () => {
         describe('@stress tests', () => {
             for (const symbol of [BNT, TKN, ETH]) {
                 for (const providerStake of [toWei(5_000), toWei(100_000)]) {
-                    for (const totalRewards of [100_000, toWei(10_000), toWei(200_000)]) {
+                    for (const totalRewards of [100_000, toWei(200_000)]) {
                         context(
                             `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
                             () => {
