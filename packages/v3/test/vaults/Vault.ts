@@ -238,23 +238,16 @@ describe('Vault', () => {
             } else {
                 it('should burn funds', async () => {
                     const prevBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
-                    let prevTotalSupply;
-                    if (!isETH) {
-                        prevTotalSupply = await reserveToken.totalSupply();
-                    }
+                    const prevBalance = await getBalance(token, testVault.address);
+                    const prevTotalSupply = await reserveToken.totalSupply();
 
                     const res = await testVault.burn(token.address, amount);
                     await expect(res)
                         .to.emit(testVault, 'FundsBurned')
                         .withArgs(token.address, deployer.address, amount);
 
-                    expect(await getBalance({ address: token.address }, ZERO_ADDRESS)).to.equal(
-                        isETH ? prevBalance.add(amount) : prevBalance
-                    );
-
-                    if (!isETH) {
-                        expect(await reserveToken.totalSupply()).to.equal(prevTotalSupply?.sub(amount));
-                    }
+                    expect(await getBalance(token, testVault.address)).to.equal(prevBalance.sub(amount));
+                    expect(await reserveToken.totalSupply()).to.equal(prevTotalSupply.sub(amount));
                 });
 
                 it('should revert when trying to burn more tokens than the vault holds', async () => {
