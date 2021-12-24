@@ -387,8 +387,7 @@ contract AutoCompoundingStakingRewards is
         } else {
             uint256 protocolPoolTokenAmount = p.poolToken.balanceOf(address(p.rewardsVault));
 
-            // burn the least number of pool token between its balance in the rewards vault and the number of it
-            // supposed to be burned
+            // do not attempt to burn more than the balance in the rewards vault
             IPoolCollection poolCollection = _network.collectionByPool(pool);
             poolTokenAmountToBurn = Math.min(
                 poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, protocolPoolTokenAmount),
