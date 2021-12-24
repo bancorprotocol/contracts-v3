@@ -191,21 +191,21 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) public view returns (bool) {
-        ProgramData memory currentProgram = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (currentProgram.remainingRewards == 0) {
+        if (p.remainingRewards == 0) {
             return false;
         }
 
         uint256 currentTime = _time();
 
         // if the program hasn't started yet
-        if (currentTime < currentProgram.startTime) {
+        if (currentTime < p.startTime) {
             return false;
         }
 
         // if a flat distribution program has already finished
-        if (currentProgram.distributionType == FLAT_DISTRIBUTION && currentTime > currentProgram.endTime) {
+        if (p.distributionType == FLAT_DISTRIBUTION && currentTime > p.endTime) {
             return false;
         }
 
@@ -312,16 +312,16 @@ contract AutoCompoundingStakingRewards is
             revert ProgramInactive();
         }
 
-        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
 
-        currentProgram.endTime = _time();
+        p.endTime = _time();
 
-        uint256 cachedRemainingRewards = currentProgram.remainingRewards;
-        currentProgram.remainingRewards = 0;
+        uint256 cachedRemainingRewards = p.remainingRewards;
+        p.remainingRewards = 0;
 
         emit ProgramTerminated({
             pool: pool,
-            endTime: currentProgram.endTime,
+            endTime: p.endTime,
             remainingRewards: cachedRemainingRewards
         });
     }
@@ -330,16 +330,16 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
-        ProgramData storage currentProgram = _programs[ReserveToken.unwrap(pool)];
+        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
 
-        bool prevStatus = currentProgram.isEnabled;
+        bool prevStatus = p.isEnabled;
         if (prevStatus == status) {
             return;
         }
 
-        currentProgram.isEnabled = status;
+        p.isEnabled = status;
 
-        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: currentProgram.remainingRewards });
+        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
     }
 
     /**
@@ -347,12 +347,12 @@ contract AutoCompoundingStakingRewards is
      */
     function processRewards(ReserveToken pool) public nonReentrant {
         address poolAddress = ReserveToken.unwrap(pool);
-        ProgramData memory currentProgram = _programs[poolAddress];
+        ProgramData memory p = _programs[poolAddress];
 
-        uint8 distributionType = currentProgram.distributionType;
+        uint8 distributionType = p.distributionType;
 
         // if program is disabled, don't process rewards
-        if (!currentProgram.isEnabled) {
+        if (!p.isEnabled) {
             return;
         }
 
@@ -361,20 +361,20 @@ contract AutoCompoundingStakingRewards is
         if (!isProgramActive(pool)) {
             if (
                 distributionType == FLAT_DISTRIBUTION &&
-                currentProgram.prevDistributionTimestamp < currentProgram.endTime &&
-                currentProgram.endTime < _time()
+                p.prevDistributionTimestamp < p.endTime &&
+                p.endTime < _time()
             ) {} else {
                 return;
             }
         }
 
-        TimeInfo memory timeInfo = _getTimeInfo(currentProgram);
+        TimeInfo memory timeInfo = _getTimeInfo(p);
 
         uint256 tokenAmountToDistribute;
         if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateExponentialDecayRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeInfo);
         } else if (distributionType == FLAT_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateFlatRewards(currentProgram, timeInfo);
+            tokenAmountToDistribute = _calculateFlatRewards(p, timeInfo);
         }
 
         if (tokenAmountToDistribute == 0) {
@@ -385,7 +385,7 @@ contract AutoCompoundingStakingRewards is
         if (_isNetworkToken(pool)) {
             poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         } else {
-            uint256 protocolPoolTokenAmount = currentProgram.poolToken.balanceOf(address(currentProgram.rewardsVault));
+            uint256 protocolPoolTokenAmount = p.poolToken.balanceOf(address(p.rewardsVault));
 
             // burn the least number of pool token between its balance in the rewards vault and the number of it
             // supposed to be burned
@@ -400,32 +400,32 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        currentProgram.remainingRewards -= tokenAmountToDistribute;
-        currentProgram.prevDistributionTimestamp = timeInfo.currentTime;
+        p.remainingRewards -= tokenAmountToDistribute;
+        p.prevDistributionTimestamp = timeInfo.currentTime;
 
-        currentProgram.rewardsVault.burn(ReserveToken.wrap(address(currentProgram.poolToken)), poolTokenAmountToBurn);
+        p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
-        _programs[poolAddress] = currentProgram;
+        _programs[poolAddress] = p;
 
         emit RewardsDistributed({
             pool: pool,
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
             programTimeElapsed: timeInfo.timeElapsed,
-            remainingRewards: currentProgram.remainingRewards
+            remainingRewards: p.remainingRewards
         });
     }
 
     /**
      * @dev returns the flat rewards
      */
-    function _calculateFlatRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+    function _calculateFlatRewards(ProgramData memory p, TimeInfo memory timeInfo)
         private
         pure
         returns (uint256)
     {
         // ensure that the elapsed time isn't longer than the duration of the program
-        uint32 programDuration = currentProgram.endTime - currentProgram.startTime;
+        uint32 programDuration = p.endTime - p.startTime;
         uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
         uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
         uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
@@ -434,35 +434,35 @@ contract AutoCompoundingStakingRewards is
             _calculateFlatRewards(
                 timeElapsedSinceLastDistribution,
                 remainingProgramDuration,
-                currentProgram.remainingRewards
+                p.remainingRewards
             );
     }
 
     /**
      * @dev returns the exponential decay rewards
      */
-    function _calculateExponentialDecayRewards(ProgramData memory currentProgram, TimeInfo memory timeInfo)
+    function _calculateExponentialDecayRewards(ProgramData memory p, TimeInfo memory timeInfo)
         private
         pure
         returns (uint256)
     {
         return
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.timeElapsed, currentProgram.totalRewards) -
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.prevTimeElapsed, currentProgram.totalRewards);
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.timeElapsed, p.totalRewards) -
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.prevTimeElapsed, p.totalRewards);
     }
 
     /**
      * @dev gets a program's time information
      */
-    function _getTimeInfo(ProgramData memory currentProgram) private view returns (TimeInfo memory) {
+    function _getTimeInfo(ProgramData memory p) private view returns (TimeInfo memory) {
         uint32 currentTime = _time();
 
         return
             TimeInfo({
                 currentTime: currentTime,
-                timeElapsed: currentTime - currentProgram.startTime,
+                timeElapsed: currentTime - p.startTime,
                 prevTimeElapsed: uint32(
-                    MathEx.subMax0(currentProgram.prevDistributionTimestamp, currentProgram.startTime)
+                    MathEx.subMax0(p.prevDistributionTimestamp, p.startTime)
                 )
             });
     }
