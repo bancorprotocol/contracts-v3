@@ -49,12 +49,6 @@ contract AutoCompoundingStakingRewards is
     error InvalidParam();
     error InsufficientFunds();
 
-    struct TimeInfo {
-        uint32 timeElapsed;
-        uint32 prevTimeElapsed;
-        uint32 currentTime;
-    }
-
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -319,11 +313,7 @@ contract AutoCompoundingStakingRewards is
         uint256 cachedRemainingRewards = p.remainingRewards;
         p.remainingRewards = 0;
 
-        emit ProgramTerminated({
-            pool: pool,
-            endTime: p.endTime,
-            remainingRewards: cachedRemainingRewards
-        });
+        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: cachedRemainingRewards });
     }
 
     /**
@@ -356,25 +346,28 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
+        uint32 currentTime = _time();
+
         // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
         // whose rewards weren't distributed yet in full
         if (!isProgramActive(pool)) {
             if (
                 distributionType == FLAT_DISTRIBUTION &&
                 p.prevDistributionTimestamp < p.endTime &&
-                p.endTime < _time()
+                p.endTime < currentTime
             ) {} else {
                 return;
             }
         }
 
-        TimeInfo memory timeInfo = _getTimeInfo(p);
+        uint32 timeElapsed = currentTime - p.startTime;
+        uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
 
         uint256 tokenAmountToDistribute;
         if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeInfo);
+            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeElapsed, prevTimeElapsed);
         } else if (distributionType == FLAT_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateFlatRewards(p, timeInfo);
+            tokenAmountToDistribute = _calculateFlatRewards(p, timeElapsed, prevTimeElapsed);
         }
 
         if (tokenAmountToDistribute == 0) {
@@ -400,7 +393,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         p.remainingRewards -= tokenAmountToDistribute;
-        p.prevDistributionTimestamp = timeInfo.currentTime;
+        p.prevDistributionTimestamp = currentTime;
 
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
@@ -410,7 +403,7 @@ contract AutoCompoundingStakingRewards is
             pool: pool,
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
-            programTimeElapsed: timeInfo.timeElapsed,
+            programTimeElapsed: timeElapsed,
             remainingRewards: p.remainingRewards
         });
     }
@@ -419,21 +412,18 @@ contract AutoCompoundingStakingRewards is
      * @dev calculates and returns the rewards for a flat distribution program according to how much time has elapsed
      * since the beginning of the program and the time of the preview calculation
      */
-    function _calculateFlatRewards(ProgramData memory p, TimeInfo memory timeInfo)
-        private
-        pure
-        returns (uint256)
-    {
-        // ensure that the elapsed time isn't longer than the duration of the program
+    function _calculateFlatRewards(
+        ProgramData memory p,
+        uint32 timeElapsed,
+        uint32 prevTimeElapsed
+    ) private pure returns (uint256) {
         uint32 programDuration = p.endTime - p.startTime;
-        uint32 timeElapsed = uint32(Math.min(timeInfo.timeElapsed, programDuration));
-        uint32 timeElapsedSinceLastDistribution = timeElapsed - timeInfo.prevTimeElapsed;
-        uint32 remainingProgramDuration = programDuration - timeInfo.prevTimeElapsed;
 
         return
             _calculateFlatRewards(
-                timeElapsedSinceLastDistribution,
-                remainingProgramDuration,
+                // ensure that the elapsed time isn't longer than the duration of the program
+                uint32(Math.min(timeElapsed, programDuration)) - prevTimeElapsed,
+                programDuration - prevTimeElapsed,
                 p.remainingRewards
             );
     }
@@ -442,30 +432,14 @@ contract AutoCompoundingStakingRewards is
      * @dev calculates and returns the rewards for an exponential decay distribution program according to how much time
      * has elapsed since the beginning of the program and the time of the preview calculation
      */
-    function _calculateExponentialDecayRewards(ProgramData memory p, TimeInfo memory timeInfo)
-        private
-        pure
-        returns (uint256)
-    {
+    function _calculateExponentialDecayRewards(
+        ProgramData memory p,
+        uint32 timeElapsed,
+        uint32 prevTimeElapsed
+    ) private pure returns (uint256) {
         return
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.timeElapsed, p.totalRewards) -
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeInfo.prevTimeElapsed, p.totalRewards);
-    }
-
-    /**
-     * @dev gets a program's time information
-     */
-    function _getTimeInfo(ProgramData memory p) private view returns (TimeInfo memory) {
-        uint32 currentTime = _time();
-
-        return
-            TimeInfo({
-                currentTime: currentTime,
-                timeElapsed: currentTime - p.startTime,
-                prevTimeElapsed: uint32(
-                    MathEx.subMax0(p.prevDistributionTimestamp, p.startTime)
-                )
-            });
+            _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, p.totalRewards) -
+            _calculateExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, p.totalRewards);
     }
 
     /**
