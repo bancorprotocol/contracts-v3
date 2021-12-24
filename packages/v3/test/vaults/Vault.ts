@@ -237,7 +237,6 @@ describe('Vault', () => {
                 });
             } else {
                 it('should burn funds', async () => {
-                    const prevBalance = await getBalance({ address: token.address }, ZERO_ADDRESS);
                     const prevBalance = await getBalance(token, testVault.address);
                     const prevTotalSupply = await reserveToken.totalSupply();
 
