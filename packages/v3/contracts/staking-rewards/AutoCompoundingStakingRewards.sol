@@ -416,7 +416,8 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns the flat rewards
+     * @dev calculates and returns the rewards for a flat distribution program according to how much time has elapsed
+     * since the beginning of the program and the time of the preview calculation
      */
     function _calculateFlatRewards(ProgramData memory p, TimeInfo memory timeInfo)
         private
@@ -438,7 +439,8 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns the exponential decay rewards
+     * @dev calculates and returns the rewards for an exponential decay distribution program according to how much time
+     * has elapsed since the beginning of the program and the time of the preview calculation
      */
     function _calculateExponentialDecayRewards(ProgramData memory p, TimeInfo memory timeInfo)
         private
