@@ -255,16 +255,16 @@ contract AutoCompoundingStakingRewards is
         }
 
         address poolAddress = ReserveToken.unwrap(pool);
-        IPoolToken poolToken = _programs[poolAddress].poolToken;
-        bool programExists = address(poolToken) != address(0);
+        bool programExists = address(_programs[poolAddress].poolToken) != address(0);
+        IPoolToken poolToken;
         uint256 requiredPoolTokenAmount;
 
         if (isNetworkToken) {
-            poolToken = programExists ? poolToken : _masterPoolToken;
+            poolToken = _masterPoolToken;
             requiredPoolTokenAmount = _masterPool.underlyingToPoolToken(totalRewards);
         } else {
             IPoolCollection poolCollection = _network.collectionByPool(pool);
-            poolToken = programExists ? poolToken : poolCollection.poolToken(pool);
+            poolToken = poolCollection.poolToken(pool);
             requiredPoolTokenAmount = poolCollection.underlyingToPoolToken(pool, totalRewards);
         }
 
