@@ -74,7 +74,7 @@ describe('AutoCompoundingStakingRewards', () => {
             poolCollection
         );
 
-        // if we're rewarding the network token - no additional if funding is needed
+        // if we're rewarding the network token - no additional funding is needed
         if (!isNetworkToken) {
             // deposit pool tokens as staking rewards
             await depositToPool(stakingRewardsProvider, token, totalRewards, network);
