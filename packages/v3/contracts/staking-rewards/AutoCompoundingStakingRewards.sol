@@ -351,7 +351,7 @@ contract AutoCompoundingStakingRewards is
 
         uint8 distributionType = p.distributionType;
 
-        // if program is disabled, don't process rewards
+        // if program is disabled, don't process the rewards
         if (!p.isEnabled) {
             return;
         }
