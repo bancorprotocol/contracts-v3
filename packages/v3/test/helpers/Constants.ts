@@ -36,5 +36,6 @@ export const Exponentiation = {
 };
 
 export const ExponentialDecay = {
-    LAMBDA: new Decimal('0.0000000142857142857143')
+    LAMBDA: new Decimal('0.0000000142857142857143'),
+    ESTIMATED_PROGRAM_DURATION: 35.5 * 365 * 24 * 60 * 60 // 35.4 years
 };
