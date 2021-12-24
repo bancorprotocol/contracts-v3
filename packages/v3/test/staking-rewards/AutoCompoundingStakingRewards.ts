@@ -597,15 +597,15 @@ describe('AutoCompoundingStakingRewards', () => {
                 }
             });
 
-            describe('query program data', () => {
+            describe('program data', () => {
                 describe('single program', () => {
-                    it('should query a non-existing program', async () => {
+                    it('should not return a non existent program', async () => {
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
                         expect(program.poolToken).to.equal(ZERO_ADDRESS);
                     });
 
-                    it('should correctly query an existing program', async () => {
+                    it('should return an existing program', async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
                             rewardsVault.address,
