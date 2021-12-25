@@ -63,7 +63,3 @@ Bancor is a work in progress. Make sure you understand the risks before using it
 For an interactive profiling, with Tenderly integration:
 
 -   `yarn profiled`
-
-## License
-
-Bancor Protocol is open source and distributed under the Apache License v2.0
