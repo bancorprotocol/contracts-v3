@@ -14,10 +14,10 @@ struct ProgramData {
     uint32 startTime;
     uint32 endTime;
     uint32 prevDistributionTimestamp;
+    IPoolToken poolToken;
     bool isEnabled;
     uint8 distributionType;
     IVault rewardsVault;
-    IPoolToken poolToken;
     uint256 totalRewards;
     uint256 remainingRewards;
 }
