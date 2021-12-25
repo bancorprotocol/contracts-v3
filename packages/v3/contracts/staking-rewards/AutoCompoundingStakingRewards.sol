@@ -363,10 +363,10 @@ contract AutoCompoundingStakingRewards is
         uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
 
         uint256 tokenAmountToDistribute;
-        if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeElapsed, prevTimeElapsed);
-        } else if (distributionType == FLAT_DISTRIBUTION) {
+        if (distributionType == FLAT_DISTRIBUTION) {
             tokenAmountToDistribute = _calculateFlatRewards(p, timeElapsed, prevTimeElapsed);
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeElapsed, prevTimeElapsed);
         }
 
         if (tokenAmountToDistribute == 0) {
