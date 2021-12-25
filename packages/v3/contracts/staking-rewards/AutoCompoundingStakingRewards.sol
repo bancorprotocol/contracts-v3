@@ -339,13 +339,12 @@ contract AutoCompoundingStakingRewards is
         address poolAddress = ReserveToken.unwrap(pool);
         ProgramData memory p = _programs[poolAddress];
 
-        uint8 distributionType = p.distributionType;
-
         // if program is disabled, don't process the rewards
         if (!p.isEnabled) {
             return;
         }
 
+        uint8 distributionType = p.distributionType;
         uint32 currentTime = _time();
 
         // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
