@@ -352,7 +352,7 @@ contract AutoCompoundingStakingRewards is
         address poolAddress = ReserveToken.unwrap(pool);
         ProgramData memory p = _programs[poolAddress];
 
-        // if program is disabled, don't process the rewards
+        // if the program is disabled, don't process the rewards
         if (!p.isEnabled) {
             return;
         }
