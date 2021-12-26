@@ -1101,12 +1101,11 @@ describe('AutoCompoundingStakingRewards', () => {
             }
         };
 
-        const distributionTypes = Object.values(StakingRewardsDistributionTypes).filter(
-            (v) => typeof v === 'number'
-        ) as number[];
-        console.log('values', distributionTypes);
-
         const testRewardsMatrix = (providerStakes: BigNumberish[], totalRewards: BigNumberish[]) => {
+            const distributionTypes = Object.values(StakingRewardsDistributionTypes).filter(
+                (v) => typeof v === 'number'
+            ) as number[];
+
             for (const symbol of [BNT, TKN, ETH]) {
                 for (const distributionType of distributionTypes) {
                     for (const providerStake of providerStakes) {
