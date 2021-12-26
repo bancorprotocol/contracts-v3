@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -547,7 +547,7 @@ describe('Profile @profile', () => {
 
     describe('trade', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -562,7 +562,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -574,7 +574,7 @@ describe('Profile @profile', () => {
                 source,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -583,7 +583,7 @@ describe('Profile @profile', () => {
                 target,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -830,7 +830,7 @@ describe('Profile @profile', () => {
 
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -842,7 +842,7 @@ describe('Profile @profile', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         const setup = async () => {
-            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
@@ -867,7 +867,7 @@ describe('Profile @profile', () => {
                     },
                     deployer,
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     poolCollection
                 ));
@@ -908,7 +908,7 @@ describe('Profile @profile', () => {
 
     describe('pending withdrawals', () => {
         let poolToken: PoolToken;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -921,7 +921,7 @@ describe('Profile @profile', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         beforeEach(async () => {
-            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+            ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
                 await createSystem());
 
             provider = await createWallet();
@@ -940,7 +940,7 @@ describe('Profile @profile', () => {
                 },
                 provider as any as SignerWithAddress,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));

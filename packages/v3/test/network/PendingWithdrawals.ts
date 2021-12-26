@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -179,7 +179,7 @@ describe('PendingWithdrawals', () => {
     describe('withdrawals', () => {
         let poolToken: PoolToken;
         let reserveToken: TokenWithAddress;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -196,7 +196,7 @@ describe('PendingWithdrawals', () => {
             beforeEach(async () => {
                 ({
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     networkToken,
                     masterPool,
@@ -303,7 +303,7 @@ describe('PendingWithdrawals', () => {
                             },
                             provider as any as SignerWithAddress,
                             network,
-                            networkInformation,
+                            networkInfo,
                             networkSettings,
                             poolCollection
                         ));
@@ -373,7 +373,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider1,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));
@@ -495,7 +495,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider1,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));
@@ -617,7 +617,7 @@ describe('PendingWithdrawals', () => {
                         },
                         provider,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));

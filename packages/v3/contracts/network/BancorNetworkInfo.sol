@@ -20,7 +20,7 @@ import { InvalidToken, Utils } from "../utility/Utils.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { IBancorNetworkInformation } from "./interfaces/IBancorNetworkInformation.sol";
+import { IBancorNetworkInfo } from "./interfaces/IBancorNetworkInfo.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
@@ -28,7 +28,7 @@ import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
 /**
  * @dev Bancor Network Information contract
  */
-contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Utils {
+contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     using ReserveTokenLibrary for ReserveToken;
 
     error InvalidTokens();
@@ -120,7 +120,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __BancorNetworkInformation_init();
+        __BancorNetworkInfo_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -128,16 +128,16 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorNetworkInformation_init() internal onlyInitializing {
+    function __BancorNetworkInfo_init() internal onlyInitializing {
         __Upgradeable_init();
 
-        __BancorNetworkInformation_init_unchained();
+        __BancorNetworkInfo_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorNetworkInformation_init_unchained() internal onlyInitializing {}
+    function __BancorNetworkInfo_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
@@ -167,98 +167,98 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function network() external view returns (IBancorNetwork) {
         return _network;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function networkToken() external view returns (IERC20) {
         return _networkToken;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function networkTokenGovernance() external view returns (ITokenGovernance) {
         return _networkTokenGovernance;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function govToken() external view returns (IERC20) {
         return _govToken;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function govTokenGovernance() external view returns (ITokenGovernance) {
         return _govTokenGovernance;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function networkSettings() external view returns (INetworkSettings) {
         return _networkSettings;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function masterVault() external view returns (IMasterVault) {
         return _masterVault;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function externalProtectionVault() external view returns (IExternalProtectionVault) {
         return _externalProtectionVault;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function externalRewardsVault() external view returns (IExternalRewardsVault) {
         return _externalRewardsVault;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function masterPool() external view returns (IMasterPool) {
         return _masterPool;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function masterPoolToken() external view returns (IPoolToken) {
         return _masterPoolToken;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function pendingWithdrawals() external view returns (IPendingWithdrawals) {
         return _pendingWithdrawals;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
         return _poolCollectionUpgrader;
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function tradeTargetAmount(
         ReserveToken sourceToken,
@@ -269,7 +269,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function tradeSourceAmount(
         ReserveToken sourceToken,
@@ -280,7 +280,7 @@ contract BancorNetworkInformation is IBancorNetworkInformation, Upgradeable, Uti
     }
 
     /**
-     * @inheritdoc IBancorNetworkInformation
+     * @inheritdoc IBancorNetworkInfo
      */
     function isReadyForWithdrawal(uint256 id) external view returns (bool) {
         return _pendingWithdrawals.isReadyForWithdrawal(id);

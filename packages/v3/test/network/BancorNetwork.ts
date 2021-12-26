@@ -13,7 +13,7 @@ import {
     TokenGovernance
 } from '../../components/LegacyContracts';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     MasterVault,
     ExternalProtectionVault,
     IERC20,
@@ -691,7 +691,7 @@ describe('BancorNetwork', () => {
 
     describe('upgrade pool', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -714,7 +714,7 @@ describe('BancorNetwork', () => {
         const setup = async () => {
             ({
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 networkToken,
                 pendingWithdrawals,
@@ -737,7 +737,7 @@ describe('BancorNetwork', () => {
                     },
                     deployer,
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     poolCollection
                 );
@@ -2019,7 +2019,7 @@ describe('BancorNetwork', () => {
 
     describe('trade', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
@@ -2036,7 +2036,7 @@ describe('BancorNetwork', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkInformation, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
+            ({ network, networkInfo, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -2049,7 +2049,7 @@ describe('BancorNetwork', () => {
                 source,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -2058,7 +2058,7 @@ describe('BancorNetwork', () => {
                 target,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -2217,11 +2217,7 @@ describe('BancorNetwork', () => {
                 );
             }
 
-            const targetAmount = await networkInformation.tradeTargetAmount(
-                sourceToken.address,
-                targetToken.address,
-                amount
-            );
+            const targetAmount = await networkInfo.tradeTargetAmount(sourceToken.address, targetToken.address, amount);
             expect(targetAmount).to.equal(tradeAmounts.amount);
 
             const res = await trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline });
@@ -2710,7 +2706,7 @@ describe('BancorNetwork', () => {
 
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let masterPool: TestMasterPool;
@@ -2725,7 +2721,7 @@ describe('BancorNetwork', () => {
         const ZERO_BYTES = '0x';
 
         const setup = async () => {
-            ({ network, networkInformation, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
+            ({ network, networkInfo, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -2749,7 +2745,7 @@ describe('BancorNetwork', () => {
                     },
                     deployer,
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     poolCollection
                 ));
@@ -2812,7 +2808,7 @@ describe('BancorNetwork', () => {
                     },
                     deployer,
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     poolCollection
                 ));
@@ -3430,7 +3426,7 @@ describe('BancorNetwork', () => {
 
     describe('pending withdrawals', () => {
         let poolToken: PoolToken;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -3443,7 +3439,7 @@ describe('BancorNetwork', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         beforeEach(async () => {
-            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+            ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
                 await createSystem());
 
             provider = await createWallet();
@@ -3462,7 +3458,7 @@ describe('BancorNetwork', () => {
                 },
                 provider as any as SignerWithAddress,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));

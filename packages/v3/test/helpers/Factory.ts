@@ -8,7 +8,7 @@ import LegacyContracts, {
 import { isProfiling } from '../../components/Profiler';
 import {
     BancorNetwork,
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     MasterVault,
     IERC20,
     NetworkSettings,
@@ -305,7 +305,7 @@ const createSystemFixture = async () => {
     await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, network.address);
     await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
 
-    const networkInformation = await Contracts.BancorNetworkInformation.deploy(
+    const networkInfo = await Contracts.BancorNetworkInfo.deploy(
         network.address,
         networkTokenGovernance.address,
         govTokenGovernance.address,
@@ -320,7 +320,7 @@ const createSystemFixture = async () => {
 
     return {
         networkSettings,
-        networkInformation,
+        networkInfo,
         network,
         networkToken,
         networkTokenGovernance,
@@ -379,14 +379,14 @@ export const setupSimplePool = async (
     spec: PoolSpec,
     provider: SignerWithAddress,
     network: TestBancorNetwork,
-    networkInformation: BancorNetworkInformation,
+    networkInfo: BancorNetworkInfo,
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
     if (spec.symbol === BNT) {
-        const poolToken = await Contracts.PoolToken.attach(await networkInformation.masterPoolToken());
+        const poolToken = await Contracts.PoolToken.attach(await networkInfo.masterPoolToken());
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
-        const networkToken = await factory.attach(await networkInformation.networkToken());
+        const networkToken = await factory.attach(await networkInfo.networkToken());
 
         // ensure that there is enough space to deposit the network token
         const reserveToken = await createTokenBySymbol(TKN);

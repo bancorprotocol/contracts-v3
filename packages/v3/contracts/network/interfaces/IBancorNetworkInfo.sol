@@ -17,7 +17,7 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
-import { IBancorNetworkInformation } from "./IBancorNetworkInformation.sol";
+import { IBancorNetworkInfo } from "./IBancorNetworkInfo.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
@@ -25,7 +25,7 @@ import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 /**
  * @dev Bancor Network Information interface
  */
-interface IBancorNetworkInformation is IUpgradeable {
+interface IBancorNetworkInfo is IUpgradeable {
     /**
      * @dev returns the network contract
      */
