@@ -681,7 +681,7 @@ describe('AutoCompoundingStakingRewards', () => {
         }
     });
 
-    describe.only('process rewards', () => {
+    describe('process rewards', () => {
         const testRewards = (
             symbol: string,
             distributionType: StakingRewardsDistributionTypes,
