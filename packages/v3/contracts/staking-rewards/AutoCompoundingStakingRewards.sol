@@ -216,7 +216,13 @@ contract AutoCompoundingStakingRewards is
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(ReserveToken.unwrap(pool))) validAddress(address(rewardsVault)) onlyAdmin {
+    )
+        external
+        validAddress(address(ReserveToken.unwrap(pool)))
+        validAddress(address(rewardsVault))
+        onlyAdmin
+        nonReentrant
+    {
         if (isProgramActive(pool)) {
             revert ProgramAlreadyActive();
         }
@@ -265,7 +271,7 @@ contract AutoCompoundingStakingRewards is
         // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
         // been distributed
         if (programExists) {
-            processRewards(pool);
+            _processRewards(pool);
         }
 
         // check whether the rewards vault holds enough funds to cover the total rewards
@@ -335,7 +341,14 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function processRewards(ReserveToken pool) public nonReentrant {
+    function processRewards(ReserveToken pool) external nonReentrant {
+        _processRewards(pool);
+    }
+
+    /**
+     * @dev processes program rewards
+     */
+    function _processRewards(ReserveToken pool) private {
         address poolAddress = ReserveToken.unwrap(pool);
         ProgramData memory p = _programs[poolAddress];
 
