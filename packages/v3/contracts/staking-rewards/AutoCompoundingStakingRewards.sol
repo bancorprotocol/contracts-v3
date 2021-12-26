@@ -428,11 +428,8 @@ contract AutoCompoundingStakingRewards is
         uint32 timeElapsed,
         uint32 prevTimeElapsed
     ) private pure returns (uint256) {
-        uint32 programDuration = p.endTime - p.startTime;
-
         return
-            StakingRewardsMath.calcFlatRewards(p.totalRewards, timeElapsed, programDuration) -
-            StakingRewardsMath.calcFlatRewards(p.totalRewards, prevTimeElapsed, programDuration);
+            StakingRewardsMath.calcFlatRewards(p.totalRewards, timeElapsed - prevTimeElapsed, p.endTime - p.startTime);
     }
 
     /**
