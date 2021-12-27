@@ -382,10 +382,9 @@ contract AutoCompoundingStakingRewards is
                 p.endTime - p.startTime
             );
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = StakingRewardsMath.calcExpDecayRewards(
-                p.totalRewards,
-                timeElapsed - prevTimeElapsed
-            );
+            tokenAmountToDistribute =
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
 
         if (tokenAmountToDistribute == 0) {
