@@ -21,6 +21,7 @@ import {
     TestERC20Token__factory,
     TestFlashLoanRecipient__factory,
     TestGovernedToken__factory,
+    TestLogic__factory,
     TestMasterPool__factory,
     TestMathEx__factory,
     TestOwned__factory,
@@ -28,12 +29,13 @@ import {
     TestPoolAverageRate__factory,
     TestPoolCollection__factory,
     TestPoolCollectionUpgrader__factory,
+    TestPoolCollectionWithdrawal__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
     TestTokenGovernance__factory,
     TestUpgradeable__factory,
     TestVault__factory,
-    TransparentUpgradeableProxy__factory
+    TransparentUpgradeableProxyImmutable__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
@@ -62,6 +64,7 @@ const getContracts = (signer?: Signer) => ({
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
     TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
     TestGovernedToken: deployOrAttach('TestGovernedToken', TestGovernedToken__factory, signer),
+    TestLogic: deployOrAttach('TestLogic', TestLogic__factory, signer),
     TestMathEx: deployOrAttach('TestMathEx', TestMathEx__factory, signer),
     TestMasterPool: deployOrAttach('TestMasterPool', TestMasterPool__factory, signer),
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
@@ -73,14 +76,19 @@ const getContracts = (signer?: Signer) => ({
         TestPoolCollectionUpgrader__factory,
         signer
     ),
+    TestPoolCollectionWithdrawal: deployOrAttach(
+        'TestPoolCollectionWithdrawal',
+        TestPoolCollectionWithdrawal__factory,
+        signer
+    ),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
-    TransparentUpgradeableProxy: deployOrAttach(
-        'TransparentUpgradeableProxy',
-        TransparentUpgradeableProxy__factory,
+    TransparentUpgradeableProxyImmutable: deployOrAttach(
+        'TransparentUpgradeableProxyImmutable',
+        TransparentUpgradeableProxyImmutable__factory,
         signer
     )
 });

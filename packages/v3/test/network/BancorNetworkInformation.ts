@@ -8,22 +8,22 @@ import {
     IERC20,
     IPoolToken,
     NetworkSettings,
+    PoolToken,
     TestBancorNetwork,
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../helpers/Constants';
-import { BNT, ETH, TKN } from '../helpers/Constants';
-import { createSystem, depositToPool, setupSimplePool, PoolSpec } from '../helpers/Factory';
+import { ZERO_ADDRESS, MAX_UINT256, BNT, ETH, TKN } from '../helpers/Constants';
+import { createSystem, depositToPool, setupSimplePool, PoolSpec, initWithdraw } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { Wallet } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('BancorNetworkInformation', () => {
@@ -422,5 +422,67 @@ describe('BancorNetworkInformation', () => {
                 }
             );
         }
+    });
+
+    describe('pending withdrawals', () => {
+        let poolToken: PoolToken;
+        let networkInformation: BancorNetworkInformation;
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let networkToken: IERC20;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let poolCollection: TestPoolCollection;
+
+        let provider: SignerWithAddress;
+        let poolTokenAmount: BigNumber;
+
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+
+        before(async () => {
+            [, provider] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+                await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+
+            await pendingWithdrawals.setTime(await latest());
+
+            ({ poolToken } = await setupSimplePool(
+                {
+                    symbol: TKN,
+                    balance: toWei(1_000_000),
+                    initialRate: { n: 1, d: 2 }
+                },
+                provider,
+                network,
+                networkInformation,
+                networkSettings,
+                poolCollection
+            ));
+
+            poolTokenAmount = await poolToken.balanceOf(provider.address);
+        });
+
+        it('should return withdrawal status', async () => {
+            const { id, creationTime } = await initWithdraw(
+                provider,
+                network,
+                pendingWithdrawals,
+                poolToken,
+                poolTokenAmount
+            );
+
+            expect(await networkInformation.isReadyForWithdrawal(id)).to.be.false;
+
+            const withdrawalDuration =
+                (await pendingWithdrawals.lockDuration()) + (await pendingWithdrawals.withdrawalWindowDuration());
+            await pendingWithdrawals.setTime(creationTime + withdrawalDuration - 1);
+
+            expect(await networkInformation.isReadyForWithdrawal(id)).to.be.true;
+        });
     });
 });

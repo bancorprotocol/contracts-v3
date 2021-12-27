@@ -1,4 +1,5 @@
 import { toBigNumber } from '../helpers/Types';
+import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -42,7 +43,10 @@ function overrideAlmostEqual(utils: Chai.ChaiUtils) {
 
 function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
-        const [expected, { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0) }] = args;
+        const [
+            expected,
+            { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0), relation = undefined }
+        ] = args;
         const obj = chaiUtils.flag(this, 'object');
 
         expect(maxAbsoluteError).to.be.instanceOf(Decimal);
@@ -56,15 +60,38 @@ function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtil
                 return;
             }
 
+            switch (relation) {
+                case Relation.LesserOrEqual:
+                    this.assert(
+                        objDec.lte(expectedDec),
+                        `Expected ${objDec} to be lesser than or equal to ${expectedDec}`,
+                        `Expected ${objDec} NOT to be lesser than or equal to ${expectedDec}`,
+                        expectedDec.toString(),
+                        objDec.toString()
+                    );
+                    break;
+                case Relation.GreaterOrEqual:
+                    this.assert(
+                        objDec.gte(expectedDec),
+                        `Expected ${objDec} to be greater than or equal to ${expectedDec}`,
+                        `Expected ${objDec} NOT to be greater than or equal to ${expectedDec}`,
+                        expectedDec.toString(),
+                        objDec.toString()
+                    );
+                    break;
+            }
+
             const absoluteError = objDec.sub(expectedDec).abs();
-            const relativeError = objDec.div(expectedDec).sub(1).abs();
+            const relativeError = absoluteError.div(expectedDec);
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
-                `Expected ${objDec.toFixed()} NOT to be almost equal to to ${expectedDec.toFixed()} (absoluteError = ${absoluteError.toFixed()},
-                relativeError = ${relativeError.toFixed(25)}`,
+                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
+                `Expected ${objDec.toFixed()} NOT to be almost equal to ${expectedDec.toFixed()}:'
+                '\nabsoluteError = ${absoluteError.toFixed()}'
+                '\nrelativeError = ${relativeError.toFixed()}`,
                 expectedDec.toFixed(),
                 objDec.toFixed()
             );

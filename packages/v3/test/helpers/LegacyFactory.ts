@@ -1,5 +1,4 @@
-import LegacyContracts from '../../components/LegacyContracts';
-import { TokenGovernance } from '../../components/LegacyContracts';
+import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, TestBancorNetwork, MasterVault } from '../../typechain-types';
 import { TokenWithAddress } from '../helpers/Utils';
 import { DEFAULT_DECIMALS } from './Constants';
@@ -9,6 +8,7 @@ const {
     registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS },
     roles: { ROLE_OWNER },
     PPM_RESOLUTION
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
 } = require('../../../v2/test/helpers/Constants');
 
 export const createLegacySystem = async (

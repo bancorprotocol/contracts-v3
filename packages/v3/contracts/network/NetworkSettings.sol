@@ -21,7 +21,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the address of the network fee vault
     INetworkFeeVault private immutable _networkFeeVault;
 
-    // a set of tokens which are eligeble for protection
+    // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token minting limits per pool
@@ -104,7 +104,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev initializes the contract and its parents
      */
-    function __NetworkSettings_init() internal initializer {
+    function __NetworkSettings_init() internal onlyInitializing {
         __Upgradeable_init();
 
         __NetworkSettings_init_unchained();
@@ -113,7 +113,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkSettings_init_unchained() internal initializer {}
+    function __NetworkSettings_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 

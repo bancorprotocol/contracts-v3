@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
-import { PPM_RESOLUTION } from '../helpers/Constants';
+import { PPM_RESOLUTION, MAX_UINT256 } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
@@ -111,7 +111,7 @@ describe('PoolAverageRate', () => {
                         averageRate = await poolAverageRate.calcAverageRate(spotRate, prevAverageRate, currentTime);
 
                         expect(averageRate.rate).to.almostEqual(newAverageRate, {
-                            maxRelativeError: new Decimal(0.0000000000000001)
+                            maxRelativeError: new Decimal('0.00000000000000009')
                         });
                         expect(averageRate.time).to.equal(currentTime);
                     }
@@ -515,6 +515,71 @@ describe('PoolAverageRate', () => {
 
             testVerifyAverageRate(AVERAGE_RATES, SCALE_FACTORS, MAX_DEVIATIONS);
         });
+    });
+
+    describe('reduced ratio', () => {
+        const THRESHOLD = BigNumber.from(2).pow(112).sub(1);
+
+        const reducedRatioTest = (ratio: Fraction<BigNumber>, maxRelativeError: Decimal) => {
+            it(`ratio = ${ratio.n} / ${ratio.d}`, async () => {
+                const newRatio = await poolAverageRate.reducedRatio(ratio);
+                expect(newRatio.n).to.be.lte(THRESHOLD);
+                expect(newRatio.d).to.be.lte(THRESHOLD);
+                expect(newRatio).to.almostEqual(ratio, { maxRelativeError });
+            });
+        };
+
+        for (let n = 0; n < 10; n++) {
+            for (let d = 0; d < 10; d++) {
+                reducedRatioTest({ n: THRESHOLD.sub(n), d: THRESHOLD.sub(d) }, new Decimal('0'));
+                reducedRatioTest(
+                    { n: THRESHOLD.sub(n), d: THRESHOLD.add(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
+                reducedRatioTest(
+                    { n: THRESHOLD.add(n), d: THRESHOLD.sub(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
+                reducedRatioTest(
+                    { n: THRESHOLD.add(n), d: THRESHOLD.add(d) },
+                    new Decimal('0.0000000000000000000000000000000002')
+                );
+            }
+        }
+
+        for (let i = BigNumber.from(1); i.lte(THRESHOLD); i = i.mul(10)) {
+            for (let j = BigNumber.from(1); j.lte(THRESHOLD); j = j.mul(10)) {
+                const n = MAX_UINT256.div(THRESHOLD).mul(i).add(1);
+                const d = MAX_UINT256.div(THRESHOLD).mul(j).add(1);
+                reducedRatioTest({ n, d }, new Decimal('0.04'));
+            }
+        }
+
+        for (let i = 96; i <= 256; i += 16) {
+            for (let j = i - 64; j <= i + 64; j += 16) {
+                const iMax = BigNumber.from(2).pow(i).sub(1);
+                const jMax = BigNumber.from(2).pow(j).sub(1);
+                for (const n of [
+                    iMax.div(3),
+                    iMax.div(2),
+                    iMax.mul(2).div(3),
+                    iMax.mul(3).div(4),
+                    iMax.sub(1),
+                    iMax,
+                    iMax.add(1),
+                    iMax.mul(4).div(3),
+                    iMax.mul(3).div(2),
+                    iMax.mul(2),
+                    iMax.mul(3)
+                ]) {
+                    for (const d of [jMax.sub(1), jMax, jMax.add(1)]) {
+                        if (n.lte(MAX_UINT256) && d.lte(MAX_UINT256)) {
+                            reducedRatioTest({ n, d }, new Decimal('0.000000000000008'));
+                        }
+                    }
+                }
+            }
+        }
     });
 
     describe('equality', () => {

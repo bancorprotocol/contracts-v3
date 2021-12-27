@@ -17,7 +17,7 @@ import { toPPM } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, ContractTransaction } from 'ethers';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 const INITIAL_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
@@ -145,17 +145,17 @@ describe('BancorV1Migration', () => {
         const prevProviderNetworkBalance = await getBalance(networkToken, provider);
 
         const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
-        await masterPoolToken.connect(provider).approve(pendingWithdrawals.address, masterPoolTokenAmount);
+        await masterPoolToken.connect(provider).approve(network.address, masterPoolTokenAmount);
 
-        await pendingWithdrawals.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
+        await network.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
 
         const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
         await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address));
         await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
-        await basePoolToken.connect(provider).approve(pendingWithdrawals.address, basePoolTokenAmount);
-        await pendingWithdrawals.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
+        await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
+        await network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
         const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
 
         const prevProviderBaseBalance = await getBalance(baseToken, provider);

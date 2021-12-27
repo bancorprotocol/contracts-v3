@@ -2,6 +2,8 @@
 pragma solidity 0.8.10;
 pragma abicoder v2;
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction, Uint512 } from "../utility/Types.sol";
@@ -54,7 +56,7 @@ library PoolAverageRate {
         // if the previous average rate was calculated a while ago (or never), the average rate should be equal to the
         // spot rate
         if (timeElapsed >= AVERAGE_RATE_PERIOD || averageRate.time == 0) {
-            return AverageRate({ time: currentTime, rate: MathEx.reducedRatio(spotRate, type(uint112).max) });
+            return AverageRate({ time: currentTime, rate: reducedRatio(spotRate) });
         }
 
         // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
@@ -69,9 +71,7 @@ library PoolAverageRate {
             d: averageRate.rate.d * spotRate.d * AVERAGE_RATE_PERIOD
         });
 
-        newRate = MathEx.reducedRatio(newRate, type(uint112).max);
-
-        return AverageRate({ time: currentTime, rate: newRate });
+        return AverageRate({ time: currentTime, rate: reducedRatio(newRate) });
     }
 
     /**
@@ -106,6 +106,14 @@ library PoolAverageRate {
         Uint512 memory max = MathEx.mul512(x, upperBound);
 
         return MathEx.lte512(min, mid) && MathEx.lte512(mid, max);
+    }
+
+    /**
+     * @dev reduces the components of a given ratio to 112 bits
+     */
+    function reducedRatio(Fraction memory ratio) internal pure returns (Fraction memory) {
+        uint256 scale = Math.ceilDiv(Math.max(ratio.n, ratio.d), type(uint112).max);
+        return Fraction({ n: ratio.n / scale, d: ratio.d / scale });
     }
 
     /**

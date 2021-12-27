@@ -22,16 +22,14 @@ import {
     TKN
 } from '../helpers/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { roundDiv } from '../helpers/MathUtils';
 import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-import fs from 'fs';
 import { ethers } from 'hardhat';
-import path from 'path';
 
 describe('PoolCollection', () => {
     const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
@@ -561,344 +559,6 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('withdrawal amounts', () => {
-        interface WithdrawalAmountData {
-            networkTokenLiquidity: string;
-            baseTokenLiquidity: string;
-            baseTokenExcessAmount: string;
-            basePoolTokenTotalSupply: string;
-            baseTokenStakedAmount: string;
-            baseTokenWalletBalance: string;
-            tradeFeePPM: string;
-            withdrawalFeePPM: string;
-            basePoolTokenWithdrawalAmount: string;
-            baseTokenAmountToTransferFromVaultToProvider: string;
-            networkTokenAmountToMintForProvider: string;
-            baseTokenAmountToDeductFromLiquidity: string;
-            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: string;
-            networkTokenAmountToDeductFromLiquidity: string;
-            networkTokenArbitrageAmount: string;
-        }
-
-        interface MaxError {
-            absolute: Decimal;
-            relative: Decimal;
-        }
-
-        interface MaxErrors {
-            baseTokenAmountToTransferFromVaultToProvider: MaxError;
-            networkTokenAmountToMintForProvider: MaxError;
-            baseTokenAmountToDeductFromLiquidity: MaxError;
-            baseTokenAmountToTransferFromExternalProtectionVaultToProvider: MaxError;
-            networkTokenAmountToDeductFromLiquidity: MaxError;
-            networkTokenArbitrageAmount: MaxError;
-        }
-
-        const testWithdrawalAmounts = (maxNumberOfTests: number = Number.MAX_SAFE_INTEGER) => {
-            let poolCollection: TestPoolCollection;
-
-            before(async () => {
-                ({ poolCollection } = await createSystem());
-            });
-
-            const test = (fileName: string, maxErrors: MaxErrors) => {
-                const table: WithdrawalAmountData[] = JSON.parse(
-                    fs.readFileSync(path.join(__dirname, '../data', `${fileName}.json`), { encoding: 'utf8' })
-                ).slice(0, maxNumberOfTests);
-
-                for (const {
-                    networkTokenLiquidity,
-                    baseTokenLiquidity,
-                    baseTokenExcessAmount,
-                    basePoolTokenTotalSupply,
-                    baseTokenStakedAmount,
-                    baseTokenWalletBalance,
-                    tradeFeePPM,
-                    withdrawalFeePPM,
-                    basePoolTokenWithdrawalAmount,
-                    baseTokenAmountToTransferFromVaultToProvider,
-                    networkTokenAmountToMintForProvider,
-                    baseTokenAmountToDeductFromLiquidity,
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-                    networkTokenAmountToDeductFromLiquidity,
-                    networkTokenArbitrageAmount
-                } of table) {
-                    it(`should receive correct withdrawal amounts (${[
-                        networkTokenLiquidity,
-                        baseTokenLiquidity,
-                        baseTokenExcessAmount,
-                        basePoolTokenTotalSupply,
-                        baseTokenStakedAmount,
-                        baseTokenWalletBalance,
-                        tradeFeePPM,
-                        withdrawalFeePPM,
-                        basePoolTokenWithdrawalAmount,
-                        baseTokenAmountToTransferFromVaultToProvider,
-                        networkTokenAmountToMintForProvider,
-                        baseTokenAmountToDeductFromLiquidity,
-                        baseTokenAmountToTransferFromExternalProtectionVaultToProvider,
-                        networkTokenAmountToDeductFromLiquidity,
-                        networkTokenArbitrageAmount
-                    ]})`, async () => {
-                        const actual = await poolCollection.withdrawalAmountsT(
-                            networkTokenLiquidity,
-                            baseTokenLiquidity,
-                            baseTokenExcessAmount,
-                            basePoolTokenTotalSupply,
-                            baseTokenStakedAmount,
-                            baseTokenWalletBalance,
-                            tradeFeePPM,
-                            withdrawalFeePPM,
-                            basePoolTokenWithdrawalAmount
-                        );
-                        expect(actual.baseTokenAmountToTransferFromVaultToProvider).to.almostEqual(
-                            new Decimal(baseTokenAmountToTransferFromVaultToProvider),
-                            {
-                                maxAbsoluteError: maxErrors.baseTokenAmountToTransferFromVaultToProvider.absolute,
-                                maxRelativeError: maxErrors.baseTokenAmountToTransferFromVaultToProvider.relative
-                            }
-                        );
-                        expect(actual.networkTokenAmountToMintForProvider).to.almostEqual(
-                            new Decimal(networkTokenAmountToMintForProvider),
-                            {
-                                maxAbsoluteError: maxErrors.networkTokenAmountToMintForProvider.absolute,
-                                maxRelativeError: maxErrors.networkTokenAmountToMintForProvider.relative
-                            }
-                        );
-                        expect(actual.baseTokenAmountToDeductFromLiquidity).to.almostEqual(
-                            new Decimal(baseTokenAmountToDeductFromLiquidity),
-                            {
-                                maxAbsoluteError: maxErrors.baseTokenAmountToDeductFromLiquidity.absolute,
-                                maxRelativeError: maxErrors.baseTokenAmountToDeductFromLiquidity.relative
-                            }
-                        );
-                        expect(actual.baseTokenAmountToTransferFromExternalProtectionVaultToProvider).to.almostEqual(
-                            new Decimal(baseTokenAmountToTransferFromExternalProtectionVaultToProvider),
-                            {
-                                maxAbsoluteError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.absolute,
-                                maxRelativeError:
-                                    maxErrors.baseTokenAmountToTransferFromExternalProtectionVaultToProvider.relative
-                            }
-                        );
-                        expect(actual.networkTokenAmountToDeductFromLiquidity).to.almostEqual(
-                            new Decimal(networkTokenAmountToDeductFromLiquidity),
-                            {
-                                maxAbsoluteError: maxErrors.networkTokenAmountToDeductFromLiquidity.absolute,
-                                maxRelativeError: maxErrors.networkTokenAmountToDeductFromLiquidity.relative
-                            }
-                        );
-                        expect(actual.networkTokenArbitrageAmount).to.almostEqual(
-                            new Decimal(networkTokenArbitrageAmount),
-                            {
-                                maxAbsoluteError: maxErrors.networkTokenArbitrageAmount.absolute,
-                                maxRelativeError: maxErrors.networkTokenArbitrageAmount.relative
-                            }
-                        );
-                    });
-                }
-            };
-
-            describe('regular cases', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000000000000002')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000000000000003')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000000000000002')
-                    },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000000000000003')
-                    },
-                    networkTokenArbitrageAmount: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.00000000000000002')
-                    }
-                };
-
-                test('WithdrawalAmountsRegularCases', maxErrors);
-            });
-
-            describe('edge cases 1', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000000003')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000003')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.00000000002')
-                    },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000001')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000002') }
-                };
-
-                test('WithdrawalAmountsEdgeCases1', maxErrors);
-            });
-
-            describe('edge cases 2', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000004')
-                    },
-                    networkTokenAmountToMintForProvider: { absolute: new Decimal(1), relative: new Decimal('0.00009') },
-                    baseTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000002')
-                    },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.00002')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0007') }
-                };
-
-                test('WithdrawalAmountsEdgeCases2', maxErrors);
-            });
-
-            describe('coverage 1', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0002')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000002')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.0002') },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0002')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0002') }
-                };
-
-                test('WithdrawalAmountsCoverage1', maxErrors);
-            });
-
-            describe('coverage 2', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000000003')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000000003')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000000003')
-                    },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000000003')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.000000003') }
-                };
-
-                test('WithdrawalAmountsCoverage2', maxErrors);
-            });
-
-            describe('coverage 3', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.008')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.000002')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: { absolute: new Decimal(1), relative: new Decimal('0.008') },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.008')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.008') }
-                };
-
-                test('WithdrawalAmountsCoverage3', maxErrors);
-            });
-
-            describe('coverage 4', () => {
-                const maxErrors = {
-                    baseTokenAmountToTransferFromVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000009')
-                    },
-                    networkTokenAmountToMintForProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000000002')
-                    },
-                    baseTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000009')
-                    },
-                    baseTokenAmountToTransferFromExternalProtectionVaultToProvider: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0')
-                    },
-                    networkTokenAmountToDeductFromLiquidity: {
-                        absolute: new Decimal(1),
-                        relative: new Decimal('0.0000009')
-                    },
-                    networkTokenArbitrageAmount: { absolute: new Decimal(1), relative: new Decimal('0.0000009') }
-                };
-
-                test('WithdrawalAmountsCoverage4', maxErrors);
-            });
-        };
-
-        describe('regular tests', () => {
-            testWithdrawalAmounts(10);
-        });
-
-        describe('@stress tests', () => {
-            testWithdrawalAmounts();
-        });
-    });
-
     describe('deposit', () => {
         const testDeposit = (symbol: string) => {
             let networkSettings: NetworkSettings;
@@ -1213,7 +873,6 @@ describe('PoolCollection', () => {
         const testWithdraw = (symbol: string) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
-            let networkToken: IERC20;
             let poolCollection: TestPoolCollection;
             let poolToken: PoolToken;
             let reserveToken: TokenWithAddress;
@@ -1225,7 +884,7 @@ describe('PoolCollection', () => {
             });
 
             beforeEach(async () => {
-                ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
+                ({ network, networkSettings, poolCollection } = await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -1257,7 +916,7 @@ describe('PoolCollection', () => {
                 ).to.be.revertedWith('ZeroValue');
             });
 
-            it('should reset the average rate when the pool is emptied', async () => {
+            it('should reset the pool data when the pool is emptied', async () => {
                 const baseTokenAmount = 1000;
 
                 await network.depositToPoolCollectionForT(
@@ -1275,6 +934,12 @@ describe('PoolCollection', () => {
                 await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
                 await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
 
+                expect(prevPoolData.liquidity.stakedBalance).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.baseTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.networkTokenTradingLiquidity).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.liquidity.tradingLiquidityProduct).to.not.equal(BigNumber.from(0));
+                expect(prevPoolData.averageRate.rate).to.not.equal(ZERO_FRACTION);
+
                 await network.withdrawFromPoolCollectionT(
                     poolCollection.address,
                     reserveToken.address,
@@ -1284,9 +949,58 @@ describe('PoolCollection', () => {
                 );
 
                 const poolData = await poolCollection.poolData(reserveToken.address);
+                expect(poolData.liquidity.stakedBalance).to.equal(0);
                 expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(0);
+                expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(0);
+                expect(poolData.liquidity.tradingLiquidityProduct).to.equal(0);
                 expect(poolData.averageRate.rate).to.equal(ZERO_FRACTION);
             });
+
+            for (const percent of [1, 5, 10, 25, 50]) {
+                it(`should update the pool data when ${percent}% of the pool is emptied`, async () => {
+                    const baseTokenAmount = BigNumber.from(1000);
+
+                    await network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        provider.address,
+                        reserveToken.address,
+                        baseTokenAmount,
+                        MAX_UINT256
+                    );
+
+                    const prevPoolData = await poolCollection.poolData(reserveToken.address);
+                    const poolTokenAmount = await poolToken.balanceOf(provider.address);
+                    await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
+                    await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
+
+                    const stakedBalanceExpected = prevPoolData.liquidity.stakedBalance.mul(100 - percent).div(100);
+                    const baseTokenTradingLiquidityExpected = prevPoolData.liquidity.baseTokenTradingLiquidity
+                        .mul(100 - percent)
+                        .div(100);
+                    const networkTokenTradingLiquidityExpected = prevPoolData.liquidity.networkTokenTradingLiquidity
+                        .mul(100 - percent)
+                        .div(100);
+                    const tradingLiquidityProductExpected = baseTokenTradingLiquidityExpected.mul(
+                        networkTokenTradingLiquidityExpected
+                    );
+
+                    await network.withdrawFromPoolCollectionT(
+                        poolCollection.address,
+                        reserveToken.address,
+                        poolTokenAmount.mul(percent).div(100),
+                        baseTokenAmount,
+                        BigNumber.from(0)
+                    );
+
+                    const poolData = await poolCollection.poolData(reserveToken.address);
+                    expect(poolData.liquidity.stakedBalance).to.equal(stakedBalanceExpected);
+                    expect(poolData.liquidity.baseTokenTradingLiquidity).to.equal(baseTokenTradingLiquidityExpected);
+                    expect(poolData.liquidity.networkTokenTradingLiquidity).to.equal(
+                        networkTokenTradingLiquidityExpected
+                    );
+                    expect(poolData.liquidity.tradingLiquidityProduct).to.equal(tradingLiquidityProductExpected);
+                });
+            }
         };
 
         for (const symbol of [ETH, TKN]) {
@@ -1694,20 +1408,24 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith(
                                         targetAmount
                                             ? 'InvalidPoolBalance'
-                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)' // eslint-disable-line max-len
                                     );
                                 }
                             });
                         });
 
                         context('insufficient', () => {
-                            const sourceBalance = BigNumber.from(12_345);
-                            const targetBalance = BigNumber.from(9_999_999);
+                            const networkTokenTradingLiquidity = BigNumber.from(12_345);
+                            const baseTokenTradingLiquidity = BigNumber.from(9_999_999);
+
+                            const targetBalance = isSourceNetworkToken
+                                ? baseTokenTradingLiquidity
+                                : networkTokenTradingLiquidity;
 
                             let targetAmount: BigNumber;
 
                             beforeEach(async () => {
-                                await setTradingLiquidity(sourceBalance, targetBalance);
+                                await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
 
                                 targetAmount = targetBalance;
                             });
@@ -1731,16 +1449,23 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
 
                                     // derive a target amount such that adding a fee to it will result in an amount
-                                    // greater than the target balance by solving the following two equations (left as an
-                                    // exercise for the reader):
-                                    // - feeAmount = targetAmount * tradingFeePPM / (PPM - tradingFeePPM)
-                                    // - targetAmount + feeAmount = targetBalance
-                                    const fee = new Decimal(tradingFeePPM.toString());
-                                    const factor = new Decimal(1).add(
-                                        fee.div(new Decimal(PPM_RESOLUTION.toString()).sub(fee))
-                                    );
-                                    targetAmount = BigNumber.from(
-                                        roundDiv(targetBalance, factor).add(new Decimal(1)).toFixed()
+                                    // equal to the target balance, by solving the following two equations:
+                                    // 1. `feeAmount = targetAmount * tradingFee / (1 - tradingFee)`
+                                    // 2. `targetAmount + feeAmount = targetBalance`
+                                    targetAmount = targetBalance
+                                        .mul(PPM_RESOLUTION - tradingFeePPM)
+                                        .div(PPM_RESOLUTION);
+                                    // Note that due to the integer-division, we expect:
+                                    // - `targetAmount + feeAmount` to be slightly smaller than `targetBalance`
+                                    // - `targetAmount + feeAmount + 1` to be equal to or larger than `targetBalance`
+                                });
+
+                                it('should not revert when attempting to query the source amount', async () => {
+                                    await poolCollection.tradeAmountAndFee(
+                                        sourceToken.address,
+                                        targetToken.address,
+                                        targetAmount,
+                                        false
                                     );
                                 });
 
@@ -1749,12 +1474,10 @@ describe('PoolCollection', () => {
                                         poolCollection.tradeAmountAndFee(
                                             sourceToken.address,
                                             targetToken.address,
-                                            targetAmount,
+                                            targetAmount.add(1),
                                             false
                                         )
-                                    ).to.be.revertedWith(
-                                        'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
-                                    );
+                                    ).to.be.revertedWith('reverted with panic code'); // either division by zero or subtraction underflow
                                 });
                             });
                         });
@@ -1794,10 +1517,12 @@ describe('PoolCollection', () => {
                                 ? liquidity.baseTokenTradingLiquidity
                                 : liquidity.networkTokenTradingLiquidity;
 
-                            const amount = targetTokenBalance
-                                .mul(sourceAmount)
-                                .div(sourceTokenBalance.add(sourceAmount));
-                            const feeAmount = amount.mul(poolData.tradingFeePPM).div(PPM_RESOLUTION);
+                            const amount = new Decimal(targetTokenBalance.toString())
+                                .mul(sourceAmount.toString())
+                                .div(sourceTokenBalance.add(sourceAmount).toString());
+                            const feeAmount = new Decimal(amount.toString())
+                                .mul(poolData.tradingFeePPM)
+                                .div(PPM_RESOLUTION);
 
                             return { amount: amount.sub(feeAmount), feeAmount };
                         };
@@ -1857,17 +1582,19 @@ describe('PoolCollection', () => {
 
                                 const expectedTargetAmounts = expectedTargetAmountAndFee(amount, prevPoolData);
                                 expect(targetAmountAndFee.amount).to.almostEqual(expectedTargetAmounts.amount, {
-                                    maxRelativeError: new Decimal(0.0001)
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
                                 });
                                 expect(targetAmountAndFee.feeAmount).to.almostEqual(expectedTargetAmounts.feeAmount, {
-                                    maxRelativeError: new Decimal(0.0001)
+                                    maxRelativeError: new Decimal('0.000000000000000006'),
+                                    relation: Relation.LesserOrEqual
                                 });
 
                                 expect(sourceAmountAndFee.amount).to.almostEqual(amount, {
-                                    maxRelativeError: new Decimal(0.0001)
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
                                 });
                                 expect(sourceAmountAndFee.feeAmount).to.almostEqual(targetAmountAndFee.feeAmount, {
-                                    maxRelativeError: new Decimal(0.0001)
+                                    maxRelativeError: new Decimal('0.000000000000000002'),
+                                    relation: Relation.GreaterOrEqual
                                 });
 
                                 const poolData = await poolCollection.poolData(reserveToken.address);

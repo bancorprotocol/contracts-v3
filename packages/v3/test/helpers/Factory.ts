@@ -25,7 +25,7 @@ import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from '
 import { fromPPM, Fraction, toWei } from './Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, ContractFactory } from 'ethers';
+import { BaseContract, BigNumber, ContractFactory, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const {
@@ -44,11 +44,6 @@ interface ProxyArguments {
     skipInitialization?: boolean;
     initArgs?: InitArgs;
     ctorArgs?: CtorArgs;
-}
-
-interface Logic {
-    ctorArgs: CtorArgs;
-    contract: BaseContract;
 }
 
 let admin: ProxyAdmin;
@@ -73,7 +68,7 @@ const createTransparentProxy = async (
 ) => {
     const admin = await proxyAdmin();
     const data = skipInitialization ? [] : logicContract.interface.encodeFunctionData('initialize', initArgs);
-    return Contracts.TransparentUpgradeableProxy.deploy(logicContract.address, admin.address, data);
+    return Contracts.TransparentUpgradeableProxyImmutable.deploy(logicContract.address, admin.address, data);
 };
 
 export const createProxy = async <F extends ContractFactory>(
@@ -89,6 +84,7 @@ export const createProxy = async <F extends ContractFactory>(
 const getDeployer = async () => (await ethers.getSigners())[0];
 
 const createGovernedToken = async (
+    // eslint-disable-next-line camelcase
     legacyFactory: ContractBuilder<NetworkToken__factory | GovToken__factory>,
     name: string,
     symbol: string,
@@ -378,13 +374,14 @@ export const setupSimplePool = async (
 };
 
 export const initWithdraw = async (
-    provider: SignerWithAddress,
+    provider: SignerWithAddress | Wallet,
+    network: TestBancorNetwork,
     pendingWithdrawals: TestPendingWithdrawals,
     poolToken: PoolToken,
     amount: BigNumber
 ) => {
-    await poolToken.connect(provider).approve(pendingWithdrawals.address, amount);
-    await pendingWithdrawals.connect(provider).initWithdrawal(poolToken.address, amount);
+    await poolToken.connect(provider).approve(network.address, amount);
+    await network.connect(provider).initWithdrawal(poolToken.address, amount);
 
     const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
     const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
