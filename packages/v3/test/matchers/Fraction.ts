@@ -1,4 +1,4 @@
-import { toDecimal, toString, isFraction, Fraction } from '../helpers/Types';
+import { toDecimal, toString, isFraction, Fraction } from '../../utils/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 

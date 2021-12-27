@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { IERC20, TestVault } from '../../typechain-types';
+import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {

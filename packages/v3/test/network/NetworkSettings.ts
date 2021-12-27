@@ -1,10 +1,10 @@
 import Contracts from '../../components/Contracts';
 import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
+import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { toWei } from '../helpers/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

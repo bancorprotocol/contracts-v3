@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { PoolToken, TestERC20Token } from '../../typechain-types';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../helpers/Constants';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { domainSeparator, permitSignature } from '../helpers/Permit';
 import { latest, duration } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

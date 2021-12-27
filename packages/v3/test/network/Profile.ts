@@ -10,7 +10,8 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../../utils/Constants';
+import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
     createSystem,
@@ -22,7 +23,6 @@ import {
 } from '../helpers/Factory';
 import { permitContractSignature } from '../helpers/Permit';
 import { latest, duration } from '../helpers/Time';
-import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';

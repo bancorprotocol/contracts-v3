@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
+import { ZERO_ADDRESS, ETH, TKN, DEFAULT_DECIMALS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, ETH, TKN, DEFAULT_DECIMALS } from '../helpers/Constants';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';

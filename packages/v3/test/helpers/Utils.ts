@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain-types';
-import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from './Constants';
-import { toWei } from './Types';
+import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';

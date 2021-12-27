@@ -12,7 +12,6 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
 import {
     FeeTypes,
     MASTER_POOL_TOKEN_NAME,
@@ -20,10 +19,11 @@ import {
     PPM_RESOLUTION,
     ZERO_ADDRESS,
     TKN
-} from '../helpers/Constants';
+} from '../../utils/Constants';
+import { toWei, toPPM } from '../../utils/Types';
+import { expectRole, roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

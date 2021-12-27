@@ -15,11 +15,11 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, MAX_UINT256, BNT, ETH, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, MAX_UINT256, BNT, ETH, TKN } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { createSystem, depositToPool, setupSimplePool, PoolSpec, initWithdraw } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

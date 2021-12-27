@@ -12,17 +12,9 @@ import {
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
 import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
-import {
-    INVALID_FRACTION,
-    MAX_UINT256,
-    PPM_RESOLUTION,
-    ZERO_ADDRESS,
-    ZERO_FRACTION,
-    ETH,
-    TKN
-} from '../helpers/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION, ETH, TKN } from '../../utils/Constants';
+import { toWei, toPPM } from '../../utils/Types';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { toWei, toPPM } from '../helpers/Types';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -39,6 +31,8 @@ describe('PoolCollection', () => {
 
     const TRADING_STATUS_UPDATE_OWNER = 0;
     const TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
+
+    const INVALID_FRACTION = { n: 0, d: 0 };
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;

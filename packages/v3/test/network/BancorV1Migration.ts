@@ -10,10 +10,10 @@ import {
     PendingWithdrawals,
     PoolToken
 } from '../../typechain-types';
-import { ETH, TKN, PPM_RESOLUTION } from '../helpers/Constants';
+import { ETH, TKN, PPM_RESOLUTION } from '../../utils/Constants';
+import { toPPM } from '../../utils/Types';
 import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { toPPM } from '../helpers/Types';
 import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

@@ -13,7 +13,6 @@ export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export const NATIVE_TOKEN_DECIMALS = DEFAULT_DECIMALS;
 export const MAX_UINT256 = MaxUint256;
 export const ZERO_ADDRESS = AddressZero;
-export const INVALID_FRACTION = { n: 0, d: 0 };
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
 export const MASTER_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;

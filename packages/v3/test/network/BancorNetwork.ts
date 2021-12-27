@@ -28,7 +28,6 @@ import {
     TestPoolCollectionUpgrader,
     TestERC20Burnable
 } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
 import {
     DEFAULT_DECIMALS,
     FeeTypes,
@@ -39,7 +38,9 @@ import {
     BNT,
     ETH,
     TKN
-} from '../helpers/Constants';
+} from '../../utils/Constants';
+import { toWei, toPPM } from '../../utils/Types';
+import { expectRole, roles } from '../helpers/AccessControl';
 import {
     createPool,
     createPoolCollection,
@@ -54,7 +55,6 @@ import { createLegacySystem } from '../helpers/LegacyFactory';
 import { permitContractSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { toWei, toPPM } from '../helpers/Types';
 import {
     createTokenBySymbol,
     createWallet,

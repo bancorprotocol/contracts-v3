@@ -9,12 +9,12 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
+import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes, DEFAULT_DECIMALS } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { MAX_UINT256, ZERO_ADDRESS, BNT, ETH, TKN, FeeTypes, DEFAULT_DECIMALS } from '../helpers/Constants';
 import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

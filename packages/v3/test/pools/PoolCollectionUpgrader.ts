@@ -9,7 +9,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, TKN } from '../helpers/Constants';
+import { ZERO_ADDRESS, TKN } from '../../utils/Constants';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

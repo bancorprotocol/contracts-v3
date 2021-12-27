@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain-types';
-import { toUint512, fromUint512 } from '../helpers/Types';
+import { toUint512, fromUint512 } from '../../utils/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';

@@ -20,9 +20,9 @@ import {
     TestPoolCollection,
     TestPendingWithdrawals
 } from '../../typechain-types';
-import { roles } from './AccessControl';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from './Constants';
-import { fromPPM, Fraction, toWei } from './Types';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from '../../utils/Constants';
+import { roles } from '../../utils/Roles';
+import { fromPPM, Fraction, toWei } from '../../utils/Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory, Wallet } from 'ethers';

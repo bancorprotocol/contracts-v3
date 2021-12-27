@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
+import { ZERO_ADDRESS, BNT, ETH, TKN } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
