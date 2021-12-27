@@ -376,9 +376,16 @@ contract AutoCompoundingStakingRewards is
 
         uint256 tokenAmountToDistribute;
         if (distributionType == FLAT_DISTRIBUTION) {
-            tokenAmountToDistribute = _calcFlatRewards(p, timeElapsed, prevTimeElapsed);
+            tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
+                p.totalRewards,
+                timeElapsed - prevTimeElapsed,
+                p.endTime - p.startTime
+            );
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = _calcExpDecayRewards(p, timeElapsed, prevTimeElapsed);
+            tokenAmountToDistribute = StakingRewardsMath.calcExpDecayRewards(
+                p.totalRewards,
+                timeElapsed - prevTimeElapsed
+            );
         }
 
         if (tokenAmountToDistribute == 0) {
@@ -417,32 +424,6 @@ contract AutoCompoundingStakingRewards is
             programTimeElapsed: timeElapsed,
             remainingRewards: p.remainingRewards
         });
-    }
-
-    /**
-     * @dev calculates and returns the rewards for a flat distribution program according to how much time has elapsed
-     * since the beginning of the program and the time of the preview calculation
-     */
-    function _calcFlatRewards(
-        ProgramData memory p,
-        uint32 timeElapsed,
-        uint32 prevTimeElapsed
-    ) private pure returns (uint256) {
-        return
-            StakingRewardsMath.calcFlatRewards(p.totalRewards, timeElapsed - prevTimeElapsed, p.endTime - p.startTime);
-    }
-
-    /**
-     * @dev calculates and returns the rewards for an exponential decay distribution program according to how much time
-     * has elapsed since the beginning of the program and the time of the preview calculation
-     */
-    function _calcExpDecayRewards(
-        ProgramData memory p,
-        uint32 timeElapsed,
-        uint32 prevTimeElapsed
-    ) private pure returns (uint256) {
-        return
-            StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed - prevTimeElapsed);
     }
 
     /**
