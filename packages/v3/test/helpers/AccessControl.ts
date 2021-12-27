@@ -1,44 +1,8 @@
 import { AccessControlEnumerableUpgradeable } from '../../typechain-types';
+import { roles } from '../../utils/Roles';
 import { expect } from 'chai';
-import { utils } from 'ethers';
 
-const { id } = utils;
-
-export const roles = {
-    Upgradeable: {
-        ROLE_ADMIN: id('ROLE_ADMIN')
-    },
-
-    BancorNetwork: {
-        ROLE_MIGRATION_MANAGER: id('ROLE_MIGRATION_MANAGER')
-    },
-
-    MasterVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
-        ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
-    },
-
-    ExternalProtectionVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
-    },
-
-    ExternalRewardsVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
-    },
-
-    NetworkFeeVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
-    },
-
-    MasterPool: {
-        ROLE_MASTER_POOL_TOKEN_MANAGER: id('ROLE_MASTER_POOL_TOKEN_MANAGER')
-    },
-
-    TokenGovernance: {
-        ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
-        ROLE_MINTER: id('ROLE_MINTER')
-    }
-};
+export * from '../../utils/Roles';
 
 const roleNames = Object.values(roles)
     .map((contractRoles) => Object.values(contractRoles))

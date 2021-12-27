@@ -799,10 +799,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nomiclabs/hardhat-ethers@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.0.3.tgz#06e20a57274f6ce3148132910e723948a711edf1"
-  integrity sha512-IJ0gBotVtO7YyLZyHNgbxzskUtFok+JkRlKPo8YELqj1ms9XL6Qm3vsfsGdZr22wnJeVEF5TQPotKuwQk21Dag==
+"@nomiclabs/hardhat-ethers@npm:hardhat-deploy-ethers", hardhat-deploy-ethers@^0.3.0-beta.12:
+  version "0.3.0-beta.12"
+  resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.3.0-beta.12.tgz#2b18d8c689413984262a12393cada3011c356b7a"
+  integrity sha512-sgx4cdhZwb8xDnuni6S0aturxgphMBGUaB1D3em73phhy8+RO9z7KiYeQvZhruXWydM6fdDX4NwGpaSy+MGcqA==
 
 "@nomiclabs/hardhat-etherscan@^2.1.8":
   version "2.1.8"
