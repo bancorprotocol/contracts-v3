@@ -27,9 +27,9 @@ library StakingRewardsMath {
 
     /**
      * @dev returns the amount of rewards distributed after a given time period since deployment has elapsed
-     * The returned value is calculated as `totalRewards * (1 - 1 / e ^ (LAMBDA * timeElapsed))`.
+     * The returned value is calculated as `totalRewards * (1 - 1 / e ^ (timeElapsed * LAMBDA))`.
      * Note that because the exponentiation function is limited to an input of up to (and excluding) 16, the
-     * input value to this function is limited by `LAMBDA * timeElapsed < 16` --> `timeElapsed < 1120000000`.
+     * input value to this function is limited by `timeElapsed * LAMBDA < 16` --> `timeElapsed < 1120000000`.
      * For `timeElapsed = 1120000000 - 1`, the formula above returns more than 99.9999% of `totalRewards`.
      */
     function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed) internal pure returns (uint256) {
