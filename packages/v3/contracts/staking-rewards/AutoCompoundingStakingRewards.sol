@@ -442,8 +442,7 @@ contract AutoCompoundingStakingRewards is
         uint32 prevTimeElapsed
     ) private pure returns (uint256) {
         return
-            StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
-            StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
+            StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed - prevTimeElapsed);
     }
 
     /**
