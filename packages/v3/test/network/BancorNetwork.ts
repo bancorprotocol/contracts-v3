@@ -39,6 +39,7 @@ import {
     ETH,
     TKN
 } from '../../utils/Constants';
+import { permitContractSignature } from '../../utils/Permit';
 import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import {
@@ -52,7 +53,6 @@ import {
     specToString
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { permitContractSignature } from '../helpers/Permit';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
 import {
