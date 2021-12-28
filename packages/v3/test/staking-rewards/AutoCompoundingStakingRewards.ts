@@ -29,8 +29,6 @@ import humanizeDuration from 'humanize-duration';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-const ONE = new Decimal(1);
-
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
