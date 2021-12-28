@@ -733,64 +733,71 @@ describe('AutoCompoundingStakingRewards', () => {
                 return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
             };
 
-            const calcFlatRewards = (totalRewards: BigNumber, timeElapsed: number, programDuration: number) => {
-                if (timeElapsed < programDuration) {
-                    return new Decimal(totalRewards.toString()).mul(timeElapsed).div(programDuration);
-                }
-                return new Decimal(totalRewards.toString());
-            };
+            const getExponentialDecayRewardsAfterTimeElapsed = (elapsedTime: number, totalRewards: BigNumber) =>
+                new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(elapsedTime).exp()));
 
-            const calcExpDecayRewards = (totalRewards: BigNumber, timeElapsed: number) => {
-                return new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(timeElapsed).exp()));
-            };
+            const getRewards = async (pool: TokenWithAddress) => {
+                let tokenAmountToDistribute = BigNumber.from(0);
+                let poolTokenAmountToBurn = BigNumber.from(0);
+                let elapsedTime = 0;
+                let effectiveTime = 0;
 
-            const getExpectedAmountToDistribute = async () => {
-                const program = await autoCompoundingStakingRewards.program(token.address);
+                const program = await autoCompoundingStakingRewards.program(pool.address);
+                const duration = program.endTime - program.startTime;
                 const currentTime = await autoCompoundingStakingRewards.currentTime();
-
                 if (!program.isEnabled || currentTime < program.startTime) {
-                    return new Decimal(0);
+                    return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
                 }
 
-                const timeElapsed = currentTime - program.startTime;
+                elapsedTime = currentTime - program.startTime;
+                effectiveTime = elapsedTime;
+                if (program.distributionType === StakingRewardsDistributionTypes.Flat) {
+                    effectiveTime = Math.min(effectiveTime, duration);
+                }
+
                 const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
 
                 switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        return calcFlatRewards(
-                            program.totalRewards,
-                            timeElapsed - prevTimeElapsed,
-                            program.endTime - program.startTime
-                        );
+                        tokenAmountToDistribute = program.remainingRewards
+                            .mul(effectiveTime - prevTimeElapsed)
+                            .div(duration - prevTimeElapsed);
+
+                        break;
+
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        return calcExpDecayRewards(program.totalRewards, timeElapsed).sub(
-                            calcExpDecayRewards(program.totalRewards, prevTimeElapsed)
+                        tokenAmountToDistribute = BigNumber.from(
+                            getExponentialDecayRewardsAfterTimeElapsed(effectiveTime, program.totalRewards)
+                                .sub(getExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, program.totalRewards))
+                                .toFixed(0)
                         );
+
+                        break;
+
                     default:
                         throw new Error(`Unsupported type ${program.distributionType}`);
                 }
-            };
 
-            const getExpectedAmountToBurnInPool = async (expectedAmountToDistribute: Decimal) => {
                 let poolToken: PoolToken;
                 let stakedBalance: BigNumber;
-
                 if (isNetworkToken) {
                     poolToken = masterPoolToken;
                     stakedBalance = await masterPool.stakedBalance();
                 } else {
-                    poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(token.address));
-                    ({ stakedBalance } = await poolCollection.poolLiquidity(token.address));
+                    poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(pool.address));
+                    ({ stakedBalance } = await poolCollection.poolLiquidity(pool.address));
                 }
 
-                const poolTokenSupply = await poolToken.totalSupply();
                 const protocolPoolTokenAmount = await poolToken.balanceOf(rewardsVault.address);
 
-                const temp = expectedAmountToDistribute.mul(poolTokenSupply.toString());
+                const poolTokenSupply = await poolToken.totalSupply();
+                const val = tokenAmountToDistribute.mul(poolTokenSupply);
 
-                return temp
-                    .mul(poolTokenSupply.toString())
-                    .div(temp.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount)).toString()));
+                poolTokenAmountToBurn = val
+                    .mul(poolTokenSupply)
+                    .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
+
+                return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
             };
 
             const testDistribution = async () => {
@@ -800,29 +807,29 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
-                const expectedAmountToDistribute = await getExpectedAmountToDistribute();
-                const expectedAmountToBurnInPool = await getExpectedAmountToBurnInPool(expectedAmountToDistribute);
+                const { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime } = await getRewards(token);
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
                 const program = await autoCompoundingStakingRewards.program(token.address);
-                const { events } = await res.wait();
 
-                let tokenAmountToDistribute: BigNumber;
-                let poolTokenAmountToBurn: BigNumber;
+                if (tokenAmountToDistribute.eq(BigNumber.from(0)) || poolTokenAmountToBurn.eq(BigNumber.from(0))) {
+                    await expect(res).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
 
-                if (events && events.length > 0) {
-                    const args: any = events.filter((event) => event.event === 'RewardsDistributed')[0].args;
-                    tokenAmountToDistribute = args[1];
-                    poolTokenAmountToBurn = args[2];
-                    expect(args[0]).to.equal(token.address);
-                    expect(args[4]).to.equal(program.remainingRewards);
+                    expect(program.prevDistributionTimestamp).to.equal(prevProgram.prevDistributionTimestamp);
+                } else {
+                    await expect(res)
+                        .to.emit(autoCompoundingStakingRewards, 'RewardsDistributed')
+                        .withArgs(
+                            token.address,
+                            tokenAmountToDistribute,
+                            poolTokenAmountToBurn,
+                            elapsedTime,
+                            BigNumber.from(totalRewards).sub(tokenAmountToDistribute)
+                        );
+
                     expect(program.prevDistributionTimestamp).to.equal(
                         await autoCompoundingStakingRewards.currentTime()
                     );
-                } else {
-                    tokenAmountToDistribute = BigNumber.from(0);
-                    poolTokenAmountToBurn = BigNumber.from(0);
-                    expect(program.prevDistributionTimestamp).to.equal(prevProgram.prevDistributionTimestamp);
                 }
 
                 expect(program.remainingRewards).to.equal(prevProgram.remainingRewards.sub(tokenAmountToDistribute));
@@ -833,56 +840,33 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
                 expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
 
-                const actualUserPoolTokenUnderlying = await getPoolTokenUnderlying(user);
-                const actualVaultPoolTokenUnderlying = await getPoolTokenUnderlying(rewardsVault);
-                const expectedUserPoolTokenUnderlying = prevUserTokenOwned.add(tokenAmountToDistribute);
-                const expectedVaultPoolTokenUnderlying =
-                    prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute);
-
-                switch (program.distributionType) {
+                let maxRelativeError1: Decimal;
+                let maxRelativeError2: Decimal;
+                const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
+                switch (distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        expect(actualUserPoolTokenUnderlying).to.be.almostEqual(expectedUserPoolTokenUnderlying, {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0.0000000000000000000002'),
-                            relation: Relation.LesserOrEqual
-                        });
-                        expect(actualVaultPoolTokenUnderlying).to.be.almostEqual(expectedVaultPoolTokenUnderlying, {
-                            maxAbsoluteError: new Decimal(1),
-                            maxRelativeError: new Decimal('0.0000000000000000000014'),
-                            relation: Relation.GreaterOrEqual
-                        });
-                        expect(tokenAmountToDistribute).to.be.almostEqual(expectedAmountToDistribute, {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal(0),
-                            relation: Relation.LesserOrEqual
-                        });
-                        expect(poolTokenAmountToBurn).to.be.almostEqual(expectedAmountToBurnInPool, {
-                            maxAbsoluteError: new Decimal(1),
-                            maxRelativeError: new Decimal(0),
-                            relation: Relation.LesserOrEqual
-                        });
+                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
+                        maxRelativeError2 = new Decimal('0.00000000000000000000004');
                         break;
+
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        expect(actualUserPoolTokenUnderlying).to.be.almostEqual(expectedUserPoolTokenUnderlying, {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0.0000000000000000000002'),
-                            relation: Relation.LesserOrEqual
-                        });
-                        expect(actualVaultPoolTokenUnderlying).to.be.almostEqual(expectedVaultPoolTokenUnderlying, {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0.0000000000000007'),
-                            relation: Relation.GreaterOrEqual
-                        });
-                        expect(tokenAmountToDistribute).to.be.almostEqual(expectedAmountToDistribute, {
-                            maxAbsoluteError: new Decimal(1),
-                            maxRelativeError: new Decimal(0)
-                        });
-                        expect(poolTokenAmountToBurn).to.be.almostEqual(expectedAmountToBurnInPool, {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0.028')
-                        });
+                        maxRelativeError1 = new Decimal('0.00000000000000000000020000002');
+                        maxRelativeError2 = new Decimal('0.000000000000002');
                         break;
+
+                    default:
+                        throw new Error(`Unsupported type ${distributionType}`);
                 }
+
+                expect(await getPoolTokenUnderlying(user)).to.be.almostEqual(
+                    prevUserTokenOwned.add(tokenAmountToDistribute),
+                    { maxRelativeError: maxRelativeError1, relation: Relation.LesserOrEqual }
+                );
+
+                expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
+                    prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
+                    { maxRelativeError: maxRelativeError2, relation: Relation.GreaterOrEqual }
+                );
 
                 return { tokenAmountToDistribute };
             };
@@ -1023,7 +1007,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
                             () => {
                                 it('should distribute rewards', async () => {
-                                    for (let i = 0, time = startTime; i < totalSteps; i++, time += step) {
+                                    for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
                                         await autoCompoundingStakingRewards.setTime(time);
 
                                         await testDistribution();
