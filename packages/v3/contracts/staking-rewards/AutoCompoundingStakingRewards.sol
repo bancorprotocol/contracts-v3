@@ -314,17 +314,17 @@ contract AutoCompoundingStakingRewards is
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
         ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory pCached = p;
 
-        if (!_isProgramActive(p)) {
+        if (!_isProgramActive(pCached)) {
             revert ProgramInactive();
         }
 
-        p.endTime = _time();
-
-        uint256 cachedRemainingRewards = p.remainingRewards;
+        uint32 endTime = _time();
+        p.endTime = endTime;
         p.remainingRewards = 0;
 
-        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: cachedRemainingRewards });
+        emit ProgramTerminated({ pool: pool, endTime: endTime, remainingRewards: pCached.remainingRewards });
     }
 
     /**
