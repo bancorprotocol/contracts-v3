@@ -834,33 +834,41 @@ describe('AutoCompoundingStakingRewards', () => {
                 );
                 expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmountToBurn));
 
-                let maxRelativeError1: Decimal;
-                let maxRelativeError2: Decimal;
+                const actualUserTokenOwned = await getPoolTokenUnderlying(user);
+                const expectedUserTokenOwned = prevUserTokenOwned.add(tokenAmountToDistribute);
+                const actualRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
+                const expectedRewardsVaultTokenOwned = prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute);
 
                 switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
-                        maxRelativeError2 = new Decimal('0.0000000000000000000014');
+                        expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
+                            maxAbsoluteError: new Decimal(0),
+                            maxRelativeError: new Decimal('0000000000000000000002'),
+                            relation: Relation.LesserOrEqual
+                        });
+                        expect(actualRewardsVaultTokenOwned).to.be.almostEqual(expectedRewardsVaultTokenOwned, {
+                            maxAbsoluteError: new Decimal(1),
+                            maxRelativeError: new Decimal('0000000000000000000014'),
+                            relation: Relation.GreaterOrEqual
+                        });
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
-                        maxRelativeError2 = new Decimal('0.0000000000000007');
+                        expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
+                            maxAbsoluteError: new Decimal(0),
+                            maxRelativeError: new Decimal('0000000000000000000002'),
+                            relation: Relation.LesserOrEqual
+                        });
+                        expect(actualRewardsVaultTokenOwned).to.be.almostEqual(expectedRewardsVaultTokenOwned, {
+                            maxAbsoluteError: new Decimal(0),
+                            maxRelativeError: new Decimal('00000000000000062'),
+                            relation: Relation.GreaterOrEqual
+                        });
                         break;
 
                     default:
                         throw new Error(`Unsupported type ${distributionType}`);
                 }
-
-                expect(await getPoolTokenUnderlying(user)).to.be.almostEqual(
-                    prevUserTokenOwned.add(tokenAmountToDistribute),
-                    { maxRelativeError: maxRelativeError1, relation: Relation.LesserOrEqual }
-                );
-
-                expect(await getPoolTokenUnderlying(rewardsVault)).to.be.almostEqual(
-                    prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute),
-                    { maxRelativeError: maxRelativeError2, relation: Relation.GreaterOrEqual }
-                );
 
                 return { tokenAmountToDistribute };
             };
