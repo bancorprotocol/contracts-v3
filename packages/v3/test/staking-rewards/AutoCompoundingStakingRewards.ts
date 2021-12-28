@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
+    TestStakingRewardsMath,
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
@@ -35,6 +36,7 @@ describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
+    let stakingRewardsMath: TestStakingRewardsMath;
 
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
@@ -51,6 +53,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
     before(async () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
+        stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
     });
 
     const prepareSimplePool = async (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
@@ -733,44 +736,35 @@ describe('AutoCompoundingStakingRewards', () => {
                 return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
             };
 
-            const getExponentialDecayRewardsAfterTimeElapsed = (elapsedTime: number, totalRewards: BigNumber) =>
-                new Decimal(totalRewards.toString()).mul(ONE.sub(LAMBDA.neg().mul(elapsedTime).exp()));
-
-            const getRewards = async (pool: TokenWithAddress) => {
+            const getRewards = async () => {
                 let tokenAmountToDistribute = BigNumber.from(0);
                 let poolTokenAmountToBurn = BigNumber.from(0);
-                let elapsedTime = 0;
-                let effectiveTime = 0;
+                let timeElapsed = 0;
 
-                const program = await autoCompoundingStakingRewards.program(pool.address);
-                const duration = program.endTime - program.startTime;
+                const program = await autoCompoundingStakingRewards.program(token.address);
                 const currentTime = await autoCompoundingStakingRewards.currentTime();
                 if (!program.isEnabled || currentTime < program.startTime) {
-                    return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
+                    return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
                 }
 
-                elapsedTime = currentTime - program.startTime;
-                effectiveTime = elapsedTime;
-                if (program.distributionType === StakingRewardsDistributionTypes.Flat) {
-                    effectiveTime = Math.min(effectiveTime, duration);
-                }
+                timeElapsed = currentTime - program.startTime;
 
                 const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
 
                 switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
-                        tokenAmountToDistribute = program.remainingRewards
-                            .mul(effectiveTime - prevTimeElapsed)
-                            .div(duration - prevTimeElapsed);
+                        tokenAmountToDistribute = await stakingRewardsMath.calcFlatRewards(
+                            program.totalRewards,
+                            timeElapsed - prevTimeElapsed,
+                            program.endTime - program.startTime
+                        );
 
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        tokenAmountToDistribute = BigNumber.from(
-                            getExponentialDecayRewardsAfterTimeElapsed(effectiveTime, program.totalRewards)
-                                .sub(getExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, program.totalRewards))
-                                .toFixed(0)
-                        );
+                        tokenAmountToDistribute = (
+                            await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, timeElapsed)
+                        ).sub(await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, prevTimeElapsed));
 
                         break;
 
@@ -784,8 +778,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     poolToken = masterPoolToken;
                     stakedBalance = await masterPool.stakedBalance();
                 } else {
-                    poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(pool.address));
-                    ({ stakedBalance } = await poolCollection.poolLiquidity(pool.address));
+                    poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(token.address));
+                    ({ stakedBalance } = await poolCollection.poolLiquidity(token.address));
                 }
 
                 const protocolPoolTokenAmount = await poolToken.balanceOf(rewardsVault.address);
@@ -797,7 +791,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     .mul(poolTokenSupply)
                     .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 
-                return { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime };
+                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
             };
 
             const testDistribution = async () => {
@@ -807,12 +801,12 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
-                const { tokenAmountToDistribute, poolTokenAmountToBurn, elapsedTime } = await getRewards(token);
+                const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards();
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
                 const program = await autoCompoundingStakingRewards.program(token.address);
 
-                if (tokenAmountToDistribute.eq(BigNumber.from(0)) || poolTokenAmountToBurn.eq(BigNumber.from(0))) {
+                if (tokenAmountToDistribute.eq(0) || poolTokenAmountToBurn.eq(0)) {
                     await expect(res).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
 
                     expect(program.prevDistributionTimestamp).to.equal(prevProgram.prevDistributionTimestamp);
@@ -823,8 +817,8 @@ describe('AutoCompoundingStakingRewards', () => {
                             token.address,
                             tokenAmountToDistribute,
                             poolTokenAmountToBurn,
-                            elapsedTime,
-                            BigNumber.from(totalRewards).sub(tokenAmountToDistribute)
+                            timeElapsed,
+                            program.remainingRewards
                         );
 
                     expect(program.prevDistributionTimestamp).to.equal(
@@ -842,16 +836,16 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 let maxRelativeError1: Decimal;
                 let maxRelativeError2: Decimal;
-                const { distributionType } = await autoCompoundingStakingRewards.program(token.address);
-                switch (distributionType) {
+
+                switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
                         maxRelativeError1 = new Decimal('0.0000000000000000000002');
-                        maxRelativeError2 = new Decimal('0.00000000000000000000004');
+                        maxRelativeError2 = new Decimal('0.0000000000000000000014');
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
-                        maxRelativeError1 = new Decimal('0.00000000000000000000020000002');
-                        maxRelativeError2 = new Decimal('0.000000000000002');
+                        maxRelativeError1 = new Decimal('0.0000000000000000000002');
+                        maxRelativeError2 = new Decimal('0.0000000000000007');
                         break;
 
                     default:
@@ -1007,7 +1001,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
                             () => {
                                 it('should distribute rewards', async () => {
-                                    for (let i = 0, time = 0; i < totalSteps; i++, time += step) {
+                                    for (let i = 0, time = startTime; i < totalSteps; i++, time += step) {
                                         await autoCompoundingStakingRewards.setTime(time);
 
                                         await testDistribution();
