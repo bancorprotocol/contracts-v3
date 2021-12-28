@@ -41,7 +41,7 @@
         "hardhat": "2.8.0"
     },
     "devDependencies": {
-        "@bancor/token-governance": "^0.1.6",
+        "@bancor/token-governance": "^0.1.7",
         "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
         "@nomiclabs/hardhat-etherscan": "^2.1.8",
         "@nomiclabs/hardhat-solhint": "^2.0.0",
@@ -57,8 +57,8 @@
         "@types/mocha": "^9.0.0",
         "@types/node": "^17.0.5",
         "@types/prompt": "^1.1.2",
-        "@typescript-eslint/eslint-plugin": "^5.8.0",
-        "@typescript-eslint/parser": "^5.8.0",
+        "@typescript-eslint/eslint-plugin": "^5.8.1",
+        "@typescript-eslint/parser": "^5.8.1",
         "chai": "^4.3.4",
         "chai-arrays": "^2.2.0",
         "decimal.js": "10.3.1",
