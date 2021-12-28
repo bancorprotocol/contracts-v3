@@ -13,7 +13,7 @@ import {
     TestPoolCollection
 } from '../../typechain-types';
 import { expectRole, roles } from '../helpers/AccessControl';
-import { StakingRewardsDistributionTypes, BNT, ETH, TKN, ZERO_ADDRESS, ExponentialDecay } from '../helpers/Constants';
+import { BNT, ETH, TKN, ZERO_ADDRESS, StakingRewardsDistributionTypes, ExponentialDecay } from '../helpers/Constants';
 import { createStakingRewards, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
@@ -27,7 +27,6 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
-const { LAMBDA, ESTIMATED_PROGRAM_DURATION } = ExponentialDecay;
 const { Upgradeable: UpgradeableRoles } = roles;
 
 const ONE = new Decimal(1);
@@ -918,28 +917,30 @@ describe('AutoCompoundingStakingRewards', () => {
                                 await autoCompoundingStakingRewards.setTime(startTime + programDuration);
                             });
 
-                            it('should distribute all the rewards', async () => {
-                                const { tokenAmountToDistribute } = await testDistribution();
-
-                                switch (distributionType) {
-                                    case StakingRewardsDistributionTypes.Flat:
+                            switch (distributionType) {
+                                case StakingRewardsDistributionTypes.Flat:
+                                    it('should distribute all the rewards', async () => {
+                                        const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.equal(totalRewards);
+                                    });
 
-                                        break;
+                                    break;
 
-                                    case StakingRewardsDistributionTypes.ExponentialDecay:
+                                case StakingRewardsDistributionTypes.ExponentialDecay:
+                                    it('should distribute almost all the rewards', async () => {
+                                        const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                            maxRelativeError: new Decimal('0.0000001133'),
+                                            maxRelativeError: new Decimal('0.000000113'),
                                             maxAbsoluteError: new Decimal(1),
                                             relation: Relation.LesserOrEqual
                                         });
+                                    });
 
-                                        break;
+                                    break;
 
-                                    default:
-                                        throw new Error(`Unsupported type ${distributionType}`);
-                                }
-                            });
+                                default:
+                                    throw new Error(`Unsupported type ${distributionType}`);
+                            }
                         });
 
                         context('after the end of a program', () => {
@@ -949,33 +950,32 @@ describe('AutoCompoundingStakingRewards', () => {
                                 );
                             });
 
-                            it('should distribute all the rewards', async () => {
-                                const { tokenAmountToDistribute } = await testDistribution();
-
-                                switch (distributionType) {
-                                    case StakingRewardsDistributionTypes.Flat:
+                            switch (distributionType) {
+                                case StakingRewardsDistributionTypes.Flat:
+                                    it('should distribute all the rewards', async () => {
+                                        const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.equal(totalRewards);
+                                    });
 
-                                        break;
+                                    break;
 
-                                    case StakingRewardsDistributionTypes.ExponentialDecay:
-                                        expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
-                                            maxRelativeError: new Decimal('0.0000001133'),
-                                            maxAbsoluteError: new Decimal(1),
-                                            relation: Relation.LesserOrEqual
-                                        });
+                                case StakingRewardsDistributionTypes.ExponentialDecay:
+                                    it('should revert with an overflow', async () => {
+                                        await expect(testDistribution()).to.be.revertedWith('Overflow');
+                                    });
 
-                                        break;
+                                    break;
 
-                                    default:
-                                        throw new Error(`Unsupported type ${distributionType}`);
-                                }
-                            });
+                                default:
+                                    throw new Error(`Unsupported type ${distributionType}`);
+                            }
                         });
 
                         context('while the program is active', () => {
                             beforeEach(async () => {
-                                await autoCompoundingStakingRewards.setTime(startTime + programDuration / 2);
+                                await autoCompoundingStakingRewards.setTime(
+                                    startTime + Math.floor(programDuration / 2)
+                                );
                             });
 
                             it('should distribute rewards', async () => {
@@ -1093,7 +1093,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 case StakingRewardsDistributionTypes.ExponentialDecay:
                     describe('regular tests', () => {
-                        testProgram(ESTIMATED_PROGRAM_DURATION);
+                        testProgram(ExponentialDecay.MAX_DURATION);
                     });
 
                     break;

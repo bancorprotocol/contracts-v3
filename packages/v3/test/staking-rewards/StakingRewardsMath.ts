@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
-import { Exponentiation, ExponentialDecay } from '../helpers/Constants';
+import { ExponentialDecay } from '../helpers/Constants';
 import { duration } from '../helpers/Time';
 import { toWei } from '../helpers/Types';
 import { Relation } from '../matchers';
@@ -40,16 +40,15 @@ describe('StakingRewardsMath', () => {
     });
 
     describe('exponential-decay rewards', () => {
-        const ONE = new Decimal(1);
         const LAMBDA = ExponentialDecay.LAMBDA;
-        const MAX_SECONDS = ONE.div(LAMBDA).mul(Exponentiation.INPUT_TOO_HIGH).floor().toNumber();
+        const MAX_DURATION = ExponentialDecay.MAX_DURATION;
 
         const calcExpDecayRewards = (totalRewards: BigNumberish, timeElapsed: number) => {
             it(`calcExpDecayRewards(${totalRewards}, ${timeElapsed})`, async () => {
-                if (timeElapsed <= MAX_SECONDS) {
+                if (timeElapsed <= MAX_DURATION) {
                     const actual = await stakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
                     const expected = new Decimal(totalRewards.toString()).mul(
-                        ONE.sub(LAMBDA.neg().mul(timeElapsed).exp())
+                        new Decimal(1).sub(LAMBDA.neg().mul(timeElapsed).exp())
                     );
                     await expect(actual).to.be.almostEqual(expected, {
                         maxAbsoluteError: new Decimal(1),
@@ -82,8 +81,8 @@ describe('StakingRewardsMath', () => {
                     years(8),
                     years(16),
                     years(32),
-                    MAX_SECONDS,
-                    MAX_SECONDS + 1
+                    MAX_DURATION,
+                    MAX_DURATION + 1
                 ]) {
                     calcExpDecayRewards(totalRewards, timeElapsed);
                 }
