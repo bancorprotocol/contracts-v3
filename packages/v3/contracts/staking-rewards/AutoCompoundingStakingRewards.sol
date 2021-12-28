@@ -184,8 +184,13 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) public view returns (bool) {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        return _isProgramActive(_programs[ReserveToken.unwrap(pool)]);
+    }
 
+    /**
+     * @dev returns whether or not a given program is active
+     */
+    function _isProgramActive(ProgramData memory p) private view returns (bool) {
         if (p.remainingRewards == 0) {
             return false;
         }
@@ -222,7 +227,9 @@ contract AutoCompoundingStakingRewards is
         onlyAdmin
         nonReentrant
     {
-        if (isProgramActive(pool)) {
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+
+        if (_isProgramActive(p)) {
             revert ProgramAlreadyActive();
         }
 
@@ -253,8 +260,7 @@ contract AutoCompoundingStakingRewards is
             }
         }
 
-        address poolAddress = ReserveToken.unwrap(pool);
-        bool programExists = address(_programs[poolAddress].poolToken) != address(0);
+        bool programExists = address(p.poolToken) != address(0);
         IPoolToken poolToken;
         uint256 requiredPoolTokenAmount;
 
@@ -270,7 +276,7 @@ contract AutoCompoundingStakingRewards is
         // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
         // been distributed
         if (programExists) {
-            _processRewards(pool);
+            _processRewards(pool, p);
         }
 
         // check whether the rewards vault holds enough funds to cover the total rewards
@@ -278,7 +284,7 @@ contract AutoCompoundingStakingRewards is
             revert InsufficientFunds();
         }
 
-        _programs[poolAddress] = ProgramData({
+        _programs[ReserveToken.unwrap(pool)] = ProgramData({
             startTime: startTime,
             endTime: endTime,
             prevDistributionTimestamp: 0,
@@ -290,7 +296,7 @@ contract AutoCompoundingStakingRewards is
             distributionType: distributionType
         });
 
-        bool programAdded = _programByPool.add(poolAddress);
+        bool programAdded = _programByPool.add(ReserveToken.unwrap(pool));
         assert(programAdded != programExists);
 
         emit ProgramCreated({
@@ -307,11 +313,11 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
-        if (!isProgramActive(pool)) {
+        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+
+        if (!_isProgramActive(p)) {
             revert ProgramInactive();
         }
-
-        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
 
         p.endTime = _time();
 
@@ -341,16 +347,13 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) external nonReentrant {
-        _processRewards(pool);
+        _processRewards(pool, _programs[ReserveToken.unwrap(pool)]);
     }
 
     /**
      * @dev processes program rewards
      */
-    function _processRewards(ReserveToken pool) private {
-        address poolAddress = ReserveToken.unwrap(pool);
-        ProgramData memory p = _programs[poolAddress];
-
+    function _processRewards(ReserveToken pool, ProgramData memory p) private {
         // if the program is disabled, don't process the rewards
         if (!p.isEnabled) {
             return;
@@ -361,7 +364,7 @@ contract AutoCompoundingStakingRewards is
 
         // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
         // whose rewards weren't distributed yet in full
-        if (!isProgramActive(pool)) {
+        if (!_isProgramActive(p)) {
             if (
                 distributionType == FLAT_DISTRIBUTION &&
                 p.prevDistributionTimestamp < p.endTime &&
@@ -414,7 +417,7 @@ contract AutoCompoundingStakingRewards is
 
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
-        _programs[poolAddress] = p;
+        _programs[ReserveToken.unwrap(pool)] = p;
 
         emit RewardsDistributed({
             pool: pool,
