@@ -1,4 +1,4 @@
-import { AccessControlEnumerableUpgradeable } from '../../typechain-types';
+import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../typechain-types';
 import { roles } from '../../utils/Roles';
 import { expect } from 'chai';
 
@@ -9,7 +9,7 @@ const roleNames = Object.values(roles)
     .flat(1);
 
 export const expectRole = async (
-    contract: AccessControlEnumerableUpgradeable,
+    contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
     role: typeof roleNames[number],
     adminRole: string,
     initialMembers: string[] = []

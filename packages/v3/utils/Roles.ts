@@ -33,6 +33,7 @@ export const roles = {
     },
 
     TokenGovernance: {
+        ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
         ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
         ROLE_MINTER: id('ROLE_MINTER')
     }

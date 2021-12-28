@@ -9,6 +9,10 @@ export enum ContractId {
     GovTokenGovernance = 'GovTokenGovernance'
 }
 
+export enum Tags {
+    V2 = 'V2'
+}
+
 interface DeployOptions {
     id: ContractId;
     contract?: string;

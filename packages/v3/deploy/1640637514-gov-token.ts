@@ -1,5 +1,5 @@
 import { vBNT, DEFAULT_DECIMALS } from '../utils/Constants';
-import { ContractId, deploy, execute } from '../utils/Deploy';
+import { ContractId, Tags, deploy, execute } from '../utils/Deploy';
 import { roles } from '../utils/Roles';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -60,5 +60,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 };
+
+func.tags = [Tags.V2];
 
 export default func;
