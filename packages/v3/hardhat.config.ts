@@ -59,7 +59,7 @@ const config: HardhatUserConfig = {
             },
             allowUnlimitedContractSize: true
         },
-        localhost: { url: 'http://localhost:8545', chainId: 31337 }
+        localhost: { url: 'http://localhost:8545', chainId: 31337, saveDeployments: false }
     },
 
     solidity: {
@@ -88,14 +88,31 @@ const config: HardhatUserConfig = {
         paths: ['@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol']
     },
 
-    etherscan: {
-        apiKey: ''
-    },
-
     contractSizer: {
         alphaSort: true,
         runOnCompile: false,
         disambiguatePaths: false
+    },
+
+    namedAccounts: {
+        deployer: {
+            hardhat: 0
+        }
+    },
+
+    external: {
+        contracts: [
+            {
+                artifacts: '../v2/artifacts'
+            },
+            {
+                artifacts: 'node_modules/@bancor/token-governance/artifacts'
+            }
+        ]
+    },
+
+    etherscan: {
+        apiKey: ''
     },
 
     mocha: mochaOptions()
