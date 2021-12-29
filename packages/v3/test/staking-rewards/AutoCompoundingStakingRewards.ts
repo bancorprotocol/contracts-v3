@@ -50,6 +50,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
     before(async () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
+
         stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
     });
 
