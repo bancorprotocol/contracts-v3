@@ -1,8 +1,8 @@
 ﻿# Bancor Protocol Contracts v3.0.0 (beta)
 
-[![Build Status](https://github.com/@bancor/contracts-solidity/actions/workflows/ci.yml/badge.svg)](https://github.com/@bancor/contracts-solidity/actions/workflows/ci.yml)
+[![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-v3.svg)](https://www.npmjs.org/package/@bancor/contracts-v3)
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.bancor.network/)
-[![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-solidity.svg)](https://www.npmjs.org/package/@bancor/contracts-solidity)
+[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml)
 
 ## Overview
 
