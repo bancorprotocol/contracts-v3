@@ -870,7 +870,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 return { tokenAmountToDistribute };
             };
 
-            const testProgram = async (programDuration: number) => {
+            const testProgram = (programDuration: number) => {
                 context(StakingRewardsDistributionTypes[distributionType], () => {
                     let startTime: number;
 
