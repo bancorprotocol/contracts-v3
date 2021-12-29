@@ -1,8 +1,8 @@
 import { deployments } from 'hardhat';
 
-const { deploy: deployContract, execute: executeTransaction } = deployments;
+const { deploy: deployContract, execute: executeTransaction, getNetworkName } = deployments;
 
-export enum ContractId {
+export enum ContractIds {
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
     GovToken = 'GovToken',
@@ -13,8 +13,12 @@ export enum Tags {
     V2 = 'V2'
 }
 
+export enum Networks {
+    MAINNET = 'mainnet'
+}
+
 interface DeployOptions {
-    id: ContractId;
+    id: ContractIds;
     contract?: string;
     args?: any[];
     from: string;
@@ -34,7 +38,7 @@ export const deploy = async (options: DeployOptions) => {
 };
 
 interface ExecuteOptions {
-    id: ContractId;
+    id: ContractIds;
     methodName: string;
     args?: any[];
     from: string;
@@ -45,3 +49,5 @@ export const execute = async (options: ExecuteOptions) => {
 
     return executeTransaction(id, { from, log: true }, methodName, ...(args || []));
 };
+
+export const isMainnet = () => getNetworkName() === Networks.MAINNET;

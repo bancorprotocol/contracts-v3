@@ -96,7 +96,12 @@ const config: HardhatUserConfig = {
 
     namedAccounts: {
         deployer: {
-            hardhat: 0
+            hardhat: 0,
+            mainnet: '0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E'
+        },
+        foundationMultisig: {
+            hardhat: 1,
+            mainnet: '0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83'
         }
     },
 
