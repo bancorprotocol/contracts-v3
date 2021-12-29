@@ -33,7 +33,6 @@ describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
-    let stakingRewardsMath: TestStakingRewardsMath;
 
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
@@ -50,8 +49,6 @@ describe('AutoCompoundingStakingRewards', () => {
 
     before(async () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
-
-        stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
     });
 
     const prepareSimplePool = async (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
@@ -691,6 +688,7 @@ describe('AutoCompoundingStakingRewards', () => {
         ) => {
             const isNetworkToken = symbol === BNT;
 
+            let stakingRewardsMath: TestStakingRewardsMath;
             let token: TokenWithAddress;
             let poolToken: PoolToken;
             let rewardsVault: IVault;
@@ -708,6 +706,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     poolCollection,
                     externalRewardsVault
                 } = await createSystem());
+
+                stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
