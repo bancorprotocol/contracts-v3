@@ -10,7 +10,7 @@
         "esModuleInterop": true,
         "baseUrl": "./",
         "paths": {
-            "@nomiclabs/hardhat-ethers/*": ["node_modules/hardhat-deploy-ethers/dist/src/*"],
+            "@nomiclabs/hardhat-ethers/*": ["node_modules/@nomiclabs/hardhat-ethers/dist/src/*"],
             "*": ["node_modules/*"]
         }
     },
