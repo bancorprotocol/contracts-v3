@@ -959,7 +959,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                                 case StakingRewardsDistributionTypes.ExponentialDecay:
                                     it('should revert with an overflow', async () => {
-                                        await expect(testDistribution()).to.be.revertedWith('Overflow');
+                                        await expect(
+                                            autoCompoundingStakingRewards.processRewards(token.address)
+                                        ).to.be.revertedWith('Overflow');
                                     });
 
                                     break;
