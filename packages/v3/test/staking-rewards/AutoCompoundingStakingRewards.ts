@@ -29,8 +29,6 @@ import humanizeDuration from 'humanize-duration';
 
 const { Upgradeable: UpgradeableRoles } = roles;
 
-const ONE = new Decimal(1);
-
 describe('AutoCompoundingStakingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
@@ -872,7 +870,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 return { tokenAmountToDistribute };
             };
 
-            const testProgram = async (programDuration: number) => {
+            const testProgram = (programDuration: number) => {
                 context(StakingRewardsDistributionTypes[distributionType], () => {
                     let startTime: number;
 

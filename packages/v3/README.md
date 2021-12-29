@@ -1,8 +1,8 @@
 ﻿# Bancor Protocol Contracts v3.0.0 (beta)
 
-[![Build Status](https://github.com/@bancor/contracts-solidity/actions/workflows/ci.yml/badge.svg)](https://github.com/@bancor/contracts-solidity/actions/workflows/ci.yml)
+[![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-v3.svg)](https://www.npmjs.org/package/@bancor/contracts-v3)
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.bancor.network/)
-[![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-solidity.svg)](https://www.npmjs.org/package/@bancor/contracts-solidity)
+[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml)
 
 ## Overview
 
@@ -63,17 +63,3 @@ Bancor is a work in progress. Make sure you understand the risks before using it
 For an interactive profiling, with Tenderly integration:
 
 -   `yarn profiled`
-
-## Collaborators
-
--   **[Yudi Levi](https://github.com/yudilevi)**
--   **[Barak Manos](https://github.com/barakman)**
--   **[Leonid Beder](https://github.com/lbeder)**
--   **[Ilana Pinhas](https://github.com/ilanapi)**
--   **[David Benchimol](https://github.com/davidbancor)**
--   **[Or Dadosh](https://github.com/ordd)**
--   **[Martin Holst Swende](https://github.com/holiman)**
-
-## License
-
-Bancor Protocol is open source and distributed under the Apache License v2.0
