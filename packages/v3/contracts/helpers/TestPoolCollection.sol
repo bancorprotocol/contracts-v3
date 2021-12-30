@@ -45,27 +45,29 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _version;
     }
 
-    function setTradingLiquidityT(ReserveToken reserveToken, PoolLiquidity calldata liquidity) external {
-        _poolData[reserveToken].liquidity = liquidity;
+    function setTradingLiquidityT(ReserveToken pool, PoolLiquidity calldata liquidity) external {
+        _poolData[pool].liquidity = liquidity;
     }
 
-    function setAverageRateT(ReserveToken reserveToken, AverageRate calldata newAverageRate) external {
-        _poolData[reserveToken].averageRate = newAverageRate;
+    function setAverageRateT(ReserveToken pool, AverageRate calldata newAverageRate) external {
+        _poolData[pool].averageRate = newAverageRate;
     }
 
     function poolWithdrawalAmountsT(
-        ReserveToken baseToken,
+        ReserveToken pool,
         uint256 basePoolTokenAmount,
         uint256 baseTokenVaultBalance,
         uint256 externalProtectionVaultBalance
     ) external view returns (WithdrawalAmounts memory) {
-        return
-            _poolWithdrawalAmounts(
-                baseToken,
-                basePoolTokenAmount,
-                baseTokenVaultBalance,
-                externalProtectionVaultBalance
-            );
+        return _poolWithdrawalAmounts(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
+    }
+
+    function mintT(
+        ReserveToken pool,
+        address recipient,
+        uint256 poolTokenAmount
+    ) external {
+        return _poolData[pool].poolToken.mint(recipient, poolTokenAmount);
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

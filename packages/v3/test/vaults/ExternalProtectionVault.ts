@@ -1,5 +1,7 @@
+import Contracts from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
-import { Symbols } from '../../utils/Constants';
+import { Symbols, ZERO_ADDRESS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -15,10 +17,24 @@ describe('ExternalProtectionVault', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
+        let networkTokenGovernance: TokenGovernance;
+        let govTokenGovernance: TokenGovernance;
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            ({ network, externalProtectionVault } = await createSystem());
+            ({ network, networkTokenGovernance, govTokenGovernance, externalProtectionVault } = await createSystem());
+        });
+
+        it('should revert when attempting to create with an invalid network token governance contract', async () => {
+            await expect(
+                Contracts.ExternalProtectionVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid gov token governance contract', async () => {
+            await expect(
+                Contracts.ExternalProtectionVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {

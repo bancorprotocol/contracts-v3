@@ -59,6 +59,22 @@ interface IMasterPool is IVault {
     function unallocatedLiquidity(ReserveToken pool) external view returns (uint256);
 
     /**
+     * @dev converts the specified pool token amount to the underlying network token amount
+     */
+    function poolTokenToUnderlying(uint256 poolTokenAmount) external view returns (uint256);
+
+    /**
+     * @dev converts the specified underlying network token amount to pool token amount
+     */
+    function underlyingToPoolToken(uint256 networkTokenAmount) external view returns (uint256);
+
+    /**
+     * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
+     * amount
+     */
+    function poolTokenAmountToBurn(uint256 networkTokenAmountToDistribute) external view returns (uint256);
+
+    /**
      * @dev mints network tokens to the recipient
      *
      * requirements:

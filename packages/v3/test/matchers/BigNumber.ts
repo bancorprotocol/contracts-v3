@@ -11,94 +11,94 @@ const supportBigNumber = (Assertion: Chai.AssertionStatic, utils: Chai.ChaiUtils
     Assertion.overwriteMethod('almostEqual', overrideAlmostEqual(utils));
 };
 
-function override(name: string, utils: Chai.ChaiUtils) {
+const override = (name: string, utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteBigNumberFunction(name, _super, utils);
-}
+};
 
-function overwriteBigNumberFunction(readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteBigNumberFunction = (readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected] = args;
-        const obj = chaiUtils.flag(this, 'object');
+        const actual = chaiUtils.flag(this, 'object');
 
-        if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            const objBN = toBigNumber<BigNumber>(obj);
+        if (BigNumber.isBigNumber(actual) || BigNumber.isBigNumber(expected)) {
+            const actualBN = toBigNumber<BigNumber>(actual);
             const expectedBN = toBigNumber<BigNumber>(expected);
 
             this.assert(
-                objBN.eq(expectedBN),
-                `Expected ${objBN} to be ${readableName} ${expectedBN}`,
-                `Expected ${objBN} NOT to be ${readableName} ${expectedBN}`,
+                actualBN.eq(expectedBN),
+                `Expected ${actualBN} to be ${readableName} ${expectedBN}`,
+                `Expected ${actualBN} NOT to be ${readableName} ${expectedBN}`,
                 expectedBN.toString(),
-                objBN.toString()
+                actualBN.toString()
             );
         } else {
             _super.apply(this, args);
         }
     };
-}
+};
 
-function overrideAlmostEqual(utils: Chai.ChaiUtils) {
+const overrideAlmostEqual = (utils: Chai.ChaiUtils) => {
     return (_super: (...args: never[]) => never) => overwriteBigNumberAlmostEqual(_super, utils);
-}
+};
 
-function overwriteBigNumberAlmostEqual(_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) {
+const overwriteBigNumberAlmostEqual = (_super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [
             expected,
             { maxAbsoluteError = new Decimal(0), maxRelativeError = new Decimal(0), relation = undefined }
         ] = args;
-        const obj = chaiUtils.flag(this, 'object');
+        const actual = chaiUtils.flag(this, 'object');
 
         expect(maxAbsoluteError).to.be.instanceOf(Decimal);
         expect(maxRelativeError).to.be.instanceOf(Decimal);
 
-        if (BigNumber.isBigNumber(obj) || BigNumber.isBigNumber(expected)) {
-            const objDec = new Decimal(obj.toString());
+        if (BigNumber.isBigNumber(actual) || BigNumber.isBigNumber(expected)) {
+            const actualDec = new Decimal(actual.toString());
             const expectedDec = new Decimal(expected.toString());
 
-            if (objDec.eq(expectedDec)) {
+            if (actualDec.eq(expectedDec)) {
                 return;
             }
 
             switch (relation) {
                 case Relation.LesserOrEqual:
                     this.assert(
-                        objDec.lte(expectedDec),
-                        `Expected ${objDec} to be lesser than or equal to ${expectedDec}`,
-                        `Expected ${objDec} NOT to be lesser than or equal to ${expectedDec}`,
+                        actualDec.lte(expectedDec),
+                        `Expected ${actualDec} to be lesser than or equal to ${expectedDec}`,
+                        `Expected ${actualDec} NOT to be lesser than or equal to ${expectedDec}`,
                         expectedDec.toString(),
-                        objDec.toString()
+                        actualDec.toString()
                     );
                     break;
                 case Relation.GreaterOrEqual:
                     this.assert(
-                        objDec.gte(expectedDec),
-                        `Expected ${objDec} to be greater than or equal to ${expectedDec}`,
-                        `Expected ${objDec} NOT to be greater than or equal to ${expectedDec}`,
+                        actualDec.gte(expectedDec),
+                        `Expected ${actualDec} to be greater than or equal to ${expectedDec}`,
+                        `Expected ${actualDec} NOT to be greater than or equal to ${expectedDec}`,
                         expectedDec.toString(),
-                        objDec.toString()
+                        actualDec.toString()
                     );
                     break;
             }
 
-            const absoluteError = objDec.sub(expectedDec).abs();
+            const absoluteError = actualDec.sub(expectedDec).abs();
             const relativeError = absoluteError.div(expectedDec);
 
             this.assert(
                 absoluteError.lte(maxAbsoluteError) || relativeError.lte(maxRelativeError),
-                `Expected ${objDec.toFixed()} to be almost equal to ${expectedDec.toFixed()}:'
-                '\nabsoluteError = ${absoluteError.toFixed()}'
-                '\nrelativeError = ${relativeError.toFixed()}`,
-                `Expected ${objDec.toFixed()} NOT to be almost equal to ${expectedDec.toFixed()}:'
-                '\nabsoluteError = ${absoluteError.toFixed()}'
-                '\nrelativeError = ${relativeError.toFixed()}`,
+                `Expected ${actualDec.toFixed()} to be almost equal to ${expectedDec.toFixed()}:'
+                '- absoluteError = ${absoluteError.toFixed()}'
+                '- relativeError = ${relativeError.toFixed()}`,
+                `Expected ${actualDec.toFixed()} NOT to be almost equal to ${expectedDec.toFixed()}:'
+                '- absoluteError = ${absoluteError.toFixed()}'
+                '- relativeError = ${relativeError.toFixed()}`,
                 expectedDec.toFixed(),
-                objDec.toFixed()
+                actualDec.toFixed()
             );
         } else {
             _super.apply(this, args);
         }
     };
-}
+};
 
 export default supportBigNumber;

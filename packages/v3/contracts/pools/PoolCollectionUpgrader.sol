@@ -15,8 +15,6 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
-error UnsupportedVersion();
-
 interface IPoolCollectionBase {
     function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
 }
@@ -47,6 +45,8 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
  * @dev Pool Collection Upgrader contract
  */
 contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
+    error UnsupportedVersion();
+
     IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
 
     // the network contract

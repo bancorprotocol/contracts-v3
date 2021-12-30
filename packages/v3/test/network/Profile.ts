@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -547,7 +547,7 @@ describe('Profile @profile', () => {
 
     describe('trade', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -562,7 +562,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -574,7 +574,7 @@ describe('Profile @profile', () => {
                 source,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -583,7 +583,7 @@ describe('Profile @profile', () => {
                 target,
                 deployer,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));
@@ -760,11 +760,13 @@ describe('Profile @profile', () => {
                 {
                     symbol: sourceSymbol,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
                     symbol: targetSymbol,
                     balance: toWei(5_000_000),
+                    requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 toWei(100_000)
@@ -785,12 +787,14 @@ describe('Profile @profile', () => {
                                     {
                                         symbol: sourceSymbol,
                                         balance: sourceBalance,
+                                        requestedLiquidity: sourceBalance.mul(1000),
                                         tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
                                         symbol: targetSymbol,
                                         balance: targetBalance,
+                                        requestedLiquidity: targetBalance.mul(1000),
                                         tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
@@ -802,12 +806,14 @@ describe('Profile @profile', () => {
                                         {
                                             symbol: sourceSymbol,
                                             balance: sourceBalance,
+                                            requestedLiquidity: sourceBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
                                             symbol: targetSymbol,
                                             balance: targetBalance,
+                                            requestedLiquidity: targetBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent2),
                                             initialRate: INITIAL_RATE
                                         },
@@ -824,7 +830,7 @@ describe('Profile @profile', () => {
 
     describe('flash-loans', () => {
         let network: TestBancorNetwork;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
@@ -834,10 +840,9 @@ describe('Profile @profile', () => {
         const amount = toWei(123_456);
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-        const ZERO_BYTES32 = formatBytes32String('');
 
         const setup = async () => {
-            ({ network, networkInformation, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
@@ -853,29 +858,19 @@ describe('Profile @profile', () => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
-                if (symbol === Symbols.BNT) {
-                    token = networkToken;
-
-                    const reserveToken = await createTokenBySymbol(Symbols.TKN);
-
-                    await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
-                    await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
-
-                    await depositToPool(deployer, networkToken, amount, network);
-                } else {
-                    ({ token } = await setupSimplePool(
-                        {
-                            symbol,
-                            balance: amount,
-                            initialRate: INITIAL_RATE
-                        },
-                        deployer,
-                        network,
-                        networkInformation,
-                        networkSettings,
-                        poolCollection
-                    ));
-                }
+                ({ token } = await setupSimplePool(
+                    {
+                        symbol,
+                        balance: amount,
+                        requestedLiquidity: amount.mul(1000),
+                        initialRate: INITIAL_RATE
+                    },
+                    deployer,
+                    network,
+                    networkInfo,
+                    networkSettings,
+                    poolCollection
+                ));
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
 
@@ -913,7 +908,7 @@ describe('Profile @profile', () => {
 
     describe('pending withdrawals', () => {
         let poolToken: PoolToken;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -926,7 +921,7 @@ describe('Profile @profile', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         beforeEach(async () => {
-            ({ network, networkToken, networkInformation, networkSettings, poolCollection, pendingWithdrawals } =
+            ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
                 await createSystem());
 
             provider = await createWallet();
@@ -940,11 +935,12 @@ describe('Profile @profile', () => {
                 {
                     symbol: Symbols.TKN,
                     balance: toWei(1_000_000),
+                    requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }
                 },
                 provider as any as SignerWithAddress,
                 network,
-                networkInformation,
+                networkInfo,
                 networkSettings,
                 poolCollection
             ));

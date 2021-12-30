@@ -4,11 +4,13 @@ pragma solidity 0.8.10;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Vault } from "./Vault.sol";
 import { IMasterVault } from "./interfaces/IMasterVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
+import { Vault } from "./Vault.sol";
 
 /**
  * @dev Master Vault contract
@@ -23,18 +25,15 @@ contract MasterVault is IMasterVault, Vault {
     // the asset manager role is only required to access the network token reserve
     bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
 
-    // the address of the network token
-    IERC20 private immutable _networkToken;
-
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IERC20 networkToken) validAddress(address(networkToken)) {
-        _networkToken = networkToken;
-    }
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    {}
 
     /**
      * @dev fully initializes the contract and its parents
@@ -78,14 +77,14 @@ contract MasterVault is IMasterVault, Vault {
     }
 
     /**
-     * @dev authenticate the right of a caller to withdraw a specific amount of a token to a target
+     * @dev authorize the right of a caller to withdraw a specific amount of a token to a target
      *
      * requirements:
      *
-     *   - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
-     *   - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
+     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
+     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
      */
-    function authenticateWithdrawal(
+    function isAuthorizedWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address, /* target */

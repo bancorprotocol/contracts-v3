@@ -1,7 +1,8 @@
 /* eslint-disable camelcase */
 import {
+    AutoCompoundingStakingRewards__factory,
     BancorNetwork__factory,
-    BancorNetworkInformation__factory,
+    BancorNetworkInfo__factory,
     BancorV1Migration__factory,
     ERC20__factory,
     ExternalProtectionVault__factory,
@@ -16,6 +17,7 @@ import {
     PoolToken__factory,
     PoolTokenFactory__factory,
     ProxyAdmin__factory,
+    TestAutoCompoundingStakingRewards__factory,
     TestBancorNetwork__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
@@ -32,6 +34,7 @@ import {
     TestPoolCollectionWithdrawal__factory,
     TestReserveToken__factory,
     TestSafeERC20Ex__factory,
+    TestStakingRewardsMath__factory,
     TestTokenGovernance__factory,
     TestUpgradeable__factory,
     TestVault__factory,
@@ -43,8 +46,13 @@ import { Signer } from 'ethers';
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    AutoCompoundingStakingRewards: deployOrAttach(
+        'AutoCompoundingStakingRewards',
+        AutoCompoundingStakingRewards__factory,
+        signer
+    ),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
-    BancorNetworkInformation: deployOrAttach('BancorNetworkInformation', BancorNetworkInformation__factory, signer),
+    BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorV1Migration: deployOrAttach('BancorV1Migration', BancorV1Migration__factory, signer),
     ERC20: deployOrAttach('ERC20', ERC20__factory, signer),
     ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),
@@ -59,6 +67,11 @@ const getContracts = (signer?: Signer) => ({
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
+    TestAutoCompoundingStakingRewards: deployOrAttach(
+        'TestAutoCompoundingStakingRewards',
+        TestAutoCompoundingStakingRewards__factory,
+        signer
+    ),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
@@ -83,6 +96,7 @@ const getContracts = (signer?: Signer) => ({
     ),
     TestReserveToken: deployOrAttach('TestReserveToken', TestReserveToken__factory, signer),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
+    TestStakingRewardsMath: deployOrAttach('TestStakingRewardsMath', TestStakingRewardsMath__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
