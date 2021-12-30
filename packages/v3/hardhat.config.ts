@@ -81,10 +81,10 @@ const config: HardhatUserConfig = {
                 blockNumber: 13900000
             },
             allowUnlimitedContractSize: true,
-            saveDeployments: true,
+            saveDeployments: false,
             live: true
         },
-        [Networks.LOCALHOST]: { chainId: 31337, url: 'http://localhost:8545', saveDeployments: false, live: false },
+        [Networks.LOCALHOST]: { chainId: 31337, url: 'http://127.0.0.1:8545', saveDeployments: false, live: false },
         [Networks.MAINNET]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
