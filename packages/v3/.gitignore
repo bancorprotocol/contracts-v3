@@ -11,9 +11,8 @@ cache
 artifacts
 typechain-types
 
-deployments/localhost
-deployments/hardhat-mainnet-fork
-contracts/hardhat-dependency-compiler
+deployments
+!deployments/mainnet
 
 .coverage_artifacts
 .coverage_contracts
