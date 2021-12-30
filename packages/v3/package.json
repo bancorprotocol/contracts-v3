@@ -10,7 +10,7 @@
     "bugs": {
         "url": "https://github.com/bancorprotocol/contracts-v3/issues"
     },
-    "author": "Yudi Levi",
+    "author": "Bancor Team",
     "license": "SEE LICENSE IN LICENSE",
     "files": [
         "contracts/**/*.sol",
