@@ -17,8 +17,7 @@
         "!contracts/helpers",
         "artifacts/contracts/**/*.json",
         "typechain-types/**/*.ts",
-        "deployments",
-        "!deployments/localhost"
+        "deployments/mainnet"
     ],
     "scripts": {
         "build": "hardhat compile",
