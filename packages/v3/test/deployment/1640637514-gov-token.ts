@@ -1,7 +1,7 @@
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
 import { Symbols, TokenNames, DeploymentTags } from '../../utils/Constants';
-import { DeployedContracts, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
