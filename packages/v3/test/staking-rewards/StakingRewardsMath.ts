@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
 import { TestStakingRewardsMath } from '../../typechain-types';
-import { Exponentiation, ExponentialDecay } from '../helpers/Constants';
+import { Exponentiation, ExponentialDecay } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { duration } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
