@@ -57,11 +57,14 @@ export enum StakingRewardsDistributionTypes {
     ExponentialDecay = 1
 }
 
+const EXP_INPUT_TOO_HIGH = 16;
+const EXP_DECAY_LAMBDA = new Decimal('0.0000000142857142857143');
+
 export const Exponentiation = {
-    INPUT_TOO_HIGH: 16
+    INPUT_TOO_HIGH: EXP_INPUT_TOO_HIGH
 };
 
 export const ExponentialDecay = {
-    LAMBDA: new Decimal('0.0000000142857142857143'),
-    ESTIMATED_PROGRAM_DURATION: 35.5 * 365 * 24 * 60 * 60 // 35.4 years
+    LAMBDA: EXP_DECAY_LAMBDA,
+    MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
 };
