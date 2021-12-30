@@ -1,4 +1,4 @@
-import { NAMED_ACCOUNTS, EXTERNAL_CONTRACTS } from './deployments/data';
+import { NamedAccounts, ExternalContracts } from './deployments/data';
 import './test/Setup.ts';
 import { Networks } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
@@ -119,8 +119,8 @@ const config: HardhatUserConfig = {
         paths: ['@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol']
     },
 
-    namedAccounts: NAMED_ACCOUNTS,
-    external: EXTERNAL_CONTRACTS,
+    namedAccounts: NamedAccounts,
+    external: ExternalContracts,
 
     contractSizer: {
         alphaSort: true,

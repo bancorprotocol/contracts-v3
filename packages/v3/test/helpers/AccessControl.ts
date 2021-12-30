@@ -1,10 +1,10 @@
 import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../typechain-types';
-import { roles } from '../../utils/Roles';
+import { Roles } from '../../utils/Roles';
 import { expect } from 'chai';
 
 export * from '../../utils/Roles';
 
-const roleNames = Object.values(roles)
+const roleNames = Object.values(Roles)
     .map((contractRoles) => Object.values(contractRoles))
     .flat(1);
 

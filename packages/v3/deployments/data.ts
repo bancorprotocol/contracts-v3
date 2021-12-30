@@ -1,6 +1,6 @@
 import { Networks } from '../utils/Constants';
 
-export const NAMED_ACCOUNTS = {
+export const NamedAccounts = {
     deployer: {
         [Networks.HARDHAT]: 0,
         [Networks.MAINNET]: '0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E',
@@ -13,7 +13,7 @@ export const NAMED_ACCOUNTS = {
     }
 };
 
-export const EXTERNAL_CONTRACTS = {
+export const ExternalContracts = {
     contracts: [
         {
             artifacts: '../v2/artifacts'

@@ -14,7 +14,7 @@ import {
 } from '../../typechain-types';
 import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION, Symbols, TokenNames } from '../../utils/Constants';
-import { roles } from '../../utils/Roles';
+import { Roles } from '../../utils/Roles';
 import { toWei, toPPM } from '../../utils/Types';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
@@ -1749,7 +1749,7 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ networkSettings, network, poolCollection, externalRewardsVault } = await createSystem());
 
-            await externalRewardsVault.grantRole(roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
+            await externalRewardsVault.grantRole(Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
 
             reserveToken = await Contracts.TestERC20Token.deploy(Symbols.TKN, Symbols.TKN, toWei(1_000_000_000));
 

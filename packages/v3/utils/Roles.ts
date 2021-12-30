@@ -2,7 +2,7 @@ import { utils } from 'ethers';
 
 const { id } = utils;
 
-export const roles = {
+export const Roles = {
     Upgradeable: {
         ROLE_ADMIN: id('ROLE_ADMIN')
     },

@@ -1,11 +1,11 @@
 import { Symbols, TokenNames, DEFAULT_DECIMALS, ContractNames, DeploymentTags } from '../utils/Constants';
 import { deploy, execute, isMainnet, isMainnetFork } from '../utils/Deploy';
-import { roles } from '../utils/Roles';
+import { Roles } from '../utils/Roles';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const { TokenGovernance: TokenGovernanceRoles } = roles;
+const { TokenGovernance: TokenGovernanceRoles } = Roles;
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     if (isMainnet() || isMainnetFork()) {
