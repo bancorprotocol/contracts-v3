@@ -23,6 +23,6 @@ export const ExternalContracts = {
         }
     ],
     deployments: {
-        [Networks.HARDHAT_MAINNET_FORK]: ['deployments/mainnet']
+        [Networks.HARDHAT_MAINNET_FORK]: [`deployments/${Networks.MAINNET}`]
     }
 };
