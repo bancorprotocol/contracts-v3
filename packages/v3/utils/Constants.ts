@@ -19,6 +19,24 @@ export enum TokenNames {
     TKN = 'Test Token'
 }
 
+export enum ContractNames {
+    NetworkToken = 'NetworkToken',
+    NetworkTokenGovernance = 'NetworkTokenGovernance',
+    GovToken = 'GovToken',
+    GovTokenGovernance = 'GovTokenGovernance'
+}
+
+export enum DeploymentTags {
+    V2 = 'V2'
+}
+
+export enum Networks {
+    HARDHAT = 'hardhat',
+    LOCALHOST = 'localhost',
+    HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
+    MAINNET = 'mainnet'
+}
+
 export const DEFAULT_DECIMALS = 18;
 export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 export const NATIVE_TOKEN_DECIMALS = DEFAULT_DECIMALS;

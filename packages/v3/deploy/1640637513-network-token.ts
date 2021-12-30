@@ -1,5 +1,5 @@
-import { Symbols, TokenNames, DEFAULT_DECIMALS } from '../utils/Constants';
-import { ContractNames, Tags, deploy, execute, isMainnet, isMainnetFork } from '../utils/Deploy';
+import { Symbols, TokenNames, DEFAULT_DECIMALS, ContractNames, DeploymentTags } from '../utils/Constants';
+import { deploy, execute, isMainnet, isMainnetFork } from '../utils/Deploy';
 import { roles } from '../utils/Roles';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -88,6 +88,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     }
 };
 
-func.tags = [Tags.V2];
+func.tags = [DeploymentTags.V2];
 
 export default func;

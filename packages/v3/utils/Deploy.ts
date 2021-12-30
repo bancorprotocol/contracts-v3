@@ -1,25 +1,9 @@
 import { NetworkToken, GovToken, TokenGovernance } from '../components/LegacyContracts';
+import { ContractNames, Networks } from './Constants';
 import { Contract } from 'ethers';
 import { deployments, ethers } from 'hardhat';
 
 const { deploy: deployContract, execute: executeTransaction, getNetworkName, fixture, run } = deployments;
-
-export enum ContractNames {
-    NetworkToken = 'NetworkToken',
-    NetworkTokenGovernance = 'NetworkTokenGovernance',
-    GovToken = 'GovToken',
-    GovTokenGovernance = 'GovTokenGovernance'
-}
-
-export enum Tags {
-    V2 = 'V2'
-}
-
-export enum Networks {
-    HARDHAT = 'hardhat',
-    HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
-    MAINNET = 'mainnet'
-}
 
 const deployed = <F extends Contract>(name: ContractNames) => ({
     deployed: async () => ethers.getContract<F>(name)

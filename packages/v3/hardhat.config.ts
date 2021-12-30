@@ -1,4 +1,6 @@
+import { NAMED_ACCOUNTS, EXTERNAL_CONTRACTS } from './deployments/data';
 import './test/Setup.ts';
+import { Networks } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
@@ -62,7 +64,7 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        hardhat: {
+        [Networks.HARDHAT]: {
             accounts: {
                 count: 10,
                 accountsBalance: '10000000000000000000000000000000000000000000000'
@@ -71,7 +73,7 @@ const config: HardhatUserConfig = {
             saveDeployments: false,
             live: false
         },
-        'hardhat-mainnet-fork': {
+        [Networks.HARDHAT_MAINNET_FORK]: {
             url: ETHEREUM_PROVIDER_URL,
             forking: {
                 enabled: true,
@@ -82,8 +84,8 @@ const config: HardhatUserConfig = {
             saveDeployments: true,
             live: true
         },
-        localhost: { chainId: 31337, url: 'http://localhost:8545', saveDeployments: false, live: false },
-        mainnet: {
+        [Networks.LOCALHOST]: { chainId: 31337, url: 'http://localhost:8545', saveDeployments: false, live: false },
+        [Networks.MAINNET]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
             saveDeployments: true,
@@ -117,37 +119,13 @@ const config: HardhatUserConfig = {
         paths: ['@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol']
     },
 
+    namedAccounts: NAMED_ACCOUNTS,
+    external: EXTERNAL_CONTRACTS,
+
     contractSizer: {
         alphaSort: true,
         runOnCompile: false,
         disambiguatePaths: false
-    },
-
-    namedAccounts: {
-        deployer: {
-            hardhat: 0,
-            mainnet: '0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E',
-            'hardhat-mainnet-fork': '0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E'
-        },
-        foundationMultisig: {
-            hardhat: 1,
-            mainnet: '0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83',
-            'hardhat-mainnet-fork': '0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83'
-        }
-    },
-
-    external: {
-        contracts: [
-            {
-                artifacts: '../v2/artifacts'
-            },
-            {
-                artifacts: 'node_modules/@bancor/token-governance/artifacts'
-            }
-        ],
-        deployments: {
-            'hardhat-mainnet-fork': ['deployments/mainnet']
-        }
     },
 
     etherscan: {

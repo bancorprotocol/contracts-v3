@@ -1,7 +1,7 @@
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { Symbols, TokenNames } from '../../utils/Constants';
-import { DeployedContracts, Tags, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
+import { Symbols, TokenNames, DeploymentTags } from '../../utils/Constants';
+import { DeployedContracts, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
@@ -22,7 +22,7 @@ describe('1640637514-gov-token', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(Tags.V2);
+        await runTestDeployment(DeploymentTags.V2);
 
         govToken = await DeployedContracts.GovToken.deployed();
         govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
