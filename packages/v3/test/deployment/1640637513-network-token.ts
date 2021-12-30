@@ -1,7 +1,7 @@
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
 import { Symbols, TokenNames, DeploymentTags } from '../../utils/Constants';
-import { DeployedContracts, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
@@ -49,7 +49,7 @@ describe('1640637513-network-token', () => {
             [deployer]
         );
 
-        if (!(isMainnet() || isMainnetFork())) {
+        if (!isMainnet()) {
             await expectRole(
                 networkTokenGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
@@ -59,7 +59,7 @@ describe('1640637513-network-token', () => {
         }
     });
 
-    if (!(isMainnet() || isMainnetFork())) {
+    if (!isMainnet()) {
         it('should mint the initial total supply', async () => {
             expect(await networkToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
         });

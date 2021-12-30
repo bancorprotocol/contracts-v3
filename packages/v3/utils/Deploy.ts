@@ -18,8 +18,8 @@ export const DeployedContracts = {
 
 export const isHardhat = () => getNetworkName() === Networks.HARDHAT || Networks.HARDHAT_MAINNET_FORK;
 export const isHardhatMainnetFork = () => getNetworkName() === Networks.HARDHAT_MAINNET_FORK;
-export const isMainnet = () => getNetworkName() === Networks.MAINNET;
 export const isMainnetFork = () => isHardhatMainnetFork();
+export const isMainnet = () => getNetworkName() === Networks.MAINNET || isMainnetFork();
 
 interface DeployOptions {
     name: ContractNames;

@@ -49,7 +49,7 @@ describe('1640637514-gov-token', () => {
             [deployer]
         );
 
-        if (!(isMainnet() || isMainnetFork())) {
+        if (!isMainnet()) {
             await expectRole(
                 govTokenGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
@@ -59,7 +59,7 @@ describe('1640637514-gov-token', () => {
         }
     });
 
-    if (!(isMainnet() || isMainnetFork())) {
+    if (!isMainnet()) {
         it('should mint the initial total supply', async () => {
             expect(await govToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
         });
