@@ -1,5 +1,5 @@
 import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
-import { BNT, ETH, TKN } from '../../utils/Constants';
+import { Symbols } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -76,8 +76,8 @@ describe('ExternalProtectionVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            const isNetworkToken = symbol === BNT;
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+            const isNetworkToken = symbol === Symbols.BNT;
 
             beforeEach(async () => {
                 ({ externalProtectionVault, networkToken } = await createSystem());

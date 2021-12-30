@@ -1,5 +1,5 @@
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
-import { BNT, ETH, TKN } from '../../utils/Constants';
+import { Symbols } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -74,13 +74,13 @@ describe('ExternalRewardsVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            const isNetworkToken = symbol === BNT;
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+            const isNetworkToken = symbol === Symbols.BNT;
 
             beforeEach(async () => {
                 ({ externalRewardsVault, networkToken } = await createSystem());
 
-                token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
+                token = isNetworkToken ? networkToken : await createTokenBySymbol(Symbols.TKN);
 
                 transfer(deployer, token, externalRewardsVault.address, amount);
             });

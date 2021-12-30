@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
-import { ZERO_ADDRESS, BNT, ETH, TKN } from '../../utils/Constants';
+import { ZERO_ADDRESS, Symbols } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -78,8 +78,8 @@ describe('MasterVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            const isNetworkToken = symbol === BNT;
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+            const isNetworkToken = symbol === Symbols.BNT;
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {

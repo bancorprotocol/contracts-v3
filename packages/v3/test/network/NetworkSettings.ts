@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
-import { ZERO_ADDRESS, PPM_RESOLUTION, TKN } from '../../utils/Constants';
+import { ZERO_ADDRESS, PPM_RESOLUTION, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
@@ -30,7 +30,7 @@ describe('NetworkSettings', () => {
     beforeEach(async () => {
         ({ networkSettings, networkFeeVault } = await createSystem());
 
-        reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
+        reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, TOTAL_SUPPLY);
     });
 
     describe('construction', async () => {
@@ -108,7 +108,7 @@ describe('NetworkSettings', () => {
             it('should revert when removing a non-whitelisted token', async () => {
                 await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith('DoesNotExist');
 
-                const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, TOTAL_SUPPLY);
+                const reserveToken2 = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, TOTAL_SUPPLY);
                 await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
                     'DoesNotExist'
                 );

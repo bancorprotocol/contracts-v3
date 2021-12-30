@@ -44,4 +44,4 @@ jobs:
       #
 
       - name: Test
-        run: CI=1 yarn test
+        run: yarn test:ci

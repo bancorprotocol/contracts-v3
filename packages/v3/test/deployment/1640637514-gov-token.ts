@@ -1,15 +1,15 @@
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../../utils/Constants';
-import { ContractIds, Tags, isMainnet } from '../../utils/Deploy';
+import { Symbols, TokenNames } from '../../utils/Constants';
+import { DeployedContracts, Tags, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
-import { ethers, deployments, getNamedAccounts } from 'hardhat';
+import { getNamedAccounts } from 'hardhat';
 
 const { TokenGovernance: TokenGovernanceRoles } = roles;
 
-describe.only('1640637514-gov-token', () => {
+describe('1640637514-gov-token', () => {
     let deployer: string;
     let foundationMultisig: string;
     let govToken: GovToken;
@@ -22,18 +22,19 @@ describe.only('1640637514-gov-token', () => {
     });
 
     beforeEach(async () => {
-        await deployments.fixture(Tags.V2);
+        await runTestDeployment(Tags.V2);
 
-        govToken = await ethers.getContract<GovToken>(ContractIds.GovToken);
-        govTokenGovernance = await ethers.getContract<TokenGovernance>(ContractIds.GovTokenGovernance);
+        govToken = await DeployedContracts.GovToken.deployed();
+        govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
     });
 
-    it('should deploy gov token', async () => {
-        expect(govToken.address).not.to.equal(ZERO_ADDRESS);
-        expect(govTokenGovernance.address).not.to.equal(ZERO_ADDRESS);
+    it('should deploy the gov token', async () => {
+        expect(await govToken.name()).to.equal(TokenNames.vBNT);
+        expect(await govToken.symbol()).to.equal(Symbols.vBNT);
     });
 
-    it('should configure gov token governance', async () => {
+    it('should deploy and configure the gov token governance', async () => {
+        expect(await govTokenGovernance.token()).to.equal(govToken.address);
         expect(await govToken.owner()).to.equal(govTokenGovernance.address);
 
         await expectRole(
@@ -50,15 +51,19 @@ describe.only('1640637514-gov-token', () => {
             [deployer]
         );
 
-        if (!isMainnet()) {
+        if (!(isMainnet() || isMainnetFork())) {
             await expectRole(
                 govTokenGovernance as any as AccessControlEnumerable,
                 TokenGovernanceRoles.ROLE_MINTER,
                 TokenGovernanceRoles.ROLE_GOVERNOR,
                 [deployer]
             );
-
-            expect(await govToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
         }
     });
+
+    if (!(isMainnet() || isMainnetFork())) {
+        it('should mint the initial total supply', async () => {
+            expect(await govToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
+        });
+    }
 });

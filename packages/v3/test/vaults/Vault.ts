@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { IERC20, TestVault } from '../../typechain-types';
-import { ETH, TKN, BNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
+import { Symbols, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -107,7 +107,7 @@ describe('TestVault', () => {
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = symbol === Symbols.BNT ? networkToken : await createTokenBySymbol(symbol);
                 await transfer(deployer, token, testVault.address, amount);
             });
 
@@ -164,7 +164,7 @@ describe('TestVault', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => testWithdraw(symbol));
         }
     });
@@ -186,7 +186,7 @@ describe('TestVault', () => {
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = symbol === Symbols.BNT ? networkToken : await createTokenBySymbol(symbol);
                 await transfer(deployer, token, testVault.address, amount);
             });
 
@@ -209,7 +209,7 @@ describe('TestVault', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 return testAuthentication(symbol);
             });

@@ -12,14 +12,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import {
-    FeeTypes,
-    MASTER_POOL_TOKEN_NAME,
-    MASTER_POOL_TOKEN_SYMBOL,
-    PPM_RESOLUTION,
-    ZERO_ADDRESS,
-    TKN
-} from '../../utils/Constants';
+import { FeeTypes, PPM_RESOLUTION, ZERO_ADDRESS, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
@@ -168,8 +161,8 @@ describe('MasterPool', () => {
             const poolToken = await Contracts.PoolToken.attach(await masterPool.poolToken());
             expect(await poolToken.owner()).to.equal(masterPool.address);
             expect(await poolToken.reserveToken()).to.equal(networkToken.address);
-            expect(await poolToken.name()).to.equal(MASTER_POOL_TOKEN_NAME);
-            expect(await poolToken.symbol()).to.equal(MASTER_POOL_TOKEN_SYMBOL);
+            expect(await poolToken.name()).to.equal(TokenNames.bnBNT);
+            expect(await poolToken.symbol()).to.equal(Symbols.bnBNT);
         });
     });
 
@@ -276,7 +269,7 @@ describe('MasterPool', () => {
                 poolCollectionUpgrader
             } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
         });
 
         it('should return false for an invalid pool', async () => {
@@ -391,7 +384,7 @@ describe('MasterPool', () => {
             ({ networkSettings, network, networkToken, masterPool, masterPoolToken, masterVault, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -542,7 +535,7 @@ describe('MasterPool', () => {
             ({ networkSettings, network, networkToken, masterPool, masterPoolToken, masterVault, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -657,7 +650,7 @@ describe('MasterPool', () => {
             ({ networkSettings, network, networkToken, govToken, masterPool, masterPoolToken, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
         });
 
         it('should revert when attempting to deposit from a non-network', async () => {
@@ -829,7 +822,7 @@ describe('MasterPool', () => {
             ({ networkSettings, network, networkToken, govToken, masterPool, masterPoolToken, poolCollection } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
         });
 
         it('should revert when attempting to withdraw from a non-network', async () => {
@@ -1011,7 +1004,7 @@ describe('MasterPool', () => {
         beforeEach(async () => {
             ({ networkSettings, masterPool, network } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
 
             await networkSettings.setPoolMintingLimit(reserveToken.address, MINTING_LIMIT);
         });
@@ -1087,15 +1080,15 @@ describe('MasterPool', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [TKN, MASTER_POOL_TOKEN_SYMBOL]) {
-            const isMasterPoolToken = symbol === MASTER_POOL_TOKEN_SYMBOL;
+        for (const symbol of [Symbols.TKN, Symbols.bnBNT]) {
+            const isMasterPoolToken = symbol === Symbols.bnBNT;
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {
                     ({ network, masterPool, masterPoolToken, networkToken, networkSettings, poolCollection } =
                         await createSystem());
 
-                    const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
 
                     if (isMasterPoolToken) {
                         token = masterPoolToken;

@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
-import { ZERO_ADDRESS, ETH, TKN, DEFAULT_DECIMALS } from '../../utils/Constants';
+import { ZERO_ADDRESS, Symbols, TokenNames, DEFAULT_DECIMALS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createSystem, createPoolToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -53,7 +53,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
         });
 
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
@@ -68,8 +68,8 @@ describe('PoolTokenFactory', () => {
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, newSymbol);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(newSymbol);
 
-            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, TKN);
-            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(TKN);
+            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, Symbols.TKN);
+            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(Symbols.TKN);
 
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, EMPTY_STRING);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
@@ -85,7 +85,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
         });
 
         it('should revert when a non-owner attempts to set a token decimal override', async () => {
@@ -181,7 +181,7 @@ describe('PoolTokenFactory', () => {
             });
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testCreatePoolToken(symbol);
             });

@@ -1,11 +1,11 @@
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../../utils/Constants';
-import { ContractIds, Tags, isMainnet } from '../../utils/Deploy';
+import { Symbols, TokenNames } from '../../utils/Constants';
+import { DeployedContracts, Tags, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
-import { ethers, deployments, getNamedAccounts } from 'hardhat';
+import { getNamedAccounts } from 'hardhat';
 
 const { TokenGovernance: TokenGovernanceRoles } = roles;
 
@@ -22,18 +22,19 @@ describe('1640637513-network-token', () => {
     });
 
     beforeEach(async () => {
-        await deployments.fixture(Tags.V2);
+        await runTestDeployment(Tags.V2);
 
-        networkToken = await ethers.getContract<NetworkToken>(ContractIds.NetworkToken);
-        networkTokenGovernance = await ethers.getContract<TokenGovernance>(ContractIds.NetworkTokenGovernance);
+        networkToken = await DeployedContracts.NetworkToken.deployed();
+        networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
     });
 
-    it('should deploy network token', async () => {
-        expect(networkToken.address).not.to.equal(ZERO_ADDRESS);
-        expect(networkTokenGovernance.address).not.to.equal(ZERO_ADDRESS);
+    it('should deploy the network token', async () => {
+        expect(await networkToken.name()).to.equal(TokenNames.BNT);
+        expect(await networkToken.symbol()).to.equal(Symbols.BNT);
     });
 
-    it('should configure network token governance', async () => {
+    it('should deploy and configure the network token governance', async () => {
+        expect(await networkTokenGovernance.token()).to.equal(networkToken.address);
         expect(await networkToken.owner()).to.equal(networkTokenGovernance.address);
 
         await expectRole(
@@ -50,15 +51,19 @@ describe('1640637513-network-token', () => {
             [deployer]
         );
 
-        if (!isMainnet()) {
+        if (!(isMainnet() || isMainnetFork())) {
             await expectRole(
                 networkTokenGovernance as any as AccessControlEnumerable,
                 TokenGovernanceRoles.ROLE_MINTER,
                 TokenGovernanceRoles.ROLE_GOVERNOR,
                 [deployer]
             );
-
-            expect(await networkToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
         }
     });
+
+    if (!(isMainnet() || isMainnetFork())) {
+        it('should mint the initial total supply', async () => {
+            expect(await networkToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
+        });
+    }
 });

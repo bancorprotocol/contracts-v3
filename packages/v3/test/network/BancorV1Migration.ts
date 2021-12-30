@@ -10,7 +10,7 @@ import {
     PendingWithdrawals,
     PoolToken
 } from '../../typechain-types';
-import { ETH, TKN, PPM_RESOLUTION } from '../../utils/Constants';
+import { Symbols, PPM_RESOLUTION } from '../../utils/Constants';
 import { toPPM } from '../../utils/Types';
 import { createPool, createSystem } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
@@ -66,7 +66,7 @@ describe('BancorV1Migration', () => {
     });
 
     const initLegacySystem = async (networkAmount: BigNumber, baseAmount: BigNumber, isETH: boolean) => {
-        baseToken = await createTokenBySymbol(isETH ? ETH : TKN);
+        baseToken = await createTokenBySymbol(isETH ? Symbols.ETH : Symbols.TKN);
 
         ({ poolToken, converter } = await createLegacySystem(
             deployer,

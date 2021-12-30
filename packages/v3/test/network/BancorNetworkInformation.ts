@@ -15,7 +15,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, MAX_UINT256, BNT, ETH, TKN } from '../../utils/Constants';
+import { ZERO_ADDRESS, MAX_UINT256, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { createSystem, depositToPool, setupSimplePool, PoolSpec, initWithdraw } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -324,7 +324,7 @@ describe('BancorNetworkInformation', () => {
         };
 
         const testTradesAmounts = (source: PoolSpec, target: PoolSpec) => {
-            const isSourceETH = source.symbol === ETH;
+            const isSourceETH = source.symbol === Symbols.ETH;
 
             context(`when trading from ${source.symbol} to ${target.symbol}`, () => {
                 const testAmount = 1000;
@@ -366,7 +366,7 @@ describe('BancorNetworkInformation', () => {
                 });
 
                 it('should revert when attempting to query using unsupported tokens', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
 
                     await reserveToken2.transfer(await trader.getAddress(), testAmount);
                     await reserveToken2.connect(trader).approve(network.address, testAmount);
@@ -400,13 +400,13 @@ describe('BancorNetworkInformation', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TKN, BNT],
-            [TKN, ETH],
-            [`${TKN}1`, `${TKN}2`],
-            [BNT, ETH],
-            [BNT, TKN],
-            [ETH, BNT],
-            [ETH, TKN]
+            [Symbols.TKN, Symbols.BNT],
+            [Symbols.TKN, Symbols.ETH],
+            [`${Symbols.TKN}1`, `${Symbols.TKN}2`],
+            [Symbols.BNT, Symbols.ETH],
+            [Symbols.BNT, Symbols.TKN],
+            [Symbols.ETH, Symbols.BNT],
+            [Symbols.ETH, Symbols.TKN]
         ]) {
             // perform a basic/sanity suite over a fixed input
             testTradesAmounts(
@@ -453,7 +453,7 @@ describe('BancorNetworkInformation', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    symbol: TKN,
+                    symbol: Symbols.TKN,
                     balance: toWei(1_000_000),
                     initialRate: { n: 1, d: 2 }
                 },

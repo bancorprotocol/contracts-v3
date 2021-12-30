@@ -35,9 +35,8 @@ import {
     NATIVE_TOKEN_ADDRESS,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
-    BNT,
-    ETH,
-    TKN
+    Symbols,
+    TokenNames
 } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { toWei, toPPM } from '../../utils/Types';
@@ -526,7 +525,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to remove a pool collection with associated pools', async () => {
-                    const reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
                     await createPool(reserveToken, network, networkSettings, lastCollection);
 
                     await expect(
@@ -618,7 +617,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
-                if (symbol === BNT) {
+                if (symbol === Symbols.BNT) {
                     reserveToken = networkToken;
                 } else {
                     reserveToken = await createTokenBySymbol(symbol);
@@ -672,13 +671,13 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testCreatePool(symbol);
             });
         }
 
-        context(BNT, () => {
+        context(Symbols.BNT, () => {
             beforeEach(async () => {
                 ({ network, networkToken } = await createSystem());
             });
@@ -703,7 +702,7 @@ describe('BancorNetwork', () => {
         const MIN_RETURN_AMOUNT = BigNumber.from(1);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
-        const reserveTokenSymbols = [TKN, ETH, TKN];
+        const reserveTokenSymbols = [Symbols.TKN, Symbols.ETH, Symbols.TKN];
         let reserveTokenAddresses: string[];
 
         const setTime = async (time: number) => {
@@ -916,8 +915,8 @@ describe('BancorNetwork', () => {
         });
 
         const testDeposits = (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
-            const isETH = symbol === ETH;
+            const isNetworkToken = symbol === Symbols.BNT;
+            const isETH = symbol === Symbols.ETH;
 
             let poolToken: PoolToken;
             let token: TokenWithAddress;
@@ -1176,7 +1175,7 @@ describe('BancorNetwork', () => {
                             });
 
                             it('should revert when attempting to deposit into a pool that does not exist', async () => {
-                                token = await createTokenBySymbol(TKN);
+                                token = await createTokenBySymbol(Symbols.TKN);
 
                                 await expect(deposit(BigNumber.from(1))).to.be.revertedWith('InvalidToken');
                             });
@@ -1213,7 +1212,7 @@ describe('BancorNetwork', () => {
                                                 beforeEach(async () => {
                                                     const contextId = formatBytes32String('CTX');
 
-                                                    const reserveToken = await createTokenBySymbol(TKN);
+                                                    const reserveToken = await createTokenBySymbol(Symbols.TKN);
 
                                                     await createPool(
                                                         reserveToken,
@@ -1486,7 +1485,7 @@ describe('BancorNetwork', () => {
                             });
 
                             it('should revert when attempting to deposit into a pool that does not exist', async () => {
-                                const token2 = await createTokenBySymbol(TKN);
+                                const token2 = await createTokenBySymbol(Symbols.TKN);
 
                                 await expect(
                                     deposit(BigNumber.from(1), {
@@ -1623,7 +1622,7 @@ describe('BancorNetwork', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testDeposits(symbol);
             });
@@ -1682,8 +1681,8 @@ describe('BancorNetwork', () => {
         });
 
         const testWithdraw = async (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
-            const isETH = symbol === ETH;
+            const isNetworkToken = symbol === Symbols.BNT;
+            const isETH = symbol === Symbols.ETH;
 
             context('with an initiated withdrawal request', () => {
                 let provider: SignerWithAddress;
@@ -1711,7 +1710,7 @@ describe('BancorNetwork', () => {
                         poolToken = masterPoolToken;
 
                         const contextId = formatBytes32String('CTX');
-                        const reserveToken = await createTokenBySymbol(TKN);
+                        const reserveToken = await createTokenBySymbol(Symbols.TKN);
                         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
 
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
@@ -2009,7 +2008,7 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testWithdraw(symbol);
             });
@@ -2426,8 +2425,8 @@ describe('BancorNetwork', () => {
         };
 
         const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
-            const isSourceETH = source.symbol === ETH;
-            const isSourceNetworkToken = source.symbol === BNT;
+            const isSourceETH = source.symbol === Symbols.ETH;
+            const isSourceNetworkToken = source.symbol === Symbols.BNT;
 
             context(`basic trades from ${source.symbol} to ${target.symbol}`, () => {
                 const testAmount = BigNumber.from(10_000);
@@ -2484,7 +2483,11 @@ describe('BancorNetwork', () => {
                         });
 
                         it('should revert when attempting to trade using unsupported tokens', async () => {
-                            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                            const reserveToken2 = await Contracts.TestERC20Token.deploy(
+                                Symbols.TKN,
+                                TokenNames.TKN,
+                                1_000_000
+                            );
 
                             await reserveToken2.transfer(await trader.getAddress(), testAmount);
                             await reserveToken2.connect(trader).approve(network.address, testAmount);
@@ -2565,7 +2568,7 @@ describe('BancorNetwork', () => {
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
+            const isSourceETH = source.symbol === Symbols.ETH;
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
@@ -2597,8 +2600,8 @@ describe('BancorNetwork', () => {
         };
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
-            const isSourceNetworkToken = source.symbol === BNT;
+            const isSourceETH = source.symbol === Symbols.ETH;
+            const isSourceNetworkToken = source.symbol === Symbols.BNT;
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
@@ -2627,13 +2630,13 @@ describe('BancorNetwork', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TKN, BNT],
-            [TKN, ETH],
-            [`${TKN}1`, `${TKN}2`],
-            [BNT, ETH],
-            [BNT, TKN],
-            [ETH, BNT],
-            [ETH, TKN]
+            [Symbols.TKN, Symbols.BNT],
+            [Symbols.TKN, Symbols.ETH],
+            [`${Symbols.TKN}1`, `$Symbols.TKN}2`],
+            [Symbols.BNT, Symbols.ETH],
+            [Symbols.BNT, Symbols.TKN],
+            [Symbols.ETH, Symbols.BNT],
+            [Symbols.ETH, Symbols.TKN]
         ]) {
             // perform a basic/sanity suite over a fixed input
             testTradesBasic(
@@ -2654,8 +2657,8 @@ describe('BancorNetwork', () => {
                     for (const amount of [10_000, toWei(500_000)]) {
                         const TRADING_FEES = [0, 5];
                         for (const tradingFeePercent of TRADING_FEES) {
-                            const isSourceNetworkToken = sourceSymbol === BNT;
-                            const isTargetNetworkToken = targetSymbol === BNT;
+                            const isSourceNetworkToken = sourceSymbol === Symbols.BNT;
+                            const isTargetNetworkToken = targetSymbol === Symbols.BNT;
 
                             // if either the source or the target token is the network token - only test fee in one of
                             // the directions
@@ -2736,7 +2739,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ token } = await setupSimplePool(
                     {
-                        symbol: TKN,
+                        symbol: Symbols.TKN,
                         balance: amount,
                         initialRate: INITIAL_RATE
                     },
@@ -2755,7 +2758,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to request a flash-loan of a non-whitelisted token', async () => {
-                const reserveToken = await createTokenBySymbol(TKN);
+                const reserveToken = await createTokenBySymbol(Symbols.TKN);
                 await expect(
                     network.flashLoan(reserveToken.address, amount, recipient.address, ZERO_BYTES)
                 ).to.be.revertedWith('NotWhitelisted');
@@ -2796,10 +2799,10 @@ describe('BancorNetwork', () => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
-                if (symbol === BNT) {
+                if (symbol === Symbols.BNT) {
                     token = networkToken;
 
-                    const reserveToken = await createTokenBySymbol(TKN);
+                    const reserveToken = await createTokenBySymbol(Symbols.TKN);
 
                     await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
                     await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
@@ -2831,7 +2834,7 @@ describe('BancorNetwork', () => {
                 const prevNetworkBalance = await getBalance(token, network.address);
 
                 let prevStakedBalance;
-                if (symbol === BNT) {
+                if (symbol === Symbols.BNT) {
                     prevStakedBalance = await masterPool.stakedBalance();
                 } else {
                     prevStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
@@ -2923,7 +2926,7 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             for (const flashLoanFee of [0, 1, 10]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
                     testFlashLoan(symbol, toPPM(flashLoanFee));
@@ -3076,7 +3079,7 @@ describe('BancorNetwork', () => {
             const initLegacySystem = async (isETH: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
-                baseToken = (await createTokenBySymbol(isETH ? ETH : TKN)) as IERC20;
+                baseToken = (await createTokenBySymbol(isETH ? Symbols.ETH : Symbols.TKN)) as IERC20;
 
                 ({
                     checkpointStore,
@@ -3458,7 +3461,7 @@ describe('BancorNetwork', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    symbol: TKN,
+                    symbol: Symbols.TKN,
                     balance: toWei(1_000_000),
                     initialRate: { n: 1, d: 2 }
                 },
@@ -3761,7 +3764,7 @@ describe('BancorNetwork Financial Verification', () => {
             externalProtectionVault
         } = await createSystem());
 
-        baseToken = await Contracts.TestERC20Burnable.deploy(TKN, TKN, tknAmount);
+        baseToken = await Contracts.TestERC20Burnable.deploy(Symbols.TKN, TokenNames.TKN, tknAmount);
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
 
         await baseToken.updateDecimals(tknDecimals);

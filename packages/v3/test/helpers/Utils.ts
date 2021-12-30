@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token } from '../../typechain-types';
-import { NATIVE_TOKEN_ADDRESS, BNT, vBNT, ETH, TKN } from '../../utils/Constants';
+import { NATIVE_TOKEN_ADDRESS, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
@@ -71,13 +71,15 @@ export const createWallet = async () => {
 
 export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddress> => {
     switch (symbol) {
-        case ETH:
+        case Symbols.ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
 
-        case TKN:
-        case `${TKN}1`:
-        case `${TKN}2`:
-            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(1_000_000_000));
+        case Symbols.TKN:
+            return Contracts.TestERC20Token.deploy(TokenNames[symbol], symbol, toWei(1_000_000_000));
+
+        case `${Symbols.TKN}1`:
+        case `${Symbols.TKN}2`:
+            return Contracts.TestERC20Token.deploy(TokenNames[Symbols.TKN], symbol, toWei(1_000_000_000));
 
         default:
             throw new Error(`Unsupported type ${symbol}`);
@@ -86,15 +88,15 @@ export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddr
 
 export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
     switch (symbol) {
-        case BNT:
+        case Symbols.BNT:
             return '';
 
-        case vBNT:
+        case Symbols.vBNT:
             return 'ERR_UNDERFLOW';
 
-        case TKN:
-        case `${TKN}1`:
-        case `${TKN}2`:
+        case Symbols.TKN:
+        case `${Symbols.TKN}1`:
+        case `${Symbols.TKN}2`:
             return 'ERC20: transfer amount exceeds allowance';
 
         default:
@@ -104,18 +106,18 @@ export const errorMessageTokenExceedsAllowance = (symbol: string): string => {
 
 export const errorMessageTokenExceedsBalance = (symbol: string): string => {
     switch (symbol) {
-        case BNT:
+        case Symbols.BNT:
             return 'SafeERC20: low-level call failed';
 
-        case vBNT:
+        case Symbols.vBNT:
             return 'ERR_UNDERFLOW';
 
-        case ETH:
+        case Symbols.ETH:
             return '';
 
-        case TKN:
-        case `${TKN}1`:
-        case `${TKN}2`:
+        case Symbols.TKN:
+        case `${Symbols.TKN}1`:
+        case `${Symbols.TKN}2`:
             return 'ERC20: transfer amount exceeds balance';
 
         default:

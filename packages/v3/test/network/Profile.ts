@@ -10,7 +10,7 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../../utils/Constants';
+import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, Symbols } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { toWei, toPPM } from '../../utils/Types';
 import {
@@ -72,8 +72,8 @@ describe('Profile @profile', () => {
         });
 
         const testDeposits = (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
-            const isETH = symbol === ETH;
+            const isNetworkToken = symbol === Symbols.BNT;
+            const isETH = symbol === Symbols.ETH;
 
             let token: TokenWithAddress;
 
@@ -179,7 +179,7 @@ describe('Profile @profile', () => {
                                                 beforeEach(async () => {
                                                     const contextId = formatBytes32String('CTX');
 
-                                                    const reserveToken = await createTokenBySymbol(TKN);
+                                                    const reserveToken = await createTokenBySymbol(Symbols.TKN);
 
                                                     await createPool(
                                                         reserveToken,
@@ -369,7 +369,7 @@ describe('Profile @profile', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testDeposits(symbol);
             });
@@ -411,7 +411,7 @@ describe('Profile @profile', () => {
         });
 
         const testWithdraw = async (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
+            const isNetworkToken = symbol === Symbols.BNT;
 
             context('with an initiated withdrawal request', () => {
                 let provider: SignerWithAddress;
@@ -439,7 +439,7 @@ describe('Profile @profile', () => {
                         poolToken = masterPoolToken;
 
                         const contextId = formatBytes32String('CTX');
-                        const reserveToken = await createTokenBySymbol(TKN);
+                        const reserveToken = await createTokenBySymbol(Symbols.TKN);
                         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
 
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
@@ -538,7 +538,7 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             context(symbol, () => {
                 testWithdraw(symbol);
             });
@@ -681,8 +681,8 @@ describe('Profile @profile', () => {
             const minReturnAmount = MIN_RETURN_AMOUNT;
             const deadline = MAX_UINT256;
 
-            const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
-            const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
+            const sourceSymbol = isSourceNetworkToken ? Symbols.BNT : isSourceETH ? Symbols.ETH : Symbols.TKN;
+            const targetSymbol = isTargetNetworkToken ? Symbols.BNT : isTargetETH ? Symbols.ETH : Symbols.TKN;
             await profiler.profile(
                 `trade ${sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
@@ -690,7 +690,7 @@ describe('Profile @profile', () => {
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
+            const isSourceETH = source.symbol === Symbols.ETH;
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
@@ -722,8 +722,8 @@ describe('Profile @profile', () => {
         };
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
-            const isSourceNetworkToken = source.symbol === BNT;
+            const isSourceETH = source.symbol === Symbols.ETH;
+            const isSourceNetworkToken = source.symbol === Symbols.BNT;
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
@@ -748,13 +748,13 @@ describe('Profile @profile', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TKN, BNT],
-            [TKN, ETH],
-            [`${TKN}1`, `${TKN}2`],
-            [BNT, ETH],
-            [BNT, TKN],
-            [ETH, BNT],
-            [ETH, TKN]
+            [Symbols.TKN, Symbols.BNT],
+            [Symbols.TKN, Symbols.ETH],
+            [`${Symbols.TKN}1`, `${Symbols.TKN}2`],
+            [Symbols.BNT, Symbols.ETH],
+            [Symbols.BNT, Symbols.TKN],
+            [Symbols.ETH, Symbols.BNT],
+            [Symbols.ETH, Symbols.TKN]
         ]) {
             testPermittedTrades(
                 {
@@ -775,8 +775,8 @@ describe('Profile @profile', () => {
                     for (const amount of [10_000, toWei(500_000)]) {
                         const TRADING_FEES = [0, 5];
                         for (const tradingFeePercent of TRADING_FEES) {
-                            const isSourceNetworkToken = sourceSymbol === BNT;
-                            const isTargetNetworkToken = targetSymbol === BNT;
+                            const isSourceNetworkToken = sourceSymbol === Symbols.BNT;
+                            const isTargetNetworkToken = targetSymbol === Symbols.BNT;
 
                             // if either the source or the target token is the network token - only test fee in one of
                             // the directions
@@ -853,10 +853,10 @@ describe('Profile @profile', () => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
-                if (symbol === BNT) {
+                if (symbol === Symbols.BNT) {
                     token = networkToken;
 
-                    const reserveToken = await createTokenBySymbol(TKN);
+                    const reserveToken = await createTokenBySymbol(Symbols.TKN);
 
                     await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
                     await network.requestLiquidityT(ZERO_BYTES32, reserveToken.address, amount);
@@ -902,7 +902,7 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             for (const flashLoanFee of [0, 1, 10]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
                     testFlashLoan(symbol, toPPM(flashLoanFee));
@@ -938,7 +938,7 @@ describe('Profile @profile', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    symbol: TKN,
+                    symbol: Symbols.TKN,
                     balance: toWei(1_000_000),
                     initialRate: { n: 1, d: 2 }
                 },

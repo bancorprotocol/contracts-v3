@@ -20,7 +20,7 @@ import {
     TestPoolCollection,
     TestPendingWithdrawals
 } from '../../typechain-types';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, vBNT } from '../../utils/Constants';
+import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, Symbols, TokenNames } from '../../utils/Constants';
 import { roles } from '../../utils/Roles';
 import { fromPPM, Fraction, toWei } from '../../utils/Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
@@ -124,16 +124,16 @@ const createGovernedToken = async (
 const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
-        BNT,
-        BNT,
+        Symbols.BNT,
+        TokenNames.BNT,
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
 
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
-        vBNT,
-        vBNT,
+        Symbols.vBNT,
+        TokenNames.vBNT,
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
@@ -348,7 +348,7 @@ export const setupSimplePool = async (
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
-    const isNetworkToken = spec.symbol === BNT;
+    const isNetworkToken = spec.symbol === Symbols.BNT;
 
     if (isNetworkToken) {
         const poolToken = await Contracts.PoolToken.attach(await networkInformation.masterPoolToken());
