@@ -115,7 +115,7 @@ describe('ExternalRewardsVault', () => {
                 context('with asset manager role', () => {
                     beforeEach(async () => {
                         await externalRewardsVault.grantRole(
-                            ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
+                            Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
                             user.address
                         );
                     });

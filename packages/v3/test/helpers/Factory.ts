@@ -144,16 +144,16 @@ const createGovernedToken = async (
 const createGovernedTokens = async () => {
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
-        Symbols.BNT,
         TokenNames.BNT,
+        Symbols.BNT,
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );
 
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
-        Symbols.vBNT,
         TokenNames.vBNT,
+        Symbols.vBNT,
         DEFAULT_DECIMALS,
         TOTAL_SUPPLY
     );

@@ -2628,7 +2628,7 @@ describe('BancorNetwork', () => {
         for (const [sourceSymbol, targetSymbol] of [
             [Symbols.TKN, Symbols.BNT],
             [Symbols.TKN, Symbols.ETH],
-            [`${Symbols.TKN}1`, `$Symbols.TKN}2`],
+            [`${Symbols.TKN}1`, `${Symbols.TKN}2`],
             [Symbols.BNT, Symbols.ETH],
             [Symbols.BNT, Symbols.TKN],
             [Symbols.ETH, Symbols.BNT],
