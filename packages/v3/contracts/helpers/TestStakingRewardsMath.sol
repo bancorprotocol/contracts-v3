@@ -3,20 +3,16 @@ pragma solidity 0.8.10;
 
 import { StakingRewardsMath } from "../staking-rewards/StakingRewardsMath.sol";
 
-contract TestStakingRewardsMath is StakingRewardsMath {
-    function calculateFlatRewardsT(
+contract TestStakingRewardsMath {
+    function calcFlatRewards(
+        uint256 totalRewards,
         uint32 timeElapsed,
-        uint32 remainingProgramDuration,
-        uint256 remainingRewards
+        uint32 programDuration
     ) external pure returns (uint256) {
-        return _calculateFlatRewards(timeElapsed, remainingProgramDuration, remainingRewards);
+        return StakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
     }
 
-    function calculateExponentialDecayRewardsAfterTimeElapsedT(uint32 timeElapsed, uint256 totalRewards)
-        external
-        pure
-        returns (uint256)
-    {
-        return _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, totalRewards);
+    function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed) external pure returns (uint256) {
+        return StakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
     }
 }

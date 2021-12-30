@@ -34,7 +34,6 @@ import { StakingRewardsMath } from "./StakingRewardsMath.sol";
  */
 contract AutoCompoundingStakingRewards is
     IAutoCompoundingStakingRewards,
-    StakingRewardsMath,
     ReentrancyGuardUpgradeable,
     Utils,
     Time,
@@ -377,9 +376,15 @@ contract AutoCompoundingStakingRewards is
 
         uint256 tokenAmountToDistribute;
         if (distributionType == FLAT_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateFlatRewards(p, timeElapsed, prevTimeElapsed);
+            tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
+                p.totalRewards,
+                timeElapsed - prevTimeElapsed,
+                p.endTime - p.startTime
+            );
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute = _calculateExponentialDecayRewards(p, timeElapsed, prevTimeElapsed);
+            tokenAmountToDistribute =
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
 
         if (tokenAmountToDistribute == 0) {
@@ -418,40 +423,6 @@ contract AutoCompoundingStakingRewards is
             programTimeElapsed: timeElapsed,
             remainingRewards: p.remainingRewards
         });
-    }
-
-    /**
-     * @dev calculates and returns the rewards for a flat distribution program according to how much time has elapsed
-     * since the beginning of the program and the time of the preview calculation
-     */
-    function _calculateFlatRewards(
-        ProgramData memory p,
-        uint32 timeElapsed,
-        uint32 prevTimeElapsed
-    ) private pure returns (uint256) {
-        uint32 programDuration = p.endTime - p.startTime;
-
-        return
-            _calculateFlatRewards(
-                // ensure that the elapsed time isn't longer than the duration of the program
-                uint32(Math.min(timeElapsed, programDuration)) - prevTimeElapsed,
-                programDuration - prevTimeElapsed,
-                p.remainingRewards
-            );
-    }
-
-    /**
-     * @dev calculates and returns the rewards for an exponential decay distribution program according to how much time
-     * has elapsed since the beginning of the program and the time of the preview calculation
-     */
-    function _calculateExponentialDecayRewards(
-        ProgramData memory p,
-        uint32 timeElapsed,
-        uint32 prevTimeElapsed
-    ) private pure returns (uint256) {
-        return
-            _calculateExponentialDecayRewardsAfterTimeElapsed(timeElapsed, p.totalRewards) -
-            _calculateExponentialDecayRewardsAfterTimeElapsed(prevTimeElapsed, p.totalRewards);
     }
 
     /**
