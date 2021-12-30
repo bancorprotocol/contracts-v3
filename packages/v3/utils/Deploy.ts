@@ -20,6 +20,7 @@ export const isHardhat = () => getNetworkName() === Networks.HARDHAT || Networks
 export const isHardhatMainnetFork = () => getNetworkName() === Networks.HARDHAT_MAINNET_FORK;
 export const isMainnetFork = () => isHardhatMainnetFork();
 export const isMainnet = () => getNetworkName() === Networks.MAINNET || isMainnetFork();
+export const isLive = () => isMainnet() && !isMainnetFork();
 
 interface DeployOptions {
     name: ContractNames;
@@ -55,7 +56,7 @@ export const execute = async (options: ExecuteOptions) => {
 };
 
 export const runTestDeployment = async (tags?: string | string[]) => {
-    if (isMainnet()) {
+    if (isLive()) {
         throw new Error('Unsupported network');
     }
 

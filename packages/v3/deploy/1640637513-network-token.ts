@@ -1,15 +1,11 @@
 import { Symbols, TokenNames, DEFAULT_DECIMALS, ContractNames, DeploymentTags } from '../utils/Constants';
-import { deploy, execute, isMainnet, isMainnetFork } from '../utils/Deploy';
+import { deploy, execute, isMainnet } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    if (isMainnet() || isMainnetFork()) {
-        return;
-    }
-
     const { deployer, foundationMultisig } = await getNamedAccounts();
 
     const TOTAL_SUPPLY = toWei(1_000_000_000);
@@ -69,23 +65,22 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: foundationMultisig
     });
 
-    if (!isMainnet()) {
-        await execute({
-            name: ContractNames.NetworkTokenGovernance,
-            methodName: 'grantRole',
-            args: [Roles.TokenGovernance.ROLE_MINTER, deployer],
-            from: deployer
-        });
+    await execute({
+        name: ContractNames.NetworkTokenGovernance,
+        methodName: 'grantRole',
+        args: [Roles.TokenGovernance.ROLE_MINTER, deployer],
+        from: deployer
+    });
 
-        await execute({
-            name: ContractNames.NetworkTokenGovernance,
-            methodName: 'mint',
-            args: [deployer, TOTAL_SUPPLY],
-            from: deployer
-        });
-    }
+    await execute({
+        name: ContractNames.NetworkTokenGovernance,
+        methodName: 'mint',
+        args: [deployer, TOTAL_SUPPLY],
+        from: deployer
+    });
 };
 
+func.skip = async () => isMainnet();
 func.tags = [DeploymentTags.V2];
 
 export default func;
