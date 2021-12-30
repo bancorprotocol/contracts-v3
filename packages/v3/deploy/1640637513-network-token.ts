@@ -81,6 +81,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 };
 
 func.skip = async () => isMainnet();
-func.tags = [DeploymentTags.V2];
+func.tags = [DeploymentTags.V2, ContractNames.NetworkToken, ContractNames.NetworkTokenGovernance];
 
 export default func;

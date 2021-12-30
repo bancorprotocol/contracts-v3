@@ -1,6 +1,6 @@
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { Symbols, TokenNames, DeploymentTags } from '../../utils/Constants';
+import { Symbols, TokenNames, ContractNames } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
@@ -20,7 +20,7 @@ describe('1640637513-network-token', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(DeploymentTags.V2);
+        await runTestDeployment([ContractNames.NetworkToken, ContractNames.NetworkTokenGovernance]);
 
         networkToken = await DeployedContracts.NetworkToken.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
