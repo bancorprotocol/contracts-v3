@@ -1,5 +1,6 @@
 import Contracts from '../../components/Contracts';
-import { IERC20, TestVault } from '../../typechain-types';
+import { TokenGovernance } from '../../components/LegacyContracts';
+import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
 import { Symbols, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
 import { expectRole, roles } from '../helpers/AccessControl';
 import { createProxy, createSystem } from '../helpers/Factory';
