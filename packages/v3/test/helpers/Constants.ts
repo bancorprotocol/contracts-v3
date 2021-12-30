@@ -1,3 +1,4 @@
+import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
 const {
@@ -18,8 +19,23 @@ export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
 export const MASTER_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
 export const MASTER_POOL_TOKEN_SYMBOL = `bn${BNT}`;
-export const FeeTypes = {
-    Trading: 0,
-    Withdrawal: 1,
-    FlashLoan: 2
+
+export enum FeeTypes {
+    Trading = 0,
+    Withdrawal = 1,
+    FlashLoan = 2
+}
+
+export enum StakingRewardsDistributionTypes {
+    Flat = 0,
+    ExponentialDecay = 1
+}
+
+export const Exponentiation = {
+    INPUT_TOO_HIGH: 16
+};
+
+export const ExponentialDecay = {
+    LAMBDA: new Decimal('0.0000000142857142857143'),
+    ESTIMATED_PROGRAM_DURATION: 35.5 * 365 * 24 * 60 * 60 // 35.4 years
 };

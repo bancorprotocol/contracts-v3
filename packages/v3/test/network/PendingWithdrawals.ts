@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import {
-    BancorNetworkInformation,
+    BancorNetworkInfo,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -18,7 +18,7 @@ import { toWei } from '../helpers/Types';
 import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
+import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { Upgradeable: UpgradeableRoles } = roles;
@@ -179,7 +179,7 @@ describe('PendingWithdrawals', () => {
     describe('withdrawals', () => {
         let poolToken: PoolToken;
         let reserveToken: TokenWithAddress;
-        let networkInformation: BancorNetworkInformation;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -196,7 +196,7 @@ describe('PendingWithdrawals', () => {
             beforeEach(async () => {
                 ({
                     network,
-                    networkInformation,
+                    networkInfo,
                     networkSettings,
                     networkToken,
                     masterPool,
@@ -298,11 +298,12 @@ describe('PendingWithdrawals', () => {
                             {
                                 symbol: TKN,
                                 balance: toWei(1_000_000),
+                                requestedLiquidity: toWei(1_000_000).mul(1000),
                                 initialRate: { n: 1, d: 2 }
                             },
                             provider as any as SignerWithAddress,
                             network,
-                            networkInformation,
+                            networkInfo,
                             networkSettings,
                             poolCollection
                         ));
@@ -367,11 +368,12 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider1,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));
@@ -448,7 +450,7 @@ describe('PendingWithdrawals', () => {
                     it("should revert when attempting to cancel another provider's request", async () => {
                         const provider2 = (await ethers.getSigners())[5];
 
-                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        await depositToPool(provider2, reserveToken, 1000, network);
                         const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
 
                         await poolToken.connect(provider2).approve(network.address, poolTokenAmount2);
@@ -488,11 +490,12 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider1,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));
@@ -573,7 +576,7 @@ describe('PendingWithdrawals', () => {
                     it("should revert when attempting to reinitiate another provider's request", async () => {
                         const provider2 = (await ethers.getSigners())[5];
 
-                        await depositToPool(provider2, reserveToken, BigNumber.from(1000), network);
+                        await depositToPool(provider2, reserveToken, 1000, network);
                         const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
 
                         await poolToken.connect(provider2).approve(network.address, poolTokenAmount2);
@@ -609,11 +612,12 @@ describe('PendingWithdrawals', () => {
                         {
                             symbol: TKN,
                             balance: toWei(1_000_000),
+                            requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
                         },
                         provider,
                         network,
-                        networkInformation,
+                        networkInfo,
                         networkSettings,
                         poolCollection
                     ));

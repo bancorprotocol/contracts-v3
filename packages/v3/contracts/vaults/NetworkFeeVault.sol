@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Vault } from "./Vault.sol";
 import { INetworkFeeVault } from "./interfaces/INetworkFeeVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
+import { Vault } from "./Vault.sol";
 
 /**
  * @dev Network Fee Vault contract
@@ -22,6 +24,13 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    {}
 
     /**
      * @dev fully initializes the contract and its parents
@@ -70,7 +79,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
      *
      * - the caller must have the ROLE_ASSET_MANAGER permission
      */
-    function authenticateWithdrawal(
+    function isAuthorizedWithdrawal(
         address caller,
         ReserveToken, /* reserveToken */
         address, /* target */

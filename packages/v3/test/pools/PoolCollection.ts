@@ -2,6 +2,7 @@ import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import {
     IERC20,
+    ExternalRewardsVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -12,6 +13,7 @@ import {
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
 import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
+import { roles } from '../helpers/AccessControl';
 import {
     INVALID_FRACTION,
     MAX_UINT256,
@@ -257,6 +259,7 @@ describe('PoolCollection', () => {
 
                     const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
                     expect(poolToken).not.to.equal(ZERO_ADDRESS);
+                    expect(await poolCollection.poolToken(reserveToken.address)).to.equal(pool.poolToken);
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
 
                     expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -1735,6 +1738,100 @@ describe('PoolCollection', () => {
                 const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
                 expect(poolLiquidity.stakedBalance).to.equal(prevPoolLiquidity.stakedBalance.add(feeAmount));
+            });
+        }
+    });
+
+    describe('pool token calculations', () => {
+        let networkSettings: NetworkSettings;
+        let network: TestBancorNetwork;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+        let poolToken: PoolToken;
+        let externalRewardsVault: ExternalRewardsVault;
+
+        const BASE_TOKEN_LIQUIDITY = toWei(1_000_000_000);
+
+        beforeEach(async () => {
+            ({ networkSettings, network, poolCollection, externalRewardsVault } = await createSystem());
+
+            await externalRewardsVault.grantRole(roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
+
+            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, toWei(1_000_000_000));
+
+            poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+            await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
+
+            await network.depositToPoolCollectionForT(
+                poolCollection.address,
+                deployer.address,
+                reserveToken.address,
+                BASE_TOKEN_LIQUIDITY,
+                MAX_UINT256
+            );
+        });
+
+        for (const baseTokenAmount of [0, 1000, toWei(20_000), toWei(3_000_000)]) {
+            context(`underlying amount of ${baseTokenAmount.toString()}`, () => {
+                it('should properly convert between underlying amount and pool token amount', async () => {
+                    const poolTokenTotalSupply = await poolToken.totalSupply();
+                    const { stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address);
+
+                    const poolTokenAmount = await poolCollection.underlyingToPoolToken(
+                        reserveToken.address,
+                        baseTokenAmount
+                    );
+                    expect(poolTokenAmount).to.equal(
+                        BigNumber.from(baseTokenAmount).mul(poolTokenTotalSupply).div(stakedBalance)
+                    );
+
+                    const underlyingAmount = await poolCollection.poolTokenToUnderlying(
+                        reserveToken.address,
+                        poolTokenAmount
+                    );
+                    expect(underlyingAmount).to.be.closeTo(BigNumber.from(baseTokenAmount), 1);
+                });
+
+                for (const protocolPoolTokenAmount of [0, 100_000, toWei(50_000)]) {
+                    context(`protocol pool token amount of ${protocolPoolTokenAmount} `, () => {
+                        beforeEach(async () => {
+                            if (protocolPoolTokenAmount !== 0) {
+                                await poolCollection.mintT(
+                                    reserveToken.address,
+                                    externalRewardsVault.address,
+                                    protocolPoolTokenAmount
+                                );
+                            }
+                        });
+
+                        it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
+                            const poolTokenAmount = await poolToken.balanceOf(deployer.address);
+                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(
+                                reserveToken.address,
+                                poolTokenAmount
+                            );
+
+                            const poolTokenAmountToBurn = await poolCollection.poolTokenAmountToBurn(
+                                reserveToken.address,
+                                baseTokenAmount,
+                                protocolPoolTokenAmount
+                            );
+
+                            // ensure that burning the resulted pool token amount increases the underlying by the
+                            // specified network amount while taking into account pool tokens owned by the protocol
+                            // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
+                            await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
+
+                            expect(
+                                await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
+                            ).to.be.closeTo(prevUnderlying.add(baseTokenAmount), 1);
+                        });
+                    });
+                }
             });
         }
     });

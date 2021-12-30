@@ -4,12 +4,12 @@ pragma solidity 0.8.10;
 import { IOwned } from "./interfaces/IOwned.sol";
 import { AccessDenied } from "./Utils.sol";
 
-error SameOwner();
-
 /**
  * @dev this contract provides support and utilities for contract ownership
  */
 abstract contract Owned is IOwned {
+    error SameOwner();
+
     address private _owner;
     address private _newOwner;
 

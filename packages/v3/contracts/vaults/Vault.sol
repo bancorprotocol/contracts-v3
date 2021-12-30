@@ -2,24 +2,51 @@
 pragma solidity 0.8.10;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IVault } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
+import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import { Utils, AccessDenied, NotPayable } from "../utility/Utils.sol";
+import { Utils, AccessDenied, NotPayable, InvalidToken } from "../utility/Utils.sol";
 
 abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using Address for address payable;
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
+    // the address of the network token
+    IERC20 internal immutable _networkToken;
+
+    // the address of the network token governance
+    ITokenGovernance internal immutable _networkTokenGovernance;
+
+    // the address of the governance token
+    IERC20 internal immutable _govToken;
+
+    // the address of the governance token governance
+    ITokenGovernance internal immutable _govTokenGovernance;
+
     // solhint-disable func-name-mixedcase
+
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
+        validAddress(address(initNetworkTokenGovernance))
+        validAddress(address(initGovTokenGovernance))
+    {
+        _networkTokenGovernance = initNetworkTokenGovernance;
+        _networkToken = initNetworkTokenGovernance.token();
+        _govTokenGovernance = initGovTokenGovernance;
+        _govToken = initGovTokenGovernance.token();
+    }
 
     /**
      * @dev initializes the contract and its parents
@@ -36,6 +63,20 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      * @dev performs contract-specific initialization
      */
     function __Vault_init_unchained() internal onlyInitializing {}
+
+    // allows execution only by an authorized operation
+    modifier whenAuthorized(
+        address caller,
+        ReserveToken reserveToken,
+        address payable target,
+        uint256 amount
+    ) {
+        if (!isAuthorizedWithdrawal(caller, reserveToken, target, amount)) {
+            revert AccessDenied();
+        }
+
+        _;
+    }
 
     /**
      * @dev returns whether withdrawals are currently paused
@@ -73,9 +114,16 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         ReserveToken reserveToken,
         address payable target,
         uint256 amount
-    ) external override validAddress(target) nonReentrant whenNotPaused {
-        if (!authenticateWithdrawal(msg.sender, reserveToken, target, amount)) {
-            revert AccessDenied();
+    )
+        external
+        override
+        validAddress(target)
+        nonReentrant
+        whenNotPaused
+        whenAuthorized(msg.sender, reserveToken, target, amount)
+    {
+        if (amount == 0) {
+            return;
         }
 
         if (reserveToken.isNativeToken()) {
@@ -90,9 +138,40 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     }
 
     /**
+     * @inheritdoc IVault
+     */
+    function burn(ReserveToken reserveToken, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        whenAuthorized(msg.sender, reserveToken, payable(address(0)), amount)
+    {
+        if (amount == 0) {
+            return;
+        }
+
+        if (reserveToken.isNativeToken()) {
+            revert InvalidToken();
+        }
+
+        IERC20 token = reserveToken.toIERC20();
+
+        // allow vaults to burn network and governance tokens via their respective token governance modules
+        if (token == _networkToken) {
+            _networkTokenGovernance.burn(amount);
+        } else if (token == _govToken) {
+            _govTokenGovernance.burn(amount);
+        } else {
+            IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
+        }
+
+        emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });
+    }
+
+    /**
      * @dev returns whether the given caller is allowed access to the given token
      */
-    function authenticateWithdrawal(
+    function isAuthorizedWithdrawal(
         address caller,
         ReserveToken reserveToken,
         address target,

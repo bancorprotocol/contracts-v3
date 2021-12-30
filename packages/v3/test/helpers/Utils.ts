@@ -6,7 +6,9 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
-export type TokenWithAddress = TestERC20Token | { address: string };
+export type Addressable = { address: string };
+
+export type TokenWithAddress = TestERC20Token | Addressable;
 
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
@@ -44,7 +46,7 @@ export const getBalances = async (tokens: TokenWithAddress[], account: string | 
 export const transfer = async (
     sourceAccount: SignerWithAddress,
     token: TokenWithAddress,
-    target: string | SignerWithAddress,
+    target: string | SignerWithAddress | BaseContract,
     amount: BigNumberish
 ) => {
     const targetAddress = toAddress(target);
@@ -69,7 +71,11 @@ export const createWallet = async () => {
     return wallet;
 };
 
-export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddress> => {
+export const createTokenBySymbol = async (
+    symbol: string,
+    totalSupply: BigNumberish = toWei(1_000_000_000),
+    burnable = false
+): Promise<TokenWithAddress> => {
     switch (symbol) {
         case ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
@@ -77,7 +83,11 @@ export const createTokenBySymbol = async (symbol: string): Promise<TokenWithAddr
         case TKN:
         case `${TKN}1`:
         case `${TKN}2`:
-            return Contracts.TestERC20Token.deploy(symbol, symbol, toWei(1_000_000_000));
+            return (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
+                symbol,
+                symbol,
+                totalSupply
+            );
 
         default:
             throw new Error(`Unsupported type ${symbol}`);
@@ -117,6 +127,27 @@ export const errorMessageTokenExceedsBalance = (symbol: string): string => {
         case `${TKN}1`:
         case `${TKN}2`:
             return 'ERC20: transfer amount exceeds balance';
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const errorMessageTokenBurnExceedsBalance = (symbol: string): string => {
+    switch (symbol) {
+        case BNT:
+            return '';
+
+        case vBNT:
+            return 'ERR_UNDERFLOW';
+
+        case ETH:
+            return '';
+
+        case TKN:
+        case `${TKN}1`:
+        case `${TKN}2`:
+            return 'ERC20: burn amount exceeds balance';
 
         default:
             throw new Error(`Unsupported type ${symbol}`);
