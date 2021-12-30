@@ -1,11 +1,9 @@
 import Contracts from '../../components/Contracts';
 import { TestUpgradeable } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('Upgradeable', () => {
     let upgradeable: TestUpgradeable;
@@ -28,7 +26,7 @@ describe('Upgradeable', () => {
     });
 
     it('should be properly initialized', async () => {
-        await expectRole(upgradeable, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+        await expectRole(upgradeable, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
     });
 
     it('should revert when a non-owner is attempting to call a restricted function', async () => {

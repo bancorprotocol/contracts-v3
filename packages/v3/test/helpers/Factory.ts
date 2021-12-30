@@ -24,7 +24,7 @@ import {
     ExternalRewardsVault
 } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, Symbols, TokenNames } from '../../utils/Constants';
-import { roles } from '../../utils/Roles';
+import { Roles } from '../../utils/Roles';
 import { fromPPM, Fraction, toWei } from '../../utils/Types';
 import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -32,12 +32,6 @@ import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils }
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;
-
-const {
-    TokenGovernance: TokenGovernanceRoles,
-    MasterVault: MasterVaultRoles,
-    ExternalProtectionVault: ExternalProtectionVaultRoles
-} = roles;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
 const V1 = 1;
@@ -99,10 +93,10 @@ export const createStakingRewards = async (
         ctorArgs: [network.address, networkSettings.address, networkToken.address, masterPool.address]
     });
 
-    await masterPool.grantRole(roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await masterPool.grantRole(Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
     await externalRewardsVault.grantRole(
-        roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+        Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
         autoCompoundingStakingRewards.address
     );
 
@@ -127,8 +121,8 @@ const createGovernedToken = async (
         await testToken.updateDecimals(decimals);
 
         tokenGovernance = (await Contracts.TestTokenGovernance.deploy(testToken.address)) as TokenGovernance;
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, deployer.address);
 
         token = testToken;
     } else {
@@ -136,8 +130,8 @@ const createGovernedToken = async (
         legacyToken.issue(deployer.address, totalSupply);
 
         tokenGovernance = await LegacyContracts.TokenGovernance.deploy(legacyToken.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, deployer.address);
         await legacyToken.transferOwnership(tokenGovernance.address);
         await tokenGovernance.acceptTokenOwnership();
 
@@ -207,10 +201,10 @@ const createMasterPoolUninitialized = async (
     await masterPoolToken.acceptOwnership();
     await masterPoolToken.transferOwnership(masterPool.address);
 
-    await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
-    await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
+    await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
+    await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
 
-    await masterVault.grantRole(MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
 
     return masterPool;
 };
@@ -302,8 +296,8 @@ const createSystemFixture = async () => {
 
     await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, network.address);
-    await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_ASSET_MANAGER, network.address);
+    await externalProtectionVault.grantRole(Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER, network.address);
 
     const networkInfo = await Contracts.BancorNetworkInfo.deploy(
         network.address,

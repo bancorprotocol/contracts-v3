@@ -2,14 +2,12 @@ import Contracts from '../../components/Contracts';
 import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
 import { ZERO_ADDRESS, PPM_RESOLUTION, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('NetworkSettings', () => {
     let networkFeeVault: NetworkFeeVault;
@@ -43,7 +41,7 @@ describe('NetworkSettings', () => {
         it('should be properly initialized', async () => {
             expect(await networkSettings.version()).to.equal(1);
 
-            await expectRole(networkSettings, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(networkSettings, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
 

@@ -14,7 +14,7 @@ import {
 } from '../../typechain-types';
 import { FeeTypes, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256, Symbols, TokenNames } from '../../utils/Constants';
 import { toWei, toPPM } from '../../utils/Types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
@@ -24,8 +24,6 @@ import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
-
-const { Upgradeable: UpgradeableRoles, MasterPool: MasterPoolRoles } = roles;
 
 describe('MasterPool', () => {
     let deployer: SignerWithAddress;
@@ -147,12 +145,14 @@ describe('MasterPool', () => {
             expect(await masterPool.version()).to.equal(1);
             expect(await masterPool.isPayable()).to.be.false;
 
-            await expectRole(masterPool, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(masterPool, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
+            ]);
 
             await expectRole(
                 masterPool,
-                MasterPoolRoles.ROLE_MASTER_POOL_TOKEN_MANAGER,
-                UpgradeableRoles.ROLE_ADMIN
+                Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER,
+                Roles.Upgradeable.ROLE_ADMIN
                 // @TODO add staking rewards to initial members
             );
 
@@ -1117,7 +1117,7 @@ describe('MasterPool', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await masterPool.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await masterPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -1125,7 +1125,7 @@ describe('MasterPool', () => {
 
                 context('with master pool token manager role', () => {
                     beforeEach(async () => {
-                        await masterPool.grantRole(MasterPoolRoles.ROLE_MASTER_POOL_TOKEN_MANAGER, user.address);
+                        await masterPool.grantRole(Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, user.address);
                     });
 
                     if (isMasterPoolToken) {

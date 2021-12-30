@@ -2,15 +2,13 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
 import { ZERO_ADDRESS, Symbols } from '../../utils/Constants';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles, MasterVault: MasterVaultRoles } = roles;
 
 describe('MasterVault', () => {
     shouldHaveGap('MasterVault');
@@ -48,11 +46,13 @@ describe('MasterVault', () => {
             expect(await masterVault.version()).to.equal(1);
             expect(await masterVault.isPayable()).to.be.true;
 
-            await expectRole(masterVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
-            await expectRole(masterVault, MasterVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
+            ]);
+            await expectRole(masterVault, Roles.MasterVault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 network.address
             ]);
-            await expectRole(masterVault, MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 masterPool.address
             ]);
         });
@@ -107,7 +107,7 @@ describe('MasterVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -115,7 +115,7 @@ describe('MasterVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                        await masterVault.grantRole(Roles.MasterVault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();
@@ -123,7 +123,7 @@ describe('MasterVault', () => {
 
                 context('with network token manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                        await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, user.address);
                     });
 
                     isNetworkToken ? testWithdrawFunds() : testWithdrawFundsRestricted();

@@ -40,7 +40,7 @@ import {
 } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { toWei, toPPM } from '../../utils/Types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import {
     createPool,
     createPoolCollection,
@@ -74,7 +74,6 @@ import { camelCase } from 'lodash';
 import { Context } from 'mocha';
 import path from 'path';
 
-const { Upgradeable: UpgradeableRoles, BancorNetwork: BancorNetworkRoles } = roles;
 const { solidityKeccak256, formatBytes32String } = utils;
 
 describe('BancorNetwork', () => {
@@ -280,7 +279,7 @@ describe('BancorNetwork', () => {
         it('should be properly initialized', async () => {
             expect(await network.version()).to.equal(1);
 
-            await expectRole(network, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
 
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
@@ -3099,9 +3098,9 @@ describe('BancorNetwork', () => {
                 await liquidityProtectionSettings.setMinNetworkTokenLiquidityForMinting(100);
                 await liquidityProtectionSettings.setMinNetworkCompensation(3);
 
-                await network.grantRole(BancorNetworkRoles.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
-                await networkTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
-                await govTokenGovernance.grantRole(roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
+                await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
+                await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
+                await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
 
                 await createPool(baseToken, network, networkSettings, poolCollection);
                 await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);

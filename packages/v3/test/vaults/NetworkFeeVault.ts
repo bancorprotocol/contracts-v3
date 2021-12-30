@@ -2,15 +2,13 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, NetworkFeeVault } from '../../typechain-types';
 import { Symbols, ZERO_ADDRESS } from '../../utils/Constants';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles, NetworkFeeVault: NetworkFeeVaultRoles } = roles;
 
 describe('NetworkFeeVault', () => {
     shouldHaveGap('NetworkFeeVault');
@@ -48,10 +46,10 @@ describe('NetworkFeeVault', () => {
             expect(await networkFeeVault.version()).to.equal(1);
             expect(await networkFeeVault.isPayable()).to.be.true;
 
-            await expectRole(networkFeeVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(networkFeeVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
-            await expectRole(networkFeeVault, NetworkFeeVaultRoles.ROLE_ASSET_MANAGER, UpgradeableRoles.ROLE_ADMIN);
+            await expectRole(networkFeeVault, Roles.NetworkFeeVault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         });
     });
 
@@ -104,7 +102,7 @@ describe('NetworkFeeVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await networkFeeVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await networkFeeVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -112,7 +110,7 @@ describe('NetworkFeeVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await networkFeeVault.grantRole(NetworkFeeVaultRoles.ROLE_ASSET_MANAGER, user.address);
+                        await networkFeeVault.grantRole(Roles.NetworkFeeVault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

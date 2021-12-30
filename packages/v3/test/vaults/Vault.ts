@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
 import { Symbols, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createProxy, createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import {
@@ -16,8 +16,6 @@ import {
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('Vault', () => {
     let deployer: SignerWithAddress;
@@ -71,7 +69,7 @@ describe('Vault', () => {
         it('should be properly initialized', async () => {
             expect(await testVault.version()).to.equal(1);
             expect(await testVault.isPayable()).to.be.false;
-            await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(testVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
         });
     });
 
@@ -332,7 +330,7 @@ describe('Vault', () => {
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
                     expect(await testVault.isPaused()).to.be.true;
@@ -353,7 +351,7 @@ describe('Vault', () => {
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
                     expect(await testVault.isPaused()).to.be.true;
@@ -367,7 +365,7 @@ describe('Vault', () => {
 
         context('admin', () => {
             beforeEach(async () => {
-                await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
+                await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, sender.address);
             });
 
             testPause();

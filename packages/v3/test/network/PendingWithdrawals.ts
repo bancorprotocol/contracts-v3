@@ -11,7 +11,7 @@ import {
 } from '../../typechain-types';
 import { MAX_UINT256, ZERO_ADDRESS, Symbols, TokenNames, FeeTypes, DEFAULT_DECIMALS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
@@ -21,7 +21,6 @@ import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
-const { Upgradeable: UpgradeableRoles } = roles;
 const { formatBytes32String } = utils;
 
 describe('PendingWithdrawals', () => {
@@ -74,7 +73,7 @@ describe('PendingWithdrawals', () => {
         it('should be properly initialized', async () => {
             expect(await pendingWithdrawals.version()).to.equal(1);
 
-            await expectRole(pendingWithdrawals, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
 

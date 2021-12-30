@@ -2,15 +2,13 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
 import { Symbols, ZERO_ADDRESS } from '../../utils/Constants';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles, ExternalRewardsVault: ExternalRewardsVaultRoles } = roles;
 
 describe('ExternalRewardsVault', () => {
     shouldHaveGap('ExternalRewardsVault');
@@ -48,13 +46,13 @@ describe('ExternalRewardsVault', () => {
             expect(await externalRewardsVault.version()).to.equal(1);
             expect(await externalRewardsVault.isPayable()).to.be.true;
 
-            await expectRole(externalRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
             await expectRole(
                 externalRewardsVault,
-                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
-                UpgradeableRoles.ROLE_ADMIN
+                Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+                Roles.Upgradeable.ROLE_ADMIN
             );
         });
     });
@@ -108,7 +106,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await externalRewardsVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalRewardsVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();

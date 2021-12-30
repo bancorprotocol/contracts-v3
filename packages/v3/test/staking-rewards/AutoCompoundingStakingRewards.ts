@@ -11,12 +11,12 @@ import {
     TestMasterPool,
     TestPoolCollection
 } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
-import { StakingRewardsDistributionTypes, BNT, ETH, TKN, ZERO_ADDRESS, ExponentialDecay } from '../helpers/Constants';
+import { StakingRewardsDistributionTypes, Symbols, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createStakingRewards, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { toWei } from '../helpers/Types';
 import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -27,7 +27,6 @@ import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
 const { LAMBDA, ESTIMATED_PROGRAM_DURATION } = ExponentialDecay;
-const { Upgradeable: UpgradeableRoles } = roles;
 
 const ONE = new Decimal(1);
 
@@ -54,7 +53,7 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     const prepareSimplePool = async (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
-        const isNetworkToken = symbol === BNT;
+        const isNetworkToken = symbol === Symbols.BNT;
 
         // deposit initial stake so that the participating user would have some initial amount of pool tokens
         const { token, poolToken } = await setupSimplePool(
@@ -156,15 +155,18 @@ describe('AutoCompoundingStakingRewards', () => {
         it('should be properly initialized', async () => {
             expect(await autoCompoundingStakingRewards.version()).to.equal(1);
 
-            await expectRole(autoCompoundingStakingRewards, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
-                deployer.address
-            ]);
+            await expectRole(
+                autoCompoundingStakingRewards,
+                Roles.Upgradeable.ROLE_ADMIN,
+                Roles.Upgradeable.ROLE_ADMIN,
+                [deployer.address]
+            );
         });
     });
 
     describe('management', () => {
         const testProgramManagement = (symbol: string, distributionType: StakingRewardsDistributionTypes) => {
-            const isNetworkToken = symbol === BNT;
+            const isNetworkToken = symbol === Symbols.BNT;
 
             let token: TokenWithAddress;
             let poolToken: TokenWithAddress;
@@ -354,7 +356,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 it('should revert when the pool is not whitelisted', async () => {
-                    const nonWhitelistedToken = await createTokenBySymbol(TKN);
+                    const nonWhitelistedToken = await createTokenBySymbol(Symbols.TKN);
 
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
@@ -628,13 +630,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     beforeEach(async () => {
                         ({ token: token1, poolToken: poolToken1 } = await prepareSimplePool(
-                            TKN,
+                            Symbols.TKN,
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
 
                         ({ token: token2, poolToken: poolToken2 } = await prepareSimplePool(
-                            TKN,
+                            Symbols.TKN,
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
@@ -665,7 +667,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
             for (const distributionType of [
                 StakingRewardsDistributionTypes.Flat,
                 StakingRewardsDistributionTypes.ExponentialDecay
@@ -688,7 +690,7 @@ describe('AutoCompoundingStakingRewards', () => {
             providerStake: BigNumberish,
             totalRewards: BigNumberish
         ) => {
-            const isNetworkToken = symbol === BNT;
+            const isNetworkToken = symbol === Symbols.BNT;
 
             let token: TokenWithAddress;
             let poolToken: PoolToken;
@@ -1106,7 +1108,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 (v) => typeof v === 'number'
             ) as number[];
 
-            for (const symbol of [BNT, TKN, ETH]) {
+            for (const symbol of [Symbols.BNT, Symbols.TKN, Symbols.ETH]) {
                 for (const distributionType of distributionTypes) {
                     for (const providerStake of providerStakes) {
                         for (const totalReward of totalRewards) {

@@ -3,11 +3,9 @@ import { AccessControlEnumerable } from '../../typechain-types';
 import { Symbols, TokenNames, DeploymentTags } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, isMainnetFork, runTestDeployment } from '../../utils/Deploy';
 import { toWei } from '../../utils/Types';
-import { expectRole, roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
-
-const { TokenGovernance: TokenGovernanceRoles } = roles;
 
 describe('1640637514-gov-token', () => {
     let deployer: string;
@@ -39,23 +37,23 @@ describe('1640637514-gov-token', () => {
 
         await expectRole(
             govTokenGovernance as any as AccessControlEnumerable,
-            TokenGovernanceRoles.ROLE_SUPERVISOR,
-            TokenGovernanceRoles.ROLE_SUPERVISOR,
+            Roles.TokenGovernance.ROLE_SUPERVISOR,
+            Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
 
         await expectRole(
             govTokenGovernance as any as AccessControlEnumerable,
-            TokenGovernanceRoles.ROLE_GOVERNOR,
-            TokenGovernanceRoles.ROLE_SUPERVISOR,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            Roles.TokenGovernance.ROLE_SUPERVISOR,
             [deployer]
         );
 
         if (!(isMainnet() || isMainnetFork())) {
             await expectRole(
                 govTokenGovernance as any as AccessControlEnumerable,
-                TokenGovernanceRoles.ROLE_MINTER,
-                TokenGovernanceRoles.ROLE_GOVERNOR,
+                Roles.TokenGovernance.ROLE_MINTER,
+                Roles.TokenGovernance.ROLE_GOVERNOR,
                 [deployer]
             );
         }
