@@ -366,7 +366,7 @@ contract AutoCompoundingStakingRewards is
         // whose rewards weren't distributed yet in full
         if (!_isProgramActive(p)) {
             if (
-                distributionType == FLAT_DISTRIBUTION &&
+                p.distributionType == FLAT_DISTRIBUTION &&
                 p.prevDistributionTimestamp < p.endTime &&
                 p.endTime < currentTime
             ) {} else {
