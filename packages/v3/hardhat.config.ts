@@ -27,7 +27,7 @@ const {
     CI: isCI,
     PROFILE: isProfiling,
     BAIL,
-    ETHEREUM_PROVIDER_URL,
+    ETHEREUM_PROVIDER_URL = '',
     ETHERSCAN_API_KEY
 }: EnvOptions = process.env as any as EnvOptions;
 
