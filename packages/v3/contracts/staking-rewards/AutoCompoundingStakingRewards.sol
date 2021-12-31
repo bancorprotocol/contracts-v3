@@ -332,15 +332,16 @@ contract AutoCompoundingStakingRewards is
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
         ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory pCached = p;
 
-        bool prevStatus = p.isEnabled;
+        bool prevStatus = pCached.isEnabled;
         if (prevStatus == status) {
             return;
         }
 
         p.isEnabled = status;
 
-        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
+        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: pCached.remainingRewards });
     }
 
     /**
@@ -359,7 +360,6 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        uint8 distributionType = p.distributionType;
         uint32 currentTime = _time();
 
         // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
@@ -378,13 +378,13 @@ contract AutoCompoundingStakingRewards is
         uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
 
         uint256 tokenAmountToDistribute;
-        if (distributionType == FLAT_DISTRIBUTION) {
+        if (p.distributionType == FLAT_DISTRIBUTION) {
             tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
                 p.totalRewards,
                 timeElapsed - prevTimeElapsed,
                 p.endTime - p.startTime
             );
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+        } else if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
             tokenAmountToDistribute =
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);

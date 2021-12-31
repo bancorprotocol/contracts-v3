@@ -443,13 +443,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         await expect(res)
                             .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
-                            .withArgs(token.address, newEndTime, 10);
+                            .withArgs(token.address, newEndTime, TOTAL_REWARDS);
 
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
                         expect(program.poolToken).to.equal(poolToken.address);
                         expect(program.rewardsVault).to.equal(rewardsVault.address);
-                        expect(program.totalRewards).to.equal(10);
+                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
                         expect(program.remainingRewards).to.equal(0);
                         expect(program.distributionType).to.equal(distributionType);
                         expect(program.startTime).to.equal(now);
