@@ -80,7 +80,6 @@ const config: HardhatUserConfig = {
                 url: ETHEREUM_PROVIDER_URL,
                 blockNumber: 13900000
             },
-            allowUnlimitedContractSize: true,
             saveDeployments: false,
             live: true
         },
