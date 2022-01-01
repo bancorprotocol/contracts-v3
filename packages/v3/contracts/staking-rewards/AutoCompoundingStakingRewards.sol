@@ -183,7 +183,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function isProgramActive(ReserveToken pool) public view returns (bool) {
+    function isProgramActive(ReserveToken pool) external view returns (bool) {
         return _isProgramActive(_programs[ReserveToken.unwrap(pool)]);
     }
 
