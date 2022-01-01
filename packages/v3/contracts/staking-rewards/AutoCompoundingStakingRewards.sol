@@ -332,16 +332,15 @@ contract AutoCompoundingStakingRewards is
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
         ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
-        ProgramData memory pCached = p;
 
-        bool prevStatus = pCached.isEnabled;
+        bool prevStatus = p.isEnabled;
         if (prevStatus == status) {
             return;
         }
 
         p.isEnabled = status;
 
-        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: pCached.remainingRewards });
+        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
     }
 
     /**
