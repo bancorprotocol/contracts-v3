@@ -16,7 +16,8 @@ export const DeployedContracts = {
     GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance)
 };
 
-export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT || DeploymentNetwork.HARDHAT_MAINNET_FORK;
+export const isHardhat = () =>
+    [DeploymentNetwork.HARDHAT, DeploymentNetwork.HARDHAT_MAINNET_FORK].includes(getNetworkName());
 export const isHardhatMainnetFork = () => getNetworkName() === DeploymentNetwork.HARDHAT_MAINNET_FORK;
 export const isMainnetFork = () => isHardhatMainnetFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
