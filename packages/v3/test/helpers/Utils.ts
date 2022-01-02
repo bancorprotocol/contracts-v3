@@ -1,9 +1,12 @@
 import Contracts from '../../components/Contracts';
+import { TestERC20Token } from '../../typechain-types';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toWei, TokenWithAddress } from '../../utils/Types';
+import { toWei, Addressable } from '../../utils/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
+
+export type TokenWithAddress = TestERC20Token | Addressable;
 
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;

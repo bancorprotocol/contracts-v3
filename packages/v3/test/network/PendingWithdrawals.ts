@@ -11,12 +11,12 @@ import {
 } from '../../typechain-types';
 import { MAX_UINT256, ZERO_ADDRESS, FeeTypes } from '../../utils/Constants';
 import { TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
-import { toWei, TokenWithAddress } from '../../utils/Types';
+import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createWallet } from '../helpers/Utils';
+import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';

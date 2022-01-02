@@ -14,7 +14,7 @@ import {
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { TokenData, TokenSymbols, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toWei, toPPM, TokenWithAddress } from '../../utils/Types';
+import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
     createSystem,
@@ -27,7 +27,7 @@ import {
     specToString
 } from '../helpers/Factory';
 import { latest, duration } from '../helpers/Time';
-import { createWallet, transfer } from '../helpers/Utils';
+import { createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';

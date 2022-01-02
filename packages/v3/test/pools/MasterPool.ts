@@ -14,11 +14,11 @@ import {
 } from '../../typechain-types';
 import { FeeTypes, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
-import { toWei, toPPM, TokenWithAddress } from '../../utils/Types';
+import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem, createToken, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer } from '../helpers/Utils';
+import { transfer, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';

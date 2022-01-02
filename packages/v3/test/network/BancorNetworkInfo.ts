@@ -17,7 +17,7 @@ import {
 } from '../../typechain-types';
 import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
-import { toWei, TokenWithAddress } from '../../utils/Types';
+import { toWei } from '../../utils/Types';
 import {
     createSystem,
     createTestToken,
@@ -28,7 +28,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { createWallet } from '../helpers/Utils';
+import { createWallet, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet } from 'ethers';

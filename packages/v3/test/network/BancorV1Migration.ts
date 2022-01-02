@@ -12,10 +12,10 @@ import {
 } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../../utils/Constants';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
-import { toPPM, TokenWithAddress } from '../../utils/Types';
+import { toPPM } from '../../utils/Types';
 import { createPool, createSystem, createToken } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { getBalance, getTransactionCost } from '../helpers/Utils';
+import { getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';

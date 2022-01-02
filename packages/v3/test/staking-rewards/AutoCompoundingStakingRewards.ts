@@ -14,7 +14,7 @@ import {
 } from '../../typechain-types';
 import { StakingRewardsDistributionTypes, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
-import { toWei, TokenWithAddress, Addressable } from '../../utils/Types';
+import { toWei, Addressable } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
     createStakingRewards,
@@ -25,7 +25,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { transfer } from '../helpers/Utils';
+import { transfer, TokenWithAddress } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

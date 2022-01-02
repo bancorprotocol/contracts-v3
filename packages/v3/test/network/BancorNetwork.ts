@@ -31,7 +31,7 @@ import {
 import { FeeTypes, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
-import { toWei, toPPM, TokenWithAddress } from '../../utils/Types';
+import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
     createPool,
@@ -49,7 +49,7 @@ import {
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
+import { createWallet, getBalance, getTransactionCost, transfer, TokenWithAddress } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

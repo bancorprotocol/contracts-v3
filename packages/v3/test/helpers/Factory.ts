@@ -27,8 +27,8 @@ import {
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbols } from '../../utils/TokenData';
-import { fromPPM, Fraction, toWei, TokenWithAddress } from '../../utils/Types';
-import { toAddress } from './Utils';
+import { fromPPM, Fraction, toWei } from '../../utils/Types';
+import { toAddress, TokenWithAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
 import { ethers, waffle } from 'hardhat';
