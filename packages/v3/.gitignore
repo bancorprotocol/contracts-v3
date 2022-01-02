@@ -11,6 +11,7 @@ cache
 artifacts
 typechain-types
 
+contracts/hardhat-dependency-compiler
 deployments
 !deployments/mainnet
 
