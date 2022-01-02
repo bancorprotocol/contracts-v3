@@ -17,7 +17,7 @@ export const DeployedContracts = {
 };
 
 export const isHardhat = () =>
-    [DeploymentNetwork.HARDHAT, DeploymentNetwork.HARDHAT_MAINNET_FORK].includes(getNetworkName());
+    [DeploymentNetwork.HARDHAT, DeploymentNetwork.HARDHAT_MAINNET_FORK].includes(getNetworkName() as DeploymentNetwork);
 export const isHardhatMainnetFork = () => getNetworkName() === DeploymentNetwork.HARDHAT_MAINNET_FORK;
 export const isMainnetFork = () => isHardhatMainnetFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
