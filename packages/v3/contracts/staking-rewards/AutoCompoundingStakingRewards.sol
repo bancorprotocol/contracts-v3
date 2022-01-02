@@ -191,23 +191,7 @@ contract AutoCompoundingStakingRewards is
      * @dev returns whether or not a given program is active
      */
     function _isProgramActive(ProgramData memory p) private view returns (bool) {
-        if (p.remainingRewards == 0) {
-            return false;
-        }
-
-        uint256 currentTime = _time();
-
-        // if the program hasn't started yet
-        if (currentTime < p.startTime) {
-            return false;
-        }
-
-        // if a flat distribution program has already finished
-        if (p.distributionType == FLAT_DISTRIBUTION && currentTime > p.endTime) {
-            return false;
-        }
-
-        return true;
+        return p.isActive && p.startTime >= _time();
     }
 
     /**
@@ -292,6 +276,7 @@ contract AutoCompoundingStakingRewards is
             remainingRewards: totalRewards,
             rewardsVault: rewardsVault,
             poolToken: poolToken,
+            isActive: true,
             isEnabled: true,
             distributionType: distributionType
         });
@@ -320,11 +305,9 @@ contract AutoCompoundingStakingRewards is
             revert ProgramInactive();
         }
 
-        uint32 endTime = _time();
-        p.endTime = endTime;
-        p.remainingRewards = 0;
+        p.isActive = false;
 
-        emit ProgramTerminated({ pool: pool, endTime: endTime, remainingRewards: pCached.remainingRewards });
+        emit ProgramTerminated({ pool: pool, endTime: _time(), remainingRewards: pCached.remainingRewards });
     }
 
     /**
@@ -354,29 +337,47 @@ contract AutoCompoundingStakingRewards is
      * @dev processes program rewards
      */
     function _processRewards(ReserveToken pool, ProgramData memory p) private {
-        // if the program is disabled, don't process the rewards
-        if (!p.isEnabled) {
+        // if the program is not active and enabled, don't process the rewards
+        if (!(_isProgramActive(p) && p.isEnabled)) {
             return;
         }
 
         uint32 currentTime = _time();
+        uint32 timeElapsed = currentTime - p.startTime;
 
-        // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
-        // whose rewards weren't distributed yet in full
-        if (!_isProgramActive(p)) {
-            if (
-                p.distributionType == FLAT_DISTRIBUTION &&
-                p.prevDistributionTimestamp < p.endTime &&
-                p.endTime < currentTime
-            ) {} else {
-                return;
-            }
+        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _processRewardAmounts(pool, p, timeElapsed);
+        if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
+            return;
         }
 
-        uint32 timeElapsed = currentTime - p.startTime;
+        p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
+
+        p.remainingRewards -= tokenAmountToDistribute;
+        p.prevDistributionTimestamp = currentTime;
+        if (p.distributionType == FLAT_DISTRIBUTION && p.endTime < currentTime) {
+            p.isActive = false;
+        }
+        _programs[ReserveToken.unwrap(pool)] = p;
+
+        emit RewardsDistributed({
+            pool: pool,
+            rewardsAmount: tokenAmountToDistribute,
+            poolTokenAmount: poolTokenAmountToBurn,
+            programTimeElapsed: timeElapsed,
+            remainingRewards: p.remainingRewards
+        });
+    }
+
+    /**
+     * @dev ???
+     */
+    function _processRewardAmounts(
+        ReserveToken pool,
+        ProgramData memory p,
+        uint32 timeElapsed
+    ) private view returns (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) {
         uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
 
-        uint256 tokenAmountToDistribute;
         if (p.distributionType == FLAT_DISTRIBUTION) {
             tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
                 p.totalRewards,
@@ -389,42 +390,15 @@ contract AutoCompoundingStakingRewards is
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
 
-        if (tokenAmountToDistribute == 0) {
-            return;
-        }
-
-        uint256 poolTokenAmountToBurn;
         if (_isNetworkToken(pool)) {
             poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         } else {
-            uint256 protocolPoolTokenAmount = p.poolToken.balanceOf(address(p.rewardsVault));
-
-            // do not attempt to burn more than the balance in the rewards vault
             IPoolCollection poolCollection = _network.collectionByPool(pool);
-            poolTokenAmountToBurn = Math.min(
-                poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, protocolPoolTokenAmount),
-                protocolPoolTokenAmount
-            );
+            uint256 totalAmount = p.poolToken.balanceOf(address(p.rewardsVault));
+            uint256 burnAmount = poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, totalAmount);
+            // do not attempt to burn more than the balance in the rewards vault
+            poolTokenAmountToBurn = Math.min(burnAmount, totalAmount);
         }
-
-        if (poolTokenAmountToBurn == 0) {
-            return;
-        }
-
-        p.remainingRewards -= tokenAmountToDistribute;
-        p.prevDistributionTimestamp = currentTime;
-
-        p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
-
-        _programs[ReserveToken.unwrap(pool)] = p;
-
-        emit RewardsDistributed({
-            pool: pool,
-            rewardsAmount: tokenAmountToDistribute,
-            poolTokenAmount: poolTokenAmountToBurn,
-            programTimeElapsed: timeElapsed,
-            remainingRewards: p.remainingRewards
-        });
     }
 
     /**
