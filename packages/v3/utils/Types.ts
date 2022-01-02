@@ -1,6 +1,12 @@
-import { MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
+import { TestERC20Token } from '../typechain-types';
+import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
+import { DEFAULT_DECIMALS } from './TokenData';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
+
+export type Addressable = { address: string };
+
+export type TokenWithAddress = TestERC20Token | Addressable;
 
 export interface Fraction<T = Decimal> {
     n: T;

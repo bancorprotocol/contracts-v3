@@ -1,19 +1,21 @@
-import { Symbols, TokenNames, DEFAULT_DECIMALS, ContractNames, DeploymentTags } from '../utils/Constants';
+import { ContractNames, DeploymentTags } from '../utils/Constants';
 import { deploy, execute, isMainnet } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
+import { TokenData, TokenSymbols } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
+const TOTAL_SUPPLY = toWei(1_000_000_000);
+
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
 
-    const TOTAL_SUPPLY = toWei(1_000_000_000);
-
+    const govTokenData = new TokenData(TokenSymbols.vBNT);
     const govToken = await deploy({
         name: ContractNames.GovToken,
         contract: 'DSToken',
-        args: [TokenNames.vBNT, Symbols.vBNT, DEFAULT_DECIMALS],
+        args: [govTokenData.name(), govTokenData.symbol(), govTokenData.decimals()],
         from: deployer
     });
 

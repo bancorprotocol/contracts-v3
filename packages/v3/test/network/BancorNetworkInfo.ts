@@ -15,12 +15,20 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, MAX_UINT256, Symbols, TokenNames } from '../../utils/Constants';
-import { toWei } from '../../utils/Types';
-import { createSystem, depositToPool, setupSimplePool, PoolSpec, initWithdraw } from '../helpers/Factory';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { toWei, TokenWithAddress } from '../../utils/Types';
+import {
+    createSystem,
+    createTestToken,
+    depositToPool,
+    setupSimplePool,
+    PoolSpec,
+    initWithdraw
+} from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { createWallet, TokenWithAddress } from '../helpers/Utils';
+import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet } from 'ethers';
@@ -324,15 +332,15 @@ describe('BancorNetworkInfo', () => {
         };
 
         const testTradesAmounts = (source: PoolSpec, target: PoolSpec) => {
-            const isSourceETH = source.symbol === Symbols.ETH;
+            const isSourceNativeToken = source.tokenData.isNativeToken();
 
-            context(`when trading from ${source.symbol} to ${target.symbol}`, () => {
+            context(`when trading from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
                 const testAmount = 1000;
 
                 beforeEach(async () => {
                     await setupPools(source, target);
 
-                    if (!isSourceETH) {
+                    if (!isSourceNativeToken) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
 
                         await reserveToken.transfer(await trader.getAddress(), testAmount);
@@ -366,7 +374,7 @@ describe('BancorNetworkInfo', () => {
                 });
 
                 it('should revert when attempting to query using unsupported tokens', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
+                    const reserveToken2 = await createTestToken();
 
                     await reserveToken2.transfer(await trader.getAddress(), testAmount);
                     await reserveToken2.connect(trader).approve(network.address, testAmount);
@@ -400,24 +408,24 @@ describe('BancorNetworkInfo', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [Symbols.TKN, Symbols.BNT],
-            [Symbols.TKN, Symbols.ETH],
-            [`${Symbols.TKN}1`, `${Symbols.TKN}2`],
-            [Symbols.BNT, Symbols.ETH],
-            [Symbols.BNT, Symbols.TKN],
-            [Symbols.ETH, Symbols.BNT],
-            [Symbols.ETH, Symbols.TKN]
+            [TokenSymbols.TKN, TokenSymbols.BNT],
+            [TokenSymbols.TKN, TokenSymbols.ETH],
+            [TokenSymbols.TKN1, TokenSymbols.TKN2],
+            [TokenSymbols.BNT, TokenSymbols.ETH],
+            [TokenSymbols.BNT, TokenSymbols.TKN],
+            [TokenSymbols.ETH, TokenSymbols.BNT],
+            [TokenSymbols.ETH, TokenSymbols.TKN]
         ]) {
             // perform a basic/sanity suite over a fixed input
             testTradesAmounts(
                 {
-                    symbol: sourceSymbol,
+                    tokenData: new TokenData(sourceSymbol),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
-                    symbol: targetSymbol,
+                    tokenData: new TokenData(targetSymbol),
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
@@ -455,7 +463,7 @@ describe('BancorNetworkInfo', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    symbol: Symbols.TKN,
+                    tokenData: new TokenData(TokenSymbols.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }

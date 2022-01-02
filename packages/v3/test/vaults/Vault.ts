@@ -1,18 +1,13 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
-import { Symbols, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../../utils/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbols, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { TokenWithAddress } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { createProxy, createSystem, createToken, createBurnableToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import {
-    transfer,
-    getBalance,
-    createTokenBySymbol,
-    errorMessageTokenExceedsBalance,
-    errorMessageTokenBurnExceedsBalance,
-    TokenWithAddress
-} from '../helpers/Utils';
+import { transfer, getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -117,12 +112,12 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testWithdraw = (symbol: string) => {
+        const testWithdraw = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === Symbols.BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
 
                 await transfer(deployer, token, testVault.address, amount + 1);
             });
@@ -160,7 +155,7 @@ describe('Vault', () => {
                         target.address,
                         (await getBalance({ address: token.address }, testVault.address)).add(1)
                     )
-                ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
+                ).to.be.revertedWith(tokenData.errors().exceedsBalance);
             });
 
             context('when paused', () => {
@@ -176,8 +171,8 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
-            context(symbol, () => testWithdraw(symbol));
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+            context(symbol, () => testWithdraw(new TokenData(symbol)));
         }
     });
 
@@ -191,29 +186,28 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testBurn = (symbol: string) => {
-            const isETH = symbol === Symbols.ETH;
+        const testBurn = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             let reserveToken: TestERC20Burnable;
 
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                switch (symbol) {
-                    case Symbols.BNT:
+                switch (tokenData.symbol()) {
+                    case TokenSymbols.BNT:
                         token = networkToken;
                         break;
 
-                    case Symbols.vBNT:
+                    case TokenSymbols.vBNT:
                         token = govToken;
                         break;
 
                     default:
-                        token = await createTokenBySymbol(symbol, amount, true);
+                        token = await createBurnableToken(tokenData, amount);
                         break;
                 }
 
-                if (!isETH) {
+                if (!tokenData.isNativeToken()) {
                     reserveToken = await Contracts.TestERC20Burnable.attach(token.address);
                 }
 
@@ -229,7 +223,7 @@ describe('Vault', () => {
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
 
-            if (isETH) {
+            if (tokenData.isNativeToken()) {
                 it('should revert when attempting to burn ETH', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
                 });
@@ -249,7 +243,7 @@ describe('Vault', () => {
 
                 it('should revert when trying to burn more tokens than the vault holds', async () => {
                     await expect(testVault.burn(token.address, amount + 1)).to.be.revertedWith(
-                        errorMessageTokenBurnExceedsBalance(symbol)
+                        tokenData.errors().burnExceedsBalance
                     );
                 });
             }
@@ -265,8 +259,8 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [Symbols.BNT, Symbols.vBNT, Symbols.ETH, Symbols.TKN]) {
-            context(symbol, () => testBurn(symbol));
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.vBNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+            context(symbol, () => testBurn(new TokenData(symbol)));
         }
     });
 
@@ -279,12 +273,12 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testAuthentication = (symbol: string) => {
+        const testAuthentication = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === Symbols.BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
                 await transfer(deployer, token, testVault.address, amount);
             });
 
@@ -307,9 +301,9 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
             context(symbol, () => {
-                return testAuthentication(symbol);
+                return testAuthentication(new TokenData(symbol));
             });
         }
     });

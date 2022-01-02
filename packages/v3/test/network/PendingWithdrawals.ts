@@ -9,13 +9,14 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, ZERO_ADDRESS, Symbols, TokenNames, FeeTypes, DEFAULT_DECIMALS } from '../../utils/Constants';
-import { toWei } from '../../utils/Types';
+import { MAX_UINT256, ZERO_ADDRESS, FeeTypes } from '../../utils/Constants';
+import { TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { toWei, TokenWithAddress } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createSystem, setupSimplePool, depositToPool } from '../helpers/Factory';
+import { createSystem, createTestToken, setupSimplePool, depositToPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, TokenWithAddress } from '../helpers/Utils';
+import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils, Wallet } from 'ethers';
@@ -189,9 +190,7 @@ describe('PendingWithdrawals', () => {
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
-        const testWithdrawals = async (symbol: string) => {
-            const isNetworkToken = symbol === Symbols.BNT;
-
+        const testWithdrawals = async (tokenData: TokenData) => {
             beforeEach(async () => {
                 ({
                     network,
@@ -273,7 +272,7 @@ describe('PendingWithdrawals', () => {
                         'InvalidAddress'
                     );
 
-                    const reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
+                    const reserveToken = await createTestToken();
                     const poolToken = await Contracts.PoolToken.deploy(
                         'POOL',
                         'POOL',
@@ -295,7 +294,7 @@ describe('PendingWithdrawals', () => {
                     beforeEach(async () => {
                         ({ poolToken, token: reserveToken } = await setupSimplePool(
                             {
-                                symbol: Symbols.TKN,
+                                tokenData: new TokenData(TokenSymbols.TKN),
                                 balance: toWei(1_000_000),
                                 requestedLiquidity: toWei(1_000_000).mul(1000),
                                 initialRate: { n: 1, d: 2 }
@@ -365,7 +364,7 @@ describe('PendingWithdrawals', () => {
                 beforeEach(async () => {
                     ({ poolToken, token: reserveToken } = await setupSimplePool(
                         {
-                            symbol: Symbols.TKN,
+                            tokenData: new TokenData(TokenSymbols.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
@@ -487,7 +486,7 @@ describe('PendingWithdrawals', () => {
                 beforeEach(async () => {
                     ({ poolToken, token: reserveToken } = await setupSimplePool(
                         {
-                            symbol: Symbols.TKN,
+                            tokenData: new TokenData(TokenSymbols.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
@@ -609,7 +608,7 @@ describe('PendingWithdrawals', () => {
                 beforeEach(async () => {
                     ({ poolToken, token: reserveToken } = await setupSimplePool(
                         {
-                            symbol: Symbols.TKN,
+                            tokenData: new TokenData(TokenSymbols.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
                             initialRate: { n: 1, d: 2 }
@@ -777,7 +776,7 @@ describe('PendingWithdrawals', () => {
                             beforeEach(async () => {
                                 const feeAmount = toWei(100_000);
 
-                                if (isNetworkToken) {
+                                if (tokenData.isNetworkToken()) {
                                     await network.onNetworkTokenFeesCollectedT(
                                         reserveToken.address,
                                         feeAmount,
@@ -801,9 +800,9 @@ describe('PendingWithdrawals', () => {
             });
         };
 
-        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
             context(symbol, () => {
-                testWithdrawals(symbol);
+                testWithdrawals(new TokenData(symbol));
             });
         }
     });

@@ -9,24 +9,26 @@ import { isProfiling } from '../../components/Profiler';
 import {
     BancorNetwork,
     BancorNetworkInfo,
-    MasterVault,
+    ExternalRewardsVault,
     IERC20,
+    MasterPool,
+    MasterVault,
     NetworkSettings,
     PoolCollectionUpgrader,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
     TestBancorNetwork,
-    TestPoolCollection,
-    TestPendingWithdrawals,
+    TestERC20Burnable,
     TestMasterPool,
-    MasterPool,
-    ExternalRewardsVault
+    TestPendingWithdrawals,
+    TestPoolCollection
 } from '../../typechain-types';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, Symbols, TokenNames } from '../../utils/Constants';
+import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
-import { fromPPM, Fraction, toWei } from '../../utils/Types';
-import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbols } from '../../utils/TokenData';
+import { fromPPM, Fraction, toWei, TokenWithAddress } from '../../utils/Types';
+import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
 import { ethers, waffle } from 'hardhat';
@@ -142,19 +144,21 @@ const createGovernedToken = async (
 };
 
 const createGovernedTokens = async () => {
+    const networkTokenData = new TokenData(TokenSymbols.BNT);
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
-        TokenNames.BNT,
-        Symbols.BNT,
-        DEFAULT_DECIMALS,
+        networkTokenData.name(),
+        networkTokenData.symbol(),
+        networkTokenData.decimals(),
         TOTAL_SUPPLY
     );
 
+    const govTokenData = new TokenData(TokenSymbols.BNT);
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
-        TokenNames.vBNT,
-        Symbols.vBNT,
-        DEFAULT_DECIMALS,
+        govTokenData.name(),
+        govTokenData.symbol(),
+        govTokenData.decimals(),
         TOTAL_SUPPLY
     );
 
@@ -354,7 +358,7 @@ export const depositToPool = async (
 };
 
 export interface PoolSpec {
-    symbol: string;
+    tokenData: TokenData;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
     initialRate: Fraction<number>;
@@ -363,10 +367,10 @@ export interface PoolSpec {
 
 export const specToString = (spec: PoolSpec) => {
     if (spec.tradingFeePPM !== undefined) {
-        return `${spec.symbol} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
+        return `${spec.tokenData.symbol()} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
     }
 
-    return `${spec.symbol} (balance=${spec.balance})`;
+    return `${spec.tokenData.symbol()} (balance=${spec.balance})`;
 };
 
 export const setupSimplePool = async (
@@ -377,13 +381,13 @@ export const setupSimplePool = async (
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
-    if (spec.symbol === Symbols.BNT) {
+    if (spec.tokenData.isNetworkToken()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.masterPoolToken());
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
         const networkToken = await factory.attach(await networkInfo.networkToken());
 
         // ensure that there is enough space to deposit the network token
-        const reserveToken = await createTokenBySymbol(Symbols.TKN);
+        const reserveToken = await createTestToken();
 
         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
         await network.requestLiquidityT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
@@ -393,7 +397,7 @@ export const setupSimplePool = async (
         return { poolToken, token: networkToken };
     }
 
-    const token = await createTokenBySymbol(spec.symbol);
+    const token = await createToken(spec.tokenData);
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
@@ -423,3 +427,41 @@ export const initWithdraw = async (
 
     return { id, creationTime };
 };
+
+export const createToken = async (
+    tokenData: TokenData,
+    totalSupply: BigNumberish = toWei(1_000_000_000),
+    burnable = false
+): Promise<TokenWithAddress> => {
+    const symbol = tokenData.symbol();
+
+    switch (symbol) {
+        case TokenSymbols.ETH:
+            return { address: NATIVE_TOKEN_ADDRESS };
+
+        case TokenSymbols.TKN:
+        case TokenSymbols.TKN1:
+        case TokenSymbols.TKN2: {
+            const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
+                tokenData.name(),
+                tokenData.symbol(),
+                totalSupply
+            );
+
+            if (!tokenData.isDefaultDecimals()) {
+                await token.updateDecimals(tokenData.decimals());
+            }
+
+            return token;
+        }
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const createBurnableToken = async (tokenData: TokenData, totalSupply: BigNumberish = toWei(1_000_000_000)) =>
+    createToken(tokenData, totalSupply, true) as Promise<TestERC20Burnable>;
+
+export const createTestToken = async (totalSupply: BigNumberish = toWei(1_000_000_000)) =>
+    createToken(new TokenData(TokenSymbols.TKN), totalSupply) as Promise<TestERC20Burnable>;

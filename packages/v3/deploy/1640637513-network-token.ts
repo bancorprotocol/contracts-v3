@@ -1,19 +1,21 @@
-import { Symbols, TokenNames, DEFAULT_DECIMALS, ContractNames, DeploymentTags } from '../utils/Constants';
+import { ContractNames, DeploymentTags } from '../utils/Constants';
 import { deploy, execute, isMainnet } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
+import { TokenData, TokenSymbols } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
+const TOTAL_SUPPLY = toWei(1_000_000_000);
+
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
 
-    const TOTAL_SUPPLY = toWei(1_000_000_000);
-
+    const networkTokenData = new TokenData(TokenSymbols.BNT);
     const networkToken = await deploy({
         name: ContractNames.NetworkToken,
         contract: 'SmartToken',
-        args: [TokenNames.BNT, Symbols.BNT, DEFAULT_DECIMALS],
+        args: [networkTokenData.name(), networkTokenData.symbol(), networkTokenData.decimals()],
         from: deployer
     });
 

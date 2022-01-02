@@ -1,7 +1,8 @@
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { Symbols, TokenNames, ContractNames } from '../../utils/Constants';
+import { ContractNames } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
@@ -14,6 +15,7 @@ describe('1640637513-network-token', () => {
     let networkTokenGovernance: TokenGovernance;
 
     const TOTAL_SUPPLY = toWei(1_000_000_000);
+    const networkTokenData = new TokenData(TokenSymbols.BNT);
 
     before(async () => {
         ({ deployer, foundationMultisig } = await getNamedAccounts());
@@ -27,8 +29,9 @@ describe('1640637513-network-token', () => {
     });
 
     it('should deploy the network token', async () => {
-        expect(await networkToken.name()).to.equal(TokenNames.BNT);
-        expect(await networkToken.symbol()).to.equal(Symbols.BNT);
+        expect(await networkToken.name()).to.equal(networkTokenData.name());
+        expect(await networkToken.symbol()).to.equal(networkTokenData.symbol());
+        expect(await networkToken.decimals()).to.equal(networkTokenData.decimals());
     });
 
     it('should deploy and configure the network token governance', async () => {

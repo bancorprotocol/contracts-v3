@@ -5,21 +5,6 @@ const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
-export enum Symbols {
-    ETH = 'ETH',
-    BNT = 'BNT',
-    bnBNT = 'bnBNT',
-    vBNT = 'vBNT',
-    TKN = 'TKN'
-}
-
-export enum TokenNames {
-    BNT = 'Bancor Network Token',
-    vBNT = 'Bancor Governance Token',
-    bnBNT = 'Bancor BNT Pool Token',
-    TKN = 'Test Token'
-}
-
 export enum ContractNames {
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
@@ -38,9 +23,6 @@ export enum Networks {
     MAINNET = 'mainnet'
 }
 
-export const DEFAULT_DECIMALS = 18;
-export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-export const NATIVE_TOKEN_DECIMALS = DEFAULT_DECIMALS;
 export const MAX_UINT256 = MaxUint256;
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };

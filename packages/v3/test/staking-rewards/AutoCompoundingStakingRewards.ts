@@ -12,13 +12,20 @@ import {
     TestMasterPool,
     TestPoolCollection
 } from '../../typechain-types';
-import { StakingRewardsDistributionTypes, Symbols, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
-import { toWei } from '../../utils/Types';
+import { StakingRewardsDistributionTypes, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { toWei, TokenWithAddress, Addressable } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createStakingRewards, createSystem, depositToPool, setupSimplePool } from '../helpers/Factory';
+import {
+    createStakingRewards,
+    createSystem,
+    createTestToken,
+    depositToPool,
+    setupSimplePool
+} from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { Addressable, createTokenBySymbol, TokenWithAddress, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -49,15 +56,13 @@ describe('AutoCompoundingStakingRewards', () => {
         [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
     });
 
-    const prepareSimplePool = async (symbol: string, providerStake: BigNumberish, totalRewards: BigNumberish) => {
-        const isNetworkToken = symbol === Symbols.BNT;
-
+    const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
         // deposit initial stake so that the participating user would have some initial amount of pool tokens
         const { token, poolToken } = await setupSimplePool(
             {
-                symbol,
+                tokenData,
                 balance: providerStake,
-                requestedLiquidity: isNetworkToken
+                requestedLiquidity: tokenData.isNetworkToken()
                     ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
                     : 0,
                 initialRate: { n: 1, d: 2 }
@@ -70,7 +75,7 @@ describe('AutoCompoundingStakingRewards', () => {
         );
 
         // if we're rewarding the network token - no additional funding is needed
-        if (!isNetworkToken) {
+        if (!tokenData.isNetworkToken()) {
             // deposit pool tokens as staking rewards
             await depositToPool(stakingRewardsProvider, token, totalRewards, network);
 
@@ -162,9 +167,7 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('management', () => {
-        const testProgramManagement = (symbol: string, distributionType: StakingRewardsDistributionTypes) => {
-            const isNetworkToken = symbol === Symbols.BNT;
-
+        const testProgramManagement = (tokenData: TokenData, distributionType: StakingRewardsDistributionTypes) => {
             let token: TokenWithAddress;
             let poolToken: TokenWithAddress;
             let rewardsVault: IVault;
@@ -201,9 +204,9 @@ describe('AutoCompoundingStakingRewards', () => {
                     externalRewardsVault
                 );
 
-                ({ token, poolToken } = await prepareSimplePool(symbol, INITIAL_USER_STAKE, TOTAL_REWARDS));
+                ({ token, poolToken } = await prepareSimplePool(tokenData, INITIAL_USER_STAKE, TOTAL_REWARDS));
 
-                rewardsVault = isNetworkToken ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isNetworkToken() ? masterPool : externalRewardsVault;
             });
 
             describe('creation', () => {
@@ -353,7 +356,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 it('should revert when the pool is not whitelisted', async () => {
-                    const nonWhitelistedToken = await createTokenBySymbol(Symbols.TKN);
+                    const nonWhitelistedToken = await createTestToken();
 
                     await expect(
                         autoCompoundingStakingRewards.createProgram(
@@ -372,7 +375,9 @@ describe('AutoCompoundingStakingRewards', () => {
                         autoCompoundingStakingRewards.createProgram(
                             token.address,
                             rewardsVault.address,
-                            BigNumber.from(isNetworkToken ? await masterPool.stakedBalance() : TOTAL_REWARDS).add(1),
+                            BigNumber.from(
+                                tokenData.isNetworkToken() ? await masterPool.stakedBalance() : TOTAL_REWARDS
+                            ).add(1),
                             distributionType,
                             0,
                             endTime
@@ -627,13 +632,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     beforeEach(async () => {
                         ({ token: token1, poolToken: poolToken1 } = await prepareSimplePool(
-                            Symbols.TKN,
+                            new TokenData(TokenSymbols.TKN),
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
 
                         ({ token: token2, poolToken: poolToken2 } = await prepareSimplePool(
-                            Symbols.TKN,
+                            new TokenData(TokenSymbols.TKN),
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
@@ -664,7 +669,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         };
 
-        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
             for (const distributionType of [
                 StakingRewardsDistributionTypes.Flat,
                 StakingRewardsDistributionTypes.ExponentialDecay
@@ -673,7 +678,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     context(
                         distributionType === StakingRewardsDistributionTypes.Flat ? 'flat' : 'exponential decay',
                         () => {
-                            testProgramManagement(symbol, distributionType);
+                            testProgramManagement(new TokenData(symbol), distributionType);
                         }
                     );
                 });
@@ -682,13 +687,11 @@ describe('AutoCompoundingStakingRewards', () => {
 
     describe('process rewards', () => {
         const testRewards = (
-            symbol: string,
+            tokenData: TokenData,
             distributionType: StakingRewardsDistributionTypes,
             providerStake: BigNumberish,
             totalRewards: BigNumberish
         ) => {
-            const isNetworkToken = symbol === Symbols.BNT;
-
             let stakingRewardsMath: TestStakingRewardsMath;
             let token: TokenWithAddress;
             let poolToken: PoolToken;
@@ -712,9 +715,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                ({ token, poolToken } = await prepareSimplePool(symbol, providerStake, totalRewards));
+                ({ token, poolToken } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                rewardsVault = isNetworkToken ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isNetworkToken() ? masterPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
@@ -728,7 +731,7 @@ describe('AutoCompoundingStakingRewards', () => {
             const getPoolTokenUnderlying = async (user: Addressable) => {
                 const userPoolTokenBalance = await poolToken.balanceOf(user.address);
 
-                if (isNetworkToken) {
+                if (tokenData.isNetworkToken()) {
                     return masterPool.poolTokenToUnderlying(userPoolTokenBalance);
                 }
 
@@ -773,7 +776,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 let poolToken: PoolToken;
                 let stakedBalance: BigNumber;
-                if (isNetworkToken) {
+                if (tokenData.isNetworkToken()) {
                     poolToken = masterPoolToken;
                     stakedBalance = await masterPool.stakedBalance();
                 } else {
@@ -1110,14 +1113,14 @@ describe('AutoCompoundingStakingRewards', () => {
                 (v) => typeof v === 'number'
             ) as number[];
 
-            for (const symbol of [Symbols.BNT, Symbols.TKN, Symbols.ETH]) {
+            for (const symbol of [TokenSymbols.BNT, TokenSymbols.TKN, TokenSymbols.ETH]) {
                 for (const distributionType of distributionTypes) {
                     for (const providerStake of providerStakes) {
                         for (const totalReward of totalRewards) {
                             context(
                                 `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
                                 () => {
-                                    testRewards(symbol, distributionType, providerStake, totalReward);
+                                    testRewards(new TokenData(symbol), distributionType, providerStake, totalReward);
                                 }
                             );
                         }

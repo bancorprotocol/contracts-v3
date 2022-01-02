@@ -1,11 +1,13 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
-import { Symbols, ZERO_ADDRESS } from '../../utils/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenWithAddress } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createSystem } from '../helpers/Factory';
+import { createSystem, createToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -90,13 +92,13 @@ describe('ExternalProtectionVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [Symbols.BNT, Symbols.ETH, Symbols.TKN]) {
-            const isNetworkToken = symbol === Symbols.BNT;
+        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+            const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {
                 ({ externalProtectionVault, networkToken } = await createSystem());
 
-                token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
 
                 await transfer(deployer, token, externalProtectionVault.address, amount);
             });

@@ -29,7 +29,8 @@
         "no-loop-func": "off",
         "no-unused-expressions": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-explicit-any": "off"
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off"
     },
     "globals": {
         "assert": true,

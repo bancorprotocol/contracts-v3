@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestReserveToken } from '../../typechain-types';
-import { NATIVE_TOKEN_ADDRESS, NATIVE_TOKEN_DECIMALS, Symbols } from '../../utils/Constants';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { createToken } from '../helpers/Factory';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -25,28 +26,26 @@ describe('ReserveToken', () => {
         sender = reserveToken.address;
     });
 
-    for (const symbol of [Symbols.ETH, Symbols.TKN]) {
+    for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
         let token: any;
-        const isETH = symbol === Symbols.ETH;
+        const tokenData = new TokenData(symbol);
 
         context(`${symbol} reserve token`, () => {
             beforeEach(async () => {
-                if (isETH) {
-                    token = { address: NATIVE_TOKEN_ADDRESS };
+                token = await createToken(tokenData, TOTAL_SUPPLY);
 
+                if (tokenData.isNativeToken()) {
                     await deployer.sendTransaction({
                         to: reserveToken.address,
                         value: TOTAL_SUPPLY / 2
                     });
                 } else {
-                    token = await Contracts.TestERC20Token.deploy(symbol, symbol, TOTAL_SUPPLY);
-
                     await token.transfer(sender, TOTAL_SUPPLY / 2);
                 }
             });
 
             it('should properly check if the reserve token is a native token', async () => {
-                expect(await reserveToken.isNativeToken(token.address)).to.equal(isETH);
+                expect(await reserveToken.isNativeToken(token.address)).to.equal(tokenData.isNativeToken());
             });
 
             it('should properly get the right symbol', async () => {
@@ -54,8 +53,8 @@ describe('ReserveToken', () => {
             });
 
             it('should properly get the right decimals', async () => {
-                if (isETH) {
-                    expect(await reserveToken.decimals(token.address)).to.equal(NATIVE_TOKEN_DECIMALS);
+                if (tokenData.isNativeToken()) {
+                    expect(await reserveToken.decimals(token.address)).to.equal(tokenData.decimals());
                 } else {
                     const decimals = await token.decimals();
                     expect(await reserveToken.decimals(token.address)).to.equal(decimals);
@@ -82,7 +81,7 @@ describe('ReserveToken', () => {
                 });
             }
 
-            if (isETH) {
+            if (tokenData.isNativeToken()) {
                 it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
                     const prevSenderBalance = await getBalance(token, sender);
                     const prevRecipientBalance = await getBalance(token, recipient);

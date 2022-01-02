@@ -10,11 +10,12 @@ import {
     PendingWithdrawals,
     PoolToken
 } from '../../typechain-types';
-import { Symbols, PPM_RESOLUTION } from '../../utils/Constants';
-import { toPPM } from '../../utils/Types';
-import { createPool, createSystem } from '../helpers/Factory';
+import { PPM_RESOLUTION } from '../../utils/Constants';
+import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { toPPM, TokenWithAddress } from '../../utils/Types';
+import { createPool, createSystem, createToken } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
-import { createTokenBySymbol, getBalance, getTransactionCost, TokenWithAddress } from '../helpers/Utils';
+import { getBalance, getTransactionCost } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
@@ -65,8 +66,8 @@ describe('BancorV1Migration', () => {
         bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address);
     });
 
-    const initLegacySystem = async (networkAmount: BigNumber, baseAmount: BigNumber, isETH: boolean) => {
-        baseToken = await createTokenBySymbol(isETH ? Symbols.ETH : Symbols.TKN);
+    const initLegacySystem = async (networkAmount: BigNumber, baseAmount: BigNumber, isNativeToken: boolean) => {
+        baseToken = await createToken(new TokenData(isNativeToken ? TokenSymbols.ETH : TokenSymbols.TKN));
 
         ({ poolToken, converter } = await createLegacySystem(
             deployer,
@@ -88,7 +89,7 @@ describe('BancorV1Migration', () => {
         await pendingWithdrawals.setLockDuration(0);
 
         await networkToken.connect(provider).approve(converter.address, networkAmount);
-        if (!isETH) {
+        if (!isNativeToken) {
             const token = await Contracts.TestERC20Token.attach(baseToken.address);
             await token.transfer(provider.address, baseAmount);
             await token.connect(provider).approve(converter.address, baseAmount);
@@ -97,7 +98,7 @@ describe('BancorV1Migration', () => {
         await converter
             .connect(provider)
             .addLiquidity([networkToken.address, baseToken.address], [networkAmount, baseAmount], 1, {
-                value: isETH ? baseAmount : BigNumber.from(0)
+                value: isNativeToken ? baseAmount : BigNumber.from(0)
             });
     };
 
@@ -105,7 +106,7 @@ describe('BancorV1Migration', () => {
         withdrawalFee: number,
         networkAmount: BigNumber,
         baseAmount: BigNumber,
-        isETH: boolean,
+        isNativeToken: boolean,
         percent: number
     ) => {
         const portionOf = (amount: BigNumber) => amount.mul(percent).div(100);
@@ -163,7 +164,7 @@ describe('BancorV1Migration', () => {
         const res = await network.connect(provider).withdraw(baseIds[0]);
 
         let transactionCost = BigNumber.from(0);
-        if (isETH) {
+        if (isNativeToken) {
             transactionCost = await getTransactionCost(res);
         }
 
@@ -182,7 +183,7 @@ describe('BancorV1Migration', () => {
         withdrawalFeePercent: number,
         networkAmountM: number,
         baseAmountM: number,
-        isETH: boolean,
+        isNativeToken: boolean,
         percent: number
     ) => {
         const withdrawalFeePPM = toPPM(withdrawalFeePercent);
@@ -192,15 +193,15 @@ describe('BancorV1Migration', () => {
         describe(`withdrawal fee = ${withdrawalFeePercent}%`, () => {
             describe(`network amount = ${networkAmountM}M`, () => {
                 describe(`base amount = ${baseAmountM}M`, () => {
-                    describe(`base token = ${isETH ? 'ETH' : 'ERC20'}`, () => {
+                    describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
                         beforeEach(async () => {
                             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                             await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 
-                            await initLegacySystem(networkAmount, baseAmount, isETH);
+                            await initLegacySystem(networkAmount, baseAmount, isNativeToken);
 
-                            if (isETH) {
+                            if (isNativeToken) {
                                 await network.deposit(baseToken.address, DEPOSIT_AMOUNT, { value: DEPOSIT_AMOUNT });
                             } else {
                                 const token = await Contracts.TestERC20Token.attach(baseToken.address);
@@ -211,7 +212,7 @@ describe('BancorV1Migration', () => {
                         });
 
                         it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
-                            await verify(withdrawalFeePPM, networkAmount, baseAmount, isETH, percent);
+                            await verify(withdrawalFeePPM, networkAmount, baseAmount, isNativeToken, percent);
                         });
                     });
                 });
@@ -227,9 +228,9 @@ describe('BancorV1Migration', () => {
         for (const withdrawalFeeP of [1, 5]) {
             for (const networkAmountM of [1, 5]) {
                 for (const baseAmountM of [1, 5]) {
-                    for (const isETH of [false, true]) {
+                    for (const isNativeToken of [false, true]) {
                         for (const percent of [10, 100]) {
-                            test(withdrawalFeeP, networkAmountM, baseAmountM, isETH, percent);
+                            test(withdrawalFeeP, networkAmountM, baseAmountM, isNativeToken, percent);
                         }
                     }
                 }
@@ -241,9 +242,9 @@ describe('BancorV1Migration', () => {
         for (const withdrawalFeeP of [1, 2.5, 5]) {
             for (const networkAmountM of [1, 2.5, 5]) {
                 for (const baseAmountM of [1, 2.5, 5]) {
-                    for (const isETH of [false, true]) {
+                    for (const isNativeToken of [false, true]) {
                         for (const percent of [10, 25, 50, 100]) {
-                            test(withdrawalFeeP, networkAmountM, baseAmountM, isETH, percent);
+                            test(withdrawalFeeP, networkAmountM, baseAmountM, isNativeToken, percent);
                         }
                     }
                 }

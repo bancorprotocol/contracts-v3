@@ -1,9 +1,8 @@
-import Contracts from '../../components/Contracts';
 import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
-import { ZERO_ADDRESS, PPM_RESOLUTION, Symbols, TokenNames } from '../../utils/Constants';
+import { ZERO_ADDRESS, PPM_RESOLUTION } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createSystem } from '../helpers/Factory';
+import { createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -17,8 +16,6 @@ describe('NetworkSettings', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    const TOTAL_SUPPLY = 1_000_000;
-
     shouldHaveGap('NetworkSettings', '_protectedTokenWhitelist');
 
     before(async () => {
@@ -28,7 +25,7 @@ describe('NetworkSettings', () => {
     beforeEach(async () => {
         ({ networkSettings, networkFeeVault } = await createSystem());
 
-        reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, TOTAL_SUPPLY);
+        reserveToken = await createTestToken();
     });
 
     describe('construction', async () => {
@@ -106,7 +103,7 @@ describe('NetworkSettings', () => {
             it('should revert when removing a non-whitelisted token', async () => {
                 await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith('DoesNotExist');
 
-                const reserveToken2 = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, TOTAL_SUPPLY);
+                const reserveToken2 = await createTestToken();
                 await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
                     'DoesNotExist'
                 );

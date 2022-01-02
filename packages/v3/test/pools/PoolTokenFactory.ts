@@ -1,10 +1,11 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
-import { ZERO_ADDRESS, Symbols, TokenNames, DEFAULT_DECIMALS } from '../../utils/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { TokenWithAddress } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createSystem, createPoolToken } from '../helpers/Factory';
+import { createSystem, createPoolToken, createToken, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, createTokenBySymbol } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -51,7 +52,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
+            reserveToken = await createTestToken();
         });
 
         it('should revert when a non-owner attempts to set a token symbol override', async () => {
@@ -66,8 +67,8 @@ describe('PoolTokenFactory', () => {
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, newSymbol);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(newSymbol);
 
-            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, Symbols.TKN);
-            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(Symbols.TKN);
+            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, TokenSymbols.TKN);
+            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(TokenSymbols.TKN);
 
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, EMPTY_STRING);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
@@ -83,7 +84,7 @@ describe('PoolTokenFactory', () => {
         beforeEach(async () => {
             ({ poolTokenFactory } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TokenNames.TKN, Symbols.TKN, 1_000_000);
+            reserveToken = await createTestToken();
         });
 
         it('should revert when a non-owner attempts to set a token decimal override', async () => {
@@ -113,11 +114,11 @@ describe('PoolTokenFactory', () => {
         const poolTokenSymbol = (symbol: string) => `bn${symbol}`;
         const poolTokenName = (symbol: string) => `Bancor ${symbol} Pool Token`;
 
-        const testCreatePoolToken = (symbol: string) => {
+        const testCreatePoolToken = (tokenData: TokenData) => {
             beforeEach(async () => {
                 ({ poolTokenFactory } = await createSystem());
 
-                reserveToken = await createTokenBySymbol(symbol);
+                reserveToken = await createToken(tokenData);
             });
 
             it('should revert when attempting to create a pool for an invalid token', async () => {
@@ -135,8 +136,8 @@ describe('PoolTokenFactory', () => {
                     .withArgs(poolToken.address, reserveToken.address);
 
                 expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                expect(await poolToken.symbol()).to.equal(poolTokenSymbol(symbol));
-                expect(await poolToken.name()).to.equal(poolTokenName(symbol));
+                expect(await poolToken.symbol()).to.equal(poolTokenSymbol(tokenData.symbol()));
+                expect(await poolToken.name()).to.equal(poolTokenName(tokenData.symbol()));
                 expect(await poolToken.decimals()).to.equal(DEFAULT_DECIMALS);
 
                 expect(await poolToken.newOwner()).to.equal(deployer.address);
@@ -172,16 +173,16 @@ describe('PoolTokenFactory', () => {
                     const poolToken = await createPoolToken(poolTokenFactory, reserveToken.address);
 
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
-                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(symbol));
-                    expect(await poolToken.name()).to.equal(poolTokenName(symbol));
+                    expect(await poolToken.symbol()).to.equal(poolTokenSymbol(tokenData.symbol()));
+                    expect(await poolToken.name()).to.equal(poolTokenName(tokenData.symbol()));
                     expect(await poolToken.decimals()).to.equal(newDecimals);
                 });
             });
         };
 
-        for (const symbol of [Symbols.ETH, Symbols.TKN]) {
+        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
             context(symbol, () => {
-                testCreatePoolToken(symbol);
+                testCreatePoolToken(new TokenData(symbol));
             });
         }
     });
