@@ -316,13 +316,8 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) external nonReentrant {
-        _processRewards(pool, _programs[ReserveToken.unwrap(pool)]);
-    }
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-    /**
-     * @dev processes program rewards
-     */
-    function _processRewards(ReserveToken pool, ProgramData memory p) private {
         uint32 currentTime = _time();
 
         // if the program is not active or not enabled or hasn't started yet, don't process the rewards
@@ -344,6 +339,7 @@ contract AutoCompoundingStakingRewards is
         if (p.distributionType == FLAT_DISTRIBUTION && p.endTime < currentTime) {
             p.isActive = false;
         }
+
         _programs[ReserveToken.unwrap(pool)] = p;
 
         emit RewardsDistributed({
