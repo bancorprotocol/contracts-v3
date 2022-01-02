@@ -44,12 +44,13 @@ import {
     initWithdraw,
     setupSimplePool,
     PoolSpec,
-    specToString
+    specToString,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { createWallet, getBalance, getTransactionCost, transfer, TokenWithAddress } from '../helpers/Utils';
+import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

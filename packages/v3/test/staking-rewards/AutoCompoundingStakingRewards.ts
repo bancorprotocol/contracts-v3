@@ -21,11 +21,12 @@ import {
     createSystem,
     createTestToken,
     depositToPool,
-    setupSimplePool
+    setupSimplePool,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { transfer, TokenWithAddress } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

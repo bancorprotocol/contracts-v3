@@ -24,10 +24,11 @@ import {
     initWithdraw,
     setupSimplePool,
     PoolSpec,
-    specToString
+    specToString,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { latest, duration } from '../helpers/Time';
-import { createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
+import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';

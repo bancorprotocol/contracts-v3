@@ -24,11 +24,12 @@ import {
     depositToPool,
     setupSimplePool,
     PoolSpec,
-    initWithdraw
+    initWithdraw,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { createWallet, TokenWithAddress } from '../helpers/Utils';
+import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet } from 'ethers';

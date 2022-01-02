@@ -4,9 +4,9 @@ import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../ty
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
 import { expectRole, Roles } from '../helpers/AccessControl';
-import { createSystem, createToken } from '../helpers/Factory';
+import { createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, TokenWithAddress } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

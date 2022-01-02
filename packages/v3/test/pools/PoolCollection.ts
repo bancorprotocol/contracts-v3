@@ -17,8 +17,14 @@ import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../../
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbols } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
-import { createPool, createPoolCollection, createSystem, createToken, createTestToken } from '../helpers/Factory';
-import { TokenWithAddress } from '../helpers/Utils';
+import {
+    createPool,
+    createPoolCollection,
+    createSystem,
+    createToken,
+    createTestToken,
+    TokenWithAddress
+} from '../helpers/Factory';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
