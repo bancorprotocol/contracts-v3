@@ -184,14 +184,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) external view returns (bool) {
-        return _isProgramActive(_programs[ReserveToken.unwrap(pool)]);
-    }
-
-    /**
-     * @dev returns whether or not a given program is active
-     */
-    function _isProgramActive(ProgramData memory p) private view returns (bool) {
-        return p.isActive && p.startTime >= _time();
+        return _programs[ReserveToken.unwrap(pool)].isActive;
     }
 
     /**
@@ -213,7 +206,7 @@ contract AutoCompoundingStakingRewards is
     {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (_isProgramActive(p)) {
+        if (p.isActive) {
             revert ProgramAlreadyActive();
         }
 
@@ -257,12 +250,6 @@ contract AutoCompoundingStakingRewards is
             requiredPoolTokenAmount = poolCollection.underlyingToPoolToken(pool, totalRewards);
         }
 
-        // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
-        // been distributed
-        if (programExists) {
-            _processRewards(pool, p);
-        }
-
         // check whether the rewards vault holds enough funds to cover the total rewards
         if (requiredPoolTokenAmount > poolToken.balanceOf(address(rewardsVault))) {
             revert InsufficientFunds();
@@ -299,15 +286,14 @@ contract AutoCompoundingStakingRewards is
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
         ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
-        ProgramData memory pCached = p;
 
-        if (!_isProgramActive(pCached)) {
+        if (!p.isActive) {
             revert ProgramInactive();
         }
 
         p.isActive = false;
 
-        emit ProgramTerminated({ pool: pool, endTime: _time(), remainingRewards: pCached.remainingRewards });
+        emit ProgramTerminated({ pool: pool, endTime: _time(), remainingRewards: p.remainingRewards });
     }
 
     /**
@@ -337,12 +323,13 @@ contract AutoCompoundingStakingRewards is
      * @dev processes program rewards
      */
     function _processRewards(ReserveToken pool, ProgramData memory p) private {
-        // if the program is not active and enabled, don't process the rewards
-        if (!(_isProgramActive(p) && p.isEnabled)) {
+        uint32 currentTime = _time();
+
+        // if the program is not active or not enabled or hasn't started yet, don't process the rewards
+        if (!p.isActive || !p.isEnabled || p.startTime > currentTime) {
             return;
         }
 
-        uint32 currentTime = _time();
         uint32 timeElapsed = currentTime - p.startTime;
 
         (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _processRewardAmounts(pool, p, timeElapsed);

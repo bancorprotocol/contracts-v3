@@ -550,8 +550,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
                     });
 
-                    it('should return false', async () => {
-                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
+                    it('should return true', async () => {
+                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
                     });
                 });
 
