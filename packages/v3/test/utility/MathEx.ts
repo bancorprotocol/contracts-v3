@@ -41,7 +41,7 @@ describe('MathEx', () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
 
-    const testExp = (f: Fraction<number>, maxRelativeError: Decimal) => {
+    const testExp = (f: Fraction, maxRelativeError: Decimal) => {
         it(`exp(${f.n} / ${f.d})`, async () => {
             if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
                 const actual = await mathContract.exp(f);

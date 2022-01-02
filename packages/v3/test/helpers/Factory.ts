@@ -364,7 +364,7 @@ export interface PoolSpec {
     tokenData: TokenData;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
-    initialRate: Fraction<number>;
+    initialRate: Fraction;
     tradingFeePPM?: number;
 }
 

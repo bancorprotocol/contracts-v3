@@ -5,7 +5,7 @@ import { BigNumber } from 'ethers';
 
 export type Addressable = { address: string };
 
-export interface Fraction<T = Decimal> {
+export interface Fraction<T = number> {
     n: T;
     d: T;
 }
