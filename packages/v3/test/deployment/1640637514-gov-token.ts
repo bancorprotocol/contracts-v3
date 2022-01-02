@@ -1,8 +1,8 @@
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { ContractNames } from '../../utils/Constants';
+import { ContractName } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
@@ -15,14 +15,14 @@ describe('1640637514-gov-token', () => {
     let govTokenGovernance: TokenGovernance;
 
     const TOTAL_SUPPLY = toWei(1_000_000_000);
-    const govTokenData = new TokenData(TokenSymbols.vBNT);
+    const govTokenData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
         ({ deployer, foundationMultisig } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
-        await runTestDeployment([ContractNames.GovToken, ContractNames.GovTokenGovernance]);
+        await runTestDeployment([ContractName.GovToken, ContractName.GovTokenGovernance]);
 
         govToken = await DeployedContracts.GovToken.deployed();
         govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();

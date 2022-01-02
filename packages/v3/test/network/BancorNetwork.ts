@@ -28,9 +28,9 @@ import {
     TestPoolCollectionUpgrader,
     TestERC20Burnable
 } from '../../typechain-types';
-import { FeeTypes, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
@@ -658,13 +658,13 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testCreatePool(new TokenData(symbol));
             });
         }
 
-        context(TokenSymbols.BNT, () => {
+        context(TokenSymbol.BNT, () => {
             beforeEach(async () => {
                 ({ network, networkToken } = await createSystem());
             });
@@ -689,7 +689,7 @@ describe('BancorNetwork', () => {
         const MIN_RETURN_AMOUNT = BigNumber.from(1);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
-        const reserveTokenSymbols = [TokenSymbols.TKN, TokenSymbols.ETH, TokenSymbols.TKN];
+        const reserveTokenSymbol = [TokenSymbol.TKN, TokenSymbol.ETH, TokenSymbol.TKN];
         let reserveTokenAddresses: string[];
 
         const setTime = async (time: number) => {
@@ -713,7 +713,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            for (const symbol of reserveTokenSymbols) {
+            for (const symbol of reserveTokenSymbol) {
                 const { token } = await setupSimplePool(
                     {
                         tokenData: new TokenData(symbol),
@@ -1605,7 +1605,7 @@ describe('BancorNetwork', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testDeposits(new TokenData(symbol));
             });
@@ -1988,7 +1988,7 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testWithdraw(new TokenData(symbol));
             });
@@ -2224,7 +2224,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FeeTypes.Trading,
+                        FeeType.Trading,
                         tradeAmounts.feeAmount,
                         poolLiquidity.stakedBalance
                     );
@@ -2266,7 +2266,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FeeTypes.Trading,
+                        FeeType.Trading,
                         tradeAmounts.feeAmount,
                         masterPoolStakedBalance
                     );
@@ -2311,7 +2311,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         networkToken.address,
-                        FeeTypes.Trading,
+                        FeeType.Trading,
                         sourceTradeAmounts.feeAmount,
                         masterPoolStakedBalance
                     );
@@ -2353,7 +2353,7 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         targetToken.address,
-                        FeeTypes.Trading,
+                        FeeType.Trading,
                         tradeAmounts.feeAmount,
                         targetPoolLiquidity.stakedBalance
                     );
@@ -2604,13 +2604,13 @@ describe('BancorNetwork', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TokenSymbols.TKN, TokenSymbols.BNT],
-            [TokenSymbols.TKN, TokenSymbols.ETH],
-            [TokenSymbols.TKN1, TokenSymbols.TKN2],
-            [TokenSymbols.BNT, TokenSymbols.ETH],
-            [TokenSymbols.BNT, TokenSymbols.TKN],
-            [TokenSymbols.ETH, TokenSymbols.BNT],
-            [TokenSymbols.ETH, TokenSymbols.TKN]
+            [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.ETH],
+            [TokenSymbol.TKN1, TokenSymbol.TKN2],
+            [TokenSymbol.BNT, TokenSymbol.ETH],
+            [TokenSymbol.BNT, TokenSymbol.TKN],
+            [TokenSymbol.ETH, TokenSymbol.BNT],
+            [TokenSymbol.ETH, TokenSymbol.TKN]
         ]) {
             const sourceTokenData = new TokenData(sourceSymbol);
             const targetTokenData = new TokenData(targetSymbol);
@@ -2722,7 +2722,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ token } = await setupSimplePool(
                     {
-                        tokenData: new TokenData(TokenSymbols.TKN),
+                        tokenData: new TokenData(TokenSymbol.TKN),
                         balance: amount,
                         requestedLiquidity: amount.mul(1000),
                         initialRate: INITIAL_RATE
@@ -2828,13 +2828,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        token.address,
-                        FeeTypes.FlashLoan,
-                        feeAmount,
-                        prevStakedBalance.add(feeAmount)
-                    );
+                    .withArgs(contextId, token.address, FeeType.FlashLoan, feeAmount, prevStakedBalance.add(feeAmount));
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.sender).to.equal(deployer.address);
@@ -2900,7 +2894,7 @@ describe('BancorNetwork', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const flashLoanFee of [0, 1, 10]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
                     testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee));
@@ -3054,7 +3048,7 @@ describe('BancorNetwork', () => {
                 [owner, provider] = await ethers.getSigners();
 
                 baseToken = (await createToken(
-                    new TokenData(isNativeToken ? TokenSymbols.ETH : TokenSymbols.TKN)
+                    new TokenData(isNativeToken ? TokenSymbol.ETH : TokenSymbol.TKN)
                 )) as IERC20;
 
                 ({
@@ -3437,7 +3431,7 @@ describe('BancorNetwork', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    tokenData: new TokenData(TokenSymbols.TKN),
+                    tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }
@@ -3743,7 +3737,7 @@ describe('BancorNetwork Financial Verification', () => {
             externalProtectionVault
         } = await createSystem());
 
-        baseToken = await createBurnableToken(new TokenData(TokenSymbols.TKN), tknAmount);
+        baseToken = await createBurnableToken(new TokenData(TokenSymbol.TKN), tknAmount);
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
 
         await baseToken.updateDecimals(tknDecimals);

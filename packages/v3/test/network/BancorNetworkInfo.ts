@@ -16,7 +16,7 @@ import {
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
 import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import {
     createSystem,
@@ -409,13 +409,13 @@ describe('BancorNetworkInfo', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TokenSymbols.TKN, TokenSymbols.BNT],
-            [TokenSymbols.TKN, TokenSymbols.ETH],
-            [TokenSymbols.TKN1, TokenSymbols.TKN2],
-            [TokenSymbols.BNT, TokenSymbols.ETH],
-            [TokenSymbols.BNT, TokenSymbols.TKN],
-            [TokenSymbols.ETH, TokenSymbols.BNT],
-            [TokenSymbols.ETH, TokenSymbols.TKN]
+            [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.ETH],
+            [TokenSymbol.TKN1, TokenSymbol.TKN2],
+            [TokenSymbol.BNT, TokenSymbol.ETH],
+            [TokenSymbol.BNT, TokenSymbol.TKN],
+            [TokenSymbol.ETH, TokenSymbol.BNT],
+            [TokenSymbol.ETH, TokenSymbol.TKN]
         ]) {
             // perform a basic/sanity suite over a fixed input
             testTradesAmounts(
@@ -464,7 +464,7 @@ describe('BancorNetworkInfo', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    tokenData: new TokenData(TokenSymbols.TKN),
+                    tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }

@@ -3,7 +3,7 @@ import { defaults } from 'lodash';
 export const DEFAULT_DECIMALS = 18;
 export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-export enum TokenSymbols {
+export enum TokenSymbol {
     ETH = 'ETH',
     BNT = 'BNT',
     vBNT = 'vBNT',
@@ -20,19 +20,19 @@ interface Errors {
 }
 
 const TOKEN_DATA = {
-    [TokenSymbols.ETH]: {
+    [TokenSymbol.ETH]: {
         name: 'Ethereum',
         decimals: DEFAULT_DECIMALS,
         errors: {}
     },
-    [TokenSymbols.BNT]: {
+    [TokenSymbol.BNT]: {
         name: 'Bancor Network Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
             exceedsBalance: 'SafeERC20: low-level call failed'
         }
     },
-    [TokenSymbols.vBNT]: {
+    [TokenSymbol.vBNT]: {
         name: 'Bancor Governance Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -41,7 +41,7 @@ const TOKEN_DATA = {
             burnExceedsBalance: 'ERR_UNDERFLOW'
         }
     },
-    [TokenSymbols.bnBNT]: {
+    [TokenSymbol.bnBNT]: {
         name: 'Bancor BNT Pool Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -50,7 +50,7 @@ const TOKEN_DATA = {
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }
     },
-    [TokenSymbols.TKN]: {
+    [TokenSymbol.TKN]: {
         name: 'Test Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -59,7 +59,7 @@ const TOKEN_DATA = {
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }
     },
-    [TokenSymbols.TKN1]: {
+    [TokenSymbol.TKN1]: {
         name: 'Test Token 1',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -68,7 +68,7 @@ const TOKEN_DATA = {
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }
     },
-    [TokenSymbols.TKN2]: {
+    [TokenSymbol.TKN2]: {
         name: 'Test Token 2',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -80,12 +80,12 @@ const TOKEN_DATA = {
 };
 
 export class TokenData {
-    private readonly _symbol: TokenSymbols;
+    private readonly _symbol: TokenSymbol;
     private readonly _name: string;
     private readonly _decimals: number;
     private readonly _errors: Errors;
 
-    constructor(symbol: TokenSymbols) {
+    constructor(symbol: TokenSymbol) {
         this._symbol = symbol;
 
         const { name, decimals, errors } = TOKEN_DATA[symbol];
@@ -115,10 +115,10 @@ export class TokenData {
     }
 
     isNativeToken() {
-        return this._symbol === TokenSymbols.ETH;
+        return this._symbol === TokenSymbol.ETH;
     }
 
     isNetworkToken() {
-        return this._symbol === TokenSymbols.BNT;
+        return this._symbol === TokenSymbol.BNT;
     }
 }

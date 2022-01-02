@@ -15,7 +15,7 @@ import {
 import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
@@ -286,7 +286,7 @@ describe('PoolCollection', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testCreatePool(new TokenData(symbol));
             });
@@ -866,7 +866,7 @@ describe('PoolCollection', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testDeposit(new TokenData(symbol));
             });
@@ -1007,7 +1007,7 @@ describe('PoolCollection', () => {
             }
         };
 
-        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testWithdraw(new TokenData(symbol));
             });

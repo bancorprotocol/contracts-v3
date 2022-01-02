@@ -27,7 +27,7 @@ import {
 } from '../../typechain-types';
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbols } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, Fraction, toWei, Addressable } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -147,7 +147,7 @@ const createGovernedToken = async (
 };
 
 const createGovernedTokens = async () => {
-    const networkTokenData = new TokenData(TokenSymbols.BNT);
+    const networkTokenData = new TokenData(TokenSymbol.BNT);
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
         networkTokenData.name(),
@@ -156,7 +156,7 @@ const createGovernedTokens = async () => {
         TOTAL_SUPPLY
     );
 
-    const govTokenData = new TokenData(TokenSymbols.BNT);
+    const govTokenData = new TokenData(TokenSymbol.BNT);
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
         govTokenData.name(),
@@ -439,12 +439,12 @@ export const createToken = async (
     const symbol = tokenData.symbol();
 
     switch (symbol) {
-        case TokenSymbols.ETH:
+        case TokenSymbol.ETH:
             return { address: NATIVE_TOKEN_ADDRESS };
 
-        case TokenSymbols.TKN:
-        case TokenSymbols.TKN1:
-        case TokenSymbols.TKN2: {
+        case TokenSymbol.TKN:
+        case TokenSymbol.TKN1:
+        case TokenSymbol.TKN2: {
             const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
                 tokenData.name(),
                 tokenData.symbol(),
@@ -467,4 +467,4 @@ export const createBurnableToken = async (tokenData: TokenData, totalSupply: Big
     createToken(tokenData, totalSupply, true) as Promise<TestERC20Burnable>;
 
 export const createTestToken = async (totalSupply: BigNumberish = toWei(1_000_000_000)) =>
-    createToken(new TokenData(TokenSymbols.TKN), totalSupply) as Promise<TestERC20Burnable>;
+    createToken(new TokenData(TokenSymbol.TKN), totalSupply) as Promise<TestERC20Burnable>;

@@ -1,8 +1,8 @@
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { AccessControlEnumerable } from '../../typechain-types';
-import { ContractNames } from '../../utils/Constants';
+import { ContractName } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
@@ -15,14 +15,14 @@ describe('1640637513-network-token', () => {
     let networkTokenGovernance: TokenGovernance;
 
     const TOTAL_SUPPLY = toWei(1_000_000_000);
-    const networkTokenData = new TokenData(TokenSymbols.BNT);
+    const networkTokenData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
         ({ deployer, foundationMultisig } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
-        await runTestDeployment([ContractNames.NetworkToken, ContractNames.NetworkTokenGovernance]);
+        await runTestDeployment([ContractName.NetworkToken, ContractName.NetworkTokenGovernance]);
 
         networkToken = await DeployedContracts.NetworkToken.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();

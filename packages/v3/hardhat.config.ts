@@ -1,6 +1,6 @@
 import { NamedAccounts, ExternalContracts } from './deployments/data';
 import './test/Setup';
-import { Networks } from './utils/Constants';
+import { DeploymentNetwork } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
@@ -64,7 +64,7 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        [Networks.HARDHAT]: {
+        [DeploymentNetwork.HARDHAT]: {
             accounts: {
                 count: 10,
                 accountsBalance: '10000000000000000000000000000000000000000000000'
@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
             saveDeployments: false,
             live: false
         },
-        [Networks.HARDHAT_MAINNET_FORK]: {
+        [DeploymentNetwork.HARDHAT_MAINNET_FORK]: {
             url: ETHEREUM_PROVIDER_URL,
             forking: {
                 enabled: true,
@@ -83,8 +83,13 @@ const config: HardhatUserConfig = {
             saveDeployments: false,
             live: true
         },
-        [Networks.LOCALHOST]: { chainId: 31337, url: 'http://127.0.0.1:8545', saveDeployments: false, live: false },
-        [Networks.MAINNET]: {
+        [DeploymentNetwork.LOCALHOST]: {
+            chainId: 31337,
+            url: 'http://127.0.0.1:8545',
+            saveDeployments: false,
+            live: false
+        },
+        [DeploymentNetwork.MAINNET]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
             saveDeployments: true,

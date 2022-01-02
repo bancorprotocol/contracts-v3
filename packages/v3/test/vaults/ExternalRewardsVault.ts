@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -89,7 +89,7 @@ describe('ExternalRewardsVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {

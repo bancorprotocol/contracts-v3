@@ -2,7 +2,7 @@ import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbols, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { createProxy, createSystem, createToken, createBurnableToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -170,7 +170,7 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => testWithdraw(new TokenData(symbol)));
         }
     });
@@ -193,11 +193,11 @@ describe('Vault', () => {
 
             beforeEach(async () => {
                 switch (tokenData.symbol()) {
-                    case TokenSymbols.BNT:
+                    case TokenSymbol.BNT:
                         token = networkToken;
                         break;
 
-                    case TokenSymbols.vBNT:
+                    case TokenSymbol.vBNT:
                         token = govToken;
                         break;
 
@@ -258,7 +258,7 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.vBNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.vBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => testBurn(new TokenData(symbol)));
         }
     });
@@ -300,7 +300,7 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 return testAuthentication(new TokenData(symbol));
             });

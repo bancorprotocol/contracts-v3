@@ -12,8 +12,8 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { FeeTypes, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { FeeType, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
@@ -161,7 +161,7 @@ describe('MasterPool', () => {
 
             expect(await masterPool.stakedBalance()).to.equal(0);
 
-            const tokenData = new TokenData(TokenSymbols.bnBNT);
+            const tokenData = new TokenData(TokenSymbol.bnBNT);
 
             const poolToken = await Contracts.PoolToken.attach(await masterPool.poolToken());
             expect(await poolToken.owner()).to.equal(masterPool.address);
@@ -1019,23 +1019,23 @@ describe('MasterPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                masterPool.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, FeeTypes.Trading)
+                masterPool.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, FeeType.Trading)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
-            await expect(network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, 1, FeeTypes.Trading)).to.be.revertedWith(
+            await expect(network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, 1, FeeType.Trading)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        for (const [name, type] of Object.entries(FeeTypes).filter(([, v]) => typeof v === 'number')) {
+        for (const [name, type] of Object.entries(FeeType).filter(([, v]) => typeof v === 'number')) {
             for (const feeAmount of [0, 12_345, toWei(12_345)]) {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await masterPool.stakedBalance();
                     const prevMintedAmount = await masterPool.mintedAmount(reserveToken.address);
                     const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
-                    const expectedMintedAmount = type === FeeTypes.Trading ? feeAmount : 0;
+                    const expectedMintedAmount = type === FeeType.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 
@@ -1086,8 +1086,8 @@ describe('MasterPool', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [TokenSymbols.TKN, TokenSymbols.bnBNT]) {
-            const isMasterPoolToken = symbol === TokenSymbols.bnBNT;
+        for (const symbol of [TokenSymbol.TKN, TokenSymbol.bnBNT]) {
+            const isMasterPoolToken = symbol === TokenSymbol.bnBNT;
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {

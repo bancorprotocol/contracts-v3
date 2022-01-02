@@ -12,8 +12,8 @@ import {
     TestMasterPool,
     TestPoolCollection
 } from '../../typechain-types';
-import { StakingRewardsDistributionTypes, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, Addressable } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
@@ -168,7 +168,7 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('management', () => {
-        const testProgramManagement = (tokenData: TokenData, distributionType: StakingRewardsDistributionTypes) => {
+        const testProgramManagement = (tokenData: TokenData, distributionType: StakingRewardsDistributionType) => {
             let token: TokenWithAddress;
             let poolToken: TokenWithAddress;
             let rewardsVault: IVault;
@@ -195,7 +195,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 now = 0;
-                endTime = distributionType === StakingRewardsDistributionTypes.Flat ? now + TOTAL_DURATION : 0;
+                endTime = distributionType === StakingRewardsDistributionType.Flat ? now + TOTAL_DURATION : 0;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
@@ -300,7 +300,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                if (distributionType === StakingRewardsDistributionTypes.Flat) {
+                if (distributionType === StakingRewardsDistributionType.Flat) {
                     it('should revert when the start time is higher than the end time', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
@@ -579,7 +579,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                 });
 
-                if (distributionType === StakingRewardsDistributionTypes.Flat) {
+                if (distributionType === StakingRewardsDistributionType.Flat) {
                     context('when a program has finished', () => {
                         beforeEach(async () => {
                             await autoCompoundingStakingRewards.createProgram(
@@ -633,13 +633,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                     beforeEach(async () => {
                         ({ token: token1, poolToken: poolToken1 } = await prepareSimplePool(
-                            new TokenData(TokenSymbols.TKN),
+                            new TokenData(TokenSymbol.TKN),
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
 
                         ({ token: token2, poolToken: poolToken2 } = await prepareSimplePool(
-                            new TokenData(TokenSymbols.TKN),
+                            new TokenData(TokenSymbol.TKN),
                             INITIAL_USER_STAKE,
                             TOTAL_REWARDS
                         ));
@@ -670,14 +670,14 @@ describe('AutoCompoundingStakingRewards', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const distributionType of [
-                StakingRewardsDistributionTypes.Flat,
-                StakingRewardsDistributionTypes.ExponentialDecay
+                StakingRewardsDistributionType.Flat,
+                StakingRewardsDistributionType.ExponentialDecay
             ])
                 context(symbol, () => {
                     context(
-                        distributionType === StakingRewardsDistributionTypes.Flat ? 'flat' : 'exponential decay',
+                        distributionType === StakingRewardsDistributionType.Flat ? 'flat' : 'exponential decay',
                         () => {
                             testProgramManagement(new TokenData(symbol), distributionType);
                         }
@@ -689,7 +689,7 @@ describe('AutoCompoundingStakingRewards', () => {
     describe('process rewards', () => {
         const testRewards = (
             tokenData: TokenData,
-            distributionType: StakingRewardsDistributionTypes,
+            distributionType: StakingRewardsDistributionType,
             providerStake: BigNumberish,
             totalRewards: BigNumberish
         ) => {
@@ -755,7 +755,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
 
                 switch (program.distributionType) {
-                    case StakingRewardsDistributionTypes.Flat:
+                    case StakingRewardsDistributionType.Flat:
                         tokenAmountToDistribute = await stakingRewardsMath.calcFlatRewards(
                             program.totalRewards,
                             timeElapsed - prevTimeElapsed,
@@ -764,7 +764,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         break;
 
-                    case StakingRewardsDistributionTypes.ExponentialDecay:
+                    case StakingRewardsDistributionType.ExponentialDecay:
                         tokenAmountToDistribute = (
                             await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, timeElapsed)
                         ).sub(await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, prevTimeElapsed));
@@ -843,7 +843,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const expectedRewardsVaultTokenOwned = prevExternalRewardsVaultTokenOwned.sub(tokenAmountToDistribute);
 
                 switch (program.distributionType) {
-                    case StakingRewardsDistributionTypes.Flat:
+                    case StakingRewardsDistributionType.Flat:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
                             maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
@@ -856,7 +856,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         });
                         break;
 
-                    case StakingRewardsDistributionTypes.ExponentialDecay:
+                    case StakingRewardsDistributionType.ExponentialDecay:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
                             maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
@@ -877,7 +877,7 @@ describe('AutoCompoundingStakingRewards', () => {
             };
 
             const testProgram = (programDuration: number) => {
-                context(StakingRewardsDistributionTypes[distributionType], () => {
+                context(StakingRewardsDistributionType[distributionType], () => {
                     let startTime: number;
 
                     beforeEach(async () => {
@@ -889,7 +889,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             totalRewards,
                             distributionType,
                             startTime,
-                            distributionType === StakingRewardsDistributionTypes.Flat ? startTime + programDuration : 0
+                            distributionType === StakingRewardsDistributionType.Flat ? startTime + programDuration : 0
                         );
                     });
 
@@ -922,7 +922,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             });
 
                             switch (distributionType) {
-                                case StakingRewardsDistributionTypes.Flat:
+                                case StakingRewardsDistributionType.Flat:
                                     it('should distribute all the rewards', async () => {
                                         const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.equal(totalRewards);
@@ -930,7 +930,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                                     break;
 
-                                case StakingRewardsDistributionTypes.ExponentialDecay:
+                                case StakingRewardsDistributionType.ExponentialDecay:
                                     it('should distribute almost all the rewards', async () => {
                                         const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
@@ -955,7 +955,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             });
 
                             switch (distributionType) {
-                                case StakingRewardsDistributionTypes.Flat:
+                                case StakingRewardsDistributionType.Flat:
                                     it('should distribute all the rewards', async () => {
                                         const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.equal(totalRewards);
@@ -963,7 +963,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                                     break;
 
-                                case StakingRewardsDistributionTypes.ExponentialDecay:
+                                case StakingRewardsDistributionType.ExponentialDecay:
                                     it('should revert with an overflow', async () => {
                                         await expect(
                                             autoCompoundingStakingRewards.processRewards(token.address)
@@ -1026,7 +1026,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     };
 
                     switch (distributionType) {
-                        case StakingRewardsDistributionTypes.Flat:
+                        case StakingRewardsDistributionType.Flat:
                             describe('regular tests', () => {
                                 for (const percent of [25]) {
                                     testMultipleDistributions(
@@ -1047,7 +1047,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                             break;
 
-                        case StakingRewardsDistributionTypes.ExponentialDecay:
+                        case StakingRewardsDistributionType.ExponentialDecay:
                             describe('regular tests', () => {
                                 for (const step of [duration.days(1)]) {
                                     for (const totalSteps of [5]) {
@@ -1073,7 +1073,7 @@ describe('AutoCompoundingStakingRewards', () => {
             };
 
             switch (distributionType) {
-                case StakingRewardsDistributionTypes.Flat:
+                case StakingRewardsDistributionType.Flat:
                     describe('regular tests', () => {
                         for (const programDuration of [duration.days(10)]) {
                             context(
@@ -1097,7 +1097,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                     break;
 
-                case StakingRewardsDistributionTypes.ExponentialDecay:
+                case StakingRewardsDistributionType.ExponentialDecay:
                     describe('regular tests', () => {
                         testProgram(ExponentialDecay.MAX_DURATION);
                     });
@@ -1110,11 +1110,11 @@ describe('AutoCompoundingStakingRewards', () => {
         };
 
         const testRewardsMatrix = (providerStakes: BigNumberish[], totalRewards: BigNumberish[]) => {
-            const distributionTypes = Object.values(StakingRewardsDistributionTypes).filter(
+            const distributionTypes = Object.values(StakingRewardsDistributionType).filter(
                 (v) => typeof v === 'number'
             ) as number[];
 
-            for (const symbol of [TokenSymbols.BNT, TokenSymbols.TKN, TokenSymbols.ETH]) {
+            for (const symbol of [TokenSymbol.BNT, TokenSymbol.TKN, TokenSymbol.ETH]) {
                 for (const distributionType of distributionTypes) {
                     for (const providerStake of providerStakes) {
                         for (const totalReward of totalRewards) {

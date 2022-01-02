@@ -11,7 +11,7 @@ import {
     PoolToken
 } from '../../typechain-types';
 import { PPM_RESOLUTION } from '../../utils/Constants';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';
 import { createPool, createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
@@ -67,7 +67,7 @@ describe('BancorV1Migration', () => {
     });
 
     const initLegacySystem = async (networkAmount: BigNumber, baseAmount: BigNumber, isNativeToken: boolean) => {
-        baseToken = await createToken(new TokenData(isNativeToken ? TokenSymbols.ETH : TokenSymbols.TKN));
+        baseToken = await createToken(new TokenData(isNativeToken ? TokenSymbol.ETH : TokenSymbol.TKN));
 
         ({ poolToken, converter } = await createLegacySystem(
             deployer,

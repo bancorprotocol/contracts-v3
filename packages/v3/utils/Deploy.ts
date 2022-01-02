@@ -1,29 +1,29 @@
 import { NetworkToken, GovToken, TokenGovernance } from '../components/LegacyContracts';
-import { ContractNames, Networks } from './Constants';
+import { ContractName, DeploymentNetwork } from './Constants';
 import { Contract } from 'ethers';
 import { deployments, ethers } from 'hardhat';
 
 const { deploy: deployContract, execute: executeTransaction, getNetworkName, fixture, run } = deployments;
 
-const deployed = <F extends Contract>(name: ContractNames) => ({
+const deployed = <F extends Contract>(name: ContractName) => ({
     deployed: async () => ethers.getContract<F>(name)
 });
 
 export const DeployedContracts = {
-    NetworkToken: deployed<NetworkToken>(ContractNames.NetworkToken),
-    NetworkTokenGovernance: deployed<TokenGovernance>(ContractNames.NetworkTokenGovernance),
-    GovToken: deployed<GovToken>(ContractNames.GovToken),
-    GovTokenGovernance: deployed<TokenGovernance>(ContractNames.GovTokenGovernance)
+    NetworkToken: deployed<NetworkToken>(ContractName.NetworkToken),
+    NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance),
+    GovToken: deployed<GovToken>(ContractName.GovToken),
+    GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance)
 };
 
-export const isHardhat = () => getNetworkName() === Networks.HARDHAT || Networks.HARDHAT_MAINNET_FORK;
-export const isHardhatMainnetFork = () => getNetworkName() === Networks.HARDHAT_MAINNET_FORK;
+export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT || DeploymentNetwork.HARDHAT_MAINNET_FORK;
+export const isHardhatMainnetFork = () => getNetworkName() === DeploymentNetwork.HARDHAT_MAINNET_FORK;
 export const isMainnetFork = () => isHardhatMainnetFork();
-export const isMainnet = () => getNetworkName() === Networks.MAINNET || isMainnetFork();
+export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
 export const isLive = () => isMainnet() && !isMainnetFork();
 
 interface DeployOptions {
-    name: ContractNames;
+    name: ContractName;
     contract?: string;
     args?: any[];
     from: string;
@@ -43,7 +43,7 @@ export const deploy = async (options: DeployOptions) => {
 };
 
 interface ExecuteOptions {
-    name: ContractNames;
+    name: ContractName;
     methodName: string;
     args?: any[];
     from: string;

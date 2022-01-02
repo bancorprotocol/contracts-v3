@@ -5,18 +5,18 @@ const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
-export enum ContractNames {
+export enum ContractName {
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
     GovToken = 'GovToken',
     GovTokenGovernance = 'GovTokenGovernance'
 }
 
-export enum DeploymentTags {
+export enum DeploymentTag {
     V2 = 'V2'
 }
 
-export enum Networks {
+export enum DeploymentNetwork {
     HARDHAT = 'hardhat',
     LOCALHOST = 'localhost',
     HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
@@ -28,13 +28,13 @@ export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
 
-export enum FeeTypes {
+export enum FeeType {
     Trading = 0,
     Withdrawal = 1,
     FlashLoan = 2
 }
 
-export enum StakingRewardsDistributionTypes {
+export enum StakingRewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1
 }

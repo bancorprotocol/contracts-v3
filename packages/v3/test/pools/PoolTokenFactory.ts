@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbols, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem, createPoolToken, createToken, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -66,8 +66,8 @@ describe('PoolTokenFactory', () => {
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, newSymbol);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(newSymbol);
 
-            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, TokenSymbols.TKN);
-            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(TokenSymbols.TKN);
+            await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, TokenSymbol.TKN);
+            expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(TokenSymbol.TKN);
 
             await poolTokenFactory.setTokenSymbolOverride(reserveToken.address, EMPTY_STRING);
             expect(await poolTokenFactory.tokenSymbolOverride(reserveToken.address)).to.equal(EMPTY_STRING);
@@ -179,7 +179,7 @@ describe('PoolTokenFactory', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testCreatePoolToken(new TokenData(symbol));
             });

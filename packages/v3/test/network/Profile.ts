@@ -13,7 +13,7 @@ import {
 } from '../../typechain-types';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
-import { TokenData, TokenSymbols, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
@@ -371,7 +371,7 @@ describe('Profile @profile', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testDeposits(new TokenData(symbol));
             });
@@ -541,7 +541,7 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testWithdraw(new TokenData(symbol));
             });
@@ -681,12 +681,8 @@ describe('Profile @profile', () => {
             const minReturnAmount = MIN_RETURN_AMOUNT;
             const deadline = MAX_UINT256;
 
-            const sourceSymbol = isSourceNativeToken
-                ? TokenSymbols.ETH
-                : await (sourceToken as TestERC20Token).symbol();
-            const targetSymbol = isTargetNativeToken
-                ? TokenSymbols.ETH
-                : await (targetToken as TestERC20Token).symbol();
+            const sourceSymbol = isSourceNativeToken ? TokenSymbol.ETH : await (sourceToken as TestERC20Token).symbol();
+            const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
                 `trade ${await sourceSymbol} -> ${targetSymbol}`,
@@ -753,13 +749,13 @@ describe('Profile @profile', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TokenSymbols.TKN, TokenSymbols.BNT],
-            [TokenSymbols.TKN, TokenSymbols.ETH],
-            [TokenSymbols.TKN1, TokenSymbols.TKN2],
-            [TokenSymbols.BNT, TokenSymbols.ETH],
-            [TokenSymbols.BNT, TokenSymbols.TKN],
-            [TokenSymbols.ETH, TokenSymbols.BNT],
-            [TokenSymbols.ETH, TokenSymbols.TKN]
+            [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.ETH],
+            [TokenSymbol.TKN1, TokenSymbol.TKN2],
+            [TokenSymbol.BNT, TokenSymbol.ETH],
+            [TokenSymbol.BNT, TokenSymbol.TKN],
+            [TokenSymbol.ETH, TokenSymbol.BNT],
+            [TokenSymbol.ETH, TokenSymbol.TKN]
         ]) {
             const sourceTokenData = new TokenData(sourceSymbol);
             const targetTokenData = new TokenData(targetSymbol);
@@ -906,7 +902,7 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [TokenSymbols.BNT, TokenSymbols.ETH, TokenSymbols.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const flashLoanFee of [0, 1, 10]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
                     testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee));
@@ -942,7 +938,7 @@ describe('Profile @profile', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    tokenData: new TokenData(TokenSymbols.TKN),
+                    tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }

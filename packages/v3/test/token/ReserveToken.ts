@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestReserveToken } from '../../typechain-types';
-import { TokenData, TokenSymbols } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { createToken } from '../helpers/Factory';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -26,7 +26,7 @@ describe('ReserveToken', () => {
         sender = reserveToken.address;
     });
 
-    for (const symbol of [TokenSymbols.ETH, TokenSymbols.TKN]) {
+    for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
         let token: any;
         const tokenData = new TokenData(symbol);
 
