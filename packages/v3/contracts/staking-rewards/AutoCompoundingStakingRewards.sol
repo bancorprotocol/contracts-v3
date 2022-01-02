@@ -352,7 +352,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev ???
+     * @dev returns the amount of tokens to distribute and the amount of pool tokens to burn
      */
     function _processRewardAmounts(
         ReserveToken pool,
