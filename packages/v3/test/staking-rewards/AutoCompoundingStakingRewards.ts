@@ -450,10 +450,10 @@ describe('AutoCompoundingStakingRewards', () => {
                         expect(program.poolToken).to.equal(poolToken.address);
                         expect(program.rewardsVault).to.equal(rewardsVault.address);
                         expect(program.totalRewards).to.equal(TOTAL_REWARDS);
-                        expect(program.remainingRewards).to.equal(0);
+                        expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                         expect(program.distributionType).to.equal(distributionType);
                         expect(program.startTime).to.equal(now);
-                        expect(program.endTime).to.equal(newEndTime);
+                        expect(program.endTime).to.equal(endTime);
                         expect(program.prevDistributionTimestamp).to.equal(0);
                         expect(program.isEnabled).to.be.true;
                     });
@@ -587,7 +587,9 @@ describe('AutoCompoundingStakingRewards', () => {
                             await autoCompoundingStakingRewards.setTime(endTime + 1);
                         });
 
-                        it('should return false', async () => {
+                        it('should return true before last request, and false after last request', async () => {
+                            expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
+                            await autoCompoundingStakingRewards.processRewards(token.address);
                             expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                         });
                     });
@@ -734,12 +736,11 @@ describe('AutoCompoundingStakingRewards', () => {
                 return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
             };
 
-            const getRewards = async () => {
+            const getRewards = async (program: any) => {
                 let tokenAmountToDistribute = BigNumber.from(0);
                 let poolTokenAmountToBurn = BigNumber.from(0);
                 let timeElapsed = 0;
 
-                const program = await autoCompoundingStakingRewards.program(token.address);
                 const currentTime = await autoCompoundingStakingRewards.currentTime();
                 if (!program.isEnabled || currentTime < program.startTime) {
                     return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
@@ -799,7 +800,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
-                const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards();
+                const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(prevProgram);
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
                 const program = await autoCompoundingStakingRewards.program(token.address);
@@ -952,14 +953,22 @@ describe('AutoCompoundingStakingRewards', () => {
                             switch (distributionType) {
                                 case StakingRewardsDistributionTypes.Flat:
                                     it('should distribute all the rewards', async () => {
-                                        const { tokenAmountToDistribute } = await testDistribution();
-                                        expect(tokenAmountToDistribute).to.equal(totalRewards);
+                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
+                                            .true;
+                                        const res1 = await testDistribution();
+                                        expect(res1.tokenAmountToDistribute).to.equal(totalRewards);
+                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
+                                            .false;
+                                        const res2 = await testDistribution();
+                                        expect(res2.tokenAmountToDistribute).to.equal(0);
                                     });
 
                                     break;
 
                                 case StakingRewardsDistributionTypes.ExponentialDecay:
                                     it('should revert with an overflow', async () => {
+                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
+                                            .true;
                                         await expect(
                                             autoCompoundingStakingRewards.processRewards(token.address)
                                         ).to.be.revertedWith('Overflow');

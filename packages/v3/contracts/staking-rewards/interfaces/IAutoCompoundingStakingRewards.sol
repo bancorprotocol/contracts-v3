@@ -15,6 +15,7 @@ struct ProgramData {
     uint32 endTime;
     uint32 prevDistributionTimestamp;
     IPoolToken poolToken;
+    bool isActive;
     bool isEnabled;
     uint8 distributionType;
     IVault rewardsVault;
