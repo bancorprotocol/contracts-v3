@@ -1,5 +1,5 @@
 import { NamedAccounts, ExternalContracts } from './deployments/data';
-import './test/Setup.ts';
+import './test/Setup';
 import { Networks } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
