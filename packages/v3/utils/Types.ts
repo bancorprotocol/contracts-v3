@@ -1,8 +1,11 @@
-import { MAX_UINT256, PPM_RESOLUTION, DEFAULT_DECIMALS } from './Constants';
+import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
+import { DEFAULT_DECIMALS } from './TokenData';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
 
-export interface Fraction<T = Decimal> {
+export type Addressable = { address: string };
+
+export interface Fraction<T = number> {
     n: T;
     d: T;
 }

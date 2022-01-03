@@ -1,4 +1,4 @@
-import { toBigNumber } from '../helpers/Types';
+import { toBigNumber } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

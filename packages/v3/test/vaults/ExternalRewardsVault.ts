@@ -1,16 +1,15 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
-import { BNT, ETH, TKN, ZERO_ADDRESS } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { expectRole, Roles } from '../helpers/AccessControl';
+import { createSystem, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { TokenWithAddress, createTokenBySymbol, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles, ExternalRewardsVault: ExternalRewardsVaultRoles } = roles;
 
 describe('ExternalRewardsVault', () => {
     shouldHaveGap('ExternalRewardsVault');
@@ -48,13 +47,13 @@ describe('ExternalRewardsVault', () => {
             expect(await externalRewardsVault.version()).to.equal(1);
             expect(await externalRewardsVault.isPayable()).to.be.true;
 
-            await expectRole(externalRewardsVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
             await expectRole(
                 externalRewardsVault,
-                ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
-                UpgradeableRoles.ROLE_ADMIN
+                Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+                Roles.Upgradeable.ROLE_ADMIN
             );
         });
     });
@@ -90,13 +89,13 @@ describe('ExternalRewardsVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            const isNetworkToken = symbol === BNT;
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {
                 ({ externalRewardsVault, networkToken } = await createSystem());
 
-                token = isNetworkToken ? networkToken : await createTokenBySymbol(TKN);
+                token = tokenData.isNetworkToken() ? networkToken : await createTestToken();
 
                 transfer(deployer, token, externalRewardsVault.address, amount);
             });
@@ -108,7 +107,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await externalRewardsVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalRewardsVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -117,7 +116,7 @@ describe('ExternalRewardsVault', () => {
                 context('with asset manager role', () => {
                     beforeEach(async () => {
                         await externalRewardsVault.grantRole(
-                            ExternalRewardsVaultRoles.ROLE_ASSET_MANAGER,
+                            Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
                             user.address
                         );
                     });

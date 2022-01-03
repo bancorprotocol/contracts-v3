@@ -9,8 +9,8 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, TKN } from '../helpers/Constants';
-import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { createPool, createPoolCollection, createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -63,7 +63,7 @@ describe('PoolCollectionUpgrader', () => {
             ({ network, networkToken, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
                 await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
 
             poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
         });
@@ -83,7 +83,7 @@ describe('PoolCollectionUpgrader', () => {
         });
 
         it('should revert when attempting upgrade a non-existing pool', async () => {
-            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            const reserveToken2 = await createTestToken();
             await expect(
                 network.upgradePoolT(poolCollectionUpgrader.address, reserveToken2.address)
             ).to.be.revertedWith('InvalidPool');
@@ -96,7 +96,7 @@ describe('PoolCollectionUpgrader', () => {
         });
 
         it('should revert when attempting upgrade a pool with an unsupported version', async () => {
-            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            const reserveToken2 = await createTestToken();
             const poolCollection2 = await createPoolCollection(
                 network,
                 networkToken,
@@ -107,7 +107,7 @@ describe('PoolCollectionUpgrader', () => {
             );
             await createPool(reserveToken2, network, networkSettings, poolCollection2);
 
-            const reserveToken3 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            const reserveToken3 = await createTestToken();
             const poolCollection3 = await createPoolCollection(
                 network,
                 networkToken,

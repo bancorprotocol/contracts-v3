@@ -1,7 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestMathEx } from '../../typechain-types';
-import { Exponentiation } from '../helpers/Constants';
-import { Fraction, toUint512, fromUint512 } from '../helpers/Types';
+import { Exponentiation } from '../../utils/Constants';
+import { Fraction, toUint512, fromUint512 } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -41,7 +41,7 @@ describe('MathEx', () => {
         mathContract = await Contracts.TestMathEx.deploy();
     });
 
-    const testExp = (f: Fraction<number>, maxRelativeError: Decimal) => {
+    const testExp = (f: Fraction, maxRelativeError: Decimal) => {
         it(`exp(${f.n} / ${f.d})`, async () => {
             if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
                 const actual = await mathContract.exp(f);

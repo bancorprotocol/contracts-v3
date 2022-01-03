@@ -54,7 +54,8 @@ Bancor is a work in progress. Make sure you understand the risks before using it
 
 -   Verifying all the contracts:
     -   `yarn test` (quick testing)
-    -   `yarn coverage` (full coverage)
+    -   `yarn test:ci` (full testing)
+    -   `yarn test:coverage` (full coverage)
 
 ### Profiling
 
@@ -62,4 +63,4 @@ Bancor is a work in progress. Make sure you understand the risks before using it
 
 For an interactive profiling, with Tenderly integration:
 
--   `yarn profiled`
+-   `yarn profile:debug`

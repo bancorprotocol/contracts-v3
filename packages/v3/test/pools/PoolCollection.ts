@@ -13,19 +13,18 @@ import {
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
 import { DepositAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
-import { roles } from '../helpers/AccessControl';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_FRACTION } from '../../utils/Constants';
+import { Roles } from '../../utils/Roles';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { toWei, toPPM } from '../../utils/Types';
 import {
-    INVALID_FRACTION,
-    MAX_UINT256,
-    PPM_RESOLUTION,
-    ZERO_ADDRESS,
-    ZERO_FRACTION,
-    ETH,
-    TKN
-} from '../helpers/Constants';
-import { createPool, createPoolCollection, createSystem } from '../helpers/Factory';
-import { toWei, toPPM } from '../helpers/Types';
-import { createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+    createPool,
+    createPoolCollection,
+    createSystem,
+    createToken,
+    createTestToken,
+    TokenWithAddress
+} from '../helpers/Factory';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -41,6 +40,8 @@ describe('PoolCollection', () => {
 
     const TRADING_STATUS_UPDATE_OWNER = 0;
     const TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
+
+    const INVALID_FRACTION = { n: 0, d: 0 };
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -149,7 +150,7 @@ describe('PoolCollection', () => {
 
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
         });
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
@@ -191,11 +192,11 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let reserveToken: TokenWithAddress;
 
-        const testCreatePool = (symbol: string) => {
+        const testCreatePool = (tokenData: TokenData) => {
             beforeEach(async () => {
                 ({ network, networkSettings, poolCollection } = await createSystem());
 
-                reserveToken = await createTokenBySymbol(symbol);
+                reserveToken = await createToken(tokenData);
             });
 
             it('should revert when attempting to create a pool from a non-network', async () => {
@@ -285,9 +286,9 @@ describe('PoolCollection', () => {
             });
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testCreatePool(symbol);
+                testCreatePool(new TokenData(symbol));
             });
         }
     });
@@ -302,11 +303,11 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
-            newReserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            newReserveToken = await createTestToken();
         });
 
         describe('initial rate', () => {
@@ -563,7 +564,7 @@ describe('PoolCollection', () => {
     });
 
     describe('deposit', () => {
-        const testDeposit = (symbol: string) => {
+        const testDeposit = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
             let poolCollection: TestPoolCollection;
@@ -578,7 +579,7 @@ describe('PoolCollection', () => {
             beforeEach(async () => {
                 ({ network, networkSettings, poolCollection } = await createSystem());
 
-                reserveToken = await createTokenBySymbol(symbol);
+                reserveToken = await createToken(tokenData);
             });
 
             it('should revert when attempting to deposit from a non-network', async () => {
@@ -865,15 +866,15 @@ describe('PoolCollection', () => {
             });
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testDeposit(symbol);
+                testDeposit(new TokenData(symbol));
             });
         }
     });
 
     describe('withdraw', () => {
-        const testWithdraw = (symbol: string) => {
+        const testWithdraw = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
             let poolCollection: TestPoolCollection;
@@ -891,7 +892,7 @@ describe('PoolCollection', () => {
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-                reserveToken = await createTokenBySymbol(symbol);
+                reserveToken = await createToken(tokenData);
 
                 poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -1006,9 +1007,9 @@ describe('PoolCollection', () => {
             }
         };
 
-        for (const symbol of [ETH, TKN]) {
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testWithdraw(symbol);
+                testWithdraw(new TokenData(symbol));
             });
         }
     });
@@ -1027,7 +1028,7 @@ describe('PoolCollection', () => {
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
@@ -1102,7 +1103,7 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to trade or query using a non-existing source pool', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken2 = await createTestToken();
 
                     await expect(
                         network.tradePoolCollectionT(
@@ -1127,7 +1128,7 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to trade or query using a non-existing target pool', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken2 = await createTestToken();
 
                     await expect(
                         network.tradePoolCollectionT(
@@ -1152,7 +1153,7 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to trade or query without using the network token as one of the pools', async () => {
-                    const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                    const reserveToken2 = await createTestToken();
 
                     await expect(
                         network.tradePoolCollectionT(
@@ -1702,7 +1703,7 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ network, networkSettings, poolCollection } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
 
             await createPool(reserveToken, network, networkSettings, poolCollection);
         });
@@ -1722,7 +1723,7 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when attempting to notify about collected fee from a non-existing pool', async () => {
-            const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            const reserveToken2 = await createTestToken();
 
             await expect(
                 network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, 1)
@@ -1755,9 +1756,9 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ networkSettings, network, poolCollection, externalRewardsVault } = await createSystem());
 
-            await externalRewardsVault.grantRole(roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
+            await externalRewardsVault.grantRole(Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, toWei(1_000_000_000));
+            reserveToken = await createTestToken();
 
             poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -1858,7 +1859,7 @@ describe('PoolCollection', () => {
                 poolCollectionUpgrader
             } = await createSystem());
 
-            reserveToken = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+            reserveToken = await createTestToken();
 
             poolToken = await createPool(reserveToken, network, networkSettings, poolCollection);
 
@@ -1978,7 +1979,7 @@ describe('PoolCollection', () => {
             });
 
             it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {
-                const reserveToken2 = await Contracts.TestERC20Token.deploy(TKN, TKN, 1_000_000);
+                const reserveToken2 = await createTestToken();
                 await expect(
                     poolCollectionUpgrader.migratePoolOutT(
                         poolCollection.address,

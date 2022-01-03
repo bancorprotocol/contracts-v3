@@ -1,23 +1,15 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, TestERC20Burnable, TestVault } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
-import { ETH, TKN, BNT, vBNT, ZERO_ADDRESS, NATIVE_TOKEN_ADDRESS } from '../helpers/Constants';
-import { createProxy, createSystem } from '../helpers/Factory';
+import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { expectRole, Roles } from '../helpers/AccessControl';
+import { createProxy, createSystem, createToken, createBurnableToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import {
-    transfer,
-    getBalance,
-    createTokenBySymbol,
-    errorMessageTokenExceedsBalance,
-    errorMessageTokenBurnExceedsBalance,
-    TokenWithAddress
-} from '../helpers/Utils';
+import { transfer, getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles } = roles;
 
 describe('Vault', () => {
     let deployer: SignerWithAddress;
@@ -71,7 +63,7 @@ describe('Vault', () => {
         it('should be properly initialized', async () => {
             expect(await testVault.version()).to.equal(1);
             expect(await testVault.isPayable()).to.be.false;
-            await expectRole(testVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [deployer.address]);
+            await expectRole(testVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
         });
     });
 
@@ -119,12 +111,12 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testWithdraw = (symbol: string) => {
+        const testWithdraw = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
 
                 await transfer(deployer, token, testVault.address, amount + 1);
             });
@@ -162,7 +154,7 @@ describe('Vault', () => {
                         target.address,
                         (await getBalance({ address: token.address }, testVault.address)).add(1)
                     )
-                ).to.be.revertedWith(errorMessageTokenExceedsBalance(symbol));
+                ).to.be.revertedWith(tokenData.errors().exceedsBalance);
             });
 
             context('when paused', () => {
@@ -178,8 +170,8 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            context(symbol, () => testWithdraw(symbol));
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            context(symbol, () => testWithdraw(new TokenData(symbol)));
         }
     });
 
@@ -193,29 +185,28 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testBurn = (symbol: string) => {
-            const isETH = symbol === ETH;
+        const testBurn = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             let reserveToken: TestERC20Burnable;
 
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                switch (symbol) {
-                    case BNT:
+                switch (tokenData.symbol()) {
+                    case TokenSymbol.BNT:
                         token = networkToken;
                         break;
 
-                    case vBNT:
+                    case TokenSymbol.vBNT:
                         token = govToken;
                         break;
 
                     default:
-                        token = await createTokenBySymbol(symbol, amount, true);
+                        token = await createBurnableToken(tokenData, amount);
                         break;
                 }
 
-                if (!isETH) {
+                if (!tokenData.isNativeToken()) {
                     reserveToken = await Contracts.TestERC20Burnable.attach(token.address);
                 }
 
@@ -231,7 +222,7 @@ describe('Vault', () => {
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
 
-            if (isETH) {
+            if (tokenData.isNativeToken()) {
                 it('should revert when attempting to burn ETH', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
                 });
@@ -251,7 +242,7 @@ describe('Vault', () => {
 
                 it('should revert when trying to burn more tokens than the vault holds', async () => {
                     await expect(testVault.burn(token.address, amount + 1)).to.be.revertedWith(
-                        errorMessageTokenBurnExceedsBalance(symbol)
+                        tokenData.errors().burnExceedsBalance
                     );
                 });
             }
@@ -267,8 +258,8 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [BNT, vBNT, ETH, TKN]) {
-            context(symbol, () => testBurn(symbol));
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.vBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            context(symbol, () => testBurn(new TokenData(symbol)));
         }
     });
 
@@ -281,12 +272,12 @@ describe('Vault', () => {
             await testVault.setPayable(true);
         });
 
-        const testAuthentication = (symbol: string) => {
+        const testAuthentication = (tokenData: TokenData) => {
             let token: TokenWithAddress;
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = symbol === BNT ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
                 await transfer(deployer, token, testVault.address, amount);
             });
 
@@ -309,9 +300,9 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                return testAuthentication(symbol);
+                return testAuthentication(new TokenData(symbol));
             });
         }
     });
@@ -332,7 +323,7 @@ describe('Vault', () => {
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
                     expect(await testVault.isPaused()).to.be.true;
@@ -353,7 +344,7 @@ describe('Vault', () => {
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, admin.address);
+                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
 
                     expect(await testVault.isPaused()).to.be.true;
@@ -367,7 +358,7 @@ describe('Vault', () => {
 
         context('admin', () => {
             beforeEach(async () => {
-                await testVault.connect(deployer).grantRole(UpgradeableRoles.ROLE_ADMIN, sender.address);
+                await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, sender.address);
             });
 
             testPause();

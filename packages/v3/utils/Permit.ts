@@ -1,6 +1,7 @@
-import Contracts from '../../components/Contracts';
-import { IERC20 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, ZERO_ADDRESS } from './Constants';
+import Contracts from '../components/Contracts';
+import { IERC20 } from '../typechain-types';
+import { MAX_UINT256, ZERO_ADDRESS } from './Constants';
+import { NATIVE_TOKEN_ADDRESS } from './TokenData';
 import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
 import { BigNumber, BigNumberish, Wallet, BaseContract, utils } from 'ethers';

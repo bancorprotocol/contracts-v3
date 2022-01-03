@@ -5,28 +5,36 @@ const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
-export const ETH = 'ETH';
-export const BNT = 'BNT';
-export const vBNT = 'vBNT';
-export const TKN = 'TKN';
-export const DEFAULT_DECIMALS = 18;
-export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-export const NATIVE_TOKEN_DECIMALS = DEFAULT_DECIMALS;
+export enum ContractName {
+    NetworkToken = 'NetworkToken',
+    NetworkTokenGovernance = 'NetworkTokenGovernance',
+    GovToken = 'GovToken',
+    GovTokenGovernance = 'GovTokenGovernance'
+}
+
+export enum DeploymentTag {
+    V2 = 'V2'
+}
+
+export enum DeploymentNetwork {
+    HARDHAT = 'hardhat',
+    LOCALHOST = 'localhost',
+    HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
+    MAINNET = 'mainnet'
+}
+
 export const MAX_UINT256 = MaxUint256;
 export const ZERO_ADDRESS = AddressZero;
-export const INVALID_FRACTION = { n: 0, d: 0 };
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
-export const MASTER_POOL_TOKEN_NAME = `Bancor ${BNT} Pool Token`;
-export const MASTER_POOL_TOKEN_SYMBOL = `bn${BNT}`;
 
-export enum FeeTypes {
+export enum FeeType {
     Trading = 0,
     Withdrawal = 1,
     FlashLoan = 2
 }
 
-export enum StakingRewardsDistributionTypes {
+export enum StakingRewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1
 }

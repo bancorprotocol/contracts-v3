@@ -9,35 +9,32 @@ import { isProfiling } from '../../components/Profiler';
 import {
     BancorNetwork,
     BancorNetworkInfo,
-    MasterVault,
+    ExternalRewardsVault,
     IERC20,
+    MasterPool,
+    MasterVault,
     NetworkSettings,
     PoolCollectionUpgrader,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
     TestBancorNetwork,
-    TestPoolCollection,
-    TestPendingWithdrawals,
+    TestERC20Burnable,
+    TestERC20Token,
     TestMasterPool,
-    MasterPool,
-    ExternalRewardsVault
+    TestPendingWithdrawals,
+    TestPoolCollection
 } from '../../typechain-types';
-import { roles } from './AccessControl';
-import { NATIVE_TOKEN_ADDRESS, MAX_UINT256, DEFAULT_DECIMALS, BNT, TKN, vBNT } from './Constants';
-import { fromPPM, Fraction, toWei } from './Types';
-import { toAddress, TokenWithAddress, createTokenBySymbol } from './Utils';
+import { MAX_UINT256 } from '../../utils/Constants';
+import { Roles } from '../../utils/Roles';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { fromPPM, Fraction, toWei, Addressable } from '../../utils/Types';
+import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;
-
-const {
-    TokenGovernance: TokenGovernanceRoles,
-    MasterVault: MasterVaultRoles,
-    ExternalProtectionVault: ExternalProtectionVaultRoles
-} = roles;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
 const V1 = 1;
@@ -52,6 +49,8 @@ interface ProxyArguments {
 }
 
 let admin: ProxyAdmin;
+
+export type TokenWithAddress = TestERC20Token | Addressable;
 
 export const proxyAdmin = async () => {
     if (!admin) {
@@ -99,10 +98,10 @@ export const createStakingRewards = async (
         ctorArgs: [network.address, networkSettings.address, networkToken.address, masterPool.address]
     });
 
-    await masterPool.grantRole(roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await masterPool.grantRole(Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
     await externalRewardsVault.grantRole(
-        roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
+        Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
         autoCompoundingStakingRewards.address
     );
 
@@ -127,8 +126,8 @@ const createGovernedToken = async (
         await testToken.updateDecimals(decimals);
 
         tokenGovernance = (await Contracts.TestTokenGovernance.deploy(testToken.address)) as TokenGovernance;
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, deployer.address);
 
         token = testToken;
     } else {
@@ -136,8 +135,8 @@ const createGovernedToken = async (
         legacyToken.issue(deployer.address, totalSupply);
 
         tokenGovernance = await LegacyContracts.TokenGovernance.deploy(legacyToken.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_GOVERNOR, deployer.address);
-        await tokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
+        await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, deployer.address);
         await legacyToken.transferOwnership(tokenGovernance.address);
         await tokenGovernance.acceptTokenOwnership();
 
@@ -148,19 +147,21 @@ const createGovernedToken = async (
 };
 
 const createGovernedTokens = async () => {
+    const networkTokenData = new TokenData(TokenSymbol.BNT);
     const { token: networkToken, tokenGovernance: networkTokenGovernance } = await createGovernedToken(
         LegacyContracts.NetworkToken,
-        BNT,
-        BNT,
-        DEFAULT_DECIMALS,
+        networkTokenData.name(),
+        networkTokenData.symbol(),
+        networkTokenData.decimals(),
         TOTAL_SUPPLY
     );
 
+    const govTokenData = new TokenData(TokenSymbol.BNT);
     const { token: govToken, tokenGovernance: govTokenGovernance } = await createGovernedToken(
         LegacyContracts.GovToken,
-        vBNT,
-        vBNT,
-        DEFAULT_DECIMALS,
+        govTokenData.name(),
+        govTokenData.symbol(),
+        govTokenData.decimals(),
         TOTAL_SUPPLY
     );
 
@@ -207,10 +208,10 @@ const createMasterPoolUninitialized = async (
     await masterPoolToken.acceptOwnership();
     await masterPoolToken.transferOwnership(masterPool.address);
 
-    await networkTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
-    await govTokenGovernance.grantRole(TokenGovernanceRoles.ROLE_MINTER, masterPool.address);
+    await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
+    await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
 
-    await masterVault.grantRole(MasterVaultRoles.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
 
     return masterPool;
 };
@@ -302,8 +303,8 @@ const createSystemFixture = async () => {
 
     await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await masterVault.grantRole(MasterVaultRoles.ROLE_ASSET_MANAGER, network.address);
-    await externalProtectionVault.grantRole(ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER, network.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_ASSET_MANAGER, network.address);
+    await externalProtectionVault.grantRole(Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER, network.address);
 
     const networkInfo = await Contracts.BancorNetworkInfo.deploy(
         network.address,
@@ -360,19 +361,19 @@ export const depositToPool = async (
 };
 
 export interface PoolSpec {
-    symbol: string;
+    tokenData: TokenData;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
-    initialRate: Fraction<number>;
+    initialRate: Fraction;
     tradingFeePPM?: number;
 }
 
 export const specToString = (spec: PoolSpec) => {
     if (spec.tradingFeePPM !== undefined) {
-        return `${spec.symbol} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
+        return `${spec.tokenData.symbol()} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
     }
 
-    return `${spec.symbol} (balance=${spec.balance})`;
+    return `${spec.tokenData.symbol()} (balance=${spec.balance})`;
 };
 
 export const setupSimplePool = async (
@@ -383,13 +384,13 @@ export const setupSimplePool = async (
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection
 ) => {
-    if (spec.symbol === BNT) {
+    if (spec.tokenData.isNetworkToken()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.masterPoolToken());
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.NetworkToken;
         const networkToken = await factory.attach(await networkInfo.networkToken());
 
         // ensure that there is enough space to deposit the network token
-        const reserveToken = await createTokenBySymbol(TKN);
+        const reserveToken = await createTestToken();
 
         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
         await network.requestLiquidityT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
@@ -399,7 +400,7 @@ export const setupSimplePool = async (
         return { poolToken, token: networkToken };
     }
 
-    const token = await createTokenBySymbol(spec.symbol);
+    const token = await createToken(spec.tokenData);
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
@@ -429,3 +430,41 @@ export const initWithdraw = async (
 
     return { id, creationTime };
 };
+
+export const createToken = async (
+    tokenData: TokenData,
+    totalSupply: BigNumberish = toWei(1_000_000_000),
+    burnable = false
+): Promise<TokenWithAddress> => {
+    const symbol = tokenData.symbol();
+
+    switch (symbol) {
+        case TokenSymbol.ETH:
+            return { address: NATIVE_TOKEN_ADDRESS };
+
+        case TokenSymbol.TKN:
+        case TokenSymbol.TKN1:
+        case TokenSymbol.TKN2: {
+            const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
+                tokenData.name(),
+                tokenData.symbol(),
+                totalSupply
+            );
+
+            if (!tokenData.isDefaultDecimals()) {
+                await token.updateDecimals(tokenData.decimals());
+            }
+
+            return token;
+        }
+
+        default:
+            throw new Error(`Unsupported type ${symbol}`);
+    }
+};
+
+export const createBurnableToken = async (tokenData: TokenData, totalSupply: BigNumberish = toWei(1_000_000_000)) =>
+    createToken(tokenData, totalSupply, true) as Promise<TestERC20Burnable>;
+
+export const createTestToken = async (totalSupply: BigNumberish = toWei(1_000_000_000)) =>
+    createToken(new TokenData(TokenSymbol.TKN), totalSupply) as Promise<TestERC20Burnable>;
