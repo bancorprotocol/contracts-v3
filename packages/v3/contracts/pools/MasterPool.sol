@@ -58,8 +58,8 @@ contract MasterPool is IMasterPool, Vault {
     // the total staked network token balance in the network
     uint256 internal _stakedBalance;
 
-    // a mapping between pools and their total funded amounts
-    mapping(ReserveToken => uint256) private _fundedAmounts;
+    // a mapping between pools and their current funding
+    mapping(ReserveToken => uint256) private _currentPoolFunding;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 2] private __gap;
@@ -183,8 +183,8 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function fundedAmount(ReserveToken pool) external view returns (uint256) {
-        return _fundedAmounts[pool];
+    function currentPoolFunding(ReserveToken pool) external view returns (uint256) {
+        return _currentPoolFunding[pool];
     }
 
     /**
@@ -202,7 +202,7 @@ contract MasterPool is IMasterPool, Vault {
      * @inheritdoc IMasterPool
      */
     function unallocatedLiquidity(ReserveToken pool) external view returns (uint256) {
-        return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _fundedAmounts[pool]);
+        return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
     }
 
     /**
@@ -343,12 +343,12 @@ contract MasterPool is IMasterPool, Vault {
         ReserveToken pool,
         uint256 networkTokenAmount
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
-        uint256 currentFundedAmount = _fundedAmounts[pool];
+        uint256 currentFunding = _currentPoolFunding[pool];
         uint256 fundingLimit = _networkSettings.poolFundingLimit(pool);
-        uint256 newFundedAmount = currentFundedAmount + networkTokenAmount;
+        uint256 newFunding = currentFunding + networkTokenAmount;
 
-        // verify that the new funded amount doesn't exceed the limit
-        if (newFundedAmount > fundingLimit) {
+        // verify that the new funding amount doesn't exceed the limit
+        if (newFunding > fundingLimit) {
             revert FundingLimitExceeded();
         }
 
@@ -370,8 +370,8 @@ contract MasterPool is IMasterPool, Vault {
         // update the staked balance
         _stakedBalance = currentStakedBalance + networkTokenAmount;
 
-        // update the current funded amount
-        _fundedAmounts[pool] = newFundedAmount;
+        // update the current funding amount
+        _currentPoolFunding[pool] = newFunding;
 
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
@@ -397,9 +397,9 @@ contract MasterPool is IMasterPool, Vault {
     ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
-        // calculate the renounced amount to deduct from both the staked balance and pool funded amount
-        uint256 currentFundedAmount = _fundedAmounts[pool];
-        uint256 renouncedAmount = Math.min(currentFundedAmount, networkTokenAmount);
+        // calculate the renounced amount to deduct from both the staked balance and current pool funding
+        uint256 currentFunding = _currentPoolFunding[pool];
+        uint256 renouncedAmount = Math.min(currentFunding, networkTokenAmount);
 
         // calculate the pool token amount to burn
         uint256 poolTokenAmount = _underlyingToPoolToken(
@@ -408,10 +408,10 @@ contract MasterPool is IMasterPool, Vault {
             currentStakedBalance
         );
 
-        // update the current funded amount. Note that the given amount can be higher than the funded amount but the
-        // request shouldn't fail (and the funded amount cannot get negative)
+        // update the current pool funding. Note that the given amount can be higher than the funding amount but the
+        // request shouldn't fail (and the funding amount cannot get negative)
         unchecked {
-            _fundedAmounts[pool] = currentFundedAmount - renouncedAmount;
+            _currentPoolFunding[pool] = currentFunding - renouncedAmount;
         }
 
         // update the staked balance
@@ -447,8 +447,8 @@ contract MasterPool is IMasterPool, Vault {
         _stakedBalance += feeAmount;
 
         if (feeType == TRADING_FEE) {
-            // increase the funded amount for the specified pool by the given amount
-            _fundedAmounts[pool] += feeAmount;
+            // increase the current funding for the specified pool by the given amount
+            _currentPoolFunding[pool] += feeAmount;
         }
     }
 

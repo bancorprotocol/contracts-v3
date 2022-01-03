@@ -1061,7 +1061,7 @@ describe('BancorNetwork', () => {
 
                     expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
-                    // expect a few network tokens to be funded to the vault
+                    // expect a few network tokens to be minted to the vault
                     expect(await networkToken.totalSupply()).to.be.gte(prevNetworkTokenTotalSupply);
                     expect(await networkToken.balanceOf(masterVault.address)).to.be.gte(prevVaultNetworkTokenBalance);
 
@@ -3523,7 +3523,7 @@ describe('BancorNetwork Financial Verification', () => {
         bntBalances: Record<string, Decimal>;
         bntknBalances: Record<string, Decimal>;
         bnbntBalances: Record<string, Decimal>;
-        bntFundedAmount: Decimal;
+        bntCurrentPoolFunding: Decimal;
         tknStakedBalance: Decimal;
         bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
@@ -3649,7 +3649,7 @@ describe('BancorNetwork Financial Verification', () => {
             bntBalances: {},
             bntknBalances: {},
             bnbntBalances: {},
-            bntFundedAmount: new Decimal(0),
+            bntCurrentPoolFunding: new Decimal(0),
             tknStakedBalance: new Decimal(0),
             bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
@@ -3690,7 +3690,10 @@ describe('BancorNetwork Financial Verification', () => {
         );
 
         const poolData = await poolCollection.poolData(baseToken.address);
-        actual.bntFundedAmount = integerToDecimal(await masterPool.fundedAmount(baseToken.address), bntDecimals);
+        actual.bntCurrentPoolFunding = integerToDecimal(
+            await masterPool.currentPoolFunding(baseToken.address),
+            bntDecimals
+        );
         actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
         actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);

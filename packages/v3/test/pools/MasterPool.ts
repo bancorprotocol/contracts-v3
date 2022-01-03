@@ -400,7 +400,7 @@ describe('MasterPool', () => {
 
         const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
             const prevStakedBalance = await masterPool.stakedBalance();
-            const prevFundedAmount = await masterPool.fundedAmount(reserveToken.address);
+            const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
             const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
 
             const prevPoolTokenTotalSupply = await masterPoolToken.totalSupply();
@@ -427,7 +427,7 @@ describe('MasterPool', () => {
                 .withArgs(contextId, reserveToken.address, expectedAmount, expectedPoolTokenAmount);
 
             expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
-            expect(await masterPool.fundedAmount(reserveToken.address)).to.equal(prevFundedAmount.add(expectedAmount));
+            expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(prevFunding.add(expectedAmount));
             expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
                 prevUnallocatedLiquidity.sub(expectedAmount)
             );
@@ -580,7 +580,7 @@ describe('MasterPool', () => {
 
             const testRenounce = async (amount: BigNumber) => {
                 const prevStakedBalance = await masterPool.stakedBalance();
-                const prevFundedAmount = await masterPool.fundedAmount(reserveToken.address);
+                const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
                 const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
 
                 const prevPoolTokenTotalSupply = await masterPoolToken.totalSupply();
@@ -593,7 +593,7 @@ describe('MasterPool', () => {
                 const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                 const prevVaultTokenBalance = await networkToken.balanceOf(masterVault.address);
 
-                const renouncedAmount = BigNumber.min(prevFundedAmount, amount);
+                const renouncedAmount = BigNumber.min(prevFunding, amount);
                 const expectedPoolTokenAmount = renouncedAmount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
 
                 const res = await network.renounceLiquidityT(contextId, reserveToken.address, amount);
@@ -603,8 +603,8 @@ describe('MasterPool', () => {
                     .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
 
                 expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.sub(renouncedAmount));
-                expect(await masterPool.fundedAmount(reserveToken.address)).to.equal(
-                    prevFundedAmount.sub(renouncedAmount)
+                expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
+                    prevFunding.sub(renouncedAmount)
                 );
 
                 expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
@@ -1033,18 +1033,18 @@ describe('MasterPool', () => {
             for (const feeAmount of [0, 12_345, toWei(12_345)]) {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await masterPool.stakedBalance();
-                    const prevFundedAmount = await masterPool.fundedAmount(reserveToken.address);
+                    const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
                     const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
-                    const expectedFundedAmount = type === FeeType.Trading ? feeAmount : 0;
+                    const expectedFunding = type === FeeType.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
 
                     expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                    expect(await masterPool.fundedAmount(reserveToken.address)).to.equal(
-                        prevFundedAmount.add(expectedFundedAmount)
+                    expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
+                        prevFunding.add(expectedFunding)
                     );
                     expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
-                        prevUnallocatedLiquidity.sub(expectedFundedAmount)
+                        prevUnallocatedLiquidity.sub(expectedFunding)
                     );
                 });
             }

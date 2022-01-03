@@ -44,9 +44,9 @@ interface IMasterPool is IVault {
     function stakedBalance() external view returns (uint256);
 
     /**
-     * @dev returns the total funded amount for a given pool
+     * @dev returns the current funding of given pool
      */
-    function fundedAmount(ReserveToken pool) external view returns (uint256);
+    function currentPoolFunding(ReserveToken pool) external view returns (uint256);
 
     /**
      * @dev returns whether network token liquidity funding is enabled for the provided pool
