@@ -293,7 +293,7 @@ contract AutoCompoundingStakingRewards is
 
         p.isActive = false;
 
-        emit ProgramTerminated({ pool: pool, endTime: _time(), remainingRewards: p.remainingRewards });
+        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
 
     /**

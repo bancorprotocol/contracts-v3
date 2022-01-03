@@ -440,15 +440,13 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
 
                     it('should terminate the program', async () => {
-                        const newEndTime = END_TIME + 1;
-
-                        await autoCompoundingStakingRewards.setTime(newEndTime);
+                        await autoCompoundingStakingRewards.setTime(END_TIME + 1);
 
                         const res = autoCompoundingStakingRewards.terminateProgram(token.address);
 
                         await expect(res)
                             .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
-                            .withArgs(token.address, newEndTime, TOTAL_REWARDS);
+                            .withArgs(token.address, END_TIME, TOTAL_REWARDS);
 
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
