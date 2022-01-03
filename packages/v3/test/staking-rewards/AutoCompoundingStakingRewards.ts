@@ -408,6 +408,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.endTime).to.equal(END_TIME);
                     expect(program.prevDistributionTimestamp).to.equal(0);
                     expect(program.isEnabled).to.be.true;
+                    expect(program.isActive).to.be.true;
                 });
             });
 
@@ -460,6 +461,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         expect(program.endTime).to.equal(END_TIME);
                         expect(program.prevDistributionTimestamp).to.equal(0);
                         expect(program.isEnabled).to.be.true;
+                        expect(program.isActive).to.be.false;
                     });
                 });
             });
