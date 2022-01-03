@@ -331,6 +331,9 @@ contract AutoCompoundingStakingRewards is
         if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
             return;
         }
+        if (poolTokenAmountToBurn > p.poolToken.balanceOf(address(p.rewardsVault))) {
+            return;
+        }
 
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
@@ -376,11 +379,11 @@ contract AutoCompoundingStakingRewards is
         if (_isNetworkToken(pool)) {
             poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         } else {
-            IPoolCollection poolCollection = _network.collectionByPool(pool);
-            uint256 totalAmount = p.poolToken.balanceOf(address(p.rewardsVault));
-            uint256 burnAmount = poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, totalAmount);
-            // do not attempt to burn more than the balance in the rewards vault
-            poolTokenAmountToBurn = Math.min(burnAmount, totalAmount);
+            poolTokenAmountToBurn = _network.collectionByPool(pool).poolTokenAmountToBurn(
+                pool,
+                tokenAmountToDistribute,
+                p.poolToken.balanceOf(address(p.rewardsVault))
+            );
         }
     }
 
