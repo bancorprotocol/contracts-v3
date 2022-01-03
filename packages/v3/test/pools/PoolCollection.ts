@@ -1820,9 +1820,15 @@ describe('PoolCollection', () => {
                                 baseTokenAmount
                             );
 
-                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount);
+                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(
+                                reserveToken.address,
+                                poolTokenAmount
+                            );
                             await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
-                            const currUnderlying = await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount);
+                            const currUnderlying = await poolCollection.poolTokenToUnderlying(
+                                reserveToken.address,
+                                poolTokenAmount
+                            );
 
                             // ensure that burning the resulted pool token amount increases the underlying by the
                             // specified network amount while taking into account pool tokens owned by the protocol
