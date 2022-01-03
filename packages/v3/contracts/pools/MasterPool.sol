@@ -67,7 +67,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev triggered when liquidity is requested
      */
-    event LiquidityRequested(
+    event FundingRequested(
         bytes32 indexed contextId,
         ReserveToken indexed pool,
         uint256 networkTokenAmount,
@@ -77,7 +77,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev triggered when liquidity is renounced
      */
-    event LiquidityRenounced(
+    event FundingRenounced(
         bytes32 indexed contextId,
         ReserveToken indexed pool,
         uint256 networkTokenAmount,
@@ -379,7 +379,7 @@ contract MasterPool is IMasterPool, Vault {
         // mint network tokens to the vault
         _networkTokenGovernance.mint(address(_masterVault), networkTokenAmount);
 
-        emit LiquidityRequested({
+        emit FundingRequested({
             contextId: contextId,
             pool: pool,
             networkTokenAmount: networkTokenAmount,
@@ -423,7 +423,7 @@ contract MasterPool is IMasterPool, Vault {
         // withdraw network tokens from the master vault and burn them
         _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
 
-        emit LiquidityRenounced({
+        emit FundingRenounced({
             contextId: contextId,
             pool: pool,
             networkTokenAmount: networkTokenAmount,

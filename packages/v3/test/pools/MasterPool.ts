@@ -423,7 +423,7 @@ describe('MasterPool', () => {
             const res = await network.requestLiquidityT(contextId, reserveToken.address, amount);
 
             await expect(res)
-                .to.emit(masterPool, 'LiquidityRequested')
+                .to.emit(masterPool, 'FundingRequested')
                 .withArgs(contextId, reserveToken.address, expectedAmount, expectedPoolTokenAmount);
 
             expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
@@ -599,7 +599,7 @@ describe('MasterPool', () => {
                 const res = await network.renounceLiquidityT(contextId, reserveToken.address, amount);
 
                 await expect(res)
-                    .to.emit(masterPool, 'LiquidityRenounced')
+                    .to.emit(masterPool, 'FundingRenounced')
                     .withArgs(contextId, reserveToken.address, amount, expectedPoolTokenAmount);
 
                 expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.sub(renouncedAmount));
