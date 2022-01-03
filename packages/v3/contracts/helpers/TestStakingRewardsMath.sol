@@ -15,4 +15,19 @@ contract TestStakingRewardsMath {
     function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed) external pure returns (uint256) {
         return StakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
     }
+
+    function calcPoolTokenAmountToBurn(
+        uint256 poolTokenSupply,
+        uint256 poolTokenBalance,
+        uint256 tokenStakedBalance,
+        uint256 tokenAmountToDistribute
+    ) external pure returns (uint256) {
+        return
+            StakingRewardsMath.calcPoolTokenAmountToBurn(
+                poolTokenSupply,
+                poolTokenBalance,
+                tokenStakedBalance,
+                tokenAmountToDistribute
+            );
+    }
 }

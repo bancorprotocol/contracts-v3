@@ -116,6 +116,11 @@ interface IPoolCollection is IVersioned {
     function poolToken(ReserveToken pool) external view returns (IPoolToken);
 
     /**
+     * @dev returns the total staked balance in the pool
+     */
+    function poolStakedBalance(ReserveToken pool) external view returns (uint256);
+
+    /**
      * @dev converts the specified pool token amount to the underlying network token amount
      */
     function poolTokenToUnderlying(ReserveToken pool, uint256 poolTokenAmount) external view returns (uint256);
@@ -124,16 +129,6 @@ interface IPoolCollection is IVersioned {
      * @dev converts the specified underlying base token amount to pool token amount
      */
     function underlyingToPoolToken(ReserveToken pool, uint256 baseTokenAmount) external view returns (uint256);
-
-    /**
-     * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
-     * amount
-     */
-    function poolTokenAmountToBurn(
-        ReserveToken pool,
-        uint256 baseTokenAmountToDistribute,
-        uint256 protocolPoolTokenAmount
-    ) external view returns (uint256);
 
     /**
      * @dev creates a new pool

@@ -370,6 +370,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
+    function poolStakedBalance(ReserveToken pool) external view returns (uint256) {
+        return _poolData[pool].liquidity.stakedBalance;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
     function poolTokenToUnderlying(ReserveToken pool, uint256 poolTokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
@@ -383,31 +390,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Pool memory data = _poolData[pool];
 
         return _underlyingToPoolToken(data.poolToken, baseTokenAmount, data.liquidity.stakedBalance);
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function poolTokenAmountToBurn(
-        ReserveToken pool,
-        uint256 baseTokenAmountToDistribute,
-        uint256 protocolPoolTokenAmount
-    ) external view returns (uint256) {
-        if (baseTokenAmountToDistribute == 0) {
-            return 0;
-        }
-
-        Pool memory data = _poolData[pool];
-
-        uint256 poolTokenSupply = data.poolToken.totalSupply();
-        uint256 val = baseTokenAmountToDistribute * poolTokenSupply;
-
-        return
-            MathEx.mulDivF(
-                val,
-                poolTokenSupply,
-                val + data.liquidity.stakedBalance * (poolTokenSupply - protocolPoolTokenAmount)
-            );
     }
 
     /**

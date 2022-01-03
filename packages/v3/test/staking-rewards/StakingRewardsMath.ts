@@ -29,8 +29,8 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            for (const totalRewards of [1000, 10_000, 100_000, toWei(1000), toWei(10_000), toWei(100_000)]) {
-                for (const timeElapsed of [duration.seconds(1000), duration.days(1), duration.weeks(4)]) {
+            for (const totalRewards of [1_000, 10_000, 100_000, toWei(1_000), toWei(10_000), toWei(100_000)]) {
+                for (const timeElapsed of [duration.hours(1), duration.days(1), duration.weeks(4)]) {
                     for (const programDuration of [duration.hours(12), duration.days(3), duration.weeks(12)]) {
                         calcFlatReward(totalRewards, timeElapsed, programDuration);
                     }
@@ -113,6 +113,85 @@ describe('StakingRewardsMath', () => {
                                     );
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    describe('amount to burn', () => {
+        const calcPoolTokenAmountToBurn = (
+            poolTokenSupply: BigNumberish,
+            poolTokenBalance: BigNumberish,
+            tokenStakedBalance: BigNumberish,
+            tokenAmountToDistribute: BigNumberish
+        ) => {
+            it(`calcPoolTokenAmountToBurn(${poolTokenSupply}, ${poolTokenBalance}, ${tokenStakedBalance}, ${tokenAmountToDistribute})`, async () => {
+                const actual = await stakingRewardsMath.calcPoolTokenAmountToBurn(
+                    poolTokenSupply,
+                    poolTokenBalance,
+                    tokenStakedBalance,
+                    tokenAmountToDistribute
+                );
+                const expected = BigNumber.from(tokenAmountToDistribute)
+                    .mul(poolTokenSupply)
+                    .mul(poolTokenSupply)
+                    .div(
+                        BigNumber.from(tokenAmountToDistribute)
+                            .mul(poolTokenSupply)
+                            .add(
+                                BigNumber.from(tokenStakedBalance).mul(
+                                    BigNumber.from(poolTokenSupply).sub(poolTokenBalance)
+                                )
+                            )
+                    );
+                expect(actual).to.equal(expected);
+            });
+        };
+
+        describe('regular tests', () => {
+            for (const poolTokenSupply of [20_000, toWei(30_000)]) {
+                for (const poolTokenBalance of [10, 2].map((d) => BigNumber.from(poolTokenSupply).div(d))) {
+                    for (const tokenStakedBalance of [20_000, toWei(30_000)]) {
+                        for (const tokenAmountToDistribute of [20_000, toWei(30_000)]) {
+                            calcPoolTokenAmountToBurn(
+                                poolTokenSupply,
+                                poolTokenBalance,
+                                tokenStakedBalance,
+                                tokenAmountToDistribute
+                            );
+                        }
+                    }
+                }
+            }
+        });
+
+        describe('@stress tests', () => {
+            for (const poolTokenSupply of [1_000, 10_000, 100_000, toWei(1_000), toWei(10_000), toWei(100_000)]) {
+                for (const poolTokenBalance of [10, 5, 2, 1].map((d) => BigNumber.from(poolTokenSupply).div(d))) {
+                    for (const tokenStakedBalance of [
+                        1_000,
+                        10_000,
+                        100_000,
+                        toWei(1_000),
+                        toWei(10_000),
+                        toWei(100_000)
+                    ]) {
+                        for (const tokenAmountToDistribute of [
+                            1_000,
+                            10_000,
+                            100_000,
+                            toWei(1_000),
+                            toWei(10_000),
+                            toWei(100_000)
+                        ]) {
+                            calcPoolTokenAmountToBurn(
+                                poolTokenSupply,
+                                poolTokenBalance,
+                                tokenStakedBalance,
+                                tokenAmountToDistribute
+                            );
                         }
                     }
                 }

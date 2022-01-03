@@ -222,25 +222,6 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function poolTokenAmountToBurn(uint256 networkTokenAmountToDistribute) external view returns (uint256) {
-        if (networkTokenAmountToDistribute == 0) {
-            return 0;
-        }
-
-        uint256 poolTokenSupply = _poolToken.totalSupply();
-        uint256 val = networkTokenAmountToDistribute * poolTokenSupply;
-
-        return
-            MathEx.mulDivF(
-                val,
-                poolTokenSupply,
-                val + _stakedBalance * (poolTokenSupply - _poolToken.balanceOf(address(this)))
-            );
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
     function mint(address recipient, uint256 networkTokenAmount)
         external
         only(address(_network))

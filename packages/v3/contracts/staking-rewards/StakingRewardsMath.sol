@@ -37,4 +37,17 @@ library StakingRewardsMath {
         Fraction memory output = MathEx.exp(input);
         return MathEx.mulDivF(totalRewards, output.n - output.d, output.n);
     }
+
+    /**
+     * @dev returns the amount of pool tokens to burn
+     */
+    function calcPoolTokenAmountToBurn(
+        uint256 poolTokenSupply,
+        uint256 poolTokenBalance,
+        uint256 tokenStakedBalance,
+        uint256 tokenAmountToDistribute
+    ) internal pure returns (uint256) {
+        uint256 temp = tokenAmountToDistribute * poolTokenSupply;
+        return MathEx.mulDivF(temp, poolTokenSupply, temp + tokenStakedBalance * (poolTokenSupply - poolTokenBalance));
+    }
 }

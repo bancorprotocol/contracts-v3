@@ -1,6 +1,7 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts from '../../components/Contracts';
 import {
+    TestStakingRewardsMath,
     IERC20,
     ExternalRewardsVault,
     NetworkSettings,
@@ -1810,25 +1811,23 @@ describe('PoolCollection', () => {
 
                         it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
                             const poolTokenAmount = await poolToken.balanceOf(deployer.address);
-                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(
-                                reserveToken.address,
-                                poolTokenAmount
+
+                            const stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
+                            const poolTokenAmountToBurn = await stakingRewardsMath.calcPoolTokenAmountToBurn(
+                                await poolToken.totalSupply(),
+                                await poolToken.balanceOf(externalRewardsVault.address),
+                                await poolCollection.poolStakedBalance(reserveToken.address),
+                                baseTokenAmount
                             );
 
-                            const poolTokenAmountToBurn = await poolCollection.poolTokenAmountToBurn(
-                                reserveToken.address,
-                                baseTokenAmount,
-                                protocolPoolTokenAmount
-                            );
+                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount);
+                            await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
+                            const currUnderlying = await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount);
 
                             // ensure that burning the resulted pool token amount increases the underlying by the
                             // specified network amount while taking into account pool tokens owned by the protocol
                             // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
-                            await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
-
-                            expect(
-                                await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
-                            ).to.be.closeTo(prevUnderlying.add(baseTokenAmount), 1);
+                            expect(currUnderlying).to.be.closeTo(prevUnderlying.add(baseTokenAmount), 1);
                         });
                     });
                 }

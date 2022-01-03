@@ -373,14 +373,21 @@ contract AutoCompoundingStakingRewards is
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
 
-        if (_isNetworkToken(pool)) {
-            poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
-        } else {
-            IPoolCollection poolCollection = _network.collectionByPool(pool);
-            uint256 totalAmount = p.poolToken.balanceOf(address(p.rewardsVault));
-            uint256 burnAmount = poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, totalAmount);
-            // do not attempt to burn more than the balance in the rewards vault
-            poolTokenAmountToBurn = Math.min(burnAmount, totalAmount);
+        uint256 poolTokenSupply = p.poolToken.totalSupply();
+        uint256 poolTokenBalance = p.poolToken.balanceOf(address(p.rewardsVault));
+        uint256 tokenStakedBalance = _isNetworkToken(pool)
+            ? _masterPool.stakedBalance()
+            : _network.collectionByPool(pool).poolStakedBalance(pool);
+
+        poolTokenAmountToBurn = StakingRewardsMath.calcPoolTokenAmountToBurn(
+            poolTokenSupply,
+            poolTokenBalance,
+            tokenStakedBalance,
+            tokenAmountToDistribute
+        );
+
+        if (poolTokenAmountToBurn > poolTokenBalance) {
+            revert InsufficientFunds();
         }
     }
 

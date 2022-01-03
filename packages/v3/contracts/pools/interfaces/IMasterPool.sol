@@ -69,12 +69,6 @@ interface IMasterPool is IVault {
     function underlyingToPoolToken(uint256 networkTokenAmount) external view returns (uint256);
 
     /**
-     * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
-     * amount
-     */
-    function poolTokenAmountToBurn(uint256 networkTokenAmountToDistribute) external view returns (uint256);
-
-    /**
      * @dev mints network tokens to the recipient
      *
      * requirements:

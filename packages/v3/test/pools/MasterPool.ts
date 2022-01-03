@@ -1,6 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import {
+    TestStakingRewardsMath,
     MasterVault,
     IERC20,
     NetworkSettings,
@@ -1189,16 +1190,22 @@ describe('MasterPool', () => {
                     const poolTokenAmount = toWei(100_000);
                     await masterPool.mintT(deployer.address, poolTokenAmount);
 
+                    const stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
+                    const poolToken = await Contracts.PoolToken.attach(await masterPool.poolToken());
+                    const poolTokenAmountToBurn = await stakingRewardsMath.calcPoolTokenAmountToBurn(
+                        await poolToken.totalSupply(),
+                        await poolToken.balanceOf(masterPool.address),
+                        await masterPool.stakedBalance(),
+                        networkTokenAmount
+                    );
+
                     const prevUnderlying = await masterPool.poolTokenToUnderlying(poolTokenAmount);
-                    const poolTokenAmountToBurn = await masterPool.poolTokenAmountToBurn(networkTokenAmount);
+                    await masterPool.burnT(poolTokenAmountToBurn);
+                    const currUnderlying = await masterPool.poolTokenToUnderlying(poolTokenAmount);
 
                     // ensure that burning the resulted pool token amount increases the underlying by the
                     // specified network amount while taking into account pool tokens owned by the protocol
-                    await masterPool.burnT(poolTokenAmountToBurn);
-
-                    expect(await masterPool.poolTokenToUnderlying(poolTokenAmount)).to.equal(
-                        prevUnderlying.add(networkTokenAmount)
-                    );
+                    expect(currUnderlying).to.equal(prevUnderlying.add(networkTokenAmount));
                 });
             });
         }
