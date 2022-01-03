@@ -875,7 +875,7 @@ describe('BancorNetwork', () => {
         let masterPoolToken: PoolToken;
 
         const MAX_DEVIATION = toPPM(1);
-        const MINTING_LIMIT = toWei(10_000_000);
+        const FUNDING_LIMIT = toWei(10_000_000);
         const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const DEPOSIT_LIMIT = toWei(100_000_000);
@@ -916,7 +916,7 @@ describe('BancorNetwork', () => {
 
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                    await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
+                    await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                     await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
                     await poolCollection.setInitialRate(token.address, INITIAL_RATE);
@@ -1061,7 +1061,7 @@ describe('BancorNetwork', () => {
 
                     expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
-                    // expect a few network tokens to be minted to the vault
+                    // expect a few network tokens to be funded to the vault
                     expect(await networkToken.totalSupply()).to.be.gte(prevNetworkTokenTotalSupply);
                     expect(await networkToken.balanceOf(masterVault.address)).to.be.gte(prevVaultNetworkTokenBalance);
 
@@ -1203,9 +1203,9 @@ describe('BancorNetwork', () => {
                                                         networkSettings,
                                                         poolCollection
                                                     );
-                                                    await networkSettings.setPoolMintingLimit(
+                                                    await networkSettings.setFundingLimit(
                                                         reserveToken.address,
-                                                        MINTING_LIMIT
+                                                        FUNDING_LIMIT
                                                     );
 
                                                     await network.requestLiquidityT(
@@ -1222,7 +1222,7 @@ describe('BancorNetwork', () => {
                                         } else {
                                             context('when there is no unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
-                                                    await networkSettings.setPoolMintingLimit(token.address, 0);
+                                                    await networkSettings.setFundingLimit(token.address, 0);
                                                 });
 
                                                 context('with a whitelisted token', async () => {
@@ -1248,10 +1248,7 @@ describe('BancorNetwork', () => {
 
                                             context('when there is enough unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
-                                                    await networkSettings.setPoolMintingLimit(
-                                                        token.address,
-                                                        MAX_UINT256
-                                                    );
+                                                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                                 });
 
                                                 context('with non-whitelisted token', async () => {
@@ -1340,7 +1337,7 @@ describe('BancorNetwork', () => {
                                                         'when close to the limit of the unallocated network token liquidity',
                                                         () => {
                                                             beforeEach(async () => {
-                                                                await networkSettings.setPoolMintingLimit(
+                                                                await networkSettings.setFundingLimit(
                                                                     token.address,
                                                                     1000
                                                                 );
@@ -1496,7 +1493,7 @@ describe('BancorNetwork', () => {
 
                                     context('when there is no unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setPoolMintingLimit(token.address, 0);
+                                            await networkSettings.setFundingLimit(token.address, 0);
                                         });
 
                                         context('with a whitelisted token', async () => {
@@ -1520,7 +1517,7 @@ describe('BancorNetwork', () => {
 
                                     context('when there is enough unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+                                            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                         });
 
                                         context('with non-whitelisted token', async () => {
@@ -1580,7 +1577,7 @@ describe('BancorNetwork', () => {
                                                 'when close to the limit of the unallocated network token liquidity',
                                                 () => {
                                                     beforeEach(async () => {
-                                                        await networkSettings.setPoolMintingLimit(token.address, 1000);
+                                                        await networkSettings.setFundingLimit(token.address, 1000);
                                                     });
 
                                                     it('should complete a deposit', async () => {
@@ -1625,7 +1622,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
 
         const MAX_DEVIATION = toPPM(1);
-        const MINTING_LIMIT = toWei(10_000_000);
+        const FUNDING_LIMIT = toWei(10_000_000);
         const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
@@ -1691,13 +1688,13 @@ describe('BancorNetwork', () => {
 
                         const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTestToken();
-                        await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+                        await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                        await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
+                        await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                         await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                         await poolCollection.setInitialRate(token.address, INITIAL_RATE);
@@ -2709,7 +2706,7 @@ describe('BancorNetwork', () => {
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         };
@@ -2914,7 +2911,7 @@ describe('BancorNetwork', () => {
         let masterVault: MasterVault;
 
         const MAX_DEVIATION = toPPM(1);
-        const MINTING_LIMIT = toWei(10_000_000);
+        const FUNDING_LIMIT = toWei(10_000_000);
         const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const DEPOSIT_LIMIT = toWei(100_000_000);
@@ -3081,7 +3078,7 @@ describe('BancorNetwork', () => {
                 await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
 
                 await createPool(baseToken, network, networkSettings, poolCollection);
-                await networkSettings.setPoolMintingLimit(baseToken.address, MINTING_LIMIT);
+                await networkSettings.setFundingLimit(baseToken.address, FUNDING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
                 await poolCollection.setInitialRate(baseToken.address, INITIAL_RATE);
 
@@ -3425,7 +3422,7 @@ describe('BancorNetwork', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 
@@ -3526,7 +3523,7 @@ describe('BancorNetwork Financial Verification', () => {
         bntBalances: Record<string, Decimal>;
         bntknBalances: Record<string, Decimal>;
         bnbntBalances: Record<string, Decimal>;
-        bntMintedAmount: Decimal;
+        bntFundedAmount: Decimal;
         tknStakedBalance: Decimal;
         bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
@@ -3549,7 +3546,7 @@ describe('BancorNetwork Financial Verification', () => {
         tknInitialRate: number;
         bntInitialRate: number;
         bntMinLiquidity: number;
-        bntMintingLimit: number;
+        bntFundingLimit: number;
         users: User[];
         operations: Operation[];
     }
@@ -3652,7 +3649,7 @@ describe('BancorNetwork Financial Verification', () => {
             bntBalances: {},
             bntknBalances: {},
             bnbntBalances: {},
-            bntMintedAmount: new Decimal(0),
+            bntFundedAmount: new Decimal(0),
             tknStakedBalance: new Decimal(0),
             bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
@@ -3693,7 +3690,7 @@ describe('BancorNetwork Financial Verification', () => {
         );
 
         const poolData = await poolCollection.poolData(baseToken.address);
-        actual.bntMintedAmount = integerToDecimal(await masterPool.mintedAmount(baseToken.address), bntDecimals);
+        actual.bntFundedAmount = integerToDecimal(await masterPool.fundedAmount(baseToken.address), bntDecimals);
         actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
         actual.bntStakedBalance = integerToDecimal(await masterPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
@@ -3746,10 +3743,7 @@ describe('BancorNetwork Financial Verification', () => {
         await networkTokenGovernance.mint(signers[0].address, bntAmount);
 
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
-        await networkSettings.setPoolMintingLimit(
-            baseToken.address,
-            decimalToInteger(flow.bntMintingLimit, bntDecimals)
-        );
+        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
         await networkSettings.setMinLiquidityForTrading(flow.bntMinLiquidity);
 

@@ -60,7 +60,7 @@ describe('NetworkSettings', () => {
         });
 
         describe('adding', () => {
-            it('should revert when a non-owner attempts to add a token', async () => {
+            it('should revert when a non-admin attempts to add a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).addTokenToWhitelist(reserveToken.address)
                 ).to.be.revertedWith('AccessDenied');
@@ -94,7 +94,7 @@ describe('NetworkSettings', () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
             });
 
-            it('should revert when a non-owner attempts to remove a token', async () => {
+            it('should revert when a non-admin attempts to remove a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).removeTokenFromWhitelist(reserveToken.address)
                 ).to.be.revertedWith('AccessDenied');
@@ -120,51 +120,63 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('pool minting limits', () => {
-        const poolMintingLimit = toWei(123_456);
+    describe('pool funding limits', () => {
+        const poolFundingLimit = toWei(123_456);
 
-        it('should revert when a non-owner attempts to set a pool limit', async () => {
+        it('should revert when a non-admin attempts to set a pool limit', async () => {
             await expect(
-                networkSettings.connect(nonOwner).setPoolMintingLimit(reserveToken.address, poolMintingLimit)
+                networkSettings.connect(nonOwner).setFundingLimit(reserveToken.address, poolFundingLimit)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when setting a pool limit of an invalid address token', async () => {
-            await expect(networkSettings.setPoolMintingLimit(ZERO_ADDRESS, poolMintingLimit)).to.be.revertedWith(
+            await expect(networkSettings.setFundingLimit(ZERO_ADDRESS, poolFundingLimit)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('should ignore setting to the same pool minting limit', async () => {
-            await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
-
-            const res = await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
-            await expect(res).not.to.emit(networkSettings, 'PoolMintingLimitUpdated');
+        it('should revert when setting a pool limit of a non-whitelisted token', async () => {
+            await expect(networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit)).to.be.revertedWith(
+                'NotWhitelisted'
+            );
         });
 
-        it('should be able to set and update pool minting limit of a token', async () => {
-            expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(0);
+        context('whitelisted', () => {
+            beforeEach(async () => {
+                await networkSettings.addTokenToWhitelist(reserveToken.address);
+            });
 
-            const res = await networkSettings.setPoolMintingLimit(reserveToken.address, poolMintingLimit);
-            await expect(res)
-                .to.emit(networkSettings, 'PoolMintingLimitUpdated')
-                .withArgs(reserveToken.address, 0, poolMintingLimit);
+            it('should ignore setting to the same pool funding limit', async () => {
+                await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
 
-            expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(poolMintingLimit);
+                const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
+                await expect(res).not.to.emit(networkSettings, 'PoolFundingLimitUpdated');
+            });
 
-            const res2 = await networkSettings.setPoolMintingLimit(reserveToken.address, 0);
-            await expect(res2)
-                .to.emit(networkSettings, 'PoolMintingLimitUpdated')
-                .withArgs(reserveToken.address, poolMintingLimit, 0);
+            it('should be able to set and update pool funding limit of a token', async () => {
+                expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
 
-            expect(await networkSettings.poolMintingLimit(reserveToken.address)).to.equal(0);
+                const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
+                await expect(res)
+                    .to.emit(networkSettings, 'PoolFundingLimitUpdated')
+                    .withArgs(reserveToken.address, 0, poolFundingLimit);
+
+                expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
+
+                const res2 = await networkSettings.setFundingLimit(reserveToken.address, 0);
+                await expect(res2)
+                    .to.emit(networkSettings, 'PoolFundingLimitUpdated')
+                    .withArgs(reserveToken.address, poolFundingLimit, 0);
+
+                expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+            });
         });
     });
 
     describe('min liquidity for trading', () => {
         const minLiquidityForTrading = toWei(1000);
 
-        it('should revert when a non-owner attempts to set the minimum liquidity for trading', async () => {
+        it('should revert when a non-admin attempts to set the minimum liquidity for trading', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setMinLiquidityForTrading(minLiquidityForTrading)
             ).to.be.revertedWith('AccessDenied');
@@ -232,7 +244,7 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
         });
 
-        it('should revert when a non-owner attempts to set the withdrawal fee', async () => {
+        it('should revert when a non-admin attempts to set the withdrawal fee', async () => {
             await expect(networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
                 'AccessDenied'
             );
@@ -269,7 +281,7 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
         });
 
-        it('should revert when a non-owner attempts to set the flash-loan fee', async () => {
+        it('should revert when a non-admin attempts to set the flash-loan fee', async () => {
             await expect(networkSettings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
                 'AccessDenied'
             );
@@ -306,7 +318,7 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(0);
         });
 
-        it('should revert when a non-owner attempts to set the maximum deviation', async () => {
+        it('should revert when a non-admin attempts to set the maximum deviation', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setAverageRateMaxDeviationPPM(newMaxDeviation)
             ).to.be.revertedWith('AccessDenied');

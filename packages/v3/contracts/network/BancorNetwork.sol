@@ -24,9 +24,7 @@ import {
     InvalidPool,
     InvalidToken,
     InvalidType,
-    NotEmpty,
-    NotWhitelisted
- } from "../utility/Utils.sol";
+    NotEmpty } from "../utility/Utils.sol";
 
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
@@ -53,7 +51,7 @@ import {
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 

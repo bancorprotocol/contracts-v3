@@ -8,10 +8,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
-import { Utils, NotWhitelisted } from "../utility/Utils.sol";
+import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";

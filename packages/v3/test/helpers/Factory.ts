@@ -392,7 +392,7 @@ export const setupSimplePool = async (
         // ensure that there is enough space to deposit the network token
         const reserveToken = await createTestToken();
 
-        await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+        await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
         await network.requestLiquidityT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
 
         await depositToPool(provider, networkToken, spec.balance, network);
@@ -403,7 +403,7 @@ export const setupSimplePool = async (
     const token = await createToken(spec.tokenData);
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-    await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setInitialRate(token.address, spec.initialRate);
     await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);

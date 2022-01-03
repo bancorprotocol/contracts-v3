@@ -40,7 +40,7 @@ struct Pool {
 struct DepositAmounts {
     uint256 networkTokenDeltaAmount; // the network token amount that was added to the trading liquidity
     uint256 baseTokenDeltaAmount; // the base token amount that was added to the trading liquidity
-    uint256 poolTokenAmount; // the minted pool token amount
+    uint256 poolTokenAmount; // the funded pool token amount
     IPoolToken poolToken; // the pool token
 }
 

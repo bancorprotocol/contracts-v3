@@ -458,7 +458,7 @@ describe('BancorNetworkInfo', () => {
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 

@@ -18,7 +18,6 @@ error InvalidToken();
 error InvalidType();
 error NotEmpty();
 error NotPayable();
-error NotWhitelisted();
 error ZeroValue();
 
 /**

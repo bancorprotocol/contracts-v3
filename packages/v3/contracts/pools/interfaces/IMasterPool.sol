@@ -18,8 +18,8 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
 struct DepositAmounts {
-    uint256 poolTokenAmount; // the minted pool token amount
-    uint256 govTokenAmount; // the minted gov token amount
+    uint256 poolTokenAmount; // the funded pool token amount
+    uint256 govTokenAmount; // the funded gov token amount
 }
 
 struct WithdrawalAmounts {
@@ -44,12 +44,12 @@ interface IMasterPool is IVault {
     function stakedBalance() external view returns (uint256);
 
     /**
-     * @dev returns the total minted amount for a given pool
+     * @dev returns the total funded amount for a given pool
      */
-    function mintedAmount(ReserveToken pool) external view returns (uint256);
+    function fundedAmount(ReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether network token liquidity minting is enabled for the provided pool
+     * @dev returns whether network token liquidity funding is enabled for the provided pool
      */
     function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
 
@@ -125,7 +125,7 @@ interface IMasterPool is IVault {
      *
      * - the caller must be the network contract
      * - the token must have been whitelisted
-     * - the request amount should be below the minting limit for a given pool
+     * - the request amount should be below the funding limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
     function requestLiquidity(

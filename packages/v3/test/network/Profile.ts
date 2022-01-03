@@ -59,7 +59,7 @@ describe('Profile @profile', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
 
         const MAX_DEVIATION = toPPM(1);
-        const MINTING_LIMIT = toWei(10_000_000);
+        const FUNDING_LIMIT = toWei(10_000_000);
         const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const DEPOSIT_LIMIT = toWei(100_000_000);
@@ -87,7 +87,7 @@ describe('Profile @profile', () => {
 
                     await createPool(token, network, networkSettings, poolCollection);
 
-                    await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
+                    await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                     await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
                     await poolCollection.setInitialRate(token.address, INITIAL_RATE);
@@ -188,9 +188,9 @@ describe('Profile @profile', () => {
                                                         networkSettings,
                                                         poolCollection
                                                     );
-                                                    await networkSettings.setPoolMintingLimit(
+                                                    await networkSettings.setFundingLimit(
                                                         reserveToken.address,
-                                                        MINTING_LIMIT
+                                                        FUNDING_LIMIT
                                                     );
 
                                                     await network.requestLiquidityT(
@@ -207,7 +207,7 @@ describe('Profile @profile', () => {
                                         } else {
                                             context('when there is no unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
-                                                    await networkSettings.setPoolMintingLimit(token.address, 0);
+                                                    await networkSettings.setFundingLimit(token.address, 0);
                                                 });
 
                                                 context('with a whitelisted token', async () => {
@@ -219,10 +219,7 @@ describe('Profile @profile', () => {
 
                                             context('when there is enough unallocated network token liquidity', () => {
                                                 beforeEach(async () => {
-                                                    await networkSettings.setPoolMintingLimit(
-                                                        token.address,
-                                                        MAX_UINT256
-                                                    );
+                                                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                                 });
 
                                                 context('when spot rate is stable', () => {
@@ -335,7 +332,7 @@ describe('Profile @profile', () => {
 
                                     context('when there is no unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setPoolMintingLimit(token.address, 0);
+                                            await networkSettings.setFundingLimit(token.address, 0);
                                         });
 
                                         context('with a whitelisted token', async () => {
@@ -347,7 +344,7 @@ describe('Profile @profile', () => {
 
                                     context('when there is enough unallocated network token liquidity', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setPoolMintingLimit(token.address, MAX_UINT256);
+                                            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                         });
 
                                         context('when spot rate is stable', () => {
@@ -388,7 +385,7 @@ describe('Profile @profile', () => {
         let masterPoolToken: PoolToken;
 
         const MAX_DEVIATION = toPPM(1);
-        const MINTING_LIMIT = toWei(10_000_000);
+        const FUNDING_LIMIT = toWei(10_000_000);
         const WITHDRAWAL_FEE = toPPM(5);
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
@@ -440,13 +437,13 @@ describe('Profile @profile', () => {
 
                         const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTestToken();
-                        await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
+                        await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                        await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
+                        await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                         await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                         await poolCollection.setInitialRate(token.address, INITIAL_RATE);
@@ -850,7 +847,7 @@ describe('Profile @profile', () => {
             ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         };
@@ -932,7 +929,7 @@ describe('Profile @profile', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setPoolMintingLimit(networkToken.address, MAX_UINT256);
+            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 

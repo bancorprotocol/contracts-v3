@@ -6,7 +6,7 @@
     "tknInitialRate": 1,
     "bntInitialRate": 1,
     "bntMinLiquidity": "1000000",
-    "bntMintingLimit": "10000000",
+    "bntFundingLimit": "10000000",
     "users": [
         {
             "id": "dayTrader",
@@ -55,7 +55,7 @@
                     "bntProvider": "0",
                     "masterPool": "1000000"
                 },
-                "bntMintedAmount": "1000000",
+                "bntFundedAmount": "1000000",
                 "tknStakedBalance": "1000000",
                 "bntStakedBalance": "1000000",
                 "tknTradingLiquidity": "1000000",
@@ -92,7 +92,7 @@
                     "bntProvider": "0",
                     "masterPool": "1100000"
                 },
-                "bntMintedAmount": "1100000",
+                "bntFundedAmount": "1100000",
                 "tknStakedBalance": "1100000",
                 "bntStakedBalance": "1100000",
                 "tknTradingLiquidity": "1100000",
@@ -129,7 +129,7 @@
                     "bntProvider": "100000",
                     "masterPool": "1000000"
                 },
-                "bntMintedAmount": "1100000",
+                "bntFundedAmount": "1100000",
                 "tknStakedBalance": "1100000",
                 "bntStakedBalance": "1100000",
                 "tknTradingLiquidity": "1100000",
@@ -166,7 +166,7 @@
                     "bntProvider": "100000",
                     "masterPool": "1000000"
                 },
-                "bntMintedAmount": "1100002.497729336966394187",
+                "bntFundedAmount": "1100002.497729336966394187",
                 "tknStakedBalance": "1100000",
                 "bntStakedBalance": "1100002.497729336966394187",
                 "tknTradingLiquidity": "1101000",
@@ -203,7 +203,7 @@
                     "bntProvider": "100000",
                     "masterPool": "1000000"
                 },
-                "bntMintedAmount": "1100002.497729336966394187",
+                "bntFundedAmount": "1100002.497729336966394187",
                 "tknStakedBalance": "1100002.502264979362833283",
                 "bntStakedBalance": "1100002.497729336966394187",
                 "tknTradingLiquidity": "1100001.596273234229519973",
@@ -240,7 +240,7 @@
                     "bntProvider": "100000",
                     "masterPool": "451374.997737853491348456"
                 },
-                "bntMintedAmount": "551376.249724678509181088",
+                "bntFundedAmount": "551376.249724678509181088",
                 "tknStakedBalance": "550001.251132489681416641",
                 "bntStakedBalance": "551376.249724678509181088",
                 "tknTradingLiquidity": "551375.348268575772306874",
@@ -277,7 +277,7 @@
                     "bntProvider": "50000",
                     "masterPool": "501374.997737853491348456"
                 },
-                "bntMintedAmount": "551376.249724678509181088",
+                "bntFundedAmount": "551376.249724678509181088",
                 "tknStakedBalance": "550001.251132489681416641",
                 "bntStakedBalance": "551376.249724678509181088",
                 "tknTradingLiquidity": "551375.348268575772306874",

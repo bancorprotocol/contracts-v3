@@ -22,11 +22,10 @@ import {
     InvalidPool,
     InvalidPoolBalance,
     InvalidPoolCollection,
-    InvalidStakedBalance,
-    NotWhitelisted
+    InvalidStakedBalance
 } from "../utility/Utils.sol";
 
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
