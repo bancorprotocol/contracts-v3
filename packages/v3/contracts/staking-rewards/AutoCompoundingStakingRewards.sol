@@ -327,7 +327,7 @@ contract AutoCompoundingStakingRewards is
 
         uint32 timeElapsed = currentTime - p.startTime;
 
-        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _processRewardAmounts(pool, p, timeElapsed);
+        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _calculateRewards(pool, p, timeElapsed);
         if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
             return;
         }
@@ -357,7 +357,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns the amount of tokens to distribute and the amount of pool tokens to burn
      */
-    function _processRewardAmounts(
+    function _calculateRewards(
         ReserveToken pool,
         ProgramData memory p,
         uint32 timeElapsed
