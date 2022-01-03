@@ -150,7 +150,7 @@ describe('NetworkSettings', () => {
                 await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
 
                 const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
-                await expect(res).not.to.emit(networkSettings, 'PoolFundingLimitUpdated');
+                await expect(res).not.to.emit(networkSettings, 'FundingLimitUpdated');
             });
 
             it('should be able to set and update pool funding limit of a token', async () => {
@@ -158,14 +158,14 @@ describe('NetworkSettings', () => {
 
                 const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
                 await expect(res)
-                    .to.emit(networkSettings, 'PoolFundingLimitUpdated')
+                    .to.emit(networkSettings, 'FundingLimitUpdated')
                     .withArgs(reserveToken.address, 0, poolFundingLimit);
 
                 expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
 
                 const res2 = await networkSettings.setFundingLimit(reserveToken.address, 0);
                 await expect(res2)
-                    .to.emit(networkSettings, 'PoolFundingLimitUpdated')
+                    .to.emit(networkSettings, 'FundingLimitUpdated')
                     .withArgs(reserveToken.address, poolFundingLimit, 0);
 
                 expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);

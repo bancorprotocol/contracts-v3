@@ -58,7 +58,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev triggered when a per-pool funding limit is updated
      */
-    event PoolFundingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event FundingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the minimum liquidity for trading is updated
@@ -208,7 +208,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
 
         _poolFundingLimits[pool] = amount;
 
-        emit PoolFundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
+        emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
     }
 
     /**
