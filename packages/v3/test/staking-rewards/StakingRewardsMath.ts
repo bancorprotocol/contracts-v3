@@ -29,8 +29,8 @@ describe('StakingRewardsMath', () => {
         };
 
         describe('regular tests', () => {
-            for (const totalRewards of [1000, 10_000, 100_000, toWei(1000), toWei(10_000), toWei(100_000)]) {
-                for (const timeElapsed of [duration.seconds(1000), duration.days(1), duration.weeks(4)]) {
+            for (const totalRewards of [1_000, 10_000, 100_000, toWei(1_000), toWei(10_000), toWei(100_000)]) {
+                for (const timeElapsed of [duration.hours(1), duration.days(1), duration.weeks(4)]) {
                     for (const programDuration of [duration.hours(12), duration.days(3), duration.weeks(12)]) {
                         calcFlatReward(totalRewards, timeElapsed, programDuration);
                     }
