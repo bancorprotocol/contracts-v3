@@ -48,6 +48,12 @@ abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnume
         _;
     }
 
+    modifier onlyRoleMember(bytes32 role) {
+        _hasRole(role, msg.sender);
+
+        _;
+    }
+
     function _hasRole(bytes32 role, address account) internal view {
         if (!hasRole(role, account)) {
             revert AccessDenied();
