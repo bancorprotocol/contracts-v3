@@ -65,7 +65,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _poolWithdrawalAmounts(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
     }
 
-    function mintT(
+    function mintPoolTokenT(
         ReserveToken pool,
         address recipient,
         uint256 poolTokenAmount

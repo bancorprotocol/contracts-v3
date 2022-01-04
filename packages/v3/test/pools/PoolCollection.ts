@@ -1823,7 +1823,7 @@ describe('PoolCollection', () => {
                     context(`protocol pool token amount of ${protocolPoolTokenAmount} `, () => {
                         beforeEach(async () => {
                             if (protocolPoolTokenAmount !== 0) {
-                                await poolCollection.mintT(
+                                await poolCollection.mintPoolTokenT(
                                     reserveToken.address,
                                     externalRewardsVault.address,
                                     protocolPoolTokenAmount
