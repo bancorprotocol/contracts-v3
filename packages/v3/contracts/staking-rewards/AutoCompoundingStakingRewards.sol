@@ -332,7 +332,7 @@ contract AutoCompoundingStakingRewards is
             return;
         }
         if (poolTokenAmountToBurn > p.poolToken.balanceOf(address(p.rewardsVault))) {
-            return;
+            revert InsufficientFunds();
         }
 
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
