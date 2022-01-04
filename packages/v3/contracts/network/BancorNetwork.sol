@@ -991,9 +991,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             unallocatedNetworkTokenLiquidity
         );
 
-        // request additional liquidity from the master pool and transfer it to the vault
+        // request additional funding from the master pool and transfer it to the vault
         if (depositAmounts.networkTokenDeltaAmount > 0) {
-            cachedMasterPool.requestLiquidity(contextId, pool, depositAmounts.networkTokenDeltaAmount);
+            cachedMasterPool.requestFunding(contextId, pool, depositAmounts.networkTokenDeltaAmount);
         }
 
         // TODO: process network fees based on the return values
@@ -1170,7 +1170,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
-            assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting liquidity here
+            assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
             cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
         }
 

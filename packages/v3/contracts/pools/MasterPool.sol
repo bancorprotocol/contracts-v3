@@ -16,7 +16,7 @@ import { Fraction } from "../utility/Types.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { TRADING_FEE } from "../network/FeeTypes.sol";
@@ -48,6 +48,9 @@ contract MasterPool is IMasterPool, Vault {
 
     // the vault manager role is required to request the master pool to burn network tokens from the master vault
     bytes32 public constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
+
+    // the funding manager role is required to request or renounce funding from the master pool
+    bytes32 public constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -141,6 +144,24 @@ contract MasterPool is IMasterPool, Vault {
         _setRoleAdmin(ROLE_MASTER_POOL_TOKEN_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_FUNDING_MANAGER, ROLE_ADMIN);
+    }
+
+    // solhint-enable func-name-mixedcase
+
+    modifier validPoolForFunding(ReserveToken pool) {
+        _validPoolForFunding(pool);
+
+        _;
+    }
+
+    /**
+     * @dev validates that the provided pool is eligible for funding
+     */
+    function _validPoolForFunding(ReserveToken pool) internal view {
+        if (!_networkSettings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
     }
 
     /**
@@ -193,17 +214,6 @@ contract MasterPool is IMasterPool, Vault {
      */
     function currentPoolFunding(ReserveToken pool) external view returns (uint256) {
         return _currentPoolFunding[pool];
-    }
-
-    /**
-     * @inheritdoc IMasterPool
-     */
-    function isFundingEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool) {
-        return
-            ReserveToken.unwrap(pool) != address(0) &&
-            address(poolCollection) != address(0) &&
-            _networkSettings.isTokenWhitelisted(pool) &&
-            poolCollection.isPoolRateStable(pool);
     }
 
     /**
@@ -346,11 +356,11 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function requestLiquidity(
+    function requestFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) validPoolForFunding(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentFunding = _currentPoolFunding[pool];
         uint256 fundingLimit = _networkSettings.poolFundingLimit(pool);
         uint256 newFunding = currentFunding + networkTokenAmount;
@@ -402,7 +412,7 @@ contract MasterPool is IMasterPool, Vault {
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) greaterThanZero(networkTokenAmount) {
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) validPoolForFunding(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the renounced amount to deduct from both the staked balance and current pool funding

@@ -115,22 +115,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             poolCollection.withdraw(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
     }
 
-    function requestLiquidityT(
-        bytes32 contextId,
-        ReserveToken pool,
-        uint256 networkTokenAmount
-    ) external {
-        _masterPool.requestLiquidity(contextId, pool, networkTokenAmount);
-    }
-
-    function renounceLiquidityT(
-        bytes32 contextId,
-        ReserveToken pool,
-        uint256 networkTokenAmount
-    ) external {
-        _masterPool.renounceLiquidity(contextId, pool, networkTokenAmount);
-    }
-
     function onNetworkTokenFeesCollectedT(
         ReserveToken pool,
         uint256 amount,

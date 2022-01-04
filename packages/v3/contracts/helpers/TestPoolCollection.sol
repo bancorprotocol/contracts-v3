@@ -73,6 +73,14 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _poolData[pool].poolToken.mint(recipient, poolTokenAmount);
     }
 
+    function requestFundingT(
+        bytes32 contextId,
+        ReserveToken pool,
+        uint256 networkTokenAmount
+    ) external {
+        _masterPool.requestFunding(contextId, pool, networkTokenAmount);
+    }
+
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }

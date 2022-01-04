@@ -398,7 +398,7 @@ export const setupSimplePool = async (
         const reserveToken = await createTestToken();
 
         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-        await network.requestLiquidityT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
+        await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
 
         await depositToPool(provider, networkToken, spec.balance, network);
 

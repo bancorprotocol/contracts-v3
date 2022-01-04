@@ -1226,7 +1226,7 @@ describe('BancorNetwork', () => {
                                                         FUNDING_LIMIT
                                                     );
 
-                                                    await network.requestFundingT(
+                                                    await poolCollection.requestFundingT(
                                                         CONTEXT_ID,
                                                         reserveToken.address,
                                                         amount
@@ -1238,7 +1238,7 @@ describe('BancorNetwork', () => {
                                                 });
                                             });
                                         } else {
-                                            context('when there is no unallocated network token liquidity', () => {
+                                            context('when there is no available network token funding', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setFundingLimit(token.address, 0);
                                                 });
@@ -1264,7 +1264,7 @@ describe('BancorNetwork', () => {
                                                 });
                                             });
 
-                                            context('when there is enough unallocated network token liquidity', () => {
+                                            context('when there is enough available network token funding', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                                 });
@@ -1352,7 +1352,7 @@ describe('BancorNetwork', () => {
                                                     });
 
                                                     context(
-                                                        'when close to the limit of the unallocated network token liquidity',
+                                                        'when close to the limit of the available network token funding',
                                                         () => {
                                                             beforeEach(async () => {
                                                                 await networkSettings.setFundingLimit(
@@ -1509,7 +1509,7 @@ describe('BancorNetwork', () => {
                                         await reserveToken.transfer(senderAddress, amount);
                                     });
 
-                                    context('when there is no unallocated network token liquidity', () => {
+                                    context('when there is no available network token funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, 0);
                                         });
@@ -1533,7 +1533,7 @@ describe('BancorNetwork', () => {
                                         });
                                     });
 
-                                    context('when there is enough unallocated network token liquidity', () => {
+                                    context('when there is enough available network token funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                         });
@@ -1592,7 +1592,7 @@ describe('BancorNetwork', () => {
                                             });
 
                                             context(
-                                                'when close to the limit of the unallocated network token liquidity',
+                                                'when close to the limit of the available network token funding',
                                                 () => {
                                                     beforeEach(async () => {
                                                         await networkSettings.setFundingLimit(token.address, 1000);
@@ -1702,7 +1702,7 @@ describe('BancorNetwork', () => {
                         const reserveToken = await createTestToken();
                         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        await network.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
+                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
@@ -1934,7 +1934,7 @@ describe('BancorNetwork', () => {
                                 );
 
                                 // TODO: test actual amounts
-                                // TODO: test request/renounce liquidity
+                                // TODO: test request/renounce funding
                                 // TODO: test vault and external storage balances
                             };
 

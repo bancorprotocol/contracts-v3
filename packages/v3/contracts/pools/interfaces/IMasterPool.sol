@@ -49,11 +49,6 @@ interface IMasterPool is IVault {
     function currentPoolFunding(ReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether funding is enabled for the provided pool
-     */
-    function isFundingEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
-
-    /**
      * @dev returns the available network token funding for a given pool
      */
     function availableFunding(ReserveToken pool) external view returns (uint256);
@@ -119,27 +114,27 @@ interface IMasterPool is IVault {
     function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
 
     /**
-     * @dev requests network token liquidity
+     * @dev requests network token funding
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_FUNDING_MANAGER role
      * - the token must have been whitelisted
      * - the request amount should be below the funding limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
-    function requestLiquidity(
+    function requestFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
     ) external;
 
     /**
-     * @dev renounces network token liquidity
+     * @dev renounces network token funding
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_FUNDING_MANAGER role
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */

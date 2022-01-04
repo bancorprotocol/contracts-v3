@@ -157,8 +157,7 @@ interface IPoolCollection is IVersioned {
     function depositFor(
         address provider,
         ReserveToken pool,
-        uint256 baseTokenAmount,
-        uint256 unallocatedNetworkTokenLiquidity
+        uint256 baseTokenAmount
     ) external returns (DepositAmounts memory);
 
     /**

@@ -191,7 +191,7 @@ describe('Profile @profile', () => {
                                                         FUNDING_LIMIT
                                                     );
 
-                                                    await network.requestFundingT(
+                                                    await poolCollection.requestFundingT(
                                                         CONTEXT_ID,
                                                         reserveToken.address,
                                                         amount
@@ -431,7 +431,7 @@ describe('Profile @profile', () => {
                         const reserveToken = await createTestToken();
                         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        await network.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
+                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 

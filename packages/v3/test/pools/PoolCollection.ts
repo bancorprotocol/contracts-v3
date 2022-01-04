@@ -1863,7 +1863,7 @@ describe('PoolCollection', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
-        let masterPool: MasterPool;
+        let masterPool: TestMasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolToken: PoolToken;
