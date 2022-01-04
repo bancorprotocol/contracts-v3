@@ -190,7 +190,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool) {
+    function isFundingEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool) {
         return
             ReserveToken.unwrap(pool) != address(0) &&
             address(poolCollection) != address(0) &&

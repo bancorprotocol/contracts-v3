@@ -49,9 +49,9 @@ interface IMasterPool is IVault {
     function currentPoolFunding(ReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether network token liquidity funding is enabled for the provided pool
+     * @dev returns whether funding is enabled for the provided pool
      */
-    function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
+    function isFundingEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
 
     /**
      * @dev returns the unallocated co-investment network token liquidity for a given pool

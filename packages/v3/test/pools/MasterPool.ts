@@ -279,16 +279,15 @@ describe('MasterPool', () => {
         });
 
         it('should return false for an invalid pool', async () => {
-            expect(await masterPool.isNetworkLiquidityEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
+            expect(await masterPool.isFundingEnabled(ZERO_ADDRESS, poolCollection.address)).to.be.false;
         });
 
         it('should return false for an invalid pool collection', async () => {
-            expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
+            expect(await masterPool.isFundingEnabled(reserveToken.address, ZERO_ADDRESS)).to.be.false;
         });
 
         it('should return false for a non-whitelisted token', async () => {
-            expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to.be
-                .false;
+            expect(await masterPool.isFundingEnabled(reserveToken.address, poolCollection.address)).to.be.false;
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -322,8 +321,7 @@ describe('MasterPool', () => {
                 });
 
                 it('should return false', async () => {
-                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to
-                        .be.false;
+                    expect(await masterPool.isFundingEnabled(reserveToken.address, poolCollection.address)).to.be.false;
                 });
             });
 
@@ -351,8 +349,7 @@ describe('MasterPool', () => {
                 });
 
                 it('should return true', async () => {
-                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection.address)).to
-                        .be.true;
+                    expect(await masterPool.isFundingEnabled(reserveToken.address, poolCollection.address)).to.be.true;
                 });
 
                 it('should return false for another pool collection', async () => {
@@ -364,8 +361,8 @@ describe('MasterPool', () => {
                         poolCollectionUpgrader
                     );
 
-                    expect(await masterPool.isNetworkLiquidityEnabled(reserveToken.address, poolCollection2.address)).to
-                        .be.false;
+                    expect(await masterPool.isFundingEnabled(reserveToken.address, poolCollection2.address)).to.be
+                        .false;
                 });
             });
         });

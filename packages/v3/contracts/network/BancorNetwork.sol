@@ -976,7 +976,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.unallocatedLiquidity(pool);
         if (unallocatedNetworkTokenLiquidity == 0 && !_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
-        } else if (!cachedMasterPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+        } else if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
             revert NetworkLiquidityDisabled();
         }
 
@@ -1153,7 +1153,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // ensure that network token liquidity is enabled
-        if (!cachedMasterPool.isNetworkLiquidityEnabled(pool, poolCollection)) {
+        if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
             revert NetworkLiquidityDisabled();
         }
 
