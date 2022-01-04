@@ -156,6 +156,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     }
 
     // solhint-enable func-name-mixedcase
+
     /**
      * @dev returns the current version of the contract
      */

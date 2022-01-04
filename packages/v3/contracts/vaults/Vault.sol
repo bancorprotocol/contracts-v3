@@ -64,6 +64,8 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      */
     function __Vault_init_unchained() internal onlyInitializing {}
 
+    // solhint-enable func-name-mixedcase
+
     // allows execution only by an authorized operation
     modifier whenAuthorized(
         address caller,

@@ -52,6 +52,8 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
     }
 
+    // solhint-enable func-name-mixedcase
+
     /**
      * @inheritdoc Vault
      */

@@ -24,6 +24,8 @@ contract TestLogic is Upgradeable {
         _version = 1;
     }
 
+    // solhint-enable func-name-mixedcase
+
     function initialized() external view returns (bool) {
         return _initialized;
     }

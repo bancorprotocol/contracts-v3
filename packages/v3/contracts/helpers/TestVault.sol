@@ -31,6 +31,8 @@ contract TestVault is Vault {
 
     function __TestVault_init_unchained() internal onlyInitializing {}
 
+    // solhint-enable func-name-mixedcase
+
     function setAuthorizedWithdrawal(bool state) external {
         _isAuthorizedWithdrawal = state;
     }

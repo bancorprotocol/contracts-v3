@@ -62,6 +62,8 @@ contract MasterVault is IMasterVault, Vault {
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
     }
 
+    // solhint-enable func-name-mixedcase
+
     /**
      * @inheritdoc Vault
      */

@@ -52,6 +52,8 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
     }
 
+    // solhint-enable func-name-mixedcase
+
     /**
      * @dev returns the current version of the contract
      */
