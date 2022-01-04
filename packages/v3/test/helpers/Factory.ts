@@ -185,7 +185,7 @@ export const createPoolCollection = async (
         toAddress(poolCollectionUpgrader)
     );
 
-const createMasterPoolUninitialized = async (
+const createMasterPool = async (
     network: TestBancorNetwork,
     networkSettings: NetworkSettings,
     networkTokenGovernance: TokenGovernance,
@@ -207,6 +207,10 @@ const createMasterPoolUninitialized = async (
 
     await masterPoolToken.acceptOwnership();
     await masterPoolToken.transferOwnership(masterPool.address);
+
+    await masterPool.initialize();
+
+    await masterPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
     await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
     await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
@@ -274,7 +278,7 @@ const createSystemFixture = async () => {
         ]
     });
 
-    const masterPool = await createMasterPoolUninitialized(
+    const masterPool = await createMasterPool(
         network,
         networkSettings,
         networkTokenGovernance,
@@ -282,8 +286,6 @@ const createSystemFixture = async () => {
         masterVault,
         masterPoolToken
     );
-
-    await masterPool.initialize();
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address, networkToken.address, masterPool.address]

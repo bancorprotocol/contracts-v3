@@ -43,6 +43,12 @@ contract MasterPool is IMasterPool, Vault {
     // the master pool token manager role is required to access the master pool token reserve
     bytes32 public constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");
 
+    // the network token manager role is required to request the master pool to mint network tokens
+    bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
+
+    // the vault manager role is required to request the master pool to burn network tokens from the master vault
+    bytes32 public constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -133,6 +139,8 @@ contract MasterPool is IMasterPool, Vault {
 
         // set up administrative roles
         _setRoleAdmin(ROLE_MASTER_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
     }
 
     /**
@@ -155,7 +163,7 @@ contract MasterPool is IMasterPool, Vault {
      * requirements:
      *
      * - reserve token must be the master pool token
-     * - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER permission
+     * - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,
@@ -243,7 +251,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     function mint(address recipient, uint256 networkTokenAmount)
         external
-        only(address(_network))
+        onlyRoleMember(ROLE_NETWORK_TOKEN_MANAGER)
         validAddress(recipient)
         greaterThanZero(networkTokenAmount)
     {
@@ -255,7 +263,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     function burnFromVault(uint256 networkTokenAmount)
         external
-        only(address(_network))
+        onlyRoleMember(ROLE_VAULT_MANAGER)
         greaterThanZero(networkTokenAmount)
     {
         _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);

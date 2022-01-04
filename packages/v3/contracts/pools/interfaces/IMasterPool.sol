@@ -79,7 +79,7 @@ interface IMasterPool is IVault {
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_NETWORK_TOKEN_MANAGER role
      */
     function mint(address recipient, uint256 networkTokenAmount) external;
 
@@ -88,7 +88,7 @@ interface IMasterPool is IVault {
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_VAULT_MANAGER role
      */
     function burnFromVault(uint256 networkTokenAmount) external;
 

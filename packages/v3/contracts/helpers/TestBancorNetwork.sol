@@ -78,14 +78,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
-    function mintT(address recipient, uint256 networkTokenAmount) external {
-        return _masterPool.mint(recipient, networkTokenAmount);
-    }
-
-    function burnFromVaultT(uint256 networkTokenAmount) external {
-        return _masterPool.burnFromVault(networkTokenAmount);
-    }
-
     function depositToNetworkPoolForT(
         address provider,
         uint256 networkTokenAmount,
