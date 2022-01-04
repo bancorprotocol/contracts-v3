@@ -22,7 +22,7 @@ contract MasterVault is IMasterVault, Vault {
     // the asset manager role is required to access all the reserves
     bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
-    // the asset manager role is only required to access the network token reserve
+    // the network token manager role is only required to access the network token reserve
     bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
 
     // upgrade forward-compatibility storage gap
@@ -81,8 +81,8 @@ contract MasterVault is IMasterVault, Vault {
      *
      * requirements:
      *
-     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
-     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
+     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER role
+     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,

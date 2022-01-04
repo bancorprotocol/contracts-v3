@@ -63,6 +63,7 @@ describe('Vault', () => {
         it('should be properly initialized', async () => {
             expect(await testVault.version()).to.equal(1);
             expect(await testVault.isPayable()).to.be.false;
+
             await expectRole(testVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
         });
     });

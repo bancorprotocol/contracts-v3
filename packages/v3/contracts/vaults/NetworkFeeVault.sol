@@ -77,7 +77,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
      *
      * requirements:
      *
-     * - the caller must have the ROLE_ASSET_MANAGER permission
+     * - the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,
