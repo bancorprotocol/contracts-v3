@@ -257,7 +257,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                it('should revert when there is already an active program', async () => {
+                it('should revert when the program is already created', async () => {
                     await autoCompoundingStakingRewards.createProgram(
                         token.address,
                         rewardsVault.address,
@@ -276,7 +276,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             START_TIME,
                             END_TIME
                         )
-                    ).to.revertedWith('ProgramAlreadyActive');
+                    ).to.revertedWith('ProgramAlreadyCreated');
                 });
 
                 it('should revert when the total rewards are equal to 0', async () => {
@@ -408,7 +408,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.endTime).to.equal(END_TIME);
                     expect(program.prevDistributionTimestamp).to.equal(0);
                     expect(program.isEnabled).to.be.true;
-                    expect(program.isActive).to.be.true;
+                    expect(program.isCreated).to.be.true;
                 });
             });
 
@@ -419,15 +419,15 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.be.revertedWith('AccessDenied');
                 });
 
-                context('when a program is inactive', () => {
+                context('when a program is not yet created', () => {
                     it('should revert', async () => {
                         await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
-                            'ProgramInactive'
+                            'ProgramNotYetCreated'
                         );
                     });
                 });
 
-                context('when a program is active', () => {
+                context('when a program is already created', () => {
                     beforeEach(async () => {
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
@@ -439,8 +439,29 @@ describe('AutoCompoundingStakingRewards', () => {
                         );
                     });
 
-                    it('should terminate the program', async () => {
-                        await autoCompoundingStakingRewards.setTime(END_TIME + 1);
+                    it('should terminate a program which has not yet started', async () => {
+                        const res = autoCompoundingStakingRewards.terminateProgram(token.address);
+
+                        await expect(res)
+                            .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
+                            .withArgs(token.address, END_TIME, TOTAL_REWARDS);
+
+                        const program = await autoCompoundingStakingRewards.program(token.address);
+
+                        expect(program.poolToken).to.equal(poolToken.address);
+                        expect(program.rewardsVault).to.equal(rewardsVault.address);
+                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
+                        expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
+                        expect(program.distributionType).to.equal(distributionType);
+                        expect(program.startTime).to.equal(START_TIME);
+                        expect(program.endTime).to.equal(END_TIME);
+                        expect(program.prevDistributionTimestamp).to.equal(0);
+                        expect(program.isEnabled).to.be.true;
+                        expect(program.isCreated).to.be.false;
+                    });
+
+                    it('should terminate a program which has already started', async () => {
+                        await autoCompoundingStakingRewards.setTime(START_TIME);
 
                         const res = autoCompoundingStakingRewards.terminateProgram(token.address);
 
@@ -459,7 +480,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         expect(program.endTime).to.equal(END_TIME);
                         expect(program.prevDistributionTimestamp).to.equal(0);
                         expect(program.isEnabled).to.be.true;
-                        expect(program.isActive).to.be.false;
+                        expect(program.isCreated).to.be.false;
                     });
                 });
             });
@@ -568,7 +589,7 @@ describe('AutoCompoundingStakingRewards', () => {
             });
 
             describe('is program active', () => {
-                context('when a program does not exist', () => {
+                context('before a program has been created', () => {
                     it('should return false', async () => {
                         expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                     });
@@ -588,8 +609,8 @@ describe('AutoCompoundingStakingRewards', () => {
                         await autoCompoundingStakingRewards.setTime(START_TIME - 1);
                     });
 
-                    it('should return true', async () => {
-                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
+                    it('should return false', async () => {
+                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                     });
                 });
 
@@ -604,7 +625,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             END_TIME
                         );
 
-                        await autoCompoundingStakingRewards.setTime(START_TIME + 1);
+                        await autoCompoundingStakingRewards.setTime(START_TIME);
                     });
 
                     it('should return true', async () => {
