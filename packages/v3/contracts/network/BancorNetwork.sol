@@ -973,7 +973,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
         // we need to check if the master pool is able to provide network liquidity
-        uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.unallocatedLiquidity(pool);
+        uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.availableFunding(pool);
         if (unallocatedNetworkTokenLiquidity == 0 && !_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         } else if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {

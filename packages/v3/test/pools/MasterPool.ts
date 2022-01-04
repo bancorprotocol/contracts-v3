@@ -398,7 +398,7 @@ describe('MasterPool', () => {
         const testRequest = async (amount: BigNumber, expectedAmount: BigNumber) => {
             const prevStakedBalance = await masterPool.stakedBalance();
             const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
-            const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
+            const prevAvailableFunding = await masterPool.availableFunding(reserveToken.address);
 
             const prevPoolTokenTotalSupply = await masterPoolToken.totalSupply();
             const prevPoolPoolTokenBalance = await masterPoolToken.balanceOf(masterPool.address);
@@ -425,8 +425,8 @@ describe('MasterPool', () => {
 
             expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
             expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(prevFunding.add(expectedAmount));
-            expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
-                prevUnallocatedLiquidity.sub(expectedAmount)
+            expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
+                prevAvailableFunding.sub(expectedAmount)
             );
 
             expect(await masterPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.add(expectedPoolTokenAmount));
@@ -578,7 +578,7 @@ describe('MasterPool', () => {
             const testRenounce = async (amount: BigNumber) => {
                 const prevStakedBalance = await masterPool.stakedBalance();
                 const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
-                const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
+                const prevAvailableFunding = await masterPool.availableFunding(reserveToken.address);
 
                 const prevPoolTokenTotalSupply = await masterPoolToken.totalSupply();
                 const prevPoolPoolTokenBalance = await masterPoolToken.balanceOf(masterPool.address);
@@ -604,10 +604,8 @@ describe('MasterPool', () => {
                     prevFunding.sub(renouncedAmount)
                 );
 
-                expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
-                    prevUnallocatedLiquidity.gt(renouncedAmount)
-                        ? prevUnallocatedLiquidity.add(renouncedAmount)
-                        : FUNDING_LIMIT
+                expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
+                    prevAvailableFunding.gt(renouncedAmount) ? prevAvailableFunding.add(renouncedAmount) : FUNDING_LIMIT
                 );
 
                 expect(await masterPoolToken.totalSupply()).to.equal(
@@ -1031,7 +1029,7 @@ describe('MasterPool', () => {
                 it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
                     const prevStakedBalance = await masterPool.stakedBalance();
                     const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
-                    const prevUnallocatedLiquidity = await masterPool.unallocatedLiquidity(reserveToken.address);
+                    const prevAvailableFunding = await masterPool.availableFunding(reserveToken.address);
                     const expectedFunding = type === FeeType.Trading ? feeAmount : 0;
 
                     await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
@@ -1040,8 +1038,8 @@ describe('MasterPool', () => {
                     expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
                         prevFunding.add(expectedFunding)
                     );
-                    expect(await masterPool.unallocatedLiquidity(reserveToken.address)).to.equal(
-                        prevUnallocatedLiquidity.sub(expectedFunding)
+                    expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
+                        prevAvailableFunding.sub(expectedFunding)
                     );
                 });
             }

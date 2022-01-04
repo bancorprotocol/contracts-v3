@@ -201,7 +201,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function unallocatedLiquidity(ReserveToken pool) external view returns (uint256) {
+    function availableFunding(ReserveToken pool) external view returns (uint256) {
         return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
     }
 
