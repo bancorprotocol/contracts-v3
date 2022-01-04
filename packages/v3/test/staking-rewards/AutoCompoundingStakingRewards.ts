@@ -535,6 +535,38 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
             });
 
+            describe('processing rewards', () => {
+                beforeEach(async () => {
+                    await autoCompoundingStakingRewards.createProgram(
+                        token.address,
+                        rewardsVault.address,
+                        TOTAL_REWARDS,
+                        distributionType,
+                        START_TIME,
+                        END_TIME
+                    );
+
+                    switch (rewardsVault.address) {
+                        case masterPool.address:
+                            await masterPool.grantRole(roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, deployer.address);
+                            break;
+                        case externalRewardsVault.address:
+                            await externalRewardsVault.grantRole(roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
+                            break;
+                    }
+
+                    await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME : ExponentialDecay.MAX_DURATION);
+                });
+
+                it('should revert when there are insufficient funds', async () => {
+                    const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
+                    await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance);
+                    await expect(
+                        autoCompoundingStakingRewards.processRewards(token.address)
+                    ).to.be.revertedWith('InsufficientFunds');
+                });
+            });
+
             describe('is program active', () => {
                 context('when a program does not exist', () => {
                     it('should return false', async () => {
