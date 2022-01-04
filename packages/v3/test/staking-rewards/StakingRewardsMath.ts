@@ -21,9 +21,7 @@ describe('StakingRewardsMath', () => {
         const calcFlatReward = (totalRewards: BigNumberish, timeElapsed: number, programDuration: number) => {
             it(`calcFlatRewards(${totalRewards}, ${timeElapsed}, ${programDuration})`, async () => {
                 const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
-                const expected = BigNumber.from(totalRewards)
-                    .mul(Math.min(timeElapsed, programDuration))
-                    .div(programDuration);
+                const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
                 expect(actual).to.equal(expected);
             });
         };

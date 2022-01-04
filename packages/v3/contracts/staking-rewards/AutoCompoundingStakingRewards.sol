@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
+import { uncheckedInc } from "../utility/MathEx.sol";
 import { Utils, NotWhitelisted } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
@@ -183,7 +183,8 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) external view returns (bool) {
-        return _isProgramActive(_programs[ReserveToken.unwrap(pool)]);
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        return _isProgramValid(p) && _isProgramTimingActive(p.distributionType, p.startTime, p.endTime);
     }
 
     /**
@@ -203,9 +204,7 @@ contract AutoCompoundingStakingRewards is
         onlyAdmin
         nonReentrant
     {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
-
-        if (p.isCreated) {
+        if (_isProgramValid(_programs[ReserveToken.unwrap(pool)])) {
             revert ProgramAlreadyCreated();
         }
 
@@ -222,21 +221,10 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (startTime < _time()) {
+        if (!_isProgramTimingValid(distributionType, startTime, endTime)) {
             revert InvalidParam();
         }
 
-        if (distributionType == FLAT_DISTRIBUTION) {
-            if (startTime > endTime || endTime == 0) {
-                revert InvalidParam();
-            }
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (endTime != 0) {
-                revert InvalidParam();
-            }
-        }
-
-        bool programExists = address(p.poolToken) != address(0);
         IPoolToken poolToken;
         uint256 requiredPoolTokenAmount;
 
@@ -257,18 +245,16 @@ contract AutoCompoundingStakingRewards is
         _programs[ReserveToken.unwrap(pool)] = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            prevDistributionTimestamp: 0,
+            prevDistributionTimestamp: startTime,
             totalRewards: totalRewards,
             remainingRewards: totalRewards,
             rewardsVault: rewardsVault,
             poolToken: poolToken,
-            isCreated: true,
             isEnabled: true,
             distributionType: distributionType
         });
 
-        bool programAdded = _programByPool.add(ReserveToken.unwrap(pool));
-        assert(programAdded != programExists);
+        assert(_programByPool.add(ReserveToken.unwrap(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -284,13 +270,13 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
-        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (!p.isCreated) {
+        if (!_isProgramValid(p)) {
             revert ProgramNotYetCreated();
         }
 
-        p.isCreated = false;
+        delete _programs[ReserveToken.unwrap(pool)];
 
         emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
@@ -299,14 +285,18 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
-        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+
+        if (!_isProgramValid(p)) {
+            revert ProgramNotYetCreated();
+        }
 
         bool prevStatus = p.isEnabled;
         if (prevStatus == status) {
             return;
         }
 
-        p.isEnabled = status;
+        _programs[ReserveToken.unwrap(pool)].isEnabled = status;
 
         emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
     }
@@ -316,14 +306,14 @@ contract AutoCompoundingStakingRewards is
      */
     function processRewards(ReserveToken pool) external nonReentrant {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
-        if (!_isProgramActive(p) || !p.isEnabled) {
+
+        uint32 currTime = _time();
+
+        if (!p.isEnabled || p.startTime > currTime) {
             return;
         }
 
-        uint32 currentTime = _time();
-        uint32 timeElapsed = currentTime - p.startTime;
-
-        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _calculateRewards(pool, p, timeElapsed);
+        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _calculateRewards(pool, p, currTime);
         if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
             return;
         }
@@ -334,10 +324,7 @@ contract AutoCompoundingStakingRewards is
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
         p.remainingRewards -= tokenAmountToDistribute;
-        p.prevDistributionTimestamp = currentTime;
-        if (p.distributionType == FLAT_DISTRIBUTION && p.endTime < currentTime) {
-            p.isCreated = false;
-        }
+        p.prevDistributionTimestamp = currTime;
 
         _programs[ReserveToken.unwrap(pool)] = p;
 
@@ -345,7 +332,7 @@ contract AutoCompoundingStakingRewards is
             pool: pool,
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
-            programTimeElapsed: timeElapsed,
+            programTimeElapsed: currTime - p.startTime,
             remainingRewards: p.remainingRewards
         });
     }
@@ -356,19 +343,23 @@ contract AutoCompoundingStakingRewards is
     function _calculateRewards(
         ReserveToken pool,
         ProgramData memory p,
-        uint32 timeElapsed
+        uint32 currTime
     ) private view returns (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) {
-        uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
+        uint32 prevTime = p.prevDistributionTimestamp;
 
         if (p.distributionType == FLAT_DISTRIBUTION) {
+            uint32 currTimeElapsed = uint32(Math.min(currTime, p.endTime)) - p.startTime;
+            uint32 prevTimeElapsed = uint32(Math.min(prevTime, p.endTime)) - p.startTime;
             tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
                 p.totalRewards,
-                timeElapsed - prevTimeElapsed,
+                currTimeElapsed - prevTimeElapsed,
                 p.endTime - p.startTime
             );
         } else if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            uint32 currTimeElapsed = currTime - p.startTime;
+            uint32 prevTimeElapsed = prevTime - p.startTime;
             tokenAmountToDistribute =
-                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
 
@@ -384,10 +375,36 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns whether or not a given program is active
+     * @dev returns whether or not a given program is valid
      */
-    function _isProgramActive(ProgramData memory p) private view returns (bool) {
-        return p.isCreated && p.startTime <= _time();
+    function _isProgramValid(ProgramData memory p) private pure returns (bool) {
+        return address(p.poolToken) != address(0);
+    }
+
+    /**
+     * @dev returns whether or not a given program timing is valid
+     */
+    function _isProgramTimingValid(uint8 distributionType, uint32 startTime, uint32 endTime) private view returns (bool) {
+        uint32 currTime = _time();
+        if (distributionType == FLAT_DISTRIBUTION) {
+            return currTime < startTime && startTime < endTime;
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            return currTime < startTime && endTime == 0;
+        }
+        return false;
+    }
+
+    /**
+     * @dev returns whether or not a given program timing is active
+     */
+    function _isProgramTimingActive(uint8 distributionType, uint32 startTime, uint32 endTime) private view returns (bool) {
+        uint32 currTime = _time();
+        if (distributionType == FLAT_DISTRIBUTION) {
+            return startTime <= currTime && currTime <= endTime;
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            return startTime <= currTime;
+        }
+        return false;
     }
 
     /**

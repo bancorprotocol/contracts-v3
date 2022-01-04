@@ -257,7 +257,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                it('should revert when the program is already created', async () => {
+                it('should revert when the program has already been created', async () => {
                     await autoCompoundingStakingRewards.createProgram(
                         token.address,
                         rewardsVault.address,
@@ -292,61 +292,77 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                if (distributionType === StakingRewardsDistributionTypes.Flat) {
-                    it('should revert when the start time is higher than the end time', async () => {
-                        await expect(
-                            autoCompoundingStakingRewards.createProgram(
-                                token.address,
-                                rewardsVault.address,
-                                TOTAL_REWARDS,
-                                distributionType,
-                                END_TIME + 1,
-                                END_TIME
-                            )
-                        ).to.be.revertedWith('InvalidParam');
-                    });
+                for (let startTime = 0; startTime < 4; startTime++) {
+                    for (let endTime = 0; endTime < 4; endTime++) {
+                        for (let currTime = 0; currTime < 4; currTime++) {
+                            let isProgramTimingValid: boolean;
 
-                    it('should revert when the end time is equal to 0', async () => {
-                        await expect(
-                            autoCompoundingStakingRewards.createProgram(
-                                token.address,
-                                rewardsVault.address,
-                                TOTAL_REWARDS,
-                                distributionType,
-                                0,
-                                0
-                            )
-                        ).to.be.revertedWith('InvalidParam');
-                    });
-                } else {
-                    it('should revert when the end time is not equal to 0', async () => {
-                        await expect(
-                            autoCompoundingStakingRewards.createProgram(
-                                token.address,
-                                rewardsVault.address,
-                                TOTAL_REWARDS,
-                                distributionType,
-                                START_TIME,
-                                START_TIME + 1
-                            )
-                        ).to.be.revertedWith('InvalidParam');
-                    });
+                            switch (distributionType) {
+                                case StakingRewardsDistributionTypes.Flat:
+                                    isProgramTimingValid = currTime < startTime && startTime < endTime;
+                                    break;
+                                case StakingRewardsDistributionTypes.ExponentialDecay:
+                                    isProgramTimingValid = currTime < startTime && endTime == 0;
+                                    break;
+                            }
+
+                            context(`[startTime, endTime, currTime] = ${[startTime, endTime, currTime]}`, () => {
+                                beforeEach(async () => {
+                                    await autoCompoundingStakingRewards.setTime(currTime);
+                                });
+
+                                if (isProgramTimingValid) {
+                                    it(`should complete`, async () => {
+                                        const res = await autoCompoundingStakingRewards.createProgram(
+                                            token.address,
+                                            rewardsVault.address,
+                                            TOTAL_REWARDS,
+                                            distributionType,
+                                            startTime,
+                                            endTime
+                                        );
+
+                                        await expect(res)
+                                            .to.emit(autoCompoundingStakingRewards, 'ProgramCreated')
+                                            .withArgs(
+                                                token.address,
+                                                distributionType,
+                                                rewardsVault.address,
+                                                TOTAL_REWARDS,
+                                                startTime,
+                                                endTime
+                                            );
+
+                                        const program = await autoCompoundingStakingRewards.program(token.address);
+
+                                        expect(program.poolToken).to.equal(poolToken.address);
+                                        expect(program.rewardsVault).to.equal(rewardsVault.address);
+                                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
+                                        expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
+                                        expect(program.distributionType).to.equal(distributionType);
+                                        expect(program.startTime).to.equal(startTime);
+                                        expect(program.endTime).to.equal(endTime);
+                                        expect(program.prevDistributionTimestamp).to.equal(startTime);
+                                        expect(program.isEnabled).to.be.true;
+                                    });
+                                } else {
+                                    it(`should revert`, async () => {
+                                        await expect(
+                                            autoCompoundingStakingRewards.createProgram(
+                                                token.address,
+                                                rewardsVault.address,
+                                                TOTAL_REWARDS,
+                                                distributionType,
+                                                startTime,
+                                                endTime
+                                            )
+                                        ).to.be.revertedWith('InvalidParam');
+                                    });
+                                }
+                            });
+                        }
+                    }
                 }
-
-                it('should revert when the start time is lower than the current time', async () => {
-                    await autoCompoundingStakingRewards.setTime(START_TIME + 1);
-
-                    await expect(
-                        autoCompoundingStakingRewards.createProgram(
-                            token.address,
-                            rewardsVault.address,
-                            TOTAL_REWARDS,
-                            distributionType,
-                            START_TIME,
-                            END_TIME
-                        )
-                    ).to.revertedWith('InvalidParam');
-                });
 
                 it('should revert when the pool is not whitelisted', async () => {
                     const nonWhitelistedToken = await createTokenBySymbol(TKN);
@@ -406,9 +422,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.distributionType).to.equal(distributionType);
                     expect(program.startTime).to.equal(START_TIME);
                     expect(program.endTime).to.equal(END_TIME);
-                    expect(program.prevDistributionTimestamp).to.equal(0);
+                    expect(program.prevDistributionTimestamp).to.equal(START_TIME);
                     expect(program.isEnabled).to.be.true;
-                    expect(program.isCreated).to.be.true;
                 });
             });
 
@@ -448,16 +463,15 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
-                        expect(program.poolToken).to.equal(poolToken.address);
-                        expect(program.rewardsVault).to.equal(rewardsVault.address);
-                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
-                        expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
-                        expect(program.distributionType).to.equal(distributionType);
-                        expect(program.startTime).to.equal(START_TIME);
-                        expect(program.endTime).to.equal(END_TIME);
+                        expect(program.poolToken).to.equal(ZERO_ADDRESS);
+                        expect(program.rewardsVault).to.equal(ZERO_ADDRESS);
+                        expect(program.totalRewards).to.equal(0);
+                        expect(program.remainingRewards).to.equal(0);
+                        expect(program.distributionType).to.equal(0);
+                        expect(program.startTime).to.equal(0);
+                        expect(program.endTime).to.equal(0);
                         expect(program.prevDistributionTimestamp).to.equal(0);
-                        expect(program.isEnabled).to.be.true;
-                        expect(program.isCreated).to.be.false;
+                        expect(program.isEnabled).to.be.false;
                     });
 
                     it('should terminate a program which has already started', async () => {
@@ -471,16 +485,15 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
-                        expect(program.poolToken).to.equal(poolToken.address);
-                        expect(program.rewardsVault).to.equal(rewardsVault.address);
-                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
-                        expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
-                        expect(program.distributionType).to.equal(distributionType);
-                        expect(program.startTime).to.equal(START_TIME);
-                        expect(program.endTime).to.equal(END_TIME);
+                        expect(program.poolToken).to.equal(ZERO_ADDRESS);
+                        expect(program.rewardsVault).to.equal(ZERO_ADDRESS);
+                        expect(program.totalRewards).to.equal(0);
+                        expect(program.remainingRewards).to.equal(0);
+                        expect(program.distributionType).to.equal(0);
+                        expect(program.startTime).to.equal(0);
+                        expect(program.endTime).to.equal(0);
                         expect(program.prevDistributionTimestamp).to.equal(0);
-                        expect(program.isEnabled).to.be.true;
-                        expect(program.isCreated).to.be.false;
+                        expect(program.isEnabled).to.be.false;
                     });
                 });
             });
@@ -566,7 +579,9 @@ describe('AutoCompoundingStakingRewards', () => {
                         START_TIME,
                         END_TIME
                     );
+                });
 
+                it('should revert when there are insufficient funds', async () => {
                     switch (rewardsVault.address) {
                         case masterPool.address:
                             await masterPool.grantRole(roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, deployer.address);
@@ -577,15 +592,43 @@ describe('AutoCompoundingStakingRewards', () => {
                     }
 
                     await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME : ExponentialDecay.MAX_DURATION);
-                });
 
-                it('should revert when there are insufficient funds', async () => {
                     const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                     await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance);
                     await expect(
                         autoCompoundingStakingRewards.processRewards(token.address)
                     ).to.be.revertedWith('InsufficientFunds');
                 });
+
+                it('should distribute tokens only when the program is enabled', async () => {
+                    await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME : ExponentialDecay.MAX_DURATION);
+                    await autoCompoundingStakingRewards.enableProgram(token.address, false);
+                    const res1 = await autoCompoundingStakingRewards.processRewards(token.address);
+                    await expect(res1).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                    await autoCompoundingStakingRewards.enableProgram(token.address, true);
+                    const res2 = await autoCompoundingStakingRewards.processRewards(token.address);
+                    await expect(res2).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                });
+
+                if (distributionType === StakingRewardsDistributionTypes.Flat) {
+                    for (const seconds of [Math.floor(END_TIME - TOTAL_DURATION / 2), END_TIME, END_TIME + TOTAL_DURATION]) {
+                        it(`should distribute tokens after ${seconds} seconds`, async () => {
+                            await autoCompoundingStakingRewards.setTime(seconds);
+                            const res1 = await autoCompoundingStakingRewards.processRewards(token.address);
+                            await expect(res1).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                            await autoCompoundingStakingRewards.setTime(END_TIME + TOTAL_DURATION * 2);
+                            const res2 = await autoCompoundingStakingRewards.processRewards(token.address);
+                            if (seconds < END_TIME) {
+                                await expect(res2).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                                await autoCompoundingStakingRewards.setTime(END_TIME + TOTAL_DURATION * 4);
+                                const res3 = await autoCompoundingStakingRewards.processRewards(token.address);
+                                await expect(res3).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                            } else {
+                                await expect(res2).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
+                            }
+                        });
+                    }
+                }
             });
 
             describe('is program active', () => {
@@ -594,6 +637,53 @@ describe('AutoCompoundingStakingRewards', () => {
                         expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
                     });
                 });
+
+                for (let startTime = 0; startTime < 5; startTime++) {
+                    for (let endTime = 0; endTime < 5; endTime++) {
+                        for (let creationTime = 0; creationTime < 5; creationTime++) {
+                            for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
+                                const currTime = creationTime + elapsedTime;
+
+                                let isProgramTimingValid: boolean;
+                                let isProgramTimingActive: boolean;
+
+                                switch (distributionType) {
+                                    case StakingRewardsDistributionTypes.Flat:
+                                        isProgramTimingValid = creationTime < startTime && startTime < endTime;
+                                        isProgramTimingActive = startTime <= currTime && currTime <= endTime;
+                                        break;
+                                    case StakingRewardsDistributionTypes.ExponentialDecay:
+                                        isProgramTimingValid = creationTime < startTime && endTime == 0;
+                                        isProgramTimingActive = startTime <= currTime;
+                                        break;
+                                }
+
+                                if (isProgramTimingValid) {
+                                    context(`[startTime, endTime, creationTime, elapsedTime] = ${[startTime, endTime, creationTime, elapsedTime]}`, () => {
+                                        beforeEach(async () => {
+                                            await autoCompoundingStakingRewards.setTime(creationTime);
+
+                                            await autoCompoundingStakingRewards.createProgram(
+                                                token.address,
+                                                rewardsVault.address,
+                                                TOTAL_REWARDS,
+                                                distributionType,
+                                                startTime,
+                                                endTime
+                                            );
+
+                                            await autoCompoundingStakingRewards.setTime(currTime);
+                                        });
+
+                                        it(`should return ${isProgramTimingActive}`, async () => {
+                                            expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.equal(isProgramTimingActive);
+                                        });
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
 
                 context('before a program has started', () => {
                     beforeEach(async () => {
@@ -633,28 +723,33 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                 });
 
-                if (distributionType === StakingRewardsDistributionTypes.Flat) {
-                    context('after a program has finished', () => {
-                        beforeEach(async () => {
-                            await autoCompoundingStakingRewards.createProgram(
-                                token.address,
-                                rewardsVault.address,
-                                TOTAL_REWARDS,
-                                distributionType,
-                                START_TIME,
-                                END_TIME
-                            );
+                context('after a program has ended', () => {
+                    beforeEach(async () => {
+                        await autoCompoundingStakingRewards.createProgram(
+                            token.address,
+                            rewardsVault.address,
+                            TOTAL_REWARDS,
+                            distributionType,
+                            START_TIME,
+                            END_TIME
+                        );
 
-                            await autoCompoundingStakingRewards.setTime(END_TIME + 1);
-                        });
-
-                        it('should return true before last request, and false after last request', async () => {
-                            expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
-                            await autoCompoundingStakingRewards.processRewards(token.address);
-                            expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
-                        });
+                        await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME + 1 : ExponentialDecay.MAX_DURATION + 1);
                     });
-                }
+
+                    switch (distributionType) {
+                        case StakingRewardsDistributionTypes.Flat:
+                            it('should return false', async () => {
+                                expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.false;
+                            });
+                            break;
+                        case StakingRewardsDistributionTypes.ExponentialDecay:
+                            it('should return true', async () => {
+                                expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be.true;
+                            });
+                            break;
+                    }
+                });
             });
 
             describe('program data', () => {
@@ -798,32 +893,35 @@ describe('AutoCompoundingStakingRewards', () => {
             };
 
             const getRewards = async (program: any) => {
-                let tokenAmountToDistribute = BigNumber.from(0);
-                let poolTokenAmountToBurn = BigNumber.from(0);
-                let timeElapsed = 0;
+                const currTime = await autoCompoundingStakingRewards.currentTime();
+                const prevTime = program.prevDistributionTimestamp;
 
-                const currentTime = await autoCompoundingStakingRewards.currentTime();
-                if (!program.isEnabled || currentTime < program.startTime) {
-                    return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
+                if (!program.isEnabled || program.startTime > currTime) {
+                    return { tokenAmountToDistribute: BigNumber.from(0), poolTokenAmountToBurn: BigNumber.from(0), timeElapsed: 0 };
                 }
 
-                timeElapsed = currentTime - program.startTime;
-
-                const prevTimeElapsed = Math.max(program.prevDistributionTimestamp - program.startTime, 0);
+                let currTimeElapsed: number;
+                let prevTimeElapsed: number;
+                let tokenAmountToDistribute: BigNumber;
+                let poolTokenAmountToBurn: BigNumber;
 
                 switch (program.distributionType) {
                     case StakingRewardsDistributionTypes.Flat:
+                        currTimeElapsed = Math.min(currTime, program.endTime) - program.startTime;
+                        prevTimeElapsed = Math.min(prevTime, program.endTime) - program.startTime;
                         tokenAmountToDistribute = await stakingRewardsMath.calcFlatRewards(
                             program.totalRewards,
-                            timeElapsed - prevTimeElapsed,
+                            currTimeElapsed - prevTimeElapsed,
                             program.endTime - program.startTime
                         );
 
                         break;
 
                     case StakingRewardsDistributionTypes.ExponentialDecay:
+                        currTimeElapsed = currTime - program.startTime;
+                        prevTimeElapsed = prevTime - program.startTime;
                         tokenAmountToDistribute = (
-                            await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, timeElapsed)
+                            await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, currTimeElapsed)
                         ).sub(await stakingRewardsMath.calcExpDecayRewards(program.totalRewards, prevTimeElapsed));
 
                         break;
@@ -851,7 +949,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     .mul(poolTokenSupply)
                     .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 
-                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed };
+                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed: currTime - program.startTime };
             };
 
             const testDistribution = async () => {
@@ -1014,22 +1112,14 @@ describe('AutoCompoundingStakingRewards', () => {
                             switch (distributionType) {
                                 case StakingRewardsDistributionTypes.Flat:
                                     it('should distribute all the rewards', async () => {
-                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
-                                            .true;
-                                        const res1 = await testDistribution();
-                                        expect(res1.tokenAmountToDistribute).to.equal(totalRewards);
-                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
-                                            .false;
-                                        const res2 = await testDistribution();
-                                        expect(res2.tokenAmountToDistribute).to.equal(0);
+                                        const { tokenAmountToDistribute } = await testDistribution();
+                                        expect(tokenAmountToDistribute).to.equal(totalRewards);
                                     });
 
                                     break;
 
                                 case StakingRewardsDistributionTypes.ExponentialDecay:
                                     it('should revert with an overflow', async () => {
-                                        expect(await autoCompoundingStakingRewards.isProgramActive(token.address)).to.be
-                                            .true;
                                         await expect(
                                             autoCompoundingStakingRewards.processRewards(token.address)
                                         ).to.be.revertedWith('Overflow');
