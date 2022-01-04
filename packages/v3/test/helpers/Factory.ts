@@ -172,6 +172,7 @@ export const createPoolCollection = async (
     network: string | BancorNetwork,
     networkToken: string | IERC20,
     networkSettings: string | NetworkSettings,
+    masterPool: string | MasterPool,
     poolTokenFactory: string | PoolTokenFactory,
     poolCollectionUpgrader: string | PoolCollectionUpgrader,
     version: number = V1
@@ -181,6 +182,7 @@ export const createPoolCollection = async (
         toAddress(network),
         toAddress(networkToken),
         toAddress(networkSettings),
+        toAddress(masterPool),
         toAddress(poolTokenFactory),
         toAddress(poolCollectionUpgrader)
     );
@@ -299,6 +301,7 @@ const createSystemFixture = async () => {
         network,
         networkToken,
         networkSettings,
+        masterPool,
         poolTokenFactory,
         poolCollectionUpgrader
     );

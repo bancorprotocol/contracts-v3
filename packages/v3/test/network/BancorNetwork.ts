@@ -69,6 +69,12 @@ describe('BancorNetwork', () => {
     let nonOwner: SignerWithAddress;
 
     const INITIAL_RATE = { n: 1, d: 2 };
+    const MAX_DEVIATION = toPPM(1);
+    const FUNDING_LIMIT = toWei(10_000_000);
+    const WITHDRAWAL_FEE = toPPM(5);
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+    const DEPOSIT_LIMIT = toWei(100_000_000);
+    const CONTEXT_ID = formatBytes32String('CTX');
 
     shouldHaveGap('BancorNetwork', '_masterPool');
 
@@ -279,14 +285,22 @@ describe('BancorNetwork', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
+        let masterPool: TestMasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolType: number;
 
         beforeEach(async () => {
-            ({ network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                masterPool,
+                poolTokenFactory,
+                poolCollection,
+                poolCollectionUpgrader
+            } = await createSystem());
 
             poolType = await poolCollection.poolType();
         });
@@ -332,6 +346,7 @@ describe('BancorNetwork', () => {
                         network,
                         networkToken,
                         networkSettings,
+                        masterPool,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         await poolCollection.version()
@@ -349,6 +364,7 @@ describe('BancorNetwork', () => {
                         network,
                         networkToken,
                         networkSettings,
+                        masterPool,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await poolCollection.version()) + 1
@@ -383,6 +399,7 @@ describe('BancorNetwork', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -406,6 +423,7 @@ describe('BancorNetwork', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -424,6 +442,7 @@ describe('BancorNetwork', () => {
                         network,
                         networkToken,
                         networkSettings,
+                        masterPool,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await poolCollection.version()) + 1
@@ -432,6 +451,7 @@ describe('BancorNetwork', () => {
                         network,
                         networkToken,
                         networkSettings,
+                        masterPool,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await newPoolCollection.version()) + 1
@@ -458,6 +478,7 @@ describe('BancorNetwork', () => {
                         network,
                         networkToken,
                         networkSettings,
+                        masterPool,
                         poolTokenFactory,
                         poolCollectionUpgrader
                     );
@@ -533,6 +554,7 @@ describe('BancorNetwork', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -557,6 +579,7 @@ describe('BancorNetwork', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader
                 );
@@ -680,6 +703,7 @@ describe('BancorNetwork', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
+        let masterPool: TestMasterPool;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
@@ -703,6 +727,7 @@ describe('BancorNetwork', () => {
                 networkInfo,
                 networkSettings,
                 networkToken,
+                masterPool,
                 pendingWithdrawals,
                 poolCollection,
                 poolCollectionUpgrader,
@@ -735,6 +760,7 @@ describe('BancorNetwork', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterPool,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1
@@ -873,12 +899,6 @@ describe('BancorNetwork', () => {
         let masterVault: MasterVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
-
-        const MAX_DEVIATION = toPPM(1);
-        const FUNDING_LIMIT = toWei(10_000_000);
-        const WITHDRAWAL_FEE = toPPM(5);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-        const DEPOSIT_LIMIT = toWei(100_000_000);
 
         const setup = async () => {
             ({
@@ -1191,10 +1211,8 @@ describe('BancorNetwork', () => {
                                         }
 
                                         if (tokenData.isNetworkToken()) {
-                                            context('with requested liquidity', () => {
+                                            context('with requested funding', () => {
                                                 beforeEach(async () => {
-                                                    const contextId = formatBytes32String('CTX');
-
                                                     const reserveToken = await createTestToken();
 
                                                     await createPool(
@@ -1208,8 +1226,8 @@ describe('BancorNetwork', () => {
                                                         FUNDING_LIMIT
                                                     );
 
-                                                    await network.requestLiquidityT(
-                                                        contextId,
+                                                    await network.requestFundingT(
+                                                        CONTEXT_ID,
                                                         reserveToken.address,
                                                         amount
                                                     );
@@ -1621,11 +1639,6 @@ describe('BancorNetwork', () => {
         let masterPoolToken: PoolToken;
         let externalProtectionVault: ExternalProtectionVault;
 
-        const MAX_DEVIATION = toPPM(1);
-        const FUNDING_LIMIT = toWei(10_000_000);
-        const WITHDRAWAL_FEE = toPPM(5);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-
         const setTime = async (time: number) => {
             await network.setTime(time);
             await pendingWithdrawals.setTime(time);
@@ -1686,11 +1699,10 @@ describe('BancorNetwork', () => {
                     if (tokenData.isNetworkToken()) {
                         poolToken = masterPoolToken;
 
-                        const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTestToken();
                         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        await network.requestLiquidityT(contextId, reserveToken.address, amount);
+                        await network.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 
@@ -2909,12 +2921,6 @@ describe('BancorNetwork', () => {
         let govToken: IERC20;
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
-
-        const MAX_DEVIATION = toPPM(1);
-        const FUNDING_LIMIT = toWei(10_000_000);
-        const WITHDRAWAL_FEE = toPPM(5);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-        const DEPOSIT_LIMIT = toWei(100_000_000);
 
         const setup = async () => {
             ({

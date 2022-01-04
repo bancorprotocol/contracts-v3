@@ -42,6 +42,12 @@ describe('Profile @profile', () => {
     let deployer: SignerWithAddress;
 
     const INITIAL_RATE = { n: 1, d: 2 };
+    const MAX_DEVIATION = toPPM(1);
+    const FUNDING_LIMIT = toWei(10_000_000);
+    const WITHDRAWAL_FEE = toPPM(5);
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+    const DEPOSIT_LIMIT = toWei(100_000_000);
+    const CONTEXT_ID = formatBytes32String('CTX');
 
     before(async () => {
         [deployer] = await ethers.getSigners();
@@ -57,12 +63,6 @@ describe('Profile @profile', () => {
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-
-        const MAX_DEVIATION = toPPM(1);
-        const FUNDING_LIMIT = toWei(10_000_000);
-        const WITHDRAWAL_FEE = toPPM(5);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-        const DEPOSIT_LIMIT = toWei(100_000_000);
 
         const setup = async () => {
             ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
@@ -176,10 +176,8 @@ describe('Profile @profile', () => {
                                         }
 
                                         if (tokenData.isNetworkToken()) {
-                                            context('with requested liquidity', () => {
+                                            context('with requested funding', () => {
                                                 beforeEach(async () => {
-                                                    const contextId = formatBytes32String('CTX');
-
                                                     const reserveToken = await createTestToken();
 
                                                     await createPool(
@@ -193,8 +191,8 @@ describe('Profile @profile', () => {
                                                         FUNDING_LIMIT
                                                     );
 
-                                                    await network.requestLiquidityT(
-                                                        contextId,
+                                                    await network.requestFundingT(
+                                                        CONTEXT_ID,
                                                         reserveToken.address,
                                                         amount
                                                     );
@@ -205,7 +203,7 @@ describe('Profile @profile', () => {
                                                 });
                                             });
                                         } else {
-                                            context('when there is no unallocated network token liquidity', () => {
+                                            context('when there is no available network token funding', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setFundingLimit(token.address, 0);
                                                 });
@@ -217,7 +215,7 @@ describe('Profile @profile', () => {
                                                 });
                                             });
 
-                                            context('when there is enough unallocated network token liquidity', () => {
+                                            context('when there is enough available network token funding', () => {
                                                 beforeEach(async () => {
                                                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                                 });
@@ -330,7 +328,7 @@ describe('Profile @profile', () => {
                                         await reserveToken.transfer(senderAddress, amount);
                                     });
 
-                                    context('when there is no unallocated network token liquidity', () => {
+                                    context('when there is no available network token funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, 0);
                                         });
@@ -342,7 +340,7 @@ describe('Profile @profile', () => {
                                         });
                                     });
 
-                                    context('when there is enough unallocated network token liquidity', () => {
+                                    context('when there is enough available network token funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                         });
@@ -383,11 +381,6 @@ describe('Profile @profile', () => {
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
-
-        const MAX_DEVIATION = toPPM(1);
-        const FUNDING_LIMIT = toWei(10_000_000);
-        const WITHDRAWAL_FEE = toPPM(5);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         const setTime = async (time: number) => {
             await network.setTime(time);
@@ -435,11 +428,10 @@ describe('Profile @profile', () => {
                     if (tokenData.isNetworkToken()) {
                         poolToken = masterPoolToken;
 
-                        const contextId = formatBytes32String('CTX');
                         const reserveToken = await createTestToken();
                         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        await network.requestLiquidityT(contextId, reserveToken.address, amount);
+                        await network.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
                     } else {
                         poolToken = await createPool(token, network, networkSettings, poolCollection);
 

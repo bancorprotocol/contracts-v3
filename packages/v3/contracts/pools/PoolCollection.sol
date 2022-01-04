@@ -43,6 +43,8 @@ import {
     TradeAmounts
 } from "./interfaces/IPoolCollection.sol";
 
+import { IMasterPool } from "./interfaces/IMasterPool.sol";
+
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
@@ -119,6 +121,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
+    // the master pool contract
+    IMasterPool internal immutable _masterPool;
+
     // the pool token factory contract
     IPoolTokenFactory private immutable _poolTokenFactory;
 
@@ -186,18 +191,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
+        IMasterPool initMasterPool,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkToken))
         validAddress(address(initNetworkSettings))
+        validAddress(address(initMasterPool))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
         _network = initNetwork;
         _networkToken = initNetworkToken;
         _networkSettings = initNetworkSettings;
+        _masterPool = initMasterPool;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 

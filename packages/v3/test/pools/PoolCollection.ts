@@ -8,6 +8,7 @@ import {
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
+    TestMasterPool,
     TestPoolAverageRate,
     TestPoolCollection,
     TestPoolCollectionUpgrader
@@ -54,13 +55,21 @@ describe('PoolCollection', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
+        let masterPool: TestMasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
 
         beforeEach(async () => {
-            ({ network, networkToken, networkSettings, poolTokenFactory, poolCollection, poolCollectionUpgrader } =
-                await createSystem());
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                masterPool,
+                poolTokenFactory,
+                poolCollection,
+                poolCollectionUpgrader
+            } = await createSystem());
         });
 
         it('should revert when attempting to create with an invalid network contract', async () => {
@@ -69,6 +78,7 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     networkToken.address,
                     networkSettings.address,
+                    masterPool.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -81,6 +91,7 @@ describe('PoolCollection', () => {
                     network.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
+                    masterPool.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -92,6 +103,20 @@ describe('PoolCollection', () => {
                 Contracts.PoolCollection.deploy(
                     network.address,
                     networkToken.address,
+                    ZERO_ADDRESS,
+                    masterPool.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid master pool contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
@@ -105,6 +130,7 @@ describe('PoolCollection', () => {
                     network.address,
                     networkToken.address,
                     networkSettings.address,
+                    masterPool.address,
                     ZERO_ADDRESS,
                     poolCollectionUpgrader.address
                 )
@@ -117,6 +143,7 @@ describe('PoolCollection', () => {
                     network.address,
                     networkToken.address,
                     networkSettings.address,
+                    masterPool.address,
                     poolTokenFactory.address,
                     ZERO_ADDRESS
                 )
@@ -592,19 +619,14 @@ describe('PoolCollection', () => {
 
             it('should revert when attempting to deposit for an invalid provider', async () => {
                 await expect(
-                    network.depositToPoolCollectionForT(
-                        poolCollection.address,
-                        ZERO_ADDRESS,
-                        reserveToken.address,
-                        1,
-                        2
-                    )
+                    network.depositToPoolCollectionForT(poolCollection.address, ZERO_ADDRESS, reserveToken.address, 1)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to deposit for an invalid pool', async () => {
                 await expect(
                     network.depositToPoolCollectionForT(poolCollection.address, provider.address, ZERO_ADDRESS, 1, 2)
+                    network.depositToPoolCollectionForT(poolCollection.address, provider.address, ZERO_ADDRESS, 1)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
@@ -1841,6 +1863,7 @@ describe('PoolCollection', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
+        let masterPool: MasterPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolToken: PoolToken;
@@ -1853,7 +1876,7 @@ describe('PoolCollection', () => {
                 network,
                 networkToken,
                 networkSettings,
-                networkSettings,
+                masterPool,
                 poolTokenFactory,
                 poolCollection,
                 poolCollectionUpgrader
@@ -1867,6 +1890,7 @@ describe('PoolCollection', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterPool,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1
@@ -1966,6 +1990,7 @@ describe('PoolCollection', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader
                 );

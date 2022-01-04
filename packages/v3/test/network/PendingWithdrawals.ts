@@ -599,7 +599,7 @@ describe('PendingWithdrawals', () => {
 
                 let poolToken: PoolToken;
                 let poolTokenAmount: BigNumber;
-                const contextId = formatBytes32String('CTX');
+                const CONTEXT_ID = formatBytes32String('CTX');
 
                 before(async () => {
                     [, provider] = await ethers.getSigners();
@@ -625,7 +625,7 @@ describe('PendingWithdrawals', () => {
 
                 it('should revert when attempting to complete a non-existing withdrawal request', async () => {
                     await expect(
-                        pendingWithdrawals.completeWithdrawal(contextId, provider.address, 100)
+                        pendingWithdrawals.completeWithdrawal(CONTEXT_ID, provider.address, 100)
                     ).to.be.revertedWith('AccessDenied');
                 });
 
@@ -652,19 +652,19 @@ describe('PendingWithdrawals', () => {
                             .div(currentReserveTokenAmount);
 
                         const completedRequest = await network.callStatic.completeWithdrawalT(
-                            contextId,
+                            CONTEXT_ID,
                             provider.address,
                             id
                         );
                         expect(completedRequest.poolToken).to.equal(withdrawalRequest.poolToken);
                         expect(completedRequest.poolTokenAmount).to.equal(currentPoolTokenAmount);
 
-                        const res = await network.completeWithdrawalT(contextId, provider.address, id);
+                        const res = await network.completeWithdrawalT(CONTEXT_ID, provider.address, id);
 
                         await expect(res)
                             .to.emit(pendingWithdrawals, 'WithdrawalCompleted')
                             .withArgs(
-                                contextId,
+                                CONTEXT_ID,
                                 reserveToken.address,
                                 provider.address,
                                 id,
@@ -712,7 +712,7 @@ describe('PendingWithdrawals', () => {
                         const nonNetwork = deployer;
 
                         await expect(
-                            pendingWithdrawals.connect(nonNetwork).completeWithdrawal(contextId, provider.address, id)
+                            pendingWithdrawals.connect(nonNetwork).completeWithdrawal(CONTEXT_ID, provider.address, id)
                         ).to.be.revertedWith('AccessDenied');
                     });
 
@@ -761,7 +761,7 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to cancel a completed withdrawal request', async () => {
-                            await network.completeWithdrawalT(contextId, provider.address, id);
+                            await network.completeWithdrawalT(CONTEXT_ID, provider.address, id);
 
                             await expect(network.connect(provider).cancelWithdrawal(id)).to.be.revertedWith(
                                 'AccessDenied'

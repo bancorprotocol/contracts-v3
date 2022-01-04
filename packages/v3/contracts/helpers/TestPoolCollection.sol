@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -27,6 +28,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
+        IMasterPool initMasterPool,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
@@ -34,6 +36,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
             initNetwork,
             initNetworkToken,
             initNetworkSettings,
+            initMasterPool,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
         )
