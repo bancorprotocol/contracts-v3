@@ -925,8 +925,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 if (!program.isEnabled || program.startTime > currTime) {
                     return {
                         tokenAmountToDistribute: BigNumber.from(0),
-                        poolTokenAmountToBurn: BigNumber.from(0),
-                        timeElapsed: 0
+                        poolTokenAmountToBurn: BigNumber.from(0)
                     };
                 }
 
@@ -979,7 +978,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     .mul(poolTokenSupply)
                     .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 
-                return { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed: currTime - program.startTime };
+                return { tokenAmountToDistribute, poolTokenAmountToBurn };
             };
 
             const testDistribution = async () => {
@@ -989,7 +988,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
 
-                const { tokenAmountToDistribute, poolTokenAmountToBurn, timeElapsed } = await getRewards(prevProgram);
+                const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(prevProgram);
 
                 const res = await autoCompoundingStakingRewards.processRewards(token.address);
                 const program = await autoCompoundingStakingRewards.program(token.address);
@@ -1005,7 +1004,6 @@ describe('AutoCompoundingStakingRewards', () => {
                             token.address,
                             tokenAmountToDistribute,
                             poolTokenAmountToBurn,
-                            timeElapsed,
                             program.remainingRewards
                         );
 

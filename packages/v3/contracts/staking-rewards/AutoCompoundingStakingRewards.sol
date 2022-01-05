@@ -100,7 +100,6 @@ contract AutoCompoundingStakingRewards is
         ReserveToken indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
-        uint32 programTimeElapsed,
         uint256 remainingRewards
     );
 
@@ -324,7 +323,6 @@ contract AutoCompoundingStakingRewards is
             pool: pool,
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
-            programTimeElapsed: currTime - p.startTime,
             remainingRewards: p.remainingRewards
         });
     }
