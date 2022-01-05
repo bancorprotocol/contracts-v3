@@ -4,6 +4,8 @@ pragma solidity 0.8.10;
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { INetworkFeeVault } from "../vaults/interfaces/INetworkFeeVault.sol";
+
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
@@ -118,7 +120,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

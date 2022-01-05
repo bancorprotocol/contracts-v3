@@ -11,6 +11,8 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
@@ -373,7 +375,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

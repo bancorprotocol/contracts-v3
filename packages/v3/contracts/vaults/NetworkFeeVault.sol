@@ -6,6 +6,8 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { INetworkFeeVault } from "./interfaces/INetworkFeeVault.sol";
@@ -59,6 +61,13 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     }
 
     // solhint-enable func-name-mixedcase
+
+    /**
+     * @inheritdoc IVersioned
+     */
+    function version() external pure override returns (uint16) {
+        return 1;
+    }
 
     /**
      * @inheritdoc Vault

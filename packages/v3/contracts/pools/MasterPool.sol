@@ -9,6 +9,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, InvalidStakedBalance } from "../utility/Utils.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
@@ -162,6 +163,13 @@ contract MasterPool is IMasterPool, Vault {
         if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
+    }
+
+    /**
+     * @inheritdoc IVersioned
+     */
+    function version() external pure returns (uint16) {
+        return 1;
     }
 
     /**

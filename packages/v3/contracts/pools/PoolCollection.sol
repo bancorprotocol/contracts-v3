@@ -8,6 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
@@ -225,7 +226,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
         return 1;

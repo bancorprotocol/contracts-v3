@@ -10,6 +10,7 @@ import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.so
 
 import { AverageRate } from "./PoolAverageRate.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -100,7 +101,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

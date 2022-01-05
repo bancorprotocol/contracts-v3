@@ -6,6 +6,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { IMasterVault } from "./interfaces/IMasterVault.sol";
@@ -63,6 +65,13 @@ contract MasterVault is IMasterVault, Vault {
     }
 
     // solhint-enable func-name-mixedcase
+
+    /**
+     * @inheritdoc IVersioned
+     */
+    function version() external pure override returns (uint16) {
+        return 1;
+    }
 
     /**
      * @inheritdoc Vault

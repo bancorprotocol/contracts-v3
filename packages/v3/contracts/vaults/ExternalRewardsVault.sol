@@ -5,6 +5,8 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { IExternalRewardsVault } from "./interfaces/IExternalRewardsVault.sol";
 import { IVault } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
@@ -55,7 +57,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure override returns (uint16) {
         return 1;
