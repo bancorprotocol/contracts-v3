@@ -322,7 +322,7 @@ contract AutoCompoundingStakingRewards is
 
         uint32 currTime = _time();
 
-        if (!p.isEnabled || p.startTime > currTime) {
+        if (!p.isEnabled || currTime < p.startTime) {
             return;
         }
 
