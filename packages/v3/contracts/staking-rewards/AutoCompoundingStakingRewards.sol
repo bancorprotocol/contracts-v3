@@ -183,7 +183,18 @@ contract AutoCompoundingStakingRewards is
      */
     function isProgramActive(ReserveToken pool) external view returns (bool) {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
-        return _isProgramValid(p) && _isProgramTimingActive(p.distributionType, p.startTime, p.endTime);
+
+        if (!_isProgramValid(p)) {
+            return false;
+        }
+
+        uint32 currTime = _time();
+
+        if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            return p.startTime <= currTime;
+        }
+
+        return startTime <= currTime && currTime <= p.endTime;
     }
 
     /**
@@ -220,7 +231,16 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (!_isProgramTimingValid(distributionType, startTime, endTime)) {
+        uint32 currTime = _time();
+        if (distributionType == FLAT_DISTRIBUTION) {
+            if (!(currTime < startTime && startTime < endTime)) {
+                revert InvalidParam();
+            }
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            if (!(currTime < startTime && endTime == 0)) {
+                revert InvalidParam();
+            }
+        } else {
             revert InvalidParam();
         }
 
@@ -369,40 +389,6 @@ contract AutoCompoundingStakingRewards is
      */
     function _isProgramValid(ProgramData memory p) private pure returns (bool) {
         return address(p.poolToken) != address(0);
-    }
-
-    /**
-     * @dev returns whether or not a given program timing is valid
-     */
-    function _isProgramTimingValid(
-        uint8 distributionType,
-        uint32 startTime,
-        uint32 endTime
-    ) private view returns (bool) {
-        uint32 currTime = _time();
-        if (distributionType == FLAT_DISTRIBUTION) {
-            return currTime < startTime && startTime < endTime;
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            return currTime < startTime && endTime == 0;
-        }
-        return false;
-    }
-
-    /**
-     * @dev returns whether or not a given program timing is active
-     */
-    function _isProgramTimingActive(
-        uint8 distributionType,
-        uint32 startTime,
-        uint32 endTime
-    ) private view returns (bool) {
-        uint32 currTime = _time();
-        if (distributionType == FLAT_DISTRIBUTION) {
-            return startTime <= currTime && currTime <= endTime;
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            return startTime <= currTime;
-        }
-        return false;
     }
 
     /**
