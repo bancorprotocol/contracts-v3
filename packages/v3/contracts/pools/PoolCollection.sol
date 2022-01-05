@@ -68,7 +68,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error DepositLimitExceeded();
     error NoInitialRate();
     error TradingDisabled();
-    error LiquidityTooLow();
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
@@ -1100,11 +1099,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
             revert TradingDisabled();
-        }
-
-        // verify that liquidity is above the minimum network token liquidity for trading
-        if (params.liquidity.networkTokenTradingLiquidity < _networkSettings.minLiquidityForTrading()) {
-            revert LiquidityTooLow();
         }
 
         if (params.isSourceNetworkToken) {

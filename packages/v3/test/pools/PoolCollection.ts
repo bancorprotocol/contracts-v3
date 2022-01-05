@@ -1281,31 +1281,6 @@ describe('PoolCollection', () => {
                     });
                 });
 
-                context('with insufficient network token liquidity', () => {
-                    it('should revert when attempting to trade or query', async () => {
-                        await expect(
-                            network.tradePoolCollectionT(
-                                poolCollection.address,
-                                sourceToken.address,
-                                targetToken.address,
-                                1,
-                                MIN_RETURN_AMOUNT
-                            )
-                        ).to.be.revertedWith('LiquidityTooLow');
-
-                        for (const targetAmount of [true, false]) {
-                            await expect(
-                                poolCollection.tradeAmountAndFee(
-                                    sourceToken.address,
-                                    targetToken.address,
-                                    1,
-                                    targetAmount
-                                )
-                            ).to.be.revertedWith('LiquidityTooLow');
-                        }
-                    });
-                });
-
                 context('with sufficient network token liquidity', () => {
                     beforeEach(async () => {
                         await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, BigNumber.from(0));
