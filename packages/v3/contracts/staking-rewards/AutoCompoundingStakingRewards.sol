@@ -184,7 +184,7 @@ contract AutoCompoundingStakingRewards is
     function isProgramActive(ReserveToken pool) external view returns (bool) {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (!_isProgramValid(p)) {
+        if (!_doesProgramExist(p)) {
             return false;
         }
 
@@ -214,7 +214,7 @@ contract AutoCompoundingStakingRewards is
         onlyAdmin
         nonReentrant
     {
-        if (_isProgramValid(_programs[ReserveToken.unwrap(pool)])) {
+        if (_doesProgramExist(_programs[ReserveToken.unwrap(pool)])) {
             revert ProgramAlreadyExists();
         }
 
@@ -285,7 +285,7 @@ contract AutoCompoundingStakingRewards is
     function terminateProgram(ReserveToken pool) external onlyAdmin {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (!_isProgramValid(p)) {
+        if (!_doesProgramExist(p)) {
             revert ProgramDoesNotExist();
         }
 
@@ -300,7 +300,7 @@ contract AutoCompoundingStakingRewards is
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
-        if (!_isProgramValid(p)) {
+        if (!_doesProgramExist(p)) {
             revert ProgramDoesNotExist();
         }
 
@@ -385,9 +385,9 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns whether or not a given program is valid
+     * @dev returns whether or not a given program exists
      */
-    function _isProgramValid(ProgramData memory p) private pure returns (bool) {
+    function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
         return address(p.poolToken) != address(0);
     }
 
