@@ -263,7 +263,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                it('should revert when the program has already been created', async () => {
+                it('should revert when the program already exists', async () => {
                     await autoCompoundingStakingRewards.createProgram(
                         token.address,
                         rewardsVault.address,
@@ -442,7 +442,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.be.revertedWith('AccessDenied');
                 });
 
-                context('when a program is not yet created', () => {
+                context('when a program does not exist', () => {
                     it('should revert', async () => {
                         await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
                             'ProgramDoesNotExist'
