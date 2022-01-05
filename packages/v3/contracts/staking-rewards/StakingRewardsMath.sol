@@ -19,6 +19,7 @@ library StakingRewardsMath {
         uint32 timeElapsed,
         uint32 programDuration
     ) internal pure returns (uint256) {
+        assert(timeElapsed <= programDuration);
         return MathEx.mulDivF(totalRewards, timeElapsed, programDuration);
     }
 

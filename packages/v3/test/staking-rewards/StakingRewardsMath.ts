@@ -20,9 +20,15 @@ describe('StakingRewardsMath', () => {
     describe('flat rewards', () => {
         const calcFlatReward = (totalRewards: BigNumberish, timeElapsed: number, programDuration: number) => {
             it(`calcFlatRewards(${totalRewards}, ${timeElapsed}, ${programDuration})`, async () => {
-                const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
-                const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
-                expect(actual).to.equal(expected);
+                if (timeElapsed <= programDuration) {
+                    const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
+                    const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
+                    expect(actual).to.equal(expected);
+                } else {
+                    await expect(
+                        stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)
+                    ).to.be.revertedWith('panic code 0x1 (Assertion error)');
+                }
             });
         };
 
