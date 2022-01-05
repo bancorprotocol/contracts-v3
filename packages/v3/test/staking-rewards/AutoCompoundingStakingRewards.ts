@@ -178,8 +178,9 @@ describe('AutoCompoundingStakingRewards', () => {
             const TOTAL_REWARDS = 10;
             const INITIAL_USER_STAKE = 10;
 
-            let START_TIME = 1000;
-            let END_TIME = distributionType === StakingRewardsDistributionType.Flat ? START_TIME + TOTAL_DURATION : 0;
+            const START_TIME = 1000;
+            const END_TIME = distributionType === StakingRewardsDistributionType.Flat ? START_TIME + TOTAL_DURATION : 0;
+            const EFFECTIVE_END_TIME = END_TIME ? END_TIME : START_TIME + ExponentialDecay.MAX_DURATION;
 
             beforeEach(async () => {
                 ({
@@ -604,7 +605,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             break;
                     }
 
-                    await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME : ExponentialDecay.MAX_DURATION);
+                    await autoCompoundingStakingRewards.setTime(EFFECTIVE_END_TIME);
 
                     const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                     await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance);
@@ -614,7 +615,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 it('should distribute tokens only when the program is enabled', async () => {
-                    await autoCompoundingStakingRewards.setTime(END_TIME ? END_TIME : ExponentialDecay.MAX_DURATION);
+                    await autoCompoundingStakingRewards.setTime(EFFECTIVE_END_TIME);
                     await autoCompoundingStakingRewards.enableProgram(token.address, false);
                     const res1 = await autoCompoundingStakingRewards.processRewards(token.address);
                     await expect(res1).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
@@ -761,9 +762,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             END_TIME
                         );
 
-                        await autoCompoundingStakingRewards.setTime(
-                            END_TIME ? END_TIME + 1 : ExponentialDecay.MAX_DURATION + 1
-                        );
+                        await autoCompoundingStakingRewards.setTime(EFFECTIVE_END_TIME + 1);
                     });
 
                     switch (distributionType) {
