@@ -12,20 +12,7 @@ export const Roles = {
     },
 
     MasterVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER'),
         ROLE_NETWORK_TOKEN_MANAGER: id('ROLE_NETWORK_TOKEN_MANAGER')
-    },
-
-    ExternalProtectionVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
-    },
-
-    ExternalRewardsVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
-    },
-
-    NetworkFeeVault: {
-        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     },
 
     MasterPool: {
@@ -39,6 +26,10 @@ export const Roles = {
         ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
         ROLE_GOVERNOR: id('ROLE_GOVERNOR'),
         ROLE_MINTER: id('ROLE_MINTER')
+    },
+
+    Vault: {
+        ROLE_ASSET_MANAGER: id('ROLE_ASSET_MANAGER')
     }
 };
 

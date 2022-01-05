@@ -5,6 +5,9 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
+// the asset manager role is required to access all the funds
+bytes32 constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
+
 interface IVault is IUpgradeable {
     /**
      * @dev triggered when tokens have been withdrawn from the vault

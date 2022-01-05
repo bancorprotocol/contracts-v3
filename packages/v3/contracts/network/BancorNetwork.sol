@@ -28,6 +28,7 @@ import {
     InvalidType,
     NotEmpty } from "../utility/Utils.sol";
 
+import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
@@ -48,7 +49,10 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 import {
     IMasterPool,
     DepositAmounts as MasterPoolDepositAmounts,
-    WithdrawalAmounts as MasterPoolWithdrawalAmounts
+    WithdrawalAmounts as MasterPoolWithdrawalAmounts,
+    ROLE_NETWORK_TOKEN_MANAGER,
+    ROLE_VAULT_MANAGER,
+    ROLE_FUNDING_MANAGER
 } from "../pools/interfaces/IMasterPool.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
@@ -416,6 +420,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         _setLatestPoolCollection(poolType, poolCollection);
+        _setAccessRoles(poolCollection, true);
 
         emit PoolCollectionAdded({ poolType: poolType, poolCollection: poolCollection });
     }
@@ -454,6 +459,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         _setLatestPoolCollection(poolType, newLatestPoolCollection);
+        _setAccessRoles(poolCollection, false);
 
         emit PoolCollectionRemoved({ poolType: poolType, poolCollection: poolCollection });
     }
@@ -980,25 +986,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // if all network token liquidity is allocated - it's enough to check that the pool is whitelisted. Otherwise,
-        // we need to check if the master pool is able to provide network liquidity
-        uint256 unallocatedNetworkTokenLiquidity = cachedMasterPool.availableFunding(pool);
-        if (unallocatedNetworkTokenLiquidity == 0 && !_networkSettings.isTokenWhitelisted(pool)) {
-            revert NotWhitelisted();
-        } else if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
-            revert NetworkLiquidityDisabled();
-        }
+        // if all network token funding is allocated - it's enough to check that the pool is whitelisted. Otherwise,
+        // we need to check if the master pool is able to provide network token funding
+
+        // TODO: refactor
+        // uint256 availableFunding = cachedMasterPool.availableFunding(pool);
+        // if (availableFunding == 0 && !_networkSettings.isTokenWhitelisted(pool)) {
+        //     revert NotWhitelisted();
+        // } else if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
+        //     revert NetworkLiquidityDisabled();
+        // }
 
         // transfer the tokens from the sender to the vault
         _depositToMasterVault(pool, sender, availableAmount);
 
         // process deposit to the base token pool (taking into account the ETH pool)
-        PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(
-            provider,
-            pool,
-            baseTokenAmount,
-            unallocatedNetworkTokenLiquidity
-        );
+        PoolCollectionDepositAmounts memory depositAmounts = poolCollection.depositFor(provider, pool, baseTokenAmount);
 
         // request additional funding from the master pool and transfer it to the vault
         if (depositAmounts.networkTokenDeltaAmount > 0) {
@@ -1161,10 +1164,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // ensure that network token liquidity is enabled
-        if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
-            revert NetworkLiquidityDisabled();
-        }
+        // ensure that funding is enabled
+        // TODO:
+        // if (!cachedMasterPool.isFundingEnabled(pool, poolCollection)) {
+        //     revert NetworkLiquidityDisabled();
+        // }
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
@@ -1455,5 +1459,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
 
         return _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @dev grants/revokes required roles to/from a pool collection
+     */
+    function _setAccessRoles(IPoolCollection poolCollection, bool state) private {
+        address poolCollectionAddress = address(poolCollection);
+
+        if (state) {
+            _masterPool.grantRole(ROLE_NETWORK_TOKEN_MANAGER, poolCollectionAddress);
+            _masterPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _masterPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _masterVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+            _externalProtectionVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+        } else {
+            _masterPool.revokeRole(ROLE_NETWORK_TOKEN_MANAGER, poolCollectionAddress);
+            _masterPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _masterPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+            _externalProtectionVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+        }
     }
 }

@@ -1778,7 +1778,7 @@ describe('PoolCollection', () => {
         beforeEach(async () => {
             ({ networkSettings, network, poolCollection, externalRewardsVault } = await createSystem());
 
-            await externalRewardsVault.grantRole(Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER, deployer.address);
+            await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, deployer.address);
 
             reserveToken = await createTestToken();
 

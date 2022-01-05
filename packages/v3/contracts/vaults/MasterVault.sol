@@ -11,7 +11,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { IMasterVault } from "./interfaces/IMasterVault.sol";
-import { IVault } from "./interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
 
 /**
@@ -20,9 +20,6 @@ import { Vault } from "./Vault.sol";
 contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
-
-    // the asset manager role is required to access all the reserves
-    bytes32 private constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
     // the network token manager role is only required to access the network token reserve
     bytes32 private constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
@@ -78,13 +75,6 @@ contract MasterVault is IMasterVault, Vault {
      */
     function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
-    }
-
-    /**
-     * @dev returns the asset manager role
-     */
-    function roleAssetManager() external pure returns (bytes32) {
-        return ROLE_ASSET_MANAGER;
     }
 
     /**

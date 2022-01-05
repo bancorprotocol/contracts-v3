@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlEnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 
 import { IUpgradeable } from "./interfaces/IUpgradeable.sol";
@@ -11,7 +10,7 @@ import { AccessDenied } from "./Utils.sol";
 /**
  * @dev this contract provides common utilities for upgradeable contracts
  */
-abstract contract Upgradeable is IUpgradeable, Initializable, AccessControlEnumerableUpgradeable {
+abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeable {
     // the admin role is used to allow a non-proxy admin to perform additional initialization/setup during contract
     // upgrades
     bytes32 internal constant ROLE_ADMIN = keccak256("ROLE_ADMIN");

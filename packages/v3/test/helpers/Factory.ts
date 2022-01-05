@@ -100,10 +100,7 @@ export const createStakingRewards = async (
 
     await masterPool.grantRole(Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
-    await externalRewardsVault.grantRole(
-        Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-        autoCompoundingStakingRewards.address
-    );
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingStakingRewards.address);
 
     return autoCompoundingStakingRewards;
 };
@@ -214,11 +211,6 @@ const createMasterPool = async (
 
     await masterPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
-    await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
-    await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
-
-    await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
-
     return masterPool;
 };
 
@@ -280,6 +272,9 @@ const createSystemFixture = async () => {
         ]
     });
 
+    await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+    await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+
     const masterPool = await createMasterPool(
         network,
         networkSettings,
@@ -288,6 +283,10 @@ const createSystemFixture = async () => {
         masterVault,
         masterPoolToken
     );
+
+    await networkTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
+    await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, masterPool.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPool.address);
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
         ctorArgs: [network.address, networkToken.address, masterPool.address]
@@ -308,8 +307,8 @@ const createSystemFixture = async () => {
 
     await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    await masterVault.grantRole(Roles.MasterVault.ROLE_ASSET_MANAGER, network.address);
-    await externalProtectionVault.grantRole(Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER, network.address);
+    await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+    await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
 
     const networkInfo = await Contracts.BancorNetworkInfo.deploy(
         network.address,

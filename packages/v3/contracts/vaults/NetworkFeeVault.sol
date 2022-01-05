@@ -11,7 +11,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { INetworkFeeVault } from "./interfaces/INetworkFeeVault.sol";
-import { IVault } from "./interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
 
 /**
@@ -20,9 +20,6 @@ import { Vault } from "./Vault.sol";
 contract NetworkFeeVault is INetworkFeeVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
-
-    // the asset manager role is required to access all the reserves
-    bytes32 private constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -74,13 +71,6 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
      */
     function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
-    }
-
-    /**
-     * @dev returns the asset manager role
-     */
-    function roleAssetManager() external pure returns (bytes32) {
-        return ROLE_ASSET_MANAGER;
     }
 
     /**

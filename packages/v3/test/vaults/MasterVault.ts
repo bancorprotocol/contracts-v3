@@ -50,9 +50,10 @@ describe('MasterVault', () => {
             await expectRoles(masterVault, Roles.MasterVault);
 
             await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-                deployer.address
+                deployer.address,
+                network.address
             ]);
-            await expectRole(masterVault, Roles.MasterVault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+            await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 network.address
             ]);
             await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
@@ -118,7 +119,7 @@ describe('MasterVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(Roles.MasterVault.ROLE_ASSET_MANAGER, user.address);
+                        await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

@@ -3,7 +3,7 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalRewardsVault } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
@@ -47,16 +47,10 @@ describe('ExternalRewardsVault', () => {
             expect(await externalRewardsVault.version()).to.equal(1);
             expect(await externalRewardsVault.isPayable()).to.be.true;
 
-            await expectRoles(externalRewardsVault, Roles.ExternalRewardsVault);
-
             await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
-            await expectRole(
-                externalRewardsVault,
-                Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-                Roles.Upgradeable.ROLE_ADMIN
-            );
+            await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         });
     });
 
@@ -117,10 +111,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await externalRewardsVault.grantRole(
-                            Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-                            user.address
-                        );
+                        await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

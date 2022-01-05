@@ -292,6 +292,9 @@ describe('BancorNetwork', () => {
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
+
         let poolType: number;
 
         beforeEach(async () => {
@@ -302,11 +305,29 @@ describe('BancorNetwork', () => {
                 masterPool,
                 poolTokenFactory,
                 poolCollection,
-                poolCollectionUpgrader
+                poolCollectionUpgrader,
+                masterVault,
+                externalProtectionVault
             } = await createSystem());
 
             poolType = await poolCollection.poolType();
         });
+
+        const verifyPoolCollectionRoles = async (poolCollection: TestPoolCollection, state: boolean) => {
+            expect(
+                await masterPool.hasRole(Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, poolCollection.address)
+            ).to.equal(state);
+            expect(await masterPool.hasRole(Roles.MasterPool.ROLE_VAULT_MANAGER, poolCollection.address)).to.equal(
+                state
+            );
+            expect(await masterPool.hasRole(Roles.MasterPool.ROLE_FUNDING_MANAGER, poolCollection.address)).to.equal(
+                state
+            );
+            expect(await masterVault.hasRole(Roles.Vault.ROLE_ASSET_MANAGER, poolCollection.address)).to.equal(state);
+            expect(
+                await externalProtectionVault.hasRole(Roles.Vault.ROLE_ASSET_MANAGER, poolCollection.address)
+            ).to.equal(state);
+        };
 
         describe('adding new pool collection', () => {
             it('should revert when a non-owner attempts to add a new pool collection', async () => {
@@ -330,6 +351,8 @@ describe('BancorNetwork', () => {
                 await expect(res)
                     .to.emit(network, 'LatestPoolCollectionReplaced')
                     .withArgs(poolType, ZERO_ADDRESS, poolCollection.address);
+
+                await verifyPoolCollectionRoles(poolCollection, true);
 
                 expect(await network.poolCollections()).to.have.members([poolCollection.address]);
                 expect(await network.latestPoolCollection(poolType)).to.equal(poolCollection.address);
@@ -512,6 +535,8 @@ describe('BancorNetwork', () => {
                     ]);
                     expect(await network.latestPoolCollection(poolType)).to.equal(newPoolCollection.address);
 
+                    await verifyPoolCollectionRoles(poolCollection, false);
+
                     const res2 = await network.removePoolCollection(newPoolCollection.address, lastCollection.address);
                     await expect(res2)
                         .to.emit(network, 'PoolCollectionRemoved')
@@ -523,6 +548,8 @@ describe('BancorNetwork', () => {
                     expect(await network.poolCollections()).to.have.members([lastCollection.address]);
                     expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
 
+                    await verifyPoolCollectionRoles(newPoolCollection, false);
+
                     const res3 = await network.removePoolCollection(lastCollection.address, ZERO_ADDRESS);
                     await expect(res3)
                         .to.emit(network, 'PoolCollectionRemoved')
@@ -533,6 +560,8 @@ describe('BancorNetwork', () => {
 
                     expect(await network.poolCollections()).to.be.empty;
                     expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
+
+                    await verifyPoolCollectionRoles(lastCollection, false);
                 });
 
                 it('should revert when attempting to remove a pool collection with associated pools', async () => {
