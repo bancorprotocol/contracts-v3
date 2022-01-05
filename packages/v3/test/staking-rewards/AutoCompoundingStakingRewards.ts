@@ -608,7 +608,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     await autoCompoundingStakingRewards.setTime(EFFECTIVE_END_TIME);
 
                     const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
-                    await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance);
+                    await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance.sub(1));
                     await expect(autoCompoundingStakingRewards.processRewards(token.address)).to.be.revertedWith(
                         'InsufficientFunds'
                     );
