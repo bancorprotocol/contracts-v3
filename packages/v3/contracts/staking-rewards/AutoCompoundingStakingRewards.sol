@@ -226,20 +226,14 @@ contract AutoCompoundingStakingRewards is
         }
 
         IPoolToken poolToken;
-        uint256 requiredPoolTokenAmount;
 
         if (isNetworkToken) {
             poolToken = _masterPoolToken;
-            requiredPoolTokenAmount = _masterPool.underlyingToPoolToken(totalRewards);
+            _verifyFunds(_masterPool.underlyingToPoolToken(totalRewards), poolToken, rewardsVault);
         } else {
             IPoolCollection poolCollection = _network.collectionByPool(pool);
             poolToken = poolCollection.poolToken(pool);
-            requiredPoolTokenAmount = poolCollection.underlyingToPoolToken(pool, totalRewards);
-        }
-
-        // check whether the rewards vault holds enough funds to cover the total rewards
-        if (requiredPoolTokenAmount > poolToken.balanceOf(address(rewardsVault))) {
-            revert InsufficientFunds();
+            _verifyFunds(poolCollection.underlyingToPoolToken(pool, totalRewards), poolToken, rewardsVault);
         }
 
         _programs[ReserveToken.unwrap(pool)] = ProgramData({
@@ -317,10 +311,8 @@ contract AutoCompoundingStakingRewards is
         if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
             return;
         }
-        if (poolTokenAmountToBurn > p.poolToken.balanceOf(address(p.rewardsVault))) {
-            revert InsufficientFunds();
-        }
 
+        _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
         p.remainingRewards -= tokenAmountToDistribute;
@@ -412,5 +404,14 @@ contract AutoCompoundingStakingRewards is
      */
     function _isNetworkToken(ReserveToken token) private view returns (bool) {
         return token.toIERC20() == _networkToken;
+    }
+
+    /**
+     * @dev verifies that the rewards vault holds a sufficient amount of pool tokens
+     */
+    function _verifyFunds(uint256 requiredAmount, IPoolToken poolToken, IVault rewardsVault) private view {
+        if (requiredAmount > poolToken.balanceOf(address(rewardsVault))) {
+            revert InsufficientFunds();
+        }
     }
 }
