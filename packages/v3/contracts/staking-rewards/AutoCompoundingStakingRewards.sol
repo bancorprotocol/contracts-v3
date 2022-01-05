@@ -42,8 +42,8 @@ contract AutoCompoundingStakingRewards is
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    error ProgramNotYetCreated();
-    error ProgramAlreadyCreated();
+    error ProgramDoesNotExist();
+    error ProgramAlreadyExists();
     error InvalidParam();
     error InsufficientFunds();
 
@@ -204,7 +204,7 @@ contract AutoCompoundingStakingRewards is
         nonReentrant
     {
         if (_isProgramValid(_programs[ReserveToken.unwrap(pool)])) {
-            revert ProgramAlreadyCreated();
+            revert ProgramAlreadyExists();
         }
 
         bool isNetworkToken = _isNetworkToken(pool);
@@ -266,7 +266,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
         if (!_isProgramValid(p)) {
-            revert ProgramNotYetCreated();
+            revert ProgramDoesNotExist();
         }
 
         delete _programs[ReserveToken.unwrap(pool)];
@@ -281,7 +281,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
 
         if (!_isProgramValid(p)) {
-            revert ProgramNotYetCreated();
+            revert ProgramDoesNotExist();
         }
 
         bool prevStatus = p.isEnabled;

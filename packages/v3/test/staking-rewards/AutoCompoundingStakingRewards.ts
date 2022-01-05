@@ -282,7 +282,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             START_TIME,
                             END_TIME
                         )
-                    ).to.revertedWith('ProgramAlreadyCreated');
+                    ).to.revertedWith('ProgramAlreadyExists');
                 });
 
                 it('should revert when the total rewards are equal to 0', async () => {
@@ -445,7 +445,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 context('when a program is not yet created', () => {
                     it('should revert', async () => {
                         await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
-                            'ProgramNotYetCreated'
+                            'ProgramDoesNotExist'
                         );
                     });
                 });
