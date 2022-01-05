@@ -348,7 +348,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                         expect(program.distributionType).to.equal(distributionType);
                                         expect(program.startTime).to.equal(startTime);
                                         expect(program.endTime).to.equal(endTime);
-                                        expect(program.prevDistributionTimestamp).to.equal(startTime);
+                                        expect(program.prevDistributionTimestamp).to.equal(0);
                                         expect(program.isEnabled).to.be.true;
                                     });
                                 } else {
@@ -430,7 +430,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     expect(program.distributionType).to.equal(distributionType);
                     expect(program.startTime).to.equal(START_TIME);
                     expect(program.endTime).to.equal(END_TIME);
-                    expect(program.prevDistributionTimestamp).to.equal(START_TIME);
+                    expect(program.prevDistributionTimestamp).to.equal(0);
                     expect(program.isEnabled).to.be.true;
                 });
             });
@@ -920,7 +920,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
             const getRewards = async (program: any) => {
                 const currTime = await autoCompoundingStakingRewards.currentTime();
-                const prevTime = program.prevDistributionTimestamp;
+                const prevTime = Math.max(program.prevDistributionTimestamp, program.startTime);
 
                 if (!program.isEnabled || program.startTime > currTime) {
                     return {

@@ -239,7 +239,7 @@ contract AutoCompoundingStakingRewards is
         _programs[ReserveToken.unwrap(pool)] = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            prevDistributionTimestamp: startTime,
+            prevDistributionTimestamp: 0,
             totalRewards: totalRewards,
             remainingRewards: totalRewards,
             rewardsVault: rewardsVault,
@@ -337,7 +337,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p,
         uint32 currTime
     ) private view returns (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) {
-        uint32 prevTime = p.prevDistributionTimestamp;
+        uint32 prevTime = uint32(Math.max(p.prevDistributionTimestamp, p.startTime));
 
         if (p.distributionType == FLAT_DISTRIBUTION) {
             uint32 currTimeElapsed = uint32(Math.min(currTime, p.endTime)) - p.startTime;
