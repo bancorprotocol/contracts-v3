@@ -6,26 +6,31 @@ import {
     NetworkSettings,
     PoolToken,
     TestBancorNetwork,
+    TestERC20Token,
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, NATIVE_TOKEN_ADDRESS, PPM_RESOLUTION, ZERO_ADDRESS, BNT, ETH, TKN } from '../helpers/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { permitContractSignature } from '../../utils/Permit';
+import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
     createSystem,
+    createToken,
+    createTestToken,
     depositToPool,
     initWithdraw,
     setupSimplePool,
     PoolSpec,
-    specToString
+    specToString,
+    TokenWithAddress
 } from '../helpers/Factory';
-import { permitContractSignature } from '../helpers/Permit';
 import { latest, duration } from '../helpers/Time';
-import { toWei, toPPM } from '../helpers/Types';
-import { createTokenBySymbol, createWallet, transfer, TokenWithAddress } from '../helpers/Utils';
+import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import { BigNumber, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
 
@@ -71,20 +76,15 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testDeposits = (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
-            const isETH = symbol === ETH;
-
+        const testDeposits = (tokenData: TokenData) => {
             let token: TokenWithAddress;
 
             beforeEach(async () => {
-                if (isNetworkToken) {
+                if (tokenData.isNetworkToken()) {
                     token = networkToken;
                 } else {
-                    token = await createTokenBySymbol(symbol);
-                }
+                    token = await createToken(tokenData);
 
-                if (!isNetworkToken) {
                     await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setPoolMintingLimit(token.address, MINTING_LIMIT);
@@ -140,7 +140,7 @@ describe('Profile @profile', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 let { value, poolAddress = token.address } = overrides;
 
-                                value ||= isETH ? amount : BigNumber.from(0);
+                                value ||= tokenData.isNativeToken() ? amount : BigNumber.from(0);
 
                                 switch (method) {
                                     case Method.Deposit:
@@ -154,10 +154,11 @@ describe('Profile @profile', () => {
                             };
 
                             const testDepositAmount = async (amount: BigNumber) => {
-                                const test = async () => await profiler.profile(`deposit ${symbol}`, deposit(amount));
+                                const test = async () =>
+                                    await profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
-                                    if (!isETH) {
+                                    if (!tokenData.isNativeToken()) {
                                         beforeEach(async () => {
                                             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
                                             await reserveToken.transfer(sender.address, amount);
@@ -165,7 +166,7 @@ describe('Profile @profile', () => {
                                     }
 
                                     context('with an approval', () => {
-                                        if (!isETH) {
+                                        if (!tokenData.isNativeToken()) {
                                             beforeEach(async () => {
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     token.address
@@ -174,12 +175,12 @@ describe('Profile @profile', () => {
                                             });
                                         }
 
-                                        if (isNetworkToken) {
+                                        if (tokenData.isNetworkToken()) {
                                             context('with requested liquidity', () => {
                                                 beforeEach(async () => {
                                                     const contextId = formatBytes32String('CTX');
 
-                                                    const reserveToken = await createTokenBySymbol(TKN);
+                                                    const reserveToken = await createTestToken();
 
                                                     await createPool(
                                                         reserveToken,
@@ -319,10 +320,11 @@ describe('Profile @profile', () => {
                             };
 
                             const testDepositAmount = async (amount: BigNumber) => {
-                                const test = async () => profiler.profile(`deposit ${symbol}`, deposit(amount));
+                                const test = async () =>
+                                    profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
-                                    if (isNetworkToken || isETH) {
+                                    if (tokenData.isNetworkToken() || tokenData.isNativeToken()) {
                                         return;
                                     }
 
@@ -369,9 +371,9 @@ describe('Profile @profile', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testDeposits(symbol);
+                testDeposits(new TokenData(symbol));
             });
         }
     });
@@ -410,9 +412,7 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testWithdraw = async (symbol: string) => {
-            const isNetworkToken = symbol === BNT;
-
+        const testWithdraw = async (tokenData: TokenData) => {
             context('with an initiated withdrawal request', () => {
                 let provider: SignerWithAddress;
                 let poolToken: PoolToken;
@@ -426,20 +426,20 @@ describe('Profile @profile', () => {
                 });
 
                 beforeEach(async () => {
-                    if (isNetworkToken) {
+                    if (tokenData.isNetworkToken()) {
                         token = networkToken;
                     } else {
-                        token = await createTokenBySymbol(symbol);
+                        token = await createToken(tokenData);
                     }
 
                     // create a deposit
                     const amount = toWei(222_222_222);
 
-                    if (isNetworkToken) {
+                    if (tokenData.isNetworkToken()) {
                         poolToken = masterPoolToken;
 
                         const contextId = formatBytes32String('CTX');
-                        const reserveToken = await createTokenBySymbol(TKN);
+                        const reserveToken = await createTestToken();
                         await networkSettings.setPoolMintingLimit(reserveToken.address, MAX_UINT256);
 
                         await network.requestLiquidityT(contextId, reserveToken.address, amount);
@@ -489,15 +489,18 @@ describe('Profile @profile', () => {
 
                         context('with approvals', () => {
                             beforeEach(async () => {
-                                if (isNetworkToken) {
+                                if (tokenData.isNetworkToken()) {
                                     await govToken.connect(provider).approve(network.address, poolTokenAmount);
                                 }
                             });
 
                             const test = async () =>
-                                profiler.profile(`withdraw ${symbol}`, network.connect(provider).withdraw(id));
+                                profiler.profile(
+                                    `withdraw ${tokenData.symbol()}`,
+                                    network.connect(provider).withdraw(id)
+                                );
 
-                            if (isNetworkToken) {
+                            if (tokenData.isNetworkToken()) {
                                 it('should complete a withdraw', async () => {
                                     await test();
                                 });
@@ -538,9 +541,9 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testWithdraw(symbol);
+                testWithdraw(new TokenData(symbol));
             });
         }
     });
@@ -665,7 +668,6 @@ describe('Profile @profile', () => {
         };
 
         const verifyTrade = async (
-            trader: Signer | Wallet,
             beneficiaryAddress: string,
             amount: BigNumber,
             trade: (
@@ -673,41 +675,40 @@ describe('Profile @profile', () => {
                 options: TradeOverrides | TradePermittedOverrides
             ) => Promise<ContractTransaction>
         ) => {
-            const isSourceETH = sourceToken.address === NATIVE_TOKEN_ADDRESS;
-            const isTargetETH = targetToken.address === NATIVE_TOKEN_ADDRESS;
-            const isSourceNetworkToken = sourceToken.address === networkToken.address;
-            const isTargetNetworkToken = targetToken.address === networkToken.address;
+            const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
+            const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
 
             const minReturnAmount = MIN_RETURN_AMOUNT;
             const deadline = MAX_UINT256;
 
-            const sourceSymbol = isSourceNetworkToken ? BNT : isSourceETH ? ETH : TKN;
-            const targetSymbol = isTargetNetworkToken ? BNT : isTargetETH ? ETH : TKN;
+            const sourceSymbol = isSourceNativeToken ? TokenSymbol.ETH : await (sourceToken as TestERC20Token).symbol();
+            const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
+
             await profiler.profile(
-                `trade ${sourceSymbol} -> ${targetSymbol}`,
+                `trade ${await sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
+            const isSourceNativeToken = source.tokenData.isNativeToken();
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
 
                 const test = async () => {
-                    if (!isSourceETH) {
+                    if (!isSourceNativeToken) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                         await reserveToken.connect(trader).approve(network.address, amount);
                     }
 
-                    await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
+                    await verifyTrade(ZERO_ADDRESS, amount, trade);
                 };
 
                 beforeEach(async () => {
                     await setupPools(source, target);
 
-                    if (!isSourceETH) {
+                    if (!isSourceNativeToken) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                         await reserveToken.transfer(trader.address, amount.mul(BigNumber.from(TRADES_COUNT)));
                     }
@@ -722,22 +723,22 @@ describe('Profile @profile', () => {
         };
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceETH = source.symbol === ETH;
-            const isSourceNetworkToken = source.symbol === BNT;
+            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
+                const test = async () => verifyTrade(ZERO_ADDRESS, amount, tradePermitted);
 
                 beforeEach(async () => {
                     await setupPools(source, target);
 
-                    if (!isSourceETH) {
+                    if (!isSourceNativeToken) {
                         const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                         await reserveToken.transfer(trader.address, amount);
                     }
                 });
 
-                if (isSourceNetworkToken || isSourceETH) {
+                if (isSourceNetworkToken || isSourceNativeToken) {
                     return;
                 }
 
@@ -748,23 +749,26 @@ describe('Profile @profile', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TKN, BNT],
-            [TKN, ETH],
-            [`${TKN}1`, `${TKN}2`],
-            [BNT, ETH],
-            [BNT, TKN],
-            [ETH, BNT],
-            [ETH, TKN]
+            [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.ETH],
+            [TokenSymbol.TKN1, TokenSymbol.TKN2],
+            [TokenSymbol.BNT, TokenSymbol.ETH],
+            [TokenSymbol.BNT, TokenSymbol.TKN],
+            [TokenSymbol.ETH, TokenSymbol.BNT],
+            [TokenSymbol.ETH, TokenSymbol.TKN]
         ]) {
+            const sourceTokenData = new TokenData(sourceSymbol);
+            const targetTokenData = new TokenData(targetSymbol);
+
             testPermittedTrades(
                 {
-                    symbol: sourceSymbol,
+                    tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: INITIAL_RATE
                 },
                 {
-                    symbol: targetSymbol,
+                    tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
                     initialRate: INITIAL_RATE
@@ -777,25 +781,26 @@ describe('Profile @profile', () => {
                     for (const amount of [10_000, toWei(500_000)]) {
                         const TRADING_FEES = [0, 5];
                         for (const tradingFeePercent of TRADING_FEES) {
-                            const isSourceNetworkToken = sourceSymbol === BNT;
-                            const isTargetNetworkToken = targetSymbol === BNT;
-
                             // if either the source or the target token is the network token - only test fee in one of
                             // the directions
-                            if (isSourceNetworkToken || isTargetNetworkToken) {
+                            if (sourceTokenData.isNetworkToken() || targetTokenData.isNetworkToken()) {
                                 testTrades(
                                     {
-                                        symbol: sourceSymbol,
+                                        tokenData: new TokenData(sourceSymbol),
                                         balance: sourceBalance,
                                         requestedLiquidity: sourceBalance.mul(1000),
-                                        tradingFeePPM: isSourceNetworkToken ? undefined : toPPM(tradingFeePercent),
+                                        tradingFeePPM: sourceTokenData.isNetworkToken()
+                                            ? undefined
+                                            : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     {
-                                        symbol: targetSymbol,
+                                        tokenData: new TokenData(targetSymbol),
                                         balance: targetBalance,
                                         requestedLiquidity: targetBalance.mul(1000),
-                                        tradingFeePPM: isTargetNetworkToken ? undefined : toPPM(tradingFeePercent),
+                                        tradingFeePPM: targetTokenData.isNetworkToken()
+                                            ? undefined
+                                            : toPPM(tradingFeePercent),
                                         initialRate: INITIAL_RATE
                                     },
                                     BigNumber.from(amount)
@@ -804,14 +809,14 @@ describe('Profile @profile', () => {
                                 for (const tradingFeePercent2 of TRADING_FEES) {
                                     testTrades(
                                         {
-                                            symbol: sourceSymbol,
+                                            tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
                                             requestedLiquidity: sourceBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             initialRate: INITIAL_RATE
                                         },
                                         {
-                                            symbol: targetSymbol,
+                                            tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
                                             requestedLiquidity: targetBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent2),
@@ -854,13 +859,13 @@ describe('Profile @profile', () => {
             await waffle.loadFixture(setup);
         });
 
-        const testFlashLoan = async (symbol: string, flashLoanFeePPM: number) => {
+        const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
                 ({ token } = await setupSimplePool(
                     {
-                        symbol,
+                        tokenData,
                         balance: amount,
                         requestedLiquidity: amount.mul(1000),
                         initialRate: INITIAL_RATE
@@ -881,7 +886,7 @@ describe('Profile @profile', () => {
             const test = async () => {
                 const data = '0x1234';
                 await profiler.profile(
-                    `flash-loan ${symbol}`,
+                    `flash-loan ${tokenData.symbol()}`,
                     network.flashLoan(token.address, amount, recipient.address, data)
                 );
             };
@@ -897,10 +902,10 @@ describe('Profile @profile', () => {
             });
         };
 
-        for (const symbol of [BNT, ETH, TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const flashLoanFee of [0, 1, 10]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
-                    testFlashLoan(symbol, toPPM(flashLoanFee));
+                    testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee));
                 });
             }
         }
@@ -933,7 +938,7 @@ describe('Profile @profile', () => {
 
             ({ poolToken } = await setupSimplePool(
                 {
-                    symbol: TKN,
+                    tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
                     initialRate: { n: 1, d: 2 }

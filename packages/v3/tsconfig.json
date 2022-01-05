@@ -10,9 +10,10 @@
         "esModuleInterop": true,
         "baseUrl": "./",
         "paths": {
+            "@nomiclabs/hardhat-ethers/*": ["node_modules/@nomiclabs/hardhat-ethers/dist/src/*"],
             "*": ["node_modules/*"]
         }
     },
-    "include": ["./test", "./tasks", "./components"],
+    "include": ["./components", "./utils", "./test", "./deploy"],
     "files": ["./hardhat.config.ts"]
 }

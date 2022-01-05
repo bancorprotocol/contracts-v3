@@ -1,8 +1,8 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
-import { PPM_RESOLUTION, MAX_UINT256 } from '../helpers/Constants';
+import { PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
+import { toString, toWei, toPPM, Fraction, AverageRate } from '../../utils/Types';
 import { duration } from '../helpers/Time';
-import { toString, toWei, toPPM, Fraction, AverageRate } from '../helpers/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';

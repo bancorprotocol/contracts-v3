@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TestERC20Burnable } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../helpers/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';

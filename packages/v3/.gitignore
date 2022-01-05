@@ -7,10 +7,13 @@
 yarn-debug.log*
 yarn-error.log*
 
-/cache
-/artifacts
-/typechain-types
-/deployments
+cache
+artifacts
+typechain-types
+
+contracts/hardhat-dependency-compiler
+deployments
+!deployments/mainnet
 
 .coverage_artifacts
 .coverage_contracts
@@ -20,8 +23,5 @@ coverage.json
 allFiredEvents
 scTopics
 
-contracts/hardhat-dependency-compiler
-
-config.json
-
+.env
 tenderly.yaml

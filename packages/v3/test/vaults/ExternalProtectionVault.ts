@@ -1,16 +1,15 @@
 import Contracts from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
-import { expectRole, roles } from '../helpers/AccessControl';
-import { BNT, ETH, TKN, ZERO_ADDRESS } from '../helpers/Constants';
-import { createSystem } from '../helpers/Factory';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { expectRole, Roles } from '../helpers/AccessControl';
+import { createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, createTokenBySymbol, TokenWithAddress } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
-const { Upgradeable: UpgradeableRoles, ExternalProtectionVault: ExternalProtectionVaultRoles } = roles;
 
 describe('ExternalProtectionVault', () => {
     shouldHaveGap('ExternalProtectionVault');
@@ -49,13 +48,13 @@ describe('ExternalProtectionVault', () => {
             expect(await externalProtectionVault.version()).to.equal(1);
             expect(await externalProtectionVault.isPayable()).to.be.true;
 
-            await expectRole(externalProtectionVault, UpgradeableRoles.ROLE_ADMIN, UpgradeableRoles.ROLE_ADMIN, [
+            await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
             await expectRole(
                 externalProtectionVault,
-                ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
-                UpgradeableRoles.ROLE_ADMIN,
+                Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
+                Roles.Upgradeable.ROLE_ADMIN,
                 [network.address]
             );
         });
@@ -92,13 +91,13 @@ describe('ExternalProtectionVault', () => {
             [deployer, user] = await ethers.getSigners();
         });
 
-        for (const symbol of [BNT, ETH, TKN]) {
-            const isNetworkToken = symbol === BNT;
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {
                 ({ externalProtectionVault, networkToken } = await createSystem());
 
-                token = isNetworkToken ? networkToken : await createTokenBySymbol(symbol);
+                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
 
                 await transfer(deployer, token, externalProtectionVault.address, amount);
             });
@@ -110,7 +109,7 @@ describe('ExternalProtectionVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await externalProtectionVault.grantRole(UpgradeableRoles.ROLE_ADMIN, user.address);
+                        await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -119,7 +118,7 @@ describe('ExternalProtectionVault', () => {
                 context('with asset manager role', () => {
                     beforeEach(async () => {
                         await externalProtectionVault.grantRole(
-                            ExternalProtectionVaultRoles.ROLE_ASSET_MANAGER,
+                            Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
                             user.address
                         );
                     });

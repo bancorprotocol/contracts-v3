@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { TransparentUpgradeableProxyImmutable, TestLogic } from '../../typechain-types';
-import { ZERO_ADDRESS } from '../helpers/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

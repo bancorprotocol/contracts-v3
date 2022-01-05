@@ -1,4 +1,4 @@
-import { toDecimal, toString, isFraction, Fraction } from '../helpers/Types';
+import { toDecimal, toString, isFraction, Fraction } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -14,7 +14,11 @@ const override = (name: string, utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteFractionFunction(name, _super, utils);
 };
 
-const overwriteFractionFunction = (readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
+const overwriteFractionFunction = (
+    readableName: string,
+    _super: (...args: any[]) => any,
+    chaiUtils: Chai.ChaiUtils
+) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected] = args;
         const actual = chaiUtils.flag(this, 'object');
@@ -81,7 +85,9 @@ const overwriteFractionAlmostEqual = (_super: (...args: any[]) => any, chaiUtils
                 case Relation.LesserOrEqual:
                     this.assert(
                         actualDec.lte(expectedDec),
-                        `Expected ${toString(actualFraction)} to be lesser than or equal to ${toString(expectedFraction)}`,
+                        `Expected ${toString(actualFraction)} to be lesser than or equal to ${toString(
+                            expectedFraction
+                        )}`,
                         `Expected ${toString(actualFraction)} NOT to be lesser than or equal to ${toString(
                             expectedFraction
                         )}`,
