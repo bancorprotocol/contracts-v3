@@ -167,12 +167,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(ReserveToken indexed pool, bool newStatus, uint8 reason);
+    event TradingEnabled(ReserveToken indexed pool, bool indexed newStatus, uint8 indexed reason);
 
     /**
      * @dev triggered when depositing to a specific pool is enabled/disabled
      */
-    event DepositingEnabled(ReserveToken indexed pool, bool newStatus);
+    event DepositingEnabled(ReserveToken indexed pool, bool indexed newStatus);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
