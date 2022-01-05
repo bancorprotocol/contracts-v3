@@ -376,7 +376,11 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns whether or not a given program timing is valid
      */
-    function _isProgramTimingValid(uint8 distributionType, uint32 startTime, uint32 endTime) private view returns (bool) {
+    function _isProgramTimingValid(
+        uint8 distributionType,
+        uint32 startTime,
+        uint32 endTime
+    ) private view returns (bool) {
         uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
             return currTime < startTime && startTime < endTime;
@@ -389,7 +393,11 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns whether or not a given program timing is active
      */
-    function _isProgramTimingActive(uint8 distributionType, uint32 startTime, uint32 endTime) private view returns (bool) {
+    function _isProgramTimingActive(
+        uint8 distributionType,
+        uint32 startTime,
+        uint32 endTime
+    ) private view returns (bool) {
         uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
             return startTime <= currTime && currTime <= endTime;
@@ -409,7 +417,11 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev verifies that the rewards vault holds a sufficient amount of pool tokens
      */
-    function _verifyFunds(uint256 requiredAmount, IPoolToken poolToken, IVault rewardsVault) private view {
+    function _verifyFunds(
+        uint256 requiredAmount,
+        IPoolToken poolToken,
+        IVault rewardsVault
+    ) private view {
         if (requiredAmount > poolToken.balanceOf(address(rewardsVault))) {
             revert InsufficientFunds();
         }
