@@ -190,11 +190,11 @@ contract AutoCompoundingStakingRewards is
 
         uint32 currTime = _time();
 
-        if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+        if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
             return p.startTime <= currTime;
         }
 
-        return startTime <= currTime && currTime <= p.endTime;
+        return p.startTime <= currTime && currTime <= p.endTime;
     }
 
     /**
