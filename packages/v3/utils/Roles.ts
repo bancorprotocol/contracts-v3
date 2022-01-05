@@ -41,3 +41,7 @@ export const Roles = {
         ROLE_MINTER: id('ROLE_MINTER')
     }
 };
+
+export const RoleIds = Object.values(Roles)
+    .map((contractRoles) => Object.values(contractRoles))
+    .flat(1);

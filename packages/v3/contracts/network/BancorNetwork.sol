@@ -76,7 +76,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error InsufficientFlashLoanReturn();
 
     // the migration manager role is required for migrating liquidity
-    bytes32 public constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
+    bytes32 private constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
 
     // the address of the network token
     IERC20 private immutable _networkToken;
@@ -379,6 +379,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function version() external pure returns (uint16) {
         return 1;
+    }
+
+    /**
+     * @dev returns the migration manager role
+     */
+    function roleMigrationManager() external pure returns (bytes32) {
+        return ROLE_MIGRATION_MANAGER;
     }
 
     /**

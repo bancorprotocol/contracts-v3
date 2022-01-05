@@ -18,11 +18,20 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
-
 import { TRADING_FEE } from "../network/FeeTypes.sol";
 
-import { IMasterPool, DepositAmounts, WithdrawalAmounts } from "./interfaces/IMasterPool.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+
+// prettier-ignore
+import {
+    IMasterPool,
+    DepositAmounts,
+    WithdrawalAmounts,
+    ROLE_NETWORK_TOKEN_MANAGER,
+    ROLE_VAULT_MANAGER,
+    ROLE_FUNDING_MANAGER
+} from "./interfaces/IMasterPool.sol";
+
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
@@ -42,16 +51,7 @@ contract MasterPool is IMasterPool, Vault {
     error FundingLimitExceeded();
 
     // the master pool token manager role is required to access the master pool token reserve
-    bytes32 public constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");
-
-    // the network token manager role is required to request the master pool to mint network tokens
-    bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
-
-    // the vault manager role is required to request the master pool to burn network tokens from the master vault
-    bytes32 public constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
-
-    // the funding manager role is required to request or renounce funding from the master pool
-    bytes32 public constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
+    bytes32 private constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -180,10 +180,31 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @dev returns the master pool token manager role
      */
-    function version() external pure returns (uint16) {
-        return 1;
+    function roleMasterPoolTokenManager() external pure returns (bytes32) {
+        return ROLE_MASTER_POOL_TOKEN_MANAGER;
+    }
+
+    /**
+     * @dev returns the network token manager role
+     */
+    function roleNetworkTokenManager() external pure returns (bytes32) {
+        return ROLE_NETWORK_TOKEN_MANAGER;
+    }
+
+    /**
+     * @dev returns the vault manager role
+     */
+    function roleVaultManager() external pure returns (bytes32) {
+        return ROLE_VAULT_MANAGER;
+    }
+
+    /**
+     * @dev returns the funding manager role
+     */
+    function roleFundingManager() external pure returns (bytes32) {
+        return ROLE_FUNDING_MANAGER;
     }
 
     /**

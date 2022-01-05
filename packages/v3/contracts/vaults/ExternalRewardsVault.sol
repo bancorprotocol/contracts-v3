@@ -16,7 +16,7 @@ import { Vault } from "./Vault.sol";
  */
 contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     // the asset manager role is required to access all the reserves
-    bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
+    bytes32 private constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -68,6 +68,13 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
      */
     function isPayable() public pure override(IVault, Vault) returns (bool) {
         return true;
+    }
+
+    /**
+     * @dev returns the asset manager role
+     */
+    function roleAssetManager() external pure returns (bytes32) {
+        return ROLE_ASSET_MANAGER;
     }
 
     /**

@@ -22,7 +22,7 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
     // the asset manager role is required to access all the reserves
-    bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
+    bytes32 private constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -77,10 +77,10 @@ contract NetworkFeeVault is INetworkFeeVault, Vault {
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @dev returns the asset manager role
      */
-    function version() external pure override returns (uint16) {
-        return 1;
+    function roleAssetManager() external pure returns (bytes32) {
+        return ROLE_ASSET_MANAGER;
     }
 
     /**

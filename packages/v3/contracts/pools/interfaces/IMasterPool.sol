@@ -29,6 +29,15 @@ struct WithdrawalAmounts {
     uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
 }
 
+// the network token manager role is required to request the master pool to mint network tokens
+bytes32 constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
+
+// the vault manager role is required to request the master pool to burn network tokens from the master vault
+bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
+
+// the funding manager role is required to request or renounce funding from the master pool
+bytes32 constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
+
 /**
  * @dev Master Pool interface
  */

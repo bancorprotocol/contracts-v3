@@ -13,7 +13,7 @@ import {
 import { FeeType, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createToken, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
@@ -148,6 +148,8 @@ describe('MasterPool', () => {
         it('should be properly initialized', async () => {
             expect(await masterPool.version()).to.equal(1);
             expect(await masterPool.isPayable()).to.be.false;
+
+            await expectRoles(masterPool, Roles.MasterPool);
 
             await expectRole(masterPool, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address,

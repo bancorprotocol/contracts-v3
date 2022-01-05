@@ -32,7 +32,7 @@ import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createPool,
     createPoolCollection,
@@ -273,6 +273,9 @@ describe('BancorNetwork', () => {
         it('should be properly initialized', async () => {
             expect(await network.version()).to.equal(1);
 
+            await expectRoles(network, Roles.BancorNetwork);
+
+            await expectRole(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
 
             expect(await network.poolCollections()).to.be.empty;
