@@ -175,11 +175,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     event DepositingEnabled(ReserveToken indexed pool, bool newStatus);
 
     /**
-     * @dev triggered when a pool's initial rate is updated
-     */
-    event InitialRateUpdated(ReserveToken indexed pool, Fraction prevRate, Fraction newRate);
-
-    /**
      * @dev triggered when a pool's deposit limit is updated
      */
     event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
@@ -297,7 +292,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             tradingEnabled: true,
             depositingEnabled: true,
             averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
-            initialRate: _zeroFraction(),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -314,14 +308,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
         // pool is disabled
         emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_OWNER });
-
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
-        emit InitialRateUpdated({
-            pool: reserveToken,
-            prevRate: Fraction({ n: 0, d: 0 }),
-            newRate: newPool.initialRate
-        });
         emit DepositLimitUpdated({ pool: reserveToken, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
@@ -477,30 +465,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.depositingEnabled = status;
 
         emit DepositingEnabled({ pool: pool, newStatus: status });
-    }
-
-    /**
-     * @dev sets the initial rate of a given pool
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setInitialRate(ReserveToken pool, Fraction memory newInitialRate)
-        external
-        onlyOwner
-        validRate(newInitialRate)
-    {
-        Pool storage data = _poolStorage(pool);
-
-        Fraction memory prevInitialRate = data.initialRate;
-        if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
-            return;
-        }
-
-        data.initialRate = newInitialRate;
-
-        emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
     }
 
     /**

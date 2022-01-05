@@ -31,7 +31,6 @@ struct Pool {
     bool tradingEnabled; // whether trading is enabled
     bool depositingEnabled; // whether depositing is enabled
     AverageRate averageRate; // the recent average rate
-    Fraction initialRate; // the initial rate of one base token in network token units in a given pool
     uint256 depositLimit; // the deposit limit
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }

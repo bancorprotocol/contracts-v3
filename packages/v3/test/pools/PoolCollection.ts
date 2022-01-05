@@ -337,69 +337,6 @@ describe('PoolCollection', () => {
             newReserveToken = await createTestToken();
         });
 
-        describe('initial rate', () => {
-            const newInitialRate = { n: 1000, d: 5000 };
-
-            it('should revert when a non-owner attempts to set the initial rate', async () => {
-                await expect(
-                    poolCollection.connect(nonOwner).setInitialRate(reserveToken.address, newInitialRate)
-                ).to.be.revertedWith('AccessDenied');
-            });
-
-            it('should revert when setting an invalid rate', async () => {
-                await expect(
-                    poolCollection.setInitialRate(reserveToken.address, {
-                        n: 1000,
-                        d: 0
-                    })
-                ).to.be.revertedWith('InvalidRate');
-
-                await expect(
-                    poolCollection.setInitialRate(reserveToken.address, {
-                        n: 0,
-                        d: 1000
-                    })
-                ).to.be.revertedWith('InvalidRate');
-            });
-
-            it('should revert when setting the initial rate of a non-existing pool', async () => {
-                await expect(poolCollection.setInitialRate(newReserveToken.address, newInitialRate)).to.be.revertedWith(
-                    'DoesNotExist'
-                );
-            });
-
-            it('should ignore updating to the same initial rate', async () => {
-                await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
-
-                const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
-                await expect(res).not.to.emit(poolCollection, 'InitialRateUpdated');
-            });
-
-            it('should allow setting and updating the initial rate', async () => {
-                let pool = await poolCollection.poolData(reserveToken.address);
-                let { initialRate } = pool;
-                expect(initialRate).to.equal(ZERO_FRACTION);
-
-                const res = await poolCollection.setInitialRate(reserveToken.address, newInitialRate);
-                await expect(res)
-                    .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, initialRate, newInitialRate);
-
-                pool = await poolCollection.poolData(reserveToken.address);
-                ({ initialRate } = pool);
-                expect(initialRate).to.equal(newInitialRate);
-
-                const newInitialRate2 = { n: 100_000, d: 50 };
-                const res2 = await poolCollection.setInitialRate(reserveToken.address, newInitialRate2);
-                await expect(res2)
-                    .to.emit(poolCollection, 'InitialRateUpdated')
-                    .withArgs(reserveToken.address, initialRate, newInitialRate2);
-
-                pool = await poolCollection.poolData(reserveToken.address);
-                ({ initialRate } = pool);
-                expect(initialRate).to.equal(newInitialRate2);
-            });
-        });
 
         describe('trading fee', () => {
             const newTradingFee = toPPM(5.5);
