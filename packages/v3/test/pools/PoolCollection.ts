@@ -1412,7 +1412,7 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith(
                                         targetAmount
                                             ? 'InvalidPoolBalance'
-                                            : 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)' // eslint-disable-line max-len
+                                            : 'panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
                                     );
                                 }
                             });
@@ -1443,7 +1443,7 @@ describe('PoolCollection', () => {
                                         false
                                     )
                                 ).to.be.revertedWith(
-                                    'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                                    'panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
                                 );
                             });
 
@@ -1481,7 +1481,11 @@ describe('PoolCollection', () => {
                                             targetAmount.add(1),
                                             false
                                         )
-                                    ).to.be.revertedWith('reverted with panic code'); // either division by zero or subtraction underflow
+                                    ).to.be.revertedWith(
+                                        isSourceNetworkToken
+                                            ? 'panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                                            : 'panic code 0x12 (Division or modulo division by zero)'
+                                    );
                                 });
                             });
                         });
