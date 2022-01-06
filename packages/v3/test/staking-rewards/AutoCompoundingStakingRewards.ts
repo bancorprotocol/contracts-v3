@@ -386,32 +386,33 @@ describe('AutoCompoundingStakingRewards', () => {
                 });
 
                 context('funds in the rewards vault', () => {
-                    let y: BigNumber; // pool token token supply
-                    let z: BigNumber; // pool token vault balance
-                    let w: BigNumber; // token staked balance
-
-                    // a program cannot be created if the funds in the rewards vault are insufficient for backing the total rewards.
-                    // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z`, then the creation of the program will reverts.
-                    // due to the inherent inaccuracy of integer-division:
-                    // - the maximum total rewards that the program can be created with, is given by `wz/y`.
-                    // - the minimum total rewards that the program cannot be created with, is given by `w(yz-zz+y-z)/(yy-yz-y)+1`.
-                    // for any value in between, the program creation will complete in some cases and revert in others, depending on `y,z,w`.
+                    let maxTotalRewards: BigNumber;
 
                     beforeEach(async () => {
-                        y = await (poolToken as PoolToken).totalSupply();
-                        z = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
-                        w = tokenData.isNetworkToken()
+                        const y = await (poolToken as PoolToken).totalSupply();
+                        const z = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
+                        const w = tokenData.isNetworkToken()
                             ? await masterPool.stakedBalance()
                             : (await poolCollection.poolLiquidity(token.address)).stakedBalance;
+
+                        // a program cannot be created if the funds in the rewards vault are insufficient for backing the total rewards.
+                        // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z`, then the creation of the program will reverts.
+                        // we want to calculate the minimum value of `x` such that the creation of the program will revert, but because
+                        // integer-division is used, we need to calculate the minimum value of `x` such that `xyy/(xy+w(y-z)) >= z+1`.
+                        // this value can be calculated as `x = w(yz-zz+y-z)/(yy-yz-y)+1`.
+
+                        // the maximum total rewards that the program can be created with:
+                        maxTotalRewards = w
+                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z))
+                            .div(y.mul(y).sub(y.mul(z)).sub(y));
                     });
 
                     it('are sufficient for backing the total rewards', async () => {
-                        const totalRewards = w.mul(z).div(y);
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
                                 rewardsVault.address,
-                                totalRewards,
+                                maxTotalRewards,
                                 distributionType,
                                 START_TIME,
                                 END_TIME
@@ -420,15 +421,11 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
 
                     it('are insufficient for backing the total rewards', async () => {
-                        const totalRewards = w
-                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z))
-                            .div(y.mul(y).sub(y.mul(z)).sub(y))
-                            .add(1);
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
                                 rewardsVault.address,
-                                totalRewards,
+                                maxTotalRewards.add(1),
                                 distributionType,
                                 START_TIME,
                                 END_TIME
