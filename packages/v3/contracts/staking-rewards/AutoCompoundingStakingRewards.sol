@@ -327,8 +327,12 @@ contract AutoCompoundingStakingRewards is
         }
 
         uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
+        if (tokenAmountToDistribute == 0) {
+            return;
+        }
+
         uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
-        if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
+        if (poolTokenAmountToBurn == 0) {
             return;
         }
 
