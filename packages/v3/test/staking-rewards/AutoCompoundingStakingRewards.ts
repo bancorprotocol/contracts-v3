@@ -390,12 +390,12 @@ describe('AutoCompoundingStakingRewards', () => {
                     let z: BigNumber; // pool token vault balance
                     let w: BigNumber; // token staked balance
 
-                    // a program cannot be created if the funds in the rewards vault are insufficient for backing the total rewards
-                    // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z` then the creation of the program will reverts
+                    // a program cannot be created if the funds in the rewards vault are insufficient for backing the total rewards.
+                    // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z`, then the creation of the program will reverts.
                     // due to the inherent inaccuracy of integer-division:
-                    // - the maximum total rewards that the program can be created with is given by `wz/y`
-                    // - the minimum total rewards that the program cannot be created with is given by `w(yz-zz+y-z)/(yy-yz-y)+1`
-                    // for any value in between, the program creation will complete in some cases and revert in others, depending on `y,z,w`
+                    // - the maximum total rewards that the program can be created with, is given by `wz/y`.
+                    // - the minimum total rewards that the program cannot be created with, is given by `w(yz-zz+y-z)/(yy-yz-y)+1`.
+                    // for any value in between, the program creation will complete in some cases and revert in others, depending on `y,z,w`.
 
                     beforeEach(async () => {
                         y = await (poolToken as PoolToken).totalSupply();
