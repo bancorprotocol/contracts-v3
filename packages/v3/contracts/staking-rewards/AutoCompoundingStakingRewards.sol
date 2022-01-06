@@ -233,11 +233,11 @@ contract AutoCompoundingStakingRewards is
 
         uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime < startTime && startTime < endTime)) {
+            if (!(currTime <= startTime && startTime < endTime)) {
                 revert InvalidParam();
             }
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime < startTime && endTime == 0)) {
+            if (!(currTime <= startTime && endTime == 0)) {
                 revert InvalidParam();
             }
         } else {

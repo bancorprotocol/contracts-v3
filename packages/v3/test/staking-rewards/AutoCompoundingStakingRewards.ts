@@ -305,10 +305,10 @@ describe('AutoCompoundingStakingRewards', () => {
 
                             switch (distributionType) {
                                 case StakingRewardsDistributionType.Flat:
-                                    isProgramTimingValid = currTime < startTime && startTime < endTime;
+                                    isProgramTimingValid = currTime <= startTime && startTime < endTime;
                                     break;
                                 case StakingRewardsDistributionType.ExponentialDecay:
-                                    isProgramTimingValid = currTime < startTime && endTime == 0;
+                                    isProgramTimingValid = currTime <= startTime && endTime == 0;
                                     break;
                             }
 
@@ -667,11 +667,11 @@ describe('AutoCompoundingStakingRewards', () => {
 
                                 switch (distributionType) {
                                     case StakingRewardsDistributionType.Flat:
-                                        isProgramTimingValid = creationTime < startTime && startTime < endTime;
+                                        isProgramTimingValid = creationTime <= startTime && startTime < endTime;
                                         isProgramTimingActive = startTime <= currTime && currTime <= endTime;
                                         break;
                                     case StakingRewardsDistributionType.ExponentialDecay:
-                                        isProgramTimingValid = creationTime < startTime && endTime == 0;
+                                        isProgramTimingValid = creationTime <= startTime && endTime == 0;
                                         isProgramTimingActive = startTime <= currTime;
                                         break;
                                 }
