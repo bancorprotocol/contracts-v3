@@ -420,7 +420,10 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
 
                     it('are insufficient for backing the total rewards', async () => {
-                        const totalRewards = w.mul(y.mul(z).sub(z.mul(z)).add(y).sub(z)).div(y.mul(y).sub(y.mul(z)).sub(y)).add(1);
+                        const totalRewards = w
+                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z))
+                            .div(y.mul(y).sub(y.mul(z)).sub(y))
+                            .add(1);
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,

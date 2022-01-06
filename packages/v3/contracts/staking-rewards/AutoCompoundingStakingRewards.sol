@@ -248,7 +248,6 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
