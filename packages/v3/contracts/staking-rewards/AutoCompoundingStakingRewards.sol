@@ -326,7 +326,8 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) = _calculateRewards(pool, p, currTime);
+        uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
+        uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (tokenAmountToDistribute == 0 || poolTokenAmountToBurn == 0) {
             return;
         }
@@ -348,39 +349,47 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns the amount of tokens to distribute and the amount of pool tokens to burn
+     * @dev returns the amount of tokens to distribute
      */
-    function _calculateRewards(
-        ReserveToken pool,
-        ProgramData memory p,
-        uint32 currTime
-    ) private view returns (uint256 tokenAmountToDistribute, uint256 poolTokenAmountToBurn) {
+    function _tokenAmountToDistribute(ProgramData memory p, uint32 currTime) private pure returns (uint256) {
         uint32 prevTime = uint32(Math.max(p.prevDistributionTimestamp, p.startTime));
 
         if (p.distributionType == FLAT_DISTRIBUTION) {
             uint32 currTimeElapsed = uint32(Math.min(currTime, p.endTime)) - p.startTime;
             uint32 prevTimeElapsed = uint32(Math.min(prevTime, p.endTime)) - p.startTime;
-            tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
-                p.totalRewards,
-                currTimeElapsed - prevTimeElapsed,
-                p.endTime - p.startTime
-            );
-        } else if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            return
+                StakingRewardsMath.calcFlatRewards(
+                    p.totalRewards,
+                    currTimeElapsed - prevTimeElapsed,
+                    p.endTime - p.startTime
+                );
+        } else {
+            // if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION)
             uint32 currTimeElapsed = currTime - p.startTime;
             uint32 prevTimeElapsed = prevTime - p.startTime;
-            tokenAmountToDistribute =
+            return
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
                 StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
+    }
 
+    /**
+     * @dev returns the amount of pool tokens to burn
+     */
+    function _poolTokenAmountToBurn(
+        ReserveToken pool,
+        ProgramData memory p,
+        uint256 tokenAmountToDistribute
+    ) private view returns (uint256) {
         if (_isNetworkToken(pool)) {
-            poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
+            return _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         } else {
-            poolTokenAmountToBurn = _network.collectionByPool(pool).poolTokenAmountToBurn(
-                pool,
-                tokenAmountToDistribute,
-                p.poolToken.balanceOf(address(p.rewardsVault))
-            );
+            return
+                _network.collectionByPool(pool).poolTokenAmountToBurn(
+                    pool,
+                    tokenAmountToDistribute,
+                    p.poolToken.balanceOf(address(p.rewardsVault))
+                );
         }
     }
 
