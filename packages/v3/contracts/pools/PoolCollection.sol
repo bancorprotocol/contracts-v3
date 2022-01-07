@@ -289,7 +289,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Pool memory newPool = Pool({
             poolToken: newPoolToken,
             tradingFeePPM: _defaultTradingFeePPM,
-            tradingEnabled: true,
+            tradingEnabled: false,
             depositingEnabled: true,
             averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
             depositLimit: 0,
@@ -305,8 +305,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
-        // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
-        // pool is disabled
         emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_OWNER });
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
@@ -430,22 +428,29 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev enables/disables trading in a given pool
+     * @dev activates trading in a given pool and updates its trading liquidity
+     */
+    function activate(ReserveToken pool, Fraction memory initialRate) external onlyOwner {
+        // TODO: STUFF
+        Pool storage data = _poolStorage(pool);
+        // if (data.tradingEnabled) {
+        //     revert ();
+        // }
+
+        data.tradingEnabled = true;
+
+        emit TradingEnabled({ pool: pool, newStatus: false, reason: TRADING_STATUS_UPDATE_OWNER });
+    }
+
+    /**
+     * @dev disables trading in a given pool
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(ReserveToken pool, bool status) external onlyOwner {
-        Pool storage data = _poolStorage(pool);
-
-        if (data.tradingEnabled == status) {
-            return;
-        }
-
-        data.tradingEnabled = status;
-
-        emit TradingEnabled({ pool: pool, newStatus: status, reason: TRADING_STATUS_UPDATE_OWNER });
+    function disableTrading(ReserveToken pool) external onlyOwner {
+        _resetTradingLiquidity(pool, _poolStorage(pool), bytes32(0), TRADING_STATUS_UPDATE_OWNER);
     }
 
     /**
@@ -1028,6 +1033,41 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         }
 
         return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
+    }
+
+    /**
+     * @dev resets trading liquidity and renounces any remaining network token funding
+     */
+    function _resetTradingLiquidity(
+        ReserveToken pool,
+        Pool storage data,
+        bytes32 contextId,
+        uint8 reason
+    ) private {
+        PoolLiquidity memory liquidity = data.liquidity;
+
+        // reset the network and base token trading liquidities
+        data.liquidity = PoolLiquidity({
+            networkTokenTradingLiquidity: 0,
+            baseTokenTradingLiquidity: 0,
+            tradingLiquidityProduct: 0,
+            stakedBalance: liquidity.stakedBalance
+        });
+
+        // reset the recent average rage
+        data.averageRate = AverageRate({ time: 0, rate: _zeroFraction() });
+
+        // ensure that trading is disabled
+        if (data.tradingEnabled) {
+            data.tradingEnabled = false;
+
+            emit TradingEnabled({ pool: pool, newStatus: false, reason: reason });
+        }
+
+        // renounce all network liquidity
+        if (liquidity.networkTokenTradingLiquidity > 0) {
+            _masterPool.renounceFunding(contextId, pool, liquidity.networkTokenTradingLiquidity);
+        }
     }
 
     /**
