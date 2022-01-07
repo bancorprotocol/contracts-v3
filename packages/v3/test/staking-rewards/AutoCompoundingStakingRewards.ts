@@ -399,11 +399,11 @@ describe('AutoCompoundingStakingRewards', () => {
                         // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z`, then the creation of the program will reverts.
                         // we want to calculate the minimum value of `x` such that the creation of the program will revert, but because
                         // integer-division is used, we need to calculate the minimum value of `x` such that `xyy/(xy+w(y-z)) >= z+1`.
-                        // this value can be calculated as `x = w(yz-zz+y-z)/(yy-yz-y)+1`.
+                        // this value can be calculated as `x = (w(yz-zz+y-z)-1)/(yy-yz-y)+1`.
 
                         // the maximum total rewards that the program can be created with:
                         maxTotalRewards = w
-                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z))
+                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z)).sub(1)
                             .div(y.mul(y).sub(y.mul(z)).sub(y));
                     });
 
