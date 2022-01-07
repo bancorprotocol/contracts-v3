@@ -62,8 +62,8 @@ contract AutoCompoundingStakingRewards is
     // the master pool took contract
     IPoolToken private immutable _masterPoolToken;
 
-    // a mapping between a pool address and a program
-    mapping(address => ProgramData) private _programs;
+    // a mapping between pools and programs
+    mapping(ReserveToken => ProgramData) private _programs;
 
     // a map of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _programByPool;
@@ -161,7 +161,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function program(ReserveToken pool) external view returns (ProgramData memory) {
-        return _programs[ReserveToken.unwrap(pool)];
+        return _programs[pool];
     }
 
     /**
@@ -172,7 +172,7 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
-            list[i] = _programs[_programByPool.at(i)];
+            list[i] = _programs[ReserveToken.wrap(_programByPool.at(i))];
         }
 
         return list;
@@ -182,7 +182,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function isProgramActive(ReserveToken pool) external view returns (bool) {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
             return false;
@@ -214,7 +214,7 @@ contract AutoCompoundingStakingRewards is
         onlyAdmin
         nonReentrant
     {
-        if (_doesProgramExist(_programs[ReserveToken.unwrap(pool)])) {
+        if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }
 
@@ -262,7 +262,7 @@ contract AutoCompoundingStakingRewards is
 
         _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, rewardsVault);
 
-        _programs[ReserveToken.unwrap(pool)] = p;
+        _programs[pool] = p;
 
         assert(_programByPool.add(ReserveToken.unwrap(pool)));
 
@@ -280,13 +280,13 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
             revert ProgramDoesNotExist();
         }
 
-        delete _programs[ReserveToken.unwrap(pool)];
+        delete _programs[pool];
 
         emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
@@ -295,7 +295,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
             revert ProgramDoesNotExist();
@@ -306,7 +306,7 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        _programs[ReserveToken.unwrap(pool)].isEnabled = status;
+        _programs[pool].isEnabled = status;
 
         emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
     }
@@ -315,7 +315,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) external nonReentrant {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
 
@@ -339,7 +339,7 @@ contract AutoCompoundingStakingRewards is
         p.remainingRewards -= tokenAmountToDistribute;
         p.prevDistributionTimestamp = currTime;
 
-        _programs[ReserveToken.unwrap(pool)] = p;
+        _programs[pool] = p;
 
         emit RewardsDistributed({
             pool: pool,
