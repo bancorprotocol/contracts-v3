@@ -451,30 +451,30 @@ describe('MasterPool', () => {
             const nonFundingManager = deployer;
 
             await expect(
-                masterPool.connect(nonFundingManager).renounceLiquidity(CONTEXT_ID, reserveToken.address, 1)
+                masterPool.connect(nonFundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to renounce funding for a non-whitelisted pool', async () => {
             await expect(
-                masterPool.connect(fundingManager).renounceLiquidity(CONTEXT_ID, ZERO_ADDRESS, 1)
+                masterPool.connect(fundingManager).renounceFunding(CONTEXT_ID, ZERO_ADDRESS, 1)
             ).to.be.revertedWith('NotWhitelisted');
 
             const reserveToken2 = await createTestToken();
             await expect(
-                masterPool.connect(fundingManager).renounceLiquidity(CONTEXT_ID, reserveToken2.address, 1)
+                masterPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken2.address, 1)
             ).to.be.revertedWith('NotWhitelisted');
         });
 
         it('should revert when attempting to renounce a zero funding amount', async () => {
             await expect(
-                masterPool.connect(fundingManager).renounceLiquidity(CONTEXT_ID, reserveToken.address, 0)
+                masterPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 0)
             ).to.be.revertedWith('ZeroValue');
         });
 
         it('should revert when attempting to renounce funding when no funding was ever requested', async () => {
-            await expect(masterPool.connect(fundingManager).renounceLiquidity(CONTEXT_ID, reserveToken.address, 1)).to
-                .be.reverted; // division by 0
+            await expect(masterPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)).to.be
+                .reverted; // division by 0
         });
 
         context('with requested funding', () => {
@@ -506,7 +506,7 @@ describe('MasterPool', () => {
 
                 const res = await masterPool
                     .connect(fundingManager)
-                    .renounceLiquidity(CONTEXT_ID, reserveToken.address, amount);
+                    .renounceFunding(CONTEXT_ID, reserveToken.address, amount);
 
                 await expect(res)
                     .to.emit(masterPool, 'FundingRenounced')

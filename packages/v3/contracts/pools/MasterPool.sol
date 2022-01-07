@@ -437,7 +437,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function renounceLiquidity(
+    function renounceFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount

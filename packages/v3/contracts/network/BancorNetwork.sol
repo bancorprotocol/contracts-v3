@@ -1184,7 +1184,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
             assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
-            cachedMasterPool.renounceLiquidity(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
+            cachedMasterPool.renounceFunding(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
         }
 
         if (amounts.networkTokensTradingLiquidityDelta.value > 0) {
