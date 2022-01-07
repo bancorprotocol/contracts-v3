@@ -403,7 +403,8 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         // the maximum total rewards that the program can be created with:
                         maxTotalRewards = w
-                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z)).sub(1)
+                            .mul(y.mul(z).sub(z.mul(z)).add(y).sub(z))
+                            .sub(1)
                             .div(y.mul(y).sub(y.mul(z)).sub(y));
                     });
 
