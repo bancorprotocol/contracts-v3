@@ -15,7 +15,11 @@ const override = (name: string, utils: Chai.ChaiUtils) => {
     return (_super: (...args: any[]) => any) => overwriteBigNumberFunction(name, _super, utils);
 };
 
-const overwriteBigNumberFunction = (readableName: string, _super: (...args: any[]) => any, chaiUtils: Chai.ChaiUtils) => {
+const overwriteBigNumberFunction = (
+    readableName: string,
+    _super: (...args: any[]) => any,
+    chaiUtils: Chai.ChaiUtils
+) => {
     return function (this: Chai.AssertionStatic, ...args: any[]) {
         const [expected] = args;
         const actual = chaiUtils.flag(this, 'object');
