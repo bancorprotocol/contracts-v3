@@ -389,7 +389,7 @@ describe('PoolCollection', () => {
             });
         });
 
-        describe('disabled trading', () => {
+        describe('disable trading', () => {
             it('should revert when a non-owner attempts to disabled trading', async () => {
                 await expect(poolCollection.connect(nonOwner).disableTrading(reserveToken.address)).to.be.revertedWith(
                     'AccessDenied'
