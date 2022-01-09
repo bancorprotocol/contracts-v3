@@ -385,7 +385,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('NotWhitelisted');
                 });
 
-                context('funds in the rewards vault', () => {
+                context('with funds in the rewards vault', () => {
                     let maxTotalRewards: BigNumber;
 
                     beforeEach(async () => {
@@ -410,7 +410,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             .div(totalSupply.mul(totalSupply.sub(vaultBalance).sub(1)));
                     });
 
-                    it('are sufficient for backing the total rewards', async () => {
+                    it('should not revert when the funds are sufficient for backing the total rewards', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
@@ -423,7 +423,7 @@ describe('AutoCompoundingStakingRewards', () => {
                         ).to.emit(autoCompoundingStakingRewards, 'ProgramCreated');
                     });
 
-                    it('are insufficient for backing the total rewards', async () => {
+                    it('should revert when the funds are not sufficient for backing the total rewards', async () => {
                         await expect(
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
