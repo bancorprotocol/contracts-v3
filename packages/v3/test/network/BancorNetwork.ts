@@ -2872,7 +2872,7 @@ describe('BancorNetwork', () => {
                     .withArgs(contextId, token.address, FeeType.FlashLoan, feeAmount, prevStakedBalance.add(feeAmount));
 
                 const callbackData = await recipient.callbackData();
-                expect(callbackData.sender).to.equal(deployer.address);
+                expect(callbackData.caller).to.equal(deployer.address);
                 expect(callbackData.token).to.equal(token.address);
                 expect(callbackData.amount).to.equal(amount);
                 expect(callbackData.feeAmount).to.equal(feeAmount);

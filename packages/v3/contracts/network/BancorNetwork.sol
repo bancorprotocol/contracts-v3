@@ -131,14 +131,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     uint256[MAX_GAP - 9] private __gap;
 
     /**
-     * @dev triggered when the external protection vault is updated
-     */
-    event ExternalProtectionVaultUpdated(
-        IExternalProtectionVault indexed prevVault,
-        IExternalProtectionVault indexed newVault
-    );
-
-    /**
      * @dev triggered when a new pool collection is added
      */
     event PoolCollectionAdded(uint16 indexed poolType, IPoolCollection indexed poolCollection);
@@ -887,20 +879,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 tokenAmount,
-        address sender
+        address caller
     ) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(sender, _time(), provider, pool, tokenAmount));
+        return keccak256(abi.encodePacked(caller, _time(), provider, pool, tokenAmount));
     }
 
     /**
      * @dev generates context ID for a withdraw request
      */
-    function _withdrawContextId(uint256 id, address sender) private view returns (bytes32) {
-        return keccak256(abi.encodePacked(sender, _time(), id));
+    function _withdrawContextId(uint256 id, address caller) private view returns (bytes32) {
+        return keccak256(abi.encodePacked(caller, _time(), id));
     }
 
     /**
-     * @dev deposits liquidity for the specified provider from sender
+     * @dev deposits liquidity for the specified provider from caller
      *
      * requirements:
      *
@@ -910,19 +902,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 tokenAmount,
-        address sender
+        address caller
     ) private {
-        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, sender);
+        bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
         if (_isNetworkToken(pool)) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, sender, false, 0);
+            _depositNetworkTokenFor(contextId, provider, tokenAmount, caller, false, 0);
         } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, sender, tokenAmount);
+            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller, tokenAmount);
         }
+
+        // TODO: process the network fees
     }
 
     /**
-     * @dev deposits network token liquidity for the specified provider from sender
+     * @dev deposits network token liquidity for the specified provider from caller
      *
      * requirements:
      *
@@ -932,14 +926,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
-        address sender,
+        address caller,
         bool isMigrating,
         uint256 originalAmount
     ) private {
         IMasterPool cachedMasterPool = _masterPool;
 
-        // transfer the tokens from the sender to the master pool
-        _networkToken.transferFrom(sender, address(cachedMasterPool), networkTokenAmount);
+        // transfer the tokens from the caller to the master pool
+        _networkToken.transferFrom(caller, address(cachedMasterPool), networkTokenAmount);
 
         // process master pool deposit
         MasterPoolDepositAmounts memory depositAmounts = cachedMasterPool.depositFor(
@@ -978,7 +972,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 baseTokenAmount,
-        address sender,
+        address caller,
         uint256 availableAmount
     ) private {
         IMasterPool cachedMasterPool = _masterPool;
@@ -1063,7 +1057,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s,
-        address sender
+        address caller
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
         if (_isNetworkToken(token) || token.isNativeToken()) {
@@ -1072,7 +1066,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner safeTransferFrom will revert
-        IERC20Permit(ReserveToken.unwrap(token)).permit(sender, address(this), tokenAmount, deadline, v, r, s);
+        IERC20Permit(ReserveToken.unwrap(token)).permit(caller, address(this), tokenAmount, deadline, v, r, s);
     }
 
     /**
@@ -1092,16 +1086,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) private {
-        address sender = msg.sender;
+        address caller = msg.sender;
 
-        _permit(pool, tokenAmount, deadline, v, r, s, sender);
+        _permit(pool, tokenAmount, deadline, v, r, s, caller);
 
         _depositBaseTokenFor(
-            _depositContextId(provider, pool, tokenAmount, sender),
+            _depositContextId(provider, pool, tokenAmount, caller),
             provider,
             pool,
             tokenAmount,
-            sender,
+            caller,
             tokenAmount
         );
     }
@@ -1323,10 +1317,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         address trader
     ) private returns (uint256) {
-        ReserveToken networkPool = ReserveToken.wrap(address(_networkToken));
+        ReserveToken masterPool = ReserveToken.wrap(address(_networkToken));
         (ReserveToken sourceToken, ReserveToken targetToken) = isSourceNetworkToken
-            ? (networkPool, pool)
-            : (pool, networkPool);
+            ? (masterPool, pool)
+            : (pool, masterPool);
         TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
             sourceToken,
             targetToken,
@@ -1402,7 +1396,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function _depositToMasterVault(
         ReserveToken reserveToken,
-        address sender,
+        address caller,
         uint256 amount
     ) private {
         if (msg.value > 0) {
@@ -1422,7 +1416,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 revert InvalidPool();
             }
 
-            reserveToken.safeTransferFrom(sender, address(_masterVault), amount);
+            reserveToken.safeTransferFrom(caller, address(_masterVault), amount);
         }
     }
 

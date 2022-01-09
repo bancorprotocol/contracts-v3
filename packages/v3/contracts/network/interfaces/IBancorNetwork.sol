@@ -27,7 +27,7 @@ interface IFlashLoanRecipient {
      * @dev a flash-loan recipient callback after each the caller must return the borrowed amount and an additional fee
      */
     function onFlashLoan(
-        address sender,
+        address caller,
         IERC20 token,
         uint256 amount,
         uint256 feeAmount,
