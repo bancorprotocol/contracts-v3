@@ -389,24 +389,25 @@ describe('AutoCompoundingStakingRewards', () => {
                     let maxTotalRewards: BigNumber;
 
                     beforeEach(async () => {
-                        const y = await (poolToken as PoolToken).totalSupply();
-                        const z = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
-                        const w = tokenData.isNetworkToken()
+                        const totalSupply = await (poolToken as PoolToken).totalSupply();
+                        const vaultBalance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
+                        const stakedBalance = tokenData.isNetworkToken()
                             ? await masterPool.stakedBalance()
                             : (await poolCollection.poolLiquidity(token.address)).stakedBalance;
 
-                        // a program cannot be created if the funds in the rewards vault are insufficient for backing the total rewards.
-                        // with `x` denoting the total rewards, if `xyy/(xy+w(y-z)) > z`, then the creation of the program will reverts.
-                        // we want to calculate the minimum value of `x` such that the creation of the program will revert, but because
-                        // integer-division is used, we need to calculate the minimum value of `x` such that `xyy/(xy+w(y-z)) >= z+1`.
-                        // this value can be calculated as `x = ceil(w(y-z)(z+1)/(y(y-z-1))) = floor((w(y-z)(z+1)-1)/(y(y-z-1)))+1`.
-
-                        // the maximum total rewards that the program can be created with:
-                        maxTotalRewards = w
-                            .mul(y.sub(z))
-                            .mul(z.add(1))
+                        // let `x` denote the granted rewards in token units (BNT or TKN, depending on the request).
+                        // let `y` denote the total supply in pool-token units (bnBNT or bnTKN, depending on the request).
+                        // let `z` denote the vault balance in pool-token units (bnBNT or bnTKN, depending on the request).
+                        // let `w` denote the staked balance in token units (BNT or TKN, depending on the request).
+                        // given the values of `y`, `z` and `w`, we want to calculate the maximum possible value of `x`.
+                        // in order to grant rewards of `x` tokens, an amount of `floor(xyy/(xy+w(y-z)))` pool tokens is burned.
+                        // therefore we want to calculate the maximum possible value of `x` such that `floor(xyy/(xy+w(y-z))) <= z`.
+                        // this value can be calculated as `x = ceil(w(y-z)(z+1)/(y(y-z-1)))-1 = floor((w(y-z)(z+1)-1)/(y(y-z-1)))`:
+                        maxTotalRewards = stakedBalance
+                            .mul(totalSupply.sub(vaultBalance))
+                            .mul(vaultBalance.add(1))
                             .sub(1)
-                            .div(y.mul(y.sub(z).sub(1)));
+                            .div(totalSupply.mul(totalSupply.sub(vaultBalance).sub(1)));
                     });
 
                     it('are sufficient for backing the total rewards', async () => {
