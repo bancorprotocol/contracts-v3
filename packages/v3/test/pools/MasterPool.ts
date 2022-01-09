@@ -578,30 +578,32 @@ describe('MasterPool', () => {
             const nonNetwork = deployer;
 
             await expect(
-                masterPool.connect(nonNetwork).depositFor(provider.address, amount, false, 0)
+                masterPool.connect(nonNetwork).depositFor(CONTEXT_ID, provider.address, amount, false, 0)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to deposit a zero amount', async () => {
             const amount = 0;
 
-            await expect(network.depositToNetworkPoolForT(provider.address, amount, false, 0)).to.be.revertedWith(
-                'ZeroValue'
-            );
+            await expect(
+                network.depositToMasterPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
+            ).to.be.revertedWith('ZeroValue');
         });
 
         it('should revert when attempting to deposit for an invalid provider', async () => {
             const amount = 1;
 
-            await expect(network.depositToNetworkPoolForT(ZERO_ADDRESS, amount, false, 0)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                network.depositToMasterPoolForT(CONTEXT_ID, ZERO_ADDRESS, amount, false, 0)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to deposit when no funding was requested', async () => {
             const amount = 1;
 
-            await expect(network.depositToNetworkPoolForT(provider.address, amount, false, 0)).to.be.reverted; // division by 0
+            await expect(
+                network.depositToMasterPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
+            ).to.be.revertedWith('reverted with panic code 0x12 (Division or modulo division by zero)');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -653,20 +655,21 @@ describe('MasterPool', () => {
                             : BigNumber.from(0);
                     }
 
-                    const depositAmounts = await network.callStatic.depositToNetworkPoolForT(
+                    const res = await network.depositToMasterPoolForT(
+                        CONTEXT_ID,
                         provider.address,
                         amount,
                         isMigrating,
                         originalGovTokenAmount
                     );
-                    expect(depositAmounts.poolTokenAmount).to.equal(expectedPoolTokenAmount);
-                    expect(depositAmounts.govTokenAmount).to.equal(expectedGovTokenAmount);
 
-                    await network.depositToNetworkPoolForT(
+                    await expect(res).to.emit(masterPool, 'TokenDeposited').withArgs(
+                        CONTEXT_ID,
+
                         provider.address,
                         amount,
-                        isMigrating,
-                        originalGovTokenAmount
+                        expectedPoolTokenAmount,
+                        expectedGovTokenAmount
                     );
 
                     expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance);
@@ -694,7 +697,7 @@ describe('MasterPool', () => {
                     const amount = 1;
 
                     await expect(
-                        network.depositToNetworkPoolForT(provider.address, amount, false, 0)
+                        network.depositToMasterPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
                     ).to.be.revertedWith('');
                 });
 
@@ -704,7 +707,7 @@ describe('MasterPool', () => {
                         .div(await masterPoolToken.totalSupply());
 
                     await expect(
-                        network.depositToNetworkPoolForT(provider.address, maxAmount.add(1), false, 0)
+                        network.depositToMasterPoolForT(CONTEXT_ID, provider.address, maxAmount.add(1), false, 0)
                     ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                 });
 
@@ -753,21 +756,25 @@ describe('MasterPool', () => {
         it('should revert when attempting to withdraw from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(masterPool.connect(nonNetwork).withdraw(provider.address, 1)).to.be.revertedWith(
+            await expect(masterPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
-            await expect(network.withdrawFromNetworkPoolT(ZERO_ADDRESS, 1)).to.be.revertedWith('InvalidAddress');
+            await expect(network.withdrawFromMasterPoolT(CONTEXT_ID, ZERO_ADDRESS, 1)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should revert when attempting to withdraw a zero amount', async () => {
-            await expect(network.withdrawFromNetworkPoolT(provider.address, 0)).to.be.revertedWith('ZeroValue');
+            await expect(network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, 0)).to.be.revertedWith(
+                'ZeroValue'
+            );
         });
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
-            await expect(network.withdrawFromNetworkPoolT(provider.address, 1)).to.be.revertedWith(''); // division by 0
+            await expect(network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, 1)).to.be.revertedWith(''); // division by 0
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -790,25 +797,21 @@ describe('MasterPool', () => {
                 });
 
                 context('with deposited liquidity', () => {
-                    let depositAmounts: {
-                        poolTokenAmount: BigNumber;
-                        govTokenAmount: BigNumber;
-                    };
+                    let depositPoolTokenAmount: BigNumber;
 
                     beforeEach(async () => {
+                        const prevProviderPoolTokenBalance = await masterPoolToken.balanceOf(provider.address);
+
                         // since this is only a unit test, we will simulate a proper transfer of the network token amount
                         // from the network to the master pool
                         const depositAmount = toWei(1_000_000);
                         await networkToken.connect(deployer).transfer(masterPool.address, depositAmount);
 
-                        depositAmounts = await network.callStatic.depositToNetworkPoolForT(
-                            provider.address,
-                            depositAmount,
-                            false,
-                            0
-                        );
+                        await network.depositToMasterPoolForT(CONTEXT_ID, provider.address, depositAmount, false, 0);
 
-                        await network.depositToNetworkPoolForT(provider.address, depositAmount, false, 0);
+                        depositPoolTokenAmount = (await masterPoolToken.balanceOf(provider.address)).sub(
+                            prevProviderPoolTokenBalance
+                        );
                     });
 
                     const testWithdraw = async (provider: SignerWithAddress, poolTokenAmount: BigNumber) => {
@@ -830,19 +833,30 @@ describe('MasterPool', () => {
                         const prevGovTotalSupply = await govToken.totalSupply();
                         const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
                         const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
-                        const expectedTokenAmount = poolTokenAmount
+
+                        const expectedNetworkTokenAmount = poolTokenAmount
                             .mul(prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE))
                             .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
+                        const expectedWithdrawalFeeAmount = poolTokenAmount
+                            .mul(prevStakedBalance.mul(WITHDRAWAL_FEE))
+                            .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
 
-                        const withdrawalAmounts = await network.callStatic.withdrawFromNetworkPoolT(
+                        const res = await network.withdrawFromMasterPoolT(
+                            CONTEXT_ID,
                             provider.address,
                             poolTokenAmount
                         );
 
-                        expect(withdrawalAmounts.networkTokenAmount).to.equal(expectedTokenAmount);
-                        expect(withdrawalAmounts.poolTokenAmount).to.equal(poolTokenAmount);
-
-                        await network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount);
+                        await expect(res)
+                            .to.emit(masterPool, 'TokenWithdrawn')
+                            .withArgs(
+                                CONTEXT_ID,
+                                provider.address,
+                                expectedNetworkTokenAmount,
+                                poolTokenAmount,
+                                poolTokenAmount,
+                                expectedWithdrawalFeeAmount
+                            );
 
                         expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance);
 
@@ -859,11 +873,11 @@ describe('MasterPool', () => {
                         );
 
                         expect(await networkToken.totalSupply()).to.equal(
-                            prevTokenTotalSupply.add(expectedTokenAmount)
+                            prevTokenTotalSupply.add(expectedNetworkTokenAmount)
                         );
                         expect(await networkToken.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance);
                         expect(await networkToken.balanceOf(provider.address)).to.equal(
-                            prevProviderTokenBalance.add(expectedTokenAmount)
+                            prevProviderTokenBalance.add(expectedNetworkTokenAmount)
                         );
 
                         expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
@@ -875,14 +889,14 @@ describe('MasterPool', () => {
 
                     it('should revert when attempting to withdraw more than the deposited amount', async () => {
                         const extra = 1;
-                        const poolTokenAmount = depositAmounts.poolTokenAmount.add(extra);
+                        const poolTokenAmount = depositPoolTokenAmount.add(extra);
 
                         await network.approveT(masterPoolToken.address, masterPool.address, poolTokenAmount);
                         await govToken.connect(deployer).transfer(provider.address, extra);
                         await govToken.connect(provider).transfer(masterPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
+                            network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
                         ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
@@ -893,7 +907,7 @@ describe('MasterPool', () => {
                         await network.approveT(masterPoolToken.address, masterPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
+                            network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
                         ).to.be.revertedWith('ERR_UNDERFLOW');
                     });
 
@@ -902,7 +916,7 @@ describe('MasterPool', () => {
                         await govToken.connect(provider).transfer(masterPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromNetworkPoolT(provider.address, poolTokenAmount)
+                            network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
                         ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
@@ -1027,7 +1041,7 @@ describe('MasterPool', () => {
                             .connect(fundingManager)
                             .requestFunding(CONTEXT_ID, reserveToken.address, amount);
 
-                        await network.depositToNetworkPoolForT(deployer.address, amount, false, 0);
+                        await network.depositToMasterPoolForT(CONTEXT_ID, deployer.address, amount, false, 0);
                     } else {
                         token = await createToken(new TokenData(symbol));
                     }

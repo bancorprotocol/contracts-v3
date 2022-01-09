@@ -17,18 +17,6 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
-struct DepositAmounts {
-    uint256 poolTokenAmount; // the funded pool token amount
-    uint256 govTokenAmount; // the funded gov token amount
-}
-
-struct WithdrawalAmounts {
-    uint256 networkTokenAmount; // the withdrawn network token amount
-    uint256 poolTokenAmount; // the burned pool token amount
-    uint256 govTokenAmount; // the burned governance token amount
-    uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
-}
-
 // the network token manager role is required to request the master pool to mint network tokens
 bytes32 constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
 
@@ -105,11 +93,12 @@ interface IMasterPool is IVault {
      * - the network tokens must have been already deposited into the contract
      */
     function depositFor(
+        bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalGovTokenAmount
-    ) external returns (DepositAmounts memory);
+    ) external;
 
     /**
      * @dev withdraws network token liquidity on behalf of a specific provider and returns the withdrawn network token
@@ -120,7 +109,11 @@ interface IMasterPool is IVault {
      * - the caller must be the network contract
      * - the governance tokens must have been already deposited into the contract
      */
-    function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
+    function withdraw(
+        bytes32 contextId,
+        address provider,
+        uint256 poolTokenAmount
+    ) external;
 
     /**
      * @dev requests network token funding
@@ -147,7 +140,7 @@ interface IMasterPool is IVault {
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */
-    function renounceLiquidity(
+    function renounceFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount

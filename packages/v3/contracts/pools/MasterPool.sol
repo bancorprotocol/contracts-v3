@@ -25,8 +25,6 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 // prettier-ignore
 import {
     IMasterPool,
-    DepositAmounts,
-    WithdrawalAmounts,
     ROLE_NETWORK_TOKEN_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
@@ -41,6 +39,11 @@ import { Vault } from "../vaults/Vault.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import { PoolToken } from "./PoolToken.sol";
+
+struct WithdrawalAmounts {
+    uint256 networkTokenAmount;
+    uint256 withdrawalFeeAmount;
+}
 
 /**
  * @dev Master Pool contract
@@ -75,7 +78,30 @@ contract MasterPool is IMasterPool, Vault {
     uint256[MAX_GAP - 2] private __gap;
 
     /**
-     * @dev triggered when liquidity is requested
+     * @dev triggered when liquidity is deposited
+     */
+    event TokenDeposited(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 networkTokenAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount
+    );
+
+    /**
+     * @dev triggered when liquidity is withdrawn
+     */
+    event TokenWithdrawn(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 networkTokenAmount,
+        uint256 poolTokenAmount,
+        uint256 govTokenAmount,
+        uint256 withdrawalFeeAmount
+    );
+
+    /**
+     * @dev triggered when funding is requested
      */
     event FundingRequested(
         bytes32 indexed contextId,
@@ -85,13 +111,23 @@ contract MasterPool is IMasterPool, Vault {
     );
 
     /**
-     * @dev triggered when liquidity is renounced
+     * @dev triggered when funding is renounced
      */
     event FundingRenounced(
         bytes32 indexed contextId,
         ReserveToken indexed pool,
         uint256 networkTokenAmount,
         uint256 poolTokenAmount
+    );
+
+    /**
+     * @dev triggered when the total liquidity in the master pool is updated
+     */
+    event TotalLiquidityUpdated(
+        bytes32 indexed contextId,
+        uint256 stakedBalance,
+        uint256 poolTokenSupply,
+        uint256 actualBalance
     );
 
     /**
@@ -312,17 +348,12 @@ contract MasterPool is IMasterPool, Vault {
      * @inheritdoc IMasterPool
      */
     function depositFor(
+        bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalGovTokenAmount
-    )
-        external
-        only(address(_network))
-        validAddress(provider)
-        greaterThanZero(networkTokenAmount)
-        returns (DepositAmounts memory)
-    {
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(networkTokenAmount) {
         // calculate the pool token amount to transfer
         uint256 poolTokenAmount = _underlyingToPoolToken(networkTokenAmount);
 
@@ -338,10 +369,8 @@ contract MasterPool is IMasterPool, Vault {
         // the provider should receive pool tokens and gov tokens in equal amounts. since the provider might already
         // have some gov tokens during migration, the contract only mints the delta between the full amount and the
         // amount the provider already has
-        unchecked {
-            if (isMigrating) {
-                govTokenAmount = MathEx.subMax0(govTokenAmount, originalGovTokenAmount);
-            }
+        if (isMigrating) {
+            govTokenAmount = MathEx.subMax0(govTokenAmount, originalGovTokenAmount);
         }
 
         // mint governance tokens to the provider
@@ -349,19 +378,23 @@ contract MasterPool is IMasterPool, Vault {
             _govTokenGovernance.mint(provider, govTokenAmount);
         }
 
-        return DepositAmounts({ poolTokenAmount: poolTokenAmount, govTokenAmount: govTokenAmount });
+        emit TokenDeposited({
+            contextId: contextId,
+            provider: provider,
+            networkTokenAmount: networkTokenAmount,
+            poolTokenAmount: poolTokenAmount,
+            govTokenAmount: govTokenAmount
+        });
     }
 
     /**
      * @inheritdoc IMasterPool
      */
-    function withdraw(address provider, uint256 poolTokenAmount)
-        external
-        only(address(_network))
-        greaterThanZero(poolTokenAmount)
-        validAddress(provider)
-        returns (WithdrawalAmounts memory)
-    {
+    function withdraw(
+        bytes32 contextId,
+        address provider,
+        uint256 poolTokenAmount
+    ) external only(address(_network)) greaterThanZero(poolTokenAmount) validAddress(provider) {
         WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
@@ -373,13 +406,14 @@ contract MasterPool is IMasterPool, Vault {
         // mint network tokens to the provider
         _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
 
-        return
-            WithdrawalAmounts({
-                networkTokenAmount: amounts.networkTokenAmount,
-                poolTokenAmount: poolTokenAmount,
-                govTokenAmount: poolTokenAmount,
-                withdrawalFeeAmount: amounts.withdrawalFeeAmount
-            });
+        emit TokenWithdrawn({
+            contextId: contextId,
+            provider: provider,
+            networkTokenAmount: amounts.networkTokenAmount,
+            poolTokenAmount: poolTokenAmount,
+            govTokenAmount: poolTokenAmount,
+            withdrawalFeeAmount: amounts.withdrawalFeeAmount
+        });
     }
 
     /**
@@ -415,7 +449,8 @@ contract MasterPool is IMasterPool, Vault {
         }
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance + networkTokenAmount;
+        uint256 newStakedBalance = currentStakedBalance + networkTokenAmount;
+        _stakedBalance = newStakedBalance;
 
         // update the current funding amount
         _currentPoolFunding[pool] = newFunding;
@@ -431,6 +466,13 @@ contract MasterPool is IMasterPool, Vault {
             pool: pool,
             networkTokenAmount: networkTokenAmount,
             poolTokenAmount: poolTokenAmount
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            poolTokenSupply: poolTokenTotalSupply,
+            stakedBalance: newStakedBalance,
+            actualBalance: _networkToken.balanceOf(address(_masterVault))
         });
     }
 
@@ -449,20 +491,16 @@ contract MasterPool is IMasterPool, Vault {
         uint256 renouncedAmount = Math.min(currentFunding, networkTokenAmount);
 
         // calculate the pool token amount to burn
-        uint256 poolTokenAmount = _underlyingToPoolToken(
-            renouncedAmount,
-            _poolToken.totalSupply(),
-            currentStakedBalance
-        );
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        uint256 poolTokenAmount = _underlyingToPoolToken(renouncedAmount, poolTokenTotalSupply, currentStakedBalance);
 
         // update the current pool funding. Note that the given amount can be higher than the funding amount but the
         // request shouldn't fail (and the funding amount cannot get negative)
-        unchecked {
-            _currentPoolFunding[pool] = currentFunding - renouncedAmount;
-        }
+        _currentPoolFunding[pool] = currentFunding - renouncedAmount;
 
         // update the staked balance
-        _stakedBalance = currentStakedBalance - renouncedAmount;
+        uint256 newStakedBalance = currentStakedBalance - renouncedAmount;
+        _stakedBalance = newStakedBalance;
 
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
@@ -475,6 +513,13 @@ contract MasterPool is IMasterPool, Vault {
             pool: pool,
             networkTokenAmount: networkTokenAmount,
             poolTokenAmount: poolTokenAmount
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            poolTokenSupply: poolTokenTotalSupply,
+            stakedBalance: newStakedBalance,
+            actualBalance: _networkToken.balanceOf(address(_masterVault))
         });
     }
 
@@ -537,16 +582,9 @@ contract MasterPool is IMasterPool, Vault {
             _networkSettings.withdrawalFeePPM(),
             PPM_RESOLUTION
         );
-        unchecked {
-            networkTokenAmount -= withdrawalFeeAmount;
-        }
 
-        return
-            WithdrawalAmounts({
-                networkTokenAmount: networkTokenAmount,
-                poolTokenAmount: poolTokenAmount,
-                govTokenAmount: poolTokenAmount,
-                withdrawalFeeAmount: withdrawalFeeAmount
-            });
+        networkTokenAmount -= withdrawalFeeAmount;
+
+        return WithdrawalAmounts({ networkTokenAmount: networkTokenAmount, withdrawalFeeAmount: withdrawalFeeAmount });
     }
 }
