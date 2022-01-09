@@ -19,3 +19,19 @@ struct Sint256 {
     uint256 value;
     bool isNeg;
 }
+
+/**
+ * @dev returns whether a fraction is zero
+ */
+// solhint-disable-next-line func-visibility
+function isFractionZero(Fraction memory fraction) pure returns (bool) {
+    return fraction.n != 0 && fraction.d != 0;
+}
+
+/**
+ * @dev returns the zero fraction
+ */
+// solhint-disable-next-line func-visibility
+function zeroFraction() pure returns (Fraction memory) {
+    return Fraction({ n: 0, d: 1 });
+}

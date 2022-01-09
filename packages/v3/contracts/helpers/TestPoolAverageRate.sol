@@ -26,6 +26,10 @@ contract TestPoolAverageRate {
         return PoolAverageRate.reducedRatio(ratio);
     }
 
+    function isValid(AverageRate memory averageRate) external pure returns (bool) {
+        return PoolAverageRate.isValid(averageRate);
+    }
+
     function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) external pure returns (bool) {
         return PoolAverageRate.isEqual(averageRate1, averageRate2);
     }

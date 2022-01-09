@@ -6,7 +6,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Uint512 } from "../utility/Types.sol";
+import { Fraction, Uint512, isFractionValid } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
@@ -114,6 +114,13 @@ library PoolAverageRate {
     function reducedRatio(Fraction memory ratio) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(ratio.n, ratio.d), type(uint112).max);
         return Fraction({ n: ratio.n / scale, d: ratio.d / scale });
+    }
+
+    /**
+     * @dev returns whether an average rate is valid
+     */
+    function isValid(AverageRate memory averageRate) internal pure returns (bool) {
+        return averageRate.time != 0 && isFractionValid(averageRate.rate);
     }
 
     /**

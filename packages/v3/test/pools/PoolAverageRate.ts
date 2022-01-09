@@ -582,6 +582,30 @@ describe('PoolAverageRate', () => {
         }
     });
 
+    describe('validity', () => {
+        for (const averageRate of [
+            { rate: { n: 123, d: 11 }, time: 1 },
+            { rate: { n: 11, d: 1000 }, time: 1000 },
+            { rate: { n: 1, d: 1 }, time: 1000 }
+        ]) {
+            it(`should return that [${toString(averageRate.rate)}, ${averageRate.time}] is valid`, async () => {
+                expect(await poolAverageRate.isValid(averageRate)).to.be.true;
+            });
+        }
+
+        for (const averageRate of [
+            { rate: { n: 123, d: 11 }, time: 0 },
+            { rate: { n: 0, d: 0 }, time: 1000 },
+            { rate: { n: 0, d: 1 }, time: 1000 },
+            { rate: { n: 1, d: 0 }, time: 1000 },
+            { rate: { n: 0, d: 0 }, time: 0 }
+        ]) {
+            it(`should return that [${toString(averageRate.rate)}, ${averageRate.time}] is invalid`, async () => {
+                expect(await poolAverageRate.isValid(averageRate)).to.be.false;
+            });
+        }
+    });
+
     describe('equality', () => {
         for (const [averageRate1, averageRate2] of [
             [
