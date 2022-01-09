@@ -384,14 +384,14 @@ contract AutoCompoundingStakingRewards is
     ) private view returns (uint256) {
         if (_isNetworkToken(pool)) {
             return _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
-        } else {
-            return
-                _network.collectionByPool(pool).poolTokenAmountToBurn(
-                    pool,
-                    tokenAmountToDistribute,
-                    p.poolToken.balanceOf(address(p.rewardsVault))
-                );
         }
+
+        return
+            _network.collectionByPool(pool).poolTokenAmountToBurn(
+                pool,
+                tokenAmountToDistribute,
+                p.poolToken.balanceOf(address(p.rewardsVault))
+            );
     }
 
     /**
