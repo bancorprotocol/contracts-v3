@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { uncheckedInc, MathEx } from "../utility/MathEx.sol";
+import { uncheckedInc } from "../utility/MathEx.sol";
 import { Utils, NotWhitelisted } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
@@ -42,9 +42,8 @@ contract AutoCompoundingStakingRewards is
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    error ProgramActive();
-    error ProgramInactive();
-    error ProgramAlreadyActive();
+    error ProgramDoesNotExist();
+    error ProgramAlreadyExists();
     error InvalidParam();
     error InsufficientFunds();
 
@@ -63,8 +62,8 @@ contract AutoCompoundingStakingRewards is
     // the master pool took contract
     IPoolToken private immutable _masterPoolToken;
 
-    // a mapping between a pool address and a program
-    mapping(address => ProgramData) private _programs;
+    // a mapping between pools and programs
+    mapping(ReserveToken => ProgramData) private _programs;
 
     // a map of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _programByPool;
@@ -101,7 +100,6 @@ contract AutoCompoundingStakingRewards is
         ReserveToken indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
-        uint32 programTimeElapsed,
         uint256 remainingRewards
     );
 
@@ -163,7 +161,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function program(ReserveToken pool) external view returns (ProgramData memory) {
-        return _programs[ReserveToken.unwrap(pool)];
+        return _programs[pool];
     }
 
     /**
@@ -174,7 +172,7 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
-            list[i] = _programs[_programByPool.at(i)];
+            list[i] = _programs[ReserveToken.wrap(_programByPool.at(i))];
         }
 
         return list;
@@ -183,26 +181,20 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function isProgramActive(ReserveToken pool) public view returns (bool) {
-        ProgramData memory p = _programs[ReserveToken.unwrap(pool)];
+    function isProgramActive(ReserveToken pool) external view returns (bool) {
+        ProgramData memory p = _programs[pool];
 
-        if (p.remainingRewards == 0) {
+        if (!_doesProgramExist(p)) {
             return false;
         }
 
-        uint256 currentTime = _time();
+        uint32 currTime = _time();
 
-        // if the program hasn't started yet
-        if (currentTime < p.startTime) {
-            return false;
+        if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            return p.startTime <= currTime;
         }
 
-        // if a flat distribution program has already finished
-        if (p.distributionType == FLAT_DISTRIBUTION && currentTime > p.endTime) {
-            return false;
-        }
-
-        return true;
+        return p.startTime <= currTime && currTime <= p.endTime;
     }
 
     /**
@@ -222,8 +214,8 @@ contract AutoCompoundingStakingRewards is
         onlyAdmin
         nonReentrant
     {
-        if (isProgramActive(pool)) {
-            revert ProgramAlreadyActive();
+        if (_doesProgramExist(_programs[pool])) {
+            revert ProgramAlreadyExists();
         }
 
         bool isNetworkToken = _isNetworkToken(pool);
@@ -239,46 +231,31 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        if (startTime < _time()) {
-            revert InvalidParam();
-        }
-
+        uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
-            if (startTime > endTime || endTime == 0) {
+            if (!(currTime <= startTime && startTime < endTime)) {
                 revert InvalidParam();
             }
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (endTime != 0) {
+            if (!(currTime <= startTime && endTime == 0)) {
                 revert InvalidParam();
             }
+        } else {
+            revert InvalidParam();
         }
 
-        address poolAddress = ReserveToken.unwrap(pool);
-        bool programExists = address(_programs[poolAddress].poolToken) != address(0);
         IPoolToken poolToken;
-        uint256 requiredPoolTokenAmount;
 
         if (isNetworkToken) {
             poolToken = _masterPoolToken;
-            requiredPoolTokenAmount = _masterPool.underlyingToPoolToken(totalRewards);
+            _verifyFunds(_masterPool.underlyingToPoolToken(totalRewards), poolToken, rewardsVault);
         } else {
             IPoolCollection poolCollection = _network.collectionByPool(pool);
             poolToken = poolCollection.poolToken(pool);
-            requiredPoolTokenAmount = poolCollection.underlyingToPoolToken(pool, totalRewards);
+            _verifyFunds(poolCollection.underlyingToPoolToken(pool, totalRewards), poolToken, rewardsVault);
         }
 
-        // if a program already exists, process rewards for the last time before resetting it to ensure all rewards have
-        // been distributed
-        if (programExists) {
-            _processRewards(pool);
-        }
-
-        // check whether the rewards vault holds enough funds to cover the total rewards
-        if (requiredPoolTokenAmount > poolToken.balanceOf(address(rewardsVault))) {
-            revert InsufficientFunds();
-        }
-
-        _programs[poolAddress] = ProgramData({
+        _programs[pool] = ProgramData({
             startTime: startTime,
             endTime: endTime,
             prevDistributionTimestamp: 0,
@@ -290,8 +267,7 @@ contract AutoCompoundingStakingRewards is
             distributionType: distributionType
         });
 
-        bool programAdded = _programByPool.add(poolAddress);
-        assert(programAdded != programExists);
+        assert(_programByPool.add(ReserveToken.unwrap(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -307,32 +283,33 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function terminateProgram(ReserveToken pool) external onlyAdmin {
-        if (!isProgramActive(pool)) {
-            revert ProgramInactive();
+        ProgramData memory p = _programs[pool];
+
+        if (!_doesProgramExist(p)) {
+            revert ProgramDoesNotExist();
         }
 
-        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        delete _programs[pool];
 
-        p.endTime = _time();
-
-        uint256 cachedRemainingRewards = p.remainingRewards;
-        p.remainingRewards = 0;
-
-        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: cachedRemainingRewards });
+        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
 
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
-        ProgramData storage p = _programs[ReserveToken.unwrap(pool)];
+        ProgramData memory p = _programs[pool];
+
+        if (!_doesProgramExist(p)) {
+            revert ProgramDoesNotExist();
+        }
 
         bool prevStatus = p.isEnabled;
         if (prevStatus == status) {
             return;
         }
 
-        p.isEnabled = status;
+        _programs[pool].isEnabled = status;
 
         emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
     }
@@ -341,88 +318,90 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function processRewards(ReserveToken pool) external nonReentrant {
-        _processRewards(pool);
-    }
+        ProgramData memory p = _programs[pool];
 
-    /**
-     * @dev processes program rewards
-     */
-    function _processRewards(ReserveToken pool) private {
-        address poolAddress = ReserveToken.unwrap(pool);
-        ProgramData memory p = _programs[poolAddress];
+        uint32 currTime = _time();
 
-        // if the program is disabled, don't process the rewards
-        if (!p.isEnabled) {
+        if (!p.isEnabled || currTime < p.startTime) {
             return;
         }
 
-        uint8 distributionType = p.distributionType;
-        uint32 currentTime = _time();
-
-        // if the program is inactive, don't process rewards. The only exception is if it's a flat distribution program
-        // whose rewards weren't distributed yet in full
-        if (!isProgramActive(pool)) {
-            if (
-                distributionType == FLAT_DISTRIBUTION &&
-                p.prevDistributionTimestamp < p.endTime &&
-                p.endTime < currentTime
-            ) {} else {
-                return;
-            }
-        }
-
-        uint32 timeElapsed = currentTime - p.startTime;
-        uint32 prevTimeElapsed = uint32(MathEx.subMax0(p.prevDistributionTimestamp, p.startTime));
-
-        uint256 tokenAmountToDistribute;
-        if (distributionType == FLAT_DISTRIBUTION) {
-            tokenAmountToDistribute = StakingRewardsMath.calcFlatRewards(
-                p.totalRewards,
-                timeElapsed - prevTimeElapsed,
-                p.endTime - p.startTime
-            );
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            tokenAmountToDistribute =
-                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, timeElapsed) -
-                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
-        }
-
+        uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
         if (tokenAmountToDistribute == 0) {
             return;
         }
 
-        uint256 poolTokenAmountToBurn;
-        if (_isNetworkToken(pool)) {
-            poolTokenAmountToBurn = _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
-        } else {
-            uint256 protocolPoolTokenAmount = p.poolToken.balanceOf(address(p.rewardsVault));
-
-            // do not attempt to burn more than the balance in the rewards vault
-            IPoolCollection poolCollection = _network.collectionByPool(pool);
-            poolTokenAmountToBurn = Math.min(
-                poolCollection.poolTokenAmountToBurn(pool, tokenAmountToDistribute, protocolPoolTokenAmount),
-                protocolPoolTokenAmount
-            );
-        }
-
+        uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (poolTokenAmountToBurn == 0) {
             return;
         }
 
-        p.remainingRewards -= tokenAmountToDistribute;
-        p.prevDistributionTimestamp = currentTime;
-
+        _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
         p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
 
-        _programs[poolAddress] = p;
+        p.remainingRewards -= tokenAmountToDistribute;
+        p.prevDistributionTimestamp = currTime;
+
+        _programs[pool] = p;
 
         emit RewardsDistributed({
             pool: pool,
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
-            programTimeElapsed: timeElapsed,
             remainingRewards: p.remainingRewards
         });
+    }
+
+    /**
+     * @dev returns the amount of tokens to distribute
+     */
+    function _tokenAmountToDistribute(ProgramData memory p, uint32 currTime) private pure returns (uint256) {
+        uint32 prevTime = uint32(Math.max(p.prevDistributionTimestamp, p.startTime));
+
+        if (p.distributionType == FLAT_DISTRIBUTION) {
+            uint32 currTimeElapsed = uint32(Math.min(currTime, p.endTime)) - p.startTime;
+            uint32 prevTimeElapsed = uint32(Math.min(prevTime, p.endTime)) - p.startTime;
+            return
+                StakingRewardsMath.calcFlatRewards(
+                    p.totalRewards,
+                    currTimeElapsed - prevTimeElapsed,
+                    p.endTime - p.startTime
+                );
+        } else {
+            // if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION)
+            uint32 currTimeElapsed = currTime - p.startTime;
+            uint32 prevTimeElapsed = prevTime - p.startTime;
+            return
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
+                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
+        }
+    }
+
+    /**
+     * @dev returns the amount of pool tokens to burn
+     */
+    function _poolTokenAmountToBurn(
+        ReserveToken pool,
+        ProgramData memory p,
+        uint256 tokenAmountToDistribute
+    ) private view returns (uint256) {
+        if (_isNetworkToken(pool)) {
+            return _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
+        }
+
+        return
+            _network.collectionByPool(pool).poolTokenAmountToBurn(
+                pool,
+                tokenAmountToDistribute,
+                p.poolToken.balanceOf(address(p.rewardsVault))
+            );
+    }
+
+    /**
+     * @dev returns whether or not a given program exists
+     */
+    function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
+        return address(p.poolToken) != address(0);
     }
 
     /**
@@ -430,5 +409,18 @@ contract AutoCompoundingStakingRewards is
      */
     function _isNetworkToken(ReserveToken token) private view returns (bool) {
         return token.toIERC20() == _networkToken;
+    }
+
+    /**
+     * @dev verifies that the rewards vault holds a sufficient amount of pool tokens
+     */
+    function _verifyFunds(
+        uint256 requiredAmount,
+        IPoolToken poolToken,
+        IVault rewardsVault
+    ) private view {
+        if (requiredAmount > poolToken.balanceOf(address(rewardsVault))) {
+            revert InsufficientFunds();
+        }
     }
 }
