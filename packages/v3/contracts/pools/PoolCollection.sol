@@ -7,7 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Fraction, Sint256 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -90,14 +90,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 baseTokenDeltaAmount;
         uint256 baseTokenExcessLiquidity;
         bool useInitialRate;
-    }
-
-    // represents `(n1 - n2) / (d1 - d2)`
-    struct Quotient {
-        uint256 n1;
-        uint256 n2;
-        uint256 d1;
-        uint256 d2;
     }
 
     // trading-related preprocessed data
@@ -288,7 +280,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: true,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
+            averageRate: AverageRate({ time: 0, rate: _zeroFraction112() }),
             initialRate: _zeroFraction(),
             depositLimit: 0,
             liquidity: PoolLiquidity({
@@ -542,9 +534,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         if (depositParams.useInitialRate) {
             // if we're using the initial rate, ensure that the average rate is set
-            if (data.averageRate.rate.n != data.initialRate.n || data.averageRate.rate.d != data.initialRate.d) {
-                data.averageRate.rate = data.initialRate;
-            }
+            data.averageRate.rate = PoolAverageRate.reducedRatio(data.initialRate);
         } else {
             // otherwise, ensure that the initial rate is properly reset
             data.initialRate = _zeroFraction();
@@ -840,7 +830,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             rate = data.initialRate;
         } else {
             // if the minimum network token trading liquidity is met - use the average rate
-            rate = data.averageRate.rate;
+            rate = Fraction({ n: data.averageRate.rate.n, d: data.averageRate.rate.d });
         }
 
         // if all network token liquidity is allocated - treat all the base token amount as excess and finish
@@ -977,7 +967,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the average rate is reset when the pool is being emptied
         if (baseTokenNewTradingLiquidity == 0) {
-            data.averageRate.rate = _zeroFraction();
+            data.averageRate.rate = _zeroFraction112();
         }
 
         if (data.tradingEnabled) {
@@ -1028,6 +1018,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function _zeroFraction() private pure returns (Fraction memory) {
         return Fraction({ n: 0, d: 1 });
+    }
+
+    /**
+     * @dev returns the zero fraction
+     */
+    function _zeroFraction112() private pure returns (Fraction112 memory) {
+        return Fraction112({ n: 0, d: 1 });
     }
 
     /**

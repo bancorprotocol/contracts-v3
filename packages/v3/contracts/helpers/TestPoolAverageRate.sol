@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-import { Fraction } from "../utility/Types.sol";
+import { Fraction, Fraction112 } from "../utility/Types.sol";
 import { PoolAverageRate, AverageRate } from "../pools/PoolAverageRate.sol";
 
 contract TestPoolAverageRate {
@@ -21,7 +21,7 @@ contract TestPoolAverageRate {
         return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation);
     }
 
-    function reducedRatio(Fraction memory ratio) external pure returns (Fraction memory) {
+    function reducedRatio(Fraction memory ratio) external pure returns (Fraction112 memory) {
         return PoolAverageRate.reducedRatio(ratio);
     }
 

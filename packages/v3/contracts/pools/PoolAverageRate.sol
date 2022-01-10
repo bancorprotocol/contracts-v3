@@ -5,11 +5,11 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Uint512 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Uint512 } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
-    Fraction rate; // the rate
+    Fraction112 rate; // the rate
 }
 
 /**
@@ -110,15 +110,15 @@ library PoolAverageRate {
     /**
      * @dev reduces the components of a given ratio to 112 bits
      */
-    function reducedRatio(Fraction memory ratio) internal pure returns (Fraction memory) {
+    function reducedRatio(Fraction memory ratio) internal pure returns (Fraction112 memory) {
         uint256 scale = Math.ceilDiv(Math.max(ratio.n, ratio.d), type(uint112).max);
-        return Fraction({ n: ratio.n / scale, d: ratio.d / scale });
+        return Fraction112({ n: uint112(ratio.n / scale), d: uint112(ratio.d / scale) });
     }
 
     /**
      * @dev compares two average rates
      */
     function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) internal pure returns (bool) {
-        return averageRate1.rate.n * averageRate2.rate.d == averageRate2.rate.n * averageRate1.rate.d;
+        return uint256(averageRate1.rate.n) * averageRate2.rate.d == uint256(averageRate2.rate.n) * averageRate1.rate.d;
     }
 }

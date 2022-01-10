@@ -10,6 +10,11 @@ struct Fraction {
     uint256 d; // denominator
 }
 
+struct Fraction112 {
+    uint112 n; // numerator
+    uint112 d; // denominator
+}
+
 struct Uint512 {
     uint256 hi; // 256 most significant bits
     uint256 lo; // 256 least significant bits
