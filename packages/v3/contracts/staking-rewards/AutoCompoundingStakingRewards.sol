@@ -218,13 +218,17 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyExists();
         }
 
-        bool isNetworkToken = _isNetworkToken(pool);
-        if (isNetworkToken) {
+        IPoolToken poolToken;
+        if (_isNetworkToken(pool)) {
             if (rewardsVault != _masterPool) {
                 revert InvalidParam();
             }
-        } else if (!_networkSettings.isTokenWhitelisted(pool)) {
-            revert NotWhitelisted();
+            poolToken = _masterPoolToken;
+        } else {
+            if (!_networkSettings.isTokenWhitelisted(pool)) {
+                revert NotWhitelisted();
+            }
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
         if (totalRewards == 0) {
@@ -244,28 +248,21 @@ contract AutoCompoundingStakingRewards is
             revert InvalidParam();
         }
 
-        IPoolToken poolToken;
-
-        if (isNetworkToken) {
-            poolToken = _masterPoolToken;
-            _verifyFunds(_masterPool.underlyingToPoolToken(totalRewards), poolToken, rewardsVault);
-        } else {
-            IPoolCollection poolCollection = _network.collectionByPool(pool);
-            poolToken = poolCollection.poolToken(pool);
-            _verifyFunds(poolCollection.underlyingToPoolToken(pool, totalRewards), poolToken, rewardsVault);
-        }
-
-        _programs[pool] = ProgramData({
+        ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
             prevDistributionTimestamp: 0,
-            totalRewards: totalRewards,
-            remainingRewards: totalRewards,
-            rewardsVault: rewardsVault,
             poolToken: poolToken,
             isEnabled: true,
-            distributionType: distributionType
+            distributionType: distributionType,
+            rewardsVault: rewardsVault,
+            totalRewards: totalRewards,
+            remainingRewards: totalRewards
         });
+
+        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, rewardsVault);
+
+        _programs[pool] = p;
 
         assert(_programByPool.add(ReserveToken.unwrap(pool)));
 

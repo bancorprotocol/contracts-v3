@@ -385,19 +385,56 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('NotWhitelisted');
                 });
 
-                it('should revert when there is not enough funds in the external rewards vault', async () => {
-                    await expect(
-                        autoCompoundingStakingRewards.createProgram(
-                            token.address,
-                            rewardsVault.address,
-                            BigNumber.from(
-                                tokenData.isNetworkToken() ? await masterPool.stakedBalance() : TOTAL_REWARDS
-                            ).add(1),
-                            distributionType,
-                            START_TIME,
-                            END_TIME
-                        )
-                    ).to.revertedWith('InsufficientFunds');
+                context('with funds in the rewards vault', () => {
+                    let maxTotalRewards: BigNumber;
+
+                    beforeEach(async () => {
+                        const totalSupply = await (poolToken as PoolToken).totalSupply();
+                        const vaultBalance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
+                        const stakedBalance = tokenData.isNetworkToken()
+                            ? await masterPool.stakedBalance()
+                            : (await poolCollection.poolLiquidity(token.address)).stakedBalance;
+
+                        // let `x` denote the granted rewards in token units (BNT or TKN, depending on the request).
+                        // let `y` denote the total supply in pool-token units (bnBNT or bnTKN, depending on the request).
+                        // let `z` denote the vault balance in pool-token units (bnBNT or bnTKN, depending on the request).
+                        // let `w` denote the staked balance in token units (BNT or TKN, depending on the request).
+                        // given the values of `y`, `z` and `w`, we want to calculate the maximum possible value of `x`.
+                        // in order to grant rewards of `x` tokens, an amount of `floor(xyy/(xy+w(y-z)))` pool tokens is burned.
+                        // therefore we want to calculate the maximum possible value of `x` such that `floor(xyy/(xy+w(y-z))) <= z`.
+                        // this value can be calculated as `x = ceil(w(y-z)(z+1)/(y(y-z-1)))-1 = floor((w(y-z)(z+1)-1)/(y(y-z-1)))`:
+                        maxTotalRewards = stakedBalance
+                            .mul(totalSupply.sub(vaultBalance))
+                            .mul(vaultBalance.add(1))
+                            .sub(1)
+                            .div(totalSupply.mul(totalSupply.sub(vaultBalance).sub(1)));
+                    });
+
+                    it('should not revert when the funds are sufficient for backing the total rewards', async () => {
+                        await expect(
+                            autoCompoundingStakingRewards.createProgram(
+                                token.address,
+                                rewardsVault.address,
+                                maxTotalRewards,
+                                distributionType,
+                                START_TIME,
+                                END_TIME
+                            )
+                        ).to.emit(autoCompoundingStakingRewards, 'ProgramCreated');
+                    });
+
+                    it('should revert when the funds are not sufficient for backing the total rewards', async () => {
+                        await expect(
+                            autoCompoundingStakingRewards.createProgram(
+                                token.address,
+                                rewardsVault.address,
+                                maxTotalRewards.add(1),
+                                distributionType,
+                                START_TIME,
+                                END_TIME
+                            )
+                        ).to.revertedWith('InsufficientFunds');
+                    });
                 });
 
                 it('should create the program', async () => {
