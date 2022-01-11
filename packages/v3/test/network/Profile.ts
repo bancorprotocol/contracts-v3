@@ -2,21 +2,26 @@ import Contracts from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import {
     BancorNetworkInfo,
+    ExternalRewardsVault,
     IERC20,
+    IVault,
     NetworkSettings,
     PoolToken,
+    TestAutoCompoundingStakingRewards,
     TestBancorNetwork,
     TestERC20Token,
     TestFlashLoanRecipient,
+    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, StakingRewardsDistributionType, ExponentialDecay } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import {
     createPool,
+    createStakingRewards,
     createSystem,
     createToken,
     createTestToken,
@@ -30,9 +35,10 @@ import {
 import { latest, duration } from '../helpers/Time';
 import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, ContractTransaction, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 import { camelCase } from 'lodash';
+import humanizeDuration from 'humanize-duration';
 
 const { formatBytes32String } = utils;
 
@@ -997,6 +1003,234 @@ describe('Profile @profile', () => {
 
                 await profiler.profile('reinit withdrawal', network.connect(provider).reinitWithdrawal(id));
             });
+        });
+    });
+
+    describe('process rewards', () => {
+        let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
+        let networkSettings: NetworkSettings;
+        let masterPool: TestMasterPool;
+        let networkToken: IERC20;
+        let poolCollection: TestPoolCollection;
+        let externalRewardsVault: ExternalRewardsVault;
+
+        let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
+
+        const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
+            // deposit initial stake so that the participating user would have some initial amount of pool tokens
+            const { token, poolToken } = await setupSimplePool(
+                {
+                    tokenData,
+                    balance: providerStake,
+                    requestedLiquidity: tokenData.isNetworkToken()
+                        ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
+                        : 0,
+                    initialRate: { n: 1, d: 2 }
+                },
+                deployer,
+                network,
+                networkInfo,
+                networkSettings,
+                poolCollection
+            );
+    
+            // if we're rewarding the network token - no additional funding is needed
+            if (!tokenData.isNetworkToken()) {
+                // deposit pool tokens as staking rewards
+                await depositToPool(deployer, token, totalRewards, network);
+    
+                await transfer(
+                    deployer,
+                    poolToken,
+                    externalRewardsVault,
+                    await poolToken.balanceOf(deployer.address)
+                );
+            }
+    
+            return { token, poolToken };
+        };
+
+        const testRewards = (
+            tokenData: TokenData,
+            distributionType: StakingRewardsDistributionType,
+            providerStake: BigNumberish,
+            totalRewards: BigNumberish
+        ) => {
+            let token: TokenWithAddress;
+            let rewardsVault: IVault;
+
+            const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
+
+            beforeEach(async () => {
+                ({
+                    network,
+                    networkInfo,
+                    networkSettings,
+                    networkToken,
+                    masterPool,
+                    poolCollection,
+                    externalRewardsVault
+                } = await createSystem());
+
+                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+                ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
+
+                rewardsVault = tokenData.isNetworkToken() ? masterPool : externalRewardsVault;
+
+                autoCompoundingStakingRewards = await createStakingRewards(
+                    network,
+                    networkSettings,
+                    networkToken,
+                    masterPool,
+                    externalRewardsVault
+                );
+            });
+
+            const testProgram = (programDuration: number) => {
+                context(StakingRewardsDistributionType[distributionType], () => {
+                    let startTime: number;
+
+                    beforeEach(async () => {
+                        startTime = await latest();
+
+                        await autoCompoundingStakingRewards.createProgram(
+                            token.address,
+                            rewardsVault.address,
+                            totalRewards,
+                            distributionType,
+                            startTime,
+                            distributionType === StakingRewardsDistributionType.Flat ? startTime + programDuration : 0
+                        );
+                    });
+
+                    const testMultipleDistributions = (step: number, totalSteps: number) => {
+                        context(
+                            `in ${totalSteps} steps of ${humanizeDuration(step * 1000, { units: ['d'] })} long steps`,
+                            () => {
+                                it('should distribute rewards', async () => {
+                                    for (let i = 0, time = startTime; i < totalSteps; i++, time += step) {
+                                        await autoCompoundingStakingRewards.setTime(time);
+
+                                        await autoCompoundingStakingRewards.processRewards(token.address);
+                                    }
+                                });
+                            }
+                        );
+                    };
+
+                    switch (distributionType) {
+                        case StakingRewardsDistributionType.Flat:
+                            describe('regular tests', () => {
+                                for (const percent of [25]) {
+                                    testMultipleDistributions(
+                                        Math.floor((programDuration * percent) / 100),
+                                        Math.floor(100 / percent)
+                                    );
+                                }
+                            });
+
+                            describe('@stress tests', () => {
+                                for (const percent of [6, 15]) {
+                                    testMultipleDistributions(
+                                        Math.floor((programDuration * percent) / 100),
+                                        Math.floor(100 / percent)
+                                    );
+                                }
+                            });
+
+                            break;
+
+                        case StakingRewardsDistributionType.ExponentialDecay:
+                            describe('regular tests', () => {
+                                for (const step of [duration.days(1)]) {
+                                    for (const totalSteps of [5]) {
+                                        testMultipleDistributions(step, totalSteps);
+                                    }
+                                }
+                            });
+
+                            describe('@stress tests', () => {
+                                for (const step of [duration.hours(1), duration.weeks(1)]) {
+                                    for (const totalSteps of [5]) {
+                                        testMultipleDistributions(step, totalSteps);
+                                    }
+                                }
+                            });
+
+                            break;
+
+                        default:
+                            throw new Error(`Unsupported type ${distributionType}`);
+                    }
+                });
+            };
+
+            switch (distributionType) {
+                case StakingRewardsDistributionType.Flat:
+                    describe('regular tests', () => {
+                        for (const programDuration of [duration.days(10)]) {
+                            context(
+                                `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
+                                () => {
+                                    testProgram(programDuration);
+                                }
+                            );
+                        }
+                    });
+
+                    describe('@stress tests', () => {
+                        for (const programDuration of [duration.weeks(12), duration.years(1)]) {
+                            context(
+                                `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
+                                () => {
+                                    testProgram(programDuration);
+                                }
+                            );
+                        }
+                    });
+                    break;
+
+                case StakingRewardsDistributionType.ExponentialDecay:
+                    describe('regular tests', () => {
+                        testProgram(ExponentialDecay.MAX_DURATION);
+                    });
+
+                    break;
+
+                default:
+                    throw new Error(`Unsupported type ${distributionType}`);
+            }
+        };
+
+        const testRewardsMatrix = (providerStakes: BigNumberish[], totalRewards: BigNumberish[]) => {
+            const distributionTypes = Object.values(StakingRewardsDistributionType).filter(
+                (v) => typeof v === 'number'
+            ) as number[];
+
+            for (const symbol of [TokenSymbol.BNT, TokenSymbol.TKN, TokenSymbol.ETH]) {
+                for (const distributionType of distributionTypes) {
+                    for (const providerStake of providerStakes) {
+                        for (const totalReward of totalRewards) {
+                            context(
+                                `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
+                                () => {
+                                    testRewards(new TokenData(symbol), distributionType, providerStake, totalReward);
+                                }
+                            );
+                        }
+                    }
+                }
+            }
+        };
+
+        describe('regular tests', () => {
+            testRewardsMatrix([toWei(10_000)], [toWei(100_000)]);
+        });
+
+        describe('@stress tests', () => {
+            testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
         });
     });
 });
