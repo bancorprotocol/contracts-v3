@@ -15,7 +15,13 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../typechain-types';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, StakingRewardsDistributionType, ExponentialDecay } from '../../utils/Constants';
+import {
+    MAX_UINT256,
+    PPM_RESOLUTION,
+    ZERO_ADDRESS,
+    StakingRewardsDistributionType,
+    ExponentialDecay
+} from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
@@ -37,8 +43,8 @@ import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
-import { camelCase } from 'lodash';
 import humanizeDuration from 'humanize-duration';
+import { camelCase } from 'lodash';
 
 const { formatBytes32String } = utils;
 
@@ -46,11 +52,12 @@ describe('Profile @profile', () => {
     const profiler = new Profiler();
 
     let deployer: SignerWithAddress;
+    let stakingRewardsProvider: SignerWithAddress;
 
     const INITIAL_RATE = { n: 1, d: 2 };
 
     before(async () => {
-        [deployer] = await ethers.getSigners();
+        [deployer, stakingRewardsProvider] = await ethers.getSigners();
     });
 
     after(async () => {
@@ -1017,7 +1024,11 @@ describe('Profile @profile', () => {
 
         let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
 
-        const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
+        const prepareSimplePool = async (
+            tokenData: TokenData,
+            providerStake: BigNumberish,
+            totalRewards: BigNumberish
+        ) => {
             // deposit initial stake so that the participating user would have some initial amount of pool tokens
             const { token, poolToken } = await setupSimplePool(
                 {
@@ -1034,20 +1045,20 @@ describe('Profile @profile', () => {
                 networkSettings,
                 poolCollection
             );
-    
+
             // if we're rewarding the network token - no additional funding is needed
             if (!tokenData.isNetworkToken()) {
                 // deposit pool tokens as staking rewards
-                await depositToPool(deployer, token, totalRewards, network);
-    
+                await depositToPool(stakingRewardsProvider, token, totalRewards, network);
+
                 await transfer(
-                    deployer,
+                    stakingRewardsProvider,
                     poolToken,
                     externalRewardsVault,
-                    await poolToken.balanceOf(deployer.address)
+                    await poolToken.balanceOf(stakingRewardsProvider.address)
                 );
             }
-    
+
             return { token, poolToken };
         };
 
@@ -1113,7 +1124,12 @@ describe('Profile @profile', () => {
                                     for (let i = 0, time = startTime; i < totalSteps; i++, time += step) {
                                         await autoCompoundingStakingRewards.setTime(time);
 
-                                        await autoCompoundingStakingRewards.processRewards(token.address);
+                                        await profiler.profile(
+                                            `process ${tokenData.symbol()} rewards / ${
+                                                StakingRewardsDistributionType[distributionType]
+                                            } program:`,
+                                            autoCompoundingStakingRewards.processRewards(token.address)
+                                        );
                                     }
                                 });
                             }
