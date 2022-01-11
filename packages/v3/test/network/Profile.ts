@@ -1125,9 +1125,9 @@ describe('Profile @profile', () => {
                                         await autoCompoundingStakingRewards.setTime(time);
 
                                         await profiler.profile(
-                                            `process ${tokenData.symbol()} rewards / ${
+                                            `${
                                                 StakingRewardsDistributionType[distributionType]
-                                            } program:`,
+                                            } program / process ${tokenData.symbol()} rewards`,
                                             autoCompoundingStakingRewards.processRewards(token.address)
                                         );
                                     }
