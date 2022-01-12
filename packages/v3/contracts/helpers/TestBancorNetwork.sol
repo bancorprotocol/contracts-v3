@@ -10,28 +10,14 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
-import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
+import { CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
-// prettier-ignore
-import { IPoolCollection,
-    DepositAmounts as PoolCollectionDepositAmounts,
-    WithdrawalAmounts as PoolCollectionWithdrawalAmounts,
-    TradeAmountsWithLiquidity
-} from "../pools/interfaces/IPoolCollection.sol";
-
+import { IPoolCollection, TradeAmountsWithLiquidity } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
-
-// prettier-ignore
-import {
-    IMasterPool,
-    DepositAmounts as MasterPoolDepositAmounts,
-    WithdrawalAmounts as MasterPoolWithdrawalAmounts
-} from "../pools/interfaces/IMasterPool.sol";
-
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -78,41 +64,42 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
-    function depositToNetworkPoolForT(
+    function depositToMasterPoolForT(
+        bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
-    ) external returns (MasterPoolDepositAmounts memory) {
-        return _masterPool.depositFor(provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
+    ) external {
+        _masterPool.depositFor(contextId, provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
         IPoolCollection poolCollection,
+        bytes32 contextId,
         address provider,
         ReserveToken pool,
-        uint256 baseTokenAmount,
-        uint256 unallocatedNetworkTokenLiquidity
-    ) external returns (PoolCollectionDepositAmounts memory) {
-        return poolCollection.depositFor(provider, pool, baseTokenAmount, unallocatedNetworkTokenLiquidity);
+        uint256 tokenAmount
+    ) external {
+        poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
-    function withdrawFromNetworkPoolT(address provider, uint256 poolTokenAmount)
-        external
-        returns (MasterPoolWithdrawalAmounts memory)
-    {
-        return _masterPool.withdraw(provider, poolTokenAmount);
+    function withdrawFromMasterPoolT(
+        bytes32 contextId,
+        address provider,
+        uint256 poolTokenAmount
+    ) external {
+        _masterPool.withdraw(contextId, provider, poolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(
         IPoolCollection poolCollection,
+        bytes32 contextId,
+        address provider,
         ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    ) external returns (PoolCollectionWithdrawalAmounts memory) {
-        return
-            poolCollection.withdraw(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
+        uint256 poolTokenAmount
+    ) external {
+        poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(

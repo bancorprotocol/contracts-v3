@@ -22,7 +22,7 @@ import {
     createSystem,
     createTestToken,
     depositToPool,
-    setupSimplePool,
+    setupFundedPool,
     PoolSpec,
     initWithdraw,
     TokenWithAddress
@@ -280,7 +280,7 @@ describe('BancorNetworkInfo', () => {
 
         let trader: Wallet;
 
-        const INITIAL_RATE = { n: 1, d: 2 };
+        const FUNDING_RATE = { n: 1, d: 2 };
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
 
@@ -293,7 +293,7 @@ describe('BancorNetworkInfo', () => {
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
-            ({ token: sourceToken } = await setupSimplePool(
+            ({ token: sourceToken } = await setupFundedPool(
                 source,
                 deployer,
                 network,
@@ -302,7 +302,7 @@ describe('BancorNetworkInfo', () => {
                 poolCollection
             ));
 
-            ({ token: targetToken } = await setupSimplePool(
+            ({ token: targetToken } = await setupFundedPool(
                 target,
                 deployer,
                 network,
@@ -423,13 +423,13 @@ describe('BancorNetworkInfo', () => {
                     tokenData: new TokenData(sourceSymbol),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    initialRate: INITIAL_RATE
+                    fundingRate: FUNDING_RATE
                 },
                 {
                     tokenData: new TokenData(targetSymbol),
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    initialRate: INITIAL_RATE
+                    fundingRate: FUNDING_RATE
                 }
             );
         }
@@ -462,12 +462,12 @@ describe('BancorNetworkInfo', () => {
 
             await pendingWithdrawals.setTime(await latest());
 
-            ({ poolToken } = await setupSimplePool(
+            ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    initialRate: { n: 1, d: 2 }
+                    fundingRate: { n: 1, d: 2 }
                 },
                 provider,
                 network,

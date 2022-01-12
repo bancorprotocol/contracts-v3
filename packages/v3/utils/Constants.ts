@@ -24,9 +24,17 @@ export enum DeploymentNetwork {
 }
 
 export const MAX_UINT256 = MaxUint256;
+export const ZERO_BYTES = '0x';
+export const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
+
+export enum TradingStatusUpdateReason {
+    Default = 0,
+    DAO = 1,
+    MinLiquidity = 2
+}
 
 export enum FeeType {
     Trading = 0,
@@ -50,3 +58,5 @@ export const ExponentialDecay = {
     LAMBDA: EXP_DECAY_LAMBDA,
     MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
 };
+
+export const LIQUIDITY_GROWTH_FACTOR = 2;

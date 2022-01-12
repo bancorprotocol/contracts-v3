@@ -7,6 +7,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
@@ -28,6 +31,8 @@ contract TestPoolCollection is PoolCollection, TestTime {
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IExternalProtectionVault initExternalProtectionVault,
         IMasterPool initMasterPool,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -36,6 +41,8 @@ contract TestPoolCollection is PoolCollection, TestTime {
             initNetwork,
             initNetworkToken,
             initNetworkSettings,
+            initMasterVault,
+            initExternalProtectionVault,
             initMasterPool,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
@@ -56,13 +63,12 @@ contract TestPoolCollection is PoolCollection, TestTime {
         _poolData[pool].averageRate = newAverageRate;
     }
 
-    function poolWithdrawalAmountsT(
-        ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    ) external view returns (WithdrawalAmounts memory) {
-        return _poolWithdrawalAmounts(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
+    function poolWithdrawalAmountsT(ReserveToken pool, uint256 basePoolTokenAmount)
+        external
+        view
+        returns (WithdrawalAmounts memory)
+    {
+        return _poolWithdrawalAmounts(pool, basePoolTokenAmount);
     }
 
     function mintPoolTokenT(

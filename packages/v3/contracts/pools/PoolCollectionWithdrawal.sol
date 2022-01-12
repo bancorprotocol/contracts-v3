@@ -10,8 +10,8 @@ error PoolCollectionWithdrawalInputInvalid();
 /**
  * @dev This library implements the mathematics behind base-token withdrawal.
  * It exposes a single function which takes the following input values:
- * `a` - network token average trading liquidity
- * `b` - base token average trading liquidity
+ * `a` - network token trading liquidity
+ * `b` - base token trading liquidity
  * `c` - base token excess amount
  * `e` - base token staked amount
  * `w` - base token external protection vault balance

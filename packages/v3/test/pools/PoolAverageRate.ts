@@ -10,6 +10,8 @@ import { BigNumber } from 'ethers';
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
+    const INITIAL_TIME = 1000;
+
     before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
@@ -21,7 +23,7 @@ describe('PoolAverageRate', () => {
                 n: BigNumber.from(0),
                 d: BigNumber.from(0)
             },
-            time: 0
+            time: INITIAL_TIME
         };
 
         it('should update the average rate to the spot rate at the beginning', async () => {
@@ -35,7 +37,7 @@ describe('PoolAverageRate', () => {
 
         it('should not update the average rate more than once per-block', async () => {
             const spotRate1 = { n: 100, d: 10 };
-            const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, 0);
+            const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, INITIAL_TIME);
 
             const currentTime = 10_000;
             const spotRate2 = { n: 1000, d: 10 };
@@ -62,7 +64,7 @@ describe('PoolAverageRate', () => {
             expect(averageRate2.rate).not.to.equal(newSpotRate);
             expect(averageRate2.time).to.equal(currentTime);
 
-            currentTime = currentTime + AVERAGE_RATE_PERIOD;
+            currentTime += AVERAGE_RATE_PERIOD;
             const averageRate3 = await poolAverageRate.calcAverageRate(newSpotRate, averageRate1, currentTime);
             expect(averageRate3.rate).to.equal(newSpotRate);
             expect(averageRate3.time).to.equal(currentTime);
@@ -316,7 +318,7 @@ describe('PoolAverageRate', () => {
                                 n: initAverageRate.n.mul(averageRateScale),
                                 d: initAverageRate.d.mul(averageRateScale)
                             },
-                            time: 0
+                            time: 1000
                         };
                         const spotRateScale = BigNumber.from(10).pow(spotRateScaleFactor);
                         const baseSpotRate = {

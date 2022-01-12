@@ -9,6 +9,7 @@ import { isProfiling } from '../../components/Profiler';
 import {
     BancorNetwork,
     BancorNetworkInfo,
+    ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
     MasterPool,
@@ -169,6 +170,8 @@ export const createPoolCollection = async (
     network: string | BancorNetwork,
     networkToken: string | IERC20,
     networkSettings: string | NetworkSettings,
+    masterVault: string | MasterVault,
+    externalProtectionVault: string | ExternalProtectionVault,
     masterPool: string | MasterPool,
     poolTokenFactory: string | PoolTokenFactory,
     poolCollectionUpgrader: string | PoolCollectionUpgrader,
@@ -179,6 +182,8 @@ export const createPoolCollection = async (
         toAddress(network),
         toAddress(networkToken),
         toAddress(networkSettings),
+        toAddress(masterVault),
+        toAddress(externalProtectionVault),
         toAddress(masterPool),
         toAddress(poolTokenFactory),
         toAddress(poolCollectionUpgrader)
@@ -300,6 +305,8 @@ const createSystemFixture = async () => {
         network,
         networkToken,
         networkSettings,
+        masterVault,
+        externalProtectionVault,
         masterPool,
         poolTokenFactory,
         poolCollectionUpgrader
@@ -368,7 +375,7 @@ export interface PoolSpec {
     tokenData: TokenData;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
-    initialRate: Fraction;
+    fundingRate: Fraction;
     tradingFeePPM?: number;
 }
 
@@ -380,13 +387,14 @@ export const specToString = (spec: PoolSpec) => {
     return `${spec.tokenData.symbol()} (balance=${spec.balance})`;
 };
 
-export const setupSimplePool = async (
+const setupPool = async (
     spec: PoolSpec,
     provider: SignerWithAddress,
     network: TestBancorNetwork,
     networkInfo: BancorNetworkInfo,
     networkSettings: NetworkSettings,
-    poolCollection: TestPoolCollection
+    poolCollection: TestPoolCollection,
+    activate: true
 ) => {
     if (spec.tokenData.isNetworkToken()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.masterPoolToken());
@@ -395,6 +403,7 @@ export const setupSimplePool = async (
 
         // ensure that there is enough space to deposit the network token
         const reserveToken = await createTestToken();
+        await createPool(reserveToken, network, networkSettings, poolCollection);
 
         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
         await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
@@ -409,13 +418,25 @@ export const setupSimplePool = async (
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-    await poolCollection.setInitialRate(token.address, spec.initialRate);
     await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
 
+    if (activate) {
+        await poolCollection.activate(token.address, spec.fundingRate);
+    }
+
     return { poolToken, token };
 };
+
+export const setupFundedPool = async (
+    spec: PoolSpec,
+    provider: SignerWithAddress,
+    network: TestBancorNetwork,
+    networkInfo: BancorNetworkInfo,
+    networkSettings: NetworkSettings,
+    poolCollection: TestPoolCollection
+) => setupPool(spec, provider, network, networkInfo, networkSettings, poolCollection, true);
 
 export const initWithdraw = async (
     provider: SignerWithAddress | Wallet,
@@ -437,7 +458,7 @@ export const initWithdraw = async (
 
 export const createToken = async (
     tokenData: TokenData,
-    totalSupply: BigNumberish = toWei(1_000_000_000),
+    totalSupply: BigNumberish = toWei(1_000_000_000_000),
     burnable = false
 ): Promise<TokenWithAddress> => {
     const symbol = tokenData.symbol();

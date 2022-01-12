@@ -34,7 +34,6 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
         bool tradingEnabled; // whether trading is enabled
         bool depositingEnabled; // whether depositing is enabled
         AverageRate averageRate; // the recent average rate
-        Fraction initialRate; // the initial rate of one base token in network token units in a given pool
         uint256 depositLimit; // the deposit limit
         PoolLiquidityV1 liquidity; // the overall liquidity in the pool
     }
@@ -165,7 +164,6 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             tradingEnabled: data.tradingEnabled,
             depositingEnabled: data.depositingEnabled,
             averageRate: data.averageRate,
-            initialRate: data.initialRate,
             depositLimit: data.depositLimit,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: data.liquidity.networkTokenTradingLiquidity,

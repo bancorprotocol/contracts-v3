@@ -22,7 +22,7 @@ import {
     createTestToken,
     depositToPool,
     initWithdraw,
-    setupSimplePool,
+    setupFundedPool,
     PoolSpec,
     specToString,
     TokenWithAddress
@@ -31,7 +31,7 @@ import { latest, duration } from '../helpers/Time';
 import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, ContractTransaction, utils, Wallet } from 'ethers';
-import { ethers, waffle } from 'hardhat';
+import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';
 
 const { formatBytes32String } = utils;
@@ -41,7 +41,7 @@ describe('Profile @profile', () => {
 
     let deployer: SignerWithAddress;
 
-    const INITIAL_RATE = { n: 1, d: 2 };
+    const FUNDING_RATE = { n: 1, d: 2 };
     const MAX_DEVIATION = toPPM(1);
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
@@ -64,16 +64,12 @@ describe('Profile @profile', () => {
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
 
-        const setup = async () => {
+        beforeEach(async () => {
             ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-        };
-
-        beforeEach(async () => {
-            await waffle.loadFixture(setup);
         });
 
         const testDeposits = (tokenData: TokenData) => {
@@ -90,7 +86,7 @@ describe('Profile @profile', () => {
                     await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                     await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
-                    await poolCollection.setInitialRate(token.address, INITIAL_RATE);
+                    await poolCollection.activate(token.address, FUNDING_RATE);
                 }
 
                 await setTime(await latest());
@@ -387,7 +383,7 @@ describe('Profile @profile', () => {
             await pendingWithdrawals.setTime(time);
         };
 
-        const setup = async () => {
+        beforeEach(async () => {
             ({ network, networkSettings, networkToken, govToken, poolCollection, pendingWithdrawals, masterPoolToken } =
                 await createSystem());
 
@@ -396,10 +392,6 @@ describe('Profile @profile', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
             await setTime(await latest());
-        };
-
-        beforeEach(async () => {
-            await waffle.loadFixture(setup);
         });
 
         const testWithdraw = async (tokenData: TokenData) => {
@@ -438,7 +430,7 @@ describe('Profile @profile', () => {
                         await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                         await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-                        await poolCollection.setInitialRate(token.address, INITIAL_RATE);
+                        await poolCollection.activate(token.address, FUNDING_RATE);
                     }
 
                     await depositToPool(provider, token, amount, network);
@@ -513,7 +505,7 @@ describe('Profile @profile', () => {
                                                 n: spotRate.n.mul(PPM_RESOLUTION),
                                                 d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
                                             },
-                                            time: 0
+                                            time: 1000
                                         });
                                     });
                                 });
@@ -562,7 +554,7 @@ describe('Profile @profile', () => {
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
-            ({ token: sourceToken } = await setupSimplePool(
+            ({ token: sourceToken } = await setupFundedPool(
                 source,
                 deployer,
                 network,
@@ -571,7 +563,7 @@ describe('Profile @profile', () => {
                 poolCollection
             ));
 
-            ({ token: targetToken } = await setupSimplePool(
+            ({ token: targetToken } = await setupFundedPool(
                 target,
                 deployer,
                 network,
@@ -754,13 +746,13 @@ describe('Profile @profile', () => {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    initialRate: INITIAL_RATE
+                    fundingRate: FUNDING_RATE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    initialRate: INITIAL_RATE
+                    fundingRate: FUNDING_RATE
                 },
                 toWei(100_000)
             );
@@ -781,7 +773,7 @@ describe('Profile @profile', () => {
                                         tradingFeePPM: sourceTokenData.isNetworkToken()
                                             ? undefined
                                             : toPPM(tradingFeePercent),
-                                        initialRate: INITIAL_RATE
+                                        fundingRate: FUNDING_RATE
                                     },
                                     {
                                         tokenData: new TokenData(targetSymbol),
@@ -790,7 +782,7 @@ describe('Profile @profile', () => {
                                         tradingFeePPM: targetTokenData.isNetworkToken()
                                             ? undefined
                                             : toPPM(tradingFeePercent),
-                                        initialRate: INITIAL_RATE
+                                        fundingRate: FUNDING_RATE
                                     },
                                     BigNumber.from(amount)
                                 );
@@ -802,14 +794,14 @@ describe('Profile @profile', () => {
                                             balance: sourceBalance,
                                             requestedLiquidity: sourceBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent),
-                                            initialRate: INITIAL_RATE
+                                            fundingRate: FUNDING_RATE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
                                             requestedLiquidity: targetBalance.mul(1000),
                                             tradingFeePPM: toPPM(tradingFeePercent2),
-                                            initialRate: INITIAL_RATE
+                                            fundingRate: FUNDING_RATE
                                         },
                                         BigNumber.from(amount)
                                     );
@@ -835,29 +827,25 @@ describe('Profile @profile', () => {
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
-        const setup = async () => {
+        beforeEach(async () => {
             ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
             await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
-        };
-
-        beforeEach(async () => {
-            await waffle.loadFixture(setup);
         });
 
         const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
-                ({ token } = await setupSimplePool(
+                ({ token } = await setupFundedPool(
                     {
                         tokenData,
                         balance: amount,
                         requestedLiquidity: amount.mul(1000),
-                        initialRate: INITIAL_RATE
+                        fundingRate: FUNDING_RATE
                     },
                     deployer,
                     network,
@@ -925,12 +913,12 @@ describe('Profile @profile', () => {
 
             await pendingWithdrawals.setTime(await latest());
 
-            ({ poolToken } = await setupSimplePool(
+            ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    initialRate: { n: 1, d: 2 }
+                    fundingRate: { n: 1, d: 2 }
                 },
                 provider as any as SignerWithAddress,
                 network,

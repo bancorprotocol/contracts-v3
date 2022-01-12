@@ -10,7 +10,6 @@ error InvalidAddress();
 error InvalidExternalAddress();
 error InvalidFee();
 error InvalidPool();
-error InvalidPoolBalance();
 error InvalidPoolCollection();
 error InvalidPortion();
 error InvalidStakedBalance();

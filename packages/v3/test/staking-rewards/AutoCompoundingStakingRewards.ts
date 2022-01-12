@@ -21,7 +21,7 @@ import {
     createSystem,
     createTestToken,
     depositToPool,
-    setupSimplePool,
+    setupFundedPool,
     TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -59,14 +59,14 @@ describe('AutoCompoundingStakingRewards', () => {
 
     const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
         // deposit initial stake so that the participating user would have some initial amount of pool tokens
-        const { token, poolToken } = await setupSimplePool(
+        const { token, poolToken } = await setupFundedPool(
             {
                 tokenData,
                 balance: providerStake,
                 requestedLiquidity: tokenData.isNetworkToken()
                     ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
                     : 0,
-                initialRate: { n: 1, d: 2 }
+                fundingRate: { n: 1, d: 2 }
             },
             user,
             network,
@@ -178,8 +178,8 @@ describe('AutoCompoundingStakingRewards', () => {
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
             const TOTAL_DURATION = duration.days(10);
-            const TOTAL_REWARDS = 10;
-            const INITIAL_USER_STAKE = 10;
+            const TOTAL_REWARDS = toWei(10_000);
+            const INITIAL_USER_STAKE = toWei(10_000);
 
             beforeEach(async () => {
                 ({
@@ -450,13 +450,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         await expect(res)
                             .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
-                            .withArgs(token.address, newEndTime, 10);
+                            .withArgs(token.address, newEndTime, TOTAL_REWARDS);
 
                         const program = await autoCompoundingStakingRewards.program(token.address);
 
                         expect(program.poolToken).to.equal(poolToken.address);
                         expect(program.rewardsVault).to.equal(rewardsVault.address);
-                        expect(program.totalRewards).to.equal(10);
+                        expect(program.totalRewards).to.equal(TOTAL_REWARDS);
                         expect(program.remainingRewards).to.equal(0);
                         expect(program.distributionType).to.equal(distributionType);
                         expect(program.startTime).to.equal(now);

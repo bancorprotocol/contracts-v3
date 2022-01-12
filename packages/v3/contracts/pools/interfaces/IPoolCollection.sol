@@ -26,7 +26,7 @@ struct PoolLiquidity {
 }
 
 struct Pool {
-    IPoolToken poolToken; // the pool token of a given pool
+    IPoolToken poolToken; // the pool token of the pool
     uint32 tradingFeePPM; // the trading fee (in units of PPM)
     bool tradingEnabled; // whether trading is enabled
     bool depositingEnabled; // whether depositing is enabled
@@ -35,24 +35,10 @@ struct Pool {
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 
-// base toke deposit output amounts
-struct DepositAmounts {
-    uint256 networkTokenDeltaAmount; // the network token amount that was added to the trading liquidity
-    uint256 baseTokenDeltaAmount; // the base token amount that was added to the trading liquidity
-    uint256 poolTokenAmount; // the funded pool token amount
-    IPoolToken poolToken; // the pool token
-}
-
-// base token withdrawal output amounts
-struct WithdrawalAmounts {
-    uint256 baseTokensToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
-    uint256 networkTokensToMintForProvider; // network token amount to mint directly for the provider
-    uint256 baseTokensToTransferFromEPV; // base token amount to transfer from the external protection vault to the provider
-    Sint256 baseTokensTradingLiquidityDelta; // base token amount to add to the trading liquidity
-    Sint256 networkTokensTradingLiquidityDelta; // network token amount to add to the trading liquidity and to the master vault
-    Sint256 networkTokensProtocolHoldingsDelta; // network token amount add to the protocol equity
-    uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
-}
+// trading enabling/disabling reasons
+uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
+uint8 constant TRADING_STATUS_UPDATE_DAO = 1;
+uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
 struct TradeAmountsWithLiquidity {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
@@ -154,10 +140,11 @@ interface IPoolCollection is IVersioned {
      * - assumes that the base token has been already deposited in the vault
      */
     function depositFor(
+        bytes32 contextId,
         address provider,
         ReserveToken pool,
         uint256 baseTokenAmount
-    ) external returns (DepositAmounts memory);
+    ) external;
 
     /**
      * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
@@ -168,11 +155,11 @@ interface IPoolCollection is IVersioned {
      * - the caller must have approved the collection to transfer/burn the pool token amount on its behalf
      */
     function withdraw(
+        bytes32 contextId,
+        address provider,
         ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    ) external returns (WithdrawalAmounts memory);
+        uint256 basePoolTokenAmount
+    ) external;
 
     /**
      * @dev performs a trade and returns the target amount and fee

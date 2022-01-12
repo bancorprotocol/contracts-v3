@@ -1,6 +1,8 @@
 import Contracts from '../../components/Contracts';
 import {
+    ExternalProtectionVault,
     IERC20,
+    MasterVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -54,6 +56,8 @@ describe('PoolCollectionUpgrader', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
@@ -66,6 +70,8 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterVault,
+                externalProtectionVault,
                 masterPool,
                 poolCollectionUpgrader,
                 poolCollection,
@@ -110,6 +116,8 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterVault,
+                externalProtectionVault,
                 masterPool,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -122,6 +130,8 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterVault,
+                externalProtectionVault,
                 masterPool,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -142,6 +152,8 @@ describe('PoolCollectionUpgrader', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterVault,
+                    externalProtectionVault,
                     masterPool,
                     poolTokenFactory,
                     poolCollectionUpgrader,
