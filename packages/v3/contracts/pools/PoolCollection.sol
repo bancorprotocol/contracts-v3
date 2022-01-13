@@ -68,8 +68,6 @@ struct WithdrawalAmounts {
     uint256 newNetworkTokenTradingLiquidity; // new network token trading liquidity
 }
 
-import "hardhat/console.sol";
-
 /**
  * @dev Pool Collection contract
  *
