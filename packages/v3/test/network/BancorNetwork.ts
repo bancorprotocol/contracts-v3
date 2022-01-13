@@ -673,7 +673,7 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let poolType: number;
 
-        const testCreatePool = async (tokenData: TokenData) => {
+        const testCreatePool = (tokenData: TokenData) => {
             beforeEach(async () => {
                 ({ network, networkSettings, networkToken, poolCollection } = await createSystem());
 
@@ -986,8 +986,8 @@ describe('BancorNetwork', () => {
 
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                    await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
-                    await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the pool is activated with sufficient funding
                     if (tokenData.isNativeToken()) {
@@ -1179,7 +1179,7 @@ describe('BancorNetwork', () => {
                                 );
                             });
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
                                 const COUNT = 3;
 
                                 const testMultipleDeposits = async () => {
@@ -1242,65 +1242,36 @@ describe('BancorNetwork', () => {
                                                 });
                                             });
                                         } else {
-                                            context('when there is no available network token funding', () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.setFundingLimit(token.address, 0);
-                                                });
-
-                                                it('should complete multiple deposits', async () => {
-                                                    await testMultipleDeposits();
-                                                });
+                                            it('should complete multiple deposits', async () => {
+                                                await testMultipleDeposits();
                                             });
 
-                                            context('when there is enough available network token funding', () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                                            if (tokenData.isNativeToken()) {
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit a different amount than what was actually sent', async () => {
+                                                    await expect(
+                                                        deposit(amount, {
+                                                            value: amount.add(1)
+                                                        })
+                                                    ).to.be.revertedWith('EthAmountMismatch');
+
+                                                    await expect(
+                                                        deposit(amount, {
+                                                            value: amount.sub(1)
+                                                        })
+                                                    ).to.be.revertedWith('EthAmountMismatch');
+
+                                                    await expect(
+                                                        deposit(amount, { value: BigNumber.from(0) })
+                                                    ).to.be.revertedWith('InvalidPool');
                                                 });
-
-                                                it('should complete multiple deposits', async () => {
-                                                    await testMultipleDeposits();
+                                            } else {
+                                                it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
+                                                    await expect(
+                                                        deposit(amount, { value: BigNumber.from(1) })
+                                                    ).to.be.revertedWith('InvalidPool');
                                                 });
-
-                                                if (tokenData.isNativeToken()) {
-                                                    // eslint-disable-next-line max-len
-                                                    it('should revert when attempting to deposit a different amount than what was actually sent', async () => {
-                                                        await expect(
-                                                            deposit(amount, {
-                                                                value: amount.add(1)
-                                                            })
-                                                        ).to.be.revertedWith('EthAmountMismatch');
-
-                                                        await expect(
-                                                            deposit(amount, {
-                                                                value: amount.sub(1)
-                                                            })
-                                                        ).to.be.revertedWith('EthAmountMismatch');
-
-                                                        await expect(
-                                                            deposit(amount, { value: BigNumber.from(0) })
-                                                        ).to.be.revertedWith('InvalidPool');
-                                                    });
-                                                } else {
-                                                    it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
-                                                        await expect(
-                                                            deposit(amount, { value: BigNumber.from(1) })
-                                                        ).to.be.revertedWith('InvalidPool');
-                                                    });
-                                                }
-
-                                                context(
-                                                    'when close to the limit of the available network token funding',
-                                                    () => {
-                                                        beforeEach(async () => {
-                                                            await networkSettings.setFundingLimit(token.address, 1000);
-                                                        });
-
-                                                        it('should complete multiple deposits', async () => {
-                                                            await testMultipleDeposits();
-                                                        });
-                                                    }
-                                                );
-                                            });
+                                            }
                                         }
                                     });
                                 });
@@ -1429,7 +1400,9 @@ describe('BancorNetwork', () => {
                                 ).to.be.revertedWith('InvalidToken');
                             });
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
+                                const COUNT = 3;
+
                                 const testMultipleDeposits = async () => {
                                     for (let i = 0; i < 3; i++) {
                                         await verifyDeposit(provider, sender, amount, deposit);
@@ -1447,17 +1420,11 @@ describe('BancorNetwork', () => {
 
                                     beforeEach(async () => {
                                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                        await reserveToken.transfer(senderAddress, amount);
+                                        await reserveToken.transfer(senderAddress, amount.mul(COUNT));
                                     });
 
-                                    context('when there is enough available network token funding', () => {
-                                        beforeEach(async () => {
-                                            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                                        });
-
-                                        it('should complete multiple deposits', async () => {
-                                            await testMultipleDeposits();
-                                        });
+                                    it('should complete multiple deposits', async () => {
+                                        await testMultipleDeposits();
                                     });
                                 });
                             };
@@ -1521,7 +1488,7 @@ describe('BancorNetwork', () => {
             await expect(network.withdraw(12_345)).to.be.revertedWith('AccessDenied');
         });
 
-        const testWithdraw = async (tokenData: TokenData) => {
+        const testWithdraw = (tokenData: TokenData) => {
             context('with an initiated withdrawal request', () => {
                 let provider: SignerWithAddress;
                 let poolToken: PoolToken;
@@ -2628,7 +2595,7 @@ describe('BancorNetwork', () => {
             });
         });
 
-        const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
+        const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number) => {
             const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
