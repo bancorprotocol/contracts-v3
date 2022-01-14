@@ -1455,7 +1455,6 @@ describe('BancorNetwork', () => {
         let govToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
-        let masterVault: MasterVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
@@ -1472,7 +1471,6 @@ describe('BancorNetwork', () => {
                 govToken,
                 masterPool,
                 poolCollection,
-                masterVault,
                 pendingWithdrawals,
                 masterPoolToken
             } = await createSystem());
@@ -1488,322 +1486,177 @@ describe('BancorNetwork', () => {
             await expect(network.withdraw(12_345)).to.be.revertedWith('AccessDenied');
         });
 
+        interface Request {
+            id: BigNumber;
+            poolTokenAmount: BigNumber;
+            creationTime: number;
+        }
+
         const testWithdraw = (tokenData: TokenData) => {
-            context('with an initiated withdrawal request', () => {
-                let provider: SignerWithAddress;
-                let poolToken: PoolToken;
-                let token: TokenWithAddress;
-                let poolTokenAmount: BigNumber;
-                let id: BigNumber;
-                let creationTime: number;
+            let provider: SignerWithAddress;
+            let poolToken: PoolToken;
+            let token: TokenWithAddress;
+            let requests: Request[];
 
-                before(async () => {
-                    [, provider] = await ethers.getSigners();
-                });
+            const INITIAL_LIQUIDITY = toWei(222_222_222);
+            const COUNT = 3;
 
-                beforeEach(async () => {
-                    if (tokenData.isNetworkToken()) {
-                        token = networkToken;
-                    } else {
-                        token = await createToken(tokenData);
-                    }
+            before(async () => {
+                [, provider] = await ethers.getSigners();
+            });
 
-                    // create a deposit
-                    const amount = toWei(222_222_222);
+            beforeEach(async () => {
+                if (tokenData.isNetworkToken()) {
+                    token = networkToken;
+                    poolToken = masterPoolToken;
 
-                    if (tokenData.isNetworkToken()) {
-                        poolToken = masterPoolToken;
+                    const reserveToken = await createTestToken();
+                    await createPool(reserveToken, network, networkSettings, poolCollection);
+                    await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        const reserveToken = await createTestToken();
-                        await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
+                    await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, INITIAL_LIQUIDITY);
+                } else {
+                    token = await createToken(tokenData);
+                    poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
-                    } else {
-                        poolToken = await createPool(token, network, networkSettings, poolCollection);
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
+                }
 
-                        await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
+                await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                        await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-                    }
+                const totalPoolTokenAmount = await poolToken.balanceOf(provider.address);
+                const poolTokenAmount = totalPoolTokenAmount.div(COUNT);
 
-                    await depositToPool(provider, token, amount, network);
+                requests = [];
 
-                    poolTokenAmount = await poolToken.balanceOf(provider.address);
-
-                    ({ id, creationTime } = await initWithdraw(
+                for (let i = 0; i < COUNT; i++) {
+                    const { id, creationTime } = await initWithdraw(
                         provider,
                         network,
                         pendingWithdrawals,
                         poolToken,
-                        await poolToken.balanceOf(provider.address)
-                    ));
-                });
+                        poolTokenAmount
+                    );
 
-                it('should revert when attempting to withdraw from a different provider', async () => {
-                    await expect(network.connect(deployer).withdraw(id)).to.be.revertedWith('AccessDenied');
-                });
-
-                context('during the lock duration', () => {
-                    beforeEach(async () => {
-                        await setTime(creationTime + 1000);
+                    requests.push({
+                        id,
+                        poolTokenAmount,
+                        creationTime
                     });
+                }
 
-                    it('should revert when attempting to withdraw', async () => {
-                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith('WithdrawalNotAllowed');
-                    });
+                if (!tokenData.isNetworkToken()) {
+                    await poolCollection.activate(token.address, FUNDING_RATE);
+                }
+            });
 
-                    context('after the withdrawal window duration', () => {
-                        beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-                            await setTime(creationTime + withdrawalDuration + 1);
-                        });
+            it('should revert when attempting to withdraw from a different provider', async () => {
+                await expect(network.connect(deployer).withdraw(requests[0].id)).to.be.revertedWith('AccessDenied');
+            });
 
-                        it('should revert when attempting to withdraw', async () => {
-                            await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                'WithdrawalNotAllowed'
-                            );
-                        });
-                    });
+            context('during the withdrawal window duration', () => {
+                const test = async (index: number) => {
+                    const request = requests[index];
+                    const prevPoolTokenTotalSupply = await poolToken.totalSupply();
+                    const prevPoolPoolTokenBalance = await poolToken.balanceOf(masterPool.address);
+                    const prevCollectionPoolTokenBalance = await poolToken.balanceOf(poolCollection.address);
+                    const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
 
-                    context('during the withdrawal window duration', () => {
-                        beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-                            await setTime(creationTime + withdrawalDuration - 1);
-                        });
+                    const prevProviderTokenBalance = await getBalance(token, provider.address);
 
-                        if (tokenData.isNetworkToken()) {
-                            it('should revert when attempting to withdraw without approving the governance token amount', async () => {
-                                await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERR_UNDERFLOW'
-                                );
-                            });
+                    const prevGovTotalSupply = await govToken.totalSupply();
+                    const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
+                    const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
 
-                            it('should revert when attempting to withdraw with an insufficient governance token amount', async () => {
-                                await govToken.connect(provider).transfer(deployer.address, 1);
-                                await govToken.connect(provider).approve(network.address, poolTokenAmount);
+                    let transactionCost = BigNumber.from(0);
 
-                                await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                    'ERR_UNDERFLOW'
-                                );
-                            });
+                    if (tokenData.isNetworkToken()) {
+                        await network.connect(provider).withdraw(request.id);
+
+                        expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
+                        expect(await poolToken.balanceOf(masterPool.address)).to.equal(
+                            prevPoolPoolTokenBalance.add(request.poolTokenAmount)
+                        );
+
+                        expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply.sub(request.poolTokenAmount));
+
+                        expect(await govToken.balanceOf(provider.address)).to.equal(
+                            prevProviderGovTokenBalance.sub(request.poolTokenAmount)
+                        );
+                    } else {
+                        const res = await network.connect(provider).withdraw(request.id);
+
+                        if (tokenData.isNativeToken()) {
+                            transactionCost = await getTransactionCost(res);
                         }
 
-                        context('with approvals', () => {
-                            let contextId: string;
+                        expect(await poolToken.totalSupply()).to.equal(
+                            prevPoolTokenTotalSupply.sub(request.poolTokenAmount)
+                        );
+                        expect(await poolToken.balanceOf(masterPool.address)).to.equal(prevPoolPoolTokenBalance);
 
-                            beforeEach(async () => {
-                                contextId = solidityKeccak256(
-                                    ['address', 'uint32', 'uint256'],
-                                    [provider.address, await network.currentTime(), id]
-                                );
+                        expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply);
+                        expect(await govToken.balanceOf(provider.address)).to.equal(prevProviderGovTokenBalance);
+                    }
 
-                                if (tokenData.isNetworkToken()) {
-                                    await govToken.connect(provider).approve(network.address, poolTokenAmount);
-                                }
-                            });
+                    expect(await poolToken.balanceOf(poolCollection.address)).to.equal(prevCollectionPoolTokenBalance);
+                    expect(await poolToken.balanceOf(provider.address)).to.equal(prevProviderPoolTokenBalance);
 
-                            const test = async () => {
-                                const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                                const prevPoolPoolTokenBalance = await poolToken.balanceOf(masterPool.address);
-                                const prevCollectionPoolTokenBalance = await poolToken.balanceOf(
-                                    poolCollection.address
-                                );
-                                const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
+                    expect(await govToken.balanceOf(masterPool.address)).to.equal(prevPoolGovTokenBalance);
 
-                                const prevProviderTokenBalance = await getBalance(token, provider.address);
+                    // sanity test
+                    expect(await getBalance(token, provider.address)).to.be.gte(
+                        prevProviderTokenBalance.sub(transactionCost)
+                    );
+                };
 
-                                const prevGovTotalSupply = await govToken.totalSupply();
-                                const prevPoolGovTokenBalance = await govToken.balanceOf(masterPool.address);
-                                const prevProviderGovTokenBalance = await govToken.balanceOf(provider.address);
+                const testMultipleWithdrawals = async () => {
+                    for (let i = 0; i < COUNT; i++) {
+                        await test(i);
+                    }
+                };
 
-                                let transactionCost = BigNumber.from(0);
+                beforeEach(async () => {
+                    const withdrawalDuration =
+                        (await pendingWithdrawals.lockDuration()) +
+                        (await pendingWithdrawals.withdrawalWindowDuration());
+                    await setTime(requests[0].creationTime + withdrawalDuration - 1);
+                });
 
-                                if (tokenData.isNetworkToken()) {
-                                    const withdrawalAmounts = await masterPool.withdrawalAmountsT(poolTokenAmount);
+                if (tokenData.isNetworkToken()) {
+                    it('should revert when attempting to withdraw without approving the governance token amount', async () => {
+                        await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
+                            new TokenData(TokenSymbol.vBNT).errors().exceedsAllowance
+                        );
+                    });
+                }
 
-                                    const res = await network.connect(provider).withdraw(id);
+                context('with approvals', () => {
+                    beforeEach(async () => {
+                        if (tokenData.isNetworkToken()) {
+                            await govToken.connect(provider).approve(
+                                network.address,
+                                requests.reduce((res, r) => res.add(r.poolTokenAmount), BigNumber.from(0))
+                            );
+                        }
+                    });
 
-                                    await expect(res)
-                                        .to.emit(network, 'NetworkTokenWithdrawn')
-                                        .withArgs(
-                                            contextId,
-                                            provider.address,
-                                            withdrawalAmounts.networkTokenAmount,
-                                            poolTokenAmount,
-                                            poolTokenAmount,
-                                            withdrawalAmounts.withdrawalFeeAmount
-                                        );
+                    if (tokenData.isNetworkToken()) {
+                        it('should revert when attempting to withdraw with an insufficient governance token amount', async () => {
+                            // ensure that there isn't enough gov tokens left to process a single withdrawal
+                            await govToken
+                                .connect(provider)
+                                .transfer(deployer.address, (await govToken.balanceOf(provider.address)).sub(1));
 
-                                    await expect(res)
-                                        .to.emit(network, 'TotalLiquidityUpdated')
-                                        .withArgs(
-                                            contextId,
-                                            token.address,
-                                            await poolToken.totalSupply(),
-                                            await masterPool.stakedBalance(),
-                                            await getBalance(token, masterVault.address)
-                                        );
-
-                                    expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                                    expect(await poolToken.balanceOf(masterPool.address)).to.equal(
-                                        prevPoolPoolTokenBalance.add(poolTokenAmount)
-                                    );
-
-                                    expect(await govToken.totalSupply()).to.equal(
-                                        prevGovTotalSupply.sub(poolTokenAmount)
-                                    );
-
-                                    expect(await govToken.balanceOf(provider.address)).to.equal(
-                                        prevProviderGovTokenBalance.sub(poolTokenAmount)
-                                    );
-                                } else {
-                                    const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
-                                        token.address,
-                                        poolTokenAmount
-                                    );
-
-                                    const res = await network.connect(provider).withdraw(id);
-
-                                    if (tokenData.isNativeToken()) {
-                                        transactionCost = await getTransactionCost(res);
-                                    }
-
-                                    await expect(res)
-                                        .to.emit(network, 'BaseTokenWithdrawn')
-                                        .withArgs(
-                                            contextId,
-                                            token.address,
-                                            provider.address,
-                                            poolCollection.address,
-                                            withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
-                                                withdrawalAmounts.baseTokensToTransferFromEPV
-                                            ),
-                                            poolTokenAmount,
-                                            withdrawalAmounts.baseTokensToTransferFromEPV,
-                                            withdrawalAmounts.networkTokensToMintForProvider,
-                                            withdrawalAmounts.baseTokensWithdrawalFee
-                                        );
-
-                                    const poolLiquidity = await poolCollection.poolLiquidity(token.address);
-
-                                    await expect(res)
-                                        .to.emit(network, 'TotalLiquidityUpdated')
-                                        .withArgs(
-                                            contextId,
-                                            token.address,
-                                            await poolToken.totalSupply(),
-                                            poolLiquidity.stakedBalance,
-                                            await getBalance(token, masterVault.address)
-                                        );
-
-                                    await expect(res)
-                                        .to.emit(network, 'TradingLiquidityUpdated')
-                                        .withArgs(
-                                            contextId,
-                                            token.address,
-                                            token.address,
-                                            poolLiquidity.baseTokenTradingLiquidity
-                                        );
-
-                                    await expect(res)
-                                        .to.emit(network, 'TradingLiquidityUpdated')
-                                        .withArgs(
-                                            contextId,
-                                            token.address,
-                                            networkToken.address,
-                                            poolLiquidity.networkTokenTradingLiquidity
-                                        );
-
-                                    expect(await poolToken.totalSupply()).to.equal(
-                                        prevPoolTokenTotalSupply.sub(poolTokenAmount)
-                                    );
-                                    expect(await poolToken.balanceOf(masterPool.address)).to.equal(
-                                        prevPoolPoolTokenBalance
-                                    );
-
-                                    expect(await govToken.totalSupply()).to.equal(prevGovTotalSupply);
-                                    expect(await govToken.balanceOf(provider.address)).to.equal(
-                                        prevProviderGovTokenBalance
-                                    );
-                                }
-
-                                expect(await poolToken.balanceOf(poolCollection.address)).to.equal(
-                                    prevCollectionPoolTokenBalance
-                                );
-                                expect(await poolToken.balanceOf(provider.address)).to.equal(
-                                    prevProviderPoolTokenBalance
-                                );
-
-                                expect(await govToken.balanceOf(masterPool.address)).to.equal(prevPoolGovTokenBalance);
-
-                                // sanity test:
-                                expect(await getBalance(token, provider.address)).to.be.gte(
-                                    prevProviderTokenBalance.sub(transactionCost)
-                                );
-
-                                // TODO: test actual amounts
-                                // TODO: test request/renounce funding
-                                // TODO: test vault and external storage balances
-                            };
-
-                            if (tokenData.isNetworkToken()) {
-                                it('should complete a withdraw', async () => {
-                                    await test();
-                                });
-                            } else {
-                                context('with non-whitelisted token', async () => {
-                                    beforeEach(async () => {
-                                        await networkSettings.removeTokenFromWhitelist(token.address);
-                                    });
-
-                                    it('should revert when attempting to withdraw', async () => {
-                                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'NetworkLiquidityDisabled'
-                                        );
-                                    });
-                                });
-
-                                context('when spot rate is unstable', () => {
-                                    beforeEach(async () => {
-                                        const spotRate = {
-                                            n: toWei(1_000_000),
-                                            d: toWei(10_000_000)
-                                        };
-
-                                        const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
-                                        await poolCollection.setTradingLiquidityT(token.address, {
-                                            networkTokenTradingLiquidity: spotRate.n,
-                                            baseTokenTradingLiquidity: spotRate.d,
-                                            tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
-                                            stakedBalance
-                                        });
-                                        await poolCollection.setAverageRateT(token.address, {
-                                            rate: {
-                                                n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
-                                            },
-                                            time: 1000
-                                        });
-                                    });
-
-                                    it('should revert when attempting to withdraw', async () => {
-                                        await expect(network.connect(provider).withdraw(id)).to.be.revertedWith(
-                                            'NetworkLiquidityDisabled'
-                                        );
-                                    });
-                                });
-
-                                context('when spot rate is stable', () => {
-                                    it('should complete a withdraw', async () => {
-                                        await test();
-                                    });
-                                });
-                            }
+                            await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
+                                new TokenData(TokenSymbol.vBNT).errors().exceedsBalance
+                            );
                         });
+                    }
+
+                    it('should complete a withdraw', async () => {
+                        await testMultipleWithdrawals();
                     });
                 });
             });

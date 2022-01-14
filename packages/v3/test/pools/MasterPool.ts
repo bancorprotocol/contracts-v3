@@ -908,7 +908,7 @@ describe('MasterPool', () => {
 
                         await expect(
                             network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERR_UNDERFLOW');
+                        ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to deposit without approving the network tokens', async () => {
