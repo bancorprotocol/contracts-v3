@@ -876,7 +876,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         ReserveToken pool,
-        uint256 baseTokenAmount,
+        uint256 tokenAmount,
         address caller,
         uint256 availableAmount
     ) private {
@@ -887,7 +887,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // process deposit to the base token pool (taking into account the ETH pool)
-        poolCollection.depositFor(contextId, provider, pool, baseTokenAmount);
+        poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
     /**

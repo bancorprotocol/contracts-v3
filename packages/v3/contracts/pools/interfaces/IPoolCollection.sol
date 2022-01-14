@@ -108,7 +108,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev converts the specified underlying base token amount to pool token amount
      */
-    function underlyingToPoolToken(ReserveToken pool, uint256 baseTokenAmount) external view returns (uint256);
+    function underlyingToPoolToken(ReserveToken pool, uint256 tokenAmount) external view returns (uint256);
 
     /**
      * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
@@ -116,7 +116,7 @@ interface IPoolCollection is IVersioned {
      */
     function poolTokenAmountToBurn(
         ReserveToken pool,
-        uint256 baseTokenAmountToDistribute,
+        uint256 tokenAmountToDistribute,
         uint256 protocolPoolTokenAmount
     ) external view returns (uint256);
 
@@ -143,7 +143,7 @@ interface IPoolCollection is IVersioned {
         bytes32 contextId,
         address provider,
         ReserveToken pool,
-        uint256 baseTokenAmount
+        uint256 tokenAmount
     ) external;
 
     /**
@@ -158,7 +158,7 @@ interface IPoolCollection is IVersioned {
         bytes32 contextId,
         address provider,
         ReserveToken pool,
-        uint256 basePoolTokenAmount
+        uint256 poolTokenAmount
     ) external;
 
     /**

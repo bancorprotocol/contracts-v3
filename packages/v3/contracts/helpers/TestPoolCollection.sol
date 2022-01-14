@@ -63,12 +63,12 @@ contract TestPoolCollection is PoolCollection, TestTime {
         _poolData[pool].averageRate = newAverageRate;
     }
 
-    function poolWithdrawalAmountsT(ReserveToken pool, uint256 basePoolTokenAmount)
+    function poolWithdrawalAmountsT(ReserveToken pool, uint256 poolTokenAmount)
         external
         view
         returns (WithdrawalAmounts memory)
     {
-        return _poolWithdrawalAmounts(pool, basePoolTokenAmount);
+        return _poolWithdrawalAmounts(pool, poolTokenAmount);
     }
 
     function mintPoolTokenT(
