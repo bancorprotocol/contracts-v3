@@ -21,7 +21,6 @@ import { IPoolCollectionUpgrader } from "./IPoolCollectionUpgrader.sol";
 struct PoolLiquidity {
     uint256 networkTokenTradingLiquidity; // the network token trading liquidity
     uint256 baseTokenTradingLiquidity; // the base token trading liquidity
-    uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
     uint256 stakedBalance; // the staked balance
 }
 

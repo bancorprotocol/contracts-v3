@@ -351,7 +351,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
                 baseTokenTradingLiquidity: 0,
-                tradingLiquidityProduct: 0,
                 stakedBalance: 0
             })
         });
@@ -600,8 +599,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         });
 
         _dispatchTradingLiquidityEvents(contextId, pool, poolTokenTotalSupply, prevLiquidity, data.liquidity);
-
-        // TODO: handle the accumulated fees
     }
 
     /**
@@ -618,8 +615,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
-
-        // TODO: handle the accumulated fees
     }
 
     /**
@@ -688,7 +683,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         PoolLiquidity memory liquidity = PoolLiquidity({
             networkTokenTradingLiquidity: newNetworkTokenTradingLiquidity,
             baseTokenTradingLiquidity: newBaseTokenTradingLiquidity,
-            tradingLiquidityProduct: params.liquidity.tradingLiquidityProduct,
             stakedBalance: stakedBalance
         });
 
@@ -881,9 +875,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity;
         liquidity.networkTokenTradingLiquidity = amounts.newNetworkTokenTradingLiquidity;
-        liquidity.tradingLiquidityProduct =
-            amounts.newBaseTokenTradingLiquidity *
-            amounts.newNetworkTokenTradingLiquidity;
 
         if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
             assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
@@ -1116,7 +1107,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         PoolLiquidity memory newLiquidity = PoolLiquidity({
             networkTokenTradingLiquidity: targetNetworkTokenTradingLiquidity,
             baseTokenTradingLiquidity: baseTokenTradingLiquidity,
-            tradingLiquidityProduct: targetNetworkTokenTradingLiquidity * baseTokenTradingLiquidity,
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1175,7 +1165,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.liquidity = PoolLiquidity({
             networkTokenTradingLiquidity: 0,
             baseTokenTradingLiquidity: 0,
-            tradingLiquidityProduct: 0,
             stakedBalance: liquidity.stakedBalance
         });
 

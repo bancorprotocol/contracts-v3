@@ -24,7 +24,6 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
     struct PoolLiquidityV1 {
         uint256 networkTokenTradingLiquidity; // the network token trading liquidity
         uint256 baseTokenTradingLiquidity; // the base token trading liquidity
-        uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
         uint256 stakedBalance; // the staked balance
     }
 
@@ -168,7 +167,6 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: data.liquidity.networkTokenTradingLiquidity,
                 baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
-                tradingLiquidityProduct: data.liquidity.tradingLiquidityProduct,
                 stakedBalance: data.liquidity.stakedBalance
             })
         });

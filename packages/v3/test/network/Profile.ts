@@ -497,7 +497,6 @@ describe('Profile @profile', () => {
                                         await poolCollection.setTradingLiquidityT(token.address, {
                                             networkTokenTradingLiquidity: spotRate.n,
                                             baseTokenTradingLiquidity: spotRate.d,
-                                            tradingLiquidityProduct: spotRate.n.mul(spotRate.d),
                                             stakedBalance
                                         });
                                         await poolCollection.setAverageRateT(token.address, {

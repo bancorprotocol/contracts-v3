@@ -576,8 +576,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
         }
-
-        // TODO: handle the network fees
     }
 
     /**
@@ -837,8 +835,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller, tokenAmount);
         }
-
-        // TODO: handle the network fees
     }
 
     /**

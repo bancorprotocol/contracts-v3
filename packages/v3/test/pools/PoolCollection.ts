@@ -86,7 +86,6 @@ describe('PoolCollection', () => {
 
         expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
         expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-        expect(liquidity.tradingLiquidityProduct).to.equal(0);
         expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
 
         // ensure that the previous network token liquidity was renounced
@@ -437,13 +436,11 @@ describe('PoolCollection', () => {
                     const { liquidity } = pool;
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
                     expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
-                    expect(liquidity.tradingLiquidityProduct).to.equal(0);
                     expect(liquidity.stakedBalance).to.equal(0);
 
                     const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
                     expect(poolLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
                     expect(poolLiquidity.networkTokenTradingLiquidity).to.equal(liquidity.networkTokenTradingLiquidity);
-                    expect(poolLiquidity.tradingLiquidityProduct).to.equal(liquidity.tradingLiquidityProduct);
                     expect(poolLiquidity.stakedBalance).to.equal(liquidity.stakedBalance);
                 });
             });
@@ -659,9 +656,6 @@ describe('PoolCollection', () => {
                 expect(liquidity.baseTokenTradingLiquidity).to.equal(
                     liquidity.networkTokenTradingLiquidity.mul(FUNDING_RATE.d).div(FUNDING_RATE.n)
                 );
-                expect(liquidity.tradingLiquidityProduct).to.equal(
-                    liquidity.networkTokenTradingLiquidity.mul(liquidity.baseTokenTradingLiquidity)
-                );
                 expect(liquidity.stakedBalance).to.equal(totalLiquidity);
 
                 // ensure that the new network token funding was requested
@@ -868,7 +862,6 @@ describe('PoolCollection', () => {
                     expect(data.tradingEnabled).to.be.false;
                     expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-                    expect(liquidity.tradingLiquidityProduct).to.equal(0);
                     expect(liquidity.stakedBalance).to.equal(0);
                 });
 
@@ -1103,7 +1096,6 @@ describe('PoolCollection', () => {
 
                             expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
                             expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-                            expect(liquidity.tradingLiquidityProduct).to.equal(0);
 
                             break;
 
@@ -1114,7 +1106,6 @@ describe('PoolCollection', () => {
                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
                                 prevLiquidity.baseTokenTradingLiquidity
                             );
-                            expect(liquidity.tradingLiquidityProduct).to.equal(prevLiquidity.tradingLiquidityProduct);
 
                             break;
 
@@ -1274,7 +1265,6 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingLiquidityT(token.address, {
                                         networkTokenTradingLiquidity: SPOT_RATE.n,
                                         baseTokenTradingLiquidity: SPOT_RATE.d,
-                                        tradingLiquidityProduct: SPOT_RATE.n.mul(SPOT_RATE.d),
                                         stakedBalance
                                     });
 
@@ -1496,7 +1486,6 @@ describe('PoolCollection', () => {
 
                         expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
                         expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-                        expect(liquidity.tradingLiquidityProduct).to.equal(0);
 
                         break;
 
@@ -1505,7 +1494,6 @@ describe('PoolCollection', () => {
                         // expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
                         // expect(liquidity.baseTokenTradingLiquidity).to.equal(expectedBaseTokenTradingLiquidity);
                         // expect(liquidity.networkTokenTradingLiquidity).to.equal(expectedNetworkTokenTradingLiquidity);
-                        // expect(liquidity.tradingLiquidityProduct).to.equal(expectedTradingLiquidityProduct);
 
                         break;
                 }
@@ -1713,7 +1701,6 @@ describe('PoolCollection', () => {
                 poolCollection.setTradingLiquidityT(reserveToken.address, {
                     networkTokenTradingLiquidity,
                     baseTokenTradingLiquidity,
-                    tradingLiquidityProduct: networkTokenTradingLiquidity.mul(baseTokenTradingLiquidity),
                     stakedBalance: baseTokenTradingLiquidity
                 });
 
@@ -2259,9 +2246,6 @@ describe('PoolCollection', () => {
                                 expect(tradeAmountsWithLiquidity.liquidity.baseTokenTradingLiquidity).to.equal(
                                     liquidity.baseTokenTradingLiquidity
                                 );
-                                expect(tradeAmountsWithLiquidity.liquidity.tradingLiquidityProduct).to.equal(
-                                    liquidity.tradingLiquidityProduct
-                                );
                                 expect(tradeAmountsWithLiquidity.liquidity.stakedBalance).to.equal(
                                     liquidity.stakedBalance
                                 );
@@ -2284,10 +2268,6 @@ describe('PoolCollection', () => {
                                         prevLiquidity.networkTokenTradingLiquidity.sub(tradeAmountsWithLiquidity.amount)
                                     );
                                 }
-
-                                expect(liquidity.tradingLiquidityProduct).to.equal(
-                                    prevLiquidity.tradingLiquidityProduct
-                                );
 
                                 // verify that the average rate has been updated
                                 const expectedNewAverageRate = await expectedAverageRate(prevPoolData, interval);
