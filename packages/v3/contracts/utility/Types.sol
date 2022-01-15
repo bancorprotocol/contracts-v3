@@ -21,11 +21,19 @@ struct Sint256 {
 }
 
 /**
+ * @dev returns whether a fraction is valid
+ */
+// solhint-disable-next-line func-visibility
+function isFractionValid(Fraction memory fraction) pure returns (bool) {
+    return fraction.d != 0;
+}
+
+/**
  * @dev returns whether a fraction is zero
  */
 // solhint-disable-next-line func-visibility
 function isFractionZero(Fraction memory fraction) pure returns (bool) {
-    return fraction.n != 0 && fraction.d != 0;
+    return fraction.n == 0 && isFractionValid(fraction);
 }
 
 /**

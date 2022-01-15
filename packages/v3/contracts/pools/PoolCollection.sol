@@ -13,7 +13,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, isFractionZero } from "../utility/Types.sol";
+import { Fraction, Sint256, zeroFraction, isFractionValid, isFractionZero } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -1011,7 +1011,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the effective funding rate is provided when we're bootstrapping a pool (i.e., when its network
         // token liquidity is 0)
-        bool isFundingRateValid = isFractionZero(fundingRate);
+        bool isFundingRateValid = isFractionValid(fundingRate);
         if (liquidity.networkTokenTradingLiquidity == 0 && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
