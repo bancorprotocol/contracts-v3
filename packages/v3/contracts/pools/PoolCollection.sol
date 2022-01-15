@@ -581,6 +581,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // update the staked balance with the full base token amount
         data.liquidity.stakedBalance = newStakedBalance;
 
+        // mint pool tokens to the provider
+        data.poolToken.mint(provider, poolTokenAmount);
+
         // adjust the trading liquidity based on the base token vault balance and funding limits
         _updateTradingLiquidity(
             contextId,
@@ -590,9 +593,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             zeroFraction(),
             _networkSettings.minLiquidityForTrading()
         );
-
-        // mint pool tokens to the provider
-        data.poolToken.mint(provider, poolTokenAmount);
 
         emit TokenDeposited({
             contextId: contextId,
