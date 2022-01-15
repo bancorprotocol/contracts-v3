@@ -1064,7 +1064,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             liquidity.networkTokenTradingLiquidity + _masterPool.availableFunding(pool)
         );
 
-        // ensure that the target is below the minimum liquidity for trading
+        // ensure that the target is above the minimum liquidity for trading
         if (targetNetworkTokenTradingLiquidity < minLiquidityForTrading) {
             _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
