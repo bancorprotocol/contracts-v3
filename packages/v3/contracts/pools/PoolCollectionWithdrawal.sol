@@ -231,7 +231,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) {
         // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
-        output.p = handleZeroMulDivF(a, z, b * e).toNeg256();
+        output.p = handleZeroMulDivF(z, a, b * e).toNeg256();
         output.q = output.p;
         output.r = (z / e).toNeg256();
         output.s = MathEx.mulDivF(y, b + c, e);
@@ -252,7 +252,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) {
         // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y, c);
-        output.p = handleZeroMulDivF(a, z, b).toNeg256();
+        output.p = handleZeroMulDivF(z, a, b).toNeg256();
         output.q = output.p;
         output.r = z.toNeg256();
         output.s = y;
@@ -288,7 +288,7 @@ library PoolCollectionWithdrawal {
                 u = (y * g) / e;
             }
         } else {
-            t = handleZeroMulDivF(a * y, g, b * e);
+            t = handleZeroMulDivF(g, a * y, b * e);
             u = 0;
         }
     }
@@ -320,14 +320,14 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns `x*y/z` if `x > 0` and `z > 0` else `y`
+     * @dev returns `x*n/d` under the notion that `n == d` --> `n/d == 1`
      */
     function handleZeroMulDivF(
         uint256 x,
-        uint256 y,
-        uint256 z
+        uint256 n,
+        uint256 d
     ) private pure returns (uint256) {
-        return x > 0 && z > 0 ? MathEx.mulDivF(x, y, z) : y;
+        return n == d ? x : MathEx.mulDivF(x, n, d);
     }
 
     /**
