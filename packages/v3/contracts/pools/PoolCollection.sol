@@ -269,7 +269,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!isFractionZero(rate)) {
+        if (isFractionZero(rate)) {
             revert InvalidRate();
         }
     }
