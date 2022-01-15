@@ -27,25 +27,25 @@ error PoolCollectionWithdrawalInputInvalid();
  * `u` - base token amount to transfer from the external protection vault to the provider
  * `v` - base token amount to keep in the pool as a withdrawal fee
  * The following table depicts the actual formulae based on the current state of the system:
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           |                         Deficit                         |                       Surplus                       |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           | p = a*x(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))  | p = -a*x(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m)) |
- * |           | q = 0                                                   | q = 0                                               |
- * |           | r = -x*(e*(1-n)-b-c)/e                                  | r = x*(b+c-e+e*n)/e                                 |
- * | Arbitrage | s = x*(1-n)                                             | s = x*(1-n)                                         |
- * |           | t = 0                                                   | t = 0                                               |
- * |           | u = 0                                                   | u = 0                                               |
- * |           | v = x*n                                                 | v = x*n                                             |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           | p = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | p = -a*z/b where z = max(x*(1-n)-c,0)               |
- * |           | q = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | q = -a*z/b where z = max(x*(1-n)-c,0)               |
- * |           | r = -z/e       where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | r = -z     where z = max(x*(1-n)-c,0)               |
- * | Default   | s = x*(1-n)*(b+c)/e                                     | s = x*(1-n)                                         |
- * |           | t = see function `externalProtection`                   | t = 0                                               |
- * |           | u = see function `externalProtection`                   | u = 0                                               |
- * |           | v = x*n                                                 | v = x*n                                             |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * +-----------+---------------------------------------------------------+------------------------------------------------------+
+ * |           |                         Deficit                         |                       Surplus                        |
+ * +-----------+---------------------------------------------------------+------------------------------------------------------+
+ * |           | p = a*x*(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m)) | p = -a*x*(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m)) |
+ * |           | q = 0                                                   | q = 0                                                |
+ * |           | r = -x*(e*(1-n)-b-c)/e                                  | r = x*(b+c-e+e*n)/e                                  |
+ * | Arbitrage | s = x*(1-n)                                             | s = x*(1-n)                                          |
+ * |           | t = 0                                                   | t = 0                                                |
+ * |           | u = 0                                                   | u = 0                                                |
+ * |           | v = x*n                                                 | v = x*n                                              |
+ * +-----------+---------------------------------------------------------+------------------------------------------------------+
+ * |           | p = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | p = -a*z/b where z = max(x*(1-n)-c,0)                |
+ * |           | q = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | q = -a*z/b where z = max(x*(1-n)-c,0)                |
+ * |           | r = -z/e       where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | r = -z     where z = max(x*(1-n)-c,0)                |
+ * | Default   | s = x*(1-n)*(b+c)/e                                     | s = x*(1-n)                                          |
+ * |           | t = see function `externalProtection`                   | t = 0                                                |
+ * |           | u = see function `externalProtection`                   | u = 0                                                |
+ * |           | v = x*n                                                 | v = x*n                                              |
+ * +-----------+---------------------------------------------------------+------------------------------------------------------+
  * Note that for the sake of illustration, both `m` and `n` are assumed normalized (between 0 and 1).
  * During runtime, it is taken into account that they are given in PPM units (between 0 and 1000000).
  */
@@ -231,7 +231,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) {
         // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
-        output.p = MathEx.mulDivF(a, z, b * e).toNeg256();
+        output.p = handleZeroMulDivF(a, z, b * e).toNeg256();
         output.q = output.p;
         output.r = (z / e).toNeg256();
         output.s = MathEx.mulDivF(y, b + c, e);
@@ -252,7 +252,7 @@ library PoolCollectionWithdrawal {
     ) private pure returns (Output memory output) {
         // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y, c);
-        output.p = MathEx.mulDivF(a, z, b).toNeg256();
+        output.p = handleZeroMulDivF(a, z, b).toNeg256();
         output.q = output.p;
         output.r = z.toNeg256();
         output.s = y;
@@ -288,7 +288,7 @@ library PoolCollectionWithdrawal {
                 u = (y * g) / e;
             }
         } else {
-            t = MathEx.mulDivF(a * y, g, b * e);
+            t = handleZeroMulDivF(a * y, g, b * e);
             u = 0;
         }
     }
@@ -317,6 +317,17 @@ library PoolCollectionWithdrawal {
         uint256 z
     ) private pure returns (uint256) {
         return a * b - MathEx.mulDivF(x, y, z);
+    }
+
+    /**
+     * @dev returns `x*y/z` if `x > 0` and `z > 0` else `y`
+     */
+    function handleZeroMulDivF(
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) private pure returns (uint256) {
+        return x > 0 && z > 0 ? MathEx.mulDivF(x, y, z) : y;
     }
 
     /**

@@ -1633,7 +1633,7 @@ describe('PoolCollection', () => {
                                 await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
                             });
 
-                            it.skip('should withdraw and reset the trading liquidity', async () => {
+                            it('should withdraw and reset the trading liquidity', async () => {
                                 await testMultipleWithdrawals(
                                     totalBasePoolTokenAmount,
                                     COUNT,
