@@ -1439,10 +1439,6 @@ describe('PoolCollection', () => {
 
                 const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
 
-                const expectedStakedBalance = prevLiquidity.stakedBalance
-                    .mul(prevPoolTokenTotalSupply.sub(poolTokenAmount))
-                    .div(prevPoolTokenTotalSupply);
-
                 const res = await network.withdrawFromPoolCollectionT(
                     poolCollection.address,
                     CONTEXT_ID,
@@ -1490,7 +1486,7 @@ describe('PoolCollection', () => {
                             masterPool,
                             prevTradingEnabled,
                             res,
-                            expectedStakedBalance,
+                            prevLiquidity.stakedBalance,
                             TradingStatusUpdateReason.MinLiquidity
                         );
 
@@ -1594,7 +1590,7 @@ describe('PoolCollection', () => {
 
                 // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
                 // from an inactive pool to work
-                context.skip('when inactive', () => {
+                context('when inactive', () => {
                     it('should withdraw', async () => {
                         await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
                     });
@@ -1645,7 +1641,7 @@ describe('PoolCollection', () => {
 
                     // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
                     // from an inactive pool to work
-                    context.skip('after disabling trading', () => {
+                    context('after disabling trading', () => {
                         beforeEach(async () => {
                             await poolCollection.disableTrading(token.address);
                         });
