@@ -121,11 +121,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     // the master vault contract
     IMasterVault private immutable _masterVault;
 
-    // the address of the external protection vault
-    IExternalProtectionVault private immutable _externalProtectionVault;
-
     // the master pool contract
     IMasterPool internal immutable _masterPool;
+
+    // the address of the external protection vault
+    IExternalProtectionVault private immutable _externalProtectionVault;
 
     // the pool token factory contract
     IPoolTokenFactory private immutable _poolTokenFactory;
@@ -236,8 +236,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IExternalProtectionVault initExternalProtectionVault,
         IMasterPool initMasterPool,
+        IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
@@ -245,8 +245,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         validAddress(address(initNetworkToken))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
-        validAddress(address(initExternalProtectionVault))
         validAddress(address(initMasterPool))
+        validAddress(address(initExternalProtectionVault))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
@@ -254,8 +254,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         _networkToken = initNetworkToken;
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
-        _externalProtectionVault = initExternalProtectionVault;
         _masterPool = initMasterPool;
+        _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 

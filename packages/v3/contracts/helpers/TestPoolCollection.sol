@@ -32,8 +32,8 @@ contract TestPoolCollection is PoolCollection, TestTime {
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IExternalProtectionVault initExternalProtectionVault,
         IMasterPool initMasterPool,
+        IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
@@ -42,8 +42,8 @@ contract TestPoolCollection is PoolCollection, TestTime {
             initNetworkToken,
             initNetworkSettings,
             initMasterVault,
-            initExternalProtectionVault,
             initMasterPool,
+            initExternalProtectionVault,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
         )

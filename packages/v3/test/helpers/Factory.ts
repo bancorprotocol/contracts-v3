@@ -171,8 +171,8 @@ export const createPoolCollection = async (
     networkToken: string | IERC20,
     networkSettings: string | NetworkSettings,
     masterVault: string | MasterVault,
-    externalProtectionVault: string | ExternalProtectionVault,
     masterPool: string | MasterPool,
+    externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolCollectionUpgrader: string | PoolCollectionUpgrader,
     version: number = V1
@@ -306,8 +306,8 @@ const createSystemFixture = async () => {
         networkToken,
         networkSettings,
         masterVault,
-        externalProtectionVault,
         masterPool,
+        externalProtectionVault,
         poolTokenFactory,
         poolCollectionUpgrader
     );

@@ -373,8 +373,8 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkSettings,
                         masterVault,
-                        externalProtectionVault,
                         masterPool,
+                        externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         await poolCollection.version()
@@ -393,8 +393,8 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkSettings,
                         masterVault,
-                        externalProtectionVault,
                         masterPool,
+                        externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await poolCollection.version()) + 1
@@ -430,8 +430,8 @@ describe('BancorNetwork', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -456,8 +456,8 @@ describe('BancorNetwork', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -477,8 +477,8 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkSettings,
                         masterVault,
-                        externalProtectionVault,
                         masterPool,
+                        externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await poolCollection.version()) + 1
@@ -488,8 +488,9 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkSettings,
                         masterVault,
-                        externalProtectionVault,
                         masterPool,
+                        externalProtectionVault,
+
                         poolTokenFactory,
                         poolCollectionUpgrader,
                         (await newPoolCollection.version()) + 1
@@ -517,8 +518,8 @@ describe('BancorNetwork', () => {
                         networkToken,
                         networkSettings,
                         masterVault,
-                        externalProtectionVault,
                         masterPool,
+                        externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader
                     );
@@ -601,8 +602,8 @@ describe('BancorNetwork', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
@@ -628,8 +629,8 @@ describe('BancorNetwork', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader
                 );
@@ -815,8 +816,8 @@ describe('BancorNetwork', () => {
                 networkToken,
                 networkSettings,
                 masterVault,
-                externalProtectionVault,
                 masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1

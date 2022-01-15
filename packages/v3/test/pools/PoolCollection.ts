@@ -176,8 +176,8 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     networkSettings.address,
                     masterVault.address,
-                    externalProtectionVault.address,
                     masterPool.address,
+                    externalProtectionVault.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -191,8 +191,8 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     networkSettings.address,
                     masterVault.address,
-                    externalProtectionVault.address,
                     masterPool.address,
+                    externalProtectionVault.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -206,8 +206,8 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     ZERO_ADDRESS,
                     masterVault.address,
-                    externalProtectionVault.address,
                     masterPool.address,
+                    externalProtectionVault.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -221,23 +221,8 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     networkSettings.address,
                     ZERO_ADDRESS,
+                    masterPool.address,
                     externalProtectionVault.address,
-                    masterPool.address,
-                    poolTokenFactory.address,
-                    poolCollectionUpgrader.address
-                )
-            ).to.be.revertedWith('InvalidAddress');
-        });
-
-        it('should revert when attempting to create with an invalid external protection vault contract', async () => {
-            await expect(
-                Contracts.PoolCollection.deploy(
-                    network.address,
-                    networkToken.address,
-                    networkSettings.address,
-                    masterVault.address,
-                    ZERO_ADDRESS,
-                    masterPool.address,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
                 )
@@ -251,7 +236,22 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     networkSettings.address,
                     masterVault.address,
+                    ZERO_ADDRESS,
                     externalProtectionVault.address,
+                    poolTokenFactory.address,
+                    poolCollectionUpgrader.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid external protection vault contract', async () => {
+            await expect(
+                Contracts.PoolCollection.deploy(
+                    network.address,
+                    networkToken.address,
+                    networkSettings.address,
+                    masterVault.address,
+                    masterPool.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
                     poolCollectionUpgrader.address
@@ -266,8 +266,8 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     networkSettings.address,
                     masterVault.address,
-                    externalProtectionVault.address,
                     masterPool.address,
+                    externalProtectionVault.address,
                     ZERO_ADDRESS,
                     poolCollectionUpgrader.address
                 )
@@ -281,8 +281,8 @@ describe('PoolCollection', () => {
                     networkToken.address,
                     networkSettings.address,
                     masterVault.address,
-                    externalProtectionVault.address,
                     masterPool.address,
+                    externalProtectionVault.address,
                     poolTokenFactory.address,
                     ZERO_ADDRESS
                 )
@@ -2499,8 +2499,8 @@ describe('PoolCollection', () => {
                 networkToken,
                 networkSettings,
                 masterVault,
-                externalProtectionVault,
                 masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection.version()) + 1
@@ -2601,8 +2601,8 @@ describe('PoolCollection', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader
                 );

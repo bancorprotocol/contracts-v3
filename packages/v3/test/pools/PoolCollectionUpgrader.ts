@@ -117,8 +117,8 @@ describe('PoolCollectionUpgrader', () => {
                 networkToken,
                 networkSettings,
                 masterVault,
-                externalProtectionVault,
                 masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 1000
@@ -131,8 +131,8 @@ describe('PoolCollectionUpgrader', () => {
                 networkToken,
                 networkSettings,
                 masterVault,
-                externalProtectionVault,
                 masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection2.version()) + 1
@@ -153,8 +153,8 @@ describe('PoolCollectionUpgrader', () => {
                     networkToken,
                     networkSettings,
                     masterVault,
-                    externalProtectionVault,
                     masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1
