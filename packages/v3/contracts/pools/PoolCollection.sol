@@ -1105,7 +1105,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         }
 
         // calculate the base token trading liquidity based on the new network token trading liquidity and the effective
-        // funding rate (please note that the effective funding rate is always the rate between the network token ans
+        // funding rate (please note that the effective funding rate is always the rate between the network token and
         // the base token)
         uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
             targetNetworkTokenTradingLiquidity,
