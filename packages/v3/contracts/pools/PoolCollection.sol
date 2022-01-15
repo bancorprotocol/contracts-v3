@@ -1020,7 +1020,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the funding rate is provided when we're bootstrapping a pool (i.e., when its network token
         // liquidity is 0)
-        bool isFundingRateValid = isFractionValid(fundingRate);
+        bool isFundingRateValid = !isFractionZero(fundingRate);
         if (liquidity.networkTokenTradingLiquidity == 0 && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
