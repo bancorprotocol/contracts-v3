@@ -40,11 +40,6 @@ import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import { PoolToken } from "./PoolToken.sol";
 
-struct WithdrawalAmounts {
-    uint256 networkTokenAmount;
-    uint256 withdrawalFeeAmount;
-}
-
 /**
  * @dev Master Pool contract
  */
@@ -52,6 +47,11 @@ contract MasterPool is IMasterPool, Vault {
     using ReserveTokenLibrary for ReserveToken;
 
     error FundingLimitExceeded();
+
+    struct WithdrawalAmounts {
+        uint256 networkTokenAmount;
+        uint256 withdrawalFeeAmount;
+    }
 
     // the master pool token manager role is required to access the master pool token reserve
     bytes32 private constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");

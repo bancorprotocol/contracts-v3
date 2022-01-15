@@ -10,7 +10,7 @@ import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { MasterPool, WithdrawalAmounts } from "../pools/MasterPool.sol";
+import { MasterPool } from "../pools/MasterPool.sol";
 
 contract TestMasterPool is MasterPool {
     constructor(
