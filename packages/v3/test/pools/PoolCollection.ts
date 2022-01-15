@@ -665,7 +665,7 @@ describe('PoolCollection', () => {
 
                 await expect(res)
                     .to.emit(poolCollection, 'TradingEnabled')
-                    .withArgs(token.address, true, TradingStatusUpdateReason.DAO);
+                    .withArgs(token.address, true, TradingStatusUpdateReason.Admin);
 
                 await testTradingLiquidityEvents(
                     token,
@@ -821,7 +821,7 @@ describe('PoolCollection', () => {
                     prevTradingEnabled,
                     res,
                     expectedStakedBalance,
-                    TradingStatusUpdateReason.DAO
+                    TradingStatusUpdateReason.Admin
                 );
             };
 

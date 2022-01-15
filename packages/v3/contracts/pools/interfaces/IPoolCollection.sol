@@ -36,7 +36,7 @@ struct Pool {
 
 // trading enabling/disabling reasons
 uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
-uint8 constant TRADING_STATUS_UPDATE_DAO = 1;
+uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
 struct TradeAmountsWithLiquidity {

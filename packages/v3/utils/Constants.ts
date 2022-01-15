@@ -32,7 +32,7 @@ export const PPM_RESOLUTION = 1_000_000;
 
 export enum TradingStatusUpdateReason {
     Default = 0,
-    DAO = 1,
+    Admin = 1,
     MinLiquidity = 2
 }
 

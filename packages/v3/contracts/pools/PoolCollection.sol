@@ -42,7 +42,7 @@ import {
     PoolLiquidity,
     Pool,
     TRADING_STATUS_UPDATE_DEFAULT,
-    TRADING_STATUS_UPDATE_DAO,
+    TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
     TradeAmountsWithLiquidity,
     TradeAmounts
@@ -499,7 +499,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         data.tradingEnabled = true;
 
-        emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_DAO });
+        emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_ADMIN });
     }
 
     /**
@@ -512,7 +512,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function disableTrading(ReserveToken pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
 
-        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_DAO);
+        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_ADMIN);
     }
 
     /**
