@@ -183,8 +183,8 @@ export const createPoolCollection = async (
         toAddress(networkToken),
         toAddress(networkSettings),
         toAddress(masterVault),
-        toAddress(externalProtectionVault),
         toAddress(masterPool),
+        toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
         toAddress(poolCollectionUpgrader)
     );
