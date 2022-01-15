@@ -474,6 +474,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     /**
      * @dev activates trading in a given pool and updates its trading liquidity
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function activate(ReserveToken pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
         Pool storage data = _poolStorage(pool);
