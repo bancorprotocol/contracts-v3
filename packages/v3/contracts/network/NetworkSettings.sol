@@ -187,7 +187,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amount of network tokens that the protocol can fund for a specific pool
+     * @dev updates the amount of network tokens that the protocol can fund a specific pool
      *
      * requirements:
      *
