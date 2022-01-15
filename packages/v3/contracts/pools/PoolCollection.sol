@@ -89,7 +89,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
-    uint32 private constant LIQUIDITY_GROWTH_FACTOR = 2;
+    uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
 
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
