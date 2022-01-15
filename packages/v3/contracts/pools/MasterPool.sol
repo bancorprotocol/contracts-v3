@@ -186,16 +186,16 @@ contract MasterPool is IMasterPool, Vault {
 
     // solhint-enable func-name-mixedcase
 
-    modifier validPoolForFunding(ReserveToken pool) {
-        _validPoolForFunding(pool);
+    modifier poolWhitelisted(ReserveToken pool) {
+        _poolWhitelisted(pool);
 
         _;
     }
 
     /**
-     * @dev validates that the provided pool is eligible for funding
+     * @dev validates that the provided pool is whitelisted
      */
-    function _validPoolForFunding(ReserveToken pool) internal view {
+    function _poolWhitelisted(ReserveToken pool) internal view {
         if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
@@ -423,7 +423,7 @@ contract MasterPool is IMasterPool, Vault {
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) validPoolForFunding(pool) greaterThanZero(networkTokenAmount) {
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentFunding = _currentPoolFunding[pool];
         uint256 fundingLimit = _networkSettings.poolFundingLimit(pool);
         uint256 newFunding = currentFunding + networkTokenAmount;
@@ -483,7 +483,7 @@ contract MasterPool is IMasterPool, Vault {
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
-    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) validPoolForFunding(pool) greaterThanZero(networkTokenAmount) {
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the renounced amount to deduct from both the staked balance and current pool funding
