@@ -183,7 +183,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
-     * @dev triggered when new liquidity is deposited to a pool
+     * @dev triggered when new liquidity is deposited into a pool
      */
     event TokenDeposited(
         bytes32 indexed contextId,
