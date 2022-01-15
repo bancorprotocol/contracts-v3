@@ -1175,10 +1175,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev grants/revokes required roles to/from a pool collection
      */
-    function _setAccessRoles(IPoolCollection poolCollection, bool state) private {
+    function _setAccessRoles(IPoolCollection poolCollection, bool set) private {
         address poolCollectionAddress = address(poolCollection);
 
-        if (state) {
+        if (set) {
             _masterPool.grantRole(ROLE_NETWORK_TOKEN_MANAGER, poolCollectionAddress);
             _masterPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
             _masterPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
