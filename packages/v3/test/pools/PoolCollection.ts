@@ -2392,7 +2392,6 @@ describe('PoolCollection', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
             await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-            // TODO: await poolCollection.setInitialRate(reserveToken.address, INITIAL_RATE);
 
             await network.depositToPoolCollectionForT(
                 poolCollection.address,

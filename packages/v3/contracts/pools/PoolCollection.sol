@@ -563,8 +563,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = data.liquidity.stakedBalance;
-        uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
-        uint256 poolTokenAmount = _underlyingToPoolToken(poolTokenTotalSupply, tokenAmount, currentStakedBalance);
+        uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
+        uint256 poolTokenAmount = _underlyingToPoolToken(prevPoolTokenTotalSupply, tokenAmount, currentStakedBalance);
 
         // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
         uint256 newStakedBalance = currentStakedBalance + tokenAmount;
@@ -598,7 +598,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             poolTokenAmount: poolTokenAmount
         });
 
-        _dispatchTradingLiquidityEvents(contextId, pool, poolTokenTotalSupply, prevLiquidity, data.liquidity);
+        _dispatchTradingLiquidityEvents(
+            contextId,
+            pool,
+            prevPoolTokenTotalSupply + poolTokenAmount,
+            prevLiquidity,
+            data.liquidity
+        );
     }
 
     /**
