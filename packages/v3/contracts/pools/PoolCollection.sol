@@ -173,7 +173,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     event TradingEnabled(ReserveToken indexed pool, bool indexed newStatus, uint8 indexed reason);
 
     /**
-     * @dev triggered when depositing to a specific pool is enabled/disabled
+     * @dev triggered when depositing into a specific pool is enabled/disabled
      */
     event DepositingEnabled(ReserveToken indexed pool, bool indexed newStatus);
 
@@ -516,7 +516,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev enables/disables depositing to a given pool
+     * @dev enables/disables depositing into a given pool
      *
      * requirements:
      *
