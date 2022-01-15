@@ -20,17 +20,21 @@ describe('StakingRewardsMath', () => {
     describe('flat rewards', () => {
         const calcFlatReward = (totalRewards: BigNumberish, timeElapsed: number, programDuration: number) => {
             it(`calcFlatRewards(${totalRewards}, ${timeElapsed}, ${programDuration})`, async () => {
-                const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
-                const expected = BigNumber.from(totalRewards)
-                    .mul(Math.min(timeElapsed, programDuration))
-                    .div(programDuration);
-                expect(actual).to.equal(expected);
+                if (timeElapsed <= programDuration) {
+                    const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
+                    const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
+                    expect(actual).to.equal(expected);
+                } else {
+                    await expect(
+                        stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)
+                    ).to.be.revertedWith('panic code 0x1 (Assertion error)');
+                }
             });
         };
 
         describe('regular tests', () => {
-            for (const totalRewards of [1000, 10_000, 100_000, toWei(1000), toWei(10_000), toWei(100_000)]) {
-                for (const timeElapsed of [duration.seconds(1000), duration.days(1), duration.weeks(4)]) {
+            for (const totalRewards of [1_000, 10_000, 100_000, toWei(1_000), toWei(10_000), toWei(100_000)]) {
+                for (const timeElapsed of [duration.hours(1), duration.days(1), duration.weeks(4)]) {
                     for (const programDuration of [duration.hours(12), duration.days(3), duration.weeks(12)]) {
                         calcFlatReward(totalRewards, timeElapsed, programDuration);
                     }

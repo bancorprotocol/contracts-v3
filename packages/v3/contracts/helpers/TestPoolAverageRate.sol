@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
-pragma abicoder v2;
 
 import { Fraction } from "../utility/Types.sol";
 import { PoolAverageRate, AverageRate } from "../pools/PoolAverageRate.sol";
