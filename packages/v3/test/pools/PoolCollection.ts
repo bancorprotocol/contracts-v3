@@ -2062,7 +2062,7 @@ describe('PoolCollection', () => {
 
                         it('should disable trading when withdrawing', async () => {
                             const { liquidity: prevLiquidity } = await poolCollection.poolData(reserveToken.address);
-                            const funding = await masterPool.currentPoolFunding(reserveToken.address);
+                            const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
                             const poolToken = await Contracts.PoolToken.attach(
                                 await poolCollection.poolToken(reserveToken.address)
                             );
@@ -2075,6 +2075,11 @@ describe('PoolCollection', () => {
 
                             await poolToken.connect(deployer).transfer(network.address, poolTokenAmount);
                             await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
+
+                            const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
+                                reserveToken.address,
+                                poolTokenAmount
+                            );
 
                             const res = await network.withdrawFromPoolCollectionT(
                                 poolCollection.address,
@@ -2091,7 +2096,11 @@ describe('PoolCollection', () => {
                                 true,
                                 res,
                                 newStakedBalance,
-                                funding.sub(prevLiquidity.networkTokenTradingLiquidity),
+                                prevFunding.sub(
+                                    withdrawalAmounts.newNetworkTokenTradingLiquidity.add(
+                                        withdrawalAmounts.networkTokensProtocolHoldingsDelta.value
+                                    )
+                                ),
                                 TradingStatusUpdateReason.MinLiquidity
                             );
                         });
@@ -2125,7 +2134,7 @@ describe('PoolCollection', () => {
                                 const { liquidity: prevLiquidity } = await poolCollection.poolData(
                                     reserveToken.address
                                 );
-                                const funding = await masterPool.currentPoolFunding(reserveToken.address);
+                                const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
 
                                 const amount = 1;
                                 const res = await network.depositToPoolCollectionForT(
@@ -2143,7 +2152,7 @@ describe('PoolCollection', () => {
                                     true,
                                     res,
                                     prevLiquidity.stakedBalance.add(amount),
-                                    funding.sub(prevLiquidity.networkTokenTradingLiquidity),
+                                    prevFunding.sub(prevLiquidity.networkTokenTradingLiquidity),
                                     TradingStatusUpdateReason.MinLiquidity
                                 );
                             });

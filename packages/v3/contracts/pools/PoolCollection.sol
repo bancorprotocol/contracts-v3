@@ -923,7 +923,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
                 contextId,
                 pool,
                 data,
-                prevLiquidity.networkTokenTradingLiquidity,
+                amounts.newNetworkTokenTradingLiquidity,
                 TRADING_STATUS_UPDATE_MIN_LIQUIDITY
             );
         }
