@@ -1252,12 +1252,6 @@ describe('PoolCollection', () => {
                     });
 
                     context('when below the deposit limit', () => {
-                        context('when the average rate was not initialized', () => {
-                            it('should deposit and reset the trading liquidity', async () => {
-                                await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
-                            });
-                        });
-
                         context('when the average rate was initialized', () => {
                             const SPOT_RATE = {
                                 n: toWei(1_000_000),
@@ -1792,12 +1786,12 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('InvalidAddress');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
                                 poolCollection.tradeAmountAndFee(ZERO_ADDRESS, targetToken.address, 1, targetAmount)
-                            ).to.be.revertedWith('InvalidAddress');
+                            ).to.be.revertedWith('DoesNotExist');
                         }
                     });
 
@@ -1811,12 +1805,12 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('InvalidAddress');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
                                 poolCollection.tradeAmountAndFee(sourceToken.address, ZERO_ADDRESS, 1, targetAmount)
-                            ).to.be.revertedWith('InvalidAddress');
+                            ).to.be.revertedWith('DoesNotExist');
                         }
                     });
 
@@ -1884,7 +1878,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('InvalidPoo');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1894,7 +1888,7 @@ describe('PoolCollection', () => {
                                     1,
                                     targetAmount
                                 )
-                            ).to.be.revertedWith('InvalidPoo');
+                            ).to.be.revertedWith('DoesNotExist');
                         }
                     });
 
@@ -1908,7 +1902,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('InvalidPoo');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1918,7 +1912,7 @@ describe('PoolCollection', () => {
                                     1,
                                     targetAmount
                                 )
-                            ).to.be.revertedWith('InvalidPoo');
+                            ).to.be.revertedWith('DoesNotExist');
                         }
                     });
 

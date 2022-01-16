@@ -23,7 +23,6 @@ import {
     Utils,
     AlreadyExists,
     DoesNotExist,
-    InvalidPool,
     InvalidPoolCollection,
     InvalidStakedBalance
 } from "../utility/Utils.sol";
@@ -1227,7 +1226,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             params.pool = sourceToken;
         } else {
             // the network token isn't one of the pools or is both of them
-            revert InvalidPool();
+            revert DoesNotExist();
         }
 
         Pool memory data = _poolData[params.pool];
