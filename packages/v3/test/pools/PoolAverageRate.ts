@@ -609,7 +609,7 @@ describe('PoolAverageRate', () => {
         for (const averageRate of [
             { rate: { n: 123, d: 11 }, time: 0 },
             { rate: { n: 0, d: 0 }, time: 1000 },
-            { rate: { n: 0, d: 1 }, time: 1000 },
+            { rate: { n: 500, d: 0 }, time: 1000 },
             { rate: { n: 1, d: 0 }, time: 1000 },
             { rate: { n: 0, d: 0 }, time: 0 }
         ]) {
