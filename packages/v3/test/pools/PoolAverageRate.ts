@@ -1,8 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
-import { PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
+import { PPM_RESOLUTION, MAX_UINT256, AVERAGE_RATE_PERIOD } from '../../utils/Constants';
 import { toString, toWei, toPPM, Fraction, AverageRate } from '../../utils/Types';
-import { duration } from '../helpers/Time';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -17,7 +16,6 @@ describe('PoolAverageRate', () => {
     });
 
     describe('calculate average rate', () => {
-        const AVERAGE_RATE_PERIOD = duration.minutes(10);
         const INITIAL_AVERAGE_RATE: AverageRate<BigNumber> = {
             rate: {
                 n: BigNumber.from(0),
@@ -339,7 +337,8 @@ describe('PoolAverageRate', () => {
                                             await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -351,7 +350,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -363,7 +363,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.add(1)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
                                     });
@@ -377,7 +378,8 @@ describe('PoolAverageRate', () => {
                                             await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -389,7 +391,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.mul(2)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -401,7 +404,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.mul(BigNumber.from(3))
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -413,7 +417,8 @@ describe('PoolAverageRate', () => {
                                                     d: toWei(10)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -424,7 +429,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
                                     });
@@ -437,7 +443,8 @@ describe('PoolAverageRate', () => {
                                                 await poolAverageRate.isPoolRateStable(
                                                     baseSpotRate,
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.true;
 
@@ -449,7 +456,8 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.true;
 
@@ -461,7 +469,8 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation + 1)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.false;
 
@@ -473,7 +482,8 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION - maxDeviation)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.true;
 
@@ -485,7 +495,8 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION - (maxDeviation + 1))
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.false;
                                         });
