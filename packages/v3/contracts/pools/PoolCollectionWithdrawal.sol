@@ -50,8 +50,8 @@ error PoolCollectionWithdrawalInputInvalid();
  * |           | q = 0                                                   | q = 0                                                    |
  * |           | r = 0                                                   | r = 0                                                    |
  * | Bootstrap | s = x*(1-n)*c/e                                         | s = x*(1-n)                                              |
- * |           | t = 0                                                   | t = 0                                                    |
- * |           | u = x*(1-n)*(1-c/e)                                     | u = 0                                                    |
+ * |           | t = see function `externalProtection`                   | t = 0                                                    |
+ * |           | u = see function `externalProtection`                   | u = 0                                                    |
  * |           | v = x*n                                                 | v = x*n                                                  |
  * +-----------+---------------------------------------------------------+----------------------------------------------------------+
  * Note that for the sake of illustration, both `m` and `n` are assumed normalized (between 0 and 1).
@@ -71,8 +71,7 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`
-     * when calculating the values of `p`, `q`, `r` and `s`, we split the input range as follows:
+     * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v` according to the current state:
      * +-------------------+-----------------------------------------------------------+
      * | `e > (b+c)/(1-n)` | bootstrap deficit or default deficit or arbitrage deficit |
      * +-------------------+-----------------------------------------------------------+
@@ -80,9 +79,6 @@ library PoolCollectionWithdrawal {
      * +-------------------+-----------------------------------------------------------+
      * | otherwise         | bootstrap surplus or default surplus                      |
      * +-------------------+-----------------------------------------------------------+
-     * in default deficit, we also calculate the values of `t` and `u`
-     * in bootstrap deficit, we also calculate the value of `u`
-     * in all cases, we calculate the value of `v` as `x*n`
      */
     function calculateWithdrawalAmounts(
         uint256 a, // <= 2**128-1
@@ -116,7 +112,7 @@ library PoolCollectionWithdrawal {
                 (output.t, output.u) = externalProtection(a, b, e, g, y, w);
             } else {
                 output.s = y * c / e;
-                output.u = y * g / e;
+                (output.t, output.u) = externalProtection(a, b, e, g, y, w);
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
@@ -273,14 +269,18 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns:
-     * +-------------------------------+---------------------------------------+-------------------------+
-     * | if `w == 0`                   | else if `a*x*(1-n)*(e-b-c)/e-w*a > 0` | else                    |
-     * +-------------------------------+---------------------------------------+-------------------------+
-     * | `t = a*x*(1-n)*(e-b-c)/(b*e)` | `t = a*x*(1-n)*(e-b-c)/(b*e)-w*a/b`   | `t = 0`                 |
-     * +-------------------------------+---------------------------------------+-------------------------+
-     * | `u = 0`                       | `u = w`                               | `u = x*(1-n)*(e-b-c)/e` |
-     * +-------------------------------+---------------------------------------+-------------------------+
+     * @dev returns `t` and `u` as follows:
+     * +-----------------------+-------+---------------------------+-------------------+
+     * | x*(1-n)*(e-b-c)/e > w | a > 0 | t                         | u                 |
+     * +-----------------------+-------+---------------------------+-------------------+
+     * | true                  | true  | a*(x*(1-n)*(e-b-c)/e-w)/b | w                 |
+     * +-----------------------+-------+---------------------------+-------------------+
+     * | true                  | false | 0                         | w                 |
+     * +-----------------------+-------+---------------------------+-------------------+
+     * | false                 | true  | 0                         | x*(1-n)*(e-b-c)/e |
+     * +-----------------------+-------+---------------------------+-------------------+
+     * | false                 | false | 0                         | x*(1-n)*(e-b-c)/e |
+     * +-----------------------+-------+---------------------------+-------------------+
      */
     function externalProtection(
         uint256 a, // <= 2**128-1
@@ -291,19 +291,14 @@ library PoolCollectionWithdrawal {
         uint256 w /// <= 2**128-1
     ) private pure returns (uint256 t, uint256 u) {
         // given the restrictions above, everything below can be declared `unchecked`
-        if (w > 0) {
-            uint256 tb = MathEx.mulDivF(a * y, g, e);
-            uint256 wa = w * a;
-            if (tb > wa) {
-                t = (tb - wa) / b;
-                u = w;
-            } else {
-                t = 0;
-                u = (y * g) / e;
-            }
+        uint256 yg = y * g;
+        uint256 we = w * e;
+        if (yg > we) {
+            t = a > 0 ? MathEx.mulDivF(a, yg - we, b * e) : 0;
+            u = w;
         } else {
-            t = MathEx.mulDivF(a * y, g, b * e);
-            u = 0;
+            t = 0;
+            u = yg / e;
         }
     }
 
