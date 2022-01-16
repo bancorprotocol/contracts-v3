@@ -12,7 +12,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, isFractionZero } from "../utility/Types.sol";
+import { Fraction, Sint256, zeroFraction, isFractionValid, isFractionZero } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -268,7 +268,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (isFractionZero(rate)) {
+        if (!_isRateValid(rate)) {
             revert InvalidRate();
         }
     }
@@ -1007,7 +1007,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = !isFractionZero(fundingRate);
+        bool isFundingRateValid = _isRateValid(fundingRate);
 
         // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
         // liquidity for trading
@@ -1328,5 +1328,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         ) {
             data.averageRate = newAverageRate;
         }
+    }
+
+    /**
+     * @dev returns whether a rate is valid
+     */
+    function _isRateValid(Fraction memory rate) private pure returns (bool) {
+        return isFractionValid(rate) && !isFractionZero(rate);
     }
 }
