@@ -111,7 +111,7 @@ library PoolCollectionWithdrawal {
                 output = defaultDeficit(a, b, c, e, y);
                 (output.t, output.u) = externalProtection(a, b, e, g, y, w);
             } else {
-                output.s = y * c / e;
+                output.s = (y * c) / e;
                 (output.t, output.u) = externalProtection(a, b, e, g, y, w);
             }
         } else {
