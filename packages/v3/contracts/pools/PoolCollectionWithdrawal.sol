@@ -269,7 +269,7 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns `t` and `u` as follows:
+     * @dev returns `t` and `u` according to the current state:
      * +-----------------------+-------+---------------------------+-------------------+
      * | x*(1-n)*(e-b-c)/e > w | a > 0 | t                         | u                 |
      * +-----------------------+-------+---------------------------+-------------------+
