@@ -167,6 +167,7 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the network contract
      */
     function trade(
+        bytes32 contextId,
         ReserveToken sourceToken,
         ReserveToken targetToken,
         uint256 sourceAmount,

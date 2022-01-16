@@ -87,11 +87,14 @@ library PoolAverageRate {
     function isPoolRateStable(
         Fraction memory spotRate,
         AverageRate memory averageRate,
-        uint32 maxDeviation
+        uint32 maxDeviation,
+        uint32 currentTime
     ) internal pure returns (bool) {
+        AverageRate memory updatedAverageRate = calcAverageRate(spotRate, averageRate, currentTime);
+
         // can revert only if one of the components below is larger than 128 bits
-        uint256 x = averageRate.rate.d * spotRate.n;
-        uint256 y = averageRate.rate.n * spotRate.d;
+        uint256 x = updatedAverageRate.rate.d * spotRate.n;
+        uint256 y = updatedAverageRate.rate.n * spotRate.d;
 
         uint256 lowerBound;
         uint256 upperBound;

@@ -511,7 +511,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function disableTrading(ReserveToken pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
 
-        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_ADMIN);
+        _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
     }
 
     /**
@@ -630,6 +630,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @inheritdoc IPoolCollection
      */
     function trade(
+        bytes32 contextId,
         ReserveToken sourceToken,
         ReserveToken targetToken,
         uint256 sourceAmount,
@@ -637,8 +638,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     )
         external
         only(address(_network))
-        validAddress(ReserveToken.unwrap(sourceToken))
-        validAddress(ReserveToken.unwrap(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
         returns (TradeAmountsWithLiquidity memory)
@@ -674,34 +673,33 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         );
 
         // sync the reserve balances
-        uint256 newNetworkTokenTradingLiquidity;
-        uint256 newBaseTokenTradingLiquidity;
-        uint256 stakedBalance = params.liquidity.stakedBalance;
+        PoolLiquidity memory newLiquidity;
         if (params.isSourceNetworkToken) {
-            newNetworkTokenTradingLiquidity = params.sourceBalance + sourceAmount;
-            newBaseTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
-
             // if the target token is a base token, make sure to add the fee to the staked balance
-            stakedBalance += tradeAmounts.feeAmount;
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                baseTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
+                stakedBalance: params.liquidity.stakedBalance + tradeAmounts.feeAmount
+            });
         } else {
-            newBaseTokenTradingLiquidity = params.sourceBalance + sourceAmount;
-            newNetworkTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
+                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                stakedBalance: params.liquidity.stakedBalance
+            });
         }
 
         // update the liquidity in the pool
-        PoolLiquidity memory liquidity = PoolLiquidity({
-            networkTokenTradingLiquidity: newNetworkTokenTradingLiquidity,
-            baseTokenTradingLiquidity: newBaseTokenTradingLiquidity,
-            stakedBalance: stakedBalance
-        });
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+        data.liquidity = newLiquidity;
 
-        data.liquidity = liquidity;
+        _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
 
         return
             TradeAmountsWithLiquidity({
                 amount: tradeAmounts.amount,
                 feeAmount: tradeAmounts.feeAmount,
-                liquidity: liquidity
+                liquidity: newLiquidity
             });
     }
 
@@ -713,14 +711,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         ReserveToken targetToken,
         uint256 amount,
         bool targetAmount
-    )
-        external
-        view
-        validAddress(ReserveToken.unwrap(sourceToken))
-        validAddress(ReserveToken.unwrap(targetToken))
-        greaterThanZero(amount)
-        returns (TradeAmounts memory)
-    {
+    ) external view greaterThanZero(amount) returns (TradeAmounts memory) {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         return
@@ -929,7 +920,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // if the new network token trading liquidity is below the minimum liquidity for trading - reset the liquidity
         if (amounts.newNetworkTokenTradingLiquidity < _networkSettings.minLiquidityForTrading()) {
-            _resetTradingLiquidity(contextId, pool, data, prevLiquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(
+                contextId,
+                pool,
+                data,
+                prevLiquidity.networkTokenTradingLiquidity,
+                TRADING_STATUS_UPDATE_MIN_LIQUIDITY
+            );
         }
 
         emit TokenWithdrawn({
@@ -1013,7 +1010,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // ensure that the base token reserve isn't empty
         uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
         if (tokenReserveAmount == 0) {
-            _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
@@ -1022,7 +1019,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // liquidity is 0)
         bool isFundingRateValid = !isFractionZero(fundingRate);
         if (liquidity.networkTokenTradingLiquidity == 0 && !isFundingRateValid) {
-            _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
@@ -1046,7 +1043,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         } else if (isAverageRateValid) {
             effectiveFundingRate = averageRate.rate;
         } else {
-            _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
@@ -1065,7 +1062,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the target is above the minimum liquidity for trading
         if (targetNetworkTokenTradingLiquidity < minLiquidityForTrading) {
-            _resetTradingLiquidity(contextId, pool, data, liquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
@@ -1127,7 +1124,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function _dispatchTradingLiquidityEvents(
         bytes32 contextId,
         ReserveToken pool,
-        uint256 poolTokenTotalSupply,
         PoolLiquidity memory prevLiquidity,
         PoolLiquidity memory newLiquidity
     ) private {
@@ -1148,6 +1144,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
                 liquidity: newLiquidity.baseTokenTradingLiquidity
             });
         }
+    }
+
+    function _dispatchTradingLiquidityEvents(
+        bytes32 contextId,
+        ReserveToken pool,
+        uint256 poolTokenTotalSupply,
+        PoolLiquidity memory prevLiquidity,
+        PoolLiquidity memory newLiquidity
+    ) private {
+        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, newLiquidity);
 
         if (newLiquidity.stakedBalance != prevLiquidity.stakedBalance) {
             emit TotalLiquidityUpdated({
@@ -1167,15 +1173,24 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         bytes32 contextId,
         ReserveToken pool,
         Pool storage data,
-        PoolLiquidity memory liquidity,
+        uint8 reason
+    ) private {
+        _resetTradingLiquidity(contextId, pool, data, data.liquidity.networkTokenTradingLiquidity, reason);
+    }
+
+    /**
+     * @dev resets trading liquidity and renounces any remaining network token funding
+     */
+    function _resetTradingLiquidity(
+        bytes32 contextId,
+        ReserveToken pool,
+        Pool storage data,
+        uint256 currentNetworkTokenTradingLiquidity,
         uint8 reason
     ) private {
         // reset the network and base token trading liquidities
-        data.liquidity = PoolLiquidity({
-            networkTokenTradingLiquidity: 0,
-            baseTokenTradingLiquidity: 0,
-            stakedBalance: liquidity.stakedBalance
-        });
+        data.liquidity.networkTokenTradingLiquidity = 0;
+        data.liquidity.baseTokenTradingLiquidity = 0;
 
         // reset the recent average rage
         data.averageRate = AverageRate({ time: 0, rate: zeroFraction() });
@@ -1188,8 +1203,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         }
 
         // renounce all network liquidity
-        if (liquidity.networkTokenTradingLiquidity > 0) {
-            _masterPool.renounceFunding(contextId, pool, liquidity.networkTokenTradingLiquidity);
+        if (currentNetworkTokenTradingLiquidity > 0) {
+            _masterPool.renounceFunding(contextId, pool, currentNetworkTokenTradingLiquidity);
         }
     }
 
@@ -1285,11 +1300,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         returns (bool)
     {
         // verify that the average rate of the pool isn't deviated too much from its spot rate
+        Fraction memory spotRate = Fraction({
+            n: liquidity.networkTokenTradingLiquidity,
+            d: liquidity.baseTokenTradingLiquidity
+        });
         return
             PoolAverageRate.isPoolRateStable(
-                Fraction({ n: liquidity.networkTokenTradingLiquidity, d: liquidity.baseTokenTradingLiquidity }),
+                spotRate,
                 averageRate,
-                _networkSettings.averageRateMaxDeviationPPM()
+                _networkSettings.averageRateMaxDeviationPPM(),
+                _time()
             );
     }
 

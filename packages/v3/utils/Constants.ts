@@ -1,3 +1,4 @@
+import { duration } from './Time';
 import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
@@ -59,4 +60,5 @@ export const ExponentialDecay = {
     MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
 };
 
+export const AVERAGE_RATE_PERIOD = duration.minutes(10);
 export const LIQUIDITY_GROWTH_FACTOR = 2;

@@ -1052,6 +1052,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             ? (masterPool, pool)
             : (pool, masterPool);
         TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
+            contextId,
             sourceToken,
             targetToken,
             sourceAmount,

@@ -1847,6 +1847,7 @@ describe('BancorNetwork', () => {
             if (isSourceNetworkToken || isTargetNetworkToken) {
                 tradeAmounts = await network.callStatic.tradePoolCollectionT(
                     poolCollection.address,
+                    CONTEXT_ID,
                     sourceToken.address,
                     targetToken.address,
                     amount,
@@ -1855,6 +1856,7 @@ describe('BancorNetwork', () => {
             } else {
                 sourceTradeAmounts = await network.callStatic.tradePoolCollectionT(
                     poolCollection.address,
+                    CONTEXT_ID,
                     sourceToken.address,
                     networkToken.address,
                     amount,
@@ -1863,6 +1865,7 @@ describe('BancorNetwork', () => {
 
                 tradeAmounts = await network.callStatic.tradePoolCollectionT(
                     poolCollection.address,
+                    CONTEXT_ID,
                     networkToken.address,
                     targetToken.address,
                     sourceTradeAmounts.amount,
