@@ -1006,18 +1006,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        // ensure that the base token reserve isn't empty
-        uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
-        if (tokenReserveAmount == 0) {
+        bool isFundingRateValid = !isFractionZero(fundingRate);
+
+        // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
+        // liquidity for trading
+        if (liquidity.networkTokenTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
 
-        // ensure that the funding rate is provided when we're bootstrapping a pool (i.e., when its network token
-        // liquidity is 0)
-        bool isFundingRateValid = !isFractionZero(fundingRate);
-        if (liquidity.networkTokenTradingLiquidity == 0 && !isFundingRateValid) {
+        // ensure that the base token reserve isn't empty
+        uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
+        if (tokenReserveAmount == 0) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;

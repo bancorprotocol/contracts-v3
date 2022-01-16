@@ -1099,7 +1099,7 @@ describe('PoolCollection', () => {
                                 prevTradingEnabled,
                                 res,
                                 prevLiquidity.stakedBalance.add(tokenAmount),
-                                0,
+                                prevFunding.sub(prevLiquidity.networkTokenTradingLiquidity),
                                 TradingStatusUpdateReason.MinLiquidity
                             );
 
@@ -1256,101 +1256,118 @@ describe('PoolCollection', () => {
                     });
 
                     context('when below the deposit limit', () => {
-                        context('when the average rate was initialized', () => {
+                        context(
+                            'when the network token liquidity for trading is below the minimum liquidity for trading',
+                            () => {
+                                beforeEach(async () => {
+                                    const { baseTokenTradingLiquidity, stakedBalance } =
+                                        await poolCollection.poolLiquidity(token.address);
+
+                                    await poolCollection.setTradingLiquidityT(token.address, {
+                                        networkTokenTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING.sub(1),
+                                        baseTokenTradingLiquidity,
+                                        stakedBalance
+                                    });
+                                });
+
+                                it('should deposit and reset the trading liquidity', async () => {
+                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                                });
+                            }
+                        );
+
+                        context('when the pool is unstable', () => {
                             const SPOT_RATE = {
                                 n: toWei(1_000_000),
                                 d: toWei(10_000_000)
                             };
 
-                            context('when the pool is unstable', () => {
-                                beforeEach(async () => {
-                                    const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
-                                    await poolCollection.setTradingLiquidityT(token.address, {
-                                        networkTokenTradingLiquidity: SPOT_RATE.n,
-                                        baseTokenTradingLiquidity: SPOT_RATE.d,
-                                        stakedBalance
-                                    });
+                            beforeEach(async () => {
+                                const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
 
-                                    await poolCollection.setAverageRateT(token.address, {
-                                        rate: {
-                                            n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                            d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
-                                        },
-                                        time: await poolCollection.currentTime()
-                                    });
+                                await poolCollection.setTradingLiquidityT(token.address, {
+                                    networkTokenTradingLiquidity: SPOT_RATE.n,
+                                    baseTokenTradingLiquidity: SPOT_RATE.d,
+                                    stakedBalance
                                 });
 
-                                it('should deposit liquidity and preserve the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Ignore);
+                                await poolCollection.setAverageRateT(token.address, {
+                                    rate: {
+                                        n: SPOT_RATE.n.mul(PPM_RESOLUTION),
+                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
+                                    },
+                                    time: await poolCollection.currentTime()
+                                });
+
+                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.false;
+                            });
+
+                            it('should deposit liquidity and preserve the trading liquidity', async () => {
+                                await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Ignore);
+                            });
+                        });
+
+                        context('when the pool is stable', () => {
+                            beforeEach(async () => {
+                                const { liquidity } = await poolCollection.poolData(token.address);
+
+                                await poolCollection.setAverageRateT(token.address, {
+                                    rate: {
+                                        n: liquidity.networkTokenTradingLiquidity,
+                                        d: liquidity.baseTokenTradingLiquidity
+                                    },
+                                    time: await poolCollection.currentTime()
+                                });
+
+                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
+                            });
+
+                            context('when the pool funding limit is below the minimum liquidity for trading', () => {
+                                beforeEach(async () => {
+                                    await networkSettings.setFundingLimit(
+                                        token.address,
+                                        MIN_LIQUIDITY_FOR_TRADING.sub(1)
+                                    );
+                                });
+
+                                it('should deposit and reset the trading liquidity', async () => {
+                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
                                 });
                             });
 
-                            context('when the pool is stable', () => {
-                                beforeEach(async () => {
-                                    const { liquidity } = await poolCollection.poolData(token.address);
-
-                                    await poolCollection.setAverageRateT(token.address, {
-                                        rate: {
-                                            n: liquidity.networkTokenTradingLiquidity,
-                                            d: liquidity.baseTokenTradingLiquidity
-                                        },
-                                        time: await poolCollection.currentTime()
+                            context(
+                                'when the matched target network liquidity is below the minimum liquidity for trading',
+                                () => {
+                                    beforeEach(async () => {
+                                        await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
                                     });
-                                });
 
-                                it('should deposit and update the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
-                                });
+                                    it('should deposit and reset the trading liquidity', async () => {
+                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                                    });
+                                }
+                            );
 
-                                context(
-                                    'when the pool funding limit is below the minimum liquidity for trading',
-                                    () => {
-                                        beforeEach(async () => {
-                                            await networkSettings.setFundingLimit(
-                                                token.address,
-                                                MIN_LIQUIDITY_FOR_TRADING.sub(1)
-                                            );
-                                        });
+                            context(
+                                'when the matched target network liquidity is below the current network liquidity',
+                                () => {
+                                    beforeEach(async () => {
+                                        // ensure that the pool grew a bit and then retroactive reduce the funding
+                                        // limit to 0 to force the shrinking of the pool
+                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
 
-                                        it('should deposit and reset the trading liquidity', async () => {
-                                            await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
-                                        });
-                                    }
-                                );
+                                        await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING);
+                                    });
 
-                                context(
-                                    'when the matched target network liquidity is below the minimum liquidity for trading',
-                                    () => {
-                                        beforeEach(async () => {
-                                            await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
-                                        });
-
-                                        it('should deposit and reset the trading liquidity', async () => {
-                                            await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
-                                        });
-                                    }
-                                );
-
-                                context(
-                                    'when the matched target network liquidity is below the current network liquidity',
-                                    () => {
-                                        beforeEach(async () => {
-                                            // ensure that the pool grew a bit and then retroactive reduce the funding
-                                            // limit to 0 to force the shrinking of the pool
-                                            await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
-
-                                            await networkSettings.setFundingLimit(
-                                                token.address,
-                                                MIN_LIQUIDITY_FOR_TRADING
-                                            );
-                                        });
-
-                                        it('should deposit and update the trading liquidity', async () => {
-                                            await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
-                                        });
-                                    }
-                                );
-                            });
+                                    it('should deposit and update the trading liquidity', async () => {
+                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
+                                    });
+                                }
+                            );
                         });
                     });
                 });
@@ -2105,57 +2122,29 @@ describe('PoolCollection', () => {
                             );
                         });
 
-                        context('with sufficient funding', () => {
-                            it('should not disable trading when depositing', async () => {
-                                const { tradingEnabled: prevTradingEnabled } = await poolCollection.poolData(
-                                    reserveToken.address
-                                );
-                                expect(prevTradingEnabled).to.be.true;
+                        it('should disable trading when depositing', async () => {
+                            const { liquidity: prevLiquidity } = await poolCollection.poolData(reserveToken.address);
+                            const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
 
-                                await network.depositToPoolCollectionForT(
-                                    poolCollection.address,
-                                    CONTEXT_ID,
-                                    deployer.address,
-                                    reserveToken.address,
-                                    1
-                                );
+                            const amount = 1;
+                            const res = await network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                CONTEXT_ID,
+                                deployer.address,
+                                reserveToken.address,
+                                amount
+                            );
 
-                                const { tradingEnabled } = await poolCollection.poolData(reserveToken.address);
-                                expect(tradingEnabled).to.be.true;
-                            });
-                        });
-
-                        context('with insufficient funding', () => {
-                            beforeEach(async () => {
-                                await networkSettings.setFundingLimit(reserveToken.address, 0);
-                            });
-
-                            it('should disable trading when depositing', async () => {
-                                const { liquidity: prevLiquidity } = await poolCollection.poolData(
-                                    reserveToken.address
-                                );
-                                const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
-
-                                const amount = 1;
-                                const res = await network.depositToPoolCollectionForT(
-                                    poolCollection.address,
-                                    CONTEXT_ID,
-                                    deployer.address,
-                                    reserveToken.address,
-                                    amount
-                                );
-
-                                await testLiquidityReset(
-                                    reserveToken,
-                                    poolCollection,
-                                    masterPool,
-                                    true,
-                                    res,
-                                    prevLiquidity.stakedBalance.add(amount),
-                                    prevFunding.sub(prevLiquidity.networkTokenTradingLiquidity),
-                                    TradingStatusUpdateReason.MinLiquidity
-                                );
-                            });
+                            await testLiquidityReset(
+                                reserveToken,
+                                poolCollection,
+                                masterPool,
+                                true,
+                                res,
+                                prevLiquidity.stakedBalance.add(amount),
+                                prevFunding.sub(prevLiquidity.networkTokenTradingLiquidity),
+                                TradingStatusUpdateReason.MinLiquidity
+                            );
                         });
                     });
 
