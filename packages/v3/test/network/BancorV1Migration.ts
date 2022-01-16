@@ -230,7 +230,7 @@ describe('BancorV1Migration', () => {
                             // ensure that enough funding has been requested before a migration
                             await deposit(DEPOSIT_AMOUNT, isNativeToken);
 
-                            await poolCollection.activate(baseToken.address, FUNDING_RATE);
+                            await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
 
                             for (let i = 0; i < 5; i++) {
                                 await deposit(DEPOSIT_AMOUNT, isNativeToken);

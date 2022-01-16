@@ -990,7 +990,7 @@ describe('BancorNetwork', () => {
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
-                    // ensure that the pool is activated with sufficient funding
+                    // ensure that the trading is enabled with sufficient funding
                     if (tokenData.isNativeToken()) {
                         await network.deposit(token.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                     } else {
@@ -1000,7 +1000,7 @@ describe('BancorNetwork', () => {
                         await network.deposit(token.address, INITIAL_LIQUIDITY);
                     }
 
-                    await poolCollection.activate(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
                 }
 
                 await setTime(await latest());
@@ -1548,7 +1548,7 @@ describe('BancorNetwork', () => {
                 }
 
                 if (!tokenData.isNetworkToken()) {
-                    await poolCollection.activate(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
                 }
             });
 
@@ -2746,7 +2746,7 @@ describe('BancorNetwork', () => {
                 await createPool(baseToken, network, networkSettings, poolCollection);
                 await networkSettings.setFundingLimit(baseToken.address, FUNDING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
-                await poolCollection.activate(baseToken.address, FUNDING_RATE);
+                await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
 
                 await networkToken.approve(converter.address, reserve2Amount);
 
@@ -3420,7 +3420,7 @@ describe('BancorNetwork Financial Verification', () => {
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
-        await poolCollection.activate(baseToken.address, { n: flow.bntInitialRate, d: flow.tknInitialRate });
+        await poolCollection.enableTrading(baseToken.address, { n: flow.bntInitialRate, d: flow.tknInitialRate });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 

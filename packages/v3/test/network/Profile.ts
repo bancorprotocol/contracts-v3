@@ -86,7 +86,7 @@ describe('Profile @profile', () => {
                     await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                     await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
-                    await poolCollection.activate(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
                 }
 
                 await setTime(await latest());
@@ -430,7 +430,7 @@ describe('Profile @profile', () => {
                         await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
 
                         await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-                        await poolCollection.activate(token.address, FUNDING_RATE);
+                        await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     }
 
                     await depositToPool(provider, token, amount, network);

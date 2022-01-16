@@ -471,13 +471,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev activates trading in a given pool and updates its trading liquidity
+     * @dev enabled trading in a given pool and updates its trading liquidity
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function activate(ReserveToken pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
+    function enableTrading(ReserveToken pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
         Pool storage data = _poolStorage(pool);
 
         if (data.tradingEnabled) {
@@ -807,7 +807,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // TODO:
         // 1. this function doesn't seem to work when baseTokenTradingLiquidity is 0, which can happen when depositing
         //    to a new/inactive pool
-        // 2. for some reason, withdrawing after the pool has been activated, only affects the staked balance and doesn't
+        // 2. for some reason, withdrawing after the trading has been disabled, only affects the staked balance and doesn't
         //    affect the networkTokenTradingLiquidity or baseTokenTradingLiquidity
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(

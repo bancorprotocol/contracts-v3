@@ -616,7 +616,7 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('activation', () => {
+    describe('enable trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let networkToken: IERC20;
@@ -639,12 +639,12 @@ describe('PoolCollection', () => {
         });
 
         const testActivation = async (tokenData: TokenData) => {
-            const testActivate = async (totalLiquidity: BigNumber) => {
+            const testEnableTrading = async (totalLiquidity: BigNumber) => {
                 expect(await masterPool.currentPoolFunding(token.address)).to.equal(0);
 
                 const { liquidity: prevLiquidity } = await poolCollection.poolData(token.address);
 
-                const res = await poolCollection.activate(token.address, FUNDING_RATE);
+                const res = await poolCollection.enableTrading(token.address, FUNDING_RATE);
 
                 const data = await poolCollection.poolData(token.address);
                 const { liquidity } = data;
@@ -695,30 +695,34 @@ describe('PoolCollection', () => {
                 await poolCollection.setDepositLimit(token.address, MAX_UINT256);
             });
 
-            it('should revert when a non-owner attempts to activate', async () => {
-                await expect(poolCollection.connect(nonOwner).activate(token.address, FUNDING_RATE)).to.be.revertedWith(
-                    'AccessDenied'
-                );
+            it('should revert when a non-owner attempts to enable trading', async () => {
+                await expect(
+                    poolCollection.connect(nonOwner).enableTrading(token.address, FUNDING_RATE)
+                ).to.be.revertedWith('AccessDenied');
             });
 
-            it('should revert when activating an invalid pool', async () => {
-                await expect(poolCollection.activate(ZERO_ADDRESS, FUNDING_RATE)).to.be.revertedWith('DoesNotExist');
-            });
-
-            it('should revert when activating a non-existing pool', async () => {
-                const newReserveToken = await createTestToken();
-                await expect(poolCollection.activate(newReserveToken.address, FUNDING_RATE)).to.be.revertedWith(
+            it('should revert when enabling trading an invalid pool', async () => {
+                await expect(poolCollection.enableTrading(ZERO_ADDRESS, FUNDING_RATE)).to.be.revertedWith(
                     'DoesNotExist'
                 );
             });
 
-            it('should revert when activating with an invalid funding rate', async () => {
-                await expect(poolCollection.activate(token.address, ZERO_FRACTION)).to.be.revertedWith('InvalidRate');
+            it('should revert when enabling trading a non-existing pool', async () => {
+                const newReserveToken = await createTestToken();
+                await expect(poolCollection.enableTrading(newReserveToken.address, FUNDING_RATE)).to.be.revertedWith(
+                    'DoesNotExist'
+                );
+            });
+
+            it('should revert when enabling trading with an invalid funding rate', async () => {
+                await expect(poolCollection.enableTrading(token.address, ZERO_FRACTION)).to.be.revertedWith(
+                    'InvalidRate'
+                );
             });
 
             context('when no base token liquidity was deposited', () => {
                 it('should revert', async () => {
-                    await expect(poolCollection.activate(token.address, FUNDING_RATE)).to.be.revertedWith(
+                    await expect(poolCollection.enableTrading(token.address, FUNDING_RATE)).to.be.revertedWith(
                         'InsufficientLiquidity'
                     );
                 });
@@ -731,13 +735,13 @@ describe('PoolCollection', () => {
                     await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
                 });
 
-                it('should activate', async () => {
-                    await testActivate(INITIAL_LIQUIDITY);
+                it('should enable trading', async () => {
+                    await testEnableTrading(INITIAL_LIQUIDITY);
                 });
 
-                it('should revert when attempting to activate a pool twice', async () => {
-                    await poolCollection.activate(token.address, FUNDING_RATE);
-                    await expect(poolCollection.activate(token.address, FUNDING_RATE)).to.be.revertedWith(
+                it('should revert when attempting to enable trading twice', async () => {
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
+                    await expect(poolCollection.enableTrading(token.address, FUNDING_RATE)).to.be.revertedWith(
                         'TradingIsEnabled'
                     );
                 });
@@ -748,7 +752,7 @@ describe('PoolCollection', () => {
                     });
 
                     it('should revert', async () => {
-                        await expect(poolCollection.activate(token.address, FUNDING_RATE)).to.be.revertedWith(
+                        await expect(poolCollection.enableTrading(token.address, FUNDING_RATE)).to.be.revertedWith(
                             'InsufficientLiquidity'
                         );
                     });
@@ -758,7 +762,7 @@ describe('PoolCollection', () => {
                     it('should revert', async () => {
                         // use a funding rate such that the resulting matched target network liquidity is insufficient
                         await expect(
-                            poolCollection.activate(token.address, {
+                            poolCollection.enableTrading(token.address, {
                                 n: MIN_LIQUIDITY_FOR_TRADING.sub(1),
                                 d: INITIAL_LIQUIDITY
                             })
@@ -778,8 +782,8 @@ describe('PoolCollection', () => {
                     }
                 });
 
-                it('should activate', async () => {
-                    await testActivate(TOTAL_INITIAL_LIQUIDITY);
+                it('should enable trading', async () => {
+                    await testEnableTrading(TOTAL_INITIAL_LIQUIDITY);
                 });
             });
         };
@@ -857,7 +861,7 @@ describe('PoolCollection', () => {
                 await expect(poolCollection.disableTrading(newReserveToken.address)).to.be.revertedWith('DoesNotExist');
             });
 
-            context('when not activated', () => {
+            context('when trading is disabled', () => {
                 beforeEach(async () => {
                     const data = await poolCollection.poolData(token.address);
                     const { liquidity } = data;
@@ -873,13 +877,13 @@ describe('PoolCollection', () => {
                 });
             });
 
-            context('when active', () => {
+            context('when trading is enabled', () => {
                 const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(10_000);
 
                 beforeEach(async () => {
                     await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                    await poolCollection.activate(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
 
                     const { tradingEnabled } = await poolCollection.poolData(token.address);
                     expect(tradingEnabled).to.be.true;
@@ -1181,7 +1185,7 @@ describe('PoolCollection', () => {
                     }
                 };
 
-                context('when inactive', () => {
+                context('when trading is disabled', () => {
                     context('when at the deposit limit', () => {
                         beforeEach(async () => {
                             await network.depositToPoolCollectionForT(
@@ -1213,7 +1217,7 @@ describe('PoolCollection', () => {
                     });
                 });
 
-                context('when active', () => {
+                context('when trading is enabled', () => {
                     const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d)
                         .div(FUNDING_RATE.n)
                         .mul(1000);
@@ -1221,7 +1225,7 @@ describe('PoolCollection', () => {
                     beforeEach(async () => {
                         await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                        await poolCollection.activate(token.address, FUNDING_RATE);
+                        await poolCollection.enableTrading(token.address, FUNDING_RATE);
 
                         const { tradingEnabled } = await poolCollection.poolData(token.address);
                         expect(tradingEnabled).to.be.true;
@@ -1583,7 +1587,7 @@ describe('PoolCollection', () => {
 
                 // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
                 // from an inactive pool to work
-                context.skip('when inactive', () => {
+                context.skip('when trading is disabled', () => {
                     it('should withdraw', async () => {
                         await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
                     });
@@ -1606,9 +1610,9 @@ describe('PoolCollection', () => {
                     );
                 });
 
-                context('when active', () => {
+                context('when trading is enabled', () => {
                     beforeEach(async () => {
-                        await poolCollection.activate(token.address, FUNDING_RATE);
+                        await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     });
 
                     it('should withdraw', async () => {
@@ -1763,7 +1767,7 @@ describe('PoolCollection', () => {
                     beforeEach(async () => {
                         await depositToPool(deployer, reserveToken, INITIAL_LIQUIDITY, network);
 
-                        await poolCollection.activate(reserveToken.address, FUNDING_RATE);
+                        await poolCollection.enableTrading(reserveToken.address, FUNDING_RATE);
                     });
 
                     it('should revert when attempting to trade from a non-network', async () => {
