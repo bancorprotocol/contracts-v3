@@ -1587,7 +1587,7 @@ describe('PoolCollection', () => {
 
                 // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
                 // from an inactive pool to work
-                context.skip('when trading is disabled', () => {
+                context('when trading is disabled', () => {
                     it('should withdraw', async () => {
                         await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
                     });
@@ -1626,7 +1626,7 @@ describe('PoolCollection', () => {
                                 await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
                             });
 
-                            it.skip('should withdraw and reset the trading liquidity', async () => {
+                            it('should withdraw and reset the trading liquidity', async () => {
                                 await testMultipleWithdrawals(
                                     totalBasePoolTokenAmount,
                                     COUNT,
@@ -1638,7 +1638,7 @@ describe('PoolCollection', () => {
 
                     // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
                     // from an inactive pool to work
-                    context.skip('after disabling trading', () => {
+                    context('after disabling trading', () => {
                         beforeEach(async () => {
                             await poolCollection.disableTrading(token.address);
                         });

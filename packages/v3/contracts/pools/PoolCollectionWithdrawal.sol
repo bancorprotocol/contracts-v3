@@ -46,6 +46,14 @@ error PoolCollectionWithdrawalInputInvalid();
  * |           | u = see function `externalProtection`                   | u = 0                                                    |
  * |           | v = x*n                                                 | v = x*n                                                  |
  * +-----------+---------------------------------------------------------+----------------------------------------------------------+
+ * |           | p = 0                                                   | p = 0                                                    |
+ * |           | q = 0                                                   | q = 0                                                    |
+ * |           | r = 0                                                   | r = 0                                                    |
+ * | Bootstrap | s = x*(1-n)*c/e                                         | s = x*(1-n)                                              |
+ * |           | t = 0                                                   | t = 0                                                    |
+ * |           | u = x*(1-n)*(1-c/e)                                     | u = 0                                                    |
+ * |           | v = x*n                                                 | v = x*n                                                  |
+ * +-----------+---------------------------------------------------------+----------------------------------------------------------+
  * Note that for the sake of illustration, both `m` and `n` are assumed normalized (between 0 and 1).
  * During runtime, it is taken into account that they are given in PPM units (between 0 and 1000000).
  */
@@ -65,15 +73,16 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `p`, `q`, `r`, `s`, `t`, `u` and `v`
      * when calculating the values of `p`, `q`, `r` and `s`, we split the input range as follows:
-     * +-------------------+--------------------------------------+
-     * | `e > (b+c)/(1-n)` | default deficit or arbitrage deficit |
-     * +-------------------+--------------------------------------+
-     * | `e < (b+c)`       | default surplus or arbitrage surplus |
-     * +-------------------+--------------------------------------+
-     * | otherwise         | default surplus                      |
-     * +-------------------+--------------------------------------+
-     * in default deficit, we also calculate the values of `t` and `u` (which are otherwise zero)
-     * the value of `v` is calculated as `x*n` in all cases
+     * +-------------------+-----------------------------------------------------------+
+     * | `e > (b+c)/(1-n)` | bootstrap deficit or default deficit or arbitrage deficit |
+     * +-------------------+-----------------------------------------------------------+
+     * | `e < (b+c)`       | bootstrap surplus or default surplus or arbitrage surplus |
+     * +-------------------+-----------------------------------------------------------+
+     * | otherwise         | bootstrap surplus or default surplus                      |
+     * +-------------------+-----------------------------------------------------------+
+     * in default deficit, we also calculate the values of `t` and `u`
+     * in bootstrap deficit, we also calculate the value of `u`
+     * in all cases, we calculate the value of `v` as `x*n`
      */
     function calculateWithdrawalAmounts(
         uint256 a, // <= 2**128-1
@@ -102,16 +111,21 @@ library PoolCollectionWithdrawal {
             uint256 g = e - (b + c);
             if (isStable(b, c, e, x) && affordableDeficit(b, e, f, g, m, n, x)) {
                 output = arbitrageDeficit(a, b, e, f, m, x, y);
-            } else {
+            } else if (a > 0) {
                 output = defaultDeficit(a, b, c, e, y);
                 (output.t, output.u) = externalProtection(a, b, e, g, y, w);
+            } else {
+                output.s = y * c / e;
+                output.u = y * g / e;
             }
         } else {
             uint256 f = MathEx.subMax0(b + c, e);
             if (f > 0 && isStable(b, c, e, x) && affordableSurplus(b, e, f, m, n, x)) {
                 output = arbitrageSurplus(a, b, e, f, m, n, x, y);
-            } else {
+            } else if (a > 0) {
                 output = defaultSurplus(a, b, c, y);
+            } else {
+                output.s = y;
             }
         }
 
