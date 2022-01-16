@@ -25,7 +25,8 @@ import {
     ZERO_BYTES32,
     TradingStatusUpdateReason,
     AVERAGE_RATE_PERIOD,
-    LIQUIDITY_GROWTH_FACTOR
+    LIQUIDITY_GROWTH_FACTOR,
+    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -654,7 +655,9 @@ describe('PoolCollection', () => {
 
                 expect(data.tradingEnabled).to.be.true;
 
-                expect(liquidity.networkTokenTradingLiquidity).to.equal(MIN_LIQUIDITY_FOR_TRADING);
+                expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                    MIN_LIQUIDITY_FOR_TRADING.mul(BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR)
+                );
                 expect(liquidity.baseTokenTradingLiquidity).to.equal(
                     liquidity.networkTokenTradingLiquidity.mul(FUNDING_RATE.d).div(FUNDING_RATE.n)
                 );

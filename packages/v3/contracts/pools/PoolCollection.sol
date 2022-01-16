@@ -87,6 +87,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
+    uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
 
     // represents `(n1 - n2) / (d1 - d2)`
@@ -1069,8 +1070,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // calculate the new network token trading liquidity and cap it by the growth factor
         if (liquidity.networkTokenTradingLiquidity == 0) {
-            // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading
-            targetNetworkTokenTradingLiquidity = minLiquidityForTrading;
+            // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading (with an
+            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+            targetNetworkTokenTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
         } else if (targetNetworkTokenTradingLiquidity >= liquidity.networkTokenTradingLiquidity) {
             // if the target is above the current trading liquidity, limit it by factoring the current value up
             targetNetworkTokenTradingLiquidity = Math.min(
