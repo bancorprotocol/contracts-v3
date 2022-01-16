@@ -732,7 +732,7 @@ describe('PoolCollection', () => {
             });
 
             context('with a base token liquidity deposit', () => {
-                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n);
+                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(1000);
 
                 beforeEach(async () => {
                     await depositToPool(provider, token, INITIAL_LIQUIDITY, network);

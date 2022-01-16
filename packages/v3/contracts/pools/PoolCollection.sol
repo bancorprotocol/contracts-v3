@@ -1072,7 +1072,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         if (liquidity.networkTokenTradingLiquidity == 0) {
             // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading (with an
             // additional buffer so that initial trades will be less likely to trigger disabling of trading)
-            targetNetworkTokenTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+            uint256 newTargetNetworkTokenTradingLiquidity = minLiquidityForTrading *
+                BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+            // ensure that we're not allocating more than the previously established limits
+            if (newTargetNetworkTokenTradingLiquidity > targetNetworkTokenTradingLiquidity) {
+                return;
+            }
+
+            targetNetworkTokenTradingLiquidity = newTargetNetworkTokenTradingLiquidity;
         } else if (targetNetworkTokenTradingLiquidity >= liquidity.networkTokenTradingLiquidity) {
             // if the target is above the current trading liquidity, limit it by factoring the current value up
             targetNetworkTokenTradingLiquidity = Math.min(
