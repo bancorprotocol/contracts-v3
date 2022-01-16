@@ -49,13 +49,13 @@ describe('PoolCollectionWithdrawal', () => {
 
             for (const { a, b, c, e, w, m, n, x, p, q, r, s, t, u, v } of table) {
                 it(`${fileName}(${[a, b, c, e, w, m, n, x]})`, async () => {
-                    const actual = await poolCollectionWithdrawal.formulaT(a, b, c, e, w, m, n, x);
-                    const actualP = actual.p.value.mul(actual.p.isNeg ? -1 : 1);
-                    const actualQ = actual.q.value.mul(actual.q.isNeg ? -1 : 1);
-                    const actualR = actual.r.value.mul(actual.r.isNeg ? -1 : 1);
-                    expect(actualP).to.almostEqual(new Decimal(p), maxErrors.p);
-                    expect(actualQ).to.almostEqual(new Decimal(q), maxErrors.q);
-                    expect(actualR).to.almostEqual(new Decimal(r), maxErrors.r);
+                    const actual = await poolCollectionWithdrawal.calculateWithdrawalAmountsT(a, b, c, e, w, m, n, x);
+                    const actualZp = actual.p.value.mul(actual.p.isNeg ? -1 : 1);
+                    const actualZq = actual.q.value.mul(actual.q.isNeg ? -1 : 1);
+                    const actualZr = actual.r.value.mul(actual.r.isNeg ? -1 : 1);
+                    expect(actualZp).to.almostEqual(new Decimal(p), maxErrors.p);
+                    expect(actualZq).to.almostEqual(new Decimal(q), maxErrors.q);
+                    expect(actualZr).to.almostEqual(new Decimal(r), maxErrors.r);
                     expect(actual.s).to.almostEqual(new Decimal(s), maxErrors.s);
                     expect(actual.t).to.almostEqual(new Decimal(t), maxErrors.t);
                     expect(actual.u).to.almostEqual(new Decimal(u), maxErrors.u);

@@ -27,25 +27,25 @@ error PoolCollectionWithdrawalInputInvalid();
  * `u` - base token amount to transfer from the external protection vault to the provider
  * `v` - base token amount to keep in the pool as a withdrawal fee
  * The following table depicts the actual formulae based on the current state of the system:
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           |                         Deficit                         |                       Surplus                       |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           | p = a*x(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))  | p = -a*x(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m)) |
- * |           | q = 0                                                   | q = 0                                               |
- * |           | r = -x*(e*(1-n)-b-c)/e                                  | r = x*(b+c-e+e*n)/e                                 |
- * | Arbitrage | s = x*(1-n)                                             | s = x*(1-n)                                         |
- * |           | t = 0                                                   | t = 0                                               |
- * |           | u = 0                                                   | u = 0                                               |
- * |           | v = x*n                                                 | v = x*n                                             |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
- * |           | p = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | p = -a*z/b where z = max(x*(1-n)-c,0)               |
- * |           | q = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | q = -a*z/b where z = max(x*(1-n)-c,0)               |
- * |           | r = -z/e       where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | r = -z     where z = max(x*(1-n)-c,0)               |
- * | Default   | s = x*(1-n)*(b+c)/e                                     | s = x*(1-n)                                         |
- * |           | t = see function `externalProtection`                   | t = 0                                               |
- * |           | u = see function `externalProtection`                   | u = 0                                               |
- * |           | v = x*n                                                 | v = x*n                                             |
- * +-----------+---------------------------------------------------------+-----------------------------------------------------+
+ * +-----------+---------------------------------------------------------+----------------------------------------------------------+
+ * |           |                         Deficit                         |                       Surplus                            |
+ * +-----------+---------------------------------------------------------+----------------------------------------------------------+
+ * |           | p = a*x*(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m)) | p = -a*x*(b+c-e*(1-n))/(b*e*(1-m)+x*(b+c-e*(1-n))*(1-m)) |
+ * |           | q = 0                                                   | q = 0                                                    |
+ * |           | r = -x*(e*(1-n)-b-c)/e                                  | r = x*(b+c-e*(1-n))/e                                    |
+ * | Arbitrage | s = x*(1-n)                                             | s = x*(1-n)                                              |
+ * |           | t = 0                                                   | t = 0                                                    |
+ * |           | u = 0                                                   | u = 0                                                    |
+ * |           | v = x*n                                                 | v = x*n                                                  |
+ * +-----------+---------------------------------------------------------+----------------------------------------------------------+
+ * |           | p = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | p = -a*z/b where z = max(x*(1-n)-c,0)                    |
+ * |           | q = -a*z/(b*e) where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | q = -a*z/b where z = max(x*(1-n)-c,0)                    |
+ * |           | r = -z/e       where z = max(x*(1-n)*b-c*(e-x*(1-n)),0) | r = -z     where z = max(x*(1-n)-c,0)                    |
+ * | Default   | s = x*(1-n)*(b+c)/e                                     | s = x*(1-n)                                              |
+ * |           | t = see function `externalProtection`                   | t = 0                                                    |
+ * |           | u = see function `externalProtection`                   | u = 0                                                    |
+ * |           | v = x*n                                                 | v = x*n                                                  |
+ * +-----------+---------------------------------------------------------+----------------------------------------------------------+
  * Note that for the sake of illustration, both `m` and `n` are assumed normalized (between 0 and 1).
  * During runtime, it is taken into account that they are given in PPM units (between 0 and 1000000).
  */
@@ -150,7 +150,7 @@ library PoolCollectionWithdrawal {
     }
 
     /**
-     * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e+e*n)*(1-m)`
+     * @dev returns `b*e*((b+c-e)*m+e*n) > (b+c-e)*x*(b+c-e*(1-n))*(1-m)`
      */
     function affordableSurplus(
         uint256 b, // <= 2**128-1
@@ -168,7 +168,7 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = a*x(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))`
+     * `p = a*x*(e*(1-n)-b-c)*(1-m)/(b*e-x*(e*(1-n)-b-c)*(1-m))`
      * `q = 0`
      * `r = -x*(e*(1-n)-b-c)/e`
      * `s = x*(1-n)`
@@ -192,9 +192,9 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * `p = -a*x(b+c-e+e*n)/(b*e*(1-m)+x*(b+c-e+e*n)*(1-m))`
+     * `p = -a*x*(b+c-e*(1-n))/(b*e*(1-m)+x*(b+c-e*(1-n))*(1-m))`
      * `q = 0`
-     * `r = x*(b+c-e+e*n)/e`
+     * `r = x*(b+c-e*(1-n))/e`
      * `s = x*(1-n)`
      */
     function arbitrageSurplus(
@@ -260,13 +260,13 @@ library PoolCollectionWithdrawal {
 
     /**
      * @dev returns:
-     * +------------------------------+--------------------------------------+-------------------------+
-     * | if `w == 0`                  | else if `a*x(1-n)*(e-b-c)/e-w*a > 0` | else                    |
-     * +------------------------------+--------------------------------------+-------------------------+
-     * | `t = a*x(1-n)*(e-b-c)/(b*e)` | `t = a*x(1-n)*(e-b-c)/(b*e)-w*a/b`   | `t = 0`                 |
-     * +------------------------------+--------------------------------------+-------------------------+
-     * | `u = 0`                      | `u = w`                              | `u = x*(1-n)*(e-b-c)/e` |
-     * +------------------------------+--------------------------------------+-------------------------+
+     * +-------------------------------+---------------------------------------+-------------------------+
+     * | if `w == 0`                   | else if `a*x*(1-n)*(e-b-c)/e-w*a > 0` | else                    |
+     * +-------------------------------+---------------------------------------+-------------------------+
+     * | `t = a*x*(1-n)*(e-b-c)/(b*e)` | `t = a*x*(1-n)*(e-b-c)/(b*e)-w*a/b`   | `t = 0`                 |
+     * +-------------------------------+---------------------------------------+-------------------------+
+     * | `u = 0`                       | `u = w`                               | `u = x*(1-n)*(e-b-c)/e` |
+     * +-------------------------------+---------------------------------------+-------------------------+
      */
     function externalProtection(
         uint256 a, // <= 2**128-1

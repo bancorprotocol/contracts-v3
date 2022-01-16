@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 import { PoolCollectionWithdrawal } from "../pools/PoolCollectionWithdrawal.sol";
 
 contract TestPoolCollectionWithdrawal {
-    function formulaT(
+    function calculateWithdrawalAmountsT(
         uint256 a,
         uint256 b,
         uint256 c,
