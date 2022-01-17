@@ -3209,8 +3209,8 @@ describe('BancorNetwork Financial Verification', () => {
         withdrawalFee: string;
         epVaultBalance: number;
         tknDecimals: number;
-        tknInitialRate: number;
-        bntInitialRate: number;
+        tknFundingRate: number;
+        bntFundingRate: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
         users: User[];
@@ -3420,7 +3420,6 @@ describe('BancorNetwork Financial Verification', () => {
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
-        await poolCollection.enableTrading(baseToken.address, { n: flow.bntInitialRate, d: flow.tknInitialRate });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 
@@ -3470,6 +3469,11 @@ describe('BancorNetwork Financial Verification', () => {
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
                     break;
+            }
+
+            try {
+                await poolCollection.enableTrading(baseToken.address, { n: flow.bntFundingRate, d: flow.tknFundingRate });
+            } catch (error) {
             }
 
             await verifyState(decimalize(expected) as State);
