@@ -742,6 +742,20 @@ describe('PoolCollection', () => {
                     await testEnableTrading(INITIAL_LIQUIDITY);
                 });
 
+                it('should save the reduced funding rate', async () => {
+                    const fundingRate = { n: MAX_UINT256.div(2), d: MAX_UINT256.div(4) };
+                    await poolCollection.enableTrading(token.address, fundingRate);
+
+                    const {
+                        averageRate: { rate }
+                    } = await poolCollection.poolData(token.address);
+
+                    expect(rate).not.to.equal(fundingRate);
+                    expect(rate).to.almostEqual(fundingRate, {
+                        maxRelativeError: new Decimal('0.000000000000000000000001')
+                    });
+                });
+
                 it('should revert when attempting to enable trading twice', async () => {
                     await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     await expect(poolCollection.enableTrading(token.address, FUNDING_RATE)).to.be.revertedWith(
