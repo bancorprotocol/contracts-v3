@@ -1495,6 +1495,8 @@ describe('PoolCollection', () => {
                     prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                 );
 
+                expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
+
                 switch (expectTradingLiquidity) {
                     case TradingLiquidityState.Reset:
                         await testLiquidityReset(
@@ -1514,9 +1516,10 @@ describe('PoolCollection', () => {
                         break;
 
                     case TradingLiquidityState.Update:
-                        expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
                         expect(liquidity.baseTokenTradingLiquidity).to.equal(prevLiquidity.baseTokenTradingLiquidity);
-                        expect(liquidity.networkTokenTradingLiquidity).to.equal(prevLiquidity.networkTokenTradingLiquidity);
+                        expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                            prevLiquidity.networkTokenTradingLiquidity
+                        );
 
                         break;
                 }
@@ -1631,9 +1634,33 @@ describe('PoolCollection', () => {
                         await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     });
 
-                    it('should withdraw', async () => {
-                        await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
-                    });
+                    context(
+                        'when the matched target network liquidity is above the minimum liquidity for trading',
+                        () => {
+                            beforeEach(async () => {
+                                const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d)
+                                    .div(FUNDING_RATE.n)
+                                    .mul(10_000);
+                                await transfer(deployer, token, masterVault, extraLiquidity);
+
+                                await network.depositToPoolCollectionForT(
+                                    poolCollection.address,
+                                    CONTEXT_ID,
+                                    provider.address,
+                                    token.address,
+                                    extraLiquidity
+                                );
+                            });
+
+                            it('should withdraw', async () => {
+                                await testMultipleWithdrawals(
+                                    totalBasePoolTokenAmount,
+                                    COUNT,
+                                    TradingLiquidityState.Update
+                                );
+                            });
+                        }
+                    );
 
                     context(
                         'when the matched target network liquidity is below the minimum liquidity for trading',
