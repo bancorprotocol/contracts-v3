@@ -59,10 +59,7 @@ library PoolAverageRate {
         }
 
         // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
-        uint256 remainingWindow;
-        unchecked {
-            remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
-        }
+        uint256 remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
 
         // calculate the new average rate
         Fraction memory newRate = Fraction({
@@ -95,13 +92,8 @@ library PoolAverageRate {
         // can revert only if one of the components below is larger than 128 bits
         uint256 x = updatedAverageRate.rate.d * spotRate.n;
         uint256 y = updatedAverageRate.rate.n * spotRate.d;
-
-        uint256 lowerBound;
-        uint256 upperBound;
-        unchecked {
-            lowerBound = PPM_RESOLUTION - maxDeviation;
-            upperBound = PPM_RESOLUTION + maxDeviation;
-        }
+        uint256 lowerBound = PPM_RESOLUTION - maxDeviation;
+        uint256 upperBound = PPM_RESOLUTION + maxDeviation;
 
         Uint512 memory min = MathEx.mul512(x, lowerBound);
         Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
