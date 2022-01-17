@@ -3469,11 +3469,10 @@ describe('BancorNetwork Financial Verification', () => {
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
                     break;
-            }
 
-            try {
-                await poolCollection.enableTrading(baseToken.address, { n: flow.bntFundingRate, d: flow.tknFundingRate });
-            } catch (error) {
+                case 'enableTrading':
+                    await poolCollection.enableTrading(baseToken.address, { n: flow.bntFundingRate, d: flow.tknFundingRate });
+                    break;
             }
 
             await verifyState(decimalize(expected) as State);
