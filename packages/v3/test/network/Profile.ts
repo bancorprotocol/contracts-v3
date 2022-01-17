@@ -46,8 +46,8 @@ describe('Profile @profile', () => {
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
-    const DEPOSIT_LIMIT = toWei(100_000_000);
     const CONTEXT_ID = formatBytes32String('CTX');
+    const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
     before(async () => {
         [deployer] = await ethers.getSigners();
@@ -75,6 +75,8 @@ describe('Profile @profile', () => {
         const testDeposits = (tokenData: TokenData) => {
             let token: TokenWithAddress;
 
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(2);
+
             beforeEach(async () => {
                 if (tokenData.isNetworkToken()) {
                     token = networkToken;
@@ -83,9 +85,19 @@ describe('Profile @profile', () => {
 
                     await createPool(token, network, networkSettings, poolCollection);
 
-                    await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
-                    await poolCollection.setDepositLimit(token.address, DEPOSIT_LIMIT);
+                    // ensure that the trading is enabled with sufficient funding
+                    if (tokenData.isNativeToken()) {
+                        await network.deposit(token.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
+                    } else {
+                        const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                        await reserveToken.approve(network.address, INITIAL_LIQUIDITY);
+
+                        await network.deposit(token.address, INITIAL_LIQUIDITY);
+                    }
+
                     await poolCollection.enableTrading(token.address, FUNDING_RATE);
                 }
 
@@ -150,14 +162,22 @@ describe('Profile @profile', () => {
                             };
 
                             const testDepositAmount = async (amount: BigNumber) => {
-                                const test = async () =>
+                                const COUNT = 3;
+
+                                const testMultipleDeposits = async () => {
+                                    for (let i = 0; i < COUNT; i++) {
+                                        await test(amount);
+                                    }
+                                };
+
+                                const test = async (amount: BigNumber) =>
                                     await profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
                                     if (!tokenData.isNativeToken()) {
                                         beforeEach(async () => {
                                             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                            await reserveToken.transfer(sender.address, amount);
+                                            await reserveToken.transfer(sender.address, amount.mul(COUNT));
                                         });
                                     }
 
@@ -167,7 +187,9 @@ describe('Profile @profile', () => {
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     token.address
                                                 );
-                                                await reserveToken.connect(sender).approve(network.address, amount);
+                                                await reserveToken
+                                                    .connect(sender)
+                                                    .approve(network.address, amount.mul(COUNT));
                                             });
                                         }
 
@@ -190,37 +212,17 @@ describe('Profile @profile', () => {
                                                     await poolCollection.requestFundingT(
                                                         CONTEXT_ID,
                                                         reserveToken.address,
-                                                        amount
+                                                        amount.mul(COUNT)
                                                     );
                                                 });
 
-                                                it('should complete a deposit', async () => {
-                                                    await test();
+                                                it('should complete multiple deposits', async () => {
+                                                    await testMultipleDeposits();
                                                 });
                                             });
                                         } else {
-                                            context('when there is no available network token funding', () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.setFundingLimit(token.address, 0);
-                                                });
-
-                                                context('with a whitelisted token', async () => {
-                                                    it('should complete a deposit', async () => {
-                                                        await test();
-                                                    });
-                                                });
-                                            });
-
-                                            context('when there is enough available network token funding', () => {
-                                                beforeEach(async () => {
-                                                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                                                });
-
-                                                context('when spot rate is stable', () => {
-                                                    it('should complete a deposit', async () => {
-                                                        await test();
-                                                    });
-                                                });
+                                            it('should complete multiple deposits', async () => {
+                                                await testMultipleDeposits();
                                             });
                                         }
                                     });
@@ -362,7 +364,7 @@ describe('Profile @profile', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+        for (const symbol of [TokenSymbol.TKN]) {
             context(symbol, () => {
                 testDeposits(new TokenData(symbol));
             });
@@ -394,128 +396,103 @@ describe('Profile @profile', () => {
             await setTime(await latest());
         });
 
+        interface Request {
+            id: BigNumber;
+            poolTokenAmount: BigNumber;
+            creationTime: number;
+        }
+
         const testWithdraw = async (tokenData: TokenData) => {
-            context('with an initiated withdrawal request', () => {
-                let provider: SignerWithAddress;
-                let poolToken: PoolToken;
-                let token: TokenWithAddress;
-                let poolTokenAmount: BigNumber;
-                let id: BigNumber;
-                let creationTime: number;
+            let provider: SignerWithAddress;
+            let poolToken: PoolToken;
+            let token: TokenWithAddress;
+            let requests: Request[];
 
-                before(async () => {
-                    [, provider] = await ethers.getSigners();
-                });
+            const INITIAL_LIQUIDITY = toWei(222_222_222);
+            const COUNT = 3;
 
-                beforeEach(async () => {
-                    if (tokenData.isNetworkToken()) {
-                        token = networkToken;
-                    } else {
-                        token = await createToken(tokenData);
-                    }
+            before(async () => {
+                [, provider] = await ethers.getSigners();
+            });
 
-                    // create a deposit
-                    const amount = toWei(222_222_222);
+            beforeEach(async () => {
+                if (tokenData.isNetworkToken()) {
+                    token = networkToken;
+                    poolToken = masterPoolToken;
 
-                    if (tokenData.isNetworkToken()) {
-                        poolToken = masterPoolToken;
+                    const reserveToken = await createTestToken();
+                    await createPool(reserveToken, network, networkSettings, poolCollection);
+                    await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
-                        const reserveToken = await createTestToken();
-                        await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
+                    await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, INITIAL_LIQUIDITY);
+                } else {
+                    token = await createToken(tokenData);
+                    poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, amount);
-                    } else {
-                        poolToken = await createPool(token, network, networkSettings, poolCollection);
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
+                }
 
-                        await networkSettings.setFundingLimit(token.address, FUNDING_LIMIT);
+                await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                        await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-                        await poolCollection.enableTrading(token.address, FUNDING_RATE);
-                    }
+                const totalPoolTokenAmount = await poolToken.balanceOf(provider.address);
+                const poolTokenAmount = totalPoolTokenAmount.div(COUNT);
 
-                    await depositToPool(provider, token, amount, network);
+                requests = [];
 
-                    poolTokenAmount = await poolToken.balanceOf(provider.address);
-
-                    ({ id, creationTime } = await initWithdraw(
+                for (let i = 0; i < COUNT; i++) {
+                    const { id, creationTime } = await initWithdraw(
                         provider,
                         network,
                         pendingWithdrawals,
                         poolToken,
-                        await poolToken.balanceOf(provider.address)
-                    ));
+                        poolTokenAmount
+                    );
+
+                    requests.push({
+                        id,
+                        poolTokenAmount,
+                        creationTime
+                    });
+                }
+
+                if (!tokenData.isNetworkToken()) {
+                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
+                }
+            });
+
+            context('during the withdrawal window duration', () => {
+                const test = async (index: number) =>
+                    profiler.profile(
+                        `withdraw ${tokenData.symbol()}`,
+                        network.connect(provider).withdraw(requests[index].id)
+                    );
+
+                const testMultipleWithdrawals = async () => {
+                    for (let i = 0; i < COUNT; i++) {
+                        await test(i);
+                    }
+                };
+
+                beforeEach(async () => {
+                    const withdrawalDuration =
+                        (await pendingWithdrawals.lockDuration()) +
+                        (await pendingWithdrawals.withdrawalWindowDuration());
+                    await setTime(requests[0].creationTime + withdrawalDuration - 1);
                 });
 
-                context('during the lock duration', () => {
+                context('with approvals', () => {
                     beforeEach(async () => {
-                        await setTime(creationTime + 1000);
+                        if (tokenData.isNetworkToken()) {
+                            await govToken.connect(provider).approve(
+                                network.address,
+                                requests.reduce((res, r) => res.add(r.poolTokenAmount), BigNumber.from(0))
+                            );
+                        }
                     });
 
-                    context('after the withdrawal window duration', () => {
-                        beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-                            await setTime(creationTime + withdrawalDuration + 1);
-                        });
-                    });
-
-                    context('during the withdrawal window duration', () => {
-                        beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-                            await setTime(creationTime + withdrawalDuration - 1);
-                        });
-
-                        context('with approvals', () => {
-                            beforeEach(async () => {
-                                if (tokenData.isNetworkToken()) {
-                                    await govToken.connect(provider).approve(network.address, poolTokenAmount);
-                                }
-                            });
-
-                            const test = async () =>
-                                profiler.profile(
-                                    `withdraw ${tokenData.symbol()}`,
-                                    network.connect(provider).withdraw(id)
-                                );
-
-                            if (tokenData.isNetworkToken()) {
-                                it('should complete a withdraw', async () => {
-                                    await test();
-                                });
-                            } else {
-                                context('when spot rate is unstable', () => {
-                                    beforeEach(async () => {
-                                        const spotRate = {
-                                            n: toWei(1_000_000),
-                                            d: toWei(10_000_000)
-                                        };
-
-                                        const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
-                                        await poolCollection.setTradingLiquidityT(token.address, {
-                                            networkTokenTradingLiquidity: spotRate.n,
-                                            baseTokenTradingLiquidity: spotRate.d,
-                                            stakedBalance
-                                        });
-                                        await poolCollection.setAverageRateT(token.address, {
-                                            rate: {
-                                                n: spotRate.n.mul(PPM_RESOLUTION),
-                                                d: spotRate.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
-                                            },
-                                            time: 1000
-                                        });
-                                    });
-                                });
-
-                                context('when spot rate is stable', () => {
-                                    it('should complete a withdraw', async () => {
-                                        await test();
-                                    });
-                                });
-                            }
-                        });
+                    it('should complete a withdraw', async () => {
+                        await testMultipleWithdrawals();
                     });
                 });
             });
@@ -535,9 +512,7 @@ describe('Profile @profile', () => {
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
-        const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
@@ -647,7 +622,7 @@ describe('Profile @profile', () => {
                 );
         };
 
-        const verifyTrade = async (
+        const performTrade = async (
             beneficiaryAddress: string,
             amount: BigNumber,
             trade: (
@@ -682,7 +657,7 @@ describe('Profile @profile', () => {
                         await reserveToken.connect(trader).approve(network.address, amount);
                     }
 
-                    await verifyTrade(ZERO_ADDRESS, amount, trade);
+                    await performTrade(ZERO_ADDRESS, amount, trade);
                 };
 
                 beforeEach(async () => {
@@ -707,7 +682,7 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const test = async () => verifyTrade(ZERO_ADDRESS, amount, tradePermitted);
+                const test = async () => performTrade(ZERO_ADDRESS, amount, tradePermitted);
 
                 beforeEach(async () => {
                     await setupPools(source, target);
@@ -817,33 +792,30 @@ describe('Profile @profile', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
-        const amount = toWei(123_456);
-
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const BALANCE = toWei(100_000_000);
+        const LOAN_AMOUNT = toWei(123_456);
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
 
         const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
-            const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
+            const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
                 ({ token } = await setupFundedPool(
                     {
                         tokenData,
-                        balance: amount,
-                        requestedLiquidity: amount.mul(1000),
+                        balance: BALANCE,
+                        requestedLiquidity: BALANCE.mul(1000),
                         fundingRate: FUNDING_RATE
                     },
                     deployer,
@@ -855,7 +827,7 @@ describe('Profile @profile', () => {
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
 
-                await transfer(deployer, token, recipient.address, feeAmount);
+                await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);
             });
 
@@ -863,13 +835,13 @@ describe('Profile @profile', () => {
                 const data = '0x1234';
                 await profiler.profile(
                     `flash-loan ${tokenData.symbol()}`,
-                    network.flashLoan(token.address, amount, recipient.address, data)
+                    network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data)
                 );
             };
 
             context('returning just about right', () => {
                 beforeEach(async () => {
-                    await recipient.setAmountToReturn(amount.add(feeAmount));
+                    await recipient.setAmountToReturn(LOAN_AMOUNT.add(FEE_AMOUNT));
                 });
 
                 it('should succeed requesting a flash-loan', async () => {
@@ -899,7 +871,7 @@ describe('Profile @profile', () => {
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const BALANCE = toWei(1_000_000);
 
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
@@ -908,16 +880,15 @@ describe('Profile @profile', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 
             ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
-                    balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: { n: 1, d: 2 }
+                    balance: BALANCE,
+                    requestedLiquidity: BALANCE.mul(1000),
+                    fundingRate: FUNDING_RATE
                 },
                 provider as any as SignerWithAddress,
                 network,

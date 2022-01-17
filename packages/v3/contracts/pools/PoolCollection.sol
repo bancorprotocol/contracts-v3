@@ -494,7 +494,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             revert InsufficientLiquidity();
         }
 
-        data.averageRate = AverageRate({ time: _time(), rate: fundingRate });
+        data.averageRate = AverageRate({ time: _time(), rate: PoolAverageRate.reducedRatio(fundingRate) });
 
         data.tradingEnabled = true;
 

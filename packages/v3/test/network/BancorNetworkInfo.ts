@@ -15,7 +15,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
+import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import {
@@ -37,6 +37,9 @@ import { ethers } from 'hardhat';
 
 describe('BancorNetworkInfo', () => {
     let deployer: SignerWithAddress;
+
+    const FUNDING_RATE = { n: 1, d: 2 };
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
     shouldHaveGap('BancorNetworkInfo');
 
@@ -280,8 +283,6 @@ describe('BancorNetworkInfo', () => {
 
         let trader: Wallet;
 
-        const FUNDING_RATE = { n: 1, d: 2 };
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
 
         beforeEach(async () => {
@@ -440,34 +441,31 @@ describe('BancorNetworkInfo', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
         let provider: SignerWithAddress;
         let poolTokenAmount: BigNumber;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const BALANCE = toWei(1_000_000);
 
         before(async () => {
             [, provider] = await ethers.getSigners();
         });
 
         beforeEach(async () => {
-            ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
-                await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 
             ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
-                    balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: { n: 1, d: 2 }
+                    balance: BALANCE,
+                    requestedLiquidity: BALANCE.mul(1000),
+                    fundingRate: FUNDING_RATE
                 },
                 provider,
                 network,
