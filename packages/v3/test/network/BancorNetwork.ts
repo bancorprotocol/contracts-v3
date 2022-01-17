@@ -75,6 +75,7 @@ describe('BancorNetwork', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
     const DEPOSIT_LIMIT = toWei(1_000_000_000);
     const CONTEXT_ID = formatBytes32String('CTX');
+    const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
     shouldHaveGap('BancorNetwork', '_masterPool');
 
@@ -762,9 +763,6 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let targetPoolCollection: TestPoolCollection;
-
-        const MIN_RETURN_AMOUNT = BigNumber.from(1);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         const reserveTokenSymbol = [TokenSymbol.TKN, TokenSymbol.ETH, TokenSymbol.TKN];
         let reserveTokenAddresses: string[];
@@ -1679,9 +1677,7 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
-        const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
@@ -2295,23 +2291,19 @@ describe('BancorNetwork', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
         let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
-        const amount = toWei(123_456);
-
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const BALANCE = toWei(100_000_000);
+        const LOAN_AMOUNT = toWei(123_456);
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
-                await createSystem());
+            ({ network, networkInfo, networkSettings, masterPool, poolCollection, masterVault } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
@@ -2321,8 +2313,8 @@ describe('BancorNetwork', () => {
                 ({ token } = await setupFundedPool(
                     {
                         tokenData: new TokenData(TokenSymbol.TKN),
-                        balance: amount,
-                        requestedLiquidity: amount.mul(1000),
+                        balance: BALANCE,
+                        requestedLiquidity: BALANCE.mul(1000),
                         fundingRate: FUNDING_RATE
                     },
                     deployer,
@@ -2334,15 +2326,15 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to request a flash-loan of an invalid token', async () => {
-                await expect(network.flashLoan(ZERO_ADDRESS, amount, recipient.address, ZERO_BYTES)).to.be.revertedWith(
-                    'InvalidAddress'
-                );
+                await expect(
+                    network.flashLoan(ZERO_ADDRESS, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
+                ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to request a flash-loan of a non-whitelisted token', async () => {
                 const reserveToken = await createTestToken();
                 await expect(
-                    network.flashLoan(reserveToken.address, amount, recipient.address, ZERO_BYTES)
+                    network.flashLoan(reserveToken.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
                 ).to.be.revertedWith('NotWhitelisted');
             });
 
@@ -2353,9 +2345,9 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to request a flash-loan for an invalid recipient', async () => {
-                await expect(network.flashLoan(token.address, amount, ZERO_ADDRESS, ZERO_BYTES)).to.be.revertedWith(
-                    'InvalidAddress'
-                );
+                await expect(
+                    network.flashLoan(token.address, LOAN_AMOUNT, ZERO_ADDRESS, ZERO_BYTES)
+                ).to.be.revertedWith('InvalidAddress');
             });
 
             context('reentering', () => {
@@ -2365,27 +2357,27 @@ describe('BancorNetwork', () => {
 
                 it('should revert when attempting to request a flash-loan', async () => {
                     await expect(
-                        network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                        network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
                     ).to.be.revertedWith('ReentrancyGuard: reentrant call');
                 });
             });
 
             it('should revert when attempting to request a flash-loan of more than the pool has', async () => {
                 await expect(
-                    network.flashLoan(token.address, amount.add(1), recipient.address, ZERO_BYTES)
+                    network.flashLoan(token.address, BALANCE.add(1), recipient.address, ZERO_BYTES)
                 ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
             });
         });
 
         const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number) => {
-            const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
+            const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
                 ({ token } = await setupFundedPool(
                     {
                         tokenData,
-                        balance: amount,
-                        requestedLiquidity: amount.mul(1000),
+                        balance: BALANCE,
+                        requestedLiquidity: BALANCE.mul(1000),
                         fundingRate: FUNDING_RATE
                     },
                     deployer,
@@ -2397,7 +2389,7 @@ describe('BancorNetwork', () => {
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
 
-                await transfer(deployer, token, recipient.address, feeAmount);
+                await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);
             });
 
@@ -2415,39 +2407,45 @@ describe('BancorNetwork', () => {
                 const data = '0x1234';
                 const contextId = solidityKeccak256(
                     ['address', 'uint32', 'address', 'uint256', 'address', 'bytes'],
-                    [deployer.address, await network.currentTime(), token.address, amount, recipient.address, data]
+                    [deployer.address, await network.currentTime(), token.address, LOAN_AMOUNT, recipient.address, data]
                 );
 
-                const res = network.flashLoan(token.address, amount, recipient.address, data);
+                const res = network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
-                    .withArgs(contextId, token.address, deployer.address, amount);
+                    .withArgs(contextId, token.address, deployer.address, LOAN_AMOUNT);
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, token.address, FeeType.FlashLoan, feeAmount, prevStakedBalance.add(feeAmount));
+                    .withArgs(
+                        contextId,
+                        token.address,
+                        FeeType.FlashLoan,
+                        FEE_AMOUNT,
+                        prevStakedBalance.add(FEE_AMOUNT)
+                    );
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.caller).to.equal(deployer.address);
                 expect(callbackData.token).to.equal(token.address);
-                expect(callbackData.amount).to.equal(amount);
-                expect(callbackData.feeAmount).to.equal(feeAmount);
+                expect(callbackData.amount).to.equal(LOAN_AMOUNT);
+                expect(callbackData.feeAmount).to.equal(FEE_AMOUNT);
                 expect(callbackData.data).to.equal(data);
-                expect(callbackData.receivedAmount).to.equal(amount);
+                expect(callbackData.receivedAmount).to.equal(LOAN_AMOUNT);
 
-                expect(await getBalance(token, masterVault.address)).to.be.gte(prevVaultBalance.add(feeAmount));
+                expect(await getBalance(token, masterVault.address)).to.be.gte(prevVaultBalance.add(FEE_AMOUNT));
                 expect(await getBalance(token, network.address)).to.equal(prevNetworkBalance);
             };
 
             context('not repaying the original amount', () => {
                 beforeEach(async () => {
-                    await recipient.setAmountToReturn(amount.sub(1));
+                    await recipient.setAmountToReturn(LOAN_AMOUNT.sub(1));
                 });
 
                 it('should revert when attempting to request a flash-loan', async () => {
                     await expect(
-                        network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                        network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
                     ).to.be.revertedWith('InsufficientFlashLoanReturn');
                 });
             });
@@ -2455,12 +2453,12 @@ describe('BancorNetwork', () => {
             if (flashLoanFeePPM > 0) {
                 context('not repaying the fee', () => {
                     beforeEach(async () => {
-                        await recipient.setAmountToReturn(amount);
+                        await recipient.setAmountToReturn(LOAN_AMOUNT);
                     });
 
                     it('should revert when attempting to request a flash-loan', async () => {
                         await expect(
-                            network.flashLoan(token.address, amount, recipient.address, ZERO_BYTES)
+                            network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
                         ).to.be.revertedWith('InsufficientFlashLoanReturn');
                     });
                 });
@@ -2473,7 +2471,7 @@ describe('BancorNetwork', () => {
                     await transfer(deployer, token, recipient.address, extraReturn);
                     await recipient.snapshot(token.address);
 
-                    await recipient.setAmountToReturn(amount.add(feeAmount).add(extraReturn));
+                    await recipient.setAmountToReturn(LOAN_AMOUNT.add(FEE_AMOUNT).add(extraReturn));
                 });
 
                 it('should succeed requesting a flash-loan', async () => {
@@ -2483,7 +2481,7 @@ describe('BancorNetwork', () => {
 
             context('returning just about right', () => {
                 beforeEach(async () => {
-                    await recipient.setAmountToReturn(amount.add(feeAmount));
+                    await recipient.setAmountToReturn(LOAN_AMOUNT.add(FEE_AMOUNT));
                 });
 
                 it('should succeed requesting a flash-loan', async () => {
@@ -3003,8 +3001,6 @@ describe('BancorNetwork', () => {
 
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
-
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =

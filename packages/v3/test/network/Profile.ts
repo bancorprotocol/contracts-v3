@@ -47,6 +47,7 @@ describe('Profile @profile', () => {
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
     const CONTEXT_ID = formatBytes32String('CTX');
+    const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
     before(async () => {
         [deployer] = await ethers.getSigners();
@@ -511,9 +512,7 @@ describe('Profile @profile', () => {
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
 
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
         const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
-        const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
@@ -793,33 +792,30 @@ describe('Profile @profile', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
 
-        const amount = toWei(123_456);
-
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+        const BALANCE = toWei(100_000_000);
+        const LOAN_AMOUNT = toWei(123_456);
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
 
         const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
-            const feeAmount = amount.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
+            const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
                 ({ token } = await setupFundedPool(
                     {
                         tokenData,
-                        balance: amount,
-                        requestedLiquidity: amount.mul(1000),
+                        balance: BALANCE,
+                        requestedLiquidity: BALANCE.mul(1000),
                         fundingRate: FUNDING_RATE
                     },
                     deployer,
@@ -831,7 +827,7 @@ describe('Profile @profile', () => {
 
                 await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
 
-                await transfer(deployer, token, recipient.address, feeAmount);
+                await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);
             });
 
@@ -839,13 +835,13 @@ describe('Profile @profile', () => {
                 const data = '0x1234';
                 await profiler.profile(
                     `flash-loan ${tokenData.symbol()}`,
-                    network.flashLoan(token.address, amount, recipient.address, data)
+                    network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data)
                 );
             };
 
             context('returning just about right', () => {
                 beforeEach(async () => {
-                    await recipient.setAmountToReturn(amount.add(feeAmount));
+                    await recipient.setAmountToReturn(LOAN_AMOUNT.add(FEE_AMOUNT));
                 });
 
                 it('should succeed requesting a flash-loan', async () => {
@@ -874,8 +870,6 @@ describe('Profile @profile', () => {
 
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
-
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
