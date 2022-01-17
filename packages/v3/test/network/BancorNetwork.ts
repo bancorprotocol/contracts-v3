@@ -2547,6 +2547,8 @@ describe('BancorNetwork', () => {
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
 
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(2);
+
             const expectInRange = (x: BigNumber, y: BigNumber) => {
                 expect(x).to.gte(y.sub(maxOffset.negative));
                 expect(x).to.lte(y.add(maxOffset.positive));
@@ -2667,8 +2669,20 @@ describe('BancorNetwork', () => {
                 await govTokenGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, liquidityProtection.address);
 
                 await createPool(baseToken, network, networkSettings, poolCollection);
+
                 await networkSettings.setFundingLimit(baseToken.address, FUNDING_LIMIT);
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
+
+                // ensure that the trading is enabled with sufficient funding
+                if (isNativeToken) {
+                    await network.deposit(baseToken.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
+                } else {
+                    const reserveToken = await Contracts.TestERC20Token.attach(baseToken.address);
+                    await reserveToken.approve(network.address, INITIAL_LIQUIDITY);
+
+                    await network.deposit(baseToken.address, INITIAL_LIQUIDITY);
+                }
+
                 await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
 
                 await networkToken.approve(converter.address, reserve2Amount);
@@ -3002,6 +3016,8 @@ describe('BancorNetwork', () => {
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
 
+        const BALANCE = toWei(1_000_000);
+
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
                 await createSystem());
@@ -3009,16 +3025,15 @@ describe('BancorNetwork', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 
             ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
-                    balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: { n: 1, d: 2 }
+                    balance: BALANCE,
+                    requestedLiquidity: BALANCE.mul(1000),
+                    fundingRate: FUNDING_RATE
                 },
                 provider as any as SignerWithAddress,
                 network,

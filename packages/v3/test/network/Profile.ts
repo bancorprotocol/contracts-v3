@@ -871,6 +871,8 @@ describe('Profile @profile', () => {
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
 
+        const BALANCE = toWei(1_000_000);
+
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
                 await createSystem());
@@ -878,16 +880,15 @@ describe('Profile @profile', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setFundingLimit(networkToken.address, MAX_UINT256);
 
             await pendingWithdrawals.setTime(await latest());
 
             ({ poolToken } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
-                    balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: { n: 1, d: 2 }
+                    balance: BALANCE,
+                    requestedLiquidity: BALANCE.mul(1000),
+                    fundingRate: FUNDING_RATE
                 },
                 provider as any as SignerWithAddress,
                 network,
