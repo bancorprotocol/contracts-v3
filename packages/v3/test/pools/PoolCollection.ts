@@ -1619,8 +1619,6 @@ describe('PoolCollection', () => {
                     }
                 });
 
-                // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
-                // from an inactive pool to work
                 context('when trading is disabled', () => {
                     it('should withdraw', async () => {
                         await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
@@ -1670,8 +1668,6 @@ describe('PoolCollection', () => {
                         }
                     );
 
-                    // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
-                    // from an inactive pool to work
                     context('after disabling trading', () => {
                         beforeEach(async () => {
                             await poolCollection.disableTrading(token.address);

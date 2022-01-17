@@ -806,10 +806,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         }
 
         // TODO:
-        // 1. this function doesn't seem to work when baseTokenTradingLiquidity is 0, which can happen when depositing
-        //    to a new/inactive pool
-        // 2. for some reason, withdrawing after the trading has been disabled, only affects the staked balance and doesn't
-        //    affect the networkTokenTradingLiquidity or baseTokenTradingLiquidity
+        // for some reason, withdrawing after the trading has been disabled, only affects the staked balance and doesn't
+        // affect the networkTokenTradingLiquidity or baseTokenTradingLiquidity
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.networkTokenTradingLiquidity,
