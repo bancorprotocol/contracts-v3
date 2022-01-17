@@ -504,11 +504,8 @@ contract MasterPool is IMasterPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // burn the network tokens from the master vault
-        //
-        // TODO: should we indeed handle the case when the balance of the master vault is insufficient?
-        uint256 availableAmount = Math.min(_networkToken.balanceOf(address(_masterVault)), renouncedAmount);
-        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), availableAmount);
+        // burn all the network tokens from the master vault
+        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
 
         emit FundingRenounced({
             contextId: contextId,

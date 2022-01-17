@@ -87,6 +87,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
+    uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
 
     // represents `(n1 - n2) / (d1 - d2)`
@@ -267,7 +268,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (isFractionZero(rate)) {
+        if (!_isRateValid(rate)) {
             revert InvalidRate();
         }
     }
@@ -923,7 +924,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
                 contextId,
                 pool,
                 data,
-                prevLiquidity.networkTokenTradingLiquidity,
+                amounts.newNetworkTokenTradingLiquidity,
                 TRADING_STATUS_UPDATE_MIN_LIQUIDITY
             );
         }
@@ -1006,18 +1007,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        // ensure that the base token reserve isn't empty
-        uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
-        if (tokenReserveAmount == 0) {
+        bool isFundingRateValid = _isRateValid(fundingRate);
+
+        // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
+        // liquidity for trading
+        if (liquidity.networkTokenTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
 
-        // ensure that the funding rate is provided when we're bootstrapping a pool (i.e., when its network token
-        // liquidity is 0)
-        bool isFundingRateValid = !isFractionZero(fundingRate);
-        if (liquidity.networkTokenTradingLiquidity == 0 && !isFundingRateValid) {
+        // ensure that the base token reserve isn't empty
+        uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
+        if (tokenReserveAmount == 0) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
@@ -1068,8 +1070,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // calculate the new network token trading liquidity and cap it by the growth factor
         if (liquidity.networkTokenTradingLiquidity == 0) {
-            // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading
-            targetNetworkTokenTradingLiquidity = minLiquidityForTrading;
+            // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading (with an
+            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+            uint256 newTargetNetworkTokenTradingLiquidity = minLiquidityForTrading *
+                BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+            // ensure that we're not allocating more than the previously established limits
+            if (newTargetNetworkTokenTradingLiquidity > targetNetworkTokenTradingLiquidity) {
+                return;
+            }
+
+            targetNetworkTokenTradingLiquidity = newTargetNetworkTokenTradingLiquidity;
         } else if (targetNetworkTokenTradingLiquidity >= liquidity.networkTokenTradingLiquidity) {
             // if the target is above the current trading liquidity, limit it by factoring the current value up
             targetNetworkTokenTradingLiquidity = Math.min(
@@ -1325,5 +1336,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         ) {
             data.averageRate = newAverageRate;
         }
+    }
+
+    /**
+     * @dev returns whether a rate is valid
+     */
+    function _isRateValid(Fraction memory rate) private pure returns (bool) {
+        return isFractionValid(rate) && !isFractionZero(rate);
     }
 }
