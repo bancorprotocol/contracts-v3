@@ -3298,7 +3298,7 @@ describe('BancorNetwork Financial Verification', () => {
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
     };
 
-    const enableTrading = async (rate: { fundingRateN: number, fundingRateD: number }) => {
+    const enableTrading = async (rate: { fundingRateN: number; fundingRateD: number }) => {
         await poolCollection.enableTrading(baseToken.address, { n: rate.fundingRateN, d: rate.fundingRateD });
     };
 
