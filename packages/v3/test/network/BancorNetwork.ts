@@ -3411,10 +3411,10 @@ describe('BancorNetwork Financial Verification', () => {
         await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         await networkTokenGovernance.mint(signers[0].address, bntAmount);
 
-        await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
-        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
-        await networkSettings.setMinLiquidityForTrading(flow.bntMinLiquidity);
+        await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
+        await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
+        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
 
         await pendingWithdrawals.setLockDuration(0);
 
