@@ -3,8 +3,6 @@
     "withdrawalFee": "0.25%",
     "epVaultBalance": "0",
     "tknDecimals": 18,
-    "tknFundingRate": 3,
-    "bntFundingRate": 1,
     "bntMinLiquidity": "1000000",
     "bntFundingLimit": "10000000",
     "users": [
@@ -66,7 +64,10 @@
             "type": "enableTrading",
             "userId": "",
             "elapsed": 3600,
-            "amount": "...",
+            "amount": {
+                "fundingRateN": 1,
+                "fundingRateD": 3
+            },
             "expected": {
                 "tknBalances": {
                     "dayTrader": "10000",

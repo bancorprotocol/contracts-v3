@@ -3209,8 +3209,6 @@ describe('BancorNetwork Financial Verification', () => {
         withdrawalFee: string;
         epVaultBalance: number;
         tknDecimals: number;
-        tknFundingRate: number;
-        bntFundingRate: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
         users: User[];
@@ -3298,6 +3296,10 @@ describe('BancorNetwork Financial Verification', () => {
         await network
             .connect(users[userId])
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
+    };
+
+    const enableTrading = async (rate: { fundingRateN: number, fundingRateD: number }) => {
+        await poolCollection.enableTrading(baseToken.address, { n: rate.fundingRateN, d: rate.fundingRateD });
     };
 
     /* eslint-disable indent */
@@ -3471,7 +3473,7 @@ describe('BancorNetwork Financial Verification', () => {
                     break;
 
                 case 'enableTrading':
-                    await poolCollection.enableTrading(baseToken.address, { n: flow.bntFundingRate, d: flow.tknFundingRate });
+                    await enableTrading(amount as any);
                     break;
             }
 
