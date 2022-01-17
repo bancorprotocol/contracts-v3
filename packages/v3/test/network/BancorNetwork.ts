@@ -1906,27 +1906,7 @@ describe('BancorNetwork', () => {
                         tradeAmounts.feeAmount,
                         poolLiquidity.stakedBalance
                     );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        targetToken.address,
-                        poolLiquidity.baseTokenTradingLiquidity
-                    );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        networkToken.address,
-                        poolLiquidity.networkTokenTradingLiquidity
-                    );
             } else if (isTargetNetworkToken) {
-                const poolLiquidity = await poolCollection.poolLiquidity(sourceToken.address);
-
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
@@ -1949,27 +1929,8 @@ describe('BancorNetwork', () => {
                         masterPoolStakedBalance
                     );
 
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        sourceToken.address,
-                        sourceToken.address,
-                        poolLiquidity.baseTokenTradingLiquidity
-                    );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        sourceToken.address,
-                        networkToken.address,
-                        poolLiquidity.networkTokenTradingLiquidity
-                    );
-
                 expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(tradeAmounts.feeAmount));
             } else {
-                const sourcePoolLiquidity = await poolCollection.poolLiquidity(sourceToken.address);
                 const targetPoolLiquidity = await poolCollection.poolLiquidity(targetToken.address);
 
                 await expect(res)
@@ -1994,24 +1955,6 @@ describe('BancorNetwork', () => {
                         masterPoolStakedBalance
                     );
 
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        sourceToken.address,
-                        sourceToken.address,
-                        sourcePoolLiquidity.baseTokenTradingLiquidity
-                    );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        sourceToken.address,
-                        networkToken.address,
-                        sourcePoolLiquidity.networkTokenTradingLiquidity
-                    );
-
                 expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(sourceTradeAmounts.feeAmount));
 
                 await expect(res)
@@ -2034,24 +1977,6 @@ describe('BancorNetwork', () => {
                         FeeType.Trading,
                         tradeAmounts.feeAmount,
                         targetPoolLiquidity.stakedBalance
-                    );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        targetToken.address,
-                        targetPoolLiquidity.baseTokenTradingLiquidity
-                    );
-
-                await expect(res)
-                    .to.emit(network, 'TradingLiquidityUpdated')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        networkToken.address,
-                        targetPoolLiquidity.networkTokenTradingLiquidity
                     );
             }
 

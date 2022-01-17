@@ -623,7 +623,7 @@ describe('Profile @profile', () => {
                 );
         };
 
-        const verifyTrade = async (
+        const performTrade = async (
             beneficiaryAddress: string,
             amount: BigNumber,
             trade: (
@@ -658,7 +658,7 @@ describe('Profile @profile', () => {
                         await reserveToken.connect(trader).approve(network.address, amount);
                     }
 
-                    await verifyTrade(ZERO_ADDRESS, amount, trade);
+                    await performTrade(ZERO_ADDRESS, amount, trade);
                 };
 
                 beforeEach(async () => {
@@ -683,7 +683,7 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const test = async () => verifyTrade(ZERO_ADDRESS, amount, tradePermitted);
+                const test = async () => performTrade(ZERO_ADDRESS, amount, tradePermitted);
 
                 beforeEach(async () => {
                     await setupPools(source, target);
