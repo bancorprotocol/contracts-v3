@@ -1456,14 +1456,11 @@ describe('PoolCollection', () => {
                 //     token.address,
                 //     poolTokenAmount
                 // );
-
-                // const expectedStakedBalance = prevLiquidity.stakedBalance.sub(expectedBaseTokenAmount);
+                //
                 // const expectedBaseTokenTradingLiquidity =
                 //     prevLiquidity.baseTokenTradingLiquidity.sub(expectedBaseTokenAmount);
-                // const expectedNetworkTokenTradingLiquidity = prevLiquidity.networkTokenTradingLiquidity;
-                // const expectedTradingLiquidityProduct = expectedBaseTokenTradingLiquidity.mul(
-                //     expectedNetworkTokenTradingLiquidity
-                // );
+
+                const expectedNetworkTokenTradingLiquidity = prevLiquidity.networkTokenTradingLiquidity;
 
                 const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
 
@@ -1529,10 +1526,9 @@ describe('PoolCollection', () => {
                         break;
 
                     case TradingLiquidityState.Update:
-                        // TODO: restore when other issues are fixed
-                        // expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
-                        // expect(liquidity.baseTokenTradingLiquidity).to.equal(expectedBaseTokenTradingLiquidity);
-                        // expect(liquidity.networkTokenTradingLiquidity).to.equal(expectedNetworkTokenTradingLiquidity);
+                        expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
+                        // TODO: expect(liquidity.baseTokenTradingLiquidity).to.equal(expectedBaseTokenTradingLiquidity);
+                        expect(liquidity.networkTokenTradingLiquidity).to.equal(expectedNetworkTokenTradingLiquidity);
 
                         break;
                 }
