@@ -1071,8 +1071,11 @@ describe('Profile @profile', () => {
 
                                         await profiler.profile(
                                             `${
-                                                StakingRewardsDistributionType[distributionType]
-                                            } program / process ${tokenData.symbol()} rewards`,
+                                                distributionType === StakingRewardsDistributionType.Flat
+                                                    ? 'flat'
+                                                    : 'exponential decay'
+                                            }
+                                             program / process ${tokenData.symbol()} rewards`,
                                             autoCompoundingStakingRewards.processRewards(token.address)
                                         );
                                     }
