@@ -58,7 +58,7 @@ describe('Profile @profile', () => {
     const MAX_DEVIATION = toPPM(1);
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
-    const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
     const CONTEXT_ID = formatBytes32String('CTX');
     const MIN_RETURN_AMOUNT = BigNumber.from(1);
 
