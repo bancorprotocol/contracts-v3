@@ -1138,42 +1138,21 @@ describe('Profile @profile', () => {
 
                     switch (distributionType) {
                         case StakingRewardsDistributionType.Flat:
-                            describe('regular tests', () => {
-                                for (const percent of [25]) {
-                                    testMultipleDistributions(
-                                        Math.floor((programDuration * percent) / 100),
-                                        Math.floor(100 / percent)
-                                    );
-                                }
-                            });
-
-                            describe('@stress tests', () => {
-                                for (const percent of [6, 15]) {
-                                    testMultipleDistributions(
-                                        Math.floor((programDuration * percent) / 100),
-                                        Math.floor(100 / percent)
-                                    );
-                                }
-                            });
+                            for (const percent of [6, 15, 25]) {
+                                testMultipleDistributions(
+                                    Math.floor((programDuration * percent) / 100),
+                                    Math.floor(100 / percent)
+                                );
+                            }
 
                             break;
 
                         case StakingRewardsDistributionType.ExponentialDecay:
-                            describe('regular tests', () => {
-                                for (const step of [duration.days(1)]) {
-                                    for (const totalSteps of [5]) {
-                                        testMultipleDistributions(step, totalSteps);
-                                    }
+                            for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
+                                for (const totalSteps of [5]) {
+                                    testMultipleDistributions(step, totalSteps);
                                 }
-                            });
-
-                            describe('@stress tests', () => {
-                                for (const step of [duration.hours(1), duration.weeks(1)]) {
-                                    for (const totalSteps of [5]) {
-                                        testMultipleDistributions(step, totalSteps);
-                                    }
-                                }
-                            });
+                            }
 
                             break;
 
@@ -1185,33 +1164,26 @@ describe('Profile @profile', () => {
 
             switch (distributionType) {
                 case StakingRewardsDistributionType.Flat:
-                    describe('regular tests', () => {
-                        for (const programDuration of [duration.days(10)]) {
-                            context(
-                                `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
-                                () => {
-                                    testProgram(programDuration);
-                                }
-                            );
-                        }
-                    });
+                    for (const programDuration of [duration.weeks(12), duration.days(10), duration.years(1)]) {
+                        context(
+                            `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
+                            () => {
+                                testProgram(programDuration);
+                            }
+                        );
+                    }
 
-                    describe('@stress tests', () => {
-                        for (const programDuration of [duration.weeks(12), duration.years(1)]) {
-                            context(
-                                `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
-                                () => {
-                                    testProgram(programDuration);
-                                }
-                            );
-                        }
-                    });
                     break;
 
                 case StakingRewardsDistributionType.ExponentialDecay:
-                    describe('regular tests', () => {
-                        testProgram(ExponentialDecay.MAX_DURATION);
-                    });
+                    for (const programDuration of [ExponentialDecay.MAX_DURATION]) {
+                        context(
+                            `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
+                            () => {
+                                testProgram(programDuration);
+                            }
+                        );
+                    }
 
                     break;
 
@@ -1241,12 +1213,6 @@ describe('Profile @profile', () => {
             }
         };
 
-        describe('regular tests', () => {
-            testRewardsMatrix([toWei(10_000)], [toWei(100_000)]);
-        });
-
-        describe('@stress tests', () => {
-            testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
-        });
+        testRewardsMatrix([toWei(5_000), toWei(10_000), toWei(100_000)], [100_000, toWei(100_000), toWei(200_000)]);
     });
 });
