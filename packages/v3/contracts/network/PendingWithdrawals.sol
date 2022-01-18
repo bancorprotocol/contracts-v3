@@ -307,7 +307,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         }
 
         // remove the withdrawal request and its id from the storage
-        _removeWithdrawalRequest(request, id);
+        _removeWithdrawalRequest(provider, id);
 
         // get the pool token value in reserve tokens
         uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
@@ -348,7 +348,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc IPendingWithdrawals
      */
     function isReadyForWithdrawal(uint256 id) external view returns (bool) {
-        WithdrawalRequest memory request = _withdrawalRequests[id];
+        WithdrawalRequest storage request = _withdrawalRequests[id];
 
         return request.provider != address(0) && _canWithdrawAt(_time(), request.createdAt);
     }
@@ -453,7 +453,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private {
         // remove the withdrawal request and its id from the storage
-        _removeWithdrawalRequest(request, id);
+        _removeWithdrawalRequest(request.provider, id);
 
         // transfer the locked pool tokens back to the provider
         request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
@@ -471,12 +471,12 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev removes withdrawal request
      */
-    function _removeWithdrawalRequest(WithdrawalRequest memory request, uint256 id) private {
-        delete _withdrawalRequests[id];
-
-        if (!_withdrawalRequestIdsByProvider[request.provider].remove(id)) {
+    function _removeWithdrawalRequest(address provider, uint256 id) private {
+        if (!_withdrawalRequestIdsByProvider[provider].remove(id)) {
             revert DoesNotExist();
         }
+
+        delete _withdrawalRequests[id];
     }
 
     /**
