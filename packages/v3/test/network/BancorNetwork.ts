@@ -3145,8 +3145,6 @@ describe('BancorNetwork Financial Verification', () => {
         withdrawalFee: string;
         epVaultBalance: number;
         tknDecimals: number;
-        tknInitialRate: number;
-        bntInitialRate: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
         users: User[];
@@ -3234,6 +3232,10 @@ describe('BancorNetwork Financial Verification', () => {
         await network
             .connect(users[userId])
             .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
+    };
+
+    const enableTrading = async (rate: { fundingRateN: number; fundingRateD: number }) => {
+        await poolCollection.enableTrading(baseToken.address, { n: rate.fundingRateN, d: rate.fundingRateD });
     };
 
     /* eslint-disable indent */
@@ -3347,16 +3349,15 @@ describe('BancorNetwork Financial Verification', () => {
         await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         await networkTokenGovernance.mint(signers[0].address, bntAmount);
 
-        await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
-        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
         await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
-        await networkSettings.setMinLiquidityForTrading(flow.bntMinLiquidity);
+        await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
+        await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
+        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
 
         await pendingWithdrawals.setLockDuration(0);
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
         await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
-        await poolCollection.enableTrading(baseToken.address, { n: flow.bntInitialRate, d: flow.tknInitialRate });
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 
@@ -3405,6 +3406,10 @@ describe('BancorNetwork Financial Verification', () => {
 
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
+                    break;
+
+                case 'enableTrading':
+                    await enableTrading(amount as any);
                     break;
             }
 

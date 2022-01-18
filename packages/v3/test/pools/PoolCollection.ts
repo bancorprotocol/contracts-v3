@@ -1450,21 +1450,6 @@ describe('PoolCollection', () => {
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();
                 const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
 
-                // TODO: these calculation are currently wrong and should be replaced with withdrawalAmounts
-                //
-                // const expectedBaseTokenAmount = await poolCollection.poolTokenToUnderlying(
-                //     token.address,
-                //     poolTokenAmount
-                // );
-
-                // const expectedStakedBalance = prevLiquidity.stakedBalance.sub(expectedBaseTokenAmount);
-                // const expectedBaseTokenTradingLiquidity =
-                //     prevLiquidity.baseTokenTradingLiquidity.sub(expectedBaseTokenAmount);
-                // const expectedNetworkTokenTradingLiquidity = prevLiquidity.networkTokenTradingLiquidity;
-                // const expectedTradingLiquidityProduct = expectedBaseTokenTradingLiquidity.mul(
-                //     expectedNetworkTokenTradingLiquidity
-                // );
-
                 const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
 
                 const expectedStakedBalance = prevLiquidity.stakedBalance
@@ -1510,6 +1495,8 @@ describe('PoolCollection', () => {
                     prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                 );
 
+                expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
+
                 switch (expectTradingLiquidity) {
                     case TradingLiquidityState.Reset:
                         await testLiquidityReset(
@@ -1529,10 +1516,10 @@ describe('PoolCollection', () => {
                         break;
 
                     case TradingLiquidityState.Update:
-                        // TODO: restore when other issues are fixed
-                        // expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
-                        // expect(liquidity.baseTokenTradingLiquidity).to.equal(expectedBaseTokenTradingLiquidity);
-                        // expect(liquidity.networkTokenTradingLiquidity).to.equal(expectedNetworkTokenTradingLiquidity);
+                        expect(liquidity.baseTokenTradingLiquidity).to.equal(prevLiquidity.baseTokenTradingLiquidity);
+                        expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                            prevLiquidity.networkTokenTradingLiquidity
+                        );
 
                         break;
                 }
@@ -1619,9 +1606,7 @@ describe('PoolCollection', () => {
                     }
                 });
 
-                // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
-                // from an inactive pool to work
-                context.skip('when trading is disabled', () => {
+                context('when trading is disabled', () => {
                     it('should withdraw', async () => {
                         await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
                     });
@@ -1649,9 +1634,33 @@ describe('PoolCollection', () => {
                         await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     });
 
-                    it('should withdraw', async () => {
-                        await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
-                    });
+                    context(
+                        'when the matched target network liquidity is above the minimum liquidity for trading',
+                        () => {
+                            beforeEach(async () => {
+                                const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d)
+                                    .div(FUNDING_RATE.n)
+                                    .mul(10_000);
+                                await transfer(deployer, token, masterVault, extraLiquidity);
+
+                                await network.depositToPoolCollectionForT(
+                                    poolCollection.address,
+                                    CONTEXT_ID,
+                                    provider.address,
+                                    token.address,
+                                    extraLiquidity
+                                );
+                            });
+
+                            it('should withdraw', async () => {
+                                await testMultipleWithdrawals(
+                                    totalBasePoolTokenAmount,
+                                    COUNT,
+                                    TradingLiquidityState.Update
+                                );
+                            });
+                        }
+                    );
 
                     context(
                         'when the matched target network liquidity is below the minimum liquidity for trading',
@@ -1660,7 +1669,7 @@ describe('PoolCollection', () => {
                                 await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
                             });
 
-                            it.skip('should withdraw and reset the trading liquidity', async () => {
+                            it('should withdraw and reset the trading liquidity', async () => {
                                 await testMultipleWithdrawals(
                                     totalBasePoolTokenAmount,
                                     COUNT,
@@ -1670,9 +1679,7 @@ describe('PoolCollection', () => {
                         }
                     );
 
-                    // TODO: we need to fix PoolCollectionWithdrawal::calculateWithdrawalAmounts in order for withdrawals
-                    // from an inactive pool to work
-                    context.skip('after disabling trading', () => {
+                    context('after disabling trading', () => {
                         beforeEach(async () => {
                             await poolCollection.disableTrading(token.address);
                         });
