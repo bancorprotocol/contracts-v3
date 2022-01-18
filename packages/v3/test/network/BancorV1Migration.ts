@@ -209,8 +209,8 @@ describe('BancorV1Migration', () => {
 
     const test = (
         withdrawalFeePercent: number,
-        networkAmount: number,
-        baseAmount: number,
+        networkAmount: BigNumberish,
+        baseAmount: BigNumberish,
         isNativeToken: boolean,
         percent: number
     ) => {
@@ -248,11 +248,11 @@ describe('BancorV1Migration', () => {
 
     describe('quick tests', () => {
         for (const withdrawalFeeP of [1, 5]) {
-            for (const networkAmountM of [1_000_000, 5_000_000]) {
-                for (const baseAmountM of [1_000_000, 5_000_000]) {
+            for (const networkAmount of [1_000_000, 5_000_000]) {
+                for (const baseAmount of [1_000_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
                         for (const percent of [10, 100]) {
-                            test(withdrawalFeeP, networkAmountM, baseAmountM, isNativeToken, percent);
+                            test(withdrawalFeeP, networkAmount, baseAmount, isNativeToken, percent);
                         }
                     }
                 }
@@ -262,11 +262,11 @@ describe('BancorV1Migration', () => {
 
     describe('@stress tests', () => {
         for (const withdrawalFeeP of [1, 2.5, 5]) {
-            for (const networkAmountM of [1, 2.5, 5]) {
-                for (const baseAmountM of [1, 2.5, 5]) {
+            for (const networkAmount of [1_000_000, 2_500_000, 5_000_000]) {
+                for (const baseAmount of [1_000_000, 2_500_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
                         for (const percent of [10, 25, 50, 100]) {
-                            test(withdrawalFeeP, networkAmountM, baseAmountM, isNativeToken, percent);
+                            test(withdrawalFeeP, networkAmount, baseAmount, isNativeToken, percent);
                         }
                     }
                 }
