@@ -1075,8 +1075,7 @@ describe('Profile @profile', () => {
                                                 distributionType === StakingRewardsDistributionType.Flat
                                                     ? 'flat'
                                                     : 'exponential decay'
-                                            }
-                                             program / process ${tokenData.symbol()} rewards`,
+                                            } program / process ${tokenData.symbol()} rewards`,
                                             autoCompoundingStakingRewards.processRewards(token.address)
                                         );
                                     }
