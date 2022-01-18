@@ -5,6 +5,7 @@ import {
     ExternalRewardsVault,
     IERC20,
     IVault,
+    MasterVault,
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
@@ -389,6 +390,7 @@ describe('Profile @profile', () => {
         let networkSettings: NetworkSettings;
         let networkToken: IERC20;
         let govToken: IERC20;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
@@ -399,8 +401,16 @@ describe('Profile @profile', () => {
         };
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, govToken, poolCollection, pendingWithdrawals, masterPoolToken } =
-                await createSystem());
+            ({
+                network,
+                networkSettings,
+                networkToken,
+                govToken,
+                masterVault,
+                poolCollection,
+                pendingWithdrawals,
+                masterPoolToken
+            } = await createSystem());
 
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -504,9 +514,49 @@ describe('Profile @profile', () => {
                         }
                     });
 
-                    it('should complete a withdraw', async () => {
-                        await testMultipleWithdrawals();
-                    });
+                    if (tokenData.isNetworkToken()) {
+                        it('should complete multiple withdrawals', async () => {
+                            await testMultipleWithdrawals();
+                        });
+                    } else {
+                        context(
+                            'when the matched target network liquidity is above the minimum liquidity for trading',
+                            () => {
+                                beforeEach(async () => {
+                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d)
+                                        .div(FUNDING_RATE.n)
+                                        .mul(10_000);
+
+                                    await transfer(deployer, token, masterVault, extraLiquidity);
+
+                                    await network.depositToPoolCollectionForT(
+                                        poolCollection.address,
+                                        CONTEXT_ID,
+                                        provider.address,
+                                        token.address,
+                                        extraLiquidity
+                                    );
+                                });
+
+                                it('should complete a withdraw', async () => {
+                                    await testMultipleWithdrawals();
+                                });
+                            }
+                        );
+
+                        context(
+                            'when the matched target network liquidity is below the minimum liquidity for trading',
+                            () => {
+                                beforeEach(async () => {
+                                    await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
+                                });
+
+                                it('should complete multiple withdrawals', async () => {
+                                    await testMultipleWithdrawals();
+                                });
+                            }
+                        );
+                    }
                 });
             });
         };

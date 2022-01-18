@@ -1608,7 +1608,7 @@ describe('PoolCollection', () => {
 
                 context('when trading is disabled', () => {
                     it('should withdraw', async () => {
-                        await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Update);
+                        await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Reset);
                     });
 
                     context(
