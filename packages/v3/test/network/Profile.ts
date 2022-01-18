@@ -1083,7 +1083,7 @@ describe('Profile @profile', () => {
 
                     switch (distributionType) {
                         case StakingRewardsDistributionType.Flat:
-                            for (const percent of [6, 15, 25]) {
+                            for (const percent of [6, 25]) {
                                 testMultipleDistributions(
                                     Math.floor((programDuration * percent) / 100),
                                     Math.floor(100 / percent)
@@ -1093,7 +1093,7 @@ describe('Profile @profile', () => {
                             break;
 
                         case StakingRewardsDistributionType.ExponentialDecay:
-                            for (const step of [duration.hours(1), duration.days(1), duration.weeks(1)]) {
+                            for (const step of [duration.hours(1), duration.weeks(1)]) {
                                 for (const totalSteps of [5]) {
                                     testMultipleDistributions(step, totalSteps);
                                 }
@@ -1109,7 +1109,7 @@ describe('Profile @profile', () => {
 
             switch (distributionType) {
                 case StakingRewardsDistributionType.Flat:
-                    for (const programDuration of [duration.weeks(12), duration.days(10), duration.years(1)]) {
+                    for (const programDuration of [duration.weeks(12), duration.years(1)]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
                             () => {
@@ -1158,6 +1158,6 @@ describe('Profile @profile', () => {
             }
         };
 
-        testRewardsMatrix([toWei(5_000), toWei(10_000), toWei(100_000)], [100_000, toWei(100_000), toWei(200_000)]);
+        testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
     });
 });
