@@ -377,7 +377,7 @@ describe('Profile @profile', () => {
             testDepositPermitted();
         };
 
-        for (const symbol of [TokenSymbol.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
                 testDeposits(new TokenData(symbol));
             });
