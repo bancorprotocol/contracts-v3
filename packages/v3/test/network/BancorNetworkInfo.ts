@@ -275,7 +275,6 @@ describe('BancorNetworkInfo', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
 
         let sourceToken: TokenWithAddress;
@@ -283,10 +282,8 @@ describe('BancorNetworkInfo', () => {
 
         let trader: Wallet;
 
-        const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
-
         beforeEach(async () => {
-            ({ network, networkToken, networkInfo, networkSettings, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -312,7 +309,10 @@ describe('BancorNetworkInfo', () => {
                 poolCollection
             ));
 
-            await depositToPool(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
+            // increase the network token liquidity by the growth factor a few times
+            for (let i = 0; i < 5; i++) {
+                await depositToPool(deployer, sourceToken, 1, network);
+            }
 
             await network.setTime(await latest());
         };

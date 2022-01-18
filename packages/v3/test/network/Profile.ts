@@ -525,8 +525,6 @@ describe('Profile @profile', () => {
         let networkToken: IERC20;
         let poolCollection: TestPoolCollection;
 
-        const NETWORK_TOKEN_LIQUIDITY = toWei(100_000);
-
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
 
@@ -559,7 +557,10 @@ describe('Profile @profile', () => {
                 poolCollection
             ));
 
-            await depositToPool(deployer, networkToken, NETWORK_TOKEN_LIQUIDITY, network);
+            // increase the network token liquidity by the growth factor a few times
+            for (let i = 0; i < 5; i++) {
+                await depositToPool(deployer, sourceToken, 1, network);
+            }
 
             await network.setTime(await latest());
         };

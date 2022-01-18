@@ -2048,7 +2048,7 @@ describe('PoolCollection', () => {
                         beforeEach(async () => {
                             // increase the network token liquidity by the growth factor a few times
                             for (let i = 0; i < 5; i++) {
-                                await depositToPool(deployer, reserveToken, 1000, network);
+                                await depositToPool(deployer, reserveToken, 1, network);
                             }
 
                             const { liquidity: prevLiquidity } = await poolCollection.poolData(reserveToken.address);
