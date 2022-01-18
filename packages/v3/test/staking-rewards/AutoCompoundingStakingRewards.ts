@@ -1315,11 +1315,19 @@ describe('AutoCompoundingStakingRewards', () => {
                             );
                         }
                     });
+
                     break;
 
                 case StakingRewardsDistributionType.ExponentialDecay:
                     describe('regular tests', () => {
-                        testProgram(ExponentialDecay.MAX_DURATION);
+                        for (const programDuration of [ExponentialDecay.MAX_DURATION]) {
+                            context(
+                                `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
+                                () => {
+                                    testProgram(programDuration);
+                                }
+                            );
+                        }
                     });
 
                     break;
