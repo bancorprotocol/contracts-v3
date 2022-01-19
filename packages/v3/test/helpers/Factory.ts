@@ -252,9 +252,6 @@ const createSystemFixture = async () => {
         ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
     });
 
-    const networkFeeVault = await createProxy(Contracts.NetworkFeeVault, {
-        ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
-    });
     const externalProtectionVault = await createProxy(Contracts.ExternalProtectionVault, {
         ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
     });
@@ -264,7 +261,7 @@ const createSystemFixture = async () => {
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const masterPoolToken = await createPoolToken(poolTokenFactory, networkToken);
-    const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [networkFeeVault.address] });
+    const networkSettings = await createProxy(Contracts.NetworkSettings);
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
         ctorArgs: [
@@ -342,7 +339,6 @@ const createSystemFixture = async () => {
         masterVault,
         externalProtectionVault,
         externalRewardsVault,
-        networkFeeVault,
         masterPool,
         pendingWithdrawals,
         poolTokenFactory,
