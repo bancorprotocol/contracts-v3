@@ -767,6 +767,8 @@ describe('BancorNetwork', () => {
         const reserveTokenSymbol = [TokenSymbol.TKN, TokenSymbol.ETH, TokenSymbol.TKN];
         let reserveTokenAddresses: string[];
 
+        const INITIAL_LIQUIDITY = toWei(50_000_000);
+
         const setTime = async (time: number) => {
             await network.setTime(time);
             await pendingWithdrawals.setTime(time);
@@ -795,8 +797,8 @@ describe('BancorNetwork', () => {
                 const { token } = await setupFundedPool(
                     {
                         tokenData: new TokenData(symbol),
-                        balance: toWei(50_000_000),
-                        requestedLiquidity: toWei(50_000_000).mul(1000),
+                        balance: INITIAL_LIQUIDITY,
+                        requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
                         fundingRate: FUNDING_RATE
                     },
                     deployer,
@@ -823,8 +825,6 @@ describe('BancorNetwork', () => {
 
             await network.addPoolCollection(targetPoolCollection.address);
             await network.setLatestPoolCollection(targetPoolCollection.address);
-
-            await depositToPool(deployer, networkToken, toWei(100_000), network);
 
             await network.setTime(await latest());
         });
