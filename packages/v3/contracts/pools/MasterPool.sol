@@ -487,18 +487,22 @@ contract MasterPool is IMasterPool, Vault {
 
         // calculate the renounced amount to deduct from both the staked balance and current pool funding
         uint256 currentFunding = _currentPoolFunding[pool];
-        uint256 renouncedAmount = Math.min(currentFunding, networkTokenAmount);
+        uint256 reduceFundingAmount = Math.min(currentFunding, networkTokenAmount);
 
         // calculate the pool token amount to burn
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-        uint256 poolTokenAmount = _underlyingToPoolToken(renouncedAmount, poolTokenTotalSupply, currentStakedBalance);
+        uint256 poolTokenAmount = _underlyingToPoolToken(
+            reduceFundingAmount,
+            poolTokenTotalSupply,
+            currentStakedBalance
+        );
 
         // update the current pool funding. Note that the given amount can be higher than the funding amount but the
         // request shouldn't fail (and the funding amount cannot get negative)
-        _currentPoolFunding[pool] = currentFunding - renouncedAmount;
+        _currentPoolFunding[pool] = currentFunding - reduceFundingAmount;
 
         // update the staked balance
-        uint256 newStakedBalance = currentStakedBalance - renouncedAmount;
+        uint256 newStakedBalance = currentStakedBalance - reduceFundingAmount;
         _stakedBalance = newStakedBalance;
 
         // burn pool tokens from the protocol
