@@ -23,9 +23,7 @@ import {
     ZERO_ADDRESS,
     ZERO_FRACTION,
     ZERO_BYTES32,
-    TradingStatusUpdateReason,
-    LIQUIDITY_GROWTH_FACTOR,
-    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
+    TradingStatusUpdateReason
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -53,6 +51,8 @@ const { formatBytes32String } = utils;
 describe('PoolCollection', () => {
     const AVERAGE_RATE_WEIGHT_PPT = toPPT(0.2);
     const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
+    const LIQUIDITY_GROWTH_FACTOR = 2;
+    const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     const POOL_TYPE = 1;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
