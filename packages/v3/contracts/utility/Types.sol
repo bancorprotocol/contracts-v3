@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.10;
 
-/**
- * @dev this contract provides types which can be used by various contracts
- */
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 struct Fraction {
     uint256 n; // numerator
     uint256 d; // denominator
+}
+
+struct Fraction112 {
+    uint112 n; // numerator
+    uint112 d; // denominator
 }
 
 struct Uint512 {
@@ -29,11 +32,38 @@ function isFractionValid(Fraction memory fraction) pure returns (bool) {
 }
 
 /**
- * @dev returns whether a fraction is zero
+ * @dev returns whether a fraction is positive
  */
 // solhint-disable-next-line func-visibility
-function isFractionZero(Fraction memory fraction) pure returns (bool) {
-    return fraction.n == 0 && isFractionValid(fraction);
+function isFractionPositive(Fraction memory fraction) pure returns (bool) {
+    return isFractionValid(fraction) && fraction.n != 0;
+}
+
+/**
+ * @dev returns whether two fractions are equal
+ */
+// solhint-disable-next-line func-visibility
+function areFractionsEqual(Fraction memory fraction1, Fraction memory fraction2) pure returns (bool) {
+    return
+        isFractionValid(fraction1) == isFractionValid(fraction2) &&
+        fraction1.n * fraction2.d == fraction2.n * fraction1.d;
+}
+
+/**
+ * @dev reduces a standard fraction to a 112-bit fraction
+ */
+// solhint-disable-next-line func-visibility
+function toFraction112(Fraction memory fraction) pure returns (Fraction112 memory) {
+    uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), type(uint112).max);
+    return Fraction112({ n: uint112(fraction.n / scale), d: uint112(fraction.d / scale) });
+}
+
+/**
+ * @dev expands a 112-bit fraction to a standard fraction
+ */
+// solhint-disable-next-line func-visibility
+function fromFraction112(Fraction112 memory fraction112) pure returns (Fraction memory) {
+    return Fraction({ n: fraction112.n, d: fraction112.d });
 }
 
 /**

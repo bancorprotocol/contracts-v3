@@ -6,31 +6,33 @@ import { PoolAverageRate, AverageRate } from "../pools/PoolAverageRate.sol";
 
 contract TestPoolAverageRate {
     function calcAverageRate(
-        Fraction calldata spotRate,
         AverageRate calldata averageRate,
-        uint32 currentTime
+        Fraction calldata spotRate,
+        uint32 currentTime,
+        uint16 weightPPT
     ) external pure returns (AverageRate memory) {
-        return PoolAverageRate.calcAverageRate(spotRate, averageRate, currentTime);
+        return PoolAverageRate.calcAverageRate(averageRate, spotRate, currentTime, weightPPT);
     }
 
-    function isPoolRateStable(
-        Fraction calldata spotRate,
+    function isSpotRateStable(
         AverageRate calldata averageRate,
+        Fraction calldata spotRate,
         uint32 maxDeviation,
-        uint32 currentTime
+        uint32 currentTime,
+        uint16 weightPPT
     ) external pure returns (bool) {
-        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation, currentTime);
-    }
-
-    function reducedRatio(Fraction memory ratio) external pure returns (Fraction memory) {
-        return PoolAverageRate.reducedRatio(ratio);
+        return PoolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviation, currentTime, weightPPT);
     }
 
     function isValid(AverageRate memory averageRate) external pure returns (bool) {
         return PoolAverageRate.isValid(averageRate);
     }
 
-    function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) external pure returns (bool) {
-        return PoolAverageRate.isEqual(averageRate1, averageRate2);
+    function areEqual(AverageRate calldata averageRate1, AverageRate calldata averageRate2)
+        external
+        pure
+        returns (bool)
+    {
+        return PoolAverageRate.areEqual(averageRate1, averageRate2);
     }
 }

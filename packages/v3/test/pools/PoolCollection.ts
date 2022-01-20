@@ -24,14 +24,13 @@ import {
     ZERO_FRACTION,
     ZERO_BYTES32,
     TradingStatusUpdateReason,
-    AVERAGE_RATE_PERIOD,
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, toPPM } from '../../utils/Types';
-import { duration, latest } from '..//helpers/Time';
+import { toWei, toPPT, toPPM } from '../../utils/Types';
+import { latest } from '..//helpers/Time';
 import { transfer, getBalance } from '..//helpers/Utils';
 import {
     createPool,
@@ -52,6 +51,7 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 
 describe('PoolCollection', () => {
+    const AVERAGE_RATE_WEIGHT_PPT = toPPT(0.2);
     const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
     const POOL_TYPE = 1;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
@@ -2081,11 +2081,6 @@ describe('PoolCollection', () => {
                             const { liquidity } = await poolCollection.poolData(reserveToken.address);
 
                             expect(liquidity.networkTokenTradingLiquidity).lt(MIN_LIQUIDITY_FOR_TRADING);
-
-                            // ensure that enough time passed for the pool to be considered as stable again
-                            await poolCollection.setTime(
-                                (await poolCollection.currentTime()) + AVERAGE_RATE_PERIOD + duration.days(1)
-                            );
                         });
 
                         it('should allow trading', async () => {
@@ -2353,12 +2348,13 @@ describe('PoolCollection', () => {
                                     const { liquidity } = poolData;
 
                                     return poolAverageRate.calcAverageRate(
+                                        poolData.averageRate,
                                         {
                                             n: liquidity.networkTokenTradingLiquidity,
                                             d: liquidity.baseTokenTradingLiquidity
                                         },
-                                        poolData.averageRate,
-                                        timeElapsed
+                                        timeElapsed,
+                                        AVERAGE_RATE_WEIGHT_PPT
                                     );
                                 };
 
