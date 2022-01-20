@@ -7,14 +7,16 @@ const {
 } = ethers;
 
 export enum ContractName {
+    GovToken = 'GovToken',
+    GovTokenGovernance = 'GovTokenGovernance',
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
-    GovToken = 'GovToken',
-    GovTokenGovernance = 'GovTokenGovernance'
+    ProxyAdmin = 'ProxyAdmin'
 }
 
 export enum DeploymentTag {
-    V2 = 'V2'
+    V2 = 'V2',
+    V3 = 'V3'
 }
 
 export enum DeploymentNetwork {

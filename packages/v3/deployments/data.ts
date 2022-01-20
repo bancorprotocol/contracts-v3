@@ -10,6 +10,11 @@ export const NamedAccounts = {
         [DeploymentNetwork.HARDHAT]: 1,
         [DeploymentNetwork.MAINNET]: '0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83',
         [DeploymentNetwork.HARDHAT_MAINNET_FORK]: '0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83'
+    },
+    daoMultisig: {
+        [DeploymentNetwork.HARDHAT]: 2,
+        [DeploymentNetwork.MAINNET]: '0x7e3692a6d8c34a762079fa9057aed87be7e67cb8',
+        [DeploymentNetwork.HARDHAT_MAINNET_FORK]: '0x7e3692a6d8c34a762079fa9057aed87be7e67cb8'
     }
 };
 
