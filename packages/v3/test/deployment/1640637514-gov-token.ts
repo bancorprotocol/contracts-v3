@@ -1,5 +1,5 @@
+import { AccessControlEnumerable } from '../../components/Contracts';
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
-import { AccessControlEnumerable } from '../../typechain-types';
 import { ContractName } from '../../utils/Constants';
 import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';

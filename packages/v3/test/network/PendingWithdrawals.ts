@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     BancorNetworkInfo,
     IERC20,
     NetworkSettings,
@@ -8,7 +7,7 @@ import {
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { ZERO_ADDRESS, FeeType } from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';

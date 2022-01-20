@@ -1,12 +1,5 @@
 import { ContractBuilder, Contract } from '../../components/ContractBuilder';
-import Contracts from '../../components/Contracts';
-import LegacyContracts, {
-    TokenGovernance,
-    NetworkToken__factory,
-    GovToken__factory
-} from '../../components/LegacyContracts';
-import { isProfiling } from '../../components/Profiler';
-import {
+import Contracts, {
     BancorNetwork,
     BancorNetworkInfo,
     ExternalProtectionVault,
@@ -25,7 +18,13 @@ import {
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import LegacyContracts, {
+    TokenGovernance,
+    NetworkToken__factory,
+    GovToken__factory
+} from '../../components/LegacyContracts';
+import { isProfiling } from '../../components/Profiler';
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';

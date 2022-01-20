@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
-import {
+import Contracts, {
     BancorV1Migration,
     IERC20,
     MasterVault,
@@ -9,7 +7,8 @@ import {
     PoolToken,
     TestBancorNetwork,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS, PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';

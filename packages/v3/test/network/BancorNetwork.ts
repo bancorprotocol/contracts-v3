@@ -1,18 +1,5 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
-import Contracts from '../../components/Contracts';
-import {
-    DSToken,
-    TokenHolder,
-    LiquidityProtectionSettings,
-    LiquidityProtectionStats,
-    LiquidityProtectionStore,
-    LiquidityProtectionSystemStore,
-    TestCheckpointStore,
-    TestLiquidityProtection,
-    TestStandardPoolConverter,
-    TokenGovernance
-} from '../../components/LegacyContracts';
-import {
+import Contracts, {
     BancorNetworkInfo,
     MasterVault,
     ExternalProtectionVault,
@@ -27,7 +14,19 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader,
     TestERC20Burnable
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import {
+    DSToken,
+    TokenHolder,
+    LiquidityProtectionSettings,
+    LiquidityProtectionStats,
+    LiquidityProtectionStore,
+    LiquidityProtectionSystemStore,
+    TestCheckpointStore,
+    TestLiquidityProtection,
+    TestStandardPoolConverter,
+    TokenGovernance
+} from '../../components/LegacyContracts';
 import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';

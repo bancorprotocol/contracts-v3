@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     ExternalProtectionVault,
     IERC20,
     MasterVault,
@@ -11,7 +10,7 @@ import {
     TestMasterPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { createPool, createPoolCollection, createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';

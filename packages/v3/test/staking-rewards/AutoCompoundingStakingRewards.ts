@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     TestStakingRewardsMath,
     BancorNetworkInfo,
     ExternalRewardsVault,
@@ -11,7 +10,7 @@ import {
     TestBancorNetwork,
     TestMasterPool,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, Addressable } from '../../utils/Types';

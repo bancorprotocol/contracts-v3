@@ -1,3 +1,4 @@
+import { ProxyAdmin } from '../components/Contracts';
 import { NetworkToken, GovToken, TokenGovernance } from '../components/LegacyContracts';
 import { ContractName, DeploymentNetwork } from './Constants';
 import { Contract } from 'ethers';
@@ -10,10 +11,11 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 });
 
 export const DeployedContracts = {
+    GovToken: deployed<GovToken>(ContractName.GovToken),
+    GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance),
     NetworkToken: deployed<NetworkToken>(ContractName.NetworkToken),
     NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance),
-    GovToken: deployed<GovToken>(ContractName.GovToken),
-    GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance)
+    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
 };
 
 export const isHardhat = () =>

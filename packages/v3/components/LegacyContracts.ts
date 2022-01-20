@@ -45,8 +45,6 @@ import {
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
-/* eslint-enable camelcase */
-
 export {
     NetworkToken,
     NetworkToken__factory,
@@ -71,6 +69,8 @@ export {
     TokenGovernance
 };
 
+/* eslint-enable camelcase */
+
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
@@ -86,10 +86,18 @@ const getContracts = (signer?: Signer) => ({
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
     TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
-    LiquidityProtectionSettings: deployOrAttach('LiquidityProtectionSettings', LiquidityProtectionSettings__factory, signer),
+    LiquidityProtectionSettings: deployOrAttach(
+        'LiquidityProtectionSettings',
+        LiquidityProtectionSettings__factory,
+        signer
+    ),
     LiquidityProtectionStats: deployOrAttach('LiquidityProtectionStats', LiquidityProtectionStats__factory, signer),
     LiquidityProtectionStore: deployOrAttach('LiquidityProtectionStore', LiquidityProtectionStore__factory, signer),
-    LiquidityProtectionSystemStore: deployOrAttach('LiquidityProtectionSystemStore', LiquidityProtectionSystemStore__factory, signer),
+    LiquidityProtectionSystemStore: deployOrAttach(
+        'LiquidityProtectionSystemStore',
+        LiquidityProtectionSystemStore__factory,
+        signer
+    ),
     TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
     TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),

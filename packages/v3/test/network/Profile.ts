@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { Profiler } from '../../components/Profiler';
-import {
+import Contracts, {
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
@@ -15,7 +13,8 @@ import {
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { Profiler } from '../../components/Profiler';
 import {
     MAX_UINT256,
     PPM_RESOLUTION,

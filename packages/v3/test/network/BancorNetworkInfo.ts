@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TokenGovernance } from '../../components/LegacyContracts';
-import {
+import Contracts, {
     BancorNetworkInfo,
     MasterVault,
     ExternalProtectionVault,
@@ -14,7 +12,8 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';

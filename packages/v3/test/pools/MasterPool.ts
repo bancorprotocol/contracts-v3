@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TokenGovernance } from '../../components/LegacyContracts';
-import {
+import Contracts, {
     MasterVault,
     IERC20,
     NetworkSettings,
@@ -9,7 +7,8 @@ import {
     TestERC20Token,
     TestMasterPool,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { FeeType, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';

@@ -1,4 +1,4 @@
-import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../typechain-types';
+import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../components/Contracts';
 import { RoleIds } from '../../utils/Roles';
 import { expect } from 'chai';
 import { utils } from 'ethers';

@@ -1,4 +1,4 @@
-import { NetworkSettings, TestERC20Token } from '../../typechain-types';
+import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
 import { ZERO_ADDRESS, PPM_RESOLUTION } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';

@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestTypes } from '../../typechain-types';
+import Contracts, { TestTypes } from '../../components/Contracts';
 import { ZERO_FRACTION } from '../../utils/Constants';
 import { toString } from '../../utils/Types';
 import { expect } from 'chai';

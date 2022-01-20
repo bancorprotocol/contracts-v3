@@ -1,6 +1,5 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     IERC20,
     ExternalProtectionVault,
     ExternalRewardsVault,
@@ -15,7 +14,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader,
     MasterPool
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
