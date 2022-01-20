@@ -34,6 +34,10 @@ library PoolAverageRate {
      * an   w   sn   T - w   an * sd * w + ad * sn * (T - w)
      * -- * - + -- * ----- = -------------------------------
      * ad   T   sd     T               ad * sd * T
+     *
+     * requirements:
+     *
+     * - weightPPT must be lesser or equal to PPT_RESOLUTION
      */
     function calcAverageRate(
         AverageRate memory averageRate,
@@ -67,8 +71,8 @@ library PoolAverageRate {
      *
      * requirements:
      *
-     * - spotRate numerator/denominator should be bound by 144 bits (otherwise, the check might revert with an overflow)
-     * - maxDeviation must be lesser or equal to PPM_RESOLUTION
+     * - maxDeviationPPM must be lesser or equal to PPM_RESOLUTION
+     * - weightPPT must be lesser or equal to PPT_RESOLUTION
      */
     function isSpotRateStable(
         AverageRate memory averageRate,
