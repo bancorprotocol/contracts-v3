@@ -17,8 +17,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         args: [daoMultisig],
         from: deployer
     });
+
+    return true;
 };
 
+func.id = ContractName.ProxyAdmin;
 func.tags = [DeploymentTag.V3, ContractName.ProxyAdmin];
 
 export default func;

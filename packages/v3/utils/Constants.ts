@@ -9,6 +9,7 @@ const {
 export enum ContractName {
     GovToken = 'GovToken',
     GovTokenGovernance = 'GovTokenGovernance',
+    MasterVault = 'MasterVault',
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
     ProxyAdmin = 'ProxyAdmin'

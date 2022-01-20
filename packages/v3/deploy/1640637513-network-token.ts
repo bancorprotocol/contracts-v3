@@ -80,8 +80,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         args: [deployer, TOTAL_SUPPLY],
         from: deployer
     });
+
+    return true;
 };
 
+func.id = ContractName.NetworkToken;
 func.skip = async () => isMainnet();
 func.tags = [DeploymentTag.V2, ContractName.NetworkToken, ContractName.NetworkTokenGovernance];
 
