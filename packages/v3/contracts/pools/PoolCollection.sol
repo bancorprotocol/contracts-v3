@@ -1020,7 +1020,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             return;
         }
 
-        // try to check whether the pool is stable (when both reserves and and average rate are available)
+        // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
         bool isAverageRateValid = PoolAverageRate.isValid(averageRate);
         if (
