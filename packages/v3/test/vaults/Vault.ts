@@ -304,7 +304,7 @@ describe('Vault', () => {
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                return testAuthentication(new TokenData(symbol));
+                testAuthentication(new TokenData(symbol));
             });
         }
     });
