@@ -14,19 +14,25 @@ import {
 } from '../components/Contracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../components/LegacyContracts';
 import { ContractName, DeploymentNetwork } from './Constants';
+import { toWei } from './Types';
 import { Contract } from 'ethers';
-import { deployments, ethers } from 'hardhat';
+import { deployments, ethers, getNamedAccounts } from 'hardhat';
 import { ProxyOptions as DeployProxyOptions, Address } from 'hardhat-deploy/types';
 
 const {
     deploy: deployContract,
     execute: executeTransaction,
     getNetworkName,
-    fixture,
     run,
     save: saveContract,
     getExtendedArtifact
 } = deployments;
+
+interface EnvOptions {
+    FORKING?: boolean;
+}
+
+const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
 const deployed = <F extends Contract>(name: ContractName) => ({
     deployed: async () => ethers.getContract<F>(name)
@@ -51,9 +57,8 @@ export const DeployedContracts = {
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
 };
 
-export const isHardhat = () =>
-    [DeploymentNetwork.HARDHAT, DeploymentNetwork.HARDHAT_MAINNET_FORK].includes(getNetworkName() as DeploymentNetwork);
-export const isHardhatMainnetFork = () => getNetworkName() === DeploymentNetwork.HARDHAT_MAINNET_FORK;
+export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT;
+export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isMainnetFork = () => isHardhatMainnetFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
 export const isLive = () => isMainnet() && !isMainnetFork();
@@ -70,10 +75,34 @@ interface DeployOptions {
     proxy?: ProxyOptions;
 }
 
+const TEST_MINIMUM_BALANCE = toWei(10);
+const TEST_FUNDING = toWei(10);
+
+export const fundAccount = async (account: string) => {
+    if (!isMainnetFork()) {
+        return;
+    }
+
+    const balance = await ethers.provider.getBalance(account);
+    if (balance.gte(TEST_MINIMUM_BALANCE)) {
+        return;
+    }
+
+    const { ethWhale } = await getNamedAccounts();
+    const whale = await ethers.getSigner(ethWhale);
+
+    return whale.sendTransaction({
+        value: TEST_FUNDING,
+        to: account
+    });
+};
+
 const INITIALIZE = 'initialize';
 
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, args, proxy } = options;
+
+    await fundAccount(from);
 
     let proxyOptions: DeployProxyOptions = {};
     if (proxy) {
@@ -114,6 +143,8 @@ interface ExecuteOptions {
 export const execute = async (options: ExecuteOptions) => {
     const { name, methodName, from, args } = options;
 
+    await fundAccount(from);
+
     return executeTransaction(name, { from, log: true }, methodName, ...(args || []));
 };
 
@@ -126,6 +157,8 @@ interface InitializeProxyOptions {
 
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
+
+    await fundAccount(from);
 
     await execute({
         name: proxyName,
@@ -161,10 +194,5 @@ export const runTestDeployment = async (tags?: string | string[]) => {
         throw new Error('Unsupported network');
     }
 
-    // mainnet forks don't support evm_snapshot, so we have to run test deployment every time before tests
-    if (isMainnetFork()) {
-        return run(tags, { resetMemory: false });
-    }
-
-    return fixture(tags);
+    return run(tags, { resetMemory: false, deletePreviousDeployments: true });
 };

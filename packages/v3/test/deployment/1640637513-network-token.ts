@@ -38,6 +38,7 @@ describe('1640637513-network-token', () => {
 
     it('should deploy and configure the network token governance', async () => {
         expect(await networkTokenGovernance.token()).to.equal(networkToken.address);
+
         expect(await networkToken.owner()).to.equal(networkTokenGovernance.address);
 
         await expectRole(

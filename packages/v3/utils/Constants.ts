@@ -33,7 +33,6 @@ export enum DeploymentTag {
 export enum DeploymentNetwork {
     HARDHAT = 'hardhat',
     LOCALHOST = 'localhost',
-    HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
     MAINNET = 'mainnet'
 }
 

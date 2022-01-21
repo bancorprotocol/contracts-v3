@@ -73,7 +73,7 @@ describe('1642682503-master-pool', () => {
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address, deployer]
+            isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address, deployer]
         );
 
         await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [

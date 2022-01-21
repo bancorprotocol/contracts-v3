@@ -21,6 +21,7 @@ interface EnvOptions {
     BAIL?: boolean;
     ETHEREUM_PROVIDER_URL: string;
     ETHERSCAN_API_KEY?: string;
+    FORKING?: boolean;
 }
 
 const {
@@ -28,7 +29,8 @@ const {
     PROFILE: isProfiling,
     BAIL,
     ETHEREUM_PROVIDER_URL = '',
-    ETHERSCAN_API_KEY
+    ETHERSCAN_API_KEY,
+    FORKING: isForking
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
@@ -64,25 +66,27 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        [DeploymentNetwork.HARDHAT]: {
-            accounts: {
-                count: 10,
-                accountsBalance: '10000000000000000000000000000000000000000000000'
-            },
-            allowUnlimitedContractSize: true,
-            saveDeployments: false,
-            live: false
-        },
-        [DeploymentNetwork.HARDHAT_MAINNET_FORK]: {
-            url: ETHEREUM_PROVIDER_URL,
-            forking: {
-                enabled: true,
-                url: ETHEREUM_PROVIDER_URL,
-                blockNumber: 13900000
-            },
-            saveDeployments: false,
-            live: true
-        },
+        [DeploymentNetwork.HARDHAT]: isForking
+            ? /* eslint-disable indent */
+              {
+                  forking: {
+                      enabled: true,
+                      url: ETHEREUM_PROVIDER_URL,
+                      blockNumber: 13900000
+                  },
+                  saveDeployments: false,
+                  live: true
+              }
+            : {
+                  accounts: {
+                      count: 10,
+                      accountsBalance: '10000000000000000000000000000000000000000000000'
+                  },
+                  allowUnlimitedContractSize: true,
+                  saveDeployments: false,
+                  live: false
+              },
+        /* eslint-enable indent */
         [DeploymentNetwork.LOCALHOST]: {
             chainId: 31337,
             url: 'http://127.0.0.1:8545',
