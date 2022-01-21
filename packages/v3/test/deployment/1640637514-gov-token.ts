@@ -12,7 +12,6 @@ describe('1640637514-gov-token', () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;
-    let stakingRewards: string;
     let govToken: GovToken;
     let govTokenGovernance: TokenGovernance;
 
@@ -20,7 +19,7 @@ describe('1640637514-gov-token', () => {
     const govTokenData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, liquidityProtection } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
