@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682496-master-vault', () => {
-    let deployer: string;
+    let daoMultisig: string;
     let proxyAdmin: ProxyAdmin;
     let masterVault: MasterVault;
 
     before(async () => {
-        ({ deployer } = await getNamedAccounts());
+        ({ daoMultisig } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -29,10 +29,7 @@ describe('1642682496-master-vault', () => {
 
         await expectRoles(masterVault, Roles.MasterVault);
 
-        // during the initial deployment, only the deployer will have the ROLE_ADMIN role (which will be revoked in a
-        // future deployment, that will revoke it and grant additional roles to the network and the master pool
-        // contracts)
-        await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
         await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
     });

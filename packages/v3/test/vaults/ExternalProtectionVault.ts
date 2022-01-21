@@ -44,16 +44,13 @@ describe('ExternalProtectionVault', () => {
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
 
-            expect(await externalProtectionVault.version()).to.equal(1);
-            expect(await externalProtectionVault.isPayable()).to.be.true;
+            expect(await externalRewardsVault.version()).to.equal(1);
+            expect(await externalRewardsVault.isPayable()).to.be.true;
 
-            await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-                deployer.address,
-                network.address
+            await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
             ]);
-            await expectRole(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-                network.address
-            ]);
+            await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         });
     });
 

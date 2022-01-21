@@ -7,11 +7,21 @@ const {
 } = ethers;
 
 export enum ContractName {
+    BancorNetwork = 'BancorNetwork',
+    BancorNetworkProxy = 'BancorNetworkProxy',
+    ExternalProtectionVault = 'ExternalProtectionVault',
+    ExternalRewardsVault = 'ExternalRewardsVault',
     GovToken = 'GovToken',
     GovTokenGovernance = 'GovTokenGovernance',
+    MasterPool = 'MasterPool',
+    MasterPoolToken = 'MasterPoolToken',
     MasterVault = 'MasterVault',
+    NetworkSettings = 'NetworkSettings',
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
+    PendingWithdrawals = 'PendingWithdrawals',
+    PoolCollectionUpgrader = 'PoolCollectionUpgrader',
+    PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin'
 }
 
@@ -62,6 +72,9 @@ export const ExponentialDecay = {
     LAMBDA: EXP_DECAY_LAMBDA,
     MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
 };
+
+export const DEFAULT_LOCK_DURATION = duration.days(7);
+export const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 
 export const AVERAGE_RATE_PERIOD = duration.minutes(10);
 export const LIQUIDITY_GROWTH_FACTOR = 2;

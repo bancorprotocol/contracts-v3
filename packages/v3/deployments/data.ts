@@ -1,6 +1,18 @@
 import { DeploymentNetwork } from '../utils/Constants';
 
+const LegacyNamedAccounts = {
+    liquidityProtection: {
+        [DeploymentNetwork.MAINNET]: '0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e',
+        [DeploymentNetwork.HARDHAT_MAINNET_FORK]: '0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e'
+    },
+    stakingRewards: {
+        [DeploymentNetwork.MAINNET]: '0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67',
+        [DeploymentNetwork.HARDHAT_MAINNET_FORK]: '0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67'
+    }
+};
+
 export const NamedAccounts = {
+    ...LegacyNamedAccounts,
     deployer: {
         [DeploymentNetwork.HARDHAT]: 0,
         [DeploymentNetwork.MAINNET]: '0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E',

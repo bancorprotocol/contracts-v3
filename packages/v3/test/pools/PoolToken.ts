@@ -31,6 +31,8 @@ describe('PoolToken', () => {
         it('should be properly initialized', async () => {
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
 
+            expect(await poolToken.version()).to.equal(1);
+
             expect(await poolToken.name()).to.equal(NAME);
             expect(await poolToken.symbol()).to.equal(SYMBOL);
             expect(await poolToken.decimals()).to.equal(DECIMALS);

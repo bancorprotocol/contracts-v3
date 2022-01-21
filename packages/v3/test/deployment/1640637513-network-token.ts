@@ -11,6 +11,8 @@ import { getNamedAccounts } from 'hardhat';
 describe('1640637513-network-token', () => {
     let deployer: string;
     let foundationMultisig: string;
+    let liquidityProtection: string;
+    let stakingRewards: string;
     let networkToken: NetworkToken;
     let networkTokenGovernance: TokenGovernance;
 
@@ -18,7 +20,7 @@ describe('1640637513-network-token', () => {
     const networkTokenData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -52,14 +54,12 @@ describe('1640637513-network-token', () => {
             [deployer]
         );
 
-        if (!isMainnet()) {
-            await expectRole(
-                networkTokenGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_MINTER,
-                Roles.TokenGovernance.ROLE_GOVERNOR,
-                [deployer]
-            );
-        }
+        await expectRole(
+            networkTokenGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_MINTER,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
+        );
     });
 
     if (!isMainnet()) {

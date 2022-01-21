@@ -11,6 +11,8 @@ import { getNamedAccounts } from 'hardhat';
 describe('1640637514-gov-token', () => {
     let deployer: string;
     let foundationMultisig: string;
+    let liquidityProtection: string;
+    let stakingRewards: string;
     let govToken: GovToken;
     let govTokenGovernance: TokenGovernance;
 
@@ -18,7 +20,7 @@ describe('1640637514-gov-token', () => {
     const govTokenData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -52,14 +54,12 @@ describe('1640637514-gov-token', () => {
             [deployer]
         );
 
-        if (!isMainnet()) {
-            await expectRole(
-                govTokenGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_MINTER,
-                Roles.TokenGovernance.ROLE_GOVERNOR,
-                [deployer]
-            );
-        }
+        await expectRole(
+            govTokenGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_MINTER,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
+        );
     });
 
     if (!isMainnet()) {

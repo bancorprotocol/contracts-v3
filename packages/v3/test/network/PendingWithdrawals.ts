@@ -8,7 +8,12 @@ import Contracts, {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import { ZERO_ADDRESS, FeeType } from '../../utils/Constants';
+import {
+    ZERO_ADDRESS,
+    FeeType,
+    DEFAULT_LOCK_DURATION,
+    DEFAULT_WITHDRAWAL_WINDOW_DURATION
+} from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
@@ -24,9 +29,6 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 
 describe('PendingWithdrawals', () => {
-    const DEFAULT_LOCK_DURATION = duration.days(7);
-    const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
-
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
