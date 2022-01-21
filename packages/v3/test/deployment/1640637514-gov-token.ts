@@ -58,7 +58,7 @@ describe('1640637514-gov-token', () => {
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
+            isMainnet() ? [liquidityProtection] : [deployer]
         );
     });
 
