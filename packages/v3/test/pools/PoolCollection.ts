@@ -105,45 +105,36 @@ describe('PoolCollection', () => {
         contextId: string,
         res: ContractTransaction
     ) => {
-        let args = [contextId, token.address, networkToken.address, newLiquidity.networkTokenTradingLiquidity];
         if (!prevLiquidity.networkTokenTradingLiquidity.eq(newLiquidity.networkTokenTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(...args);
+                .withArgs(contextId, token.address, networkToken.address, newLiquidity.networkTokenTradingLiquidity);
         } else {
-            await expect(res)
-                .not.to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(...args);
+            await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
 
-        args = [contextId, token.address, token.address, newLiquidity.baseTokenTradingLiquidity];
         if (!prevLiquidity.baseTokenTradingLiquidity.eq(newLiquidity.baseTokenTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(...args);
+                .withArgs(contextId, token.address, token.address, newLiquidity.baseTokenTradingLiquidity);
         } else {
-            await expect(res)
-                .not.to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(...args);
+            await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
 
         const poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(token.address));
-        args = [
-            contextId,
-            token.address,
-            await poolToken.totalSupply(),
-            newLiquidity.stakedBalance,
-            await getBalance(token, masterVault.address)
-        ];
 
         if (!prevLiquidity.stakedBalance.eq(newLiquidity.stakedBalance)) {
             await expect(res)
                 .to.emit(poolCollection, 'TotalLiquidityUpdated')
-                .withArgs(...args);
+                .withArgs(
+                    contextId,
+                    token.address,
+                    await poolToken.totalSupply(),
+                    newLiquidity.stakedBalance,
+                    await getBalance(token, masterVault.address)
+                );
         } else {
-            await expect(res)
-                .not.to.emit(poolCollection, 'TotalLiquidityUpdated')
-                .withArgs(...args);
+            await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
         }
     };
 
