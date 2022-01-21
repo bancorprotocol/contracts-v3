@@ -7,6 +7,7 @@ import {
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
+    PoolCollection,
     PoolCollectionUpgrader,
     PoolToken,
     PoolTokenFactory,
@@ -54,6 +55,7 @@ export const DeployedContracts = {
     NetworkToken: deployed<NetworkToken>(ContractName.NetworkToken),
     NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance),
     PendingWithdrawals: deployed<PendingWithdrawals>(ContractName.PendingWithdrawals),
+    PoolCollectionType1: deployed<PoolCollection>(ContractName.PoolCollectionType1),
     PoolCollectionUpgrader: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgrader),
     PoolTokenFactory: deployed<PoolTokenFactory>(ContractName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
@@ -175,6 +177,8 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
         name,
         address
     });
+
+    return address;
 };
 
 interface Deployment {

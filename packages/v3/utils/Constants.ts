@@ -1,4 +1,5 @@
 import { duration } from './Time';
+import { toPPM } from './Types';
 import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
@@ -21,6 +22,7 @@ export enum ContractName {
     NetworkToken = 'NetworkToken',
     NetworkTokenGovernance = 'NetworkTokenGovernance',
     PendingWithdrawals = 'PendingWithdrawals',
+    PoolCollectionType1 = 'PoolCollectionType1',
     PoolCollectionUpgrader = 'PoolCollectionUpgrader',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin'
@@ -79,3 +81,9 @@ export const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 export const AVERAGE_RATE_PERIOD = duration.minutes(10);
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+
+export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
+
+export enum PoolType {
+    Standard = 1
+}

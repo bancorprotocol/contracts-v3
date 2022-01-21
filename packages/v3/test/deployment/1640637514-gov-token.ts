@@ -45,14 +45,12 @@ describe('1640637514-gov-token', () => {
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-
         await expectRole(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [deployer]
         );
-
         await expectRole(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,

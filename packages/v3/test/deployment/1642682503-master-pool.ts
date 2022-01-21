@@ -56,26 +56,22 @@ describe('1642682503-master-pool', () => {
             daoMultisig,
             networkProxy.address
         ]);
-
         await expectRole(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
-        await expectRole(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, []);
+        await expectRole(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         await expectRole(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         await expectRole(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
-
         await expectRole(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             Roles.TokenGovernance.ROLE_GOVERNOR,
             isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address, deployer]
         );
-
         await expectRole(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             Roles.TokenGovernance.ROLE_GOVERNOR,
             isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address, deployer]
         );
-
         await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
             masterPool.address
         ]);

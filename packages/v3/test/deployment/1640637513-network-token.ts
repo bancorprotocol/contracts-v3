@@ -47,14 +47,12 @@ describe('1640637513-network-token', () => {
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-
         await expectRole(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [deployer]
         );
-
         await expectRole(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,

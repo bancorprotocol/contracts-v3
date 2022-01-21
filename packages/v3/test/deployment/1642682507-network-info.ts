@@ -62,7 +62,7 @@ describe('1642682507-network-info', () => {
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
 
-    it('should deploy and configure the pool collection upgrader contract', async () => {
+    it('should deploy and configure the network info contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(networkInfo.address)).to.equal(proxyAdmin.address);
 
         expect(await networkInfo.version()).to.equal(1);

@@ -11,11 +11,39 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
     const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgrader.deployed();
 
-    await initializeProxy({
+    const networkAddress = await initializeProxy({
         name: ContractName.BancorNetwork,
         proxyName: ContractName.BancorNetworkProxy,
         args: [masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address],
         from: deployer
+    });
+
+    await execute({
+        name: ContractName.MasterVault,
+        methodName: 'grantRole',
+        args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
+        from: daoMultisig
+    });
+
+    await execute({
+        name: ContractName.MasterVault,
+        methodName: 'grantRole',
+        args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
+        from: daoMultisig
+    });
+
+    await execute({
+        name: ContractName.ExternalProtectionVault,
+        methodName: 'grantRole',
+        args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
+        from: daoMultisig
+    });
+
+    await execute({
+        name: ContractName.ExternalProtectionVault,
+        methodName: 'grantRole',
+        args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
+        from: daoMultisig
     });
 
     await execute({
@@ -31,6 +59,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         args: [Roles.Upgradeable.ROLE_ADMIN, deployer],
         from: deployer
     });
+
+    // await masterPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
     return true;
 };
