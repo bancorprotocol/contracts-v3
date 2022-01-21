@@ -23,7 +23,7 @@ describe('1642682500-master-pool-token', () => {
         masterPoolToken = await DeployedContracts.MasterPoolToken.deployed();
     });
 
-    it('should deploy and configure the external rewards vault contract', async () => {
+    it('should deploy and configure the master pool contract', async () => {
         expect(await masterPoolToken.version()).to.equal(1);
 
         expect(await masterPoolToken.owner()).to.equal(daoMultisig);

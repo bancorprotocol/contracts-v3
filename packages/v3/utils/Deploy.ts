@@ -1,5 +1,6 @@
 import {
     BancorNetwork,
+    BancorNetworkInfo,
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterPool,
@@ -40,6 +41,7 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 
 export const DeployedContracts = {
     BancorNetwork: deployed<BancorNetwork>(ContractName.BancorNetwork),
+    BancorNetworkInfo: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVault),
     ExternalRewardsVault: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVault),

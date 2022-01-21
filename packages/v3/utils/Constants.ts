@@ -8,6 +8,7 @@ const {
 
 export enum ContractName {
     BancorNetwork = 'BancorNetwork',
+    BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
     ExternalProtectionVault = 'ExternalProtectionVault',
     ExternalRewardsVault = 'ExternalRewardsVault',

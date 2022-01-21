@@ -328,18 +328,20 @@ const createSystemFixture = async () => {
 
     await network.initialize(masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
-    const networkInfo = await Contracts.BancorNetworkInfo.deploy(
-        network.address,
-        networkTokenGovernance.address,
-        govTokenGovernance.address,
-        networkSettings.address,
-        masterVault.address,
-        externalProtectionVault.address,
-        externalRewardsVault.address,
-        masterPool.address,
-        pendingWithdrawals.address,
-        poolCollectionUpgrader.address
-    );
+    const networkInfo = await createProxy(Contracts.BancorNetworkInfo, {
+        ctorArgs: [
+            network.address,
+            networkTokenGovernance.address,
+            govTokenGovernance.address,
+            networkSettings.address,
+            masterVault.address,
+            externalProtectionVault.address,
+            externalRewardsVault.address,
+            masterPool.address,
+            pendingWithdrawals.address,
+            poolCollectionUpgrader.address
+        ]
+    });
 
     const poolCollection = await createPoolCollection(
         network,

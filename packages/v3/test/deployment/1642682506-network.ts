@@ -21,7 +21,7 @@ describe('1642682506-network', () => {
         network = await DeployedContracts.BancorNetwork.deployed();
     });
 
-    it('should deploy and configure the pool collection upgrader contract', async () => {
+    it('should deploy and configure the network contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(network.address)).to.equal(proxyAdmin.address);
 
         expect(await network.version()).to.equal(1);

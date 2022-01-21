@@ -21,7 +21,7 @@ describe('1642682501-network-settings', () => {
         networkSettings = await DeployedContracts.NetworkSettings.deployed();
     });
 
-    it('should deploy and configure the external protection vault contract', async () => {
+    it('should deploy and configure the network settings contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(networkSettings.address)).to.equal(proxyAdmin.address);
 
         expect(await networkSettings.version()).to.equal(1);
