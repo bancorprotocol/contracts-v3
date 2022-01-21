@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682501-network-settings', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let networkSettings: NetworkSettings;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -26,6 +26,6 @@ describe('1642682501-network-settings', () => {
 
         expect(await networkSettings.version()).to.equal(1);
 
-        await expectRole(networkSettings, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRole(networkSettings, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

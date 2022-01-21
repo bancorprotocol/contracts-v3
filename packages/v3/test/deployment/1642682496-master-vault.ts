@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682496-master-vault', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let masterVault: MasterVault;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -29,7 +29,7 @@ describe('1642682496-master-vault', () => {
 
         await expectRoles(masterVault, Roles.MasterVault);
 
-        await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
         await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
     });

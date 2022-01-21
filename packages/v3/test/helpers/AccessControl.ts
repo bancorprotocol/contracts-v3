@@ -12,13 +12,13 @@ export const expectRole = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
     roleId: typeof RoleIds[number],
     adminRole: string,
-    initialMembers: string[] = []
+    members: string[] = []
 ) => {
     expect(await contract.getRoleAdmin(roleId)).to.equal(adminRole);
-    expect(await contract.getRoleMemberCount(roleId)).to.equal(initialMembers?.length);
+    expect(await contract.getRoleMemberCount(roleId)).to.equal(members?.length);
 
-    for (const initialMember of initialMembers) {
-        expect(await contract.hasRole(roleId, initialMember)).to.be.true;
+    for (const member of members) {
+        expect(await contract.hasRole(roleId, member)).to.be.true;
     }
 };
 

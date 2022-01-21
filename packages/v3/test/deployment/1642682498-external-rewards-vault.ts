@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682498-external-rewards-vault', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let externalRewardsVault: ExternalRewardsVault;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -27,9 +27,7 @@ describe('1642682498-external-rewards-vault', () => {
         expect(await externalRewardsVault.version()).to.equal(1);
         expect(await externalRewardsVault.isPayable()).to.be.true;
 
-        await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-            daoMultisig
-        ]);
+        await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
         await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
     });
 });

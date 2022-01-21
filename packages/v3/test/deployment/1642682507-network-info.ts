@@ -19,7 +19,7 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682507-network-info', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
 
     let network: BancorNetwork;
@@ -39,7 +39,7 @@ describe('1642682507-network-info', () => {
     let networkInfo: BancorNetworkInfo;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -81,6 +81,6 @@ describe('1642682507-network-info', () => {
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
         expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
 
-        await expectRole(networkInfo, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRole(networkInfo, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

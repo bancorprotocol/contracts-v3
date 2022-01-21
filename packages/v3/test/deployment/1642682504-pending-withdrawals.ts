@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682504-pending-withdrawals', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let pendingWithdrawals: PendingWithdrawals;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -26,7 +26,7 @@ describe('1642682504-pending-withdrawals', () => {
 
         expect(await pendingWithdrawals.version()).to.equal(1);
 
-        await expectRole(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRole(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
 
         expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
         expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);

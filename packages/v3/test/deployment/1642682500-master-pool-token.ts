@@ -7,13 +7,13 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682500-master-pool-token', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let networkToken: NetworkToken;
     let masterPoolToken: PoolToken;
     const masterPoolTokenData = new TokenData(TokenSymbol.bnBNT);
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -26,7 +26,7 @@ describe('1642682500-master-pool-token', () => {
     it('should deploy and configure the master pool contract', async () => {
         expect(await masterPoolToken.version()).to.equal(1);
 
-        expect(await masterPoolToken.owner()).to.equal(daoMultisig);
+        expect(await masterPoolToken.owner()).to.equal(deployer);
 
         expect(await masterPoolToken.name()).to.equal(masterPoolTokenData.name());
         expect(await masterPoolToken.symbol()).to.equal(masterPoolTokenData.symbol());

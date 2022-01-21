@@ -4,7 +4,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, daoMultisig } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetwork.deployed();
     const networkToken = await DeployedContracts.NetworkToken.deployed();
@@ -36,7 +36,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.BancorNetwork,
         methodName: 'addPoolCollection',
         args: [poolCollectionAddress],
-        from: daoMultisig
+        from: deployer
     });
 
     return true;

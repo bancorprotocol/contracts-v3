@@ -15,7 +15,6 @@ import { getNamedAccounts } from 'hardhat';
 
 describe('1642682503-master-pool', () => {
     let deployer: string;
-    let daoMultisig: string;
     let liquidityProtection: string;
     let stakingRewards: string;
     let proxyAdmin: ProxyAdmin;
@@ -27,7 +26,7 @@ describe('1642682503-master-pool', () => {
     let masterPoolToken: PoolToken;
 
     before(async () => {
-        ({ deployer, daoMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, liquidityProtection, stakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -53,7 +52,7 @@ describe('1642682503-master-pool', () => {
         await expectRoles(masterPool, Roles.MasterPool);
 
         await expectRole(masterPool, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-            daoMultisig,
+            deployer,
             networkProxy.address
         ]);
         await expectRole(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);

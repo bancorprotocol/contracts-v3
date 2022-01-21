@@ -5,7 +5,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, daoMultisig } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     const masterPool = await DeployedContracts.MasterPool.deployed();
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -22,45 +22,29 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.MasterVault,
         methodName: 'grantRole',
         args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
-        from: daoMultisig
+        from: deployer
     });
 
     await execute({
         name: ContractName.MasterVault,
         methodName: 'grantRole',
         args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
-        from: daoMultisig
+        from: deployer
     });
 
     await execute({
         name: ContractName.ExternalProtectionVault,
         methodName: 'grantRole',
         args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
-        from: daoMultisig
+        from: deployer
     });
 
     await execute({
         name: ContractName.ExternalProtectionVault,
         methodName: 'grantRole',
         args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
-        from: daoMultisig
-    });
-
-    await execute({
-        name: ContractName.BancorNetwork,
-        methodName: 'grantRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, daoMultisig],
         from: deployer
     });
-
-    await execute({
-        name: ContractName.BancorNetwork,
-        methodName: 'revokeRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, deployer],
-        from: deployer
-    });
-
-    // await masterPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
     return true;
 };

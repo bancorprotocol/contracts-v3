@@ -6,12 +6,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describe('1642682499-pool-token-factory', () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let poolTokenFactory: PoolTokenFactory;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -26,6 +26,6 @@ describe('1642682499-pool-token-factory', () => {
 
         expect(await poolTokenFactory.version()).to.equal(1);
 
-        await expectRole(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRole(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

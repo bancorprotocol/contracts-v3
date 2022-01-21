@@ -13,7 +13,7 @@ interface PoolTokenCreated {
 }
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { daoMultisig } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     const networkToken = await DeployedContracts.NetworkToken.deployed();
 
@@ -21,7 +21,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.PoolTokenFactory,
         methodName: 'createPoolToken',
         args: [networkToken.address],
-        from: daoMultisig
+        from: deployer
     });
 
     const event = events![1] as PoolTokenCreated;
@@ -38,7 +38,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await execute({
         name: ContractName.MasterPoolToken,
         methodName: 'acceptOwnership',
-        from: daoMultisig
+        from: deployer
     });
 
     return true;

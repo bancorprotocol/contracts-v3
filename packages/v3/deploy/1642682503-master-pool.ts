@@ -5,7 +5,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, daoMultisig } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     const networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
     const networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
@@ -36,7 +36,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.MasterPoolToken,
         methodName: 'transferOwnership',
         args: [masterPoolAddress],
-        from: daoMultisig
+        from: deployer
     });
 
     await execute({
@@ -70,20 +70,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.MasterVault,
         methodName: 'grantRole',
         args: [Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPoolAddress],
-        from: daoMultisig
-    });
-
-    await execute({
-        name: ContractName.MasterPool,
-        methodName: 'grantRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, daoMultisig],
-        from: deployer
-    });
-
-    await execute({
-        name: ContractName.MasterPool,
-        methodName: 'revokeRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, deployer],
         from: deployer
     });
 
