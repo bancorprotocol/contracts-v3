@@ -81,8 +81,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error InsufficientLiquidity();
     error InvalidRate();
     error ReturnAmountTooLow();
-    error TradingIsDisabled();
-    error TradingIsEnabled();
+    error TradingDisabled();
+    error AlreadyEnabled();
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
@@ -482,7 +482,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Pool storage data = _poolStorage(pool);
 
         if (data.tradingEnabled) {
-            revert TradingIsEnabled();
+            revert AlreadyEnabled();
         }
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
@@ -1245,7 +1245,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
-            revert TradingIsDisabled();
+            revert TradingDisabled();
         }
 
         if (params.isSourceNetworkToken) {

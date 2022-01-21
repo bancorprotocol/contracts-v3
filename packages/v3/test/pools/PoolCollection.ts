@@ -750,7 +750,7 @@ describe('PoolCollection', () => {
                 it('should revert when attempting to enable trading twice', async () => {
                     await poolCollection.enableTrading(token.address, FUNDING_RATE);
                     await expect(poolCollection.enableTrading(token.address, FUNDING_RATE)).to.be.revertedWith(
-                        'TradingIsEnabled'
+                        'AlreadyEnabled'
                     );
                 });
 
@@ -1776,7 +1776,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('TradingIsDisabled');
+                        ).to.be.revertedWith('TradingDisabled');
 
                         for (const targetAmount of [true, false]) {
                             await expect(
@@ -1786,7 +1786,7 @@ describe('PoolCollection', () => {
                                     1,
                                     targetAmount
                                 )
-                            ).to.be.revertedWith('TradingIsDisabled');
+                            ).to.be.revertedWith('TradingDisabled');
                         }
                     });
                 });
