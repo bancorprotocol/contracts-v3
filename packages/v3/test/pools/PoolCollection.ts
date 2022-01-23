@@ -1157,7 +1157,6 @@ describe('PoolCollection', () => {
                                 }
 
                                 // ensure that the new network token funding was updated
-
                                 if (targetNetworkTokenTradingLiquidity.gt(prevLiquidity.networkTokenTradingLiquidity)) {
                                     expect(await masterPool.currentPoolFunding(token.address)).to.equal(
                                         prevFunding.add(
@@ -1183,13 +1182,9 @@ describe('PoolCollection', () => {
                     }
                 };
 
-                const testMultipleDepositsFor = async (
-                    tokenAmount: BigNumberish,
-                    count: number,
-                    expectTradingLiquidity: TradingLiquidityState
-                ) => {
-                    for (let i = 0; i < count; i++) {
-                        await testDepositFor(tokenAmount, expectTradingLiquidity);
+                const testMultipleDepositsFor = async (expectTradingLiquidity: TradingLiquidityState) => {
+                    for (let i = 0; i < COUNT; i++) {
+                        await testDepositFor(AMOUNT, expectTradingLiquidity);
                     }
                 };
 
@@ -1220,7 +1215,7 @@ describe('PoolCollection', () => {
 
                     context('when below the deposit limit', () => {
                         it('should deposit and reset the trading liquidity', async () => {
-                            await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                            await testMultipleDepositsFor(TradingLiquidityState.Reset);
                         });
                     });
                 });
@@ -1279,7 +1274,7 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should deposit and reset the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
                                 });
                             }
                         );
@@ -1311,7 +1306,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should deposit liquidity and preserve the trading liquidity', async () => {
-                                await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Ignore);
+                                await testMultipleDepositsFor(TradingLiquidityState.Ignore);
                             });
                         });
 
@@ -1331,7 +1326,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
                             });
 
                             context('when the pool funding limit is below the minimum liquidity for trading', () => {
@@ -1343,7 +1338,7 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should deposit and reset the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
                                 });
                             });
 
@@ -1355,7 +1350,7 @@ describe('PoolCollection', () => {
                                     });
 
                                     it('should deposit and reset the trading liquidity', async () => {
-                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Reset);
+                                        await testMultipleDepositsFor(TradingLiquidityState.Reset);
                                     });
                                 }
                             );
@@ -1366,13 +1361,13 @@ describe('PoolCollection', () => {
                                     beforeEach(async () => {
                                         // ensure that the pool grew a bit and then retroactive reduce the funding
                                         // limit to 0 to force the shrinking of the pool
-                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
+                                        await testMultipleDepositsFor(TradingLiquidityState.Update);
 
                                         await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING);
                                     });
 
                                     it('should deposit and update the trading liquidity', async () => {
-                                        await testMultipleDepositsFor(AMOUNT, COUNT, TradingLiquidityState.Update);
+                                        await testMultipleDepositsFor(TradingLiquidityState.Update);
                                     });
                                 }
                             );
@@ -1390,7 +1385,7 @@ describe('PoolCollection', () => {
     });
 
     describe('withdraw', () => {
-        const testWithdrawal = (tokenData: TokenData) => {
+        const testWithdrawal = (tokenData: TokenData, withdrawalFeePPM: number) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
             let networkToken: IERC20;
@@ -1414,6 +1409,7 @@ describe('PoolCollection', () => {
 
                 poolToken = await createPool(token, network, networkSettings, poolCollection);
 
+                await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256);
 
@@ -1426,105 +1422,6 @@ describe('PoolCollection', () => {
                 Reset = 0,
                 Update = 1
             }
-
-            const testWithdraw = async (
-                poolTokenAmount: BigNumberish,
-                expectTradingLiquidity: TradingLiquidityState
-            ) => {
-                const { liquidity: prevLiquidity, tradingEnabled: prevTradingEnabled } = await poolCollection.poolData(
-                    token.address
-                );
-
-                await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
-
-                const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
-
-                const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
-
-                const expectedStakedBalance = prevLiquidity.stakedBalance
-                    .mul(prevPoolTokenTotalSupply.sub(poolTokenAmount))
-                    .div(prevPoolTokenTotalSupply);
-
-                const res = await network.withdrawFromPoolCollectionT(
-                    poolCollection.address,
-                    CONTEXT_ID,
-                    provider.address,
-                    token.address,
-                    poolTokenAmount
-                );
-
-                await expect(res)
-                    .to.emit(poolCollection, 'TokenWithdrawn')
-                    .withArgs(
-                        CONTEXT_ID,
-                        token.address,
-                        provider.address,
-                        withdrawalAmounts.baseTokensToTransferFromMasterVault,
-                        poolTokenAmount,
-                        withdrawalAmounts.baseTokensToTransferFromEPV,
-                        withdrawalAmounts.networkTokensToMintForProvider,
-                        withdrawalAmounts.baseTokensWithdrawalFee
-                    );
-
-                const { liquidity } = await poolCollection.poolData(token.address);
-
-                await testTradingLiquidityEvents(
-                    token,
-                    poolCollection,
-                    masterVault,
-                    networkToken,
-                    prevLiquidity,
-                    liquidity,
-                    CONTEXT_ID,
-                    res
-                );
-
-                expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmount));
-                expect(await poolToken.balanceOf(network.address)).to.equal(
-                    prevNetworkPoolTokenBalance.sub(poolTokenAmount)
-                );
-
-                expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
-
-                switch (expectTradingLiquidity) {
-                    case TradingLiquidityState.Reset:
-                        await testLiquidityReset(
-                            token,
-                            poolCollection,
-                            masterPool,
-                            prevTradingEnabled,
-                            res,
-                            expectedStakedBalance,
-                            0,
-                            TradingStatusUpdateReason.MinLiquidity
-                        );
-
-                        expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
-                        expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-
-                        break;
-
-                    case TradingLiquidityState.Update:
-                        expect(liquidity.baseTokenTradingLiquidity).to.equal(prevLiquidity.baseTokenTradingLiquidity);
-                        expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                            prevLiquidity.networkTokenTradingLiquidity
-                        );
-
-                        break;
-                }
-            };
-
-            const testMultipleWithdrawals = async (
-                totalBasePoolTokenAmount: BigNumberish,
-                count: number,
-                expectTradingLiquidity: TradingLiquidityState
-            ) => {
-                for (let i = 0; i < count; i++) {
-                    await testWithdraw(BigNumber.from(totalBasePoolTokenAmount).div(count), expectTradingLiquidity);
-                }
-            };
 
             it('should revert when attempting to withdraw from a non-network', async () => {
                 const nonNetwork = deployer;
@@ -1573,13 +1470,13 @@ describe('PoolCollection', () => {
 
             context('with deposited funds', () => {
                 const COUNT = 3;
-                const AMOUNT = toWei(1_000_000);
+                const INITIAL_DEPOSIT_AMOUNT = toWei(100_000_000);
 
                 let totalBasePoolTokenAmount: BigNumber;
 
                 beforeEach(async () => {
                     for (let i = 0; i < COUNT; i++) {
-                        await transfer(deployer, token, masterVault, AMOUNT);
+                        await transfer(deployer, token, masterVault, INITIAL_DEPOSIT_AMOUNT);
 
                         const prevBasePoolTokenBalance = await poolToken.balanceOf(provider.address);
 
@@ -1588,7 +1485,7 @@ describe('PoolCollection', () => {
                             CONTEXT_ID,
                             provider.address,
                             token.address,
-                            AMOUNT
+                            INITIAL_DEPOSIT_AMOUNT
                         );
 
                         totalBasePoolTokenAmount = (await poolToken.balanceOf(provider.address)).sub(
@@ -1597,9 +1494,119 @@ describe('PoolCollection', () => {
                     }
                 });
 
+                const testWithdraw = async (
+                    poolTokenAmount: BigNumberish,
+                    expectTradingLiquidity: TradingLiquidityState
+                ) => {
+                    const { liquidity: prevLiquidity, tradingEnabled: prevTradingEnabled } =
+                        await poolCollection.poolData(token.address);
+
+                    await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
+                    await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
+
+                    const prevPoolTokenTotalSupply = await poolToken.totalSupply();
+                    const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
+                    const prevProviderBalance = await getBalance(token, provider);
+
+                    const expectedStakedBalance = prevLiquidity.stakedBalance
+                        .mul(prevPoolTokenTotalSupply.sub(poolTokenAmount))
+                        .div(prevPoolTokenTotalSupply);
+
+                    const underlyingAmount = await poolCollection.poolTokenToUnderlying(token.address, poolTokenAmount);
+                    const expectedWithdrawalFee = underlyingAmount.mul(withdrawalFeePPM).div(PPM_RESOLUTION);
+
+                    const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
+                        token.address,
+                        poolTokenAmount
+                    );
+
+                    expect(expectedWithdrawalFee).to.almostEqual(withdrawalAmounts.baseTokensWithdrawalFee, {
+                        maxAbsoluteError: new Decimal(1)
+                    });
+
+                    const res = await network.withdrawFromPoolCollectionT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        provider.address,
+                        token.address,
+                        poolTokenAmount
+                    );
+
+                    await expect(res)
+                        .to.emit(poolCollection, 'TokenWithdrawn')
+                        .withArgs(
+                            CONTEXT_ID,
+                            token.address,
+                            provider.address,
+                            withdrawalAmounts.baseTokensToTransferFromMasterVault,
+                            poolTokenAmount,
+                            withdrawalAmounts.baseTokensToTransferFromEPV,
+                            withdrawalAmounts.networkTokensToMintForProvider,
+                            withdrawalAmounts.baseTokensWithdrawalFee
+                        );
+
+                    const { liquidity } = await poolCollection.poolData(token.address);
+
+                    await testTradingLiquidityEvents(
+                        token,
+                        poolCollection,
+                        masterVault,
+                        networkToken,
+                        prevLiquidity,
+                        liquidity,
+                        CONTEXT_ID,
+                        res
+                    );
+
+                    expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmount));
+                    expect(await poolToken.balanceOf(network.address)).to.equal(
+                        prevNetworkPoolTokenBalance.sub(poolTokenAmount)
+                    );
+                    expect(await getBalance(token, provider)).to.equal(
+                        prevProviderBalance.add(withdrawalAmounts.baseTokensToTransferFromMasterVault)
+                    );
+
+                    expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
+
+                    switch (expectTradingLiquidity) {
+                        case TradingLiquidityState.Reset:
+                            await testLiquidityReset(
+                                token,
+                                poolCollection,
+                                masterPool,
+                                prevTradingEnabled,
+                                res,
+                                expectedStakedBalance,
+                                0,
+                                TradingStatusUpdateReason.MinLiquidity
+                            );
+
+                            expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
+                            expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
+
+                            break;
+
+                        case TradingLiquidityState.Update:
+                            expect(liquidity.baseTokenTradingLiquidity).to.equal(
+                                withdrawalAmounts.newBaseTokenTradingLiquidity
+                            );
+                            expect(liquidity.networkTokenTradingLiquidity).to.equal(
+                                withdrawalAmounts.newNetworkTokenTradingLiquidity
+                            );
+
+                            break;
+                    }
+                };
+
+                const testMultipleWithdrawals = async (expectTradingLiquidity: TradingLiquidityState) => {
+                    for (let i = 0; i < COUNT; i++) {
+                        await testWithdraw(BigNumber.from(totalBasePoolTokenAmount).div(COUNT), expectTradingLiquidity);
+                    }
+                };
+
                 context('when trading is disabled', () => {
                     it('should withdraw', async () => {
-                        await testMultipleWithdrawals(totalBasePoolTokenAmount, COUNT, TradingLiquidityState.Reset);
+                        await testMultipleWithdrawals(TradingLiquidityState.Reset);
                     });
 
                     context(
@@ -1610,11 +1617,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should withdraw and reset the trading liquidity', async () => {
-                                await testMultipleWithdrawals(
-                                    totalBasePoolTokenAmount,
-                                    COUNT,
-                                    TradingLiquidityState.Reset
-                                );
+                                await testMultipleWithdrawals(TradingLiquidityState.Reset);
                             });
                         }
                     );
@@ -1644,11 +1647,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should withdraw', async () => {
-                                await testMultipleWithdrawals(
-                                    totalBasePoolTokenAmount,
-                                    COUNT,
-                                    TradingLiquidityState.Update
-                                );
+                                await testMultipleWithdrawals(TradingLiquidityState.Update);
                             });
                         }
                     );
@@ -1661,11 +1660,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should withdraw and reset the trading liquidity', async () => {
-                                await testMultipleWithdrawals(
-                                    totalBasePoolTokenAmount,
-                                    COUNT,
-                                    TradingLiquidityState.Reset
-                                );
+                                await testMultipleWithdrawals(TradingLiquidityState.Reset);
                             });
                         }
                     );
@@ -1676,11 +1671,7 @@ describe('PoolCollection', () => {
                         });
 
                         it('should withdraw', async () => {
-                            await testMultipleWithdrawals(
-                                totalBasePoolTokenAmount,
-                                COUNT,
-                                TradingLiquidityState.Update
-                            );
+                            await testMultipleWithdrawals(TradingLiquidityState.Update);
                         });
 
                         context(
@@ -1691,11 +1682,7 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should withdraw and reset the trading liquidity', async () => {
-                                    await testMultipleWithdrawals(
-                                        totalBasePoolTokenAmount,
-                                        COUNT,
-                                        TradingLiquidityState.Reset
-                                    );
+                                    await testMultipleWithdrawals(TradingLiquidityState.Reset);
                                 });
                             }
                         );
@@ -1705,9 +1692,11 @@ describe('PoolCollection', () => {
         };
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
-            context(symbol, () => {
-                testWithdrawal(new TokenData(symbol));
-            });
+            for (const withdrawalFee of [0, 1, 5]) {
+                context(`${symbol}, withdrawalFee=${withdrawalFee}%`, () => {
+                    testWithdrawal(new TokenData(symbol), toPPM(withdrawalFee));
+                });
+            }
         }
     });
 
