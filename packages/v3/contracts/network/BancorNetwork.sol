@@ -955,7 +955,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // transfer governance tokens from the caller to the master pool
         _govToken.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the master pool - returns the amounts/breakdown
+        // call withdraw on the master pool
         cachedMasterPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 
