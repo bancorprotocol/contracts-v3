@@ -6,16 +6,6 @@ import { Fraction, Uint512, Sint256 } from "./Types.sol";
 uint256 constant ONE = 1 << 127;
 
 /**
- * @dev an unchecked version of i++
- */
-// solhint-disable-next-line func-visibility
-function uncheckedInc(uint256 i) pure returns (uint256) {
-    unchecked {
-        return i + 1;
-    }
-}
-
-/**
  * @dev this library provides a set of complex math operations
  */
 library MathEx {
