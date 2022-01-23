@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.10;
+pragma solidity 0.8.11;
 
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
 
@@ -97,24 +97,6 @@ library MathEx {
                 n = (n * 0x0002bf84208204f5977f9a8cf01fdc307) / 0x0000003c6ab775dd0b95b4cbee7e65d11; // multiply by e^2^(+3)
 
             return Fraction({ n: n, d: ONE });
-        }
-    }
-
-    /**
-     * @dev returns the largest integer smaller than or equal to the square root of an unsigned integer
-     */
-    function floorSqrt(uint256 n) internal pure returns (uint256) {
-        unchecked {
-            if (n == 0) {
-                return 0;
-            }
-            uint256 x = n / 2 + 1;
-            uint256 y = (x + n / x) / 2;
-            while (x > y) {
-                x = y;
-                y = (x + n / x) / 2;
-            }
-            return x;
         }
     }
 

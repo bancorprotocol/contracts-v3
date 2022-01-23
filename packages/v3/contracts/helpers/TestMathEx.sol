@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.10;
+pragma solidity 0.8.11;
 
 import { MathEx, Uint512 } from "../utility/MathEx.sol";
 import { Fraction } from "../utility/Types.sol";
@@ -7,10 +7,6 @@ import { Fraction } from "../utility/Types.sol";
 contract TestMathEx {
     function exp(Fraction memory f) external pure returns (Fraction memory) {
         return MathEx.exp(f);
-    }
-
-    function floorSqrt(uint256 n) external pure returns (uint256) {
-        return MathEx.floorSqrt(n);
     }
 
     function mulDivF(

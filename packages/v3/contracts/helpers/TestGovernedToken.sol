@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.10;
+pragma solidity 0.8.11;
 
 import { IMintableToken } from "@bancor/token-governance/contracts/IMintableToken.sol";
 
