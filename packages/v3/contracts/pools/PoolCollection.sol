@@ -891,8 +891,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             _masterPool.mint(address(provider), amounts.networkTokensToMintForProvider);
         }
 
-        // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
-        // external protection vault and send them to the master vault
+        // if the provider should receive some base tokens from the external protection vault - remove the tokens from
+        // the external protection vault and send them to the master vault
         if (amounts.baseTokensToTransferFromEPV > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
@@ -902,8 +902,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromEPV;
         }
 
-        // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault and send
-        // them to the provider
+        // if the provider should receive some base tokens from the master vault - remove the tokens from the master
+        // vault and send them to the provider
         if (amounts.baseTokensToTransferFromMasterVault > 0) {
             _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokensToTransferFromMasterVault);
         }
