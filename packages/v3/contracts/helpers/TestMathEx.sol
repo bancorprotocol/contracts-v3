@@ -9,10 +9,6 @@ contract TestMathEx {
         return MathEx.exp(f);
     }
 
-    function floorSqrt(uint256 n) external pure returns (uint256) {
-        return MathEx.floorSqrt(n);
-    }
-
     function mulDivF(
         uint256 x,
         uint256 y,

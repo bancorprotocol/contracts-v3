@@ -81,8 +81,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error InsufficientLiquidity();
     error InvalidRate();
     error ReturnAmountTooLow();
-    error TradingIsDisabled();
-    error TradingIsEnabled();
+    error TradingDisabled();
+    error AlreadyEnabled();
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
@@ -482,7 +482,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Pool storage data = _poolStorage(pool);
 
         if (data.tradingEnabled) {
-            revert TradingIsEnabled();
+            revert AlreadyEnabled();
         }
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
@@ -891,8 +891,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             _masterPool.mint(address(provider), amounts.networkTokensToMintForProvider);
         }
 
-        // if the provider should receive some base tokens from the external protection vault - remove the tokens from the
-        // external protection vault and send them to the master vault
+        // if the provider should receive some base tokens from the external protection vault - remove the tokens from
+        // the external protection vault and send them to the master vault
         if (amounts.baseTokensToTransferFromEPV > 0) {
             _externalProtectionVault.withdrawFunds(
                 pool,
@@ -902,8 +902,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromEPV;
         }
 
-        // if the provider should receive some base tokens from the master vault - remove the tokens from the master vault and send
-        // them to the provider
+        // if the provider should receive some base tokens from the master vault - remove the tokens from the master
+        // vault and send them to the provider
         if (amounts.baseTokensToTransferFromMasterVault > 0) {
             _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokensToTransferFromMasterVault);
         }
@@ -1020,7 +1020,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             return;
         }
 
-        // try to check whether the pool is stable (when both reserves and and average rate are available)
+        // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
         bool isAverageRateValid = PoolAverageRate.isValid(averageRate);
         if (
@@ -1245,7 +1245,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
-            revert TradingIsDisabled();
+            revert TradingDisabled();
         }
 
         if (params.isSourceNetworkToken) {
