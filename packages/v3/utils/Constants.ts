@@ -8,6 +8,7 @@ const {
 } = ethers;
 
 export enum ContractName {
+    AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
     BancorNetwork = 'BancorNetwork',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',

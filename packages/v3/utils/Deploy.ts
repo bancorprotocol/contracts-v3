@@ -1,4 +1,5 @@
 import {
+    AutoCompoundingStakingRewards,
     BancorNetwork,
     BancorNetworkInfo,
     ExternalProtectionVault,
@@ -41,6 +42,7 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 });
 
 export const DeployedContracts = {
+    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(ContractName.AutoCompoundingStakingRewards),
     BancorNetwork: deployed<BancorNetwork>(ContractName.BancorNetwork),
     BancorNetworkInfo: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
