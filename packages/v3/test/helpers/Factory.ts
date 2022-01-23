@@ -417,7 +417,7 @@ const setupPool = async (
     networkInfo: BancorNetworkInfo,
     networkSettings: NetworkSettings,
     poolCollection: TestPoolCollection,
-    enableTrading = true
+    enableTrading: boolean
 ) => {
     if (spec.tokenData.isNetworkToken()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.masterPoolToken());

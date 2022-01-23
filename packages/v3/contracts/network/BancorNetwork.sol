@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.10;
+pragma solidity 0.8.11;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -955,7 +955,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // transfer governance tokens from the caller to the master pool
         _govToken.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the master pool - returns the amounts/breakdown
+        // call withdraw on the master pool
         cachedMasterPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 

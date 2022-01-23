@@ -58,15 +58,6 @@ describe('MathEx', () => {
         });
     };
 
-    const testFloorSqrt = (n: number, k: number) => {
-        const x = BigNumber.from(2).pow(n).add(k);
-        it(`floorSqrt(${x.toHexString()})`, async () => {
-            const expected = new Decimal(x.toString()).sqrt().floor();
-            const actual = await mathContract.floorSqrt(x);
-            expect(actual).to.equal(expected);
-        });
-    };
-
     const testMulDiv = (x: BigNumber, y: BigNumber, z: BigNumber) => {
         for (const funcName in mulDivFuncs) {
             it(`${funcName}(${x}, ${y}, ${z})`, async () => {
@@ -158,12 +149,6 @@ describe('MathEx', () => {
             }
         }
 
-        for (let n = 0; n <= 256; n += 64) {
-            for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                testFloorSqrt(n, k);
-            }
-        }
-
         for (const px of [128, 192, 256]) {
             for (const py of [128, 192, 256]) {
                 for (const pz of [128, 192, 256]) {
@@ -194,12 +179,6 @@ describe('MathEx', () => {
         for (let n = 0; n < 100; n++) {
             for (let d = 1; d < 100; d++) {
                 testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
-            }
-        }
-
-        for (let n = 0; n <= 256; n++) {
-            for (const k of n < 256 ? [-1, 0, +1] : [-1]) {
-                testFloorSqrt(n, k);
             }
         }
 

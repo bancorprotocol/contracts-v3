@@ -500,8 +500,10 @@ describe('MasterPool', () => {
                 const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                 const prevVaultTokenBalance = await networkToken.balanceOf(masterVault.address);
 
-                const renouncedAmount = BigNumber.min(prevFunding, amount);
-                const expectedPoolTokenAmount = renouncedAmount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
+                const reduceFundingAmount = BigNumber.min(prevFunding, amount);
+                const expectedPoolTokenAmount = reduceFundingAmount
+                    .mul(prevPoolTokenTotalSupply)
+                    .div(prevStakedBalance);
 
                 const res = await masterPool
                     .connect(fundingManager)
@@ -511,13 +513,15 @@ describe('MasterPool', () => {
                     .to.emit(masterPool, 'FundingRenounced')
                     .withArgs(CONTEXT_ID, reserveToken.address, amount, expectedPoolTokenAmount);
 
-                expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.sub(renouncedAmount));
+                expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.sub(reduceFundingAmount));
                 expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
-                    prevFunding.sub(renouncedAmount)
+                    prevFunding.sub(reduceFundingAmount)
                 );
 
                 expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
-                    prevAvailableFunding.gt(renouncedAmount) ? prevAvailableFunding.add(renouncedAmount) : FUNDING_LIMIT
+                    prevAvailableFunding.gt(reduceFundingAmount)
+                        ? prevAvailableFunding.add(reduceFundingAmount)
+                        : FUNDING_LIMIT
                 );
 
                 expect(await masterPoolToken.totalSupply()).to.equal(

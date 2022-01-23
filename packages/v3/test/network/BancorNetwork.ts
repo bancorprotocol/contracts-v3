@@ -1139,6 +1139,9 @@ describe('BancorNetwork', () => {
 
                                 if (!value) {
                                     value = BigNumber.from(0);
+
+                                    // if we aren't overriding which token we want to deposit and it's the native token -
+                                    // ensure to add to the transaction
                                     if (poolAddress === token.address && tokenData.isNativeToken()) {
                                         value = BigNumber.from(amount);
                                     }
