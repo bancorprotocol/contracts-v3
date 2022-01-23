@@ -5,7 +5,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Uint512 } from "../utility/Types.sol";
+import { Fraction, Uint512, isFractionValid } from "../utility/Types.sol";
 
 struct AverageRate {
     uint32 time; // the time when the rate was recorded (Unix timestamp))
@@ -59,10 +59,7 @@ library PoolAverageRate {
         }
 
         // since we know that timeElapsed < AVERAGE_RATE_PERIOD, we can avoid checked operations
-        uint256 remainingWindow;
-        unchecked {
-            remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
-        }
+        uint256 remainingWindow = AVERAGE_RATE_PERIOD - timeElapsed;
 
         // calculate the new average rate
         Fraction memory newRate = Fraction({
@@ -87,18 +84,16 @@ library PoolAverageRate {
     function isPoolRateStable(
         Fraction memory spotRate,
         AverageRate memory averageRate,
-        uint32 maxDeviation
+        uint32 maxDeviation,
+        uint32 currentTime
     ) internal pure returns (bool) {
-        // can revert only if one of the components below is larger than 128 bits
-        uint256 x = averageRate.rate.d * spotRate.n;
-        uint256 y = averageRate.rate.n * spotRate.d;
+        AverageRate memory updatedAverageRate = calcAverageRate(spotRate, averageRate, currentTime);
 
-        uint256 lowerBound;
-        uint256 upperBound;
-        unchecked {
-            lowerBound = PPM_RESOLUTION - maxDeviation;
-            upperBound = PPM_RESOLUTION + maxDeviation;
-        }
+        // can revert only if one of the components below is larger than 128 bits
+        uint256 x = updatedAverageRate.rate.d * spotRate.n;
+        uint256 y = updatedAverageRate.rate.n * spotRate.d;
+        uint256 lowerBound = PPM_RESOLUTION - maxDeviation;
+        uint256 upperBound = PPM_RESOLUTION + maxDeviation;
 
         Uint512 memory min = MathEx.mul512(x, lowerBound);
         Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
@@ -113,6 +108,13 @@ library PoolAverageRate {
     function reducedRatio(Fraction memory ratio) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(ratio.n, ratio.d), type(uint112).max);
         return Fraction({ n: ratio.n / scale, d: ratio.d / scale });
+    }
+
+    /**
+     * @dev returns whether an average rate is valid
+     */
+    function isValid(AverageRate memory averageRate) internal pure returns (bool) {
+        return averageRate.time != 0 && isFractionValid(averageRate.rate);
     }
 
     /**

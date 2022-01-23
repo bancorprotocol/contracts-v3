@@ -5,17 +5,16 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { IExternalRewardsVault } from "./interfaces/IExternalRewardsVault.sol";
-import { IVault } from "./interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
 
 /**
  * @dev External Rewards Vault contract
  */
 contract ExternalRewardsVault is IExternalRewardsVault, Vault {
-    // the asset manager role is required to access all the reserves
-    bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
-
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
@@ -52,8 +51,10 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
     }
 
+    // solhint-enable func-name-mixedcase
+
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure override returns (uint16) {
         return 1;
@@ -71,7 +72,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
      *
      * requirements:
      *
-     * - the caller must have the ROLE_ASSET_MANAGER permission
+     * - the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,

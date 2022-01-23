@@ -10,7 +10,6 @@ error InvalidAddress();
 error InvalidExternalAddress();
 error InvalidFee();
 error InvalidPool();
-error InvalidPoolBalance();
 error InvalidPoolCollection();
 error InvalidPortion();
 error InvalidStakedBalance();
@@ -18,22 +17,21 @@ error InvalidToken();
 error InvalidType();
 error NotEmpty();
 error NotPayable();
-error NotWhitelisted();
 error ZeroValue();
 
 /**
  * @dev common utilities
  */
 contract Utils {
-    // allows execution by the sender only
-    modifier only(address sender) {
-        _only(sender);
+    // allows execution by the caller only
+    modifier only(address caller) {
+        _only(caller);
 
         _;
     }
 
-    function _only(address sender) internal view {
-        if (msg.sender != sender) {
+    function _only(address caller) internal view {
+        if (msg.sender != caller) {
             revert AccessDenied();
         }
     }

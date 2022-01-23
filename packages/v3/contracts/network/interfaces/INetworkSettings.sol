@@ -6,6 +6,8 @@ import { INetworkFeeVault } from "../../vaults/interfaces/INetworkFeeVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
+error NotWhitelisted();
+
 /**
  * @dev Network Settings interface
  */
@@ -21,9 +23,9 @@ interface INetworkSettings is IUpgradeable {
     function isTokenWhitelisted(ReserveToken pool) external view returns (bool);
 
     /**
-     * @dev returns the network token minting limit for a given pool
+     * @dev returns the network token funding limit for a given pool
      */
-    function poolMintingLimit(ReserveToken pool) external view returns (uint256);
+    function poolFundingLimit(ReserveToken pool) external view returns (uint256);
 
     /**
      * @dev returns the minimum network token trading liquidity required before the system enables trading in the

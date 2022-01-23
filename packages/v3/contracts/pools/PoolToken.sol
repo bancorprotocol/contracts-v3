@@ -7,6 +7,7 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draf
 import { ReserveToken } from "../token/ReserveToken.sol";
 import { ERC20Burnable } from "../token/ERC20Burnable.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Utils } from "../utility/Utils.sol";
 
@@ -34,7 +35,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

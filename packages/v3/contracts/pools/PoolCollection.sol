@@ -4,10 +4,15 @@ pragma solidity 0.8.10;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { Fraction, Sint256 } from "../utility/Types.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Fraction, Sint256, zeroFraction, isFractionValid, isFractionZero } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -18,14 +23,11 @@ import {
     Utils,
     AlreadyExists,
     DoesNotExist,
-    InvalidPool,
-    InvalidPoolBalance,
     InvalidPoolCollection,
-    InvalidStakedBalance,
-    NotWhitelisted
+    InvalidStakedBalance
 } from "../utility/Utils.sol";
 
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
@@ -37,15 +39,32 @@ import {
     IPoolCollection,
     PoolLiquidity,
     Pool,
-    DepositAmounts,
-    WithdrawalAmounts,
+    TRADING_STATUS_UPDATE_DEFAULT,
+    TRADING_STATUS_UPDATE_ADMIN,
+    TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
     TradeAmountsWithLiquidity,
     TradeAmounts
 } from "./interfaces/IPoolCollection.sol";
 
+import { IMasterPool } from "./interfaces/IMasterPool.sol";
+
 import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
+
+// base token withdrawal output amounts
+struct WithdrawalAmounts {
+    uint256 baseTokensToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
+    uint256 networkTokensToMintForProvider; // network token amount to mint directly for the provider
+    uint256 baseTokensToTransferFromEPV; // base token amount to transfer from the external protection vault to the provider
+    Sint256 baseTokensTradingLiquidityDelta; // base token amount to add to the trading liquidity
+    Sint256 networkTokensTradingLiquidityDelta; // network token amount to add to the trading liquidity and to the master vault
+    Sint256 networkTokensProtocolHoldingsDelta; // network token amount add to the protocol equity
+    uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
+    uint256 poolTokenTotalSupply; // base pool token's total supply
+    uint256 newBaseTokenTradingLiquidity; // new base token trading liquidity
+    uint256 newNetworkTokenTradingLiquidity; // new network token trading liquidity
+}
 
 /**
  * @dev Pool Collection contract
@@ -58,39 +77,18 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    error InvalidRate();
-    error ZeroTargetAmount();
-    error ReturnAmountTooLow();
-    error MinLiquidityNotSet();
     error DepositLimitExceeded();
-    error NoInitialRate();
+    error InsufficientLiquidity();
+    error InvalidRate();
+    error ReturnAmountTooLow();
     error TradingDisabled();
-    error LiquidityTooLow();
+    error AlreadyEnabled();
+    error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
-
-    // trading enabling/disabling reasons
-    uint8 private constant TRADING_STATUS_UPDATE_OWNER = 0;
-    uint8 private constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 1;
-
-    // withdrawal-related input data
-    struct PoolWithdrawalParams {
-        uint256 networkTokenAvgTradingLiquidity;
-        uint256 baseTokenAvgTradingLiquidity;
-        uint256 baseTokenTradingLiquidity;
-        uint256 basePoolTokenTotalSupply;
-        uint256 baseTokenStakedAmount;
-        uint32 tradeFeePPM;
-    }
-
-    // deposit-related output data
-    struct PoolDepositParams {
-        uint256 networkTokenDeltaAmount;
-        uint256 baseTokenDeltaAmount;
-        uint256 baseTokenExcessLiquidity;
-        bool useInitialRate;
-    }
+    uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+    uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
 
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
@@ -118,6 +116,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
+
+    // the master vault contract
+    IMasterVault private immutable _masterVault;
+
+    // the master pool contract
+    IMasterPool internal immutable _masterPool;
+
+    // the address of the external protection vault
+    IExternalProtectionVault private immutable _externalProtectionVault;
 
     // the pool token factory contract
     IPoolTokenFactory private immutable _poolTokenFactory;
@@ -162,22 +169,63 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(ReserveToken indexed pool, bool newStatus, uint8 reason);
+    event TradingEnabled(ReserveToken indexed pool, bool indexed newStatus, uint8 indexed reason);
 
     /**
-     * @dev triggered when depositing to a specific pool is enabled/disabled
+     * @dev triggered when depositing into a specific pool is enabled/disabled
      */
-    event DepositingEnabled(ReserveToken indexed pool, bool newStatus);
-
-    /**
-     * @dev triggered when a pool's initial rate is updated
-     */
-    event InitialRateUpdated(ReserveToken indexed pool, Fraction prevRate, Fraction newRate);
+    event DepositingEnabled(ReserveToken indexed pool, bool indexed newStatus);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
      */
     event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
+
+    /**
+     * @dev triggered when new liquidity is deposited into a pool
+     */
+    event TokenDeposited(
+        bytes32 indexed contextId,
+        ReserveToken indexed token,
+        address indexed provider,
+        uint256 tokenAmount,
+        uint256 poolTokenAmount
+    );
+
+    /**
+     * @dev triggered when existing liquidity is withdrawn from a pool
+     */
+    event TokenWithdrawn(
+        bytes32 indexed contextId,
+        ReserveToken indexed token,
+        address indexed provider,
+        uint256 tokenAmount,
+        uint256 poolTokenAmount,
+        uint256 externalProtectionBaseTokenAmount,
+        uint256 networkTokenAmount,
+        uint256 withdrawalFeeAmount
+    );
+
+    /**
+     * @dev triggered when the trading liquidity in a pool is updated
+     */
+    event TradingLiquidityUpdated(
+        bytes32 indexed contextId,
+        ReserveToken indexed pool,
+        ReserveToken indexed reserveToken,
+        uint256 liquidity
+    );
+
+    /**
+     * @dev triggered when the total liquidity in a pool is updated
+     */
+    event TotalLiquidityUpdated(
+        bytes32 indexed contextId,
+        ReserveToken indexed pool,
+        uint256 stakedBalance,
+        uint256 poolTokenSupply,
+        uint256 actualBalance
+    );
 
     /**
      * @dev initializes a new PoolCollection contract
@@ -186,18 +234,27 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IMasterPool initMasterPool,
+        IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkToken))
         validAddress(address(initNetworkSettings))
+        validAddress(address(initMasterVault))
+        validAddress(address(initMasterPool))
+        validAddress(address(initExternalProtectionVault))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
     {
         _network = initNetwork;
         _networkToken = initNetworkToken;
         _networkSettings = initNetworkSettings;
+        _masterVault = initMasterVault;
+        _masterPool = initMasterPool;
+        _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -211,13 +268,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!_isFractionValid(rate)) {
+        if (!_isRateValid(rate)) {
             revert InvalidRate();
         }
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
         return 1;
@@ -286,15 +343,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Pool memory newPool = Pool({
             poolToken: newPoolToken,
             tradingFeePPM: _defaultTradingFeePPM,
-            tradingEnabled: true,
+            tradingEnabled: false,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: _zeroFraction() }),
-            initialRate: _zeroFraction(),
+            averageRate: AverageRate({ time: 0, rate: zeroFraction() }),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
                 baseTokenTradingLiquidity: 0,
-                tradingLiquidityProduct: 0,
                 stakedBalance: 0
             })
         });
@@ -303,17 +358,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
 
-        // although the owner-controlled flag is set to true, we want to emphasize that the trading in a newly created
-        // pool is disabled
-        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_OWNER });
-
+        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
-        emit InitialRateUpdated({
-            pool: reserveToken,
-            prevRate: Fraction({ n: 0, d: 0 }),
-            newRate: newPool.initialRate
-        });
         emit DepositLimitUpdated({ pool: reserveToken, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
@@ -333,16 +380,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             return false;
         }
 
-        // verify that the average rate of the pool isn't deviated too much from its spot rate
-        return
-            PoolAverageRate.isPoolRateStable(
-                Fraction({
-                    n: data.liquidity.networkTokenTradingLiquidity,
-                    d: data.liquidity.baseTokenTradingLiquidity
-                }),
-                data.averageRate,
-                _networkSettings.averageRateMaxDeviationPPM()
-            );
+        return _isPoolRateStable(data.liquidity, data.averageRate);
     }
 
     /**
@@ -378,10 +416,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function underlyingToPoolToken(ReserveToken pool, uint256 baseTokenAmount) external view returns (uint256) {
+    function underlyingToPoolToken(ReserveToken pool, uint256 tokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
-        return _underlyingToPoolToken(data.poolToken, baseTokenAmount, data.liquidity.stakedBalance);
+        return _underlyingToPoolToken(data.poolToken.totalSupply(), tokenAmount, data.liquidity.stakedBalance);
     }
 
     /**
@@ -389,17 +427,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function poolTokenAmountToBurn(
         ReserveToken pool,
-        uint256 baseTokenAmountToDistribute,
+        uint256 tokenAmountToDistribute,
         uint256 protocolPoolTokenAmount
     ) external view returns (uint256) {
-        if (baseTokenAmountToDistribute == 0) {
+        if (tokenAmountToDistribute == 0) {
             return 0;
         }
 
         Pool memory data = _poolData[pool];
 
         uint256 poolTokenSupply = data.poolToken.totalSupply();
-        uint256 val = baseTokenAmountToDistribute * poolTokenSupply;
+        uint256 val = tokenAmountToDistribute * poolTokenSupply;
 
         return
             MathEx.mulDivF(
@@ -434,26 +472,50 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev enables/disables trading in a given pool
+     * @dev enabled trading in a given pool and updates its trading liquidity
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(ReserveToken pool, bool status) external onlyOwner {
+    function enableTrading(ReserveToken pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
         Pool storage data = _poolStorage(pool);
 
-        if (data.tradingEnabled == status) {
-            return;
+        if (data.tradingEnabled) {
+            revert AlreadyEnabled();
         }
 
-        data.tradingEnabled = status;
+        // adjust the trading liquidity based on the base token vault balance and funding limits
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+        _updateTradingLiquidity(bytes32(0), pool, data, data.liquidity, fundingRate, minLiquidityForTrading);
 
-        emit TradingEnabled({ pool: pool, newStatus: status, reason: TRADING_STATUS_UPDATE_OWNER });
+        // verify that network token trading liquidity is equal or greater than the minimum liquidity for trading
+        if (data.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading) {
+            revert InsufficientLiquidity();
+        }
+
+        data.averageRate = AverageRate({ time: _time(), rate: PoolAverageRate.reducedRatio(fundingRate) });
+
+        data.tradingEnabled = true;
+
+        emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_ADMIN });
     }
 
     /**
-     * @dev enables/disables depositing to a given pool
+     * @dev disables trading in a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function disableTrading(ReserveToken pool) external onlyOwner {
+        Pool storage data = _poolStorage(pool);
+
+        _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
+    }
+
+    /**
+     * @dev enables/disables depositing into a given pool
      *
      * requirements:
      *
@@ -469,30 +531,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.depositingEnabled = status;
 
         emit DepositingEnabled({ pool: pool, newStatus: status });
-    }
-
-    /**
-     * @dev sets the initial rate of a given pool
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setInitialRate(ReserveToken pool, Fraction memory newInitialRate)
-        external
-        onlyOwner
-        validRate(newInitialRate)
-    {
-        Pool storage data = _poolStorage(pool);
-
-        Fraction memory prevInitialRate = data.initialRate;
-        if (prevInitialRate.n == newInitialRate.n && prevInitialRate.d == newInitialRate.d) {
-            return;
-        }
-
-        data.initialRate = newInitialRate;
-
-        emit InitialRateUpdated({ pool: pool, prevRate: prevInitialRate, newRate: newInitialRate });
     }
 
     /**
@@ -519,114 +557,80 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @inheritdoc IPoolCollection
      */
     function depositFor(
+        bytes32 contextId,
         address provider,
         ReserveToken pool,
-        uint256 baseTokenAmount,
-        uint256 unallocatedNetworkTokenLiquidity
-    )
-        external
-        only(address(_network))
-        validAddress(provider)
-        validAddress(ReserveToken.unwrap(pool))
-        greaterThanZero(baseTokenAmount)
-        nonReentrant
-        returns (DepositAmounts memory)
-    {
-        PoolDepositParams memory depositParams = _poolDepositParams(
-            pool,
-            baseTokenAmount,
-            unallocatedNetworkTokenLiquidity
-        );
-
-        Pool memory data = _poolData[pool];
-
-        if (depositParams.useInitialRate) {
-            // if we're using the initial rate, ensure that the average rate is set
-            if (data.averageRate.rate.n != data.initialRate.n || data.averageRate.rate.d != data.initialRate.d) {
-                data.averageRate.rate = data.initialRate;
-            }
-        } else {
-            // otherwise, ensure that the initial rate is properly reset
-            data.initialRate = _zeroFraction();
-        }
-
-        // if we've passed above the minimum network token liquidity for trading - emit that trading is now enabled
-        if (data.tradingEnabled) {
-            uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-            if (
-                data.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading &&
-                data.liquidity.networkTokenTradingLiquidity + depositParams.baseTokenDeltaAmount >=
-                minLiquidityForTrading
-            ) {
-                emit TradingEnabled({ pool: pool, newStatus: true, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
-            }
-        }
-
-        // calculate and update the new trading liquidity based on the provided network token amount
-        data.liquidity.networkTokenTradingLiquidity += depositParams.networkTokenDeltaAmount;
-        data.liquidity.baseTokenTradingLiquidity += depositParams.baseTokenDeltaAmount;
-        data.liquidity.tradingLiquidityProduct =
-            data.liquidity.networkTokenTradingLiquidity *
-            data.liquidity.baseTokenTradingLiquidity;
+        uint256 tokenAmount
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(tokenAmount) nonReentrant {
+        Pool storage data = _poolStorage(pool);
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = data.liquidity.stakedBalance;
-        uint256 poolTokenAmount = _underlyingToPoolToken(data.poolToken, baseTokenAmount, currentStakedBalance);
+        uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
+        uint256 poolTokenAmount = _underlyingToPoolToken(prevPoolTokenTotalSupply, tokenAmount, currentStakedBalance);
+
+        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
+        uint256 newStakedBalance = currentStakedBalance + tokenAmount;
+        if (newStakedBalance > data.depositLimit) {
+            revert DepositLimitExceeded();
+        }
+
+        PoolLiquidity memory prevLiquidity = data.liquidity;
 
         // update the staked balance with the full base token amount
-        data.liquidity.stakedBalance = currentStakedBalance + baseTokenAmount;
-
-        _poolData[pool] = data;
+        data.liquidity.stakedBalance = newStakedBalance;
 
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
 
-        return
-            DepositAmounts({
-                networkTokenDeltaAmount: depositParams.networkTokenDeltaAmount,
-                baseTokenDeltaAmount: depositParams.baseTokenDeltaAmount,
-                poolTokenAmount: poolTokenAmount,
-                poolToken: data.poolToken
-            });
+        // adjust the trading liquidity based on the base token vault balance and funding limits
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            data.liquidity,
+            zeroFraction(),
+            _networkSettings.minLiquidityForTrading()
+        );
+
+        emit TokenDeposited({
+            contextId: contextId,
+            token: pool,
+            provider: provider,
+            tokenAmount: tokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
+
+        _dispatchTradingLiquidityEvents(
+            contextId,
+            pool,
+            prevPoolTokenTotalSupply + poolTokenAmount,
+            prevLiquidity,
+            data.liquidity
+        );
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
     function withdraw(
+        bytes32 contextId,
+        address provider,
         ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    )
-        external
-        only(address(_network))
-        validAddress(ReserveToken.unwrap(pool))
-        greaterThanZero(basePoolTokenAmount)
-        nonReentrant
-        returns (WithdrawalAmounts memory amounts)
-    {
+        uint256 poolTokenAmount
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) nonReentrant {
         // obtain the withdrawal amounts
-        amounts = _poolWithdrawalAmounts(
-            pool,
-            basePoolTokenAmount,
-            baseTokenVaultBalance,
-            externalProtectionVaultBalance
-        );
+        WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
         // execute the actual withdrawal
-        _executeWithdrawal(
-            pool,
-            basePoolTokenAmount,
-            amounts.baseTokensTradingLiquidityDelta,
-            amounts.networkTokensTradingLiquidityDelta
-        );
+        _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
     function trade(
+        bytes32 contextId,
         ReserveToken sourceToken,
         ReserveToken targetToken,
         uint256 sourceAmount,
@@ -634,8 +638,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     )
         external
         only(address(_network))
-        validAddress(ReserveToken.unwrap(sourceToken))
-        validAddress(ReserveToken.unwrap(targetToken))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
         returns (TradeAmountsWithLiquidity memory)
@@ -671,35 +673,33 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         );
 
         // sync the reserve balances
-        uint256 newNetworkTokenTradingLiquidity;
-        uint256 newBaseTokenTradingLiquidity;
-        uint256 stakedBalance = params.liquidity.stakedBalance;
+        PoolLiquidity memory newLiquidity;
         if (params.isSourceNetworkToken) {
-            newNetworkTokenTradingLiquidity = params.sourceBalance + sourceAmount;
-            newBaseTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
-
             // if the target token is a base token, make sure to add the fee to the staked balance
-            stakedBalance += tradeAmounts.feeAmount;
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                baseTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
+                stakedBalance: params.liquidity.stakedBalance + tradeAmounts.feeAmount
+            });
         } else {
-            newBaseTokenTradingLiquidity = params.sourceBalance + sourceAmount;
-            newNetworkTokenTradingLiquidity = params.targetBalance - tradeAmounts.amount;
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
+                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                stakedBalance: params.liquidity.stakedBalance
+            });
         }
 
         // update the liquidity in the pool
-        PoolLiquidity memory liquidity = PoolLiquidity({
-            networkTokenTradingLiquidity: newNetworkTokenTradingLiquidity,
-            baseTokenTradingLiquidity: newBaseTokenTradingLiquidity,
-            tradingLiquidityProduct: params.liquidity.tradingLiquidityProduct,
-            stakedBalance: stakedBalance
-        });
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+        data.liquidity = newLiquidity;
 
-        data.liquidity = liquidity;
+        _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
 
         return
             TradeAmountsWithLiquidity({
                 amount: tradeAmounts.amount,
                 feeAmount: tradeAmounts.feeAmount,
-                liquidity: liquidity
+                liquidity: newLiquidity
             });
     }
 
@@ -711,14 +711,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         ReserveToken targetToken,
         uint256 amount,
         bool targetAmount
-    )
-        external
-        view
-        validAddress(ReserveToken.unwrap(sourceToken))
-        validAddress(ReserveToken.unwrap(targetToken))
-        greaterThanZero(amount)
-        returns (TradeAmounts memory)
-    {
+    ) external view greaterThanZero(amount) returns (TradeAmounts memory) {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         return
@@ -730,11 +723,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function onFeesCollected(ReserveToken pool, uint256 feeAmount)
-        external
-        only(address(_network))
-        validAddress(ReserveToken.unwrap(pool))
-    {
+    function onFeesCollected(ReserveToken pool, uint256 feeAmount) external only(address(_network)) {
         if (feeAmount == 0) {
             return;
         }
@@ -765,7 +754,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection)
         external
-        validAddress(ReserveToken.unwrap(pool))
         validAddress(address(targetPoolCollection))
         only(address(_poolCollectionUpgrader))
     {
@@ -805,129 +793,46 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev returns deposit-related output data
-     */
-    function _poolDepositParams(
-        ReserveToken pool,
-        uint256 baseTokenAmount,
-        uint256 unallocatedNetworkTokenLiquidity
-    ) private view returns (PoolDepositParams memory depositParams) {
-        Pool memory data = _poolData[pool];
-        if (!_validPool(data)) {
-            revert DoesNotExist();
-        }
-
-        // get the effective rate to use when calculating the matching network token trading liquidity amount
-        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-        if (minLiquidityForTrading == 0) {
-            revert MinLiquidityNotSet();
-        }
-
-        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
-        if (data.liquidity.stakedBalance + baseTokenAmount > data.depositLimit) {
-            revert DepositLimitExceeded();
-        }
-
-        Fraction memory rate;
-        depositParams.useInitialRate = data.liquidity.networkTokenTradingLiquidity < minLiquidityForTrading;
-        if (depositParams.useInitialRate) {
-            // if the minimum network token trading liquidity isn't met - use the initial rate (but ensure that it was
-            // actually set)
-            if (!_isFractionValid(data.initialRate)) {
-                revert NoInitialRate();
-            }
-
-            rate = data.initialRate;
-        } else {
-            // if the minimum network token trading liquidity is met - use the average rate
-            rate = data.averageRate.rate;
-        }
-
-        // if all network token liquidity is allocated - treat all the base token amount as excess and finish
-        if (unallocatedNetworkTokenLiquidity == 0) {
-            depositParams.baseTokenExcessLiquidity = baseTokenAmount;
-            depositParams.baseTokenDeltaAmount = 0;
-
-            return depositParams;
-        }
-
-        // calculate the matching network token trading liquidity amount
-        depositParams.networkTokenDeltaAmount = MathEx.mulDivF(baseTokenAmount, rate.n, rate.d);
-
-        // if most of network token liquidity is allocated - we'll use as much as we can and the remaining base token
-        // liquidity will be treated as excess
-        if (depositParams.networkTokenDeltaAmount > unallocatedNetworkTokenLiquidity) {
-            uint256 unavailableNetworkTokenAmount;
-            unchecked {
-                unavailableNetworkTokenAmount =
-                    depositParams.networkTokenDeltaAmount -
-                    unallocatedNetworkTokenLiquidity;
-            }
-
-            depositParams.networkTokenDeltaAmount = unallocatedNetworkTokenLiquidity;
-            depositParams.baseTokenExcessLiquidity = MathEx.mulDivF(unavailableNetworkTokenAmount, rate.d, rate.n);
-        }
-
-        // base token amount is guaranteed to be larger than the excess liquidity
-        unchecked {
-            depositParams.baseTokenDeltaAmount = baseTokenAmount - depositParams.baseTokenExcessLiquidity;
-        }
-    }
-
-    /**
      * @dev returns withdrawal amounts
      */
-    function _poolWithdrawalAmounts(
-        ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    ) internal view returns (WithdrawalAmounts memory amounts) {
-        PoolWithdrawalParams memory params = _poolWithdrawalParams(pool);
-
-        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
-            params.networkTokenAvgTradingLiquidity,
-            params.baseTokenAvgTradingLiquidity,
-            MathEx.subMax0(baseTokenVaultBalance, params.baseTokenTradingLiquidity),
-            params.baseTokenStakedAmount,
-            externalProtectionVaultBalance,
-            params.tradeFeePPM,
-            _networkSettings.withdrawalFeePPM(),
-            MathEx.mulDivF(basePoolTokenAmount, params.baseTokenStakedAmount, params.basePoolTokenTotalSupply)
-        );
-
-        amounts.baseTokensToTransferFromMasterVault = output.s;
-        amounts.networkTokensToMintForProvider = output.t;
-        amounts.baseTokensToTransferFromEPV = output.u;
-        amounts.baseTokensTradingLiquidityDelta = output.r;
-        amounts.networkTokensTradingLiquidityDelta = output.p;
-        amounts.networkTokensProtocolHoldingsDelta = output.q;
-        amounts.baseTokensWithdrawalFee = output.v;
-    }
-
-    /**
-     * @dev returns withdrawal-related input which can be retrieved from the pool
-     */
-    function _poolWithdrawalParams(ReserveToken pool) private view returns (PoolWithdrawalParams memory) {
+    function _poolWithdrawalAmounts(ReserveToken pool, uint256 poolTokenAmount)
+        internal
+        view
+        returns (WithdrawalAmounts memory)
+    {
         Pool memory data = _poolData[pool];
         if (!_validPool(data)) {
             revert DoesNotExist();
         }
 
-        uint256 prod = data.liquidity.networkTokenTradingLiquidity * data.liquidity.baseTokenTradingLiquidity;
+        uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
+        PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
+            data.liquidity.networkTokenTradingLiquidity,
+            data.liquidity.baseTokenTradingLiquidity,
+            MathEx.subMax0(pool.balanceOf(address(_masterVault)), data.liquidity.baseTokenTradingLiquidity),
+            data.liquidity.stakedBalance,
+            pool.balanceOf(address(_externalProtectionVault)),
+            data.tradingFeePPM,
+            _networkSettings.withdrawalFeePPM(),
+            MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, poolTokenTotalSupply)
+        );
 
         return
-            PoolWithdrawalParams({
-                networkTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, data.averageRate.rate.n, data.averageRate.rate.d)
-                ),
-                baseTokenAvgTradingLiquidity: MathEx.floorSqrt(
-                    MathEx.mulDivF(prod, data.averageRate.rate.d, data.averageRate.rate.n)
-                ),
-                baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
-                basePoolTokenTotalSupply: data.poolToken.totalSupply(),
-                baseTokenStakedAmount: data.liquidity.stakedBalance,
-                tradeFeePPM: data.tradingFeePPM
+            WithdrawalAmounts({
+                baseTokensToTransferFromMasterVault: output.s,
+                networkTokensToMintForProvider: output.t,
+                baseTokensToTransferFromEPV: output.u,
+                baseTokensTradingLiquidityDelta: output.r,
+                networkTokensTradingLiquidityDelta: output.p,
+                networkTokensProtocolHoldingsDelta: output.q,
+                baseTokensWithdrawalFee: output.v,
+                poolTokenTotalSupply: poolTokenTotalSupply,
+                newBaseTokenTradingLiquidity: output.r.isNeg
+                    ? data.liquidity.baseTokenTradingLiquidity - output.r.value
+                    : data.liquidity.baseTokenTradingLiquidity + output.r.value,
+                newNetworkTokenTradingLiquidity: output.p.isNeg
+                    ? data.liquidity.networkTokenTradingLiquidity - output.p.value
+                    : data.liquidity.networkTokenTradingLiquidity + output.p.value
             });
     }
 
@@ -943,51 +848,94 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *   (either above the threshold or below the threshold)
      */
     function _executeWithdrawal(
+        bytes32 contextId,
+        address provider,
         ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        Sint256 memory baseTokenTradingLiquidityDelta,
-        Sint256 memory networkTokenTradingLiquidityDelta
+        uint256 poolTokenAmount,
+        WithdrawalAmounts memory amounts
     ) private {
-        Pool storage data = _poolData[pool];
-        uint256 totalSupply = data.poolToken.totalSupply();
+        Pool storage data = _poolStorage(pool);
 
-        // all of these are at most 128 bits, but we store them as uint256 in order to avoid 128-bit multiplication
-        // overflows
-        uint256 baseTokenCurrTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
-        uint256 networkTokenCurrTradingLiquidity = data.liquidity.networkTokenTradingLiquidity;
-        uint256 baseTokenNewTradingLiquidity = baseTokenTradingLiquidityDelta.isNeg
-            ? baseTokenCurrTradingLiquidity - baseTokenTradingLiquidityDelta.value
-            : baseTokenCurrTradingLiquidity + baseTokenTradingLiquidityDelta.value;
-        uint256 networkTokenNewTradingLiquidity = networkTokenTradingLiquidityDelta.isNeg
-            ? networkTokenCurrTradingLiquidity - networkTokenTradingLiquidityDelta.value
-            : networkTokenCurrTradingLiquidity + networkTokenTradingLiquidityDelta.value;
+        data.poolToken.burnFrom(address(_network), poolTokenAmount);
+        uint256 newPoolTokenTotalSupply = amounts.poolTokenTotalSupply - poolTokenAmount;
 
-        data.poolToken.burnFrom(address(_network), basePoolTokenAmount);
+        PoolLiquidity storage liquidity = data.liquidity;
+        PoolLiquidity memory prevLiquidity = liquidity;
 
-        unchecked {
-            data.liquidity.stakedBalance = MathEx.mulDivF(
-                data.liquidity.stakedBalance,
-                totalSupply - basePoolTokenAmount,
-                totalSupply
-            );
-        }
-        data.liquidity.baseTokenTradingLiquidity = baseTokenNewTradingLiquidity;
-        data.liquidity.networkTokenTradingLiquidity = networkTokenNewTradingLiquidity;
-        data.liquidity.tradingLiquidityProduct = baseTokenNewTradingLiquidity * networkTokenNewTradingLiquidity;
+        liquidity.stakedBalance = MathEx.mulDivF(
+            liquidity.stakedBalance,
+            newPoolTokenTotalSupply,
+            amounts.poolTokenTotalSupply
+        );
 
-        // ensure that the average rate is reset when the pool is being emptied
-        if (baseTokenNewTradingLiquidity == 0) {
-            data.averageRate.rate = _zeroFraction();
+        liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity;
+        liquidity.networkTokenTradingLiquidity = amounts.newNetworkTokenTradingLiquidity;
+
+        if (amounts.networkTokensProtocolHoldingsDelta.value > 0) {
+            assert(amounts.networkTokensProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
+
+            _masterPool.renounceFunding(contextId, pool, amounts.networkTokensProtocolHoldingsDelta.value);
         }
 
-        if (data.tradingEnabled) {
-            uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-            bool currEnabled = networkTokenCurrTradingLiquidity >= minLiquidityForTrading;
-            bool newEnabled = networkTokenNewTradingLiquidity >= minLiquidityForTrading;
-            if (newEnabled != currEnabled) {
-                emit TradingEnabled({ pool: pool, newStatus: newEnabled, reason: TRADING_STATUS_UPDATE_MIN_LIQUIDITY });
+        if (amounts.networkTokensTradingLiquidityDelta.value > 0) {
+            if (amounts.networkTokensTradingLiquidityDelta.isNeg) {
+                _masterPool.burnFromVault(amounts.networkTokensTradingLiquidityDelta.value);
+            } else {
+                _masterPool.mint(address(_masterVault), amounts.networkTokensTradingLiquidityDelta.value);
             }
         }
+
+        // if the provider should receive some network tokens - ask the master pool to mint network tokens to the
+        // provider
+        if (amounts.networkTokensToMintForProvider > 0) {
+            _masterPool.mint(address(provider), amounts.networkTokensToMintForProvider);
+        }
+
+        // if the provider should receive some base tokens from the external protection vault - remove the tokens from
+        // the external protection vault and send them to the master vault
+        if (amounts.baseTokensToTransferFromEPV > 0) {
+            _externalProtectionVault.withdrawFunds(
+                pool,
+                payable(address(_masterVault)),
+                amounts.baseTokensToTransferFromEPV
+            );
+            amounts.baseTokensToTransferFromMasterVault += amounts.baseTokensToTransferFromEPV;
+        }
+
+        // if the provider should receive some base tokens from the master vault - remove the tokens from the master
+        // vault and send them to the provider
+        if (amounts.baseTokensToTransferFromMasterVault > 0) {
+            _masterVault.withdrawFunds(pool, payable(provider), amounts.baseTokensToTransferFromMasterVault);
+        }
+
+        // ensure that the average rate is reset when the pool is being emptied
+        if (amounts.newBaseTokenTradingLiquidity == 0) {
+            data.averageRate.rate = zeroFraction();
+        }
+
+        // if the new network token trading liquidity is below the minimum liquidity for trading - reset the liquidity
+        if (amounts.newNetworkTokenTradingLiquidity < _networkSettings.minLiquidityForTrading()) {
+            _resetTradingLiquidity(
+                contextId,
+                pool,
+                data,
+                amounts.newNetworkTokenTradingLiquidity,
+                TRADING_STATUS_UPDATE_MIN_LIQUIDITY
+            );
+        }
+
+        emit TokenWithdrawn({
+            contextId: contextId,
+            token: pool,
+            provider: provider,
+            tokenAmount: amounts.baseTokensToTransferFromMasterVault,
+            poolTokenAmount: poolTokenAmount,
+            externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
+            networkTokenAmount: amounts.networkTokensToMintForProvider,
+            withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
+        });
+
+        _dispatchTradingLiquidityEvents(contextId, pool, newPoolTokenTotalSupply, prevLiquidity, data.liquidity);
     }
 
     /**
@@ -1024,38 +972,245 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     /**
-     * @dev returns the zero fraction
-     */
-    function _zeroFraction() private pure returns (Fraction memory) {
-        return Fraction({ n: 0, d: 1 });
-    }
-
-    /**
-     * @dev returns whether a fraction is zero
-     */
-    function _isFractionValid(Fraction memory fraction) private pure returns (bool) {
-        return fraction.n != 0 && fraction.d != 0;
-    }
-
-    /**
      * @dev calculates pool tokens amount
      */
     function _underlyingToPoolToken(
-        IPoolToken basePoolToken,
-        uint256 baseTokenAmount,
+        uint256 poolTokenSupply,
+        uint256 tokenAmount,
         uint256 stakedBalance
-    ) private view returns (uint256) {
-        uint256 poolTokenTotalSupply = basePoolToken.totalSupply();
-        if (poolTokenTotalSupply == 0) {
+    ) private pure returns (uint256) {
+        if (poolTokenSupply == 0) {
             // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
             if (stakedBalance > 0) {
                 revert InvalidStakedBalance();
             }
 
-            return baseTokenAmount;
+            return tokenAmount;
         }
 
-        return MathEx.mulDivF(baseTokenAmount, poolTokenTotalSupply, stakedBalance);
+        return MathEx.mulDivF(tokenAmount, poolTokenSupply, stakedBalance);
+    }
+
+    /**
+     * @dev adjusts the trading liquidity based on the base token vault balance and funding limits
+     */
+    function _updateTradingLiquidity(
+        bytes32 contextId,
+        ReserveToken pool,
+        Pool storage data,
+        PoolLiquidity memory liquidity,
+        Fraction memory fundingRate,
+        uint256 minLiquidityForTrading
+    ) private {
+        bool isFundingRateValid = _isRateValid(fundingRate);
+
+        // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
+        // liquidity for trading
+        if (liquidity.networkTokenTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
+            return;
+        }
+
+        // ensure that the base token reserve isn't empty
+        uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
+        if (tokenReserveAmount == 0) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
+            return;
+        }
+
+        // try to check whether the pool is stable (when both reserves and the average rate are available)
+        AverageRate memory averageRate = data.averageRate;
+        bool isAverageRateValid = PoolAverageRate.isValid(averageRate);
+        if (
+            liquidity.networkTokenTradingLiquidity != 0 &&
+            liquidity.baseTokenTradingLiquidity != 0 &&
+            isAverageRateValid &&
+            !_isPoolRateStable(liquidity, averageRate)
+        ) {
+            return;
+        }
+
+        // figure out the effective funding rate
+        Fraction memory effectiveFundingRate;
+        if (isFundingRateValid) {
+            effectiveFundingRate = fundingRate;
+        } else if (isAverageRateValid) {
+            effectiveFundingRate = averageRate.rate;
+        } else {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
+            return;
+        }
+
+        // calculate the target network token trading liquidity based on the smaller between the following:
+        // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
+        // - network token liquidity required to match previously deposited based token liquidity
+        // - maximum available network token trading liquidity (current amount + available funding)
+        uint256 targetNetworkTokenTradingLiquidity = Math.min(
+            Math.min(
+                _networkSettings.poolFundingLimit(pool),
+                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
+            ),
+            liquidity.networkTokenTradingLiquidity + _masterPool.availableFunding(pool)
+        );
+
+        // ensure that the target is above the minimum liquidity for trading
+        if (targetNetworkTokenTradingLiquidity < minLiquidityForTrading) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
+            return;
+        }
+
+        // calculate the new network token trading liquidity and cap it by the growth factor
+        if (liquidity.networkTokenTradingLiquidity == 0) {
+            // if the current network token trading liquidity is 0, set it to the minimum liquidity for trading (with an
+            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+            uint256 newTargetNetworkTokenTradingLiquidity = minLiquidityForTrading *
+                BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+            // ensure that we're not allocating more than the previously established limits
+            if (newTargetNetworkTokenTradingLiquidity > targetNetworkTokenTradingLiquidity) {
+                return;
+            }
+
+            targetNetworkTokenTradingLiquidity = newTargetNetworkTokenTradingLiquidity;
+        } else if (targetNetworkTokenTradingLiquidity >= liquidity.networkTokenTradingLiquidity) {
+            // if the target is above the current trading liquidity, limit it by factoring the current value up
+            targetNetworkTokenTradingLiquidity = Math.min(
+                targetNetworkTokenTradingLiquidity,
+                liquidity.networkTokenTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
+            );
+        } else {
+            // if the target is below the current trading liquidity, limit it by factoring the current value down
+            targetNetworkTokenTradingLiquidity = Math.max(
+                targetNetworkTokenTradingLiquidity,
+                liquidity.networkTokenTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
+            );
+        }
+
+        // update funding from the master pool
+        if (targetNetworkTokenTradingLiquidity > liquidity.networkTokenTradingLiquidity) {
+            _masterPool.requestFunding(
+                contextId,
+                pool,
+                targetNetworkTokenTradingLiquidity - liquidity.networkTokenTradingLiquidity
+            );
+        } else if (targetNetworkTokenTradingLiquidity < liquidity.networkTokenTradingLiquidity) {
+            _masterPool.renounceFunding(
+                contextId,
+                pool,
+                liquidity.networkTokenTradingLiquidity - targetNetworkTokenTradingLiquidity
+            );
+        }
+
+        // calculate the base token trading liquidity based on the new network token trading liquidity and the effective
+        // funding rate (please note that the effective funding rate is always the rate between the network token and
+        // the base token)
+        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
+            targetNetworkTokenTradingLiquidity,
+            effectiveFundingRate.d,
+            effectiveFundingRate.n
+        );
+
+        // update the liquidity data of the pool
+        PoolLiquidity memory newLiquidity = PoolLiquidity({
+            networkTokenTradingLiquidity: targetNetworkTokenTradingLiquidity,
+            baseTokenTradingLiquidity: baseTokenTradingLiquidity,
+            stakedBalance: liquidity.stakedBalance
+        });
+
+        data.liquidity = newLiquidity;
+
+        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, newLiquidity);
+    }
+
+    function _dispatchTradingLiquidityEvents(
+        bytes32 contextId,
+        ReserveToken pool,
+        PoolLiquidity memory prevLiquidity,
+        PoolLiquidity memory newLiquidity
+    ) private {
+        if (newLiquidity.networkTokenTradingLiquidity != prevLiquidity.networkTokenTradingLiquidity) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: pool,
+                reserveToken: ReserveToken.wrap(address(_networkToken)),
+                liquidity: newLiquidity.networkTokenTradingLiquidity
+            });
+        }
+
+        if (newLiquidity.baseTokenTradingLiquidity != prevLiquidity.baseTokenTradingLiquidity) {
+            emit TradingLiquidityUpdated({
+                contextId: contextId,
+                pool: pool,
+                reserveToken: pool,
+                liquidity: newLiquidity.baseTokenTradingLiquidity
+            });
+        }
+    }
+
+    function _dispatchTradingLiquidityEvents(
+        bytes32 contextId,
+        ReserveToken pool,
+        uint256 poolTokenTotalSupply,
+        PoolLiquidity memory prevLiquidity,
+        PoolLiquidity memory newLiquidity
+    ) private {
+        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, newLiquidity);
+
+        if (newLiquidity.stakedBalance != prevLiquidity.stakedBalance) {
+            emit TotalLiquidityUpdated({
+                contextId: contextId,
+                pool: pool,
+                poolTokenSupply: poolTokenTotalSupply,
+                stakedBalance: newLiquidity.stakedBalance,
+                actualBalance: pool.balanceOf(address(_masterVault))
+            });
+        }
+    }
+
+    /**
+     * @dev resets trading liquidity and renounces any remaining network token funding
+     */
+    function _resetTradingLiquidity(
+        bytes32 contextId,
+        ReserveToken pool,
+        Pool storage data,
+        uint8 reason
+    ) private {
+        _resetTradingLiquidity(contextId, pool, data, data.liquidity.networkTokenTradingLiquidity, reason);
+    }
+
+    /**
+     * @dev resets trading liquidity and renounces any remaining network token funding
+     */
+    function _resetTradingLiquidity(
+        bytes32 contextId,
+        ReserveToken pool,
+        Pool storage data,
+        uint256 currentNetworkTokenTradingLiquidity,
+        uint8 reason
+    ) private {
+        // reset the network and base token trading liquidities
+        data.liquidity.networkTokenTradingLiquidity = 0;
+        data.liquidity.baseTokenTradingLiquidity = 0;
+
+        // reset the recent average rage
+        data.averageRate = AverageRate({ time: 0, rate: zeroFraction() });
+
+        // ensure that trading is disabled
+        if (data.tradingEnabled) {
+            data.tradingEnabled = false;
+
+            emit TradingEnabled({ pool: pool, newStatus: false, reason: reason });
+        }
+
+        // renounce all network liquidity
+        if (currentNetworkTokenTradingLiquidity > 0) {
+            _masterPool.renounceFunding(contextId, pool, currentNetworkTokenTradingLiquidity);
+        }
     }
 
     /**
@@ -1077,7 +1232,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             params.pool = sourceToken;
         } else {
             // the network token isn't one of the pools or is both of them
-            revert InvalidPool();
+            revert DoesNotExist();
         }
 
         Pool memory data = _poolData[params.pool];
@@ -1091,11 +1246,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
             revert TradingDisabled();
-        }
-
-        // verify that liquidity is above the minimum network token liquidity for trading
-        if (params.liquidity.networkTokenTradingLiquidity < _networkSettings.minLiquidityForTrading()) {
-            revert LiquidityTooLow();
         }
 
         if (params.isSourceNetworkToken) {
@@ -1117,7 +1267,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 sourceAmount
     ) private pure returns (TradeAmounts memory) {
         if (sourceBalance == 0 || targetBalance == 0) {
-            revert InvalidPoolBalance();
+            revert InsufficientLiquidity();
         }
 
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
@@ -1136,7 +1286,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 targetAmount
     ) private pure returns (TradeAmounts memory) {
         if (sourceBalance == 0) {
-            revert InvalidPoolBalance();
+            revert InsufficientLiquidity();
         }
 
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
@@ -1144,6 +1294,28 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
+    }
+
+    /**
+     * @dev returns whether a pool's rate is stable
+     */
+    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRate)
+        private
+        view
+        returns (bool)
+    {
+        // verify that the average rate of the pool isn't deviated too much from its spot rate
+        Fraction memory spotRate = Fraction({
+            n: liquidity.networkTokenTradingLiquidity,
+            d: liquidity.baseTokenTradingLiquidity
+        });
+        return
+            PoolAverageRate.isPoolRateStable(
+                spotRate,
+                averageRate,
+                _networkSettings.averageRateMaxDeviationPPM(),
+                _time()
+            );
     }
 
     /**
@@ -1159,5 +1331,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         ) {
             data.averageRate = newAverageRate;
         }
+    }
+
+    /**
+     * @dev returns whether a rate is valid
+     */
+    function _isRateValid(Fraction memory rate) private pure returns (bool) {
+        return isFractionValid(rate) && !isFractionZero(rate);
     }
 }

@@ -21,7 +21,7 @@ import {
     createSystem,
     createTestToken,
     depositToPool,
-    setupSimplePool,
+    setupFundedPool,
     TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -59,14 +59,14 @@ describe('AutoCompoundingStakingRewards', () => {
 
     const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
         // deposit initial stake so that the participating user would have some initial amount of pool tokens
-        const { token, poolToken } = await setupSimplePool(
+        const { token, poolToken } = await setupFundedPool(
             {
                 tokenData,
                 balance: providerStake,
                 requestedLiquidity: tokenData.isNetworkToken()
                     ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
                     : 0,
-                initialRate: { n: 1, d: 2 }
+                fundingRate: { n: 1, d: 2 }
             },
             user,
             network,
@@ -175,12 +175,12 @@ describe('AutoCompoundingStakingRewards', () => {
 
             const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
             const TOTAL_DURATION = duration.days(10);
-            const TOTAL_REWARDS = 10;
-            const INITIAL_USER_STAKE = 10;
+            const TOTAL_REWARDS = toWei(10_000);
+            const INITIAL_USER_STAKE = toWei(10_000);
 
             const START_TIME = 1000;
             const END_TIME = distributionType === StakingRewardsDistributionType.Flat ? START_TIME + TOTAL_DURATION : 0;
-            const EFFECTIVE_END_TIME = END_TIME ? END_TIME : START_TIME + ExponentialDecay.MAX_DURATION;
+            const EFFECTIVE_END_TIME = END_TIME || START_TIME + ExponentialDecay.MAX_DURATION;
 
             beforeEach(async () => {
                 ({
@@ -308,7 +308,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                     isProgramTimingValid = currTime <= startTime && startTime < endTime;
                                     break;
                                 case StakingRewardsDistributionType.ExponentialDecay:
-                                    isProgramTimingValid = currTime <= startTime && endTime == 0;
+                                    isProgramTimingValid = currTime <= startTime && endTime === 0;
                                     break;
                             }
 
@@ -635,10 +635,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             );
                             break;
                         case externalRewardsVault.address:
-                            await externalRewardsVault.grantRole(
-                                Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-                                deployer.address
-                            );
+                            await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, deployer.address);
                             break;
                     }
 
@@ -672,6 +669,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             const res1 = await autoCompoundingStakingRewards.processRewards(token.address); // distribute tokens
                             await expect(res1).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
                             await autoCompoundingStakingRewards.setTime(END_TIME + TOTAL_DURATION * 2);
+                            // eslint-disable-next-line max-len
                             const res2 = await autoCompoundingStakingRewards.processRewards(token.address); // distribute tokens possibly one last time
                             if (seconds < END_TIME) {
                                 await expect(res2).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
@@ -708,7 +706,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                         isProgramTimingActive = startTime <= currTime && currTime <= endTime;
                                         break;
                                     case StakingRewardsDistributionType.ExponentialDecay:
-                                        isProgramTimingValid = creationTime <= startTime && endTime == 0;
+                                        isProgramTimingValid = creationTime <= startTime && endTime === 0;
                                         isProgramTimingActive = startTime <= currTime;
                                         break;
                                 }
@@ -969,7 +967,6 @@ describe('AutoCompoundingStakingRewards', () => {
                 let currTimeElapsed: number;
                 let prevTimeElapsed: number;
                 let tokenAmountToDistribute: BigNumber;
-                let poolTokenAmountToBurn: BigNumber;
 
                 switch (program.distributionType) {
                     case StakingRewardsDistributionType.Flat:
@@ -1011,7 +1008,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const poolTokenSupply = await poolToken.totalSupply();
                 const val = tokenAmountToDistribute.mul(poolTokenSupply);
 
-                poolTokenAmountToBurn = val
+                const poolTokenAmountToBurn = val
                     .mul(poolTokenSupply)
                     .div(val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 

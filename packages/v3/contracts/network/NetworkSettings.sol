@@ -4,13 +4,15 @@ pragma solidity 0.8.10;
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { INetworkFeeVault } from "../vaults/interfaces/INetworkFeeVault.sol";
+
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract
@@ -24,8 +26,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
-    // a mapping of network token minting limits per pool
-    mapping(ReserveToken => uint256) private _poolMintingLimits;
+    // a mapping of network token funding limits per pool
+    mapping(ReserveToken => uint256) private _poolFundingLimits;
 
     // below that amount, trading is disabled and co-investments use the initial rate
     uint256 private _minLiquidityForTrading;
@@ -56,9 +58,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event TokenRemovedFromWhitelist(ReserveToken indexed token);
 
     /**
-     * @dev triggered when a per-pool minting limit is updated
+     * @dev triggered when a per-pool funding limit is updated
      */
-    event PoolMintingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event FundingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the minimum liquidity for trading is updated
@@ -118,7 +120,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;
@@ -174,36 +176,41 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @inheritdoc INetworkSettings
      */
     function isTokenWhitelisted(ReserveToken token) external view returns (bool) {
-        return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
+        return _isTokenWhitelisted(token);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function poolMintingLimit(ReserveToken pool) external view returns (uint256) {
-        return _poolMintingLimits[pool];
+    function poolFundingLimit(ReserveToken pool) external view returns (uint256) {
+        return _poolFundingLimits[pool];
     }
 
     /**
-     * @dev updates the amount of network tokens that the system can mint into a specific pool
+     * @dev updates the amount of network tokens that the protocol can fund a specific pool
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
+     * - the token must have been whitelisted
      */
-    function setPoolMintingLimit(ReserveToken pool, uint256 amount)
+    function setFundingLimit(ReserveToken pool, uint256 amount)
         external
         onlyAdmin
         validAddress(ReserveToken.unwrap(pool))
     {
-        uint256 prevPoolMintingLimit = _poolMintingLimits[pool];
-        if (prevPoolMintingLimit == amount) {
+        if (!_isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+
+        uint256 prevPoolFundingLimit = _poolFundingLimits[pool];
+        if (prevPoolFundingLimit == amount) {
             return;
         }
 
-        _poolMintingLimits[pool] = amount;
+        _poolFundingLimits[pool] = amount;
 
-        emit PoolMintingLimitUpdated({ pool: pool, prevLimit: prevPoolMintingLimit, newLimit: amount });
+        emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
     }
 
     /**
@@ -350,5 +357,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
             prevDeviationPPM: prevAverageRateMaxDeviationPPM,
             newDeviationPPM: newAverageRateMaxDeviationPPM
         });
+    }
+
+    /**
+     * @dev checks whether a given token is whitelisted
+     */
+    function _isTokenWhitelisted(ReserveToken token) private view returns (bool) {
+        return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
     }
 }

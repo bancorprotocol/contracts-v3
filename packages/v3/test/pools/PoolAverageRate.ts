@@ -1,8 +1,7 @@
 import Contracts from '../../components/Contracts';
 import { TestPoolAverageRate } from '../../typechain-types';
-import { PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
+import { PPM_RESOLUTION, MAX_UINT256, AVERAGE_RATE_PERIOD } from '../../utils/Constants';
 import { toString, toWei, toPPM, Fraction, AverageRate } from '../../utils/Types';
-import { duration } from '../helpers/Time';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -10,18 +9,19 @@ import { BigNumber } from 'ethers';
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
+    const INITIAL_TIME = 1000;
+
     before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
 
     describe('calculate average rate', () => {
-        const AVERAGE_RATE_PERIOD = duration.minutes(10);
         const INITIAL_AVERAGE_RATE: AverageRate<BigNumber> = {
             rate: {
                 n: BigNumber.from(0),
                 d: BigNumber.from(0)
             },
-            time: 0
+            time: INITIAL_TIME
         };
 
         it('should update the average rate to the spot rate at the beginning', async () => {
@@ -35,7 +35,7 @@ describe('PoolAverageRate', () => {
 
         it('should not update the average rate more than once per-block', async () => {
             const spotRate1 = { n: 100, d: 10 };
-            const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, 0);
+            const averageRate1 = await poolAverageRate.calcAverageRate(spotRate1, INITIAL_AVERAGE_RATE, INITIAL_TIME);
 
             const currentTime = 10_000;
             const spotRate2 = { n: 1000, d: 10 };
@@ -62,7 +62,7 @@ describe('PoolAverageRate', () => {
             expect(averageRate2.rate).not.to.equal(newSpotRate);
             expect(averageRate2.time).to.equal(currentTime);
 
-            currentTime = currentTime + AVERAGE_RATE_PERIOD;
+            currentTime += AVERAGE_RATE_PERIOD;
             const averageRate3 = await poolAverageRate.calcAverageRate(newSpotRate, averageRate1, currentTime);
             expect(averageRate3.rate).to.equal(newSpotRate);
             expect(averageRate3.time).to.equal(currentTime);
@@ -301,7 +301,7 @@ describe('PoolAverageRate', () => {
         });
     });
 
-    describe('verify average rate', () => {
+    describe('pool rate stability', () => {
         const testVerifyAverageRate = async (
             averageRates: Fraction<BigNumber>[],
             scaleFactors: number[],
@@ -316,7 +316,7 @@ describe('PoolAverageRate', () => {
                                 n: initAverageRate.n.mul(averageRateScale),
                                 d: initAverageRate.d.mul(averageRateScale)
                             },
-                            time: 0
+                            time: 1000
                         };
                         const spotRateScale = BigNumber.from(10).pow(spotRateScaleFactor);
                         const baseSpotRate = {
@@ -337,7 +337,8 @@ describe('PoolAverageRate', () => {
                                             await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -349,7 +350,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -361,7 +363,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.add(1)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
                                     });
@@ -375,7 +378,8 @@ describe('PoolAverageRate', () => {
                                             await poolAverageRate.isPoolRateStable(
                                                 baseSpotRate,
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -387,7 +391,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.mul(2)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
 
@@ -399,7 +404,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d.mul(BigNumber.from(3))
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -411,7 +417,8 @@ describe('PoolAverageRate', () => {
                                                     d: toWei(10)
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.false;
 
@@ -422,7 +429,8 @@ describe('PoolAverageRate', () => {
                                                     d: baseSpotRate.d
                                                 },
                                                 averageRate,
-                                                maxDeviation
+                                                maxDeviation,
+                                                INITIAL_TIME
                                             )
                                         ).to.be.true;
                                     });
@@ -431,11 +439,23 @@ describe('PoolAverageRate', () => {
                                 for (const maxDeviation of maxDeviations) {
                                     context(`max deviation = ${maxDeviation.toString()}`, () => {
                                         it('should properly verify the average rate', async () => {
+                                            // at the initial rate
                                             expect(
                                                 await poolAverageRate.isPoolRateStable(
                                                     baseSpotRate,
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
+                                                )
+                                            ).to.be.true;
+
+                                            // at the initial rate - after the calculation window
+                                            expect(
+                                                await poolAverageRate.isPoolRateStable(
+                                                    baseSpotRate,
+                                                    averageRate,
+                                                    maxDeviation,
+                                                    INITIAL_TIME + AVERAGE_RATE_PERIOD
                                                 )
                                             ).to.be.true;
 
@@ -447,7 +467,21 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
+                                                )
+                                            ).to.be.true;
+
+                                            // at the max deviation (average > spot) - after the calculation window
+                                            expect(
+                                                await poolAverageRate.isPoolRateStable(
+                                                    {
+                                                        n: baseSpotRate.n.mul(PPM_RESOLUTION),
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation)
+                                                    },
+                                                    averageRate,
+                                                    maxDeviation,
+                                                    INITIAL_TIME + AVERAGE_RATE_PERIOD
                                                 )
                                             ).to.be.true;
 
@@ -459,9 +493,23 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation + 1)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.false;
+
+                                            // above the max deviation (average > spot) - after the calculation window
+                                            expect(
+                                                await poolAverageRate.isPoolRateStable(
+                                                    {
+                                                        n: baseSpotRate.n.mul(PPM_RESOLUTION),
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION + maxDeviation + 1)
+                                                    },
+                                                    averageRate,
+                                                    maxDeviation,
+                                                    INITIAL_TIME + AVERAGE_RATE_PERIOD
+                                                )
+                                            ).to.be.true;
 
                                             // at the max deviation (average < spot)
                                             expect(
@@ -471,7 +519,21 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION - maxDeviation)
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
+                                                )
+                                            ).to.be.true;
+
+                                            // at the max deviation (average < spot) - after the calculation window
+                                            expect(
+                                                await poolAverageRate.isPoolRateStable(
+                                                    {
+                                                        n: baseSpotRate.n.mul(PPM_RESOLUTION),
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION - maxDeviation)
+                                                    },
+                                                    averageRate,
+                                                    maxDeviation,
+                                                    INITIAL_TIME + AVERAGE_RATE_PERIOD
                                                 )
                                             ).to.be.true;
 
@@ -483,9 +545,23 @@ describe('PoolAverageRate', () => {
                                                         d: baseSpotRate.d.mul(PPM_RESOLUTION - (maxDeviation + 1))
                                                     },
                                                     averageRate,
-                                                    maxDeviation
+                                                    maxDeviation,
+                                                    INITIAL_TIME
                                                 )
                                             ).to.be.false;
+
+                                            // above the max deviation (average < spot) - after the calculation window
+                                            expect(
+                                                await poolAverageRate.isPoolRateStable(
+                                                    {
+                                                        n: baseSpotRate.n.mul(PPM_RESOLUTION),
+                                                        d: baseSpotRate.d.mul(PPM_RESOLUTION - (maxDeviation + 1))
+                                                    },
+                                                    averageRate,
+                                                    maxDeviation,
+                                                    INITIAL_TIME + AVERAGE_RATE_PERIOD
+                                                )
+                                            ).to.be.true;
                                         });
                                     });
                                 }
@@ -579,6 +655,30 @@ describe('PoolAverageRate', () => {
                     }
                 }
             }
+        }
+    });
+
+    describe('validity', () => {
+        for (const averageRate of [
+            { rate: { n: 123, d: 11 }, time: 1 },
+            { rate: { n: 11, d: 1000 }, time: 1000 },
+            { rate: { n: 1, d: 1 }, time: 1000 }
+        ]) {
+            it(`should return that [${toString(averageRate.rate)}, ${averageRate.time}] is valid`, async () => {
+                expect(await poolAverageRate.isValid(averageRate)).to.be.true;
+            });
+        }
+
+        for (const averageRate of [
+            { rate: { n: 123, d: 11 }, time: 0 },
+            { rate: { n: 0, d: 0 }, time: 1000 },
+            { rate: { n: 500, d: 0 }, time: 1000 },
+            { rate: { n: 1, d: 0 }, time: 1000 },
+            { rate: { n: 0, d: 0 }, time: 0 }
+        ]) {
+            it(`should return that [${toString(averageRate.rate)}, ${averageRate.time}] is invalid`, async () => {
+                expect(await poolAverageRate.isValid(averageRate)).to.be.false;
+            });
         }
     });
 

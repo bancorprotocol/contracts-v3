@@ -16,7 +16,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
     using ReserveTokenLibrary for ReserveToken;
 
     struct CallbackData {
-        address sender;
+        address caller;
         IERC20 token;
         uint256 amount;
         uint256 feeAmount;
@@ -55,7 +55,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
     }
 
     function onFlashLoan(
-        address sender,
+        address caller,
         IERC20 token,
         uint256 amount,
         uint256 feeAmount,
@@ -64,7 +64,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
         ReserveToken reserveToken = ReserveToken.wrap(address(token));
 
         _callbackData = CallbackData({
-            sender: sender,
+            caller: caller,
             token: token,
             amount: amount,
             feeAmount: feeAmount,

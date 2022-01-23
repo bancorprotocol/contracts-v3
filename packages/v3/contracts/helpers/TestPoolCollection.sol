@@ -6,6 +6,10 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+
+import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -26,6 +30,9 @@ contract TestPoolCollection is PoolCollection, TestTime {
         IBancorNetwork initNetwork,
         IERC20 initNetworkToken,
         INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IMasterPool initMasterPool,
+        IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
@@ -33,6 +40,9 @@ contract TestPoolCollection is PoolCollection, TestTime {
             initNetwork,
             initNetworkToken,
             initNetworkSettings,
+            initMasterVault,
+            initMasterPool,
+            initExternalProtectionVault,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
         )
@@ -52,21 +62,28 @@ contract TestPoolCollection is PoolCollection, TestTime {
         _poolData[pool].averageRate = newAverageRate;
     }
 
-    function poolWithdrawalAmountsT(
-        ReserveToken pool,
-        uint256 basePoolTokenAmount,
-        uint256 baseTokenVaultBalance,
-        uint256 externalProtectionVaultBalance
-    ) external view returns (WithdrawalAmounts memory) {
-        return _poolWithdrawalAmounts(pool, basePoolTokenAmount, baseTokenVaultBalance, externalProtectionVaultBalance);
+    function poolWithdrawalAmountsT(ReserveToken pool, uint256 poolTokenAmount)
+        external
+        view
+        returns (WithdrawalAmounts memory)
+    {
+        return _poolWithdrawalAmounts(pool, poolTokenAmount);
     }
 
-    function mintT(
+    function mintPoolTokenT(
         ReserveToken pool,
         address recipient,
         uint256 poolTokenAmount
     ) external {
         return _poolData[pool].poolToken.mint(recipient, poolTokenAmount);
+    }
+
+    function requestFundingT(
+        bytes32 contextId,
+        ReserveToken pool,
+        uint256 networkTokenAmount
+    ) external {
+        _masterPool.requestFunding(contextId, pool, networkTokenAmount);
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

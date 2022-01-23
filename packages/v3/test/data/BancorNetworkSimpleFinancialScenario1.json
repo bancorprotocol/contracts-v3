@@ -3,10 +3,8 @@
     "withdrawalFee": "0.25%",
     "epVaultBalance": "0",
     "tknDecimals": 18,
-    "tknInitialRate": 1,
-    "bntInitialRate": 1,
     "bntMinLiquidity": "1000000",
-    "bntMintingLimit": "10000000",
+    "bntFundingLimit": "10000000",
     "users": [
         {
             "id": "dayTrader",
@@ -42,7 +40,7 @@
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "1000000"
+                    "masterVault": "0"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -53,13 +51,13 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "1000000"
+                    "masterPool": "0"
                 },
-                "bntMintedAmount": "1000000",
+                "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "1000000",
-                "bntStakedBalance": "1000000",
-                "tknTradingLiquidity": "1000000",
-                "bntTradingLiquidity": "1000000"
+                "bntStakedBalance": "0",
+                "tknTradingLiquidity": "0",
+                "bntTradingLiquidity": "0"
             }
         },
         {
@@ -79,7 +77,7 @@
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "10000000"
+                    "masterVault": "0"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -90,13 +88,53 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "10000000"
+                    "masterPool": "0"
                 },
-                "bntMintedAmount": "10000000",
+                "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "10000000",
-                "bntStakedBalance": "10000000",
-                "tknTradingLiquidity": "10000000",
-                "bntTradingLiquidity": "10000000"
+                "bntStakedBalance": "0",
+                "tknTradingLiquidity": "0",
+                "bntTradingLiquidity": "0"
+            }
+        },
+        {
+            "type": "enableTrading",
+            "userId": "",
+            "elapsed": 0,
+            "amount": {
+                "fundingRateN": 1,
+                "fundingRateD": 1
+            },
+            "expected": {
+                "tknBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "0",
+                    "masterVault": "10000000",
+                    "epVault": "0"
+                },
+                "bntBalances": {
+                    "dayTrader": "10000",
+                    "tknProvider": "0",
+                    "bntProvider": "10000000",
+                    "masterVault": "2000000"
+                },
+                "bntknBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "10000000",
+                    "bntProvider": "0"
+                },
+                "bnbntBalances": {
+                    "dayTrader": "0",
+                    "tknProvider": "0",
+                    "bntProvider": "0",
+                    "masterPool": "2000000"
+                },
+                "bntCurrentPoolFunding": "2000000",
+                "tknStakedBalance": "10000000",
+                "bntStakedBalance": "2000000",
+                "tknTradingLiquidity": "2000000",
+                "bntTradingLiquidity": "2000000"
             }
         },
         {
@@ -116,7 +154,7 @@
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "9000000",
-                    "masterVault": "10000000"
+                    "masterVault": "2000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -127,13 +165,13 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "masterPool": "9000000"
+                    "masterPool": "1000000"
                 },
-                "bntMintedAmount": "10000000",
+                "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "10000000",
-                "bntStakedBalance": "10000000",
-                "tknTradingLiquidity": "10000000",
-                "bntTradingLiquidity": "10000000"
+                "bntStakedBalance": "2000000",
+                "tknTradingLiquidity": "2000000",
+                "bntTradingLiquidity": "2000000"
             }
         },
         {
@@ -153,7 +191,7 @@
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "9000000",
-                    "masterVault": "25000"
+                    "masterVault": "2000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -164,13 +202,13 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "masterPool": "4012500"
+                    "masterPool": "1000000"
                 },
-                "bntMintedAmount": "5012500",
+                "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5000000",
-                "bntStakedBalance": "5012500",
-                "tknTradingLiquidity": "5012500",
-                "bntTradingLiquidity": "5012500"
+                "bntStakedBalance": "2000000",
+                "tknTradingLiquidity": "2000000",
+                "bntTradingLiquidity": "2000000"
             }
         },
         {
@@ -190,7 +228,7 @@
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "9498750",
-                    "masterVault": "25000"
+                    "masterVault": "2000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -201,13 +239,13 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "500000",
-                    "masterPool": "4512500"
+                    "masterPool": "1500000"
                 },
-                "bntMintedAmount": "5012500",
+                "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5000000",
-                "bntStakedBalance": "5012500",
-                "tknTradingLiquidity": "5012500",
-                "bntTradingLiquidity": "5012500"
+                "bntStakedBalance": "2000000",
+                "tknTradingLiquidity": "2000000",
+                "bntTradingLiquidity": "2000000"
             }
         }
     ]

@@ -9,6 +9,7 @@ import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.so
 
 import { AverageRate } from "./PoolAverageRate.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { ReserveToken } from "../token/ReserveToken.sol";
@@ -22,7 +23,6 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
     struct PoolLiquidityV1 {
         uint256 networkTokenTradingLiquidity; // the network token trading liquidity
         uint256 baseTokenTradingLiquidity; // the base token trading liquidity
-        uint256 tradingLiquidityProduct; // the product of the base token and network token trading liquidities (used for fee calculations)
         uint256 stakedBalance; // the staked balance
     }
 
@@ -32,7 +32,6 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
         bool tradingEnabled; // whether trading is enabled
         bool depositingEnabled; // whether depositing is enabled
         AverageRate averageRate; // the recent average rate
-        Fraction initialRate; // the initial rate of one base token in network token units in a given pool
         uint256 depositLimit; // the deposit limit
         PoolLiquidityV1 liquidity; // the overall liquidity in the pool
     }
@@ -99,7 +98,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;
@@ -163,12 +162,10 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             tradingEnabled: data.tradingEnabled,
             depositingEnabled: data.depositingEnabled,
             averageRate: data.averageRate,
-            initialRate: data.initialRate,
             depositLimit: data.depositLimit,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: data.liquidity.networkTokenTradingLiquidity,
                 baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
-                tradingLiquidityProduct: data.liquidity.tradingLiquidityProduct,
                 stakedBalance: data.liquidity.stakedBalance
             })
         });

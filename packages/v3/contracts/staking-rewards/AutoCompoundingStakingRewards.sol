@@ -6,17 +6,21 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { uncheckedInc } from "../utility/MathEx.sol";
-import { Utils, NotWhitelisted } from "../utility/Utils.sol";
+import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
 // prettier-ignore
@@ -151,7 +155,7 @@ contract AutoCompoundingStakingRewards is
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

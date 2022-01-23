@@ -32,11 +32,18 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
     // the network contract
     BancorNetwork private immutable _network;
 
+    // the address of the network token
+    IERC20 private immutable _networkToken;
+
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(BancorNetwork network) validAddress(address(network)) {
-        _network = network;
+    constructor(BancorNetwork initNetwork, IERC20 initNetworkToken)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkToken))
+    {
+        _network = initNetwork;
+        _networkToken = initNetworkToken;
     }
 
     /**
@@ -58,18 +65,32 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
 
         ReserveToken[] memory reserveTokens = converter.reserveTokens();
 
+        // ensure to migrate network token liquidity last, in order to reduce some cases when migration wouldn't have
+        // been possible
+        ReserveToken[] memory orderedReserveTokens = new ReserveToken[](2);
+        orderedReserveTokens[0] = reserveTokens[1].toERC20() == _networkToken ? reserveTokens[0] : reserveTokens[1];
+        orderedReserveTokens[1] = ReserveToken.wrap(address(_networkToken));
+
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;
         minReturnAmounts[1] = 1;
 
-        uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
+        uint256[] memory orderedReserveAmounts = converter.removeLiquidity(
+            amount,
+            orderedReserveTokens,
+            minReturnAmounts
+        );
 
         for (uint256 i = 0; i < 2; i = uncheckedInc(i)) {
-            if (reserveTokens[i].isNativeToken()) {
-                _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
+            if (orderedReserveTokens[i].isNativeToken()) {
+                _network.depositFor{ value: orderedReserveAmounts[i] }(
+                    msg.sender,
+                    orderedReserveTokens[i],
+                    orderedReserveAmounts[i]
+                );
             } else {
-                reserveTokens[i].toIERC20().safeApprove(address(_network), reserveAmounts[i]);
-                _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
+                orderedReserveTokens[i].toIERC20().safeApprove(address(_network), orderedReserveAmounts[i]);
+                _network.depositFor(msg.sender, orderedReserveTokens[i], orderedReserveAmounts[i]);
             }
         }
     }

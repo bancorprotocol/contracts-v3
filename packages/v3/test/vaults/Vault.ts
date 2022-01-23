@@ -3,7 +3,7 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createProxy, createSystem, createToken, createBurnableToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer, getBalance } from '../helpers/Utils';
@@ -63,6 +63,9 @@ describe('Vault', () => {
         it('should be properly initialized', async () => {
             expect(await testVault.version()).to.equal(1);
             expect(await testVault.isPayable()).to.be.false;
+
+            await expectRoles(testVault, Roles.Vault);
+
             await expectRole(testVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
         });
     });

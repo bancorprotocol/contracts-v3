@@ -6,10 +6,12 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
 import { IMasterVault } from "./interfaces/IMasterVault.sol";
-import { IVault } from "./interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
 
 /**
@@ -19,11 +21,8 @@ contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
     using ReserveTokenLibrary for ReserveToken;
 
-    // the asset manager role is required to access all the reserves
-    bytes32 public constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
-
-    // the asset manager role is only required to access the network token reserve
-    bytes32 public constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
+    // the network token manager role is only required to access the network token reserve
+    bytes32 private constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -62,6 +61,15 @@ contract MasterVault is IMasterVault, Vault {
         _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
     }
 
+    // solhint-enable func-name-mixedcase
+
+    /**
+     * @inheritdoc IVersioned
+     */
+    function version() external pure override returns (uint16) {
+        return 1;
+    }
+
     /**
      * @inheritdoc Vault
      */
@@ -70,10 +78,10 @@ contract MasterVault is IMasterVault, Vault {
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @dev returns the network token manager role
      */
-    function version() external pure override returns (uint16) {
-        return 1;
+    function roleNetworkTokenManager() external pure returns (bytes32) {
+        return ROLE_NETWORK_TOKEN_MANAGER;
     }
 
     /**
@@ -81,8 +89,8 @@ contract MasterVault is IMasterVault, Vault {
      *
      * requirements:
      *
-     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER permission
-     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER permission
+     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER role
+     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,

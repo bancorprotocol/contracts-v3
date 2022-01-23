@@ -50,7 +50,7 @@ describe('NetworkFeeVault', () => {
             await expectRole(networkFeeVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
-            await expectRole(networkFeeVault, Roles.NetworkFeeVault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
+            await expectRole(networkFeeVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         });
     });
 
@@ -111,7 +111,7 @@ describe('NetworkFeeVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await networkFeeVault.grantRole(Roles.NetworkFeeVault.ROLE_ASSET_MANAGER, user.address);
+                        await networkFeeVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

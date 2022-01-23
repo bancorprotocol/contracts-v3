@@ -36,6 +36,7 @@ import {
     TestSafeERC20Ex__factory,
     TestStakingRewardsMath__factory,
     TestTokenGovernance__factory,
+    TestTypes__factory,
     TestUpgradeable__factory,
     TestVault__factory,
     TransparentUpgradeableProxyImmutable__factory
@@ -98,6 +99,7 @@ const getContracts = (signer?: Signer) => ({
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
     TestStakingRewardsMath: deployOrAttach('TestStakingRewardsMath', TestStakingRewardsMath__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
+    TestTypes: deployOrAttach('TestTypes', TestTypes__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
     TransparentUpgradeableProxyImmutable: deployOrAttach(

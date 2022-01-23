@@ -9,7 +9,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IVault } from "./interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
@@ -63,6 +63,15 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      * @dev performs contract-specific initialization
      */
     function __Vault_init_unchained() internal onlyInitializing {}
+
+    // solhint-enable func-name-mixedcase
+
+    /**
+     * @dev returns the asset manager role
+     */
+    function roleAssetManager() external pure returns (bytes32) {
+        return ROLE_ASSET_MANAGER;
+    }
 
     // allows execution only by an authorized operation
     modifier whenAuthorized(

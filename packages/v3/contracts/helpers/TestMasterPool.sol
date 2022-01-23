@@ -9,7 +9,6 @@ import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { WithdrawalAmounts } from "../pools/interfaces/IMasterPool.sol";
 import { MasterPool } from "../pools/MasterPool.sol";
 
 contract TestMasterPool is MasterPool {
@@ -31,15 +30,11 @@ contract TestMasterPool is MasterPool {
         )
     {}
 
-    function withdrawalAmountsT(uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory) {
-        return _withdrawalAmounts(poolTokenAmount);
-    }
-
-    function mintT(address recipient, uint256 poolTokenAmount) external {
+    function mintPoolTokenT(address recipient, uint256 poolTokenAmount) external {
         return _poolToken.mint(recipient, poolTokenAmount);
     }
 
-    function burnT(uint256 poolTokenAmount) external {
+    function burnPoolTokenT(uint256 poolTokenAmount) external {
         return _poolToken.burn(poolTokenAmount);
     }
 }

@@ -49,14 +49,12 @@ describe('ExternalProtectionVault', () => {
             expect(await externalProtectionVault.isPayable()).to.be.true;
 
             await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-                deployer.address
+                deployer.address,
+                network.address
             ]);
-            await expectRole(
-                externalProtectionVault,
-                Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
-                Roles.Upgradeable.ROLE_ADMIN,
-                [network.address]
-            );
+            await expectRole(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+                network.address
+            ]);
         });
     });
 
@@ -117,10 +115,7 @@ describe('ExternalProtectionVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await externalProtectionVault.grantRole(
-                            Roles.ExternalProtectionVault.ROLE_ASSET_MANAGER,
-                            user.address
-                        );
+                        await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

@@ -50,11 +50,7 @@ describe('ExternalRewardsVault', () => {
             await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
-            await expectRole(
-                externalRewardsVault,
-                Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-                Roles.Upgradeable.ROLE_ADMIN
-            );
+            await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
         });
     });
 
@@ -115,10 +111,7 @@ describe('ExternalRewardsVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await externalRewardsVault.grantRole(
-                            Roles.ExternalRewardsVault.ROLE_ASSET_MANAGER,
-                            user.address
-                        );
+                        await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();

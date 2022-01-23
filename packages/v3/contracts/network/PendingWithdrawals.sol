@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
@@ -18,7 +19,6 @@ import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
-
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 
 /**
@@ -155,8 +155,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     }
 
     // solhint-enable func-name-mixedcase
+
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

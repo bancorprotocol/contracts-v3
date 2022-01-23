@@ -1,11 +1,14 @@
 import Contracts from '../../components/Contracts';
 import {
+    ExternalProtectionVault,
     IERC20,
+    MasterVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
+    TestMasterPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../typechain-types';
@@ -53,6 +56,9 @@ describe('PoolCollectionUpgrader', () => {
         let network: TestBancorNetwork;
         let networkToken: IERC20;
         let networkSettings: NetworkSettings;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
+        let masterPool: TestMasterPool;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolTokenFactory: PoolTokenFactory;
@@ -60,8 +66,17 @@ describe('PoolCollectionUpgrader', () => {
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkToken, networkSettings, poolCollectionUpgrader, poolCollection, poolTokenFactory } =
-                await createSystem());
+            ({
+                network,
+                networkToken,
+                networkSettings,
+                masterVault,
+                externalProtectionVault,
+                masterPool,
+                poolCollectionUpgrader,
+                poolCollection,
+                poolTokenFactory
+            } = await createSystem());
 
             reserveToken = await createTestToken();
 
@@ -101,6 +116,9 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterVault,
+                masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 1000
@@ -112,6 +130,9 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 networkToken,
                 networkSettings,
+                masterVault,
+                masterPool,
+                externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
                 (await poolCollection2.version()) + 1
@@ -131,6 +152,9 @@ describe('PoolCollectionUpgrader', () => {
                     network,
                     networkToken,
                     networkSettings,
+                    masterVault,
+                    masterPool,
+                    externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
                     (await poolCollection.version()) + 1

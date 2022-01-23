@@ -16,17 +16,14 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
-struct DepositAmounts {
-    uint256 poolTokenAmount; // the minted pool token amount
-    uint256 govTokenAmount; // the minted gov token amount
-}
+// the network token manager role is required to request the master pool to mint network tokens
+bytes32 constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
 
-struct WithdrawalAmounts {
-    uint256 networkTokenAmount; // the withdrawn network token amount
-    uint256 poolTokenAmount; // the burned pool token amount
-    uint256 govTokenAmount; // the burned governance token amount
-    uint256 withdrawalFeeAmount; // the withdrawal fee network token amount
-}
+// the vault manager role is required to request the master pool to burn network tokens from the master vault
+bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
+
+// the funding manager role is required to request or renounce funding from the master pool
+bytes32 constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
 
 /**
  * @dev Master Pool interface
@@ -43,19 +40,14 @@ interface IMasterPool is IVault {
     function stakedBalance() external view returns (uint256);
 
     /**
-     * @dev returns the total minted amount for a given pool
+     * @dev returns the current funding of given pool
      */
-    function mintedAmount(ReserveToken pool) external view returns (uint256);
+    function currentPoolFunding(ReserveToken pool) external view returns (uint256);
 
     /**
-     * @dev returns whether network token liquidity minting is enabled for the provided pool
+     * @dev returns the available network token funding for a given pool
      */
-    function isNetworkLiquidityEnabled(ReserveToken pool, IPoolCollection poolCollection) external view returns (bool);
-
-    /**
-     * @dev returns the unallocated co-investment network token liquidity for a given pool
-     */
-    function unallocatedLiquidity(ReserveToken pool) external view returns (uint256);
+    function availableFunding(ReserveToken pool) external view returns (uint256);
 
     /**
      * @dev converts the specified pool token amount to the underlying network token amount
@@ -78,7 +70,7 @@ interface IMasterPool is IVault {
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_NETWORK_TOKEN_MANAGER role
      */
     function mint(address recipient, uint256 networkTokenAmount) external;
 
@@ -87,7 +79,7 @@ interface IMasterPool is IVault {
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_VAULT_MANAGER role
      */
     function burnFromVault(uint256 networkTokenAmount) external;
 
@@ -100,11 +92,12 @@ interface IMasterPool is IVault {
      * - the network tokens must have been already deposited into the contract
      */
     function depositFor(
+        bytes32 contextId,
         address provider,
         uint256 networkTokenAmount,
         bool isMigrating,
         uint256 originalGovTokenAmount
-    ) external returns (DepositAmounts memory);
+    ) external;
 
     /**
      * @dev withdraws network token liquidity on behalf of a specific provider and returns the withdrawn network token
@@ -115,34 +108,38 @@ interface IMasterPool is IVault {
      * - the caller must be the network contract
      * - the governance tokens must have been already deposited into the contract
      */
-    function withdraw(address provider, uint256 poolTokenAmount) external returns (WithdrawalAmounts memory);
+    function withdraw(
+        bytes32 contextId,
+        address provider,
+        uint256 poolTokenAmount
+    ) external;
 
     /**
-     * @dev requests network token liquidity
+     * @dev requests network token funding
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_FUNDING_MANAGER role
      * - the token must have been whitelisted
-     * - the request amount should be below the minting limit for a given pool
+     * - the request amount should be below the funding limit for a given pool
      * - the average rate of the pool must not deviate too much from its spot rate
      */
-    function requestLiquidity(
+    function requestFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount
     ) external;
 
     /**
-     * @dev renounces network token liquidity
+     * @dev renounces network token funding
      *
      * requirements:
      *
-     * - the caller must be the network contract
+     * - the caller must have the ROLE_FUNDING_MANAGER role
      * - the token must have been whitelisted
      * - the average rate of the pool must not deviate too much from its spot rate
      */
-    function renounceLiquidity(
+    function renounceFunding(
         bytes32 contextId,
         ReserveToken pool,
         uint256 networkTokenAmount

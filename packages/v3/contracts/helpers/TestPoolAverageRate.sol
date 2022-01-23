@@ -16,13 +16,18 @@ contract TestPoolAverageRate {
     function isPoolRateStable(
         Fraction calldata spotRate,
         AverageRate calldata averageRate,
-        uint32 maxDeviation
+        uint32 maxDeviation,
+        uint32 currentTime
     ) external pure returns (bool) {
-        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation);
+        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, maxDeviation, currentTime);
     }
 
     function reducedRatio(Fraction memory ratio) external pure returns (Fraction memory) {
         return PoolAverageRate.reducedRatio(ratio);
+    }
+
+    function isValid(AverageRate memory averageRate) external pure returns (bool) {
+        return PoolAverageRate.isValid(averageRate);
     }
 
     function isEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) external pure returns (bool) {

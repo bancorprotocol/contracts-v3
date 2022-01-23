@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 
@@ -60,7 +61,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;

@@ -15,6 +15,7 @@ import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 import { TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { InvalidToken, Utils } from "../utility/Utils.sol";
 
@@ -160,7 +161,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns the current version of the contract
+     * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
         return 1;
