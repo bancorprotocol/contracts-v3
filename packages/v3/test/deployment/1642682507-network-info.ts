@@ -21,7 +21,6 @@ import { getNamedAccounts } from 'hardhat';
 describe('1642682507-network-info', () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
-
     let network: BancorNetwork;
     let networkToken: NetworkToken;
     let govToken: GovToken;
