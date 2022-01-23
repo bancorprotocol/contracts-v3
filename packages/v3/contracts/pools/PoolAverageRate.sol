@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.10;
+pragma solidity 0.8.11;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPT_RESOLUTION, PPM_RESOLUTION } from "../utility/Constants.sol";
