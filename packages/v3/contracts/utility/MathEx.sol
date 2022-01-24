@@ -20,16 +20,16 @@ library MathEx {
      * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
      */
     function exp(Fraction memory f) internal pure returns (Fraction memory) {
+        uint256 x = MathEx.mulDivF(ONE, f.n, f.d);
+        uint256 y;
+        uint256 z;
+        uint256 n;
+
+        if (x >= (ONE << 4)) {
+            revert Overflow();
+        }
+
         unchecked {
-            uint256 x = MathEx.mulDivF(ONE, f.n, f.d);
-            uint256 y;
-            uint256 z;
-            uint256 n;
-
-            if (x >= (ONE << 4)) {
-                revert Overflow();
-            }
-
             z = y = x % (ONE >> 3); // get the input modulo 2^(-3)
             z = (z * y) / ONE;
             n += z * 0x10e1b3be415a0000; // add y^02 * (20! / 02!)
@@ -85,9 +85,9 @@ library MathEx {
                 n = (n * 0x00960aadc109e7a3bf4578099615711d7) / 0x0002bf84208204f5977f9a8cf01fdce3d; // multiply by e^2^(+2)
             if ((x & (ONE << 3)) != 0)
                 n = (n * 0x0002bf84208204f5977f9a8cf01fdc307) / 0x0000003c6ab775dd0b95b4cbee7e65d11; // multiply by e^2^(+3)
-
-            return Fraction({ n: n, d: ONE });
         }
+
+        return Fraction({ n: n, d: ONE });
     }
 
     /**
@@ -112,32 +112,30 @@ library MathEx {
         uint256 y,
         uint256 z
     ) internal pure returns (uint256) {
-        unchecked {
-            Uint512 memory xy = mul512(x, y);
+        Uint512 memory xy = mul512(x, y);
 
-            // if `x * y < 2 ^ 256`
-            if (xy.hi == 0) {
-                return xy.lo / z;
-            }
-
-            // assert `x * y / z < 2 ^ 256`
-            if (xy.hi >= z) {
-                revert Overflow();
-            }
-
-            uint256 m = _mulMod(x, y, z); // `m = x * y % z`
-            Uint512 memory n = _sub512(xy, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
-
-            // if `n < 2 ^ 256`
-            if (n.hi == 0) {
-                return n.lo / z;
-            }
-
-            uint256 p = _unsafeSub(0, z) & z; // `p` is the largest power of 2 which `z` is divisible by
-            uint256 q = _div512(n, p); // `n` is divisible by `p` because `n` is divisible by `z` and `z` is divisible by `p`
-            uint256 r = _inv256(z / p); // `z / p = 1 mod 2` hence `inverse(z / p) = 1 mod 2 ^ 256`
-            return _unsafeMul(q, r); // `q * r = (n / p) * inverse(z / p) = n / z`
+        // if `x * y < 2 ^ 256`
+        if (xy.hi == 0) {
+            return xy.lo / z;
         }
+
+        // assert `x * y / z < 2 ^ 256`
+        if (xy.hi >= z) {
+            revert Overflow();
+        }
+
+        uint256 m = _mulMod(x, y, z); // `m = x * y % z`
+        Uint512 memory n = _sub512(xy, m); // `n = x * y - m` hence `n / z = floor(x * y / z)`
+
+        // if `n < 2 ^ 256`
+        if (n.hi == 0) {
+            return n.lo / z;
+        }
+
+        uint256 p = _unsafeSub(0, z) & z; // `p` is the largest power of 2 which `z` is divisible by
+        uint256 q = _div512(n, p); // `n` is divisible by `p` because `n` is divisible by `z` and `z` is divisible by `p`
+        uint256 r = _inv256(z / p); // `z / p = 1 mod 2` hence `inverse(z / p) = 1 mod 2 ^ 256`
+        return _unsafeMul(q, r); // `q * r = (n / p) * inverse(z / p) = n / z`
     }
 
     /**
@@ -148,26 +146,22 @@ library MathEx {
         uint256 y,
         uint256 z
     ) internal pure returns (uint256) {
-        unchecked {
-            uint256 w = mulDivF(x, y, z);
-            if (_mulMod(x, y, z) > 0) {
-                if (w >= type(uint256).max) {
-                    revert Overflow();
-                }
-
-                return w + 1;
+        uint256 w = mulDivF(x, y, z);
+        if (_mulMod(x, y, z) > 0) {
+            if (w >= type(uint256).max) {
+                revert Overflow();
             }
-            return w;
+
+            return w + 1;
         }
+        return w;
     }
 
     /**
      * @dev returns the maximum of `n1 - n2` and 0
      */
     function subMax0(uint256 n1, uint256 n2) internal pure returns (uint256) {
-        unchecked {
-            return n1 > n2 ? n1 - n2 : 0;
-        }
+        return n1 > n2 ? n1 - n2 : 0;
     }
 
     /**
@@ -202,50 +196,42 @@ library MathEx {
      * @dev returns the value of `x * y`
      */
     function mul512(uint256 x, uint256 y) internal pure returns (Uint512 memory) {
-        unchecked {
-            uint256 p = _mulModMax(x, y);
-            uint256 q = _unsafeMul(x, y);
-            if (p >= q) {
-                return Uint512({ hi: p - q, lo: q });
-            }
-            return Uint512({ hi: _unsafeSub(p, q) - 1, lo: q });
+        uint256 p = _mulModMax(x, y);
+        uint256 q = _unsafeMul(x, y);
+        if (p >= q) {
+            return Uint512({ hi: p - q, lo: q });
         }
+        return Uint512({ hi: _unsafeSub(p, q) - 1, lo: q });
     }
 
     /**
      * @dev returns the value of `2 ^ x - y`, given that `2 ^ x >= y`
      */
     function _sub512(Uint512 memory x, uint256 y) private pure returns (Uint512 memory) {
-        unchecked {
-            if (x.lo >= y) {
-                return Uint512({ hi: x.hi, lo: x.lo - y });
-            }
-            return Uint512({ hi: x.hi - 1, lo: _unsafeSub(x.lo, y) });
+        if (x.lo >= y) {
+            return Uint512({ hi: x.hi, lo: x.lo - y });
         }
+        return Uint512({ hi: x.hi - 1, lo: _unsafeSub(x.lo, y) });
     }
 
     /**
      * @dev returns the value of `2 ^ x / pow2n`, given that `x` is divisible by `pow2n`
      */
     function _div512(Uint512 memory x, uint256 pow2n) private pure returns (uint256) {
-        unchecked {
-            uint256 pow2nInv = _unsafeAdd(_unsafeSub(0, pow2n) / pow2n, 1); // `1 << (256 - n)`
-            return _unsafeMul(x.hi, pow2nInv) | (x.lo / pow2n); // `(x.hi << (256 - n)) | (x.lo >> n)`
-        }
+        uint256 pow2nInv = _unsafeAdd(_unsafeSub(0, pow2n) / pow2n, 1); // `1 << (256 - n)`
+        return _unsafeMul(x.hi, pow2nInv) | (x.lo / pow2n); // `(x.hi << (256 - n)) | (x.lo >> n)`
     }
 
     /**
      * @dev returns the inverse of `d` modulo `2 ^ 256`, given that `d` is congruent to `1` modulo `2`
      */
     function _inv256(uint256 d) private pure returns (uint256) {
-        unchecked {
-            // approximate the root of `f(x) = 1 / x - d` using the newton–raphson convergence method
-            uint256 x = 1;
-            for (uint256 i = 0; i < 8; i++) {
-                x = _unsafeMul(x, _unsafeSub(2, _unsafeMul(x, d))); // `x = x * (2 - x * d) mod 2 ^ 256`
-            }
-            return x;
+        // approximate the root of `f(x) = 1 / x - d` using the newton–raphson convergence method
+        uint256 x = 1;
+        for (uint256 i = 0; i < 8; i++) {
+            x = _unsafeMul(x, _unsafeSub(2, _unsafeMul(x, d))); // `x = x * (2 - x * d) mod 2 ^ 256`
         }
+        return x;
     }
 
     /**
