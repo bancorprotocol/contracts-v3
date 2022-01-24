@@ -14,11 +14,11 @@ contract TestPoolAverageRate {
     }
 
     function isSpotRateStable(
-        Fraction112 calldata averageRate,
         Fraction calldata spotRate,
+        Fraction112 calldata averageRate,
         uint32 maxDeviationPPM
     ) external pure returns (bool) {
-        return PoolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviationPPM);
+        return PoolAverageRate.isSpotRateStable(spotRate, averageRate, maxDeviationPPM);
     }
 
     function isValid(Fraction112 memory averageRate) external pure returns (bool) {

@@ -37,23 +37,23 @@ describe('PoolAverageRate', () => {
     };
 
     const isSpotRateStableTest = async (
-        an: BigNumberish,
-        ad: BigNumberish,
         sn: BigNumberish,
         sd: BigNumberish,
+        an: BigNumberish,
+        ad: BigNumberish,
         md: number
     ) => {
-        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, max deviation = ${md}%`, async () => {
-            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
+        it(`spot rate = ${sn}/${sd}, average rate = ${an}/${ad}, max deviation = ${md}%`, async () => {
             const spotRate = { n: BigNumber.from(sn), d: BigNumber.from(sd) };
+            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
             const maxDeviationPPM = toPPM(md);
-            const x = averageRate.d.mul(spotRate.n);
-            const y = averageRate.n.mul(spotRate.d);
+            const x = spotRate.n.mul(averageRate.d);
+            const y = spotRate.d.mul(averageRate.n);
             const min = x.mul(PPM_RESOLUTION - maxDeviationPPM);
             const mid = y.mul(PPM_RESOLUTION);
             const max = x.mul(PPM_RESOLUTION + maxDeviationPPM);
             const expected = min.lte(mid) && mid.lte(max);
-            const actual = await poolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviationPPM);
+            const actual = await poolAverageRate.isSpotRateStable(spotRate, averageRate, maxDeviationPPM);
             expect(actual).to.equal(expected);
         });
     };
@@ -98,12 +98,12 @@ describe('PoolAverageRate', () => {
         });
 
         describe('isSpotRateStableTest', () => {
-            for (const an of [MAX_UINT64, MAX_UINT96]) {
-                for (const ad of [MAX_UINT64, MAX_UINT96]) {
-                    for (const sn of [MAX_UINT64, MAX_UINT96]) {
-                        for (const sd of [MAX_UINT64, MAX_UINT96]) {
+            for (const sn of [MAX_UINT64, MAX_UINT96]) {
+                for (const sd of [MAX_UINT64, MAX_UINT96]) {
+                    for (const an of [MAX_UINT64, MAX_UINT96]) {
+                        for (const ad of [MAX_UINT64, MAX_UINT96]) {
                             for (const md of [2, 5]) {
-                                isSpotRateStableTest(an, ad, sn, sd, md);
+                                isSpotRateStableTest(sn, sd, an, ad, md);
                             }
                         }
                     }
@@ -160,24 +160,24 @@ describe('PoolAverageRate', () => {
         });
 
         describe('isSpotRateStableTest', () => {
-            for (const an of [0, 1, 2, 3]) {
-                for (const ad of [1, 2, 3, 4]) {
-                    for (const sn of [0, 1, 2, 3]) {
-                        for (const sd of [1, 2, 3, 4]) {
+            for (const sn of [0, 1, 2, 3]) {
+                for (const sd of [1, 2, 3, 4]) {
+                    for (const an of [0, 1, 2, 3]) {
+                        for (const ad of [1, 2, 3, 4]) {
                             for (const md of [0, 2, 5, 10]) {
-                                isSpotRateStableTest(an, ad, sn, sd, md);
+                                isSpotRateStableTest(sn, sd, an, ad, md);
                             }
                         }
                     }
                 }
             }
 
-            for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                    for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                        for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+            for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                    for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                        for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                             for (const md of [0, 2, 5, 10]) {
-                                isSpotRateStableTest(an, ad, sn, sd, md);
+                                isSpotRateStableTest(sn, sd, an, ad, md);
                             }
                         }
                     }

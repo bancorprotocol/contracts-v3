@@ -60,8 +60,8 @@ library PoolAverageRate {
      * - maxDeviationPPM must be lesser or equal to PPM_RESOLUTION
      */
     function isSpotRateStable(
-        Fraction112 memory averageRate,
         Fraction memory spotRate,
+        Fraction112 memory averageRate,
         uint32 maxDeviationPPM
     ) internal pure returns (bool) {
         uint256 x = spotRate.n * averageRate.d;

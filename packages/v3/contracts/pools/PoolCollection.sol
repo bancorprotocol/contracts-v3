@@ -1317,7 +1317,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         }
 
         return
-            PoolAverageRate.isSpotRateStable(averageRate.rate, spotRate, _networkSettings.averageRateMaxDeviationPPM());
+            PoolAverageRate.isSpotRateStable(spotRate, averageRate.rate, _networkSettings.averageRateMaxDeviationPPM());
     }
 
     /**
