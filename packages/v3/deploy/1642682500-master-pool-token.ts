@@ -25,14 +25,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     const event = events![1] as PoolTokenCreated;
-    if (!event || event.event !== EVENT_NAME || event.args.reserveToken !== networkToken.address) {
-        throw new Error(`Unable to find the ${EVENT_NAME} event`);
-    }
+    const poolTokenAddress = event.args.poolToken;
 
     await save({
         name: ContractName.MasterPoolToken,
         contract: 'PoolToken',
-        address: event.args.poolToken
+        address: poolTokenAddress
     });
 
     await execute({
