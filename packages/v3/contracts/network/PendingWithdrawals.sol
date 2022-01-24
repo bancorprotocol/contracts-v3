@@ -324,9 +324,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
 
         // since pool token value can only go up, there’s usually burning
         if (request.poolTokenAmount > currentPoolTokenAmount) {
-            unchecked {
-                request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
-            }
+            request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
         }
 
         // transfer the locked pool tokens back to the caller
