@@ -4,7 +4,7 @@ import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const CONTRACTS = [
+const CONTRACT_NAMES_TO_REVOKE = [
     ContractName.MasterVault,
     ContractName.ExternalProtectionVault,
     ContractName.ExternalRewardsVault,
@@ -20,7 +20,7 @@ const CONTRACTS = [
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, daoMultisig } = await getNamedAccounts();
 
-    for (const name of CONTRACTS) {
+    for (const name of CONTRACT_NAMES_TO_REVOKE) {
         await execute({
             name,
             methodName: 'grantRole',
@@ -40,7 +40,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 };
 
 func.id = 'RevokeRoles';
-func.dependencies = CONTRACTS;
+func.dependencies = CONTRACT_NAMES_TO_REVOKE;
 func.tags = [DeploymentTag.V3];
 
 export default func;
