@@ -15,39 +15,23 @@ const MAX_UINT128 = BigNumber.from(2).pow(128).sub(1);
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
-    const calcAverageRateTest = (
-        an: BigNumberish,
-        ad: BigNumberish,
-        sn: BigNumberish,
-        sd: BigNumberish,
-        at: number,
-        ct: number,
-        w: number
-    ) => {
-        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, average rate time = ${at}, current time = ${ct}, weight = ${w}%`, async () => {
-            const averageRate = { rate: { n: BigNumber.from(an), d: BigNumber.from(ad) }, time: at };
+    const calcAverageRateTest = (an: BigNumberish, ad: BigNumberish, sn: BigNumberish, sd: BigNumberish, w: number) => {
+        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, weight = ${w}%`, async () => {
+            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
             const spotRate = { n: BigNumber.from(sn), d: BigNumber.from(sd) };
-            const currentTime = ct;
             const weightPPT = toPPT(w);
-            const newAverageRate = await poolAverageRate.calcAverageRate(averageRate, spotRate, currentTime, weightPPT);
-            expect(newAverageRate.time).to.equal(currentTime);
-            if (averageRate.time == currentTime) {
-                expect(newAverageRate.rate).to.equal(averageRate.rate);
+            const expected = {
+                n: averageRate.n
+                    .mul(spotRate.d)
+                    .mul(weightPPT)
+                    .add(averageRate.d.mul(spotRate.n).mul(PPT_RESOLUTION - weightPPT)),
+                d: averageRate.d.mul(spotRate.d).mul(PPT_RESOLUTION)
+            };
+            const actual = await poolAverageRate.calcAverageRate(averageRate, spotRate, weightPPT);
+            if (expected.n.lte(MAX_UINT112) && expected.d.lte(MAX_UINT112)) {
+                expect(actual).to.equal(expected);
             } else {
-                const expectedRate = {
-                    n: averageRate.rate.n
-                        .mul(spotRate.d)
-                        .mul(weightPPT)
-                        .add(averageRate.rate.d.mul(spotRate.n).mul(PPT_RESOLUTION - weightPPT)),
-                    d: averageRate.rate.d.mul(spotRate.d).mul(PPT_RESOLUTION)
-                };
-                if (expectedRate.n.lte(MAX_UINT112) && expectedRate.d.lte(MAX_UINT112)) {
-                    expect(newAverageRate.rate).to.equal(expectedRate);
-                } else {
-                    expect(newAverageRate.rate).to.almostEqual(expectedRate, {
-                        maxRelativeError: new Decimal('0.000016')
-                    });
-                }
+                expect(actual).to.almostEqual(expected, { maxRelativeError: new Decimal('0.000016') });
             }
         });
     };
@@ -57,61 +41,38 @@ describe('PoolAverageRate', () => {
         ad: BigNumberish,
         sn: BigNumberish,
         sd: BigNumberish,
-        md: number,
-        at: number,
-        ct: number,
-        w: number
+        md: number
     ) => {
-        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, max deviation = ${md}%, average rate time = ${at}, current time = ${ct}, weight = ${w}%`, async () => {
-            const averageRate = { rate: { n: BigNumber.from(an), d: BigNumber.from(ad) }, time: at };
+        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, max deviation = ${md}%`, async () => {
+            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
             const spotRate = { n: BigNumber.from(sn), d: BigNumber.from(sd) };
             const maxDeviationPPM = toPPM(md);
-            const currentTime = ct;
-            const weightPPT = toPPT(w);
-            const newAverageRate = await poolAverageRate.calcAverageRate(averageRate, spotRate, currentTime, weightPPT);
-            const x = newAverageRate.rate.d.mul(spotRate.n);
-            const y = newAverageRate.rate.n.mul(spotRate.d);
+            const x = averageRate.d.mul(spotRate.n);
+            const y = averageRate.n.mul(spotRate.d);
             const min = x.mul(PPM_RESOLUTION - maxDeviationPPM);
             const mid = y.mul(PPM_RESOLUTION);
             const max = x.mul(PPM_RESOLUTION + maxDeviationPPM);
             const expected = min.lte(mid) && mid.lte(max);
-            const actual = await poolAverageRate.isSpotRateStable(
-                averageRate,
-                spotRate,
-                maxDeviationPPM,
-                currentTime,
-                weightPPT
-            );
+            const actual = await poolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviationPPM);
             expect(actual).to.equal(expected);
         });
     };
 
-    const isValidTest = (n: BigNumberish, d: BigNumberish, t: BigNumberish) => {
-        it(`average rate = [${n}/${d}, ${t}]`, async () => {
-            const ar = { rate: { n: BigNumber.from(n), d: BigNumber.from(d) }, time: t };
-            const expected = ar.time != 0 && !ar.rate.d.eq(0);
+    const isValidTest = (n: BigNumberish, d: BigNumberish) => {
+        it(`average rate = ${n}/${d}`, async () => {
+            const ar = { n: BigNumber.from(n), d: BigNumber.from(d) };
+            const expected = ar.d.gt(0);
             const actual = await poolAverageRate.isValid(ar);
             expect(actual).to.equal(expected);
         });
     };
 
-    const areEqualTest = (
-        n1: BigNumberish,
-        d1: BigNumberish,
-        t1: BigNumberish,
-        n2: BigNumberish,
-        d2: BigNumberish,
-        t2: BigNumberish
-    ) => {
-        it(`average rate 1 = [${n1}/${d1}, ${t1}], average rate 2 = [${n2}/${d2}, ${t2}]`, async () => {
-            const ar1 = { rate: { n: BigNumber.from(n1), d: BigNumber.from(d1) }, time: t1 };
-            const ar2 = { rate: { n: BigNumber.from(n2), d: BigNumber.from(d2) }, time: t2 };
+    const areEqualTest = (n1: BigNumberish, d1: BigNumberish, n2: BigNumberish, d2: BigNumberish) => {
+        it(`average rate 1 = ${n1}/${d1}, average rate 2 = ${n2}/${d2}`, async () => {
+            const ar1 = { n: BigNumber.from(n1), d: BigNumber.from(d1) };
+            const ar2 = { n: BigNumber.from(n2), d: BigNumber.from(d2) };
             const expected =
-                ar1.time == ar2.time &&
-                ((ar1.rate.d.eq(0) && ar2.rate.d.eq(0)) ||
-                    (!ar1.rate.d.eq(0) &&
-                        !ar2.rate.d.eq(0) &&
-                        ar1.rate.n.mul(ar2.rate.d).eq(ar2.rate.n.mul(ar1.rate.d))));
+                (ar1.d.eq(0) && ar2.d.eq(0)) || (ar1.d.gt(0) && ar2.d.gt(0) && ar1.n.mul(ar2.d).eq(ar2.n.mul(ar1.d)));
             const actual = await poolAverageRate.areEqual(ar1, ar2);
             expect(actual).to.equal(expected);
         });
@@ -127,12 +88,8 @@ describe('PoolAverageRate', () => {
                 for (const ad of [MAX_UINT64, MAX_UINT96]) {
                     for (const sn of [MAX_UINT64, MAX_UINT96]) {
                         for (const sd of [MAX_UINT64, MAX_UINT96]) {
-                            for (const at of [1, 2]) {
-                                for (const ct of [1, 2]) {
-                                    for (const w of [20, 80]) {
-                                        calcAverageRateTest(an, ad, sn, sd, at, ct, w);
-                                    }
-                                }
+                            for (const w of [20, 80]) {
+                                calcAverageRateTest(an, ad, sn, sd, w);
                             }
                         }
                     }
@@ -146,13 +103,7 @@ describe('PoolAverageRate', () => {
                     for (const sn of [MAX_UINT64, MAX_UINT96]) {
                         for (const sd of [MAX_UINT64, MAX_UINT96]) {
                             for (const md of [2, 5]) {
-                                for (const at of [1, 2]) {
-                                    for (const ct of [1, 2]) {
-                                        for (const w of [20, 80]) {
-                                            isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
-                                        }
-                                    }
-                                }
+                                isSpotRateStableTest(an, ad, sn, sd, md);
                             }
                         }
                     }
@@ -163,9 +114,7 @@ describe('PoolAverageRate', () => {
         describe('isValid', () => {
             for (const n of [0, 1]) {
                 for (const d of [0, 1]) {
-                    for (const t of [0, 1]) {
-                        isValidTest(n, d, t);
-                    }
+                    isValidTest(n, d);
                 }
             }
         });
@@ -173,13 +122,9 @@ describe('PoolAverageRate', () => {
         describe('areEqual', () => {
             for (const n1 of [0, 1, 2, 3, 4]) {
                 for (const d1 of [0, 1, 2, 3, 4]) {
-                    for (const t1 of [0, 1]) {
-                        for (const n2 of [0, 1, 2, 3, 4]) {
-                            for (const d2 of [0, 1, 2, 3, 4]) {
-                                for (const t2 of [0, 1]) {
-                                    areEqualTest(n1, d1, t1, n2, d2, t2);
-                                }
-                            }
+                    for (const n2 of [0, 1, 2, 3, 4]) {
+                        for (const d2 of [0, 1, 2, 3, 4]) {
+                            areEqualTest(n1, d1, n2, d2);
                         }
                     }
                 }
@@ -193,12 +138,8 @@ describe('PoolAverageRate', () => {
                 for (const ad of [1, 2, 3, 4]) {
                     for (const sn of [0, 1, 2, 3]) {
                         for (const sd of [1, 2, 3, 4]) {
-                            for (const at of [0, 1, 2, 3]) {
-                                for (const ct of [0, 1, 2, 3]) {
-                                    for (const w of [0, 20, 80, 100]) {
-                                        calcAverageRateTest(an, ad, sn, sd, at, ct, w);
-                                    }
-                                }
+                            for (const w of [0, 20, 80, 100]) {
+                                calcAverageRateTest(an, ad, sn, sd, w);
                             }
                         }
                     }
@@ -209,12 +150,8 @@ describe('PoolAverageRate', () => {
                 for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
                     for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                         for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                            for (const at of [0, 1, 2, 3]) {
-                                for (const ct of [0, 1, 2, 3]) {
-                                    for (const w of [0, 20, 80, 100]) {
-                                        calcAverageRateTest(an, ad, sn, sd, at, ct, w);
-                                    }
-                                }
+                            for (const w of [0, 20, 80, 100]) {
+                                calcAverageRateTest(an, ad, sn, sd, w);
                             }
                         }
                     }
@@ -228,13 +165,7 @@ describe('PoolAverageRate', () => {
                     for (const sn of [0, 1, 2, 3]) {
                         for (const sd of [1, 2, 3, 4]) {
                             for (const md of [0, 2, 5, 10]) {
-                                for (const at of [0, 1, 2, 3]) {
-                                    for (const ct of [0, 1, 2, 3]) {
-                                        for (const w of [0, 20, 80, 100]) {
-                                            isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
-                                        }
-                                    }
-                                }
+                                isSpotRateStableTest(an, ad, sn, sd, md);
                             }
                         }
                     }
@@ -246,13 +177,7 @@ describe('PoolAverageRate', () => {
                     for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                         for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                             for (const md of [0, 2, 5, 10]) {
-                                for (const at of [0, 1, 2, 3]) {
-                                    for (const ct of [0, 1, 2, 3]) {
-                                        for (const w of [0, 20, 80, 100]) {
-                                            isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
-                                        }
-                                    }
-                                }
+                                isSpotRateStableTest(an, ad, sn, sd, md);
                             }
                         }
                     }
@@ -263,9 +188,7 @@ describe('PoolAverageRate', () => {
         describe('isValid', () => {
             for (const n of [0, 1, 2, 3, MAX_UINT112]) {
                 for (const d of [0, 1, 2, 3, MAX_UINT112]) {
-                    for (const t of [0, 1, 2, 3, MAX_UINT32]) {
-                        isValidTest(n, d, t);
-                    }
+                    isValidTest(n, d);
                 }
             }
         });
@@ -273,13 +196,9 @@ describe('PoolAverageRate', () => {
         describe('areEqual', () => {
             for (const n1 of [0, 1, 2, 3, 4, MAX_UINT112]) {
                 for (const d1 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                    for (const t1 of [0, 1, 2, 3, MAX_UINT32]) {
-                        for (const n2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                            for (const d2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                                for (const t2 of [0, 1, 2, 3, MAX_UINT32]) {
-                                    areEqualTest(n1, d1, t1, n2, d2, t2);
-                                }
-                            }
+                    for (const n2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
+                        for (const d2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
+                            areEqualTest(n1, d1, n2, d2);
                         }
                     }
                 }

@@ -1295,11 +1295,11 @@ describe('PoolCollection', () => {
                                 });
 
                                 await poolCollection.setAverageRateT(token.address, {
+                                    time: await poolCollection.currentTime(),
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
                                         d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
-                                    },
-                                    time: await poolCollection.currentTime()
+                                    }
                                 });
 
                                 expect(await poolCollection.isPoolRateStable(token.address)).to.be.false;
@@ -1315,11 +1315,11 @@ describe('PoolCollection', () => {
                                 const { liquidity } = await poolCollection.poolData(token.address);
 
                                 await poolCollection.setAverageRateT(token.address, {
+                                    time: await poolCollection.currentTime(),
                                     rate: {
                                         n: liquidity.networkTokenTradingLiquidity,
                                         d: liquidity.baseTokenTradingLiquidity
-                                    },
-                                    time: await poolCollection.currentTime()
+                                    }
                                 });
 
                                 expect(await poolCollection.isPoolRateStable(token.address)).to.be.true;
@@ -2324,18 +2324,23 @@ describe('PoolCollection', () => {
                             `with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${intervals}]`,
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
-                                const expectedAverageRate = async (poolData: PoolData, timeElapsed: number) => {
-                                    const { liquidity } = poolData;
-
-                                    return poolAverageRate.calcAverageRate(
-                                        poolData.averageRate,
-                                        {
-                                            n: liquidity.networkTokenTradingLiquidity,
-                                            d: liquidity.baseTokenTradingLiquidity
-                                        },
-                                        timeElapsed,
-                                        AVERAGE_RATE_WEIGHT_PPT
-                                    );
+                                const expectedAverageRate = async (poolData: PoolData, time: number) => {
+                                    const averageRate = poolData.averageRate;
+                                    if (time > 0) {
+                                        const spotRate = {
+                                            n: poolData.liquidity.networkTokenTradingLiquidity,
+                                            d: poolData.liquidity.baseTokenTradingLiquidity
+                                        };
+                                        return {
+                                            time: time,
+                                            rate: await poolAverageRate.calcAverageRate(
+                                                averageRate.rate,
+                                                spotRate,
+                                                AVERAGE_RATE_WEIGHT_PPT
+                                            )
+                                        };
+                                    }
+                                    return averageRate;
                                 };
 
                                 const expectedTargetAmountAndFee = (sourceAmount: BigNumber, poolData: PoolData) => {

@@ -12,7 +12,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, isFractionPositive, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Sint256, zeroFraction, isFractionPositive, toFraction112, fromFraction112 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -36,6 +36,7 @@ import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.so
 
 // prettier-ignore
 import {
+    AverageRate,
     IPoolCollection,
     PoolLiquidity,
     Pool,
@@ -48,7 +49,7 @@ import {
 
 import { IMasterPool } from "./interfaces/IMasterPool.sol";
 
-import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
+import { PoolAverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
@@ -1023,7 +1024,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = PoolAverageRate.isValid(averageRate);
+        bool isAverageRateValid = data.averageRate.time != 0 && PoolAverageRate.isValid(averageRate.rate);
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
@@ -1310,30 +1311,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             n: liquidity.networkTokenTradingLiquidity,
             d: liquidity.baseTokenTradingLiquidity
         });
+
+        if (averageRate.time < _time()) {
+            averageRate.rate = PoolAverageRate.calcAverageRate(averageRate.rate, spotRate, AVERAGE_RATE_WEIGHT_PPT);
+        }
+
         return
-            PoolAverageRate.isSpotRateStable(
-                averageRate,
-                spotRate,
-                _networkSettings.averageRateMaxDeviationPPM(),
-                _time(),
-                AVERAGE_RATE_WEIGHT_PPT
-            );
+            PoolAverageRate.isSpotRateStable(averageRate.rate, spotRate, _networkSettings.averageRateMaxDeviationPPM());
     }
 
     /**
      * @dev updates the average rate
      */
     function _updateAverageRate(Pool storage data, Fraction memory spotRate) private {
-        AverageRate memory currentAverageRate = data.averageRate;
-        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(
-            currentAverageRate,
-            spotRate,
-            _time(),
-            AVERAGE_RATE_WEIGHT_PPT
-        );
+        uint32 time = _time();
 
-        if (!PoolAverageRate.areEqual(newAverageRate, currentAverageRate)) {
-            data.averageRate = newAverageRate;
+        if (data.averageRate.time < time) {
+            data.averageRate = AverageRate({
+                time: time,
+                rate: PoolAverageRate.calcAverageRate(data.averageRate.rate, spotRate, AVERAGE_RATE_WEIGHT_PPT)
+            });
         }
     }
 

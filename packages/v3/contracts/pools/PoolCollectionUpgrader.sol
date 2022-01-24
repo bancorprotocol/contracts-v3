@@ -3,11 +3,9 @@ pragma solidity 0.8.11;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { Pool, PoolLiquidity, IPoolCollection } from "./interfaces/IPoolCollection.sol";
+import { Pool, PoolLiquidity, IPoolCollection, AverageRate } from "./interfaces/IPoolCollection.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.sol";
-
-import { AverageRate } from "./PoolAverageRate.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/Types.sol";

@@ -4,14 +4,12 @@ pragma solidity 0.8.11;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256 } from "../../utility/Types.sol";
+import { Fraction, Fraction112, Sint256 } from "../../utility/Types.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
-
-import { AverageRate } from "../PoolAverageRate.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
@@ -21,6 +19,11 @@ struct PoolLiquidity {
     uint256 networkTokenTradingLiquidity; // the network token trading liquidity
     uint256 baseTokenTradingLiquidity; // the base token trading liquidity
     uint256 stakedBalance; // the staked balance
+}
+
+struct AverageRate {
+    uint32 time;
+    Fraction112 rate;
 }
 
 struct Pool {

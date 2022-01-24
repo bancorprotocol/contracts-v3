@@ -5,11 +5,6 @@ import { MathEx } from "../utility/MathEx.sol";
 import { PPT_RESOLUTION, PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Fraction, Fraction112, Uint512, isFractionValid, areFractionsEqual, toFraction112, fromFraction112 } from "../utility/Types.sol";
 
-struct AverageRate {
-    uint32 time;
-    Fraction112 rate;
-}
-
 /**
  * @dev Pool average-rate helper library
  */
@@ -40,27 +35,18 @@ library PoolAverageRate {
      * - weightPPT must be lesser or equal to PPT_RESOLUTION
      */
     function calcAverageRate(
-        AverageRate memory averageRate,
+        Fraction112 memory averageRate,
         Fraction memory spotRate,
-        uint32 currentTime,
         uint16 weightPPT
-    ) internal pure returns (AverageRate memory) {
-        // refrain from recalculating the average rate if it has already been calculated in the current block
-        if (averageRate.time == currentTime) {
-            return averageRate;
-        }
+    ) internal pure returns (Fraction112 memory) {
+        Fraction memory currRate = fromFraction112(averageRate);
 
-        // calculate a new average rate
-        Fraction memory currRate = fromFraction112(averageRate.rate);
-        Fraction112 memory newRate = toFraction112(
-            Fraction({
-                n: currRate.n * spotRate.d * weightPPT + currRate.d * spotRate.n * (PPT_RESOLUTION - weightPPT),
-                d: currRate.d * spotRate.d * PPT_RESOLUTION
-            })
-        );
+        Fraction memory newRate = Fraction({
+            n: currRate.n * spotRate.d * weightPPT + currRate.d * spotRate.n * (PPT_RESOLUTION - weightPPT),
+            d: currRate.d * spotRate.d * PPT_RESOLUTION
+        });
 
-        // return the new average rate
-        return AverageRate({ time: currentTime, rate: newRate });
+        return toFraction112(newRate);
     }
 
     /**
@@ -72,20 +58,14 @@ library PoolAverageRate {
      * requirements:
      *
      * - maxDeviationPPM must be lesser or equal to PPM_RESOLUTION
-     * - weightPPT must be lesser or equal to PPT_RESOLUTION
      */
     function isSpotRateStable(
-        AverageRate memory averageRate,
+        Fraction112 memory averageRate,
         Fraction memory spotRate,
-        uint32 maxDeviationPPM,
-        uint32 currentTime,
-        uint16 weightPPT
+        uint32 maxDeviationPPM
     ) internal pure returns (bool) {
-        averageRate = calcAverageRate(averageRate, spotRate, currentTime, weightPPT);
-        Fraction memory currRate = fromFraction112(averageRate.rate);
-
-        uint256 x = currRate.d * spotRate.n;
-        uint256 y = currRate.n * spotRate.d;
+        uint256 x = spotRate.n * averageRate.d;
+        uint256 y = spotRate.d * averageRate.n;
 
         Uint512 memory min = MathEx.mul512(x, PPM_RESOLUTION - maxDeviationPPM);
         Uint512 memory mid = MathEx.mul512(y, PPM_RESOLUTION);
@@ -97,16 +77,14 @@ library PoolAverageRate {
     /**
      * @dev returns whether an average rate is valid
      */
-    function isValid(AverageRate memory averageRate) internal pure returns (bool) {
-        return averageRate.time != 0 && isFractionValid(fromFraction112(averageRate.rate));
+    function isValid(Fraction112 memory averageRate) internal pure returns (bool) {
+        return isFractionValid(fromFraction112(averageRate));
     }
 
     /**
      * @dev returns whether two average rates are equal
      */
-    function areEqual(AverageRate memory averageRate1, AverageRate memory averageRate2) internal pure returns (bool) {
-        return
-            averageRate1.time == averageRate2.time &&
-            areFractionsEqual(fromFraction112(averageRate1.rate), fromFraction112(averageRate2.rate));
+    function areEqual(Fraction112 memory averageRate1, Fraction112 memory averageRate2) internal pure returns (bool) {
+        return areFractionsEqual(fromFraction112(averageRate1), fromFraction112(averageRate2));
     }
 }

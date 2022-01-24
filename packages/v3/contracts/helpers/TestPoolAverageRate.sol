@@ -1,34 +1,31 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.11;
 
-import { Fraction } from "../utility/Types.sol";
-import { PoolAverageRate, AverageRate } from "../pools/PoolAverageRate.sol";
+import { Fraction, Fraction112 } from "../utility/Types.sol";
+import { PoolAverageRate } from "../pools/PoolAverageRate.sol";
 
 contract TestPoolAverageRate {
     function calcAverageRate(
-        AverageRate calldata averageRate,
+        Fraction112 calldata averageRate,
         Fraction calldata spotRate,
-        uint32 currentTime,
         uint16 weightPPT
-    ) external pure returns (AverageRate memory) {
-        return PoolAverageRate.calcAverageRate(averageRate, spotRate, currentTime, weightPPT);
+    ) external pure returns (Fraction112 memory) {
+        return PoolAverageRate.calcAverageRate(averageRate, spotRate, weightPPT);
     }
 
     function isSpotRateStable(
-        AverageRate calldata averageRate,
+        Fraction112 calldata averageRate,
         Fraction calldata spotRate,
-        uint32 maxDeviation,
-        uint32 currentTime,
-        uint16 weightPPT
+        uint32 maxDeviationPPM
     ) external pure returns (bool) {
-        return PoolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviation, currentTime, weightPPT);
+        return PoolAverageRate.isSpotRateStable(averageRate, spotRate, maxDeviationPPM);
     }
 
-    function isValid(AverageRate memory averageRate) external pure returns (bool) {
+    function isValid(Fraction112 memory averageRate) external pure returns (bool) {
         return PoolAverageRate.isValid(averageRate);
     }
 
-    function areEqual(AverageRate calldata averageRate1, AverageRate calldata averageRate2)
+    function areEqual(Fraction112 calldata averageRate1, Fraction112 calldata averageRate2)
         external
         pure
         returns (bool)
