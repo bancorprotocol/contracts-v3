@@ -129,7 +129,7 @@ describe('PoolAverageRate', () => {
                         for (const sd of [MAX_UINT64, MAX_UINT96]) {
                             for (const at of [1, 2]) {
                                 for (const ct of [1, 2]) {
-                                    for (const w of [0.2, 0.5]) {
+                                    for (const w of [20, 80]) {
                                         calcAverageRateTest(an, ad, sn, sd, at, ct, w);
                                     }
                                 }
@@ -148,7 +148,7 @@ describe('PoolAverageRate', () => {
                             for (const md of [2, 5]) {
                                 for (const at of [1, 2]) {
                                     for (const ct of [1, 2]) {
-                                        for (const w of [0.2, 0.5]) {
+                                        for (const w of [20, 80]) {
                                             isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
                                         }
                                     }
@@ -195,7 +195,7 @@ describe('PoolAverageRate', () => {
                         for (const sd of [1, 2, 3, 4]) {
                             for (const at of [0, 1, 2, 3]) {
                                 for (const ct of [0, 1, 2, 3]) {
-                                    for (const w of [0, 0.2, 0.5, 1]) {
+                                    for (const w of [0, 20, 80, 100]) {
                                         calcAverageRateTest(an, ad, sn, sd, at, ct, w);
                                     }
                                 }
@@ -211,7 +211,7 @@ describe('PoolAverageRate', () => {
                         for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                             for (const at of [0, 1, 2, 3]) {
                                 for (const ct of [0, 1, 2, 3]) {
-                                    for (const w of [0, 0.2, 0.5, 1]) {
+                                    for (const w of [0, 20, 80, 100]) {
                                         calcAverageRateTest(an, ad, sn, sd, at, ct, w);
                                     }
                                 }
@@ -230,7 +230,7 @@ describe('PoolAverageRate', () => {
                             for (const md of [0, 2, 5, 10]) {
                                 for (const at of [0, 1, 2, 3]) {
                                     for (const ct of [0, 1, 2, 3]) {
-                                        for (const w of [0, 0.2, 0.5, 1]) {
+                                        for (const w of [0, 20, 80, 100]) {
                                             isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
                                         }
                                     }
@@ -248,7 +248,7 @@ describe('PoolAverageRate', () => {
                             for (const md of [0, 2, 5, 10]) {
                                 for (const at of [0, 1, 2, 3]) {
                                     for (const ct of [0, 1, 2, 3]) {
-                                        for (const w of [0, 0.2, 0.5, 1]) {
+                                        for (const w of [0, 20, 80, 100]) {
                                             isSpotRateStableTest(an, ad, sn, sd, md, at, ct, w);
                                         }
                                     }

@@ -49,7 +49,7 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 
 describe('PoolCollection', () => {
-    const AVERAGE_RATE_WEIGHT_PPT = toPPT(0.2);
+    const AVERAGE_RATE_WEIGHT_PPT = toPPT(80);
     const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
     const LIQUIDITY_GROWTH_FACTOR = 2;
     const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;

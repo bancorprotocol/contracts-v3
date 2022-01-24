@@ -86,7 +86,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
-    uint16 private constant AVERAGE_RATE_WEIGHT_PPT = 2; // 0.2%
+    uint16 private constant AVERAGE_RATE_WEIGHT_PPT = 800; // 80%
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
