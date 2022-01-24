@@ -15,7 +15,7 @@ export const expectRole = async (
     members: string[] = []
 ) => {
     expect(await contract.getRoleAdmin(roleId)).to.equal(adminRole);
-    expect(await contract.getRoleMemberCount(roleId)).to.equal(members?.length);
+    expect(await contract.getRoleMemberCount(roleId)).to.equal(members.length);
 
     for (const member of members) {
         expect(await contract.hasRole(roleId, member)).to.be.true;
