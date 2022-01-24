@@ -41,7 +41,6 @@ uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 struct TradeAmountsWithLiquidity {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
     uint256 feeAmount; // the trading fee amount
-    PoolLiquidity liquidity; // the updated liquidity in the pool
 }
 
 struct TradeAmounts {

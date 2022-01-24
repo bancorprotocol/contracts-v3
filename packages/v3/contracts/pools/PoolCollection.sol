@@ -695,12 +695,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
 
-        return
-            TradeAmountsWithLiquidity({
-                amount: tradeAmounts.amount,
-                feeAmount: tradeAmounts.feeAmount,
-                liquidity: newLiquidity
-            });
+        return TradeAmountsWithLiquidity({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
     }
 
     /**
