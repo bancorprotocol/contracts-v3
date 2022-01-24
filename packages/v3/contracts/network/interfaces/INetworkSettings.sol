@@ -2,7 +2,6 @@
 pragma solidity 0.8.11;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { INetworkFeeVault } from "../../vaults/interfaces/INetworkFeeVault.sol";
 
 import { ReserveToken } from "../../token/ReserveToken.sol";
 
@@ -32,16 +31,6 @@ interface INetworkSettings is IUpgradeable {
      * relevant pool
      */
     function minLiquidityForTrading() external view returns (uint256);
-
-    /**
-     * @dev returns the network fee parameters (in units of PPM)
-     */
-    function networkFeeParams() external view returns (INetworkFeeVault, uint32);
-
-    /**
-     * @dev returns the vault that receives the global network fees
-     */
-    function networkFeeVault() external view returns (INetworkFeeVault);
 
     /**
      * @dev returns the global network fee (in units of PPM)
