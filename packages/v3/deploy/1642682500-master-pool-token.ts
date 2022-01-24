@@ -3,7 +3,6 @@ import { execute, save, DeployedContracts } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const EVENT_NAME = 'PoolTokenCreated';
 interface PoolTokenCreated {
     event: string;
     args: {
