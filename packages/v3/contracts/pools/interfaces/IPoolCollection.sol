@@ -38,11 +38,6 @@ uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
 uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
-struct TradeAmountsWithLiquidity {
-    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
-    uint256 feeAmount; // the trading fee amount
-}
-
 struct TradeAmounts {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
     uint256 feeAmount; // the trading fee amount
@@ -171,7 +166,7 @@ interface IPoolCollection is IVersioned {
         ReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmountsWithLiquidity memory);
+    ) external returns (TradeAmounts memory);
 
     /**
      * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're

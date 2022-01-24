@@ -42,7 +42,7 @@ import {
     TRADING_STATUS_UPDATE_DEFAULT,
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
-    TradeAmountsWithLiquidity,
+    TradeAmounts,
     TradeAmounts
 } from "./interfaces/IPoolCollection.sol";
 
@@ -640,7 +640,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         only(address(_network))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmountsWithLiquidity memory)
+        returns (TradeAmounts memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
@@ -695,7 +695,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
 
-        return TradeAmountsWithLiquidity({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+        return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
     }
 
     /**

@@ -33,13 +33,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-// prettier-ignore
-import {
-    IPoolCollection,
-    PoolLiquidity,
-    TradeAmountsWithLiquidity
-} from "../pools/interfaces/IPoolCollection.sol";
-
+import { IPoolCollection, PoolLiquidity, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 // prettier-ignore
@@ -1033,7 +1027,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         (ReserveToken sourceToken, ReserveToken targetToken) = isSourceNetworkToken
             ? (masterPool, pool)
             : (pool, masterPool);
-        TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
+        TradeAmounts memory tradeAmounts = _poolCollection(pool).trade(
             contextId,
             sourceToken,
             targetToken,
