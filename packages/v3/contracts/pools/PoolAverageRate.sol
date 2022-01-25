@@ -50,8 +50,7 @@ library PoolAverageRate {
     }
 
     /**
-     * @dev returns whether the spot rate is stable (i.e., the deviation of the average rate from the
-     * spot rate is within the permitted range)
+     * @dev returns whether the deviation of the spot rate from the average rate is within the permitted range
      *
      * for example, if the maximum permitted deviation is 5%, then verify `95% <= average/spot <= 105%`
      *
