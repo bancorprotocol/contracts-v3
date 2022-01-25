@@ -1922,8 +1922,6 @@ describe('BancorNetwork', () => {
             const masterPoolStakedBalance = await masterPool.stakedBalance();
 
             if (isSourceNetworkToken) {
-                const poolLiquidity = await poolCollection.poolLiquidity(targetToken.address);
-
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
@@ -1938,13 +1936,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        FeeType.Trading,
-                        tradeAmounts.feeAmount,
-                        poolLiquidity.stakedBalance
-                    );
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradeAmounts.feeAmount);
             } else if (isTargetNetworkToken) {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -1960,18 +1952,10 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        FeeType.Trading,
-                        tradeAmounts.feeAmount,
-                        masterPoolStakedBalance
-                    );
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradeAmounts.feeAmount);
 
                 expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(tradeAmounts.feeAmount));
             } else {
-                const targetPoolLiquidity = await poolCollection.poolLiquidity(targetToken.address);
-
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
@@ -1986,13 +1970,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        networkToken.address,
-                        FeeType.Trading,
-                        sourceTradeAmounts.feeAmount,
-                        masterPoolStakedBalance
-                    );
+                    .withArgs(contextId, networkToken.address, FeeType.Trading, sourceTradeAmounts.feeAmount);
 
                 expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(sourceTradeAmounts.feeAmount));
 
@@ -2010,13 +1988,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        targetToken.address,
-                        FeeType.Trading,
-                        tradeAmounts.feeAmount,
-                        targetPoolLiquidity.stakedBalance
-                    );
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradeAmounts.feeAmount);
             }
 
             expect(await getBalance(sourceToken, traderAddress)).to.equal(
@@ -2334,7 +2306,7 @@ describe('BancorNetwork', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let masterPool: TestMasterPool;
+
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
         let recipient: TestFlashLoanRecipient;
@@ -2344,7 +2316,7 @@ describe('BancorNetwork', () => {
         const LOAN_AMOUNT = toWei(123_456);
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, masterPool, poolCollection, masterVault } = await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection, masterVault } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -2440,13 +2412,6 @@ describe('BancorNetwork', () => {
                 const prevVaultBalance = await getBalance(token, masterVault.address);
                 const prevNetworkBalance = await getBalance(token, network.address);
 
-                let prevStakedBalance;
-                if (tokenData.isNetworkToken()) {
-                    prevStakedBalance = await masterPool.stakedBalance();
-                } else {
-                    prevStakedBalance = (await poolCollection.poolLiquidity(token.address)).stakedBalance;
-                }
-
                 const data = '0x1234';
                 const contextId = solidityKeccak256(
                     ['address', 'uint32', 'address', 'uint256', 'address', 'bytes'],
@@ -2461,13 +2426,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(
-                        contextId,
-                        token.address,
-                        FeeType.FlashLoan,
-                        FEE_AMOUNT,
-                        prevStakedBalance.add(FEE_AMOUNT)
-                    );
+                    .withArgs(contextId, token.address, FeeType.FlashLoan, FEE_AMOUNT);
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.caller).to.equal(deployer.address);
