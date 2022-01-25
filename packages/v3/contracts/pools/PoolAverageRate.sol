@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPT_RESOLUTION, PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Fraction112, Uint512, isFractionValid, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Uint512, toFraction112, fromFraction112 } from "../utility/Types.sol";
 
 /**
  * @dev Pool average-rate helper library
