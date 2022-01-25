@@ -73,11 +73,4 @@ library PoolAverageRate {
 
         return MathEx.lte512(min, mid) && MathEx.lte512(mid, max);
     }
-
-    /**
-     * @dev returns whether an average rate is valid
-     */
-    function isValid(Fraction112 memory averageRate) internal pure returns (bool) {
-        return isFractionValid(fromFraction112(averageRate));
-    }
 }

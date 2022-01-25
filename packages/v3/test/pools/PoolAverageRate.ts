@@ -58,15 +58,6 @@ describe('PoolAverageRate', () => {
         });
     };
 
-    const isValidTest = (n: BigNumberish, d: BigNumberish) => {
-        it(`average rate = ${n}/${d}`, async () => {
-            const ar = { n: BigNumber.from(n), d: BigNumber.from(d) };
-            const expected = ar.d.gt(0);
-            const actual = await poolAverageRate.isValid(ar);
-            expect(actual).to.equal(expected);
-        });
-    };
-
     before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
@@ -96,14 +87,6 @@ describe('PoolAverageRate', () => {
                             }
                         }
                     }
-                }
-            }
-        });
-
-        describe('isValid', () => {
-            for (const n of [0, 1]) {
-                for (const d of [0, 1]) {
-                    isValidTest(n, d);
                 }
             }
         });
@@ -158,14 +141,6 @@ describe('PoolAverageRate', () => {
                             }
                         }
                     }
-                }
-            }
-        });
-
-        describe('isValid', () => {
-            for (const n of [0, 1, 2, 3, MAX_UINT112]) {
-                for (const d of [0, 1, 2, 3, MAX_UINT112]) {
-                    isValidTest(n, d);
                 }
             }
         });

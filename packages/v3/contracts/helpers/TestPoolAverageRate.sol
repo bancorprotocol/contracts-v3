@@ -20,8 +20,4 @@ contract TestPoolAverageRate {
     ) external pure returns (bool) {
         return PoolAverageRate.isSpotRateStable(spotRate, averageRate, maxDeviationPPM);
     }
-
-    function isValid(Fraction112 memory averageRate) external pure returns (bool) {
-        return PoolAverageRate.isValid(averageRate);
-    }
 }

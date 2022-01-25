@@ -1024,7 +1024,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = data.averageRate.time != 0 && PoolAverageRate.isValid(averageRate.rate);
+        bool isAverageRateValid = data.averageRate.time != 0 && _isRateValid(fromFraction112(averageRate.rate));
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
