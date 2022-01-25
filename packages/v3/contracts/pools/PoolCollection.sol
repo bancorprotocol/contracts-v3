@@ -1306,7 +1306,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         view
         returns (bool)
     {
-        // verify that the average rate of the pool isn't deviated too much from its spot rate
         Fraction memory spotRate = Fraction({
             n: liquidity.networkTokenTradingLiquidity,
             d: liquidity.baseTokenTradingLiquidity
