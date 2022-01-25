@@ -172,10 +172,10 @@ describe('PoolAverageRate', () => {
                 }
             }
 
-            for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                    for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                        for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+            for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                    for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                        for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
                             for (const md of [0, 2, 5, 10]) {
                                 isSpotRateStableTest(sn, sd, an, ad, md);
                             }
