@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPT_RESOLUTION, PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Fraction112, Uint512, isFractionValid, areFractionsEqual, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Uint512, isFractionValid, toFraction112, fromFraction112 } from "../utility/Types.sol";
 
 /**
  * @dev Pool average-rate helper library
@@ -79,12 +79,5 @@ library PoolAverageRate {
      */
     function isValid(Fraction112 memory averageRate) internal pure returns (bool) {
         return isFractionValid(fromFraction112(averageRate));
-    }
-
-    /**
-     * @dev returns whether two average rates are equal
-     */
-    function areEqual(Fraction112 memory averageRate1, Fraction112 memory averageRate2) internal pure returns (bool) {
-        return areFractionsEqual(fromFraction112(averageRate1), fromFraction112(averageRate2));
     }
 }

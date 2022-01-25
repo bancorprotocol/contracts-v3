@@ -24,12 +24,4 @@ contract TestPoolAverageRate {
     function isValid(Fraction112 memory averageRate) external pure returns (bool) {
         return PoolAverageRate.isValid(averageRate);
     }
-
-    function areEqual(Fraction112 calldata averageRate1, Fraction112 calldata averageRate2)
-        external
-        pure
-        returns (bool)
-    {
-        return PoolAverageRate.areEqual(averageRate1, averageRate2);
-    }
 }

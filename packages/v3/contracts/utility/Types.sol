@@ -40,16 +40,6 @@ function isFractionPositive(Fraction memory fraction) pure returns (bool) {
 }
 
 /**
- * @dev returns whether two fractions are equal
- */
-// solhint-disable-next-line func-visibility
-function areFractionsEqual(Fraction memory fraction1, Fraction memory fraction2) pure returns (bool) {
-    return
-        isFractionValid(fraction1) == isFractionValid(fraction2) &&
-        fraction1.n * fraction2.d == fraction2.n * fraction1.d;
-}
-
-/**
  * @dev reduces a standard fraction to a 112-bit fraction
  */
 // solhint-disable-next-line func-visibility

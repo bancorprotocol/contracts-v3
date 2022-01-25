@@ -62,58 +62,6 @@ describe('Types', () => {
         }
     });
 
-    describe('areFractionsEqual', () => {
-        for (const [fraction1, fraction2] of [
-            [
-                { n: 123, d: 11 },
-                { n: 123, d: 11 }
-            ],
-            [
-                { n: 123, d: 11 },
-                { n: 123, d: 11 }
-            ],
-            [
-                { n: 2000, d: 1000 },
-                { n: 2, d: 1 }
-            ],
-            [
-                { n: 1, d: 5 },
-                { n: 2, d: 10 }
-            ]
-        ]) {
-            it(`should return that ${toString(fraction1)} and ${toString(fraction2)} are equal`, async () => {
-                expect(await types.areFractionsEqual(fraction1, fraction2)).to.be.true;
-            });
-        }
-
-        for (const [fraction1, fraction2] of [
-            [
-                { n: 123, d: 11 },
-                { n: 123, d: 1 }
-            ],
-            [
-                { n: 123, d: 11 },
-                { n: 123, d: 1 }
-            ],
-            [
-                { n: 2000, d: 1000 },
-                { n: 2, d: 2 }
-            ],
-            [
-                { n: 2000, d: 1000 },
-                { n: 2000, d: 1001 }
-            ],
-            [
-                { n: 1, d: 5 },
-                { n: 2, d: 11 }
-            ]
-        ]) {
-            it(`should return that ${toString(fraction1)} and ${toString(fraction2)} are not equal`, async () => {
-                expect(await types.areFractionsEqual(fraction1, fraction2)).to.be.false;
-            });
-        }
-    });
-
     describe('toFraction112', () => {
         const toFraction112 = (fraction: Fraction<BigNumber>, maxRelativeError: Decimal) => {
             it(`fraction = ${toString(fraction)}`, async () => {

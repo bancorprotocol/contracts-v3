@@ -67,17 +67,6 @@ describe('PoolAverageRate', () => {
         });
     };
 
-    const areEqualTest = (n1: BigNumberish, d1: BigNumberish, n2: BigNumberish, d2: BigNumberish) => {
-        it(`average rate 1 = ${n1}/${d1}, average rate 2 = ${n2}/${d2}`, async () => {
-            const ar1 = { n: BigNumber.from(n1), d: BigNumber.from(d1) };
-            const ar2 = { n: BigNumber.from(n2), d: BigNumber.from(d2) };
-            const expected =
-                (ar1.d.eq(0) && ar2.d.eq(0)) || (ar1.d.gt(0) && ar2.d.gt(0) && ar1.n.mul(ar2.d).eq(ar2.n.mul(ar1.d)));
-            const actual = await poolAverageRate.areEqual(ar1, ar2);
-            expect(actual).to.equal(expected);
-        });
-    };
-
     before(async () => {
         poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
     });
@@ -115,18 +104,6 @@ describe('PoolAverageRate', () => {
             for (const n of [0, 1]) {
                 for (const d of [0, 1]) {
                     isValidTest(n, d);
-                }
-            }
-        });
-
-        describe('areEqual', () => {
-            for (const n1 of [0, 1, 2, 3, 4]) {
-                for (const d1 of [0, 1, 2, 3, 4]) {
-                    for (const n2 of [0, 1, 2, 3, 4]) {
-                        for (const d2 of [0, 1, 2, 3, 4]) {
-                            areEqualTest(n1, d1, n2, d2);
-                        }
-                    }
                 }
             }
         });
@@ -189,18 +166,6 @@ describe('PoolAverageRate', () => {
             for (const n of [0, 1, 2, 3, MAX_UINT112]) {
                 for (const d of [0, 1, 2, 3, MAX_UINT112]) {
                     isValidTest(n, d);
-                }
-            }
-        });
-
-        describe('areEqual', () => {
-            for (const n1 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                for (const d1 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                    for (const n2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                        for (const d2 of [0, 1, 2, 3, 4, MAX_UINT112]) {
-                            areEqualTest(n1, d1, n2, d2);
-                        }
-                    }
                 }
             }
         });

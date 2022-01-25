@@ -7,7 +7,6 @@ import {
     Fraction112,
     isFractionValid as _isFractionValid,
     isFractionPositive as _isFractionPositive,
-    areFractionsEqual as _areFractionsEqual,
     toFraction112 as _toFraction112,
     fromFraction112 as _fromFraction112,
     zeroFraction as _zeroFraction
@@ -20,10 +19,6 @@ contract TestTypes {
 
     function isFractionPositive(Fraction memory fraction) external pure returns (bool) {
         return _isFractionPositive(fraction);
-    }
-
-    function areFractionsEqual(Fraction memory fraction1, Fraction memory fraction2) external pure returns (bool) {
-        return _areFractionsEqual(fraction1, fraction2);
     }
 
     function toFraction112(Fraction memory fraction) external pure returns (Fraction112 memory) {
