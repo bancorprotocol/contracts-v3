@@ -7,8 +7,7 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment, isMainnet } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { expectRoles, expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -30,15 +29,15 @@ describe('1642682503-master-pool', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.MasterPool);
+        await runTestDeployment(ContractName.MasterPoolV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
         govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
-        masterVault = await DeployedContracts.MasterVault.deployed();
-        masterPoolToken = await DeployedContracts.MasterPoolToken.deployed();
-        masterPool = await DeployedContracts.MasterPool.deployed();
+        masterVault = await DeployedContracts.MasterVaultV1.deployed();
+        masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
+        masterPool = await DeployedContracts.MasterPoolV1.deployed();
     });
 
     it('should deploy and configure the master pool contract', async () => {

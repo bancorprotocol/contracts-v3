@@ -7,33 +7,6 @@ const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
-export enum ContractName {
-    AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
-    BancorNetwork = 'BancorNetwork',
-    BancorNetworkInfo = 'BancorNetworkInfo',
-    BancorNetworkProxy = 'BancorNetworkProxy',
-    ExternalProtectionVault = 'ExternalProtectionVault',
-    ExternalRewardsVault = 'ExternalRewardsVault',
-    GovToken = 'GovToken',
-    GovTokenGovernance = 'GovTokenGovernance',
-    MasterPool = 'MasterPool',
-    MasterPoolToken = 'MasterPoolToken',
-    MasterVault = 'MasterVault',
-    NetworkSettings = 'NetworkSettings',
-    NetworkToken = 'NetworkToken',
-    NetworkTokenGovernance = 'NetworkTokenGovernance',
-    PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1 = 'PoolCollectionType1',
-    PoolCollectionUpgrader = 'PoolCollectionUpgrader',
-    PoolTokenFactory = 'PoolTokenFactory',
-    ProxyAdmin = 'ProxyAdmin'
-}
-
-export enum DeploymentTag {
-    V2 = 'V2',
-    V3 = 'V3'
-}
-
 export enum DeploymentNetwork {
     HARDHAT = 'hardhat',
     LOCALHOST = 'localhost',

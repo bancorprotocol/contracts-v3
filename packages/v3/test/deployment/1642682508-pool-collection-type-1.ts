@@ -18,13 +18,13 @@ describe('1642682508-pool-collection-type-1', () => {
     let poolCollection: PoolCollection;
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolCollectionType1);
+        await runTestDeployment(ContractName.PoolCollectionType1V1);
 
-        network = await DeployedContracts.BancorNetwork.deployed();
-        masterPool = await DeployedContracts.MasterPool.deployed();
-        masterVault = await DeployedContracts.MasterVault.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1.deployed();
+        network = await DeployedContracts.BancorNetworkV1.deployed();
+        masterPool = await DeployedContracts.MasterPoolV1.deployed();
+        masterVault = await DeployedContracts.MasterVaultV1.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     });
 
     it('should deploy and configure the pool collection contract', async () => {

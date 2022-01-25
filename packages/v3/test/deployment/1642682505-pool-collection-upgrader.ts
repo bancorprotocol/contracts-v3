@@ -1,6 +1,5 @@
 import { PoolCollectionUpgrader, ProxyAdmin } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -15,10 +14,10 @@ describe('1642682505-pool-collection-upgrader', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolCollectionUpgrader);
+        await runTestDeployment(ContractName.PoolCollectionUpgraderV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgrader.deployed();
+        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
     });
 
     it('should deploy and configure the pool collection upgrader contract', async () => {

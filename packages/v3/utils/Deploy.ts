@@ -16,7 +16,7 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../components/LegacyContracts';
-import { ContractName, DeploymentNetwork } from './Constants';
+import { DeploymentNetwork } from './Constants';
 import { toWei } from './Types';
 import { Contract } from 'ethers';
 import { deployments, ethers, getNamedAccounts } from 'hardhat';
@@ -41,27 +41,67 @@ const deployed = <F extends Contract>(name: ContractName) => ({
     deployed: async () => ethers.getContract<F>(name)
 });
 
-export const DeployedContracts = {
-    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(ContractName.AutoCompoundingStakingRewards),
-    BancorNetwork: deployed<BancorNetwork>(ContractName.BancorNetwork),
-    BancorNetworkInfo: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfo),
-    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
-    ExternalProtectionVault: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVault),
-    ExternalRewardsVault: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVault),
+enum LegacyContractName {
+    GovToken = 'GovToken',
+    GovTokenGovernance = 'GovTokenGovernance',
+    NetworkToken = 'NetworkToken',
+    NetworkTokenGovernance = 'NetworkTokenGovernance'
+}
+
+enum NewContractName {
+    AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
+    BancorNetworkV1 = 'BancorNetworkV1',
+    BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
+    BancorNetworkProxy = 'BancorNetworkProxy',
+    ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
+    ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
+    MasterPoolV1 = 'MasterPoolV1',
+    MasterPoolTokenV1 = 'MasterPoolTokenV1',
+    MasterVaultV1 = 'MasterVaultV1',
+    NetworkSettingsV1 = 'NetworkSettingsV1',
+    PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
+    PoolCollectionType1V1 = 'PoolCollectionType1V1',
+    PoolCollectionUpgraderV1 = 'PoolCollectionUpgraderV1',
+    PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
+    ProxyAdmin = 'ProxyAdmin'
+}
+
+export const ContractName = { ...LegacyContractName, ...NewContractName } as const;
+export type ContractName = LegacyContractName | NewContractName;
+
+export enum DeploymentTag {
+    V2 = 'V2',
+    V3 = 'V3'
+}
+
+const DeployedLegacyContracts = {
     GovToken: deployed<GovToken>(ContractName.GovToken),
     GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance),
-    MasterPool: deployed<MasterPool>(ContractName.MasterPool),
-    MasterPoolToken: deployed<PoolToken>(ContractName.MasterPoolToken),
-    MasterVault: deployed<MasterVault>(ContractName.MasterVault),
-    NetworkSettings: deployed<NetworkSettings>(ContractName.NetworkSettings),
     NetworkToken: deployed<NetworkToken>(ContractName.NetworkToken),
-    NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance),
-    PendingWithdrawals: deployed<PendingWithdrawals>(ContractName.PendingWithdrawals),
-    PoolCollectionType1: deployed<PoolCollection>(ContractName.PoolCollectionType1),
-    PoolCollectionUpgrader: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgrader),
-    PoolTokenFactory: deployed<PoolTokenFactory>(ContractName.PoolTokenFactory),
+    NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance)
+};
+
+const DeployedNewContracts = {
+    AutoCompoundingStakingRewardsV1: deployed<AutoCompoundingStakingRewards>(
+        ContractName.AutoCompoundingStakingRewardsV1
+    ),
+    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
+    BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
+    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
+    ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
+    ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
+    MasterPoolV1: deployed<MasterPool>(ContractName.MasterPoolV1),
+    MasterPoolTokenV1: deployed<PoolToken>(ContractName.MasterPoolTokenV1),
+    MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
+    NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
+    PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
+    PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
+    PoolCollectionUpgraderV1: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgraderV1),
+    PoolTokenFactoryV1: deployed<PoolTokenFactory>(ContractName.PoolTokenFactoryV1),
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
 };
+
+export const DeployedContracts = { ...DeployedLegacyContracts, ...DeployedNewContracts };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;

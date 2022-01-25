@@ -7,15 +7,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await deployProxy({
-        name: ContractName.NetworkSettings,
+        name: ContractName.NetworkSettingsV1,
         from: deployer
     });
 
     return true;
 };
 
-func.id = ContractName.NetworkSettings;
+func.id = ContractName.NetworkSettingsV1;
 func.dependencies = [ContractName.ProxyAdmin];
-func.tags = [DeploymentTag.V3, ContractName.NetworkSettings];
+func.tags = [DeploymentTag.V3, ContractName.NetworkSettingsV1];
 
 export default func;

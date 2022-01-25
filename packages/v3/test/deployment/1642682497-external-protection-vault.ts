@@ -1,6 +1,5 @@
 import { ExternalProtectionVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -15,10 +14,10 @@ describe('1642682497-external-protection-vault', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.ExternalProtectionVault);
+        await runTestDeployment(ContractName.ExternalProtectionVaultV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
     });
 
     it('should deploy and configure the external protection vault contract', async () => {

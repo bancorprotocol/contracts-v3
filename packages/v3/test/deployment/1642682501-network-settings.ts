@@ -1,6 +1,5 @@
 import { NetworkSettings, ProxyAdmin } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -15,10 +14,10 @@ describe('1642682501-network-settings', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.NetworkSettings);
+        await runTestDeployment(ContractName.NetworkSettingsV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        networkSettings = await DeployedContracts.NetworkSettings.deployed();
+        networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     });
 
     it('should deploy and configure the network settings contract', async () => {

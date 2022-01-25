@@ -10,7 +10,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
 
     await deployProxy({
-        name: ContractName.ExternalProtectionVault,
+        name: ContractName.ExternalProtectionVaultV1,
         from: deployer,
         args: [networkTokenGovernance.address, govTokenGovernance.address]
     });
@@ -18,8 +18,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.ExternalProtectionVault;
+func.id = ContractName.ExternalProtectionVaultV1;
 func.dependencies = [DeploymentTag.V2, ContractName.ProxyAdmin];
-func.tags = [DeploymentTag.V3, ContractName.ExternalProtectionVault];
+func.tags = [DeploymentTag.V3, ContractName.ExternalProtectionVaultV1];
 
 export default func;

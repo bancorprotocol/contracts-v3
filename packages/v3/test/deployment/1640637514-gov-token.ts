@@ -1,7 +1,6 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';

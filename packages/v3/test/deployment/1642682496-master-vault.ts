@@ -1,6 +1,5 @@
 import { MasterVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -15,10 +14,10 @@ describe('1642682496-master-vault', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.MasterVault);
+        await runTestDeployment(ContractName.MasterVaultV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        masterVault = await DeployedContracts.MasterVault.deployed();
+        masterVault = await DeployedContracts.MasterVaultV1.deployed();
     });
 
     it('should deploy and configure the master vault contract', async () => {

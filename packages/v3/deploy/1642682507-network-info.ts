@@ -6,19 +6,19 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
+    const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
     const govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
-    const masterVault = await DeployedContracts.MasterVault.deployed();
-    const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-    const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
-    const masterPool = await DeployedContracts.MasterPool.deployed();
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
-    const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgrader.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
+    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
+    const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
+    const externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
+    const masterPool = await DeployedContracts.MasterPoolV1.deployed();
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
+    const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
 
     await deployProxy({
-        name: ContractName.BancorNetworkInfo,
+        name: ContractName.BancorNetworkInfoV1,
         from: deployer,
         args: [
             network.address,
@@ -37,19 +37,19 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorNetworkInfo;
+func.id = ContractName.BancorNetworkInfoV1;
 func.dependencies = [
     DeploymentTag.V2,
     ContractName.ProxyAdmin,
-    ContractName.BancorNetwork,
-    ContractName.NetworkSettings,
-    ContractName.MasterVault,
-    ContractName.ExternalProtectionVault,
-    ContractName.ExternalRewardsVault,
-    ContractName.MasterPool,
-    ContractName.PendingWithdrawals,
-    ContractName.PoolCollectionUpgrader
+    ContractName.BancorNetworkV1,
+    ContractName.NetworkSettingsV1,
+    ContractName.MasterVaultV1,
+    ContractName.ExternalProtectionVaultV1,
+    ContractName.ExternalRewardsVaultV1,
+    ContractName.MasterPoolV1,
+    ContractName.PendingWithdrawalsV1,
+    ContractName.PoolCollectionUpgraderV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.BancorNetworkInfo];
+func.tags = [DeploymentTag.V3, ContractName.BancorNetworkInfoV1];
 
 export default func;

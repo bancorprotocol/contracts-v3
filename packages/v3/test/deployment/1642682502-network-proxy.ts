@@ -1,6 +1,5 @@
 import Contracts, { ProxyAdmin, TransparentUpgradeableProxyImmutable } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 

@@ -1,6 +1,5 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractName, DeploymentTag } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeploymentTag, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -19,14 +18,14 @@ describe('1642778028-revoke-roles', () => {
 
     it('should revoke deployer roles', async () => {
         for (const name of [
-            ContractName.ExternalRewardsVault,
-            ContractName.PoolTokenFactory,
-            ContractName.NetworkSettings,
-            ContractName.MasterPool,
-            ContractName.PendingWithdrawals,
-            ContractName.PoolCollectionUpgrader,
-            ContractName.BancorNetwork,
-            ContractName.BancorNetworkInfo
+            ContractName.ExternalRewardsVaultV1,
+            ContractName.PoolTokenFactoryV1,
+            ContractName.NetworkSettingsV1,
+            ContractName.MasterPoolV1,
+            ContractName.PendingWithdrawalsV1,
+            ContractName.PoolCollectionUpgraderV1,
+            ContractName.BancorNetworkV1,
+            ContractName.BancorNetworkInfoV1
         ]) {
             const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
             expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;

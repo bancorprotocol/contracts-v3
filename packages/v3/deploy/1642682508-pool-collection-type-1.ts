@@ -6,18 +6,18 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
+    const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkToken = await DeployedContracts.NetworkToken.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
-    const masterVault = await DeployedContracts.MasterVault.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
+    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
 
-    const masterPool = await DeployedContracts.MasterPool.deployed();
-    const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-    const poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
-    const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgrader.deployed();
+    const masterPool = await DeployedContracts.MasterPoolV1.deployed();
+    const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
+    const poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
+    const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
 
     const poolCollectionAddress = await deploy({
-        name: ContractName.PoolCollectionType1,
+        name: ContractName.PoolCollectionType1V1,
         contract: 'PoolCollection',
         from: deployer,
         args: [
@@ -33,7 +33,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await execute({
-        name: ContractName.BancorNetwork,
+        name: ContractName.BancorNetworkV1,
         methodName: 'addPoolCollection',
         args: [poolCollectionAddress],
         from: deployer
@@ -42,18 +42,18 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.PoolCollectionType1;
+func.id = ContractName.PoolCollectionType1V1;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.BancorNetwork,
-    ContractName.NetworkSettings,
-    ContractName.MasterVault,
-    ContractName.MasterPool,
-    ContractName.ExternalProtectionVault,
-    ContractName.PoolTokenFactory,
-    ContractName.PendingWithdrawals,
-    ContractName.PoolCollectionUpgrader
+    ContractName.BancorNetworkV1,
+    ContractName.NetworkSettingsV1,
+    ContractName.MasterVaultV1,
+    ContractName.MasterPoolV1,
+    ContractName.ExternalProtectionVaultV1,
+    ContractName.PoolTokenFactoryV1,
+    ContractName.PendingWithdrawalsV1,
+    ContractName.PoolCollectionUpgraderV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.PoolCollectionType1];
+func.tags = [DeploymentTag.V3, ContractName.PoolCollectionType1V1];
 
 export default func;

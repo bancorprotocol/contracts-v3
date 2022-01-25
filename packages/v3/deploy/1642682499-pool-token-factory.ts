@@ -7,15 +7,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await deployProxy({
-        name: ContractName.PoolTokenFactory,
+        name: ContractName.PoolTokenFactoryV1,
         from: deployer
     });
 
     return true;
 };
 
-func.id = ContractName.PoolTokenFactory;
+func.id = ContractName.PoolTokenFactoryV1;
 func.dependencies = [ContractName.ProxyAdmin];
-func.tags = [DeploymentTag.V3, ContractName.PoolTokenFactory];
+func.tags = [DeploymentTag.V3, ContractName.PoolTokenFactoryV1];
 
 export default func;

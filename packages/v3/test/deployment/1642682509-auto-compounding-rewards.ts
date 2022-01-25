@@ -4,8 +4,7 @@ import {
     MasterPool,
     ProxyAdmin
 } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -22,12 +21,12 @@ describe('1642682509-auto-compounding-rewards', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.AutoCompoundingStakingRewards);
+        await runTestDeployment(ContractName.AutoCompoundingStakingRewardsV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        masterPool = await DeployedContracts.MasterPool.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
-        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewards.deployed();
+        masterPool = await DeployedContracts.MasterPoolV1.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
+        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewardsV1.deployed();
     });
 
     it('should deploy and configure the auto-compounding rewards contract', async () => {

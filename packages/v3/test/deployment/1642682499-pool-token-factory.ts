@@ -1,6 +1,5 @@
 import { PoolTokenFactory, ProxyAdmin } from '../../components/Contracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -15,10 +14,10 @@ describe('1642682499-pool-token-factory', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolTokenFactory);
+        await runTestDeployment(ContractName.PoolTokenFactoryV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
+        poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
     });
 
     it('should deploy and configure the pool token factory contract', async () => {

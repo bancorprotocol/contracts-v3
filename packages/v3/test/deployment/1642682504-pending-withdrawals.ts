@@ -15,10 +15,10 @@ describe('1642682504-pending-withdrawals', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PendingWithdrawals);
+        await runTestDeployment(ContractName.PendingWithdrawalsV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     });
 
     it('should deploy and configure the pending withdrawals contract', async () => {

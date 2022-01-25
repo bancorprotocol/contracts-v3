@@ -12,8 +12,7 @@ import {
     ProxyAdmin
 } from '../../components/Contracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -42,23 +41,23 @@ describe('1642682507-network-info', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.BancorNetworkInfo);
+        await runTestDeployment(ContractName.BancorNetworkInfoV1);
 
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        network = await DeployedContracts.BancorNetwork.deployed();
+        network = await DeployedContracts.BancorNetworkV1.deployed();
         networkToken = await DeployedContracts.NetworkToken.deployed();
         govToken = await DeployedContracts.GovToken.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
         govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
-        networkSettings = await DeployedContracts.NetworkSettings.deployed();
-        masterVault = await DeployedContracts.MasterVault.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
-        masterPool = await DeployedContracts.MasterPool.deployed();
-        masterPoolToken = await DeployedContracts.MasterPoolToken.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
-        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgrader.deployed();
-        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
+        networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
+        masterVault = await DeployedContracts.MasterVaultV1.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
+        masterPool = await DeployedContracts.MasterPoolV1.deployed();
+        masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
+        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
     });
 
     it('should deploy and configure the network info contract', async () => {
