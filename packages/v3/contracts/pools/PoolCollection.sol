@@ -1301,7 +1301,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev returns whether a pool's rate is stable
      */
-    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRate)
+    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
         private
         view
         returns (bool)
@@ -1311,12 +1311,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             d: liquidity.baseTokenTradingLiquidity
         });
 
-        if (averageRate.time < _time()) {
-            averageRate.rate = PoolAverageRate.calcAverageRate(averageRate.rate, spotRate, AVERAGE_RATE_WEIGHT_PPT);
+        Fraction memory averageRate = fromFraction112(averageRateInfo.rate);
+
+        if (averageRateInfo.time < _time()) {
+            averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return
-            PoolAverageRate.isSpotRateStable(spotRate, averageRate.rate, _networkSettings.averageRateMaxDeviationPPM());
+        return PoolAverageRate.isSpotRateStable(spotRate, averageRate, _networkSettings.averageRateMaxDeviationPPM());
     }
 
     /**
@@ -1328,9 +1329,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         if (data.averageRate.time < time) {
             data.averageRate = AverageRate({
                 time: time,
-                rate: PoolAverageRate.calcAverageRate(data.averageRate.rate, spotRate, AVERAGE_RATE_WEIGHT_PPT)
+                rate: toFraction112(_calcAverageRate(fromFraction112(data.averageRate.rate), spotRate))
             });
         }
+    }
+
+    /**
+     * @dev calculates the average rate
+     */
+    function _calcAverageRate(Fraction memory averageRate, Fraction memory spotRate)
+        private
+        pure
+        returns (Fraction memory)
+    {
+        return PoolAverageRate.calcAverageRate(averageRate, spotRate, AVERAGE_RATE_WEIGHT_PPT);
     }
 
     /**

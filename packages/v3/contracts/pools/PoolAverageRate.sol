@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { MathEx } from "../utility/MathEx.sol";
 import { PPT_RESOLUTION, PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction, Fraction112, Uint512, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Uint512 } from "../utility/Types.sol";
 
 /**
  * @dev Pool average-rate helper library
@@ -35,18 +35,15 @@ library PoolAverageRate {
      * - weightPPT must be lesser or equal to PPT_RESOLUTION
      */
     function calcAverageRate(
-        Fraction112 memory averageRate,
+        Fraction memory averageRate,
         Fraction memory spotRate,
         uint16 weightPPT
-    ) internal pure returns (Fraction112 memory) {
-        Fraction memory currRate = fromFraction112(averageRate);
-
-        Fraction memory newRate = Fraction({
-            n: currRate.n * spotRate.d * weightPPT + currRate.d * spotRate.n * (PPT_RESOLUTION - weightPPT),
-            d: currRate.d * spotRate.d * PPT_RESOLUTION
-        });
-
-        return toFraction112(newRate);
+    ) internal pure returns (Fraction memory) {
+        return
+            Fraction({
+                n: averageRate.n * spotRate.d * weightPPT + averageRate.d * spotRate.n * (PPT_RESOLUTION - weightPPT),
+                d: averageRate.d * spotRate.d * PPT_RESOLUTION
+            });
     }
 
     /**
@@ -60,7 +57,7 @@ library PoolAverageRate {
      */
     function isSpotRateStable(
         Fraction memory spotRate,
-        Fraction112 memory averageRate,
+        Fraction memory averageRate,
         uint32 maxDeviationPPM
     ) internal pure returns (bool) {
         uint256 x = spotRate.n * averageRate.d;
