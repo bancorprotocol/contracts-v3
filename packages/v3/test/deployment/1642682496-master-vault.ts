@@ -25,7 +25,6 @@ describe('1642682496-master-vault', () => {
         expect(await proxyAdmin.getProxyAdmin(masterVault.address)).to.equal(proxyAdmin.address);
 
         expect(await masterVault.version()).to.equal(1);
-        expect(await masterVault.isPayable()).to.be.true;
 
         await expectRoles(masterVault, Roles.MasterVault);
 

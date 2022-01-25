@@ -25,7 +25,6 @@ describe('1642682498-external-rewards-vault', () => {
         expect(await proxyAdmin.getProxyAdmin(externalRewardsVault.address)).to.equal(proxyAdmin.address);
 
         expect(await externalRewardsVault.version()).to.equal(1);
-        expect(await externalRewardsVault.isPayable()).to.be.true;
 
         await expectRole(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
         await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);

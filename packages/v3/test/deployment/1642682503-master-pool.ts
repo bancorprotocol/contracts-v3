@@ -45,7 +45,6 @@ describe('1642682503-master-pool', () => {
         expect(await proxyAdmin.getProxyAdmin(masterPool.address)).to.equal(proxyAdmin.address);
 
         expect(await masterPool.version()).to.equal(1);
-        expect(await masterPool.isPayable()).to.be.false;
 
         expect(await masterPool.poolToken()).to.equal(masterPoolToken.address);
 

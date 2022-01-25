@@ -25,7 +25,6 @@ describe('1642682497-external-protection-vault', () => {
         expect(await proxyAdmin.getProxyAdmin(externalProtectionVault.address)).to.equal(proxyAdmin.address);
 
         expect(await externalProtectionVault.version()).to.equal(1);
-        expect(await externalProtectionVault.isPayable()).to.be.true;
 
         await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
             deployer
