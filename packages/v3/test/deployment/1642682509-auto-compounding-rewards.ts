@@ -38,11 +38,6 @@ describe('1642682509-auto-compounding-rewards', () => {
         await expectRole(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
             deployer
         ]);
-
-        await expectRole(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-            deployer
-        ]);
-
         await expectRole(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
             autoCompoundingStakingRewards.address
         ]);
