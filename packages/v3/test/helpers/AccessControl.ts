@@ -24,11 +24,15 @@ export const expectRoleMembers = async (
     roleId: typeof RoleIds[number],
     members: string[] = []
 ) => {
-    expect(await contract.getRoleMemberCount(roleId)).to.equal(members.length);
+    const actualMembers = [];
+    const memberCount = (await contract.getRoleMemberCount(roleId)).toNumber();
 
-    for (const member of members) {
-        expect(await contract.hasRole(roleId, member)).to.be.true;
+    for (let i = 0; i < memberCount; i++) {
+        actualMembers.push(await contract.getRoleMember(roleId, i));
     }
+
+    expect(actualMembers).to.have.lengthOf(members.length);
+    expect(actualMembers).to.have.members(members);
 };
 
 export const expectRoles = async (
