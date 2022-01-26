@@ -7,7 +7,7 @@ import {
 } from '../../components/Contracts';
 import { PoolType, DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 
 describe('1642682508-pool-collection-type-1', () => {
@@ -35,20 +35,11 @@ describe('1642682508-pool-collection-type-1', () => {
 
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
-        await expectRole(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-            poolCollection.address
-        ]);
-        await expectRole(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-            poolCollection.address
-        ]);
-        await expectRole(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-            poolCollection.address
-        ]);
-        await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-            network.address,
-            poolCollection.address
-        ]);
-        await expectRole(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
+        await expectRoleMembers(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, [
             network.address,
             poolCollection.address
         ]);

@@ -1,6 +1,6 @@
 import { MasterVault, ProxyAdmin } from '../../components/Contracts';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -25,10 +25,8 @@ describe('1642682496-master-vault', () => {
 
         expect(await masterVault.version()).to.equal(1);
 
-        await expectRoles(masterVault, Roles.MasterVault);
-
-        await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
-        await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
-        await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
+        await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER);
+        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER);
     });
 });

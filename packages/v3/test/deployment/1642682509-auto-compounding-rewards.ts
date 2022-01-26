@@ -5,7 +5,7 @@ import {
     ProxyAdmin
 } from '../../components/Contracts';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -34,13 +34,11 @@ describe('1642682509-auto-compounding-rewards', () => {
 
         expect(await autoCompoundingStakingRewards.version()).to.equal(1);
 
-        await expectRole(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-            deployer
-        ]);
-        await expectRole(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+        await expectRoleMembers(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
-        await expectRole(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
     });

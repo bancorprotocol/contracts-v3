@@ -13,7 +13,8 @@ const CONTRACT_NAMES_TO_REVOKE = [
     ContractName.PendingWithdrawalsV1,
     ContractName.PoolCollectionUpgraderV1,
     ContractName.BancorNetworkV1,
-    ContractName.BancorNetworkInfoV1
+    ContractName.BancorNetworkInfoV1,
+    ContractName.AutoCompoundingStakingRewardsV1
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {

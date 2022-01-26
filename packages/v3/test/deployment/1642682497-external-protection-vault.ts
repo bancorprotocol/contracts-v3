@@ -1,6 +1,6 @@
 import { ExternalProtectionVault, ProxyAdmin } from '../../components/Contracts';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -25,9 +25,7 @@ describe('1642682497-external-protection-vault', () => {
 
         expect(await externalProtectionVault.version()).to.equal(1);
 
-        await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
-            deployer
-        ]);
-        await expectRole(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
+        await expectRoleMembers(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRoleMembers(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER);
     });
 });

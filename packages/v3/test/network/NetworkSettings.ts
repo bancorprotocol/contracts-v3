@@ -1,7 +1,7 @@
 import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
 import { ZERO_ADDRESS, PPM_RESOLUTION } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -36,6 +36,8 @@ describe('NetworkSettings', () => {
 
         it('should be properly initialized', async () => {
             expect(await networkSettings.version()).to.equal(1);
+
+            await expectRoles(networkSettings, Roles.Upgradeable);
 
             await expectRole(networkSettings, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address

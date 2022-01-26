@@ -13,7 +13,7 @@ import {
 } from '../../components/Contracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -79,6 +79,6 @@ describe('1642682507-network-info', () => {
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
         expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
 
-        await expectRole(networkInfo, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRoleMembers(networkInfo, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

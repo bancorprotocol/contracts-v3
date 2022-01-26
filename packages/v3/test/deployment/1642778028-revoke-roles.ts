@@ -25,7 +25,8 @@ describe('1642778028-revoke-roles', () => {
             ContractName.PendingWithdrawalsV1,
             ContractName.PoolCollectionUpgraderV1,
             ContractName.BancorNetworkV1,
-            ContractName.BancorNetworkInfoV1
+            ContractName.BancorNetworkInfoV1,
+            ContractName.AutoCompoundingStakingRewardsV1
         ]) {
             const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
             expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;

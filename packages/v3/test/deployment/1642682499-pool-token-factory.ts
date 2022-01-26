@@ -1,6 +1,6 @@
 import { PoolTokenFactory, ProxyAdmin } from '../../components/Contracts';
 import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -25,6 +25,6 @@ describe('1642682499-pool-token-factory', () => {
 
         expect(await poolTokenFactory.version()).to.equal(1);
 
-        await expectRole(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+        await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

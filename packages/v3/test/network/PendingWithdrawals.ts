@@ -16,7 +16,7 @@ import {
 } from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken, setupFundedPool, depositToPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
@@ -74,6 +74,8 @@ describe('PendingWithdrawals', () => {
 
         it('should be properly initialized', async () => {
             expect(await pendingWithdrawals.version()).to.equal(1);
+
+            await expectRoles(pendingWithdrawals, Roles.Upgradeable);
 
             await expectRole(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address

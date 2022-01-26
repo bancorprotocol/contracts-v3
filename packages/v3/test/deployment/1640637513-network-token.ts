@@ -3,7 +3,7 @@ import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts'
 import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -40,22 +40,19 @@ describe('1640637513-network-token', () => {
 
         expect(await networkToken.owner()).to.equal(networkTokenGovernance.address);
 
-        await expectRole(
+        await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
-            Roles.TokenGovernance.ROLE_SUPERVISOR,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-        await expectRole(
+        await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            Roles.TokenGovernance.ROLE_SUPERVISOR,
             [deployer]
         );
-        await expectRole(
+        await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            Roles.TokenGovernance.ROLE_GOVERNOR,
             isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
         );
     });
