@@ -19,8 +19,10 @@ import { GovToken, NetworkToken, TokenGovernance } from '../components/LegacyCon
 import { DeploymentNetwork } from './Constants';
 import { toWei } from './Types';
 import { Contract } from 'ethers';
-import { deployments, ethers, getNamedAccounts } from 'hardhat';
+import fs from 'fs';
+import { deployments, ethers, getNamedAccounts, config } from 'hardhat';
 import { ProxyOptions as DeployProxyOptions, Address } from 'hardhat-deploy/types';
+import path from 'path';
 
 const {
     deploy: deployContract,
@@ -109,18 +111,6 @@ export const isMainnetFork = () => isHardhatMainnetFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
 export const isLive = () => isMainnet() && !isMainnetFork();
 
-interface ProxyOptions {
-    skipInitialization?: boolean;
-}
-
-interface DeployOptions {
-    name: ContractName;
-    contract?: string;
-    args?: any[];
-    from: string;
-    proxy?: ProxyOptions;
-}
-
 const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
 
@@ -143,9 +133,50 @@ export const fundAccount = async (account: string) => {
     });
 };
 
-const INITIALIZE = 'initialize';
-
 const normalizeContractName = (contractName: string) => contractName.replace(/V\d+/g, '');
+
+interface SaveTypeOptions {
+    name: ContractName;
+    contract: string;
+}
+
+const saveTypes = async (options: SaveTypeOptions) => {
+    const { name, contract } = options;
+
+    const src = path.join(path.resolve('./', config.typechain.outDir), `${contract}.ts`);
+    const destDir = path.join(config.paths.deployments, getNetworkName());
+    const dest = path.join(destDir, `${name}.ts`);
+
+    // don't save types for legacy contracts
+    if (Object.values(LegacyContractName).includes(name as LegacyContractName)) {
+        return;
+    }
+
+    // don't overwrite types for an existing deployment
+    if (fs.existsSync(dest)) {
+        return;
+    }
+
+    if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir);
+    }
+
+    fs.copyFileSync(src, dest);
+};
+
+interface ProxyOptions {
+    skipInitialization?: boolean;
+}
+
+interface DeployOptions {
+    name: ContractName;
+    contract?: string;
+    args?: any[];
+    from: string;
+    proxy?: ProxyOptions;
+}
+
+const INITIALIZE = 'initialize';
 
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, args, proxy } = options;
@@ -164,13 +195,16 @@ export const deploy = async (options: DeployOptions) => {
         };
     }
 
+    const contractName = normalizeContractName(contract || name);
     const res = await deployContract(name, {
-        contract: normalizeContractName(contract || name),
+        contract: contractName,
         from,
         args,
         proxy: proxy ? proxyOptions : undefined,
         log: true
     });
+
+    await saveTypes({ name, contract: contractName });
 
     return res.address;
 };
