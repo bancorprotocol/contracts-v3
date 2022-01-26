@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, execute, initializeProxy, DeployedContracts } from '../utils/Deploy';
+import { ContractName, DeploymentTag, initializeProxy, DeployedContracts, grantRole } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -17,31 +17,31 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.MasterVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
+        id: Roles.Upgradeable.ROLE_ADMIN,
+        member: networkAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.MasterVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
+        id: Roles.Vault.ROLE_ASSET_MANAGER,
+        member: networkAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.ExternalProtectionVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, networkAddress],
+        id: Roles.Upgradeable.ROLE_ADMIN,
+        member: networkAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.ExternalProtectionVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.Vault.ROLE_ASSET_MANAGER, networkAddress],
+        id: Roles.Vault.ROLE_ASSET_MANAGER,
+        member: networkAddress,
         from: deployer
     });
 

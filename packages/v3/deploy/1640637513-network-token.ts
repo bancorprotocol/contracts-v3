@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, deploy, execute, isMainnet } from '../utils/Deploy';
+import { ContractName, DeploymentTag, deploy, execute, isMainnet, grantRole, revokeRole } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { TokenData, TokenSymbol } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
@@ -25,32 +25,25 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.NetworkTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_SUPERVISOR, foundationMultisig],
+        id: Roles.TokenGovernance.ROLE_SUPERVISOR,
+        member: foundationMultisig,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.NetworkTokenGovernance,
-        methodName: 'revokeRole',
-        args: [Roles.TokenGovernance.ROLE_SUPERVISOR, deployer],
+        id: Roles.TokenGovernance.ROLE_GOVERNOR,
+        member: deployer,
         from: deployer
     });
 
-    await execute({
+    await revokeRole({
         name: ContractName.NetworkTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_SUPERVISOR, foundationMultisig],
-        from: foundationMultisig
-    });
-
-    await execute({
-        name: ContractName.NetworkTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_GOVERNOR, deployer],
-        from: foundationMultisig
+        id: Roles.TokenGovernance.ROLE_SUPERVISOR,
+        member: deployer,
+        from: deployer
     });
 
     await execute({
@@ -66,10 +59,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: foundationMultisig
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.NetworkTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_MINTER, deployer],
+        id: Roles.TokenGovernance.ROLE_MINTER,
+        member: deployer,
         from: deployer
     });
 
@@ -77,6 +70,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: ContractName.NetworkTokenGovernance,
         methodName: 'mint',
         args: [deployer, TOTAL_SUPPLY],
+        from: deployer
+    });
+
+    await revokeRole({
+        name: ContractName.NetworkTokenGovernance,
+        id: Roles.TokenGovernance.ROLE_MINTER,
+        member: deployer,
         from: deployer
     });
 

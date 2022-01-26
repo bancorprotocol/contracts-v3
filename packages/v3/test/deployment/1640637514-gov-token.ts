@@ -51,7 +51,7 @@ describe('1640637514-gov-token', () => {
         await expectRoleMembers(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection] : [deployer]
+            isMainnet() ? [liquidityProtection] : []
         );
     });
 

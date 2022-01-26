@@ -18,15 +18,17 @@ describe('1642778028-revoke-roles', () => {
 
     it('should revoke deployer roles', async () => {
         for (const name of [
+            ContractName.AutoCompoundingStakingRewardsV1,
+            ContractName.BancorNetworkInfoV1,
+            ContractName.BancorNetworkV1,
+            ContractName.ExternalProtectionVaultV1,
             ContractName.ExternalRewardsVaultV1,
-            ContractName.PoolTokenFactoryV1,
-            ContractName.NetworkSettingsV1,
             ContractName.MasterPoolV1,
+            ContractName.MasterVaultV1,
+            ContractName.NetworkSettingsV1,
             ContractName.PendingWithdrawalsV1,
             ContractName.PoolCollectionUpgraderV1,
-            ContractName.BancorNetworkV1,
-            ContractName.BancorNetworkInfoV1,
-            ContractName.AutoCompoundingStakingRewardsV1
+            ContractName.PoolTokenFactoryV1
         ]) {
             const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
             expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;

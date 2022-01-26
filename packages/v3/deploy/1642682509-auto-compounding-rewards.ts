@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, deployProxy, execute, DeployedContracts } from '../utils/Deploy';
+import { ContractName, DeploymentTag, deployProxy, DeployedContracts, grantRole } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -17,17 +17,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         args: [network.address, networkSettings.address, networkToken.address, masterPool.address]
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.MasterPoolV1,
-        methodName: 'grantRole',
-        args: [Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, autoCompoundingRewardsAddress],
+        id: Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER,
+        member: autoCompoundingRewardsAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.ExternalRewardsVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingRewardsAddress],
+        id: Roles.Vault.ROLE_ASSET_MANAGER,
+        member: autoCompoundingRewardsAddress,
         from: deployer
     });
 

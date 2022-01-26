@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, deployProxy, execute, DeployedContracts } from '../utils/Deploy';
+import { ContractName, DeploymentTag, deployProxy, execute, DeployedContracts, grantRole } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -44,31 +44,31 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.MasterPoolV1,
-        methodName: 'grantRole',
-        args: [Roles.Upgradeable.ROLE_ADMIN, networkProxy.address],
+        id: Roles.Upgradeable.ROLE_ADMIN,
+        member: networkProxy.address,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.NetworkTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_MINTER, masterPoolAddress],
+        id: Roles.TokenGovernance.ROLE_MINTER,
+        member: masterPoolAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.GovTokenGovernance,
-        methodName: 'grantRole',
-        args: [Roles.TokenGovernance.ROLE_MINTER, masterPoolAddress],
+        id: Roles.TokenGovernance.ROLE_MINTER,
+        member: masterPoolAddress,
         from: deployer
     });
 
-    await execute({
+    await grantRole({
         name: ContractName.MasterVaultV1,
-        methodName: 'grantRole',
-        args: [Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, masterPoolAddress],
+        id: Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER,
+        member: masterPoolAddress,
         from: deployer
     });
 

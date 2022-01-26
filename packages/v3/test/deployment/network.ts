@@ -77,7 +77,7 @@ describe('network', () => {
         await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
+            isMainnet() ? [liquidityProtection, stakingRewards] : []
         );
 
         await expectRoleMembers(
@@ -93,7 +93,7 @@ describe('network', () => {
         await expectRoleMembers(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection] : [deployer]
+            isMainnet() ? [liquidityProtection] : []
         );
 
         await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);

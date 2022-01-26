@@ -53,7 +53,7 @@ describe('1640637513-network-token', () => {
         await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection, stakingRewards] : [deployer]
+            isMainnet() ? [liquidityProtection, stakingRewards] : []
         );
     });
 

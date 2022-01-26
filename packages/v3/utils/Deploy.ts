@@ -17,6 +17,7 @@ import {
 } from '../components/Contracts';
 import { GovToken, NetworkToken, TokenGovernance } from '../components/LegacyContracts';
 import { DeploymentNetwork } from './Constants';
+import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { Contract } from 'ethers';
 import fs from 'fs';
@@ -256,6 +257,27 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 
     return address;
 };
+
+interface RolesOptions {
+    name: ContractName;
+    id: typeof RoleIds[number];
+    member: string;
+    from: string;
+}
+
+const setRole = async (options: RolesOptions, set: boolean) => {
+    const { name, id, from, member } = options;
+
+    return execute({
+        name,
+        methodName: set ? 'grantRole' : 'revokeRole',
+        args: [id, member],
+        from
+    });
+};
+
+export const grantRole = async (options: RolesOptions) => setRole(options, true);
+export const revokeRole = async (options: RolesOptions) => setRole(options, false);
 
 interface Deployment {
     name: ContractName;

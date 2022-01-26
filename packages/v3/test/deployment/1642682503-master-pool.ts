@@ -55,14 +55,12 @@ describe('1642682503-master-pool', () => {
         await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-
-            isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address, deployer]
+            isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address]
         );
         await expectRoleMembers(
             govTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-
-            isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address, deployer]
+            isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address]
         );
         await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, [masterPool.address]);
     });
