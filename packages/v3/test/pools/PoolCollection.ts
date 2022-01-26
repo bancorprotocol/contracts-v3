@@ -2331,13 +2331,18 @@ describe('PoolCollection', () => {
                                             n: poolData.liquidity.networkTokenTradingLiquidity,
                                             d: poolData.liquidity.baseTokenTradingLiquidity
                                         };
+                                        const newAverageRate = await poolAverageRate.calcAverageRate(
+                                            averageRate.rate,
+                                            spotRate,
+                                            AVERAGE_RATE_WEIGHT_PPT
+                                        );
+                                        const scale = BigNumber.max(newAverageRate.n, newAverageRate.d)
+                                            .sub(1)
+                                            .div(BigNumber.from(2).pow(112).sub(1))
+                                            .add(1);
                                         return {
                                             time: time,
-                                            rate: await poolAverageRate.calcAverageRate(
-                                                averageRate.rate,
-                                                spotRate,
-                                                AVERAGE_RATE_WEIGHT_PPT
-                                            )
+                                            rate: { n: newAverageRate.n.div(scale), d: newAverageRate.d.div(scale) }
                                         };
                                     }
                                     return averageRate;
