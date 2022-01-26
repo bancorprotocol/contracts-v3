@@ -14,7 +14,7 @@ describe('1640637514-gov-token', () => {
     let govToken: GovToken;
     let govTokenGovernance: TokenGovernance;
 
-    const TOTAL_SUPPLY = toWei(1_000_000_000);
+    const INITIAL_SUPPLY = toWei(1_000_000_000);
     const govTokenData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
@@ -57,7 +57,7 @@ describe('1640637514-gov-token', () => {
 
     if (!isMainnet()) {
         it('should mint the initial total supply', async () => {
-            expect(await govToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
+            expect(await govToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY);
         });
     }
 });

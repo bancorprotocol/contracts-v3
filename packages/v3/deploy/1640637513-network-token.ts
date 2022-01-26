@@ -5,7 +5,7 @@ import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const TOTAL_SUPPLY = toWei(1_000_000_000);
+const INITIAL_SUPPLY = toWei(1_000_000_000);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
@@ -69,7 +69,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await execute({
         name: ContractName.NetworkTokenGovernance,
         methodName: 'mint',
-        args: [deployer, TOTAL_SUPPLY],
+        args: [deployer, INITIAL_SUPPLY],
         from: deployer
     });
 

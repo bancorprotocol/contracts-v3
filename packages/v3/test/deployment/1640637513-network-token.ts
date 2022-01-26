@@ -15,7 +15,7 @@ describe('1640637513-network-token', () => {
     let networkToken: NetworkToken;
     let networkTokenGovernance: TokenGovernance;
 
-    const TOTAL_SUPPLY = toWei(1_000_000_000);
+    const INITIAL_SUPPLY = toWei(1_000_000_000);
     const networkTokenData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
@@ -59,7 +59,7 @@ describe('1640637513-network-token', () => {
 
     if (!isMainnet()) {
         it('should mint the initial total supply', async () => {
-            expect(await networkToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
+            expect(await networkToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY);
         });
     }
 });
