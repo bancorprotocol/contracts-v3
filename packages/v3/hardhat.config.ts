@@ -71,8 +71,7 @@ const config: HardhatUserConfig = {
               {
                   forking: {
                       enabled: true,
-                      url: ETHEREUM_PROVIDER_URL,
-                      blockNumber: 13900000
+                      url: ETHEREUM_PROVIDER_URL
                   },
                   saveDeployments: false,
                   live: true
