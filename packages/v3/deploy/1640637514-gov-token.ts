@@ -1,5 +1,4 @@
-import { ContractName, DeploymentTag } from '../utils/Constants';
-import { deploy, execute, isMainnet } from '../utils/Deploy';
+import { ContractName, DeploymentTag, deploy, execute, isMainnet } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { TokenData, TokenSymbol } from '../utils/TokenData';
 import { toWei } from '../utils/Types';

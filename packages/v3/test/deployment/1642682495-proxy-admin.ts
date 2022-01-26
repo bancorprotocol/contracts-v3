@@ -1,5 +1,5 @@
 import { ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 

@@ -1,6 +1,6 @@
 import { PoolToken } from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';

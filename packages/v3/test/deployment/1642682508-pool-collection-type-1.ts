@@ -5,8 +5,8 @@ import {
     MasterVault,
     PoolCollection
 } from '../../components/Contracts';
-import { ContractName, PoolType, DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
-import { DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { PoolType, DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
+import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import { expect } from 'chai';
 
