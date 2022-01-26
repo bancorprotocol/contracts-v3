@@ -145,6 +145,8 @@ export const fundAccount = async (account: string) => {
 
 const INITIALIZE = 'initialize';
 
+const normalizeContractName = (contractName: string) => contractName.replace(/V\d+/g, '');
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, args, proxy } = options;
 
@@ -163,7 +165,7 @@ export const deploy = async (options: DeployOptions) => {
     }
 
     const res = await deployContract(name, {
-        contract: (contract || name).replace(/V\d+/g, ''), // remove the version data
+        contract: normalizeContractName(contract || name),
         from,
         args,
         proxy: proxy ? proxyOptions : undefined,
@@ -204,8 +206,6 @@ interface InitializeProxyOptions {
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
 
-    await fundAccount(from);
-
     await execute({
         name: proxyName,
         methodName: INITIALIZE,
@@ -232,7 +232,7 @@ interface Deployment {
 export const save = async (deployment: Deployment) => {
     const { name, contract, address } = deployment;
 
-    const { abi } = await getExtendedArtifact(contract || name);
+    const { abi } = await getExtendedArtifact(normalizeContractName(contract || name));
 
     return saveContract(name, { abi, address });
 };
