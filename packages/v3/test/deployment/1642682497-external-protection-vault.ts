@@ -1,10 +1,11 @@
 import { ExternalProtectionVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682497-external-protection-vault', () => {
+describeDeployment('1642682497-external-protection-vault', ContractName.ExternalProtectionVaultV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let externalProtectionVault: ExternalProtectionVault;
@@ -14,8 +15,6 @@ describe('1642682497-external-protection-vault', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.ExternalProtectionVaultV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
     });

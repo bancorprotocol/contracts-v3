@@ -1,10 +1,11 @@
 import { PoolCollectionUpgrader, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682505-pool-collection-upgrader', () => {
+describeDeployment('1642682505-pool-collection-upgrader', ContractName.PoolCollectionUpgraderV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let poolCollectionUpgrader: PoolCollectionUpgrader;
@@ -14,8 +15,6 @@ describe('1642682505-pool-collection-upgrader', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolCollectionUpgraderV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
     });

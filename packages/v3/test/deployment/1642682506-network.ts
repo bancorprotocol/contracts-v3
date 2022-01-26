@@ -1,10 +1,11 @@
 import { BancorNetwork, ExternalProtectionVault, MasterVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682506-network', () => {
+describeDeployment('1642682506-network', ContractName.BancorNetworkV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let network: BancorNetwork;
@@ -16,8 +17,6 @@ describe('1642682506-network', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.BancorNetworkV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         network = await DeployedContracts.BancorNetworkV1.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();

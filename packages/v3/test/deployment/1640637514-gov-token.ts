@@ -1,13 +1,14 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
 import { GovToken, TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1640637514-gov-token', () => {
+describeDeployment('1640637514-gov-token', ContractName.GovToken, () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;
@@ -22,8 +23,6 @@ describe('1640637514-gov-token', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment([ContractName.GovToken, ContractName.GovTokenGovernance]);
-
         govToken = await DeployedContracts.GovToken.deployed();
         govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
     });

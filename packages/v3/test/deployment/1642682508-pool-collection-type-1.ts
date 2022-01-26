@@ -6,11 +6,12 @@ import {
     PoolCollection
 } from '../../components/Contracts';
 import { PoolType, DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-describe('1642682508-pool-collection-type-1', () => {
+describeDeployment('1642682508-pool-collection-type-1', ContractName.PoolCollectionType1V1, () => {
     let network: BancorNetwork;
     let masterPool: MasterPool;
     let masterVault: MasterVault;
@@ -18,8 +19,6 @@ describe('1642682508-pool-collection-type-1', () => {
     let poolCollection: PoolCollection;
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolCollectionType1V1);
-
         network = await DeployedContracts.BancorNetworkV1.deployed();
         masterPool = await DeployedContracts.MasterPoolV1.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();

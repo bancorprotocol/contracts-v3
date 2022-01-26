@@ -1,10 +1,11 @@
 import { MasterVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682496-master-vault', () => {
+describeDeployment('1642682496-master-vault', ContractName.MasterVaultV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let masterVault: MasterVault;
@@ -14,8 +15,6 @@ describe('1642682496-master-vault', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.MasterVaultV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
     });

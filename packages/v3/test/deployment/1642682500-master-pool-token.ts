@@ -1,11 +1,12 @@
 import { PoolToken } from '../../components/Contracts';
 import { NetworkToken } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682500-master-pool-token', () => {
+describeDeployment('1642682500-master-pool-token', ContractName.MasterPoolTokenV1, () => {
     let deployer: string;
     let networkToken: NetworkToken;
     let masterPoolToken: PoolToken;
@@ -16,8 +17,6 @@ describe('1642682500-master-pool-token', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.MasterPoolTokenV1);
-
         networkToken = await DeployedContracts.NetworkToken.deployed();
         masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
     });

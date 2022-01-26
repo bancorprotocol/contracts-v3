@@ -1,13 +1,14 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1640637513-network-token', () => {
+describeDeployment('1640637513-network-token', ContractName.NetworkToken, async () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;
@@ -23,8 +24,6 @@ describe('1640637513-network-token', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment([ContractName.NetworkToken, ContractName.NetworkTokenGovernance]);
-
         networkToken = await DeployedContracts.NetworkToken.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
     });

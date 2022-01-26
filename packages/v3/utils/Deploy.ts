@@ -29,7 +29,6 @@ const {
     deploy: deployContract,
     execute: executeTransaction,
     getNetworkName,
-    run,
     save: saveContract,
     getExtendedArtifact
 } = deployments;
@@ -293,10 +292,4 @@ export const save = async (deployment: Deployment) => {
     return saveContract(name, { abi, address });
 };
 
-export const runTestDeployment = async (tags?: string | string[]) => {
-    if (isLive()) {
-        throw new Error('Unsupported network');
-    }
-
-    return run(tags, { resetMemory: false, deletePreviousDeployments: true });
-};
+export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;

@@ -1,19 +1,16 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractName, DeploymentTag, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeploymentTag, DeployedContracts } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642778028-revoke-roles', () => {
+describeDeployment('1642778028-revoke-roles', DeploymentTag.V3, () => {
     let deployer: string;
     let daoMultisig: string;
 
     before(async () => {
         ({ deployer, daoMultisig } = await getNamedAccounts());
-    });
-
-    beforeEach(async () => {
-        await runTestDeployment(DeploymentTag.V3);
     });
 
     it('should revoke deployer roles', async () => {

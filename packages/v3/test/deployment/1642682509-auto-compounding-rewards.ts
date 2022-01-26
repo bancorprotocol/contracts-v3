@@ -4,12 +4,13 @@ import {
     MasterPool,
     ProxyAdmin
 } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682509-auto-compounding-rewards', () => {
+describeDeployment('1642682509-auto-compounding-rewards', ContractName.AutoCompoundingStakingRewardsV1, () => {
     let proxyAdmin: ProxyAdmin;
     let deployer: string;
     let masterPool: MasterPool;
@@ -21,8 +22,6 @@ describe('1642682509-auto-compounding-rewards', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.AutoCompoundingStakingRewardsV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         masterPool = await DeployedContracts.MasterPoolV1.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();

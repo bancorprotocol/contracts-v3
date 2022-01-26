@@ -1,10 +1,11 @@
 import { PoolTokenFactory, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682499-pool-token-factory', () => {
+describeDeployment('1642682499-pool-token-factory', ContractName.PoolTokenFactoryV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let poolTokenFactory: PoolTokenFactory;
@@ -14,8 +15,6 @@ describe('1642682499-pool-token-factory', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PoolTokenFactoryV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
     });

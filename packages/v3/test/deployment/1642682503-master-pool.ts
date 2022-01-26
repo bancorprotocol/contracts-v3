@@ -7,12 +7,13 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682503-master-pool', () => {
+describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
     let deployer: string;
     let liquidityProtection: string;
     let stakingRewards: string;
@@ -29,8 +30,6 @@ describe('1642682503-master-pool', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.MasterPoolV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();

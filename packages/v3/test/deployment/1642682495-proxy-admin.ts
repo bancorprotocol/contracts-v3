@@ -1,9 +1,10 @@
 import { ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682495-proxy-admin', () => {
+describeDeployment('1642682495-proxy-admin', ContractName.ProxyAdmin, () => {
     let daoMultisig: string;
     let proxyAdmin: ProxyAdmin;
 
@@ -12,8 +13,6 @@ describe('1642682495-proxy-admin', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.ProxyAdmin);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
     });
 

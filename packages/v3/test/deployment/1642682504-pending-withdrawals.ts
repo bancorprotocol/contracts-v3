@@ -1,11 +1,12 @@
 import { PendingWithdrawals, ProxyAdmin } from '../../components/Contracts';
 import { DEFAULT_LOCK_DURATION, DEFAULT_WITHDRAWAL_WINDOW_DURATION } from '../../utils/Constants';
-import { ContractName, DeployedContracts, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1642682504-pending-withdrawals', () => {
+describeDeployment('1642682504-pending-withdrawals', ContractName.PendingWithdrawalsV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let pendingWithdrawals: PendingWithdrawals;
@@ -15,8 +16,6 @@ describe('1642682504-pending-withdrawals', () => {
     });
 
     beforeEach(async () => {
-        await runTestDeployment(ContractName.PendingWithdrawalsV1);
-
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     });
