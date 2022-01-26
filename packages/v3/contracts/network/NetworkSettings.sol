@@ -3,8 +3,6 @@ pragma solidity 0.8.11;
 
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
-import { INetworkFeeVault } from "../vaults/interfaces/INetworkFeeVault.sol";
-
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
@@ -19,9 +17,6 @@ import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.
  */
 contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
-
-    // the address of the network fee vault
-    INetworkFeeVault private immutable _networkFeeVault;
 
     // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
@@ -86,13 +81,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the maximum deviation of the average rate from the spot rate  is updated
      */
     event AverageRateMaxDeviationPPMUpdated(uint32 prevDeviationPPM, uint32 newDeviationPPM);
-
-    /**
-     * @dev a "virtual" constructor that is only used to set immutable state variables
-     */
-    constructor(INetworkFeeVault initNetworkFeeVault) validAddress(address(initNetworkFeeVault)) {
-        _networkFeeVault = initNetworkFeeVault;
-    }
 
     /**
      * @dev fully initializes the contract and its parents
@@ -236,20 +224,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _minLiquidityForTrading = amount;
 
         emit MinLiquidityForTradingUpdated({ prevLiquidity: prevMinLiquidityForTrading, newLiquidity: amount });
-    }
-
-    /**
-     * @inheritdoc INetworkSettings
-     */
-    function networkFeeParams() external view returns (INetworkFeeVault, uint32) {
-        return (_networkFeeVault, _networkFeePPM);
-    }
-
-    /**
-     * @inheritdoc INetworkSettings
-     */
-    function networkFeeVault() external view returns (INetworkFeeVault) {
-        return _networkFeeVault;
     }
 
     /**

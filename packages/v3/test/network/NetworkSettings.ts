@@ -1,4 +1,4 @@
-import { NetworkSettings, NetworkFeeVault, TestERC20Token } from '../../typechain-types';
+import { NetworkSettings, TestERC20Token } from '../../typechain-types';
 import { ZERO_ADDRESS, PPM_RESOLUTION } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
@@ -9,7 +9,6 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 describe('NetworkSettings', () => {
-    let networkFeeVault: NetworkFeeVault;
     let reserveToken: TestERC20Token;
     let networkSettings: NetworkSettings;
 
@@ -23,7 +22,7 @@ describe('NetworkSettings', () => {
     });
 
     beforeEach(async () => {
-        ({ networkSettings, networkFeeVault } = await createSystem());
+        ({ networkSettings } = await createSystem());
 
         reserveToken = await createTestToken();
     });
@@ -43,10 +42,7 @@ describe('NetworkSettings', () => {
             ]);
 
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
-            const networkFeeParams = await networkSettings.networkFeeParams();
-            expect(networkFeeParams[0]).to.equal(networkFeeVault.address);
-            expect(networkFeeParams[1]).to.equal(0);
-            expect(await networkSettings.networkFeeVault()).to.equal(networkFeeVault.address);
+
             expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
@@ -206,34 +202,6 @@ describe('NetworkSettings', () => {
                 .withArgs(minLiquidityForTrading, newMinLiquidityForTrading);
 
             expect(await networkSettings.minLiquidityForTrading()).to.equal(newMinLiquidityForTrading);
-        });
-    });
-
-    describe('network fee params', () => {
-        const newNetworkFee = 100_000;
-
-        const expectNetworkFeeParams = async (vault: NetworkFeeVault | undefined, fee: number) => {
-            const vaultAddress = vault?.address || ZERO_ADDRESS;
-            const networkFeeParams = await networkSettings.networkFeeParams();
-            expect(networkFeeParams[0]).to.equal(vaultAddress);
-            expect(networkFeeParams[1]).to.equal(fee);
-            expect(await networkSettings.networkFeeVault()).to.equal(vaultAddress);
-            expect(await networkSettings.networkFeePPM()).to.equal(fee);
-        };
-
-        beforeEach(async () => {
-            await expectNetworkFeeParams(networkFeeVault, 0);
-        });
-
-        it('should revert when setting the network fee to an invalid value', async () => {
-            await expect(networkSettings.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
-        });
-
-        it('should be able to set and update network vault params', async () => {
-            const res = await networkSettings.setNetworkFeePPM(newNetworkFee);
-            await expect(res).to.emit(networkSettings, 'NetworkFeePPMUpdated').withArgs(0, newNetworkFee);
-
-            await expectNetworkFeeParams(networkFeeVault, newNetworkFee);
         });
     });
 
