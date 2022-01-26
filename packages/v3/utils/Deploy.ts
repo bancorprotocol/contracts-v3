@@ -163,7 +163,7 @@ export const deploy = async (options: DeployOptions) => {
     }
 
     const res = await deployContract(name, {
-        contract: contract || name,
+        contract: contract || name.replace(/V\d+/g, ''), // remove the "V1" version data from the name of the contract
         from,
         args,
         proxy: proxy ? proxyOptions : undefined,
