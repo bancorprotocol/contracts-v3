@@ -33,7 +33,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-import { IPoolCollection, PoolLiquidity, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 // prettier-ignore
