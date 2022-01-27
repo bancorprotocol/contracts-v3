@@ -14,6 +14,13 @@ describe('Types', () => {
         types = await Contracts.TestTypes.deploy();
     });
 
+    describe('zeroFraction', () => {
+        it('should return the zero fraction', async () => {
+            const zeroFraction = await types.zeroFraction();
+            expect(zeroFraction).to.equal(ZERO_FRACTION);
+        });
+    });
+
     describe('isFractionValid', () => {
         for (const fraction of [
             { n: 0, d: 1 },
@@ -50,13 +57,63 @@ describe('Types', () => {
         for (const fraction of [
             { n: 0, d: 1 },
             { n: 0, d: 1000 },
-
-            // invalid fractions aren't positive
             { n: 0, d: 0 },
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction)} is not positive`, async () => {
                 expect(await types.isFractionPositive(fraction)).to.be.false;
+            });
+        }
+    });
+
+    describe('zeroFraction112', () => {
+        it('should return the zero fraction112', async () => {
+            const zeroFraction112 = await types.zeroFraction112();
+            expect(zeroFraction112).to.equal(ZERO_FRACTION);
+        });
+    });
+
+    describe('isFraction112Valid', () => {
+        for (const fraction112 of [
+            { n: 0, d: 1 },
+            { n: 1, d: 2 },
+            { n: 1000, d: 2000 }
+        ]) {
+            it(`should return that ${toString(fraction112)} is valid`, async () => {
+                expect(await types.isFraction112Valid(fraction112)).to.be.true;
+            });
+        }
+
+        for (const fraction112 of [
+            { n: 0, d: 0 },
+            { n: 1, d: 0 },
+            { n: 1000, d: 0 }
+        ]) {
+            it(`should return that ${fraction112} is invalid`, async () => {
+                expect(await types.isFraction112Valid(fraction112)).to.be.false;
+            });
+        }
+    });
+
+    describe('isFraction112Positive', () => {
+        for (const fraction112 of [
+            { n: 1, d: 1 },
+            { n: 1, d: 2 },
+            { n: 1000, d: 2000 }
+        ]) {
+            it(`should return that ${toString(fraction112)} is positive`, async () => {
+                expect(await types.isFraction112Positive(fraction112)).to.be.true;
+            });
+        }
+
+        for (const fraction112 of [
+            { n: 0, d: 1 },
+            { n: 0, d: 1000 },
+            { n: 0, d: 0 },
+            { n: 1, d: 0 }
+        ]) {
+            it(`should return that ${toString(fraction112)} is not positive`, async () => {
+                expect(await types.isFraction112Positive(fraction112)).to.be.false;
             });
         }
     });
@@ -140,12 +197,5 @@ describe('Types', () => {
                 fromFraction112({ n: MAX_UINT112.sub(n), d: MAX_UINT112.sub(d) });
             }
         }
-    });
-
-    describe('zeroFraction', () => {
-        it('should return the zero fraction', async () => {
-            const zeroFraction = await types.zeroFraction();
-            expect(zeroFraction).to.equal(ZERO_FRACTION);
-        });
     });
 });

@@ -12,7 +12,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, isFractionPositive, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -270,7 +270,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!_isRateValid(rate)) {
+        if (!isFractionPositive(rate)) {
             revert InvalidRate();
         }
     }
@@ -347,7 +347,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: false,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: toFraction112(zeroFraction()) }),
+            averageRate: AverageRate({ time: 0, rate: zeroFraction112() }),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -907,7 +907,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the average rate is reset when the pool is being emptied
         if (amounts.newBaseTokenTradingLiquidity == 0) {
-            data.averageRate.rate = toFraction112(zeroFraction());
+            data.averageRate.rate = zeroFraction112();
         }
 
         // if the new network token trading liquidity is below the minimum liquidity for trading - reset the liquidity
@@ -999,7 +999,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = _isRateValid(fundingRate);
+        bool isFundingRateValid = isFractionPositive(fundingRate);
 
         // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
         // liquidity for trading
@@ -1019,7 +1019,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = data.averageRate.time != 0 && _isRateValid(fromFraction112(averageRate.rate));
+        bool isAverageRateValid = data.averageRate.time != 0 && isFraction112Positive(averageRate.rate);
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
@@ -1195,7 +1195,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.liquidity.baseTokenTradingLiquidity = 0;
 
         // reset the recent average rage
-        data.averageRate = AverageRate({ time: 0, rate: toFraction112(zeroFraction()) });
+        data.averageRate = AverageRate({ time: 0, rate: zeroFraction112() });
 
         // ensure that trading is disabled
         if (data.tradingEnabled) {
@@ -1338,12 +1338,5 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         returns (Fraction memory)
     {
         return PoolAverageRate.calcAverageRate(averageRate, spotRate, AVERAGE_RATE_WEIGHT_PPT);
-    }
-
-    /**
-     * @dev returns whether a rate is valid
-     */
-    function _isRateValid(Fraction memory rate) private pure returns (bool) {
-        return isFractionPositive(rate);
     }
 }

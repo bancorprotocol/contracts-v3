@@ -24,6 +24,14 @@ struct Sint256 {
 }
 
 /**
+ * @dev returns the zero fraction
+ */
+// solhint-disable-next-line func-visibility
+function zeroFraction() pure returns (Fraction memory) {
+    return Fraction({ n: 0, d: 1 });
+}
+
+/**
  * @dev returns whether a fraction is valid
  */
 // solhint-disable-next-line func-visibility
@@ -37,6 +45,30 @@ function isFractionValid(Fraction memory fraction) pure returns (bool) {
 // solhint-disable-next-line func-visibility
 function isFractionPositive(Fraction memory fraction) pure returns (bool) {
     return isFractionValid(fraction) && fraction.n != 0;
+}
+
+/**
+ * @dev returns the zero fraction112
+ */
+// solhint-disable-next-line func-visibility
+function zeroFraction112() pure returns (Fraction112 memory) {
+    return Fraction112({ n: 0, d: 1 });
+}
+
+/**
+ * @dev returns whether a fraction112 is valid
+ */
+// solhint-disable-next-line func-visibility
+function isFraction112Valid(Fraction112 memory fraction112) pure returns (bool) {
+    return fraction112.d != 0;
+}
+
+/**
+ * @dev returns whether a fraction112 is positive
+ */
+// solhint-disable-next-line func-visibility
+function isFraction112Positive(Fraction112 memory fraction112) pure returns (bool) {
+    return isFraction112Valid(fraction112) && fraction112.n != 0;
 }
 
 /**
@@ -54,12 +86,4 @@ function toFraction112(Fraction memory fraction) pure returns (Fraction112 memor
 // solhint-disable-next-line func-visibility
 function fromFraction112(Fraction112 memory fraction112) pure returns (Fraction memory) {
     return Fraction({ n: fraction112.n, d: fraction112.d });
-}
-
-/**
- * @dev returns the zero fraction
- */
-// solhint-disable-next-line func-visibility
-function zeroFraction() pure returns (Fraction memory) {
-    return Fraction({ n: 0, d: 1 });
 }
