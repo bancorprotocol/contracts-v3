@@ -16,7 +16,7 @@ import { Fraction, Sint256, zeroFraction, isFractionPositive, toFraction112, fro
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
-import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -43,7 +43,7 @@ import {
     TRADING_STATUS_UPDATE_DEFAULT,
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
-    TradeAmountsWithLiquidity,
+    TradeAmounts,
     TradeAmounts
 } from "./interfaces/IPoolCollection.sol";
 
@@ -302,7 +302,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function pools() external view returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ReserveToken.wrap(_pools.at(i));
         }
         return list;
@@ -642,7 +642,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         only(address(_network))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmountsWithLiquidity memory)
+        returns (TradeAmounts memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
@@ -697,12 +697,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
 
-        return
-            TradeAmountsWithLiquidity({
-                amount: tradeAmounts.amount,
-                feeAmount: tradeAmounts.feeAmount,
-                liquidity: newLiquidity
-            });
+        return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
     }
 
     /**

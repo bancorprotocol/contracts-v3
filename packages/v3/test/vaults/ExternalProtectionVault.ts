@@ -1,9 +1,8 @@
-import Contracts from '../../components/Contracts';
+import Contracts, { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
@@ -47,6 +46,8 @@ describe('ExternalProtectionVault', () => {
 
             expect(await externalProtectionVault.version()).to.equal(1);
             expect(await externalProtectionVault.isPayable()).to.be.true;
+
+            await expectRoles(externalProtectionVault, Roles.Upgradeable);
 
             await expectRole(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address,

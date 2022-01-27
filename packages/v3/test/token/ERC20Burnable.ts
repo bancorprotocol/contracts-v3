@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestERC20Burnable } from '../../typechain-types';
+import Contracts, { TestERC20Burnable } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -103,7 +102,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, amount);
             await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWith(
-                'InsufficientAllowance'
+                'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
             );
         });
 
@@ -112,7 +111,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, allowance);
             await expect(burnable.connect(owner).burnFrom(owner.address, allowance + 1)).to.be.revertedWith(
-                'InsufficientAllowance'
+                'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
             );
         });
     });

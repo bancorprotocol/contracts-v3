@@ -6,7 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Utils } from "../utility/Utils.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
+
 import { BancorNetwork } from "./BancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
@@ -81,7 +81,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
             minReturnAmounts
         );
 
-        for (uint256 i = 0; i < 2; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < 2; i++) {
             if (orderedReserveTokens[i].isNativeToken()) {
                 _network.depositFor{ value: orderedReserveAmounts[i] }(
                     msg.sender,

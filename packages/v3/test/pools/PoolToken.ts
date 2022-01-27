@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { PoolToken, TestERC20Token } from '../../typechain-types';
+import Contracts, { PoolToken, TestERC20Token } from '../../components/Contracts';
 import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { domainSeparator, permitSignature } from '../../utils/Permit';
 import { latest, duration } from '../helpers/Time';
@@ -31,6 +30,8 @@ describe('PoolToken', () => {
     describe('construction', () => {
         it('should be properly initialized', async () => {
             poolToken = await Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, reserveToken.address);
+
+            expect(await poolToken.version()).to.equal(1);
 
             expect(await poolToken.name()).to.equal(NAME);
             expect(await poolToken.symbol()).to.equal(SYMBOL);

@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TokenGovernance } from '../../components/LegacyContracts';
-import {
+import Contracts, {
     BancorNetworkInfo,
     MasterVault,
     ExternalProtectionVault,
@@ -14,10 +12,12 @@ import {
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import {
     createSystem,
     createTestToken,
@@ -252,8 +252,16 @@ describe('BancorNetworkInfo', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
+        it('should revert when attempting to reinitialize', async () => {
+            await expect(networkInfo.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+        });
+
         it('should be properly initialized', async () => {
             expect(await networkInfo.version()).to.equal(1);
+
+            await expectRole(networkInfo, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
+            ]);
 
             expect(await networkInfo.network()).to.equal(network.address);
             expect(await networkInfo.networkToken()).to.equal(networkToken.address);

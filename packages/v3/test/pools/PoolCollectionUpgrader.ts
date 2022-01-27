@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     ExternalProtectionVault,
     IERC20,
     MasterVault,
@@ -11,8 +10,9 @@ import {
     TestMasterPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -49,6 +49,12 @@ describe('PoolCollectionUpgrader', () => {
 
         it('should be properly initialized', async () => {
             expect(await poolCollectionUpgrader.version()).to.equal(1);
+
+            await expectRoles(poolCollectionUpgrader, Roles.Upgradeable);
+
+            await expectRole(poolCollectionUpgrader, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
+            ]);
         });
     });
 

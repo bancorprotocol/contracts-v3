@@ -1,8 +1,7 @@
-import Contracts from '../../components/Contracts';
-import { TestERC20Token, PoolTokenFactory } from '../../typechain-types';
+import Contracts, { TestERC20Token, PoolTokenFactory } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createPoolToken, createToken, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -34,6 +33,8 @@ describe('PoolTokenFactory', () => {
 
         it('should be properly initialized', async () => {
             expect(await poolTokenFactory.version()).to.equal(1);
+
+            await expectRoles(poolTokenFactory, Roles.Upgradeable);
 
             await expectRole(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address

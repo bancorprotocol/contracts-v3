@@ -15,7 +15,7 @@ import { BancorNetwork } from "../network/BancorNetwork.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
-import { IPoolCollection, TradeAmountsWithLiquidity } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -124,7 +124,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ReserveToken targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmountsWithLiquidity memory) {
+    ) external returns (TradeAmounts memory) {
         return poolCollection.trade(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 

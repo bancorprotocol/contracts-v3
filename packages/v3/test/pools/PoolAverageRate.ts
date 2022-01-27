@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestPoolAverageRate } from '../../typechain-types';
+import Contracts, { TestPoolAverageRate } from '../../components/Contracts';
 import { PPT_RESOLUTION, PPM_RESOLUTION } from '../../utils/Constants';
 import { toPPT, toPPM } from '../../utils/Types';
 import { expect } from 'chai';
