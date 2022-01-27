@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestStakingRewardsMath } from '../../typechain-types';
+import Contracts, { TestStakingRewardsMath } from '../../components/Contracts';
 import { ExponentialDecay } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { duration } from '../helpers/Time';

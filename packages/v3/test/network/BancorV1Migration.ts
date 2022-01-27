@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
-import {
+import Contracts, {
     BancorV1Migration,
     IERC20,
     MasterVault,
@@ -9,7 +7,8 @@ import {
     PoolToken,
     TestBancorNetwork,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS, PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';
@@ -22,7 +21,6 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 const FUNDING_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-const MAX_DEVIATION = BigNumber.from(10_000);
 const FUNDING_LIMIT = BigNumber.from(100_000_000);
 const MIN_LIQUIDITY = BigNumber.from(100_000);
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);

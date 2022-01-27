@@ -1,5 +1,5 @@
+import { IERC20, TestBancorNetwork, MasterVault } from '../../components/Contracts';
 import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, TestBancorNetwork, MasterVault } from '../../typechain-types';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

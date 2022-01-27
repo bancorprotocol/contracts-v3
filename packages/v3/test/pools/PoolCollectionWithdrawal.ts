@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestPoolCollectionWithdrawal } from '../../typechain-types';
+import Contracts, { TestPoolCollectionWithdrawal } from '../../components/Contracts';
 import { AlmostEqualOptions, Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

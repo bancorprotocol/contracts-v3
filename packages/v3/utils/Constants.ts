@@ -1,4 +1,5 @@
 import { duration } from './Time';
+import { toPPM } from './Types';
 import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
@@ -6,21 +7,9 @@ const {
     constants: { AddressZero, MaxUint256 }
 } = ethers;
 
-export enum ContractName {
-    NetworkToken = 'NetworkToken',
-    NetworkTokenGovernance = 'NetworkTokenGovernance',
-    GovToken = 'GovToken',
-    GovTokenGovernance = 'GovTokenGovernance'
-}
-
-export enum DeploymentTag {
-    V2 = 'V2'
-}
-
 export enum DeploymentNetwork {
     HARDHAT = 'hardhat',
     LOCALHOST = 'localhost',
-    HARDHAT_MAINNET_FORK = 'hardhat-mainnet-fork',
     MAINNET = 'mainnet'
 }
 
@@ -60,7 +49,16 @@ export const ExponentialDecay = {
     MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
 };
 
+export const DEFAULT_LOCK_DURATION = duration.days(7);
+export const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
+
 export const AVERAGE_RATE_PERIOD = duration.minutes(10);
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+
+export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
 export const MAX_AVERAGE_RATE_DEVIATION_PPM = 10000;
+
+export enum PoolType {
+    Standard = 1
+}

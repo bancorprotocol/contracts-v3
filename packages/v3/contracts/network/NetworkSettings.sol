@@ -6,7 +6,6 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
@@ -112,7 +111,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     function protectedTokenWhitelist() external view returns (ReserveToken[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
         ReserveToken[] memory list = new ReserveToken[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ReserveToken.wrap(_protectedTokenWhitelist.at(i));
         }
         return list;

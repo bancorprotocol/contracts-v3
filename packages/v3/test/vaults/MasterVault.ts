@@ -1,6 +1,5 @@
-import Contracts from '../../components/Contracts';
+import Contracts, { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';

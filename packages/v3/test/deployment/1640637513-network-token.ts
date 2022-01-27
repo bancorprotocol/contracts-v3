@@ -1,29 +1,29 @@
+import { AccessControlEnumerable } from '../../components/Contracts';
 import { NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
-import { AccessControlEnumerable } from '../../typechain-types';
-import { ContractName } from '../../utils/Constants';
-import { DeployedContracts, isMainnet, runTestDeployment } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describe('1640637513-network-token', () => {
+describeDeployment('1640637513-network-token', ContractName.NetworkToken, async () => {
     let deployer: string;
     let foundationMultisig: string;
+    let liquidityProtection: string;
+    let stakingRewards: string;
     let networkToken: NetworkToken;
     let networkTokenGovernance: TokenGovernance;
 
-    const TOTAL_SUPPLY = toWei(1_000_000_000);
+    const INITIAL_SUPPLY = toWei(1_000_000_000);
     const networkTokenData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
-        await runTestDeployment([ContractName.NetworkToken, ContractName.NetworkTokenGovernance]);
-
         networkToken = await DeployedContracts.NetworkToken.deployed();
         networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
     });
@@ -36,35 +36,29 @@ describe('1640637513-network-token', () => {
 
     it('should deploy and configure the network token governance', async () => {
         expect(await networkTokenGovernance.token()).to.equal(networkToken.address);
+
         expect(await networkToken.owner()).to.equal(networkTokenGovernance.address);
 
-        await expectRole(
+        await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
-            Roles.TokenGovernance.ROLE_SUPERVISOR,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-
-        await expectRole(
+        await expectRoleMembers(
             networkTokenGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            Roles.TokenGovernance.ROLE_SUPERVISOR,
             [deployer]
         );
-
-        if (!isMainnet()) {
-            await expectRole(
-                networkTokenGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_MINTER,
-                Roles.TokenGovernance.ROLE_GOVERNOR,
-                [deployer]
-            );
-        }
+        await expectRoleMembers(
+            networkTokenGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_MINTER,
+            isMainnet() ? [liquidityProtection, stakingRewards] : []
+        );
     });
 
     if (!isMainnet()) {
         it('should mint the initial total supply', async () => {
-            expect(await networkToken.balanceOf(deployer)).to.equal(TOTAL_SUPPLY);
+            expect(await networkToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY);
         });
     }
 });

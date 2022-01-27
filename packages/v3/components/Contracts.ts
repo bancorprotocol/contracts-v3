@@ -43,6 +43,8 @@ import {
 import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
 
+export * from '../typechain-types';
+
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
