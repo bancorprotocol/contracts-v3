@@ -1,6 +1,5 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     IERC20,
     ExternalProtectionVault,
     ExternalRewardsVault,
@@ -15,7 +14,7 @@ import {
     TestPoolCollection,
     TestPoolCollectionUpgrader,
     MasterPool
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
@@ -26,7 +25,9 @@ import {
     TradingStatusUpdateReason,
     AVERAGE_RATE_PERIOD,
     LIQUIDITY_GROWTH_FACTOR,
-    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
+    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
+    DEFAULT_TRADING_FEE_PPM,
+    PoolType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -52,8 +53,6 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 
 describe('PoolCollection', () => {
-    const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
-    const POOL_TYPE = 1;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
     const MAX_DEVIATION = toPPM(1);
@@ -286,7 +285,7 @@ describe('PoolCollection', () => {
         it('should be properly initialized', async () => {
             expect(await poolCollection.version()).to.equal(1);
 
-            expect(await poolCollection.poolType()).to.equal(POOL_TYPE);
+            expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
         });
 

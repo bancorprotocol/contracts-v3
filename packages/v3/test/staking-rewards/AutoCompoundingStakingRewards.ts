@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import {
+import Contracts, {
     TestStakingRewardsMath,
     BancorNetworkInfo,
     ExternalRewardsVault,
@@ -11,11 +10,11 @@ import {
     TestBancorNetwork,
     TestMasterPool,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
 import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, Addressable } from '../../utils/Types';
-import { expectRole, Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createStakingRewards,
     createSystem,
@@ -157,6 +156,8 @@ describe('AutoCompoundingStakingRewards', () => {
 
         it('should be properly initialized', async () => {
             expect(await autoCompoundingStakingRewards.version()).to.equal(1);
+
+            await expectRoles(autoCompoundingStakingRewards, Roles.Upgradeable);
 
             await expectRole(
                 autoCompoundingStakingRewards,

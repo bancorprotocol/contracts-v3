@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestMathEx } from '../../typechain-types';
+import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
 import { Fraction, toUint512, fromUint512 } from '../../utils/Types';
 import { Relation } from '../matchers';

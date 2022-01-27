@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestERC20Burnable } from '../../typechain-types';
+import Contracts, { TestERC20Burnable } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

@@ -1,5 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { TestReserveToken } from '../../typechain-types';
+import Contracts, { TestReserveToken } from '../../components/Contracts';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { createToken } from '../helpers/Factory';
 import { getBalance } from '../helpers/Utils';
