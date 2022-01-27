@@ -1,9 +1,9 @@
 import Contracts, { TestPoolAverageRate } from '../../components/Contracts';
 import { PPT_RESOLUTION, PPM_RESOLUTION } from '../../utils/Constants';
-import { toPPT, toPPM } from '../../utils/Types';
+import { toPPT, toPPM, Fraction } from '../../utils/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber } from 'ethers';
 
 const MAX_UINT32 = BigNumber.from(2).pow(32).sub(1);
 const MAX_UINT64 = BigNumber.from(2).pow(64).sub(1);
@@ -14,11 +14,9 @@ const MAX_UINT128 = BigNumber.from(2).pow(128).sub(1);
 describe('PoolAverageRate', () => {
     let poolAverageRate: TestPoolAverageRate;
 
-    const calcAverageRateTest = (an: BigNumberish, ad: BigNumberish, sn: BigNumberish, sd: BigNumberish, w: number) => {
-        it(`average rate = ${an}/${ad}, spot rate = ${sn}/${sd}, weight = ${w}%`, async () => {
-            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
-            const spotRate = { n: BigNumber.from(sn), d: BigNumber.from(sd) };
-            const weightPPT = toPPT(w);
+    const calcAverageRateTest = (averageRate: Fraction<BigNumber>, spotRate: Fraction<BigNumber>, weight: number) => {
+        it(`average rate = ${averageRate}, spot rate = ${spotRate}, weight = ${weight}%`, async () => {
+            const weightPPT = toPPT(weight);
             const expected = {
                 n: averageRate.n
                     .mul(spotRate.d)
@@ -36,16 +34,12 @@ describe('PoolAverageRate', () => {
     };
 
     const isSpotRateStableTest = async (
-        sn: BigNumberish,
-        sd: BigNumberish,
-        an: BigNumberish,
-        ad: BigNumberish,
-        md: number
+        spotRate: Fraction<BigNumber>,
+        averageRate: Fraction<BigNumber>,
+        maxDeviation: number
     ) => {
-        it(`spot rate = ${sn}/${sd}, average rate = ${an}/${ad}, max deviation = ${md}%`, async () => {
-            const spotRate = { n: BigNumber.from(sn), d: BigNumber.from(sd) };
-            const averageRate = { n: BigNumber.from(an), d: BigNumber.from(ad) };
-            const maxDeviationPPM = toPPM(md);
+        it(`spot rate = ${spotRate}, average rate = ${averageRate}, max deviation = ${maxDeviation}%`, async () => {
+            const maxDeviationPPM = toPPM(maxDeviation);
             const x = spotRate.n.mul(averageRate.d);
             const y = spotRate.d.mul(averageRate.n);
             const min = x.mul(PPM_RESOLUTION - maxDeviationPPM);
@@ -63,12 +57,14 @@ describe('PoolAverageRate', () => {
 
     describe('quick tests', () => {
         describe('calcAverageRate', () => {
-            for (const an of [MAX_UINT64, MAX_UINT96]) {
-                for (const ad of [MAX_UINT64, MAX_UINT96]) {
-                    for (const sn of [MAX_UINT64, MAX_UINT96]) {
-                        for (const sd of [MAX_UINT64, MAX_UINT96]) {
-                            for (const w of [20, 80]) {
-                                calcAverageRateTest(an, ad, sn, sd, w);
+            for (const n of [MAX_UINT64, MAX_UINT96]) {
+                for (const d of [MAX_UINT64, MAX_UINT96]) {
+                    const averageRate = { n, d };
+                    for (const n of [MAX_UINT64, MAX_UINT96]) {
+                        for (const d of [MAX_UINT64, MAX_UINT96]) {
+                            const spotRate = { n, d };
+                            for (const weight of [20, 80]) {
+                                calcAverageRateTest(averageRate, spotRate, weight);
                             }
                         }
                     }
@@ -77,12 +73,14 @@ describe('PoolAverageRate', () => {
         });
 
         describe('isSpotRateStableTest', () => {
-            for (const sn of [MAX_UINT64, MAX_UINT96]) {
-                for (const sd of [MAX_UINT64, MAX_UINT96]) {
-                    for (const an of [MAX_UINT64, MAX_UINT96]) {
-                        for (const ad of [MAX_UINT64, MAX_UINT96]) {
-                            for (const md of [2, 5]) {
-                                isSpotRateStableTest(sn, sd, an, ad, md);
+            for (const n of [MAX_UINT64, MAX_UINT96]) {
+                for (const d of [MAX_UINT64, MAX_UINT96]) {
+                    const spotRate = { n, d };
+                    for (const n of [MAX_UINT64, MAX_UINT96]) {
+                        for (const d of [MAX_UINT64, MAX_UINT96]) {
+                            const averageRate = { n, d };
+                            for (const maxDeviation of [2, 5]) {
+                                isSpotRateStableTest(spotRate, averageRate, maxDeviation);
                             }
                         }
                     }
@@ -93,24 +91,28 @@ describe('PoolAverageRate', () => {
 
     describe('@stress tests', () => {
         describe('calcAverageRate', () => {
-            for (const an of [0, 1, 2, 3]) {
-                for (const ad of [1, 2, 3, 4]) {
-                    for (const sn of [0, 1, 2, 3]) {
-                        for (const sd of [1, 2, 3, 4]) {
-                            for (const w of [0, 20, 80, 100]) {
-                                calcAverageRateTest(an, ad, sn, sd, w);
+            for (const n of [0, 1, 2, 3]) {
+                for (const d of [1, 2, 3, 4]) {
+                    const averageRate = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                    for (const n of [0, 1, 2, 3]) {
+                        for (const d of [1, 2, 3, 4]) {
+                            const spotRate = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                            for (const weight of [0, 20, 80, 100]) {
+                                calcAverageRateTest(averageRate, spotRate, weight);
                             }
                         }
                     }
                 }
             }
 
-            for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                    for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                        for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                            for (const w of [0, 20, 80, 100]) {
-                                calcAverageRateTest(an, ad, sn, sd, w);
+            for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                    const averageRate = { n, d };
+                    for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                        for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                            const spotRate = { n, d };
+                            for (const weight of [0, 20, 80, 100]) {
+                                calcAverageRateTest(averageRate, spotRate, weight);
                             }
                         }
                     }
@@ -119,24 +121,28 @@ describe('PoolAverageRate', () => {
         });
 
         describe('isSpotRateStableTest', () => {
-            for (const sn of [0, 1, 2, 3]) {
-                for (const sd of [1, 2, 3, 4]) {
-                    for (const an of [0, 1, 2, 3]) {
-                        for (const ad of [1, 2, 3, 4]) {
-                            for (const md of [0, 2, 5, 10]) {
-                                isSpotRateStableTest(sn, sd, an, ad, md);
+            for (const n of [0, 1, 2, 3]) {
+                for (const d of [1, 2, 3, 4]) {
+                    const spotRate = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                    for (const n of [0, 1, 2, 3]) {
+                        for (const d of [1, 2, 3, 4]) {
+                            const averageRate = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                            for (const maxDeviation of [0, 2, 5, 10]) {
+                                isSpotRateStableTest(spotRate, averageRate, maxDeviation);
                             }
                         }
                     }
                 }
             }
 
-            for (const sn of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                for (const sd of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
-                    for (const an of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                        for (const ad of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
-                            for (const md of [0, 2, 5, 10]) {
-                                isSpotRateStableTest(sn, sd, an, ad, md);
+            for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                    const spotRate = { n, d };
+                    for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                        for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                            const averageRate = { n, d };
+                            for (const maxDeviation of [0, 2, 5, 10]) {
+                                isSpotRateStableTest(spotRate, averageRate, maxDeviation);
                             }
                         }
                     }
