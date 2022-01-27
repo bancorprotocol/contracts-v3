@@ -63,3 +63,4 @@ export const ExponentialDecay = {
 export const AVERAGE_RATE_PERIOD = duration.minutes(10);
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+export const MAX_AVERAGE_RATE_DEVIATION_PPM = 10000;

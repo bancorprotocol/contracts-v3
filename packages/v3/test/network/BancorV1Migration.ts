@@ -221,7 +221,6 @@ describe('BancorV1Migration', () => {
                 describe(`base amount = ${baseAmount}`, () => {
                     describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
                         beforeEach(async () => {
-                            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                             await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 

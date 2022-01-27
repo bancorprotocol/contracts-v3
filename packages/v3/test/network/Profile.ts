@@ -56,7 +56,6 @@ describe('Profile @profile', () => {
     let stakingRewardsProvider: SignerWithAddress;
 
     const FUNDING_RATE = { n: 1, d: 2 };
-    const MAX_DEVIATION = toPPM(1);
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -81,7 +80,6 @@ describe('Profile @profile', () => {
         beforeEach(async () => {
             ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -412,7 +410,6 @@ describe('Profile @profile', () => {
                 masterPoolToken
             } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 

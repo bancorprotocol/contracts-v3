@@ -46,7 +46,6 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
-            expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(0);
         });
     });
 
@@ -276,52 +275,6 @@ describe('NetworkSettings', () => {
             await expect(res2).to.emit(networkSettings, 'FlashLoanFeePPMUpdated').withArgs(newFlashLoanFee, 0);
 
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
-        });
-    });
-
-    describe('maximum deviation', () => {
-        const newMaxDeviation = 500_000;
-
-        beforeEach(async () => {
-            expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(0);
-        });
-
-        it('should revert when a non-admin attempts to set the maximum deviation', async () => {
-            await expect(
-                networkSettings.connect(nonOwner).setAverageRateMaxDeviationPPM(newMaxDeviation)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should revert when setting the maximum deviation to an invalid value', async () => {
-            await expect(networkSettings.setAverageRateMaxDeviationPPM(0)).to.be.revertedWith('InvalidPortion');
-
-            await expect(networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION + 1)).to.be.revertedWith(
-                'InvalidPortion'
-            );
-        });
-
-        it('should ignore updating to the same maximum deviation', async () => {
-            await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
-
-            const res = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
-            await expect(res).not.to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated');
-        });
-
-        it('should be able to set and update the maximum deviation', async () => {
-            const res = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation);
-            await expect(res)
-                .to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated')
-                .withArgs(0, newMaxDeviation);
-
-            expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation);
-
-            const newMaxDeviation2 = 5000;
-            const res2 = await networkSettings.setAverageRateMaxDeviationPPM(newMaxDeviation2);
-            await expect(res2)
-                .to.emit(networkSettings, 'AverageRateMaxDeviationPPMUpdated')
-                .withArgs(newMaxDeviation, newMaxDeviation2);
-
-            expect(await networkSettings.averageRateMaxDeviationPPM()).to.equal(newMaxDeviation2);
         });
     });
 });

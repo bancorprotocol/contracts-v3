@@ -69,7 +69,6 @@ describe('BancorNetwork', () => {
     let nonOwner: SignerWithAddress;
 
     const FUNDING_RATE = { n: 1, d: 2 };
-    const MAX_DEVIATION = toPPM(1);
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -964,7 +963,6 @@ describe('BancorNetwork', () => {
                 masterPoolToken
             } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -1479,7 +1477,6 @@ describe('BancorNetwork', () => {
                 masterPoolToken
             } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -2565,7 +2562,6 @@ describe('BancorNetwork', () => {
                 masterVault
             } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -3393,7 +3389,6 @@ describe('BancorNetwork Financial Verification', () => {
         await networkTokenGovernance.burn(await networkToken.balanceOf(signers[0].address));
         await networkTokenGovernance.mint(signers[0].address, bntAmount);
 
-        await networkSettings.setAverageRateMaxDeviationPPM(PPM_RESOLUTION);
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
         await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));

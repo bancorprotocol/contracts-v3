@@ -26,7 +26,8 @@ import {
     TradingStatusUpdateReason,
     AVERAGE_RATE_PERIOD,
     LIQUIDITY_GROWTH_FACTOR,
-    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
+    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
+    MAX_AVERAGE_RATE_DEVIATION_PPM
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -56,7 +57,6 @@ describe('PoolCollection', () => {
     const POOL_TYPE = 1;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
-    const MAX_DEVIATION = toPPM(1);
     const CONTEXT_ID = formatBytes32String('CTX');
 
     let deployer: SignerWithAddress;
@@ -954,7 +954,6 @@ describe('PoolCollection', () => {
                     await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
 
                 token = await createToken(tokenData);
             });
@@ -1297,7 +1296,7 @@ describe('PoolCollection', () => {
                                 await poolCollection.setAverageRateT(token.address, {
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
+                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_AVERAGE_RATE_DEVIATION_PPM + toPPM(0.5))
                                     },
                                     time: await poolCollection.currentTime()
                                 });
@@ -1714,7 +1713,6 @@ describe('PoolCollection', () => {
             ({ network, networkToken, networkSettings, masterPool, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
 
             reserveToken = await createTestToken();
 
