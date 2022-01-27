@@ -89,7 +89,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
-    uint32 private constant MAX_AVERAGE_RATE_DEVIATION_PPM = 10000; // %1
+    uint32 private constant AVERAGE_RATE_MAX_DEVIATION_PPM_PPM = 10000; // %1
 
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
@@ -1305,7 +1305,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             n: liquidity.networkTokenTradingLiquidity,
             d: liquidity.baseTokenTradingLiquidity
         });
-        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, MAX_AVERAGE_RATE_DEVIATION_PPM, _time());
+        return PoolAverageRate.isPoolRateStable(spotRate, averageRate, AVERAGE_RATE_MAX_DEVIATION_PPM_PPM, _time());
     }
 
     /**

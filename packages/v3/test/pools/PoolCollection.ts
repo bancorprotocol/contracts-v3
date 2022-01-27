@@ -27,7 +27,7 @@ import {
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
-    MAX_AVERAGE_RATE_DEVIATION_PPM,
+    AVERAGE_RATE_MAX_DEVIATION_PPM_PPM,
     PoolType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
@@ -1295,7 +1295,9 @@ describe('PoolCollection', () => {
                                 await poolCollection.setAverageRateT(token.address, {
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_AVERAGE_RATE_DEVIATION_PPM + toPPM(0.5))
+                                        d: SPOT_RATE.d.mul(
+                                            PPM_RESOLUTION + AVERAGE_RATE_MAX_DEVIATION_PPM_PPM + toPPM(0.5)
+                                        )
                                     },
                                     time: await poolCollection.currentTime()
                                 });
