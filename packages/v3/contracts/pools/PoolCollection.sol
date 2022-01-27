@@ -1321,7 +1321,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function _updateAverageRate(Pool storage data, Fraction memory spotRate) private {
         uint32 time = _time();
 
-        if (data.averageRate.time < time) {
+        if (data.averageRate.time != time) {
             data.averageRate = AverageRate({
                 time: time,
                 rate: toFraction112(_calcAverageRate(fromFraction112(data.averageRate.rate), spotRate))
