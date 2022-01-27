@@ -2471,15 +2471,6 @@ describe('PoolCollection', () => {
                                         expect(tradeAmountsWithLiquidity.feeAmount).to.equal(
                                             targetAmountAndFee.feeAmount
                                         );
-                                        expect(
-                                            tradeAmountsWithLiquidity.liquidity.networkTokenTradingLiquidity
-                                        ).to.equal(liquidity.networkTokenTradingLiquidity);
-                                        expect(tradeAmountsWithLiquidity.liquidity.baseTokenTradingLiquidity).to.equal(
-                                            liquidity.baseTokenTradingLiquidity
-                                        );
-                                        expect(tradeAmountsWithLiquidity.liquidity.stakedBalance).to.equal(
-                                            liquidity.stakedBalance
-                                        );
 
                                         if (isSourceNetworkToken) {
                                             expect(liquidity.networkTokenTradingLiquidity).to.equal(
