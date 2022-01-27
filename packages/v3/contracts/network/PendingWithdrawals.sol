@@ -12,7 +12,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
-import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
@@ -221,7 +221,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         EnumerableSetUpgradeable.UintSet storage providerRequests = _withdrawalRequestIdsByProvider[provider];
         uint256 length = providerRequests.length();
         uint256[] memory list = new uint256[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = providerRequests.at(i);
         }
         return list;
@@ -324,9 +324,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
 
         // since pool token value can only go up, there’s usually burning
         if (request.poolTokenAmount > currentPoolTokenAmount) {
-            unchecked {
-                request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
-            }
+            request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
         }
 
         // transfer the locked pool tokens back to the caller
@@ -409,8 +407,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         }
 
         // record the current withdrawal request alongside previous pending withdrawal requests
-        uint256 id = _nextWithdrawalRequestId;
-        _nextWithdrawalRequestId = uncheckedInc(_nextWithdrawalRequestId);
+        uint256 id = _nextWithdrawalRequestId++;
 
         // get the pool token value in reserve tokens
         uint256 reserveTokenAmount = _poolTokenUnderlying(pool, poolTokenAmount);

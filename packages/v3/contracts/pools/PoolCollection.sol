@@ -16,7 +16,7 @@ import { Fraction, Sint256, zeroFraction, isFractionValid, isFractionZero } from
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
-import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -300,7 +300,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function pools() external view returns (ReserveToken[] memory) {
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ReserveToken.wrap(_pools.at(i));
         }
         return list;

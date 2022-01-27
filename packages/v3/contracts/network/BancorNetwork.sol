@@ -15,7 +15,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
-import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -403,7 +403,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function poolCollections() external view returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         IPoolCollection[] memory list = new IPoolCollection[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; ++i) {
             list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
@@ -422,7 +422,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function liquidityPools() external view returns (ReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ReserveToken.wrap(_liquidityPools.at(i));
         }
         return list;
@@ -480,7 +480,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function upgradePools(ReserveToken[] calldata pools) external nonReentrant {
         uint256 length = pools.length;
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             ReserveToken pool = pools[i];
 
             // request the pool collection upgrader to upgrade the pool and get the new pool collection it exists in
