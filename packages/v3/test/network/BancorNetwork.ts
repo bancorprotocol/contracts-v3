@@ -277,10 +277,81 @@ describe('BancorNetwork', () => {
 
             await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
             await expectRole(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
+            await expectRole(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, Roles.Upgradeable.ROLE_ADMIN);
 
+            expect(await network.isPaused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(networkToken.address)).to.be.true;
+        });
+    });
+
+    describe('pausing/unpausing', () => {
+        let network: TestBancorNetwork;
+
+        let sender: SignerWithAddress;
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [deployer, sender, emergencyStopper] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network } = await createSystem());
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+        });
+
+        const testPause = () => {
+            it('should pause the contract', async () => {
+                const res = await network.connect(sender).pause();
+
+                await expect(res).to.emit(network, 'Paused').withArgs(sender.address);
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should resume the contract', async () => {
+                    const res = await network.connect(sender).resume();
+
+                    await expect(res).to.emit(network, 'Unpaused').withArgs(sender.address);
+
+                    expect(await network.isPaused()).to.be.false;
+                });
+            });
+        };
+
+        const testPauseRestricted = () => {
+            it('should revert when a non-emergency stopper is attempting to pause', async () => {
+                await expect(network.connect(sender).pause()).to.be.revertedWith('AccessDenied');
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when a non-emergency stopper is attempting resume', async () => {
+                    await expect(network.connect(sender).resume()).to.be.revertedWith('AccessDenied');
+                });
+            });
+        };
+
+        context('emergency stopper', () => {
+            beforeEach(async () => {
+                await network.connect(deployer).grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, sender.address);
+            });
+
+            testPause();
+        });
+
+        context('regular account', () => {
+            testPauseRestricted();
         });
     });
 
@@ -950,6 +1021,12 @@ describe('BancorNetwork', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
+
         beforeEach(async () => {
             ({
                 network,
@@ -966,6 +1043,10 @@ describe('BancorNetwork', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
         });
 
         const testDeposits = (tokenData: TokenData) => {
@@ -1178,6 +1259,16 @@ describe('BancorNetwork', () => {
                                 await expect(deposit(amount, { poolAddress: token2.address })).to.be.revertedWith(
                                     'InvalidToken'
                                 );
+                            });
+
+                            context('when paused', () => {
+                                beforeEach(async () => {
+                                    await network.connect(emergencyStopper).pause();
+                                });
+
+                                it('should revert when attempting to deposit', async () => {
+                                    await expect(deposit(1)).to.be.revertedWith('Pausable: paused');
+                                });
                             });
 
                             const testDepositAmount = (amount: BigNumber) => {
@@ -1401,6 +1492,16 @@ describe('BancorNetwork', () => {
                                 ).to.be.revertedWith('InvalidToken');
                             });
 
+                            context('when paused', () => {
+                                beforeEach(async () => {
+                                    await network.connect(emergencyStopper).pause();
+                                });
+
+                                it('should revert when attempting to deposit', async () => {
+                                    await expect(deposit(1)).to.be.revertedWith('Pausable: paused');
+                                });
+                            });
+
                             const testDepositAmount = (amount: BigNumber) => {
                                 const COUNT = 3;
 
@@ -1460,10 +1561,11 @@ describe('BancorNetwork', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let masterPoolToken: PoolToken;
 
-        const setTime = async (time: number) => {
-            await network.setTime(time);
-            await pendingWithdrawals.setTime(time);
-        };
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
 
         beforeEach(async () => {
             ({
@@ -1482,8 +1584,17 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+
             await setTime(await latest());
         });
+
+        const setTime = async (time: number) => {
+            await network.setTime(time);
+            await pendingWithdrawals.setTime(time);
+        };
 
         it('should revert when attempting to withdraw a non-existing withdrawal request', async () => {
             await expect(network.withdraw(12_345)).to.be.revertedWith('AccessDenied');
@@ -1701,6 +1812,18 @@ describe('BancorNetwork', () => {
                     }
                 });
             });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when attempting to withdraw', async () => {
+                    await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
+            });
         };
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
@@ -1723,12 +1846,21 @@ describe('BancorNetwork', () => {
         let targetToken: TokenWithAddress;
 
         let trader: Wallet;
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
 
         beforeEach(async () => {
             ({ network, networkInfo, networkSettings, networkToken, masterPool, poolCollection, masterVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
         });
 
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
@@ -2101,6 +2233,16 @@ describe('BancorNetwork', () => {
                             const trader2 = (await ethers.getSigners())[9];
                             await verifyTrade(trader, trader2.address, testAmount, trade);
                         });
+
+                        context('when paused', () => {
+                            beforeEach(async () => {
+                                await network.connect(emergencyStopper).pause();
+                            });
+
+                            it('should revert when attempting to trade', async () => {
+                                await expect(trade(testAmount)).to.be.revertedWith('Pausable: paused');
+                            });
+                        });
                     });
                 }
 
@@ -2311,6 +2453,11 @@ describe('BancorNetwork', () => {
         let masterVault: MasterVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
 
         const BALANCE = toWei(100_000_000);
         const LOAN_AMOUNT = toWei(123_456);
@@ -2319,6 +2466,10 @@ describe('BancorNetwork', () => {
             ({ network, networkInfo, networkSettings, poolCollection, masterVault } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
 
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
@@ -2381,6 +2532,18 @@ describe('BancorNetwork', () => {
                 await expect(
                     network.flashLoan(token.address, BALANCE.add(1), recipient.address, ZERO_BYTES)
                 ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when attempting to request a flash-loan', async () => {
+                    await expect(network.flashLoan(token.address, 1, recipient.address, ZERO_BYTES)).to.be.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
             });
         });
 
@@ -2511,6 +2674,12 @@ describe('BancorNetwork', () => {
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
 
+        let emergencyStopper: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
+
         beforeEach(async () => {
             ({
                 networkTokenGovernance,
@@ -2526,6 +2695,10 @@ describe('BancorNetwork', () => {
             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
         });
 
         const testLiquidityMigration = (
@@ -2850,6 +3023,24 @@ describe('BancorNetwork', () => {
                         const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
                         expect(protectionNetworkBalance).to.equal(0);
                     });
+
+                    context('when paused', () => {
+                        beforeEach(async () => {
+                            await network.connect(emergencyStopper).pause();
+
+                            await liquidityProtection.setTime(now + duration.seconds(1));
+                        });
+
+                        it('should revert when attempting to migrate positions', async () => {
+                            const protectionId = (
+                                await liquidityProtectionStore.protectedLiquidityIds(owner.address)
+                            )[0];
+
+                            await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                                'Pausable: paused'
+                            );
+                        });
+                    });
                 });
             }
 
@@ -2964,6 +3155,22 @@ describe('BancorNetwork', () => {
                     const protectionNetworkBalance = await networkToken.balanceOf(liquidityProtection.address);
                     expectInRange(protectionNetworkBalance, BigNumber.from(0));
                 });
+
+                context('when paused', () => {
+                    beforeEach(async () => {
+                        await network.connect(emergencyStopper).pause();
+
+                        await liquidityProtection.setTime(now + duration.seconds(1));
+                    });
+
+                    it('should revert when attempting to migrate positions', async () => {
+                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
+
+                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
+                            'Pausable: paused'
+                        );
+                    });
+                });
             });
         };
 
@@ -3017,8 +3224,13 @@ describe('BancorNetwork', () => {
 
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
+        let emergencyStopper: SignerWithAddress;
 
         const BALANCE = toWei(1_000_000);
+
+        before(async () => {
+            [, emergencyStopper] = await ethers.getSigners();
+        });
 
         beforeEach(async () => {
             ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
@@ -3027,6 +3239,10 @@ describe('BancorNetwork', () => {
             provider = await createWallet();
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
 
             await pendingWithdrawals.setTime(await latest());
 
@@ -3088,6 +3304,35 @@ describe('BancorNetwork', () => {
             expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
         });
 
+        context('when paused', () => {
+            beforeEach(async () => {
+                await network.connect(emergencyStopper).pause();
+            });
+
+            it('should revert when attempting to initiate a withdrawal request', async () => {
+                await expect(
+                    network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount)
+                ).to.be.revertedWith('Pausable: paused');
+            });
+
+            it('should revert when attempting to initiate a permitted withdrawal request', async () => {
+                const { v, r, s } = await permitContractSignature(
+                    provider as Wallet,
+                    poolToken.address,
+                    network,
+                    networkToken,
+                    poolTokenAmount,
+                    MAX_UINT256
+                );
+
+                await expect(
+                    network
+                        .connect(provider)
+                        .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, v, r, s)
+                ).to.be.revertedWith('Pausable: paused');
+            });
+        });
+
         context('with an initiated withdrawal request', () => {
             let id: BigNumber;
 
@@ -3110,6 +3355,20 @@ describe('BancorNetwork', () => {
 
                 const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
                 expect(withdrawalRequest.createdAt).to.equal(newTime);
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when attempting to cancel a pending withdrawal request', async () => {
+                    await expect(network.connect(provider).cancelWithdrawal(id)).to.be.revertedWith('Pausable: paused');
+                });
+
+                it('should revert when attempting to reinitiate a pending withdrawal request', async () => {
+                    await expect(network.connect(provider).reinitWithdrawal(id)).to.be.revertedWith('Pausable: paused');
+                });
             });
         });
     });

@@ -129,6 +129,7 @@ describe('network', () => {
 
         await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER);
+        await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
 
         await expectRoleMembers(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
