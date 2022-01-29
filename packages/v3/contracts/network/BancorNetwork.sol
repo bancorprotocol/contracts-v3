@@ -752,7 +752,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         uint256 availableAmount,
         uint256 originalAmount
-    ) external payable nonReentrant whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) {
+    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) nonReentrant {
         bytes32 contextId = keccak256(
             abi.encodePacked(msg.sender, _time(), reserveToken, provider, amount, availableAmount, originalAmount)
         );
