@@ -18,7 +18,7 @@ import { AverageRate } from "../pools/PoolAverageRate.sol";
 
 import { Time } from "../utility/Time.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { TestTime } from "./TestTime.sol";
 
@@ -54,15 +54,15 @@ contract TestPoolCollection is PoolCollection, TestTime {
         return _version;
     }
 
-    function setTradingLiquidityT(ReserveToken pool, PoolLiquidity calldata liquidity) external {
+    function setTradingLiquidityT(Token pool, PoolLiquidity calldata liquidity) external {
         _poolData[pool].liquidity = liquidity;
     }
 
-    function setAverageRateT(ReserveToken pool, AverageRate calldata newAverageRate) external {
+    function setAverageRateT(Token pool, AverageRate calldata newAverageRate) external {
         _poolData[pool].averageRate = newAverageRate;
     }
 
-    function poolWithdrawalAmountsT(ReserveToken pool, uint256 poolTokenAmount)
+    function poolWithdrawalAmountsT(Token pool, uint256 poolTokenAmount)
         external
         view
         returns (WithdrawalAmounts memory)
@@ -71,7 +71,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
     }
 
     function mintPoolTokenT(
-        ReserveToken pool,
+        Token pool,
         address recipient,
         uint256 poolTokenAmount
     ) external {
@@ -80,7 +80,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
 
     function requestFundingT(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 networkTokenAmount
     ) external {
         _masterPool.requestFunding(contextId, pool, networkTokenAmount);

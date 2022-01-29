@@ -6,7 +6,8 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
@@ -74,7 +75,7 @@ struct WithdrawalAmounts {
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils {
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error DepositLimitExceeded();
@@ -103,7 +104,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 sourceBalance;
         uint256 targetBalance;
         PoolLiquidity liquidity;
-        ReserveToken pool;
+        Token pool;
         bool isSourceNetworkToken;
         uint32 tradingFeePPM;
     }
@@ -132,8 +133,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     // the pool collection upgrader contract
     IPoolCollectionUpgrader private immutable _poolCollectionUpgrader;
 
-    // a mapping between reserve tokens and their pools
-    mapping(ReserveToken => Pool) internal _poolData;
+    // a mapping between reserve/pool tokens and their pools
+    mapping(Token => Pool) internal _poolData;
 
     // the set of all pools which are managed by this pool collection
     EnumerableSet.AddressSet private _pools;
@@ -144,17 +145,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev triggered when a pool is created
      */
-    event PoolCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
+    event PoolCreated(IPoolToken indexed poolToken, Token indexed reserveToken);
 
     /**
      * @dev triggered when a pool is migrated into a this pool collection
      */
-    event PoolMigratedIn(ReserveToken indexed reserveToken);
+    event PoolMigratedIn(Token indexed reserveToken);
 
     /**
      * @dev triggered when a pool is migrated out of this pool collection
      */
-    event PoolMigratedOut(ReserveToken indexed reserveToken);
+    event PoolMigratedOut(Token indexed reserveToken);
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -164,29 +165,29 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev triggered when a specific pool's trading fee is updated
      */
-    event TradingFeePPMUpdated(ReserveToken indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
+    event TradingFeePPMUpdated(Token indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev triggered when trading in a specific pool is enabled/disabled
      */
-    event TradingEnabled(ReserveToken indexed pool, bool indexed newStatus, uint8 indexed reason);
+    event TradingEnabled(Token indexed pool, bool indexed newStatus, uint8 indexed reason);
 
     /**
      * @dev triggered when depositing into a specific pool is enabled/disabled
      */
-    event DepositingEnabled(ReserveToken indexed pool, bool indexed newStatus);
+    event DepositingEnabled(Token indexed pool, bool indexed newStatus);
 
     /**
      * @dev triggered when a pool's deposit limit is updated
      */
-    event DepositLimitUpdated(ReserveToken indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
+    event DepositLimitUpdated(Token indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
      * @dev triggered when new liquidity is deposited into a pool
      */
     event TokenDeposited(
         bytes32 indexed contextId,
-        ReserveToken indexed token,
+        Token indexed reserveToken,
         address indexed provider,
         uint256 tokenAmount,
         uint256 poolTokenAmount
@@ -197,7 +198,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     event TokenWithdrawn(
         bytes32 indexed contextId,
-        ReserveToken indexed token,
+        Token indexed reserveToken,
         address indexed provider,
         uint256 tokenAmount,
         uint256 poolTokenAmount,
@@ -211,8 +212,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     event TradingLiquidityUpdated(
         bytes32 indexed contextId,
-        ReserveToken indexed pool,
-        ReserveToken indexed reserveToken,
+        Token indexed pool,
+        Token indexed reserveToken,
         uint256 liquidity
     );
 
@@ -221,7 +222,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
-        ReserveToken indexed pool,
+        Token indexed pool,
         uint256 stakedBalance,
         uint256 poolTokenSupply,
         uint256 actualBalance
@@ -297,11 +298,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function pools() external view returns (ReserveToken[] memory) {
+    function pools() external view returns (Token[] memory) {
         uint256 length = _pools.length();
-        ReserveToken[] memory list = new ReserveToken[](length);
+        Token[] memory list = new Token[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ReserveToken(_pools.at(i));
+            list[i] = Token(_pools.at(i));
         }
         return list;
     }
@@ -331,12 +332,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(ReserveToken reserveToken) external only(address(_network)) nonReentrant {
-        if (!_networkSettings.isTokenWhitelisted(reserveToken)) {
+    function createPool(Token token) external only(address(_network)) nonReentrant {
+        if (!_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
-        IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(reserveToken));
+        IPoolToken newPoolToken = IPoolToken(_poolTokenFactory.createPoolToken(token));
 
         newPoolToken.acceptOwnership();
 
@@ -354,27 +355,27 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             })
         });
 
-        _addPool(reserveToken, newPool);
+        _addPool(token, newPool);
 
-        emit PoolCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
+        emit PoolCreated({ poolToken: newPoolToken, reserveToken: token });
 
-        emit TradingEnabled({ pool: reserveToken, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
-        emit TradingFeePPMUpdated({ pool: reserveToken, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
-        emit DepositingEnabled({ pool: reserveToken, newStatus: newPool.depositingEnabled });
-        emit DepositLimitUpdated({ pool: reserveToken, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
+        emit TradingEnabled({ pool: token, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
+        emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
+        emit DepositingEnabled({ pool: token, newStatus: newPool.depositingEnabled });
+        emit DepositLimitUpdated({ pool: token, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolValid(ReserveToken pool) external view returns (bool) {
+    function isPoolValid(Token pool) external view returns (bool) {
         return _validPool(_poolData[pool]);
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateStable(ReserveToken pool) external view returns (bool) {
+    function isPoolRateStable(Token pool) external view returns (bool) {
         Pool memory data = _poolData[pool];
         if (!_validPool(data)) {
             return false;
@@ -386,28 +387,28 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolData(ReserveToken pool) external view returns (Pool memory) {
+    function poolData(Token pool) external view returns (Pool memory) {
         return _poolData[pool];
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolLiquidity(ReserveToken pool) external view returns (PoolLiquidity memory) {
+    function poolLiquidity(Token pool) external view returns (PoolLiquidity memory) {
         return _poolData[pool].liquidity;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolToken(ReserveToken pool) external view returns (IPoolToken) {
+    function poolToken(Token pool) external view returns (IPoolToken) {
         return _poolData[pool].poolToken;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolTokenToUnderlying(ReserveToken pool, uint256 poolTokenAmount) external view returns (uint256) {
+    function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
         return MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, data.poolToken.totalSupply());
@@ -416,7 +417,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function underlyingToPoolToken(ReserveToken pool, uint256 tokenAmount) external view returns (uint256) {
+    function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
         return _underlyingToPoolToken(data.poolToken.totalSupply(), tokenAmount, data.liquidity.stakedBalance);
@@ -426,7 +427,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @inheritdoc IPoolCollection
      */
     function poolTokenAmountToBurn(
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmountToDistribute,
         uint256 protocolPoolTokenAmount
     ) external view returns (uint256) {
@@ -454,11 +455,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *
      * - the caller must be the owner of the contract
      */
-    function setTradingFeePPM(ReserveToken pool, uint32 newTradingFeePPM)
-        external
-        onlyOwner
-        validFee(newTradingFeePPM)
-    {
+    function setTradingFeePPM(Token pool, uint32 newTradingFeePPM) external onlyOwner validFee(newTradingFeePPM) {
         Pool storage data = _poolStorage(pool);
 
         uint32 prevTradingFeePPM = data.tradingFeePPM;
@@ -478,7 +475,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(ReserveToken pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
+    function enableTrading(Token pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
         Pool storage data = _poolStorage(pool);
 
         if (data.tradingEnabled) {
@@ -508,7 +505,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *
      * - the caller must be the owner of the contract
      */
-    function disableTrading(ReserveToken pool) external onlyOwner {
+    function disableTrading(Token pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
 
         _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
@@ -521,7 +518,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *
      * - the caller must be the owner of the contract
      */
-    function enableDepositing(ReserveToken pool, bool status) external onlyOwner {
+    function enableDepositing(Token pool, bool status) external onlyOwner {
         Pool storage data = _poolStorage(pool);
 
         if (data.depositingEnabled == status) {
@@ -540,7 +537,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      *
      * - the caller must be the owner of the contract
      */
-    function setDepositLimit(ReserveToken pool, uint256 newDepositLimit) external onlyOwner {
+    function setDepositLimit(Token pool, uint256 newDepositLimit) external onlyOwner {
         Pool storage data = _poolStorage(pool);
 
         uint256 prevDepositLimit = data.depositLimit;
@@ -559,7 +556,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function depositFor(
         bytes32 contextId,
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(tokenAmount) nonReentrant {
         Pool storage data = _poolStorage(pool);
@@ -595,7 +592,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit TokenDeposited({
             contextId: contextId,
-            token: pool,
+            reserveToken: pool,
             provider: provider,
             tokenAmount: tokenAmount,
             poolTokenAmount: poolTokenAmount
@@ -616,7 +613,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function withdraw(
         bytes32 contextId,
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 poolTokenAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) nonReentrant {
         // obtain the withdrawal amounts
@@ -631,8 +628,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function trade(
         bytes32 contextId,
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     )
@@ -702,8 +699,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @inheritdoc IPoolCollection
      */
     function tradeAmountAndFee(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 amount,
         bool targetAmount
     ) external view greaterThanZero(amount) returns (TradeAmounts memory) {
@@ -718,7 +715,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function onFeesCollected(ReserveToken pool, uint256 feeAmount) external only(address(_network)) {
+    function onFeesCollected(Token pool, uint256 feeAmount) external only(address(_network)) {
         if (feeAmount == 0) {
             return;
         }
@@ -732,7 +729,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function migratePoolIn(ReserveToken pool, Pool calldata data)
+    function migratePoolIn(Token pool, Pool calldata data)
         external
         validAddress(address(pool))
         only(address(_poolCollectionUpgrader))
@@ -747,7 +744,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @inheritdoc IPoolCollection
      */
-    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection)
+    function migratePoolOut(Token pool, IPoolCollection targetPoolCollection)
         external
         validAddress(address(targetPoolCollection))
         only(address(_poolCollectionUpgrader))
@@ -768,7 +765,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev adds a pool
      */
-    function _addPool(ReserveToken pool, Pool memory data) private {
+    function _addPool(Token pool, Pool memory data) private {
         if (!_pools.add(address(pool))) {
             revert AlreadyExists();
         }
@@ -779,7 +776,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev removes a pool
      */
-    function _removePool(ReserveToken pool) private {
+    function _removePool(Token pool) private {
         if (!_pools.remove(address(pool))) {
             revert DoesNotExist();
         }
@@ -790,7 +787,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev returns withdrawal amounts
      */
-    function _poolWithdrawalAmounts(ReserveToken pool, uint256 poolTokenAmount)
+    function _poolWithdrawalAmounts(Token pool, uint256 poolTokenAmount)
         internal
         view
         returns (WithdrawalAmounts memory)
@@ -845,7 +842,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     function _executeWithdrawal(
         bytes32 contextId,
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 poolTokenAmount,
         WithdrawalAmounts memory amounts
     ) private {
@@ -921,7 +918,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit TokenWithdrawn({
             contextId: contextId,
-            token: pool,
+            reserveToken: pool,
             provider: provider,
             tokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: poolTokenAmount,
@@ -950,7 +947,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev returns a storage reference to pool data
      */
-    function _poolStorage(ReserveToken pool) private view returns (Pool storage) {
+    function _poolStorage(Token pool) private view returns (Pool storage) {
         Pool storage data = _poolData[pool];
         if (!_validPool(data)) {
             revert DoesNotExist();
@@ -991,7 +988,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function _updateTradingLiquidity(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         Pool storage data,
         PoolLiquidity memory liquidity,
         Fraction memory fundingRate,
@@ -1123,7 +1120,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     function _dispatchTradingLiquidityEvents(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         PoolLiquidity memory prevLiquidity,
         PoolLiquidity memory newLiquidity
     ) private {
@@ -1131,7 +1128,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: pool,
-                reserveToken: ReserveToken(address(_networkToken)),
+                reserveToken: Token(address(_networkToken)),
                 liquidity: newLiquidity.networkTokenTradingLiquidity
             });
         }
@@ -1148,7 +1145,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
     function _dispatchTradingLiquidityEvents(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 poolTokenTotalSupply,
         PoolLiquidity memory prevLiquidity,
         PoolLiquidity memory newLiquidity
@@ -1171,7 +1168,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function _resetTradingLiquidity(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         Pool storage data,
         uint8 reason
     ) private {
@@ -1183,7 +1180,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function _resetTradingLiquidity(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         Pool storage data,
         uint256 currentNetworkTokenTradingLiquidity,
         uint8 reason
@@ -1211,11 +1208,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev returns trading params
      */
-    function _tradeParams(ReserveToken sourceToken, ReserveToken targetToken)
-        private
-        view
-        returns (TradingParams memory params)
-    {
+    function _tradeParams(Token sourceToken, Token targetToken) private view returns (TradingParams memory params) {
         // ensure that the network token is either the source or the target pool
         bool isSourceNetworkToken = sourceToken.toIERC20() == _networkToken;
         bool isTargetNetworkToken = targetToken.toIERC20() == _networkToken;

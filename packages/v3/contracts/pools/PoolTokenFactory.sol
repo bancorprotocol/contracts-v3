@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.11;
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -15,17 +16,17 @@ import { PoolToken } from "./PoolToken.sol";
  * @dev Pool Token Factory contract
  */
 contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     string private constant POOL_TOKEN_SYMBOL_PREFIX = "bn";
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
-    // a mapping between reserve tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
-    mapping(ReserveToken => string) private _tokenSymbolOverrides;
+    // a mapping between reserve/pool tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
+    mapping(Token => string) private _tokenSymbolOverrides;
 
-    // a mapping between reserve tokens and custom token overrides (only needed for tokens with malformed decimals property)
-    mapping(ReserveToken => uint8) private _tokenDecimalsOverrides;
+    // a mapping between reserve/pool tokens and custom token overrides (only needed for tokens with malformed decimals property)
+    mapping(Token => uint8) private _tokenDecimalsOverrides;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 2] private __gap;
@@ -33,7 +34,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @dev triggered when a pool token is created
      */
-    event PoolTokenCreated(IPoolToken indexed poolToken, ReserveToken indexed reserveToken);
+    event PoolTokenCreated(IPoolToken indexed poolToken, Token indexed reserveToken);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -70,8 +71,8 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function tokenSymbolOverride(ReserveToken reserveToken) external view returns (string memory) {
-        return _tokenSymbolOverrides[reserveToken];
+    function tokenSymbolOverride(Token token) external view returns (string memory) {
+        return _tokenSymbolOverrides[token];
     }
 
     /**
@@ -81,15 +82,15 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function setTokenSymbolOverride(ReserveToken reserveToken, string calldata symbol) external onlyAdmin {
-        _tokenSymbolOverrides[reserveToken] = symbol;
+    function setTokenSymbolOverride(Token token, string calldata symbol) external onlyAdmin {
+        _tokenSymbolOverrides[token] = symbol;
     }
 
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function tokenDecimalsOverride(ReserveToken reserveToken) external view returns (uint8) {
-        return _tokenDecimalsOverrides[reserveToken];
+    function tokenDecimalsOverride(Token token) external view returns (uint8) {
+        return _tokenDecimalsOverrides[token];
     }
 
     /**
@@ -99,35 +100,31 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function setTokenDecimalsOverride(ReserveToken reserveToken, uint8 decimals) external onlyAdmin {
-        _tokenDecimalsOverrides[reserveToken] = decimals;
+    function setTokenDecimalsOverride(Token token, uint8 decimals) external onlyAdmin {
+        _tokenDecimalsOverrides[token] = decimals;
     }
 
     /**
      * @inheritdoc IPoolTokenFactory
      */
-    function createPoolToken(ReserveToken reserveToken)
-        external
-        validAddress(address(reserveToken))
-        returns (IPoolToken)
-    {
-        string memory customSymbol = _tokenSymbolOverrides[reserveToken];
-        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : reserveToken.symbol();
+    function createPoolToken(Token token) external validAddress(address(token)) returns (IPoolToken) {
+        string memory customSymbol = _tokenSymbolOverrides[token];
+        string memory tokenSymbol = bytes(customSymbol).length != 0 ? customSymbol : token.symbol();
 
-        uint8 customDecimals = _tokenDecimalsOverrides[reserveToken];
-        uint8 tokenDecimals = customDecimals != 0 ? customDecimals : reserveToken.decimals();
+        uint8 customDecimals = _tokenDecimalsOverrides[token];
+        uint8 tokenDecimals = customDecimals != 0 ? customDecimals : token.decimals();
 
         string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
         string memory name = string(
             abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
         );
 
-        PoolToken newPoolToken = new PoolToken(name, symbol, tokenDecimals, reserveToken);
+        PoolToken newPoolToken = new PoolToken(name, symbol, tokenDecimals, token);
 
         // make sure to transfer the ownership to the caller
         newPoolToken.transferOwnership(msg.sender);
 
-        emit PoolTokenCreated({ poolToken: newPoolToken, reserveToken: reserveToken });
+        emit PoolTokenCreated({ poolToken: newPoolToken, reserveToken: token });
 
         return newPoolToken;
     }

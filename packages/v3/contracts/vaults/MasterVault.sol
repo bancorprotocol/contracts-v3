@@ -8,7 +8,8 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IMasterVault } from "./interfaces/IMasterVault.sol";
 import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
@@ -19,7 +20,7 @@ import { Vault } from "./Vault.sol";
  */
 contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     // the network token manager role is only required to access the network token reserve
     bytes32 private constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
@@ -94,12 +95,12 @@ contract MasterVault is IMasterVault, Vault {
      */
     function isAuthorizedWithdrawal(
         address caller,
-        ReserveToken reserveToken,
+        Token token,
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
         return
-            (reserveToken.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
+            (token.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
             hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

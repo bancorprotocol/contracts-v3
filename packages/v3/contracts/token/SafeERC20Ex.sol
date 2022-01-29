@@ -14,7 +14,7 @@ library SafeERC20Ex {
      * @dev ensures that the spender has sufficient allowance
      */
     function ensureApprove(
-        IERC20 token,
+        IERC20 erc20Token,
         address spender,
         uint256 amount
     ) internal {
@@ -22,14 +22,14 @@ library SafeERC20Ex {
             return;
         }
 
-        uint256 allowance = token.allowance(address(this), spender);
+        uint256 allowance = erc20Token.allowance(address(this), spender);
         if (allowance >= amount) {
             return;
         }
 
         if (allowance > 0) {
-            token.safeApprove(spender, 0);
+            erc20Token.safeApprove(spender, 0);
         }
-        token.safeApprove(spender, amount);
+        erc20Token.safeApprove(spender, amount);
     }
 }

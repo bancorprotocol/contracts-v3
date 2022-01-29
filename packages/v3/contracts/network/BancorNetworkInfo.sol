@@ -19,7 +19,8 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { InvalidToken, Utils } from "../utility/Utils.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IBancorNetworkInfo } from "./interfaces/IBancorNetworkInfo.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
@@ -30,7 +31,7 @@ import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
  * @dev Bancor Network Information contract
  */
 contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     error InvalidTokens();
 
@@ -142,7 +143,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
 
     // solhint-enable func-name-mixedcase
 
-    modifier validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) {
+    modifier validTokensForTrade(Token sourceToken, Token targetToken) {
         _validTokensForTrade(sourceToken, targetToken);
 
         _;
@@ -151,7 +152,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @dev validates that the provided tokens are valid and unique
      */
-    function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
+    function _validTokensForTrade(Token sourceToken, Token targetToken) internal pure {
         _validAddress(address(sourceToken));
         _validAddress(address(targetToken));
 
@@ -262,8 +263,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * @inheritdoc IBancorNetworkInfo
      */
     function tradeTargetAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(sourceAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, sourceAmount, true);
@@ -273,8 +274,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * @inheritdoc IBancorNetworkInfo
      */
     function tradeSourceAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 targetAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
         return _tradeAmount(sourceToken, targetToken, targetAmount, false);
@@ -292,8 +293,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * interested in the target or source amount
      */
     function _tradeAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 amount,
         bool targetAmount
     ) private view returns (uint256) {
@@ -313,26 +314,21 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         // the network token
         TradeAmounts memory sourceTradeAmounts = _poolCollection(sourceToken).tradeAmountAndFee(
             sourceToken,
-            ReserveToken(address(_networkToken)),
+            Token(address(_networkToken)),
             amount,
             targetAmount
         );
 
         return
             _poolCollection(targetToken)
-                .tradeAmountAndFee(
-                    ReserveToken(address(_networkToken)),
-                    targetToken,
-                    sourceTradeAmounts.amount,
-                    targetAmount
-                )
+                .tradeAmountAndFee(Token(address(_networkToken)), targetToken, sourceTradeAmounts.amount, targetAmount)
                 .amount;
     }
 
     /**
      * @dev verifies that the specified pool is managed by a valid pool collection and returns it
      */
-    function _poolCollection(ReserveToken token) private view returns (IPoolCollection) {
+    function _poolCollection(Token token) private view returns (IPoolCollection) {
         // verify that the pool is managed by a valid pool collection
         IPoolCollection poolCollection = _network.collectionByPool(token);
         if (address(poolCollection) == address(0)) {
@@ -345,7 +341,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @dev returns whether the specified token is the network token
      */
-    function _isNetworkToken(ReserveToken token) private view returns (bool) {
+    function _isNetworkToken(Token token) private view returns (bool) {
         return token.toIERC20() == _networkToken;
     }
 }

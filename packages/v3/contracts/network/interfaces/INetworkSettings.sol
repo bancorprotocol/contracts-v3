@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 error NotWhitelisted();
 
@@ -14,17 +14,17 @@ interface INetworkSettings is IUpgradeable {
     /**
      * @dev returns the protected tokens whitelist
      */
-    function protectedTokenWhitelist() external view returns (ReserveToken[] memory);
+    function protectedTokenWhitelist() external view returns (Token[] memory);
 
     /**
      * @dev checks whether a given token is whitelisted
      */
-    function isTokenWhitelisted(ReserveToken pool) external view returns (bool);
+    function isTokenWhitelisted(Token pool) external view returns (bool);
 
     /**
      * @dev returns the network token funding limit for a given pool
      */
-    function poolFundingLimit(ReserveToken pool) external view returns (uint256);
+    function poolFundingLimit(Token pool) external view returns (uint256);
 
     /**
      * @dev returns the minimum network token trading liquidity required before the system enables trading in the
