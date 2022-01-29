@@ -340,7 +340,7 @@ contract MasterPool is IMasterPool, Vault {
         onlyRoleMember(ROLE_VAULT_MANAGER)
         greaterThanZero(networkTokenAmount)
     {
-        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
+        _masterVault.burn(ReserveToken(address(_networkToken)), networkTokenAmount);
     }
 
     /**
@@ -509,7 +509,7 @@ contract MasterPool is IMasterPool, Vault {
         _poolToken.burn(poolTokenAmount);
 
         // burn all the network tokens from the master vault
-        _masterVault.burn(ReserveToken.wrap(address(_networkToken)), networkTokenAmount);
+        _masterVault.burn(ReserveToken(address(_networkToken)), networkTokenAmount);
 
         emit FundingRenounced({
             contextId: contextId,
@@ -533,7 +533,7 @@ contract MasterPool is IMasterPool, Vault {
         ReserveToken pool,
         uint256 feeAmount,
         uint8 feeType
-    ) external only(address(_network)) validAddress(ReserveToken.unwrap(pool)) {
+    ) external only(address(_network)) validAddress(address(pool)) {
         if (feeAmount == 0) {
             return;
         }

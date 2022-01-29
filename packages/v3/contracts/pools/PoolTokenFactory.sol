@@ -108,7 +108,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
      */
     function createPoolToken(ReserveToken reserveToken)
         external
-        validAddress(ReserveToken.unwrap(reserveToken))
+        validAddress(address(reserveToken))
         returns (IPoolToken)
     {
         string memory customSymbol = _tokenSymbolOverrides[reserveToken];

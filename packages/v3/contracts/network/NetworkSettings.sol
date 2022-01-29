@@ -120,7 +120,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         uint256 length = _protectedTokenWhitelist.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ReserveToken.wrap(_protectedTokenWhitelist.at(i));
+            list[i] = ReserveToken(_protectedTokenWhitelist.at(i));
         }
         return list;
     }
@@ -132,12 +132,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function addTokenToWhitelist(ReserveToken token)
-        external
-        onlyAdmin
-        validExternalAddress(ReserveToken.unwrap(token))
-    {
-        if (!_protectedTokenWhitelist.add(ReserveToken.unwrap(token))) {
+    function addTokenToWhitelist(ReserveToken token) external onlyAdmin validExternalAddress(address(token)) {
+        if (!_protectedTokenWhitelist.add(address(token))) {
             revert AlreadyExists();
         }
 
@@ -152,7 +148,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      */
     function removeTokenFromWhitelist(ReserveToken token) external onlyAdmin {
-        if (!_protectedTokenWhitelist.remove(ReserveToken.unwrap(token))) {
+        if (!_protectedTokenWhitelist.remove(address(token))) {
             revert DoesNotExist();
         }
 
@@ -181,11 +177,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      * - the token must have been whitelisted
      */
-    function setFundingLimit(ReserveToken pool, uint256 amount)
-        external
-        onlyAdmin
-        validAddress(ReserveToken.unwrap(pool))
-    {
+    function setFundingLimit(ReserveToken pool, uint256 amount) external onlyAdmin validAddress(address(pool)) {
         if (!_isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
@@ -336,6 +328,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev checks whether a given token is whitelisted
      */
     function _isTokenWhitelisted(ReserveToken token) private view returns (bool) {
-        return _protectedTokenWhitelist.contains(ReserveToken.unwrap(token));
+        return _protectedTokenWhitelist.contains(address(token));
     }
 }

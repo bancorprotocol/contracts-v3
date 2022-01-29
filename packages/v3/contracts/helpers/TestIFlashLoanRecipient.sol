@@ -37,7 +37,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
     receive() external payable {}
 
     function snapshot(IERC20 token) external {
-        ReserveToken reserveToken = ReserveToken.wrap(address(token));
+        ReserveToken reserveToken = ReserveToken(address(token));
 
         _snapshots[token] = reserveToken.balanceOf(address(this));
     }
@@ -61,7 +61,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
         uint256 feeAmount,
         bytes memory data
     ) external {
-        ReserveToken reserveToken = ReserveToken.wrap(address(token));
+        ReserveToken reserveToken = ReserveToken(address(token));
 
         _callbackData = CallbackData({
             caller: caller,

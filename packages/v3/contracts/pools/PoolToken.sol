@@ -29,7 +29,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
         string memory symbol,
         uint8 initDecimals,
         ReserveToken initReserveToken
-    ) ERC20(name, symbol) ERC20Permit(name) validAddress(ReserveToken.unwrap(initReserveToken)) {
+    ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
         _decimals = initDecimals;
         _reserveToken = initReserveToken;
     }

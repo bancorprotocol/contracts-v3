@@ -69,7 +69,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         // been possible
         ReserveToken[] memory orderedReserveTokens = new ReserveToken[](2);
         orderedReserveTokens[0] = reserveTokens[1].toERC20() == _networkToken ? reserveTokens[0] : reserveTokens[1];
-        orderedReserveTokens[1] = ReserveToken.wrap(address(_networkToken));
+        orderedReserveTokens[1] = ReserveToken(address(_networkToken));
 
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;

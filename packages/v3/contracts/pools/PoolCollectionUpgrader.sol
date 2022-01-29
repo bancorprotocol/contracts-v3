@@ -108,7 +108,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
      * @inheritdoc IPoolCollectionUpgrader
      */
     function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
-        if (ReserveToken.unwrap(pool) == address(0)) {
+        if (address(pool) == address(0)) {
             revert InvalidPool();
         }
 

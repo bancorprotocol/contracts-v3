@@ -7,7 +7,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { SafeERC20Ex } from "./SafeERC20Ex.sol";
 
-type ReserveToken is address;
+interface ReserveToken {}
 
 /**
  * @dev This library implements ERC20 and SafeERC20 utilities for reserve tokens, which can be either ERC20 tokens or ETH
@@ -29,7 +29,7 @@ library ReserveTokenLibrary {
      * @dev returns whether the provided token represents an ERC20 or ETH reserve
      */
     function isNativeToken(ReserveToken reserveToken) internal pure returns (bool) {
-        return ReserveToken.unwrap(reserveToken) == NATIVE_TOKEN_ADDRESS;
+        return address(reserveToken) == NATIVE_TOKEN_ADDRESS;
     }
 
     /**
@@ -123,13 +123,13 @@ library ReserveTokenLibrary {
      * @dev utility function that converts an ReserveToken to an IERC20
      */
     function toIERC20(ReserveToken reserveToken) internal pure returns (IERC20) {
-        return IERC20(ReserveToken.unwrap(reserveToken));
+        return IERC20(address(reserveToken));
     }
 
     /**
      * @dev utility function that converts an ReserveToken to an ERC20
      */
     function toERC20(ReserveToken reserveToken) internal pure returns (ERC20) {
-        return ERC20(ReserveToken.unwrap(reserveToken));
+        return ERC20(address(reserveToken));
     }
 }

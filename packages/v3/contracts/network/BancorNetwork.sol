@@ -273,10 +273,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev validates that the provided tokens are valid and unique
      */
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
-        _validAddress(ReserveToken.unwrap(sourceToken));
-        _validAddress(ReserveToken.unwrap(targetToken));
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
 
-        if (ReserveToken.unwrap(sourceToken) == ReserveToken.unwrap(targetToken)) {
+        if (address(sourceToken) == address(targetToken)) {
             revert InvalidTokens();
         }
     }
@@ -411,7 +411,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 length = _liquidityPools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ReserveToken.wrap(_liquidityPools.at(i));
+            list[i] = ReserveToken(_liquidityPools.at(i));
         }
         return list;
     }
@@ -427,8 +427,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc IBancorNetwork
      */
     function isPoolValid(ReserveToken pool) external view returns (bool) {
-        return
-            ReserveToken.unwrap(pool) == address(_networkToken) || _liquidityPools.contains(ReserveToken.unwrap(pool));
+        return address(pool) == address(_networkToken) || _liquidityPools.contains(address(pool));
     }
 
     /**
@@ -437,13 +436,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function createPool(uint16 poolType, ReserveToken reserveToken)
         external
         nonReentrant
-        validAddress(ReserveToken.unwrap(reserveToken))
+        validAddress(address(reserveToken))
     {
         if (_isNetworkToken(reserveToken)) {
             revert InvalidToken();
         }
 
-        if (!_liquidityPools.add(ReserveToken.unwrap(reserveToken))) {
+        if (!_liquidityPools.add(address(reserveToken))) {
             revert AlreadyExists();
         }
 
@@ -489,14 +488,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         ReserveToken pool,
         uint256 tokenAmount
-    )
-        external
-        payable
-        validAddress(provider)
-        validAddress(ReserveToken.unwrap(pool))
-        greaterThanZero(tokenAmount)
-        nonReentrant
-    {
+    ) external payable validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
         _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
@@ -506,7 +498,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function deposit(ReserveToken pool, uint256 tokenAmount)
         external
         payable
-        validAddress(ReserveToken.unwrap(pool))
+        validAddress(address(pool))
         greaterThanZero(tokenAmount)
         nonReentrant
     {
@@ -524,13 +516,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        validAddress(provider)
-        validAddress(ReserveToken.unwrap(pool))
-        greaterThanZero(tokenAmount)
-        nonReentrant
-    {
+    ) external validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
         _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, v, r, s);
     }
 
@@ -544,7 +530,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(ReserveToken.unwrap(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
         _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, v, r, s);
     }
 
@@ -621,13 +607,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         IFlashLoanRecipient recipient,
         bytes calldata data
-    )
-        external
-        nonReentrant
-        validAddress(ReserveToken.unwrap(token))
-        greaterThanZero(amount)
-        validAddress(address(recipient))
-    {
+    ) external nonReentrant validAddress(address(token)) greaterThanZero(amount) validAddress(address(recipient)) {
         if (!_isNetworkToken(token) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
@@ -880,7 +860,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner safeTransferFrom will revert
-        IERC20Permit(ReserveToken.unwrap(token)).permit(caller, address(this), tokenAmount, deadline, v, r, s);
+        IERC20Permit(address(token)).permit(caller, address(this), tokenAmount, deadline, v, r, s);
     }
 
     /**
@@ -1023,7 +1003,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         address trader
     ) private returns (uint256) {
-        ReserveToken masterPool = ReserveToken.wrap(address(_networkToken));
+        ReserveToken masterPool = ReserveToken(address(_networkToken));
         (ReserveToken sourceToken, ReserveToken targetToken) = isSourceNetworkToken
             ? (masterPool, pool)
             : (pool, masterPool);
