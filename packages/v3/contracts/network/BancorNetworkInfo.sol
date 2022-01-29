@@ -156,7 +156,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(sourceToken));
         _validAddress(address(targetToken));
 
-        if (address(sourceToken) == address(targetToken)) {
+        if (sourceToken == targetToken) {
             revert InvalidTokens();
         }
     }
