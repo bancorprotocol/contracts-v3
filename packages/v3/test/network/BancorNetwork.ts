@@ -2161,15 +2161,6 @@ describe('BancorNetwork', () => {
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
 
-                const test = async () => {
-                    if (!isSourceNativeToken) {
-                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                        await reserveToken.connect(trader).approve(network.address, amount);
-                    }
-
-                    await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
-                };
-
                 beforeEach(async () => {
                     await setupPools(source, target);
 
@@ -2180,8 +2171,15 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should complete multiple trades', async () => {
+                    const currentTime = await poolCollection.currentTime();
                     for (let i = 0; i < TRADES_COUNT; i++) {
-                        await test();
+                        if (!isSourceNativeToken) {
+                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                            await reserveToken.connect(trader).approve(network.address, amount);
+                        }
+    
+                        await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
+                        await poolCollection.setTime(currentTime + i + 1);
                     }
                 });
             });
@@ -2192,8 +2190,6 @@ describe('BancorNetwork', () => {
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const test = async () => verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
-
                 beforeEach(async () => {
                     await setupPools(source, target);
 
@@ -2212,7 +2208,7 @@ describe('BancorNetwork', () => {
                 }
 
                 it('should complete a trade', async () => {
-                    await test();
+                    await verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
                 });
             });
         };

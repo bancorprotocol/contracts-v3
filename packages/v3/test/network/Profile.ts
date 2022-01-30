@@ -691,7 +691,8 @@ describe('Profile @profile', () => {
             trade: (
                 amount: BigNumber,
                 options: TradeOverrides | TradePermittedOverrides
-            ) => Promise<ContractTransaction>
+            ) => Promise<ContractTransaction>,
+            description: string
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -703,7 +704,7 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `trade ${await sourceSymbol} -> ${targetSymbol}`,
+                `${description} ${sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
         };
@@ -713,15 +714,6 @@ describe('Profile @profile', () => {
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
-
-                const test = async () => {
-                    if (!isSourceNativeToken) {
-                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                        await reserveToken.connect(trader).approve(network.address, amount);
-                    }
-
-                    await performTrade(ZERO_ADDRESS, amount, trade);
-                };
 
                 beforeEach(async () => {
                     await setupPools(source, target);
@@ -733,8 +725,15 @@ describe('Profile @profile', () => {
                 });
 
                 it('should complete multiple trades', async () => {
+                    const currentTime = await poolCollection.currentTime();
                     for (let i = 0; i < TRADES_COUNT; i++) {
-                        await test();
+                        if (!isSourceNativeToken) {
+                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                            await reserveToken.connect(trader).approve(network.address, amount);
+                        }
+
+                        await performTrade(ZERO_ADDRESS, amount, trade, 'trade');
+                        await poolCollection.setTime(currentTime + i + 1);
                     }
                 });
             });
@@ -745,8 +744,6 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const test = async () => performTrade(ZERO_ADDRESS, amount, tradePermitted);
-
                 beforeEach(async () => {
                     await setupPools(source, target);
 
@@ -760,8 +757,8 @@ describe('Profile @profile', () => {
                     return;
                 }
 
-                it('should complete a trade', async () => {
-                    await test();
+                it('should complete a permitted trade', async () => {
+                    await performTrade(ZERO_ADDRESS, amount, tradePermitted, 'trade permitted');
                 });
             });
         };
