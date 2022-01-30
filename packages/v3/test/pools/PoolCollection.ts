@@ -10,7 +10,6 @@ import Contracts, {
     TestBancorNetwork,
     TestERC20Token,
     TestMasterPool,
-    TestPoolAverageRate,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
     MasterPool
@@ -18,6 +17,7 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
+    PPT_RESOLUTION,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
     ZERO_FRACTION,
@@ -2324,17 +2324,16 @@ describe('PoolCollection', () => {
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
                                 const expectedAverageRate = async (poolData: PoolData, time: number) => {
-                                    const averageRate = poolData.averageRate;
+                                    const averageRate = poolData.averageRate.rate;
                                     if (time > 0) {
                                         const spotRate = {
                                             n: poolData.liquidity.networkTokenTradingLiquidity,
                                             d: poolData.liquidity.baseTokenTradingLiquidity
                                         };
-                                        const newAverageRate = await poolAverageRate.calcAverageRate(
-                                            averageRate.rate,
-                                            spotRate,
-                                            AVERAGE_RATE_WEIGHT_PPT
-                                        );
+                                        const newAverageRate = {
+                                            n: averageRate.n.mul(spotRate.d).mul(AVERAGE_RATE_WEIGHT_PPT).add(averageRate.d.mul(spotRate.n).mul(PPT_RESOLUTION - AVERAGE_RATE_WEIGHT_PPT)),
+                                            d: averageRate.d.mul(spotRate.d).mul(PPT_RESOLUTION)
+                                        };
                                         const scale = BigNumber.max(newAverageRate.n, newAverageRate.d)
                                             .sub(1)
                                             .div(BigNumber.from(2).pow(112).sub(1))
@@ -2344,7 +2343,7 @@ describe('PoolCollection', () => {
                                             rate: { n: newAverageRate.n.div(scale), d: newAverageRate.d.div(scale) }
                                         };
                                     }
-                                    return averageRate;
+                                    return poolData.averageRate;
                                 };
 
                                 const expectedTargetAmountAndFee = (sourceAmount: BigNumber, poolData: PoolData) => {
@@ -2367,11 +2366,7 @@ describe('PoolCollection', () => {
                                     return { amount: amount.sub(feeAmount), feeAmount };
                                 };
 
-                                let poolAverageRate: TestPoolAverageRate;
-
                                 beforeEach(async () => {
-                                    poolAverageRate = await Contracts.TestPoolAverageRate.deploy();
-
                                     const networkTokenTradingLiquidity = isSourceNetworkToken
                                         ? sourceBalance
                                         : targetBalance;

@@ -12,7 +12,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
+import { Fraction, Fraction112, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -48,8 +48,6 @@ import {
 } from "./interfaces/IPoolCollection.sol";
 
 import { IMasterPool } from "./interfaces/IMasterPool.sol";
-
-import { PoolAverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
@@ -1306,13 +1304,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             d: liquidity.baseTokenTradingLiquidity
         });
 
-        Fraction memory averageRate = fromFraction112(averageRateInfo.rate);
-
-        if (averageRateInfo.time < _time()) {
+        Fraction112 memory averageRate = averageRateInfo.rate;
+        if (averageRateInfo.time != _time()) {
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return PoolAverageRate.isSpotRateStable(spotRate, averageRate, _networkSettings.averageRateMaxDeviationPPM());
+        return MathEx.isInRange(fromFraction112(averageRate), spotRate, _networkSettings.averageRateMaxDeviationPPM());
     }
 
     /**
@@ -1324,7 +1321,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         if (data.averageRate.time != time) {
             data.averageRate = AverageRate({
                 time: time,
-                rate: toFraction112(_calcAverageRate(fromFraction112(data.averageRate.rate), spotRate))
+                rate: _calcAverageRate(data.averageRate.rate, spotRate)
             });
         }
     }
@@ -1332,11 +1329,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev calculates the average rate
      */
-    function _calcAverageRate(Fraction memory averageRate, Fraction memory spotRate)
-        private
-        pure
-        returns (Fraction memory)
-    {
-        return PoolAverageRate.calcAverageRate(averageRate, spotRate, AVERAGE_RATE_WEIGHT_PPT);
+    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate) private pure returns (Fraction112 memory) {
+        return toFraction112(MathEx.weightedAverage(fromFraction112(averageRate), spotRate, AVERAGE_RATE_WEIGHT_PPT));
     }
 }

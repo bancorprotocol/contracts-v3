@@ -9,6 +9,22 @@ contract TestMathEx {
         return MathEx.exp(f);
     }
 
+    function weightedAverage(
+        Fraction memory fraction1,
+        Fraction memory fraction2,
+        uint16 weight1PPT
+    ) external pure returns (Fraction memory) {
+        return MathEx.weightedAverage(fraction1, fraction2, weight1PPT);
+    }
+
+    function isInRange(
+        Fraction memory baseSample,
+        Fraction memory offsetSample,
+        uint32 maxDeviationPPM
+    ) external pure returns (bool) {
+        return MathEx.isInRange(baseSample, offsetSample, maxDeviationPPM);
+    }
+
     function mulDivF(
         uint256 x,
         uint256 y,
