@@ -37,11 +37,6 @@ type ToDecimalReturn<T> = T extends Fraction<BigNumber>
     ? Decimal
     : never;
 
-export interface AverageRate<T> {
-    rate: Fraction<T>;
-    time: number;
-}
-
 // eslint-disable-next-line no-prototype-builtins
 export const isFraction = (v: any) => v.hasOwnProperty('n') && v.hasOwnProperty('d');
 
