@@ -31,7 +31,7 @@ import {
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, toPPT, toPPM } from '../../utils/Types';
+import { toWei, toPPM } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
 import { transfer, getBalance } from '..//helpers/Utils';
 import {
