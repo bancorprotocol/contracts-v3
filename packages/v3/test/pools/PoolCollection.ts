@@ -32,7 +32,7 @@ import {
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPT, toPPM } from '../../utils/Types';
-import { latest } from '..//helpers/Time';
+import { latestBlockNumber } from '..//helpers/BlockNumber';
 import { transfer, getBalance } from '..//helpers/Utils';
 import {
     createPool,
@@ -52,7 +52,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe('PoolCollection', () => {
+describe.only('PoolCollection', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
     const MAX_DEVIATION = toPPM(1);
@@ -83,7 +83,7 @@ describe('PoolCollection', () => {
         const { liquidity } = data;
 
         expect(data.tradingEnabled).to.be.false;
-        expect(data.averageRate.time).to.equal(0);
+        expect(data.averageRate.blockNumber).to.equal(0);
         expect(data.averageRate.rate).to.equal(ZERO_FRACTION);
 
         expect(liquidity.networkTokenTradingLiquidity).to.equal(0);
@@ -422,7 +422,7 @@ describe('PoolCollection', () => {
                     expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
                     expect(pool.tradingEnabled).to.be.false;
                     expect(pool.depositingEnabled).to.be.true;
-                    expect(pool.averageRate.time).to.equal(0);
+                    expect(pool.averageRate.blockNumber).to.equal(0);
                     expect(pool.averageRate.rate).to.equal(ZERO_FRACTION);
                     expect(pool.depositLimit).to.equal(0);
 
@@ -640,7 +640,7 @@ describe('PoolCollection', () => {
                 const data = await poolCollection.poolData(token.address);
                 const { liquidity } = data;
 
-                expect(data.averageRate.time).to.equal(await poolCollection.currentTime());
+                expect(data.averageRate.blockNumber).to.equal(await poolCollection.currentBlockNumber());
                 expect(data.averageRate.rate).to.equal(FUNDING_RATE);
 
                 expect(data.tradingEnabled).to.be.true;
@@ -903,7 +903,7 @@ describe('PoolCollection', () => {
                 context('with an initialized average rate', () => {
                     beforeEach(async () => {
                         await poolCollection.setAverageRateT(token.address, {
-                            time: 1000,
+                            blockNumber: 1000,
                             rate: {
                                 n: 1234,
                                 d: 100
@@ -913,7 +913,7 @@ describe('PoolCollection', () => {
                         const data = await poolCollection.poolData(token.address);
                         const { averageRate } = data;
 
-                        expect(averageRate.time).to.be.gte(0);
+                        expect(averageRate.blockNumber).to.be.gte(0);
                         expect(averageRate.rate.n).to.be.gte(0);
                         expect(averageRate.rate.d).to.be.gte(0);
                     });
@@ -1030,7 +1030,7 @@ describe('PoolCollection', () => {
 
                     await transfer(deployer, token, masterVault, AMOUNT.mul(COUNT));
 
-                    await poolCollection.setTime(await latest());
+                    await poolCollection.setBlockNumber(await latestBlockNumber());
                 });
 
                 enum TradingLiquidityState {
@@ -1294,7 +1294,7 @@ describe('PoolCollection', () => {
                                 });
 
                                 await poolCollection.setAverageRateT(token.address, {
-                                    time: await poolCollection.currentTime(),
+                                    blockNumber: await poolCollection.currentBlockNumber(),
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
                                         d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
@@ -1314,7 +1314,7 @@ describe('PoolCollection', () => {
                                 const { liquidity } = await poolCollection.poolData(token.address);
 
                                 await poolCollection.setAverageRateT(token.address, {
-                                    time: await poolCollection.currentTime(),
+                                    blockNumber: await poolCollection.currentBlockNumber(),
                                     rate: {
                                         n: liquidity.networkTokenTradingLiquidity,
                                         d: liquidity.baseTokenTradingLiquidity
@@ -1414,7 +1414,7 @@ describe('PoolCollection', () => {
 
                 await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
-                await poolCollection.setTime(await latest());
+                await poolCollection.setBlockNumber(await latestBlockNumber());
             });
 
             enum TradingLiquidityState {
@@ -1723,7 +1723,7 @@ describe('PoolCollection', () => {
 
             await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
 
-            await poolCollection.setTime(await latest());
+            await poolCollection.setBlockNumber(await latestBlockNumber());
         });
 
         const testTrading = (isSourceNetworkToken: boolean) => {
@@ -2313,19 +2313,19 @@ describe('PoolCollection', () => {
                         targetBalance: BigNumber;
                         tradingFeePPM: number;
                         amount: BigNumber;
-                        intervals: number[];
+                        blockNumbers: number[];
                     }
 
                     const testTrading = (spec: Spec) => {
-                        const { sourceBalance, targetBalance, tradingFeePPM, amount, intervals } = spec;
+                        const { sourceBalance, targetBalance, tradingFeePPM, amount, blockNumbers } = spec;
 
-                        context(
-                            `with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${intervals}]`,
+                        context.only(
+                            `with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${blockNumbers}]`,
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
-                                const expectedAverageRate = async (poolData: PoolData, time: number) => {
-                                    const averageRate = poolData.averageRate.rate;
-                                    if (time > 0) {
+                                const expectedAverageRate = async (poolData: PoolData, blockNumber: number) => {
+                                    if (blockNumber != poolData.averageRate.blockNumber) {
+                                        const averageRate = poolData.averageRate.rate;
                                         const spotRate = {
                                             n: poolData.liquidity.networkTokenTradingLiquidity,
                                             d: poolData.liquidity.baseTokenTradingLiquidity
@@ -2339,7 +2339,7 @@ describe('PoolCollection', () => {
                                             .div(BigNumber.from(2).pow(112).sub(1))
                                             .add(1);
                                         return {
-                                            time: time,
+                                            blockNumber: blockNumber,
                                             rate: { n: newAverageRate.n.div(scale), d: newAverageRate.d.div(scale) }
                                         };
                                     }
@@ -2376,7 +2376,7 @@ describe('PoolCollection', () => {
                                     await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
 
                                     await poolCollection.setAverageRateT(reserveToken.address, {
-                                        time: 0,
+                                        blockNumber: 0,
                                         rate: { n: networkTokenTradingLiquidity, d: baseTokenTradingLiquidity }
                                     });
 
@@ -2384,8 +2384,8 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should perform a trade', async () => {
-                                    for (const interval of intervals) {
-                                        await poolCollection.setTime(interval);
+                                    for (const blockNumber of blockNumbers) {
+                                        await poolCollection.setBlockNumber(blockNumber);
 
                                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity: prevLiquidity } = prevPoolData;
@@ -2499,9 +2499,9 @@ describe('PoolCollection', () => {
                                         // verify that the average rate has been updated
                                         const expectedNewAverageRate = await expectedAverageRate(
                                             prevPoolData,
-                                            interval
+                                            blockNumber
                                         );
-                                        expect(poolData.averageRate.time).to.equal(expectedNewAverageRate.time);
+                                        expect(poolData.averageRate.blockNumber).to.equal(expectedNewAverageRate.blockNumber);
                                         expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
                                     }
                                 });
@@ -2519,7 +2519,7 @@ describe('PoolCollection', () => {
                                             targetBalance: toWei(targetBalance),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             amount: toWei(amount),
-                                            intervals: [0, 200, 500]
+                                            blockNumbers: [0, 200, 500, 500, 600]
                                         });
                                     }
                                 }
@@ -2527,7 +2527,7 @@ describe('PoolCollection', () => {
                         }
                     });
 
-                    describe('@stress tests', () => {
+                    describe('stress tests', () => {
                         for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
                             for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
                                 for (const tradingFeePercent of [0, 1, 10]) {
@@ -2537,7 +2537,7 @@ describe('PoolCollection', () => {
                                             targetBalance: toWei(targetBalance),
                                             tradingFeePPM: toPPM(tradingFeePercent),
                                             amount: toWei(amount),
-                                            intervals: [0, 1, 2, 10, 100, 200, 400, 500]
+                                            blockNumbers: [0, 1, 2, 10, 10, 100, 200, 400, 500]
                                         });
                                     }
                                 }

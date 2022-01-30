@@ -15,7 +15,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction, Fraction112, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
-import { Time } from "../utility/Time.sol";
+import { BlockNumber } from "../utility/BlockNumber.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
@@ -72,7 +72,7 @@ struct WithdrawalAmounts {
  *
  * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils {
+contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
     using ReserveTokenLibrary for ReserveToken;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -345,7 +345,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: false,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: zeroFraction112() }),
+            averageRate: AverageRate({ blockNumber: 0, rate: zeroFraction112() }),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -494,7 +494,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             revert InsufficientLiquidity();
         }
 
-        data.averageRate = AverageRate({ time: _time(), rate: toFraction112(fundingRate) });
+        data.averageRate = AverageRate({ blockNumber: _blockNumber(), rate: toFraction112(fundingRate) });
 
         data.tradingEnabled = true;
 
@@ -1017,7 +1017,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = data.averageRate.time != 0 && isFraction112Positive(averageRate.rate);
+        bool isAverageRateValid = data.averageRate.blockNumber != 0 && isFraction112Positive(averageRate.rate);
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
@@ -1193,7 +1193,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.liquidity.baseTokenTradingLiquidity = 0;
 
         // reset the recent average rage
-        data.averageRate = AverageRate({ time: 0, rate: zeroFraction112() });
+        data.averageRate = AverageRate({ blockNumber: 0, rate: zeroFraction112() });
 
         // ensure that trading is disabled
         if (data.tradingEnabled) {
@@ -1305,7 +1305,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         });
 
         Fraction112 memory averageRate = averageRateInfo.rate;
-        if (averageRateInfo.time != _time()) {
+        if (averageRateInfo.blockNumber != _blockNumber()) {
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
@@ -1316,11 +1316,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @dev updates the average rate
      */
     function _updateAverageRate(Pool storage data, Fraction memory spotRate) private {
-        uint32 time = _time();
+        uint32 blockNumber = _blockNumber();
 
-        if (data.averageRate.time != time) {
+        if (data.averageRate.blockNumber != blockNumber) {
             data.averageRate = AverageRate({
-                time: time,
+                blockNumber: blockNumber,
                 rate: _calcAverageRate(data.averageRate.rate, spotRate)
             });
         }

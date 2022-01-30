@@ -16,13 +16,13 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/interfaces/IPoolCollection.sol";
 
-import { Time } from "../utility/Time.sol";
+import { BlockNumber } from "../utility/BlockNumber.sol";
 
 import { ReserveToken } from "../token/ReserveToken.sol";
 
-import { TestTime } from "./TestTime.sol";
+import { TestBlockNumber } from "./TestBlockNumber.sol";
 
-contract TestPoolCollection is PoolCollection, TestTime {
+contract TestPoolCollection is PoolCollection, TestBlockNumber {
     uint16 private immutable _version;
 
     constructor(
@@ -86,7 +86,7 @@ contract TestPoolCollection is PoolCollection, TestTime {
         _masterPool.requestFunding(contextId, pool, networkTokenAmount);
     }
 
-    function _time() internal view virtual override(Time, TestTime) returns (uint32) {
-        return TestTime._time();
+    function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {
+        return TestBlockNumber._blockNumber();
     }
 }
