@@ -1,6 +1,6 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
-import { Fraction, toUint512, fromUint512 } from '../../utils/Types';
+import { Fraction, toUint512, fromUint512, toString, toPPT, toPPM } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -8,6 +8,10 @@ import { BigNumber } from 'ethers';
 
 const EXP_INPUT_TOO_HIGH = Exponentiation.INPUT_TOO_HIGH;
 
+const MAX_UINT32 = BigNumber.from(2).pow(32).sub(1);
+const MAX_UINT64 = BigNumber.from(2).pow(64).sub(1);
+const MAX_UINT96 = BigNumber.from(2).pow(96).sub(1);
+const MAX_UINT112 = BigNumber.from(2).pow(112).sub(1);
 const MAX_UINT128 = BigNumber.from(2).pow(128).sub(1);
 const MAX_UINT256 = BigNumber.from(2).pow(256).sub(1);
 
@@ -33,6 +37,8 @@ const comp512Funcs = {
     lte512: (x: BigNumber, y: BigNumber) => x.lte(y)
 };
 
+const toDecimal = (fraction: Fraction<BigNumber>) => new Decimal(fraction.n.toString()).div(fraction.d.toString());
+
 describe('MathEx', () => {
     let mathContract: TestMathEx;
 
@@ -55,6 +61,25 @@ describe('MathEx', () => {
             } else {
                 await expect(mathContract.exp(f)).to.revertedWith('Overflow');
             }
+        });
+    };
+
+    const testWeightedAverage = (fraction1: Fraction<BigNumber>, fraction2: Fraction<BigNumber>, weight1: number, maxRelativeError: Decimal) => {
+        it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}%)`, async () => {
+            const expected = toDecimal(fraction1).mul(weight1).add(toDecimal(fraction2).mul(100 - weight1)).div(100);
+            const actual = await mathContract.weightedAverage(fraction1, fraction2, toPPT(weight1));
+            expect(actual).to.almostEqual({ n: expected, d: 1 }, { maxRelativeError });
+        });
+    };
+
+    const testIsInRange = (baseSample: Fraction<BigNumber>, offsetSample: Fraction<BigNumber>, maxDeviation: number) => {
+        it(`isInRange(${toString(baseSample)}, ${toString(offsetSample)}, ${maxDeviation}%)`, async () => {
+            const mid = toDecimal(offsetSample);
+            const min = toDecimal(baseSample).mul(100 - maxDeviation).div(100);
+            const max = toDecimal(baseSample).mul(100 + maxDeviation).div(100);
+            const expected = min.lte(mid) && mid.lte(max);
+            const actual = await mathContract.isInRange(baseSample, offsetSample, toPPM(maxDeviation));
+            expect(actual).to.equal(expected);
         });
     };
 
@@ -149,6 +174,34 @@ describe('MathEx', () => {
             }
         }
 
+        for (const n of [MAX_UINT64, MAX_UINT96]) {
+            for (const d of [MAX_UINT64, MAX_UINT96]) {
+                const fraction1 = { n, d };
+                for (const n of [MAX_UINT64, MAX_UINT96]) {
+                    for (const d of [MAX_UINT64, MAX_UINT96]) {
+                        const fraction2 = { n, d };
+                        for (const weight1 of [20, 80]) {
+                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('5e-155'));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const n of [MAX_UINT64, MAX_UINT96]) {
+            for (const d of [MAX_UINT64, MAX_UINT96]) {
+                const baseSample = { n, d };
+                for (const n of [MAX_UINT64, MAX_UINT96]) {
+                    for (const d of [MAX_UINT64, MAX_UINT96]) {
+                        const offsetSample = { n, d };
+                        for (const maxDeviation of [2, 5]) {
+                            testIsInRange(baseSample, offsetSample, maxDeviation);
+                        }
+                    }
+                }
+            }
+        }
+
         for (const px of [128, 192, 256]) {
             for (const py of [128, 192, 256]) {
                 for (const pz of [128, 192, 256]) {
@@ -179,6 +232,62 @@ describe('MathEx', () => {
         for (let n = 0; n < 100; n++) {
             for (let d = 1; d < 100; d++) {
                 testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            }
+        }
+
+        for (const n of [0, 1, 2, 3]) {
+            for (const d of [1, 2, 3, 4]) {
+                const fraction1 = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                for (const n of [0, 1, 2, 3]) {
+                    for (const d of [1, 2, 3, 4]) {
+                        const fraction2 = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                        for (const weight1 of [0, 20, 80, 100]) {
+                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('4e-155'));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+            for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT112]) {
+                const fraction1 = { n, d };
+                for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                    for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                        const fraction2 = { n, d };
+                        for (const weight1 of [0, 20, 80, 100]) {
+                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('2e-154'));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const n of [0, 1, 2, 3]) {
+            for (const d of [1, 2, 3, 4]) {
+                const baseSample = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                for (const n of [0, 1, 2, 3]) {
+                    for (const d of [1, 2, 3, 4]) {
+                        const offsetSample = { n: BigNumber.from(n), d: BigNumber.from(d) };
+                        for (const maxDeviation of [0, 2, 5, 10]) {
+                            testIsInRange(baseSample, offsetSample, maxDeviation);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+            for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                const baseSample = { n, d };
+                for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                    for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
+                        const offsetSample = { n, d };
+                        for (const maxDeviation of [0, 2, 5, 10]) {
+                            testIsInRange(baseSample, offsetSample, maxDeviation);
+                        }
+                    }
+                }
             }
         }
 
