@@ -2,7 +2,7 @@
 pragma solidity 0.8.11;
 
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
-import { PPT_RESOLUTION, PPM_RESOLUTION } from "./Constants.sol";
+import { PPM_RESOLUTION } from "./Constants.sol";
 
 uint256 constant ONE = 1 << 127;
 
@@ -97,12 +97,13 @@ library MathEx {
     function weightedAverage(
         Fraction memory fraction1,
         Fraction memory fraction2,
-        uint16 weight1PPT
+        uint256 weight1,
+        uint256 weight2
     ) internal pure returns (Fraction memory) {
         return
             Fraction({
-                n: fraction1.n * fraction2.d * weight1PPT + fraction1.d * fraction2.n * (PPT_RESOLUTION - weight1PPT),
-                d: fraction1.d * fraction2.d * PPT_RESOLUTION
+                n: fraction1.n * fraction2.d * weight1 + fraction1.d * fraction2.n * weight2,
+                d: fraction1.d * fraction2.d * (weight1 + weight2)
             });
     }
 

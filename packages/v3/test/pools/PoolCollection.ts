@@ -17,13 +17,13 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
-    PPT_RESOLUTION,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
     ZERO_FRACTION,
     ZERO_BYTES32,
     TradingStatusUpdateReason,
-    AVERAGE_RATE_WEIGHT_PPT,
+    EMA_AVERAGE_RATE_WEIGHT,
+    EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
@@ -31,7 +31,7 @@ import {
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, toPPT, toPPM } from '../../utils/Types';
+import { toWei, toPPM } from '../../utils/Types';
 import { latest } from '..//helpers/Time';
 import { transfer, getBalance } from '..//helpers/Utils';
 import {
@@ -2331,8 +2331,13 @@ describe('PoolCollection', () => {
                                             d: poolData.liquidity.baseTokenTradingLiquidity
                                         };
                                         const newAverageRate = {
-                                            n: averageRate.n.mul(spotRate.d).mul(AVERAGE_RATE_WEIGHT_PPT).add(averageRate.d.mul(spotRate.n).mul(PPT_RESOLUTION - AVERAGE_RATE_WEIGHT_PPT)),
-                                            d: averageRate.d.mul(spotRate.d).mul(PPT_RESOLUTION)
+                                            n: averageRate.n
+                                                .mul(spotRate.d)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT)
+                                                .add(averageRate.d.mul(spotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
+                                            d: averageRate.d
+                                                .mul(spotRate.d)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
                                         };
                                         const scale = BigNumber.max(newAverageRate.n, newAverageRate.d)
                                             .sub(1)

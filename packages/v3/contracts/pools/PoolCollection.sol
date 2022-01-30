@@ -85,7 +85,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
-    uint16 private constant AVERAGE_RATE_WEIGHT_PPT = 800; // 80%
+    uint16 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
+    uint16 private constant EMA_SPOT_RATE_WEIGHT = 1;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
@@ -1319,17 +1320,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint32 time = _time();
 
         if (data.averageRate.time != time) {
-            data.averageRate = AverageRate({
-                time: time,
-                rate: _calcAverageRate(data.averageRate.rate, spotRate)
-            });
+            data.averageRate = AverageRate({ time: time, rate: _calcAverageRate(data.averageRate.rate, spotRate) });
         }
     }
 
     /**
      * @dev calculates the average rate
      */
-    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate) private pure returns (Fraction112 memory) {
-        return toFraction112(MathEx.weightedAverage(fromFraction112(averageRate), spotRate, AVERAGE_RATE_WEIGHT_PPT));
+    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate)
+        private
+        pure
+        returns (Fraction112 memory)
+    {
+        return
+            toFraction112(
+                MathEx.weightedAverage(
+                    fromFraction112(averageRate),
+                    spotRate,
+                    EMA_AVERAGE_RATE_WEIGHT,
+                    EMA_SPOT_RATE_WEIGHT
+                )
+            );
     }
 }

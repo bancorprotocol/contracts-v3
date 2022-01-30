@@ -1,4 +1,4 @@
-import { MAX_UINT256, PPT_RESOLUTION, PPM_RESOLUTION } from './Constants';
+import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
 import { DEFAULT_DECIMALS } from './TokenData';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -105,9 +105,6 @@ export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
 
     return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
 };
-
-export const toPPT = (percent: number): number => percent * (PPT_RESOLUTION / 100);
-export const fromPPT = (ppt: number): number => ppt / (PPT_RESOLUTION / 100);
 
 export const toPPM = (percent: number): number => percent * (PPM_RESOLUTION / 100);
 export const fromPPM = (ppm: number): number => ppm / (PPM_RESOLUTION / 100);
