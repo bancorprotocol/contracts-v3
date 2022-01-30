@@ -817,7 +817,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer network tokens to on its behalf
+     * - the caller must have approved the network to transfer network tokens to on its behalf
      */
     function _depositNetworkTokenFor(
         bytes32 contextId,
@@ -841,7 +841,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer base tokens to on its behalf
+     * - the caller must have approved the network to transfer base tokens to on its behalf
      */
     function _depositBaseTokenFor(
         bytes32 contextId,
