@@ -137,7 +137,7 @@ export const fundAccount = async (account: string) => {
 };
 
 // remove internal versioning (== a contract name ends in "V" and some number) from the name of the contract
-const normalizeContractName = (contractName: string) => contractName.replace(/V\d+$/, '');
+const normalizedContractName = (contractName: string) => contractName.replace(/V\d+$/, '');
 
 interface SaveTypeOptions {
     name: ContractName;
@@ -199,7 +199,7 @@ export const deploy = async (options: DeployOptions) => {
         };
     }
 
-    const contractName = normalizeContractName(contract || name);
+    const contractName = normalizedContractName(contract || name);
     const res = await deployContract(name, {
         contract: contractName,
         from,
@@ -291,7 +291,7 @@ interface Deployment {
 export const save = async (deployment: Deployment) => {
     const { name, contract, address } = deployment;
 
-    const { abi } = await getExtendedArtifact(normalizeContractName(contract || name));
+    const { abi } = await getExtendedArtifact(normalizedContractName(contract || name));
 
     return saveContract(name, { abi, address });
 };
