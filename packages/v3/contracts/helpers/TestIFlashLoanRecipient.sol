@@ -37,10 +37,8 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
 
     receive() external payable {}
 
-    function snapshot(IERC20 erc20Token) external {
-        Token token = Token(address(erc20Token));
-
-        _snapshots[erc20Token] = token.balanceOf(address(this));
+    function snapshot(IERC20 token) external {
+        _snapshots[token] = Token(address(token)).balanceOf(address(this));
     }
 
     function callbackData() external view returns (CallbackData memory) {
