@@ -2561,11 +2561,11 @@ describe('BancorNetwork', () => {
                 token: IERC20,
                 tokenAddress: string,
                 amount: BigNumber,
-                isNative: boolean,
+                isNativeToken: boolean,
                 from: SignerWithAddress
             ) => {
                 let value = BigNumber.from(0);
-                if (isNative) {
+                if (isNativeToken) {
                     value = amount;
                 } else {
                     await token.connect(from).approve(liquidityProtection.address, amount);
@@ -2593,10 +2593,10 @@ describe('BancorNetwork', () => {
             const getPoolStats = async (
                 poolToken: TokenWithAddress,
                 reserveToken: TokenWithAddress,
-                isNative: boolean
+                isNativeToken: boolean
             ) => {
                 const poolTokenAddress = poolToken.address;
-                const reserveTokenAddress = isNative ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
+                const reserveTokenAddress = isNativeToken ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
                     totalPoolAmount: await liquidityProtectionStats.totalPoolAmount(poolTokenAddress),
                     totalReserveAmount: await liquidityProtectionStats.totalReserveAmount(
@@ -2610,10 +2610,10 @@ describe('BancorNetwork', () => {
                 provider: SignerWithAddress,
                 poolToken: TokenWithAddress,
                 reserveToken: TokenWithAddress,
-                isNative: boolean
+                isNativeToken: boolean
             ) => {
                 const poolTokenAddress = poolToken.address;
-                const reserveTokenAddress = isNative ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
+                const reserveTokenAddress = isNativeToken ? NATIVE_TOKEN_ADDRESS : reserveToken.address;
                 return {
                     totalProviderAmount: await liquidityProtectionStats.totalProviderAmount(
                         provider.address,
@@ -2634,10 +2634,12 @@ describe('BancorNetwork', () => {
                 }
             };
 
-            const initLegacySystem = async (isNative: boolean) => {
+            const initLegacySystem = async (isNativeToken: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
-                baseToken = (await createToken(new TokenData(isNative ? TokenSymbol.ETH : TokenSymbol.TKN))) as IERC20;
+                baseToken = (await createToken(
+                    new TokenData(isNativeToken ? TokenSymbol.ETH : TokenSymbol.TKN)
+                )) as IERC20;
 
                 ({
                     checkpointStore,
@@ -2674,7 +2676,7 @@ describe('BancorNetwork', () => {
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
 
                 // ensure that the trading is enabled with sufficient funding
-                if (isNative) {
+                if (isNativeToken) {
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                 } else {
                     const reserveToken = await Contracts.TestERC20Token.attach(baseToken.address);
@@ -2688,7 +2690,7 @@ describe('BancorNetwork', () => {
                 await networkToken.approve(converter.address, reserve2Amount);
 
                 let value = BigNumber.from(0);
-                if (isNative) {
+                if (isNativeToken) {
                     value = reserve1Amount;
                 } else {
                     await baseToken.approve(converter.address, reserve1Amount);
