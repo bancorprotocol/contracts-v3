@@ -1,4 +1,4 @@
-import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../typechain-types';
+import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../components/Contracts';
 import { RoleIds } from '../../utils/Roles';
 import { expect } from 'chai';
 import { utils } from 'ethers';
@@ -12,14 +12,27 @@ export const expectRole = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
     roleId: typeof RoleIds[number],
     adminRole: string,
-    initialMembers: string[] = []
+    members: string[] = []
 ) => {
     expect(await contract.getRoleAdmin(roleId)).to.equal(adminRole);
-    expect(await contract.getRoleMemberCount(roleId)).to.equal(initialMembers?.length);
 
-    for (const initialMember of initialMembers) {
-        expect(await contract.hasRole(roleId, initialMember)).to.be.true;
+    await expectRoleMembers(contract, roleId, members);
+};
+
+export const expectRoleMembers = async (
+    contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
+    roleId: typeof RoleIds[number],
+    members: string[] = []
+) => {
+    const actualMembers = [];
+    const memberCount = (await contract.getRoleMemberCount(roleId)).toNumber();
+
+    for (let i = 0; i < memberCount; i++) {
+        actualMembers.push(await contract.getRoleMember(roleId, i));
     }
+
+    expect(actualMembers).to.have.lengthOf(members.length);
+    expect(actualMembers).to.have.members(members);
 };
 
 export const expectRoles = async (

@@ -1,6 +1,5 @@
-import Contracts from '../../components/Contracts';
+import Contracts, { IERC20, TestVault, TestERC20Burnable } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { IERC20, TestVault, TestERC20Burnable } from '../../typechain-types';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -305,7 +304,7 @@ describe('Vault', () => {
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                return testAuthentication(new TokenData(symbol));
+                testAuthentication(new TokenData(symbol));
             });
         }
     });

@@ -8,7 +8,6 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { uncheckedInc } from "../utility/MathEx.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
@@ -175,7 +174,7 @@ contract AutoCompoundingStakingRewards is
         uint256 numPrograms = _programByPool.length();
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
-        for (uint256 i = 0; i < numPrograms; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < numPrograms; i++) {
             list[i] = _programs[ReserveToken.wrap(_programByPool.at(i))];
         }
 

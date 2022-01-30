@@ -5,8 +5,6 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { IERC20Burnable } from "./interfaces/IERC20Burnable.sol";
 
-error InsufficientAllowance();
-
 /**
  * @dev This is an adapted clone of the OZ's ERC20Burnable extension which is unfortunately required so that it can be
  * explicitly specified in interfaces via our new IERC20Burnable interface.
@@ -25,14 +23,7 @@ abstract contract ERC20Burnable is ERC20, IERC20Burnable {
      * @inheritdoc IERC20Burnable
      */
     function burnFrom(address recipient, uint256 amount) external virtual {
-        uint256 currentAllowance = allowance(recipient, msg.sender);
-        if (currentAllowance < amount) {
-            revert InsufficientAllowance();
-        }
-
-        unchecked {
-            _approve(recipient, msg.sender, currentAllowance - amount);
-        }
+        _approve(recipient, msg.sender, allowance(recipient, msg.sender) - amount);
         _burn(recipient, amount);
     }
 }

@@ -15,7 +15,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
-import { MathEx, uncheckedInc } from "../utility/MathEx.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -33,13 +33,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
 
-// prettier-ignore
-import {
-    IPoolCollection,
-    PoolLiquidity,
-    TradeAmountsWithLiquidity
-} from "../pools/interfaces/IPoolCollection.sol";
-
+import { IPoolCollection, TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 // prettier-ignore
@@ -185,13 +179,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when trading/flash-loan fees are collected
      */
-    event FeesCollected(
-        bytes32 indexed contextId,
-        ReserveToken indexed token,
-        uint8 indexed feeType,
-        uint256 amount,
-        uint256 stakedBalance
-    );
+    event FeesCollected(bytes32 indexed contextId, ReserveToken indexed token, uint8 indexed feeType, uint256 amount);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -403,7 +391,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function poolCollections() external view returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         IPoolCollection[] memory list = new IPoolCollection[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; ++i) {
             list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
@@ -422,7 +410,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function liquidityPools() external view returns (ReserveToken[] memory) {
         uint256 length = _liquidityPools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = ReserveToken.wrap(_liquidityPools.at(i));
         }
         return list;
@@ -480,7 +468,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function upgradePools(ReserveToken[] calldata pools) external nonReentrant {
         uint256 length = pools.length;
-        for (uint256 i = 0; i < length; i = uncheckedInc(i)) {
+        for (uint256 i = 0; i < length; i++) {
             ReserveToken pool = pools[i];
 
             // request the pool collection upgrader to upgrade the pool and get the new pool collection it exists in
@@ -668,34 +656,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             token.safeTransfer(payable(address(_masterVault)), returnedAmount);
         }
 
-        uint256 stakedBalance;
-
         // notify the pool of accrued fees
         if (_isNetworkToken(token)) {
             IMasterPool cachedMasterPool = _masterPool;
 
             cachedMasterPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
-
-            stakedBalance = cachedMasterPool.stakedBalance();
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
             poolCollection.onFeesCollected(token, feeAmount);
-
-            stakedBalance = poolCollection.poolLiquidity(token).stakedBalance;
         }
 
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
 
         emit FlashLoanCompleted({ contextId: contextId, token: token, borrower: msg.sender, amount: amount });
 
-        emit FeesCollected({
-            contextId: contextId,
-            token: token,
-            feeType: FLASH_LOAN_FEE,
-            amount: feeAmount,
-            stakedBalance: stakedBalance
-        });
+        emit FeesCollected({ contextId: contextId, token: token, feeType: FLASH_LOAN_FEE, amount: feeAmount });
     }
 
     /**
@@ -841,7 +817,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer network tokens to on its behalf
+     * - the caller must have approved the network to transfer network tokens to on its behalf
      */
     function _depositNetworkTokenFor(
         bytes32 contextId,
@@ -865,7 +841,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved have approved the network to transfer base tokens to on its behalf
+     * - the caller must have approved the network to transfer base tokens to on its behalf
      */
     function _depositBaseTokenFor(
         bytes32 contextId,
@@ -1051,7 +1027,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         (ReserveToken sourceToken, ReserveToken targetToken) = isSourceNetworkToken
             ? (masterPool, pool)
             : (pool, masterPool);
-        TradeAmountsWithLiquidity memory tradeAmounts = _poolCollection(pool).trade(
+        TradeAmounts memory tradeAmounts = _poolCollection(pool).trade(
             contextId,
             sourceToken,
             targetToken,
@@ -1080,10 +1056,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId: contextId,
             token: targetToken,
             feeType: TRADING_FEE,
-            amount: tradeAmounts.feeAmount,
-            stakedBalance: isSourceNetworkToken
-                ? tradeAmounts.liquidity.stakedBalance
-                : cachedMasterPool.stakedBalance()
+            amount: tradeAmounts.feeAmount
         });
 
         return tradeAmounts.amount;

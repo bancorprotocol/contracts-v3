@@ -1,6 +1,4 @@
-import Contracts from '../../components/Contracts';
-import { Profiler } from '../../components/Profiler';
-import {
+import Contracts, {
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
@@ -15,7 +13,8 @@ import {
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
-} from '../../typechain-types';
+} from '../../components/Contracts';
+import { Profiler } from '../../components/Profiler';
 import {
     MAX_UINT256,
     PPM_RESOLUTION,
@@ -793,7 +792,7 @@ describe('Profile @profile', () => {
 
             for (const sourceBalance of [toWei(1_000_000), toWei(50_000_000)]) {
                 for (const targetBalance of [toWei(1_000_000), toWei(50_000_000)]) {
-                    for (const amount of [10_000, toWei(500_000)]) {
+                    for (const amount of [toWei(500_000)]) {
                         const TRADING_FEES = [0, 5];
                         for (const tradingFeePercent of TRADING_FEES) {
                             // if either the source or the target token is the network token - only test fee in one of
@@ -1158,7 +1157,7 @@ describe('Profile @profile', () => {
 
             switch (distributionType) {
                 case StakingRewardsDistributionType.Flat:
-                    for (const programDuration of [duration.weeks(12), duration.years(1)]) {
+                    for (const programDuration of [duration.weeks(12)]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
                             () => {
@@ -1186,27 +1185,23 @@ describe('Profile @profile', () => {
             }
         };
 
-        const testRewardsMatrix = (providerStakes: BigNumberish[], totalRewards: BigNumberish[]) => {
+        const testRewardsMatrix = (providerStake: BigNumberish, totalReward: BigNumberish) => {
             const distributionTypes = Object.values(StakingRewardsDistributionType).filter(
                 (v) => typeof v === 'number'
             ) as number[];
 
             for (const symbol of [TokenSymbol.BNT, TokenSymbol.TKN, TokenSymbol.ETH]) {
                 for (const distributionType of distributionTypes) {
-                    for (const providerStake of providerStakes) {
-                        for (const totalReward of totalRewards) {
-                            context(
-                                `total ${totalRewards} ${symbol} rewards, with initial provider stake of ${providerStake}`,
-                                () => {
-                                    testRewards(new TokenData(symbol), distributionType, providerStake, totalReward);
-                                }
-                            );
+                    context(
+                        `total ${totalReward} ${symbol} rewards, with initial provider stake of ${providerStake}`,
+                        () => {
+                            testRewards(new TokenData(symbol), distributionType, providerStake, totalReward);
                         }
-                    }
+                    );
                 }
             }
         };
 
-        testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
+        testRewardsMatrix(toWei(100_000), toWei(200_000));
     });
 });
