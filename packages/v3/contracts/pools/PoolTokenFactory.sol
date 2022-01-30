@@ -34,7 +34,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     /**
      * @dev triggered when a pool token is created
      */
-    event PoolTokenCreated(IPoolToken indexed poolToken, Token indexed reserveToken);
+    event PoolTokenCreated(IPoolToken indexed poolToken, Token indexed token);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -124,7 +124,7 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
         // make sure to transfer the ownership to the caller
         newPoolToken.transferOwnership(msg.sender);
 
-        emit PoolTokenCreated({ poolToken: newPoolToken, reserveToken: token });
+        emit PoolTokenCreated({ poolToken: newPoolToken, token: token });
 
         return newPoolToken;
     }

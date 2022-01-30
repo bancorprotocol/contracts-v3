@@ -145,17 +145,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev triggered when a pool is created
      */
-    event PoolCreated(IPoolToken indexed poolToken, Token indexed reserveToken);
+    event PoolCreated(IPoolToken indexed poolToken, Token indexed token);
 
     /**
      * @dev triggered when a pool is migrated into a this pool collection
      */
-    event PoolMigratedIn(Token indexed reserveToken);
+    event PoolMigratedIn(Token indexed token);
 
     /**
      * @dev triggered when a pool is migrated out of this pool collection
      */
-    event PoolMigratedOut(Token indexed reserveToken);
+    event PoolMigratedOut(Token indexed token);
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -187,7 +187,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     event TokenDeposited(
         bytes32 indexed contextId,
-        Token indexed reserveToken,
+        Token indexed token,
         address indexed provider,
         uint256 tokenAmount,
         uint256 poolTokenAmount
@@ -198,7 +198,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     event TokenWithdrawn(
         bytes32 indexed contextId,
-        Token indexed reserveToken,
+        Token indexed token,
         address indexed provider,
         uint256 tokenAmount,
         uint256 poolTokenAmount,
@@ -213,7 +213,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     event TradingLiquidityUpdated(
         bytes32 indexed contextId,
         Token indexed pool,
-        Token indexed reserveToken,
+        Token indexed token,
         uint256 liquidity
     );
 
@@ -357,7 +357,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         _addPool(token, newPool);
 
-        emit PoolCreated({ poolToken: newPoolToken, reserveToken: token });
+        emit PoolCreated({ poolToken: newPoolToken, token: token });
 
         emit TradingEnabled({ pool: token, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
@@ -592,7 +592,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit TokenDeposited({
             contextId: contextId,
-            reserveToken: pool,
+            token: pool,
             provider: provider,
             tokenAmount: tokenAmount,
             poolTokenAmount: poolTokenAmount
@@ -738,7 +738,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         data.poolToken.acceptOwnership();
 
-        emit PoolMigratedIn({ reserveToken: pool });
+        emit PoolMigratedIn({ token: pool });
     }
 
     /**
@@ -759,7 +759,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         cachedPoolToken.transferOwnership(address(targetPoolCollection));
 
-        emit PoolMigratedOut({ reserveToken: pool });
+        emit PoolMigratedOut({ token: pool });
     }
 
     /**
@@ -918,7 +918,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         emit TokenWithdrawn({
             contextId: contextId,
-            reserveToken: pool,
+            token: pool,
             provider: provider,
             tokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: poolTokenAmount,
@@ -1128,7 +1128,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: pool,
-                reserveToken: Token(address(_networkToken)),
+                token: Token(address(_networkToken)),
                 liquidity: newLiquidity.networkTokenTradingLiquidity
             });
         }
@@ -1137,7 +1137,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: pool,
-                reserveToken: pool,
+                token: pool,
                 liquidity: newLiquidity.baseTokenTradingLiquidity
             });
         }
