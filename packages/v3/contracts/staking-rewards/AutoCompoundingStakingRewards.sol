@@ -403,7 +403,7 @@ contract AutoCompoundingStakingRewards is
      * @dev returns whether the specified token is the network token
      */
     function _isNetworkToken(Token token) private view returns (bool) {
-        return token.toIERC20() == _networkToken;
+        return token.isEqual(_networkToken);
     }
 
     /**

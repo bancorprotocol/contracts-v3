@@ -440,7 +440,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev returns the pool token value in reserve/pool tokens
      */
     function _poolTokenUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
-        if (pool.toIERC20() == _networkToken) {
+        if (pool.isEqual(_networkToken)) {
             return _masterPool.poolTokenToUnderlying(poolTokenAmount);
         }
 

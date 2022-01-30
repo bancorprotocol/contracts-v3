@@ -1,5 +1,6 @@
 import Contracts, { TestTokenLibrary } from '../../components/Contracts';
-import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { createToken } from '../helpers/Factory';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -114,6 +115,13 @@ describe('TokenLibrary', () => {
                     });
                 }
             }
+
+            it('should compare', async () => {
+                expect(await tokenLibrary.isEqual(token.address, token.address)).to.be.true;
+                expect(await tokenLibrary.isEqual(token.address, ZERO_ADDRESS)).to.be.false;
+
+                expect(await tokenLibrary.isEqual(token.address, NATIVE_TOKEN_ADDRESS)).to.equal(tokenData.isNative());
+            });
         });
     }
 });

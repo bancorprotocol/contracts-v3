@@ -121,6 +121,13 @@ library TokenLibrary {
     }
 
     /**
+     * @dev compares between a token and another raw ERC20 token
+     */
+    function isEqual(Token token, IERC20 erc20Token) internal pure returns (bool) {
+        return toIERC20(token) == erc20Token;
+    }
+
+    /**
      * @dev utility function that converts an token to an IERC20
      */
     function toIERC20(Token token) internal pure returns (IERC20) {

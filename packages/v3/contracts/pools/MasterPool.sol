@@ -257,7 +257,7 @@ contract MasterPool is IMasterPool, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return token.toIERC20() == _poolToken && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller);
+        return token.isEqual(_poolToken) && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller);
     }
 
     /**

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.11;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
@@ -48,5 +50,9 @@ contract TestTokenLibrary {
         uint256 amount
     ) external {
         token.ensureApprove(spender, amount);
+    }
+
+    function isEqual(Token token, IERC20 erc20Token) external pure returns (bool) {
+        return token.isEqual(erc20Token);
     }
 }

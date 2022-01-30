@@ -100,7 +100,7 @@ contract MasterVault is IMasterVault, Vault {
         uint256 /* amount */
     ) internal view override returns (bool) {
         return
-            (token.toIERC20() == _networkToken && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
+            (token.isEqual(_networkToken) && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
             hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

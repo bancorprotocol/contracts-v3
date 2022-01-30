@@ -1210,8 +1210,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function _tradeParams(Token sourceToken, Token targetToken) private view returns (TradingParams memory params) {
         // ensure that the network token is either the source or the target pool
-        bool isSourceNetworkToken = sourceToken.toIERC20() == _networkToken;
-        bool isTargetNetworkToken = targetToken.toIERC20() == _networkToken;
+        bool isSourceNetworkToken = sourceToken.isEqual(_networkToken);
+        bool isTargetNetworkToken = targetToken.isEqual(_networkToken);
         if (isSourceNetworkToken && !isTargetNetworkToken) {
             params.isSourceNetworkToken = true;
             params.pool = targetToken;

@@ -164,15 +164,13 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             revert InvalidToken();
         }
 
-        IERC20 erc20Token = token.toIERC20();
-
         // allow vaults to burn network and governance tokens via their respective token governance modules
-        if (erc20Token == _networkToken) {
+        if (token.isEqual(_networkToken)) {
             _networkTokenGovernance.burn(amount);
-        } else if (erc20Token == _govToken) {
+        } else if (token.isEqual(_govToken)) {
             _govTokenGovernance.burn(amount);
         } else {
-            IERC20Burnable(address(erc20Token)).burn(amount);
+            IERC20Burnable(address(token)).burn(amount);
         }
 
         emit FundsBurned({ token: token, caller: msg.sender, amount: amount });
