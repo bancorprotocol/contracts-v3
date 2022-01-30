@@ -691,7 +691,8 @@ describe('Profile @profile', () => {
             trade: (
                 amount: BigNumber,
                 options: TradeOverrides | TradePermittedOverrides
-            ) => Promise<ContractTransaction>
+            ) => Promise<ContractTransaction>,
+            description: string
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -703,7 +704,7 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `${trade.name} ${await sourceSymbol} -> ${targetSymbol}`,
+                `${description} ${sourceSymbol} -> ${targetSymbol}`,
                 trade(amount, { minReturnAmount, beneficiary: beneficiaryAddress, deadline })
             );
         };
@@ -731,7 +732,7 @@ describe('Profile @profile', () => {
                             await reserveToken.connect(trader).approve(network.address, amount);
                         }
 
-                        await performTrade(ZERO_ADDRESS, amount, trade);
+                        await performTrade(ZERO_ADDRESS, amount, trade, 'trade');
                         await poolCollection.setTime(currentTime + i + 1);
                     }
                 });
@@ -757,7 +758,7 @@ describe('Profile @profile', () => {
                 }
 
                 it('should complete a permitted trade', async () => {
-                    await performTrade(ZERO_ADDRESS, amount, tradePermitted);
+                    await performTrade(ZERO_ADDRESS, amount, tradePermitted, 'trade permitted');
                 });
             });
         };
