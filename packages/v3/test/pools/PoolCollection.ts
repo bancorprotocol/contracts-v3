@@ -52,7 +52,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe.only('PoolCollection', () => {
+describe('PoolCollection', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
     const MAX_DEVIATION = toPPM(1);
@@ -2319,7 +2319,7 @@ describe.only('PoolCollection', () => {
                     const testTrading = (spec: Spec) => {
                         const { sourceBalance, targetBalance, tradingFeePPM, amount, blockNumbers } = spec;
 
-                        context.only(
+                        context(
                             `with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${blockNumbers}]`,
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
@@ -2527,7 +2527,7 @@ describe.only('PoolCollection', () => {
                         }
                     });
 
-                    describe('stress tests', () => {
+                    describe('@stress tests', () => {
                         for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
                             for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
                                 for (const tradingFeePercent of [0, 1, 10]) {
