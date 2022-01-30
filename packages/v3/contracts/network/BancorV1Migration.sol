@@ -5,12 +5,14 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Utils } from "../utility/Utils.sol";
 
-import { BancorNetwork } from "./BancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
+
+import { BancorNetwork } from "./BancorNetwork.sol";
 
 interface IBancorConverterV1 {
     function reserveTokens() external view returns (Token[] memory);
@@ -23,9 +25,9 @@ interface IBancorConverterV1 {
 }
 
 /**
- * @dev this contract supports v1 liquidity migration
+ * @dev this contract supports V1 liquidity migration
  */
-contract BancorV1Migration is ReentrancyGuard, Utils {
+contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
     using TokenLibrary for Token;
@@ -45,6 +47,13 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
     {
         _network = initNetwork;
         _networkToken = initNetworkToken;
+    }
+
+    /**
+     * @inheritdoc IVersioned
+     */
+    function version() external pure returns (uint16) {
+        return 1;
     }
 
     /**

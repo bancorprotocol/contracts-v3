@@ -80,6 +80,10 @@ describe('BancorV1Migration', () => {
                 'InvalidAddress'
             );
         });
+
+        it('should be properly initialized', async () => {
+            expect(await bancorV1Migration.version()).to.equal(1);
+        });
     });
 
     const initLegacySystem = async (networkAmount: BigNumberish, baseAmount: BigNumberish, isNativeToken: boolean) => {
