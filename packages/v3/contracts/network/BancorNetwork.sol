@@ -1052,7 +1052,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev deposits reserve/pool tokens to the master vault and verifies that msg.value corresponds to its type
+     * @dev deposits tokens to the master vault and verifies that msg.value corresponds to its type
      */
     function _depositToMasterVault(
         Token token,

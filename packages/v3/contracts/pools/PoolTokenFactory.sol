@@ -22,10 +22,10 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
     string private constant POOL_TOKEN_NAME_PREFIX = "Bancor";
     string private constant POOL_TOKEN_NAME_SUFFIX = "Pool Token";
 
-    // a mapping between reserve/pool tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
+    // a mapping between tokens and custom symbol overrides (only needed for tokens with malformed symbol property)
     mapping(Token => string) private _tokenSymbolOverrides;
 
-    // a mapping between reserve/pool tokens and custom token overrides (only needed for tokens with malformed decimals property)
+    // a mapping between tokens and custom token overrides (only needed for tokens with malformed decimals property)
     mapping(Token => uint8) private _tokenDecimalsOverrides;
 
     // upgrade forward-compatibility storage gap

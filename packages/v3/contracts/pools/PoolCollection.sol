@@ -133,7 +133,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     // the pool collection upgrader contract
     IPoolCollectionUpgrader private immutable _poolCollectionUpgrader;
 
-    // a mapping between reserve/pool tokens and their pools
+    // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
     // the set of all pools which are managed by this pool collection
