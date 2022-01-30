@@ -78,7 +78,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
         }
 
         uint256 returnAmount = _amountToReturn != 0 ? _amountToReturn : amount + feeAmount;
-        if (token.isNativeToken()) {
+        if (token.isNative()) {
             payable(msg.sender).sendValue(returnAmount);
         } else {
             token.safeTransfer(msg.sender, returnAmount);

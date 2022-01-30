@@ -622,7 +622,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the amount and the fee back to the vault
-        if (token.isNativeToken()) {
+        if (token.isNative()) {
             payable(address(_masterVault)).sendValue(returnedAmount);
         } else {
             token.safeTransfer(payable(address(_masterVault)), returnedAmount);
@@ -846,7 +846,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address caller
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
-        if (_isNetworkToken(token) || token.isNativeToken()) {
+        if (_isNetworkToken(token) || token.isNative()) {
             revert PermitUnsupported();
         }
 
@@ -1060,7 +1060,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount
     ) private {
         if (msg.value > 0) {
-            if (!token.isNativeToken()) {
+            if (!token.isNative()) {
                 revert InvalidPool();
             }
 
@@ -1072,7 +1072,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(address(_masterVault)).sendValue(amount);
         } else {
-            if (token.isNativeToken()) {
+            if (token.isNative()) {
                 revert InvalidPool();
             }
 

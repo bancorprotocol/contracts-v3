@@ -9,8 +9,8 @@ contract TestTokenLibrary {
 
     receive() external payable {}
 
-    function isNativeToken(Token token) external pure returns (bool) {
-        return token.isNativeToken();
+    function isNative(Token token) external pure returns (bool) {
+        return token.isNative();
     }
 
     function symbol(Token token) external view returns (string memory) {

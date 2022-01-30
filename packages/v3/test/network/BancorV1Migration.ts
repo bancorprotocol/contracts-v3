@@ -82,8 +82,8 @@ describe('BancorV1Migration', () => {
         });
     });
 
-    const initLegacySystem = async (networkAmount: BigNumberish, baseAmount: BigNumberish, isNativeToken: boolean) => {
-        baseToken = await createToken(new TokenData(isNativeToken ? TokenSymbol.ETH : TokenSymbol.TKN));
+    const initLegacySystem = async (networkAmount: BigNumberish, baseAmount: BigNumberish, isNative: boolean) => {
+        baseToken = await createToken(new TokenData(isNative ? TokenSymbol.ETH : TokenSymbol.TKN));
 
         ({ poolToken, converter } = await createLegacySystem(
             deployer,
@@ -106,7 +106,7 @@ describe('BancorV1Migration', () => {
         await pendingWithdrawals.setLockDuration(0);
 
         await networkToken.connect(provider).approve(converter.address, networkAmount);
-        if (!isNativeToken) {
+        if (!isNative) {
             const token = await Contracts.TestERC20Token.attach(baseToken.address);
             await token.transfer(provider.address, baseAmount);
             await token.connect(provider).approve(converter.address, baseAmount);
@@ -115,7 +115,7 @@ describe('BancorV1Migration', () => {
         await converter
             .connect(provider)
             .addLiquidity([networkToken.address, baseToken.address], [networkAmount, baseAmount], 1, {
-                value: isNativeToken ? baseAmount : BigNumber.from(0)
+                value: isNative ? baseAmount : BigNumber.from(0)
             });
     };
 
@@ -123,7 +123,7 @@ describe('BancorV1Migration', () => {
         withdrawalFee: number,
         networkAmount: BigNumberish,
         baseAmount: BigNumberish,
-        isNativeToken: boolean,
+        isNative: boolean,
         percent: number
     ) => {
         const portionOf = (amount: BigNumberish) => BigNumber.from(amount).mul(percent).div(100);
@@ -180,7 +180,7 @@ describe('BancorV1Migration', () => {
         const res = await network.connect(provider).withdraw(baseIds[0]);
 
         let transactionCost = BigNumber.from(0);
-        if (isNativeToken) {
+        if (isNative) {
             transactionCost = await getTransactionCost(res);
         }
 
@@ -195,8 +195,8 @@ describe('BancorV1Migration', () => {
         );
     };
 
-    const deposit = async (amount: BigNumberish, isNativeToken: boolean) => {
-        if (isNativeToken) {
+    const deposit = async (amount: BigNumberish, isNative: boolean) => {
+        if (isNative) {
             await network.deposit(baseToken.address, amount, { value: amount });
         } else {
             const token = await Contracts.TestERC20Token.attach(baseToken.address);
@@ -210,7 +210,7 @@ describe('BancorV1Migration', () => {
         withdrawalFeePercent: number,
         networkAmount: BigNumberish,
         baseAmount: BigNumberish,
-        isNativeToken: boolean,
+        isNative: boolean,
         percent: number
     ) => {
         const withdrawalFeePPM = toPPM(withdrawalFeePercent);
@@ -218,26 +218,26 @@ describe('BancorV1Migration', () => {
         describe(`withdrawal fee = ${withdrawalFeePercent}%`, () => {
             describe(`network amount = ${networkAmount}`, () => {
                 describe(`base amount = ${baseAmount}`, () => {
-                    describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
+                    describe(`base token = ${isNative ? 'ETH' : 'ERC20'}`, () => {
                         beforeEach(async () => {
                             await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                             await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 
-                            await initLegacySystem(networkAmount, baseAmount, isNativeToken);
+                            await initLegacySystem(networkAmount, baseAmount, isNative);
 
                             // ensure that enough funding has been requested before a migration
-                            await deposit(DEPOSIT_AMOUNT, isNativeToken);
+                            await deposit(DEPOSIT_AMOUNT, isNative);
 
                             await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
 
                             for (let i = 0; i < 5; i++) {
-                                await deposit(DEPOSIT_AMOUNT, isNativeToken);
+                                await deposit(DEPOSIT_AMOUNT, isNative);
                             }
                         });
 
                         it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
-                            await verify(withdrawalFeePPM, networkAmount, baseAmount, isNativeToken, percent);
+                            await verify(withdrawalFeePPM, networkAmount, baseAmount, isNative, percent);
                         });
                     });
                 });
@@ -249,9 +249,9 @@ describe('BancorV1Migration', () => {
         for (const withdrawalFeeP of [1, 5]) {
             for (const networkAmount of [1_000_000, 5_000_000]) {
                 for (const baseAmount of [1_000_000, 5_000_000]) {
-                    for (const isNativeToken of [false, true]) {
+                    for (const isNative of [false, true]) {
                         for (const percent of [10, 100]) {
-                            test(withdrawalFeeP, networkAmount, baseAmount, isNativeToken, percent);
+                            test(withdrawalFeeP, networkAmount, baseAmount, isNative, percent);
                         }
                     }
                 }
@@ -263,9 +263,9 @@ describe('BancorV1Migration', () => {
         for (const withdrawalFeeP of [1, 2.5, 5]) {
             for (const networkAmount of [1_000_000, 2_500_000, 5_000_000]) {
                 for (const baseAmount of [1_000_000, 2_500_000, 5_000_000]) {
-                    for (const isNativeToken of [false, true]) {
+                    for (const isNative of [false, true]) {
                         for (const percent of [10, 25, 50, 100]) {
-                            test(withdrawalFeeP, networkAmount, baseAmount, isNativeToken, percent);
+                            test(withdrawalFeeP, networkAmount, baseAmount, isNative, percent);
                         }
                     }
                 }

@@ -29,7 +29,7 @@ library TokenLibrary {
     /**
      * @dev returns whether the provided token represents an ERC20 or ETH reserve
      */
-    function isNativeToken(Token token) internal pure returns (bool) {
+    function isNative(Token token) internal pure returns (bool) {
         return address(token) == NATIVE_TOKEN_ADDRESS;
     }
 
@@ -37,7 +37,7 @@ library TokenLibrary {
      * @dev returns the symbol of the ETH/ERC20 token
      */
     function symbol(Token token) internal view returns (string memory) {
-        if (isNativeToken(token)) {
+        if (isNative(token)) {
             return NATIVE_TOKEN_SYMBOL;
         }
 
@@ -48,7 +48,7 @@ library TokenLibrary {
      * @dev returns the decimals of the ETH/ERC20 token
      */
     function decimals(Token token) internal view returns (uint8) {
-        if (isNativeToken(token)) {
+        if (isNative(token)) {
             return NATIVE_TOKEN_DECIMALS;
         }
 
@@ -59,7 +59,7 @@ library TokenLibrary {
      * @dev returns the balance of the ETH/ERC20 token
      */
     function balanceOf(Token token, address account) internal view returns (uint256) {
-        if (isNativeToken(token)) {
+        if (isNative(token)) {
             return account.balance;
         }
 
@@ -78,7 +78,7 @@ library TokenLibrary {
             return;
         }
 
-        if (isNativeToken(token)) {
+        if (isNative(token)) {
             payable(to).transfer(amount);
         } else {
             toIERC20(token).safeTransfer(to, amount);
@@ -96,7 +96,7 @@ library TokenLibrary {
         address to,
         uint256 amount
     ) internal {
-        if (amount == 0 || isNativeToken(token)) {
+        if (amount == 0 || isNative(token)) {
             return;
         }
 
@@ -113,7 +113,7 @@ library TokenLibrary {
         address spender,
         uint256 amount
     ) internal {
-        if (isNativeToken(token)) {
+        if (isNative(token)) {
             return;
         }
 

@@ -136,7 +136,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             return;
         }
 
-        if (token.isNativeToken()) {
+        if (token.isNative()) {
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             target.sendValue(amount);
@@ -160,7 +160,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             return;
         }
 
-        if (token.isNativeToken()) {
+        if (token.isNative()) {
             revert InvalidToken();
         }
 

@@ -33,7 +33,7 @@ describe('TokenLibrary', () => {
             beforeEach(async () => {
                 token = await createToken(tokenData, TOTAL_SUPPLY);
 
-                if (tokenData.isNativeToken()) {
+                if (tokenData.isNative()) {
                     await deployer.sendTransaction({
                         to: tokenLibrary.address,
                         value: TOTAL_SUPPLY / 2
@@ -44,7 +44,7 @@ describe('TokenLibrary', () => {
             });
 
             it('should properly check if the reserve token is a native token', async () => {
-                expect(await tokenLibrary.isNativeToken(token.address)).to.equal(tokenData.isNativeToken());
+                expect(await tokenLibrary.isNative(token.address)).to.equal(tokenData.isNative());
             });
 
             it('should properly get the right symbol', async () => {
@@ -52,7 +52,7 @@ describe('TokenLibrary', () => {
             });
 
             it('should properly get the right decimals', async () => {
-                if (tokenData.isNativeToken()) {
+                if (tokenData.isNative()) {
                     expect(await tokenLibrary.decimals(token.address)).to.equal(tokenData.decimals());
                 } else {
                     const decimals = await token.decimals();
@@ -80,7 +80,7 @@ describe('TokenLibrary', () => {
                 });
             }
 
-            if (tokenData.isNativeToken()) {
+            if (tokenData.isNative()) {
                 it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
                     const prevSenderBalance = await getBalance(token, sender);
                     const prevRecipientBalance = await getBalance(token, recipient);

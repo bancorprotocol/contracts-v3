@@ -83,7 +83,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         );
 
         for (uint256 i = 0; i < 2; i++) {
-            if (orderedReserveTokens[i].isNativeToken()) {
+            if (orderedReserveTokens[i].isNative()) {
                 _network.depositFor{ value: orderedReserveAmounts[i] }(
                     msg.sender,
                     orderedReserveTokens[i],
