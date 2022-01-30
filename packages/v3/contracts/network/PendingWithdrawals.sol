@@ -311,7 +311,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(provider, id);
 
-        // get the pool token value in tokens
+        // get the pool token value in reserve/pool tokens
         uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
 
         // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
@@ -410,7 +410,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // record the current withdrawal request alongside previous pending withdrawal requests
         uint256 id = _nextWithdrawalRequestId++;
 
-        // get the pool token value in tokens
+        // get the pool token value in reserve/pool tokens
         uint256 reserveTokenAmount = _poolTokenUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
