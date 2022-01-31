@@ -25,6 +25,7 @@
         "test": "NODE_OPTIONS=\"--max-old-space-size=30000 ${CI:+--openssl-legacy-provider}\" hardhat test",
         "testb": "BAIL=1 yarn test",
         "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=30000 --openssl-legacy-provider'} hardhat coverage",
+        "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",
         "test:ci": "CI=1 yarn test",
         "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
         "test:deploy:mainnet": "HARDHAT_NETWORK=hardhat FORKING=1 yarn test:deploy",
