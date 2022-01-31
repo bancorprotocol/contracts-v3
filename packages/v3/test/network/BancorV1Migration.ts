@@ -21,7 +21,6 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 const FUNDING_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-const MAX_DEVIATION = BigNumber.from(10_000);
 const FUNDING_LIMIT = BigNumber.from(100_000_000);
 const MIN_LIQUIDITY = BigNumber.from(100_000);
 const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
@@ -220,7 +219,6 @@ describe('BancorV1Migration', () => {
                 describe(`base amount = ${baseAmount}`, () => {
                     describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
                         beforeEach(async () => {
-                            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
                             await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 

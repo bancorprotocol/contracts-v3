@@ -27,6 +27,7 @@ import {
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
+    AVERAGE_RATE_MAX_DEVIATION_PPM,
     PoolType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
@@ -55,7 +56,6 @@ const { formatBytes32String } = utils;
 describe('PoolCollection', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const FUNDING_RATE = { n: 1, d: 2 };
-    const MAX_DEVIATION = toPPM(1);
     const CONTEXT_ID = formatBytes32String('CTX');
 
     let deployer: SignerWithAddress;
@@ -953,7 +953,6 @@ describe('PoolCollection', () => {
                     await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-                await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
 
                 token = await createToken(tokenData);
             });
@@ -1297,7 +1296,7 @@ describe('PoolCollection', () => {
                                     time: await poolCollection.currentTime(),
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + MAX_DEVIATION + toPPM(0.5))
+                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + AVERAGE_RATE_MAX_DEVIATION_PPM + toPPM(0.5))
                                     }
                                 });
 
@@ -1713,7 +1712,6 @@ describe('PoolCollection', () => {
             ({ network, networkToken, networkSettings, masterPool, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
 
             reserveToken = await createTestToken();
 
