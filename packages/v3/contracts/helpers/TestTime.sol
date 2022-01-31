@@ -10,7 +10,7 @@ contract TestTime is Time {
         return _currentTime;
     }
 
-    function setTime(uint32 newTime) public {
+    function setTime(uint32 newTime) external {
         _currentTime = newTime;
     }
 

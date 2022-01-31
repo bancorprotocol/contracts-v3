@@ -10,7 +10,7 @@ contract TestBlockNumber is BlockNumber {
         return _currentBlockNumber;
     }
 
-    function setBlockNumber(uint32 newBlockNumber) public {
+    function setBlockNumber(uint32 newBlockNumber) external {
         _currentBlockNumber = newBlockNumber;
     }
 
