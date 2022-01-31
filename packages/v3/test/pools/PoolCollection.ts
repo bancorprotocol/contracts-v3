@@ -27,7 +27,7 @@ import {
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
-    POOL_RATE_MAX_DEVIATION_PPM,
+    RATE_MAX_DEVIATION_PPM,
     PoolType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
@@ -1296,7 +1296,7 @@ describe('PoolCollection', () => {
                                     time: await poolCollection.currentTime(),
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + POOL_RATE_MAX_DEVIATION_PPM + toPPM(0.5))
+                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5))
                                     }
                                 });
 

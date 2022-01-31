@@ -57,7 +57,7 @@ export const EMA_SPOT_RATE_WEIGHT = 1;
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
 export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
-export const POOL_RATE_MAX_DEVIATION_PPM = toPPM(1);
+export const RATE_MAX_DEVIATION_PPM = toPPM(1);
 
 export enum PoolType {
     Standard = 1
