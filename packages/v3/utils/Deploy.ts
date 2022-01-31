@@ -1,5 +1,6 @@
 import {
     AutoCompoundingStakingRewards,
+    BancorV1Migration,
     BancorNetwork,
     BancorNetworkInfo,
     ExternalProtectionVault,
@@ -52,8 +53,9 @@ enum LegacyContractName {
 
 enum NewContractName {
     AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
-    BancorNetworkV1 = 'BancorNetworkV1',
     BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
+    BancorNetworkV1 = 'BancorNetworkV1',
+    BancorV1MigrationV1 = 'BancorV1MigrationV1',
     BancorNetworkProxy = 'BancorNetworkProxy',
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
@@ -87,6 +89,7 @@ const DeployedNewContracts = {
     AutoCompoundingStakingRewardsV1: deployed<AutoCompoundingStakingRewards>(
         ContractName.AutoCompoundingStakingRewardsV1
     ),
+    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
     BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
     BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
@@ -133,7 +136,8 @@ export const fundAccount = async (account: string) => {
     });
 };
 
-const normalizeContractName = (contractName: string) => contractName.replace(/V\d+/g, '');
+// remove internal versioning (== a contract name ends in "V" and some number) from the name of the contract
+const normalizedContractName = (contractName: string) => contractName.replace(/V\d+$/, '');
 
 interface SaveTypeOptions {
     name: ContractName;
@@ -195,7 +199,7 @@ export const deploy = async (options: DeployOptions) => {
         };
     }
 
-    const contractName = normalizeContractName(contract || name);
+    const contractName = normalizedContractName(contract || name);
     const res = await deployContract(name, {
         contract: contractName,
         from,
@@ -287,7 +291,7 @@ interface Deployment {
 export const save = async (deployment: Deployment) => {
     const { name, contract, address } = deployment;
 
-    const { abi } = await getExtendedArtifact(normalizeContractName(contract || name));
+    const { abi } = await getExtendedArtifact(normalizedContractName(contract || name));
 
     return saveContract(name, { abi, address });
 };

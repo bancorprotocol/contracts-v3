@@ -19,7 +19,7 @@ import { IPoolCollection, TradeAmounts } from "../pools/interfaces/IPoolCollecti
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { TestTime } from "./TestTime.sol";
 
@@ -44,11 +44,11 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         )
     {}
 
-    function createPoolT(IPoolCollection poolCollection, ReserveToken reserveToken) external {
-        poolCollection.createPool(reserveToken);
+    function createPoolT(IPoolCollection poolCollection, Token token) external {
+        poolCollection.createPool(token);
     }
 
-    function upgradePoolT(IPoolCollectionUpgrader poolCollectionUpgrader, ReserveToken pool)
+    function upgradePoolT(IPoolCollectionUpgrader poolCollectionUpgrader, Token pool)
         external
         returns (IPoolCollection)
     {
@@ -77,7 +77,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         IPoolCollection poolCollection,
         bytes32 contextId,
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmount
     ) external {
         poolCollection.depositFor(contextId, provider, pool, tokenAmount);
@@ -95,14 +95,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         IPoolCollection poolCollection,
         bytes32 contextId,
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 poolTokenAmount
     ) external {
         poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
     }
 
     function onNetworkTokenFeesCollectedT(
-        ReserveToken pool,
+        Token pool,
         uint256 amount,
         uint8 feeType
     ) external {
@@ -111,7 +111,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
 
     function onPoolCollectionFeesCollectedT(
         IPoolCollection poolCollection,
-        ReserveToken pool,
+        Token pool,
         uint256 amount
     ) external {
         poolCollection.onFeesCollected(pool, amount);
@@ -120,8 +120,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function tradePoolCollectionT(
         IPoolCollection poolCollection,
         bytes32 contextId,
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmounts memory) {

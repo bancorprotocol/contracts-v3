@@ -342,7 +342,7 @@ describe('BancorNetworkInfo', () => {
         };
 
         const testTradesAmounts = (source: PoolSpec, target: PoolSpec) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
 
             context(`when trading from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
                 const testAmount = 1000;

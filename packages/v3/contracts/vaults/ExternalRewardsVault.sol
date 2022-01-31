@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
@@ -76,7 +76,7 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
      */
     function isAuthorizedWithdrawal(
         address caller,
-        ReserveToken, /* reserveToken */
+        Token, /* Token */
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {

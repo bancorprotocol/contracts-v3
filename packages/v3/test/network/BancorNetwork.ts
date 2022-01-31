@@ -923,7 +923,7 @@ describe('BancorNetwork', () => {
             expect(await targetPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
-                const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
+                const isNative = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
 
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(targetPoolCollection.address);
 
@@ -973,7 +973,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNativeToken) {
+                if (isNative) {
                     transactionCost = await getTransactionCost(res);
                 }
 
@@ -997,7 +997,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNativeToken) {
+                if (isNative) {
                     transactionCost = await getTransactionCost(res2);
                 }
 
@@ -1067,7 +1067,7 @@ describe('BancorNetwork', () => {
                     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the trading is enabled with sufficient funding
-                    if (tokenData.isNativeToken()) {
+                    if (tokenData.isNative()) {
                         await network.deposit(token.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                     } else {
                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
@@ -1142,7 +1142,7 @@ describe('BancorNetwork', () => {
 
                     const res = await deposit(amount);
 
-                    if (tokenData.isNativeToken()) {
+                    if (tokenData.isNative()) {
                         transactionCost = await getTransactionCost(res);
                     }
 
@@ -1221,7 +1221,7 @@ describe('BancorNetwork', () => {
 
                                     // if we aren't overriding which token we want to deposit and it's the native token -
                                     // ensure to add to the transaction
-                                    if (poolAddress === token.address && tokenData.isNativeToken()) {
+                                    if (poolAddress === token.address && tokenData.isNative()) {
                                         value = BigNumber.from(amount);
                                     }
                                 }
@@ -1279,7 +1279,7 @@ describe('BancorNetwork', () => {
                                 };
 
                                 context(`${amount} tokens`, () => {
-                                    if (!tokenData.isNativeToken()) {
+                                    if (!tokenData.isNative()) {
                                         beforeEach(async () => {
                                             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
                                             await reserveToken.transfer(sender.address, amount.mul(COUNT));
@@ -1293,7 +1293,7 @@ describe('BancorNetwork', () => {
                                     }
 
                                     context('with an approval', () => {
-                                        if (!tokenData.isNativeToken()) {
+                                        if (!tokenData.isNative()) {
                                             beforeEach(async () => {
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     token.address
@@ -1336,7 +1336,7 @@ describe('BancorNetwork', () => {
                                                 await testMultipleDeposits();
                                             });
 
-                                            if (tokenData.isNativeToken()) {
+                                            if (tokenData.isNative()) {
                                                 // eslint-disable-next-line max-len
                                                 it('should revert when attempting to deposit a different amount than what was actually sent', async () => {
                                                     await expect(
@@ -1510,7 +1510,7 @@ describe('BancorNetwork', () => {
                                 };
 
                                 context(`${amount} tokens`, () => {
-                                    if (tokenData.isNetworkToken() || tokenData.isNativeToken()) {
+                                    if (tokenData.isNetworkToken() || tokenData.isNative()) {
                                         it('should revert when attempting to deposit', async () => {
                                             await expect(deposit(amount)).to.be.revertedWith('PermitUnsupported');
                                         });
@@ -1698,7 +1698,7 @@ describe('BancorNetwork', () => {
                     } else {
                         const res = await network.connect(provider).withdraw(request.id);
 
-                        if (tokenData.isNativeToken()) {
+                        if (tokenData.isNative()) {
                             transactionCost = await getTransactionCost(res);
                         }
 
@@ -2146,7 +2146,7 @@ describe('BancorNetwork', () => {
         };
 
         const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`basic trades from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
@@ -2295,7 +2295,7 @@ describe('BancorNetwork', () => {
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
@@ -2325,7 +2325,7 @@ describe('BancorNetwork', () => {
         };
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
@@ -2875,16 +2875,16 @@ describe('BancorNetwork', () => {
                 await setTime(await latest());
             };
 
-            for (const isNativeToken of [false, true]) {
-                describe(`base token (${isNativeToken ? 'ETH' : 'ERC20'})`, () => {
+            for (const isNative of [false, true]) {
+                describe(`base token (${isNative ? 'ETH' : 'ERC20'})`, () => {
                     beforeEach(async () => {
-                        await initLegacySystem(isNativeToken);
+                        await initLegacySystem(isNative);
                         await addProtectedLiquidity(
                             poolToken.address,
                             baseToken,
                             baseToken.address,
                             BigNumber.from(1000),
-                            isNativeToken,
+                            isNative,
                             owner
                         );
                     });
@@ -2910,8 +2910,8 @@ describe('BancorNetwork', () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         const protection = await getProtection(protectionId);
 
-                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
-                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
+                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNative);
+                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNative);
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
@@ -2925,13 +2925,13 @@ describe('BancorNetwork', () => {
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
-                        const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
+                        const transactionCost = isNative ? await getTransactionCost(res) : BigNumber.from(0);
 
                         // verify protected liquidities
                         expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                         // verify stats
-                        const poolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
+                        const poolStats = await getPoolStats(poolToken, baseToken, isNative);
                         expect(poolStats.totalPoolAmount).to.equal(
                             prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
                         );
@@ -2939,7 +2939,7 @@ describe('BancorNetwork', () => {
                             prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
                         );
 
-                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
+                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNative);
                         expect(providerStats.totalProviderAmount).to.equal(
                             prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
                         );

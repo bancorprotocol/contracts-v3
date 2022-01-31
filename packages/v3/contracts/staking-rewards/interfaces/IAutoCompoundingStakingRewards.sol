@@ -4,7 +4,7 @@ pragma solidity 0.8.11;
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { ReserveToken, ReserveTokenLibrary } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 // distribution types
 uint8 constant FLAT_DISTRIBUTION = 0;
@@ -26,7 +26,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     /**
      * @dev returns the program data of a pool
      */
-    function program(ReserveToken pool) external view returns (ProgramData memory);
+    function program(Token pool) external view returns (ProgramData memory);
 
     /**
      * @dev returns a list of all pools' program data
@@ -36,7 +36,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     /**
      * @dev returns whether a program is currently active
      */
-    function isProgramActive(ReserveToken pool) external view returns (bool);
+    function isProgramActive(Token pool) external view returns (bool);
 
     /**
      * @dev creates a program for a pool
@@ -47,7 +47,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      * - the pool must not have an active program
      */
     function createProgram(
-        ReserveToken pool,
+        Token pool,
         IVault rewardsVault,
         uint256 totalRewards,
         uint8 distributionType,
@@ -63,7 +63,7 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      * - the caller must be the admin of the contract
      * - the program must be active
      */
-    function terminateProgram(ReserveToken pool) external;
+    function terminateProgram(Token pool) external;
 
     /**
      * @dev enables or disables a program
@@ -72,10 +72,10 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      *
      * - the caller must be the admin of the contract
      */
-    function enableProgram(ReserveToken pool, bool status) external;
+    function enableProgram(Token pool, bool status) external;
 
     /**
      * @dev processes program rewards
      */
-    function processRewards(ReserveToken pool) external;
+    function processRewards(Token pool) external;
 }
