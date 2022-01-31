@@ -22,9 +22,9 @@
     "scripts": {
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
-        "test": "NODE_OPTIONS=\"--max-old-space-size=8196 ${CI:+--openssl-legacy-provider}\" hardhat test",
+        "test": "NODE_OPTIONS=\"--max-old-space-size=8192 ${CI:+--openssl-legacy-provider}\" hardhat test",
         "testb": "BAIL=1 yarn test",
-        "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8196 --openssl-legacy-provider'} hardhat coverage",
+        "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192 --openssl-legacy-provider'} hardhat coverage",
         "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",
         "test:ci": "CI=1 yarn test",
         "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
