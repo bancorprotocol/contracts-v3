@@ -55,7 +55,6 @@ describe('Profile @profile', () => {
     let stakingRewardsProvider: SignerWithAddress;
 
     const FUNDING_RATE = { n: 1, d: 2 };
-    const MAX_DEVIATION = toPPM(1);
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -80,7 +79,6 @@ describe('Profile @profile', () => {
         beforeEach(async () => {
             ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -102,7 +100,7 @@ describe('Profile @profile', () => {
                     await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the trading is enabled with sufficient funding
-                    if (tokenData.isNativeToken()) {
+                    if (tokenData.isNative()) {
                         await network.deposit(token.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                     } else {
                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
@@ -161,7 +159,7 @@ describe('Profile @profile', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 let { value, poolAddress = token.address } = overrides;
 
-                                value ||= tokenData.isNativeToken() ? amount : BigNumber.from(0);
+                                value ||= tokenData.isNative() ? amount : BigNumber.from(0);
 
                                 switch (method) {
                                     case Method.Deposit:
@@ -187,7 +185,7 @@ describe('Profile @profile', () => {
                                     await profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
-                                    if (!tokenData.isNativeToken()) {
+                                    if (!tokenData.isNative()) {
                                         beforeEach(async () => {
                                             const reserveToken = await Contracts.TestERC20Token.attach(token.address);
                                             await reserveToken.transfer(sender.address, amount.mul(COUNT));
@@ -195,7 +193,7 @@ describe('Profile @profile', () => {
                                     }
 
                                     context('with an approval', () => {
-                                        if (!tokenData.isNativeToken()) {
+                                        if (!tokenData.isNative()) {
                                             beforeEach(async () => {
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     token.address
@@ -330,7 +328,7 @@ describe('Profile @profile', () => {
                                     profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
-                                    if (tokenData.isNetworkToken() || tokenData.isNativeToken()) {
+                                    if (tokenData.isNetworkToken() || tokenData.isNative()) {
                                         return;
                                     }
 
@@ -411,7 +409,6 @@ describe('Profile @profile', () => {
                 masterPoolToken
             } = await createSystem());
 
-            await networkSettings.setAverageRateMaxDeviationPPM(MAX_DEVIATION);
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -710,7 +707,7 @@ describe('Profile @profile', () => {
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 const TRADES_COUNT = 2;
@@ -740,7 +737,7 @@ describe('Profile @profile', () => {
         };
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNativeToken();
+            const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
             if (isSourceNativeToken || isSourceNetworkToken) {

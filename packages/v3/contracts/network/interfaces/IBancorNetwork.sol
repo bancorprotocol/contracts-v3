@@ -9,7 +9,7 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 import { IPoolCollection, TradeAmounts } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
@@ -28,7 +28,7 @@ interface IFlashLoanRecipient {
      */
     function onFlashLoan(
         address caller,
-        IERC20 token,
+        IERC20 erc20Token,
         uint256 amount,
         uint256 feeAmount,
         bytes memory data
@@ -52,17 +52,17 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the set of all liquidity pools
      */
-    function liquidityPools() external view returns (ReserveToken[] memory);
+    function liquidityPools() external view returns (Token[] memory);
 
     /**
      * @dev returns the respective pool collection for the provided pool
      */
-    function collectionByPool(ReserveToken pool) external view returns (IPoolCollection);
+    function collectionByPool(Token pool) external view returns (IPoolCollection);
 
     /**
      * @dev returns whether the pool is valid
      */
-    function isPoolValid(ReserveToken pool) external view returns (bool);
+    function isPoolValid(Token pool) external view returns (bool);
 
     /**
      * @dev creates a new pool
@@ -71,7 +71,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the pool doesn't exist
      */
-    function createPool(uint16 poolType, ReserveToken reserveToken) external;
+    function createPool(uint16 poolType, Token token) external;
 
     /**
      * @dev upgrades a list of pools
@@ -80,7 +80,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - invalid or incompatible pools will be skipped gracefully
      */
-    function upgradePools(ReserveToken[] calldata pools) external;
+    function upgradePools(Token[] calldata pools) external;
 
     /**
      * @dev deposits liquidity for the specified provider
@@ -91,7 +91,7 @@ interface IBancorNetwork is IUpgradeable {
      */
     function depositFor(
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmount
     ) external payable;
 
@@ -102,7 +102,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the network to transfer the liquidity tokens on its behalf
      */
-    function deposit(ReserveToken pool, uint256 tokenAmount) external payable;
+    function deposit(Token pool, uint256 tokenAmount) external payable;
 
     /**
      * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
@@ -114,7 +114,7 @@ interface IBancorNetwork is IUpgradeable {
      */
     function depositForPermitted(
         address provider,
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmount,
         uint256 deadline,
         uint8 v,
@@ -131,7 +131,7 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
     function depositPermitted(
-        ReserveToken pool,
+        Token pool,
         uint256 tokenAmount,
         uint256 deadline,
         uint8 v,
@@ -159,8 +159,8 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
     function trade(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
         uint256 deadline,
@@ -177,8 +177,8 @@ interface IBancorNetwork is IUpgradeable {
      */
 
     function tradePermitted(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount,
         uint256 deadline,
@@ -196,7 +196,7 @@ interface IBancorNetwork is IUpgradeable {
      * - the recipient's callback must return *at least* the borrowed amount and fee back to the specified return address
      */
     function flashLoan(
-        ReserveToken token,
+        Token token,
         uint256 amount,
         IFlashLoanRecipient recipient,
         bytes calldata data
@@ -249,7 +249,7 @@ interface IBancorNetwork is IUpgradeable {
      * @dev deposits liquidity during a migration
      */
     function migrateLiquidity(
-        ReserveToken reserveToken,
+        Token token,
         address provider,
         uint256 amount,
         uint256 availableAmount,

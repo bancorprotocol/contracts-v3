@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 // the asset manager role is required to access all the funds
 bytes32 constant ROLE_ASSET_MANAGER = keccak256("ROLE_ASSET_MANAGER");
@@ -12,12 +12,12 @@ interface IVault is IUpgradeable {
     /**
      * @dev triggered when tokens have been withdrawn from the vault
      */
-    event FundsWithdrawn(ReserveToken indexed token, address indexed caller, address indexed target, uint256 amount);
+    event FundsWithdrawn(Token indexed token, address indexed caller, address indexed target, uint256 amount);
 
     /**
      * @dev triggered when tokens have been burned from the vault
      */
-    event FundsBurned(ReserveToken indexed token, address indexed caller, uint256 amount);
+    event FundsBurned(Token indexed token, address indexed caller, uint256 amount);
 
     /**
      * @dev tells if the contracts accepts ETH deposits
@@ -28,7 +28,7 @@ interface IVault is IUpgradeable {
      * @dev withdraws funds held by the contract and sends them to an account
      */
     function withdrawFunds(
-        ReserveToken reserveToken,
+        Token token,
         address payable target,
         uint256 amount
     ) external;
@@ -36,5 +36,5 @@ interface IVault is IUpgradeable {
     /**
      * @dev burns funds held by the contract
      */
-    function burn(ReserveToken reserveToken, uint256 amount) external;
+    function burn(Token token, uint256 amount) external;
 }

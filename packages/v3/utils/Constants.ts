@@ -58,6 +58,7 @@ export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
 
 export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
+export const AVERAGE_RATE_MAX_DEVIATION_PPM = 10000;
 
 export enum PoolType {
     Standard = 1

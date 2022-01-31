@@ -8,7 +8,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolCollection } from "./IPoolCollection.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
@@ -42,12 +42,12 @@ interface IMasterPool is IVault {
     /**
      * @dev returns the current funding of given pool
      */
-    function currentPoolFunding(ReserveToken pool) external view returns (uint256);
+    function currentPoolFunding(Token pool) external view returns (uint256);
 
     /**
      * @dev returns the available network token funding for a given pool
      */
-    function availableFunding(ReserveToken pool) external view returns (uint256);
+    function availableFunding(Token pool) external view returns (uint256);
 
     /**
      * @dev converts the specified pool token amount to the underlying network token amount
@@ -126,7 +126,7 @@ interface IMasterPool is IVault {
      */
     function requestFunding(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 networkTokenAmount
     ) external;
 
@@ -141,7 +141,7 @@ interface IMasterPool is IVault {
      */
     function renounceFunding(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 networkTokenAmount
     ) external;
 
@@ -153,7 +153,7 @@ interface IMasterPool is IVault {
      * - the caller must be the network contract
      */
     function onFeesCollected(
-        ReserveToken pool,
+        Token pool,
         uint256 feeAmount,
         uint8 feeType
     ) external;

@@ -4,7 +4,7 @@ pragma solidity 0.8.11;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 import { ERC20Burnable } from "../token/ERC20Burnable.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
@@ -17,7 +17,7 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
  * @dev Pool Token contract
  */
 contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
-    ReserveToken private immutable _reserveToken;
+    Token private immutable _reserveToken;
 
     uint8 private _decimals;
 
@@ -28,8 +28,8 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
         string memory name,
         string memory symbol,
         uint8 initDecimals,
-        ReserveToken initReserveToken
-    ) ERC20(name, symbol) ERC20Permit(name) validAddress(ReserveToken.unwrap(initReserveToken)) {
+        Token initReserveToken
+    ) ERC20(name, symbol) ERC20Permit(name) validAddress(address(initReserveToken)) {
         _decimals = initDecimals;
         _reserveToken = initReserveToken;
     }
@@ -51,7 +51,7 @@ contract PoolToken is IPoolToken, ERC20Permit, ERC20Burnable, Owned, Utils {
     /**
      * @inheritdoc IPoolToken
      */
-    function reserveToken() external view returns (ReserveToken) {
+    function reserveToken() external view returns (Token) {
         return _reserveToken;
     }
 

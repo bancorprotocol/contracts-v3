@@ -3,7 +3,7 @@ pragma solidity 0.8.11;
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
 
@@ -24,5 +24,5 @@ interface IPoolCollectionUpgrader is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function upgradePool(ReserveToken pool) external returns (IPoolCollection);
+    function upgradePool(Token pool) external returns (IPoolCollection);
 }

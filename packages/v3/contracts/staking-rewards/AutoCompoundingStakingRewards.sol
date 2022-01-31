@@ -18,7 +18,8 @@ import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
@@ -42,7 +43,7 @@ contract AutoCompoundingStakingRewards is
     Time,
     Upgradeable
 {
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     error ProgramDoesNotExist();
@@ -66,7 +67,7 @@ contract AutoCompoundingStakingRewards is
     IPoolToken private immutable _masterPoolToken;
 
     // a mapping between pools and programs
-    mapping(ReserveToken => ProgramData) private _programs;
+    mapping(Token => ProgramData) private _programs;
 
     // a map of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _programByPool;
@@ -78,7 +79,7 @@ contract AutoCompoundingStakingRewards is
      * @dev triggered when a program is created
      */
     event ProgramCreated(
-        ReserveToken indexed pool,
+        Token indexed pool,
         uint8 indexed distributionType,
         IVault rewardsVault,
         uint256 totalRewards,
@@ -89,18 +90,18 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(ReserveToken indexed pool, uint32 endTime, uint256 remainingRewards);
+    event ProgramTerminated(Token indexed pool, uint32 endTime, uint256 remainingRewards);
 
     /**
      * @dev triggered when a program is enabled/disabled
      */
-    event ProgramEnabled(ReserveToken indexed pool, bool status, uint256 remainingRewards);
+    event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
 
     /**
      * @dev triggered when rewards are distributed
      */
     event RewardsDistributed(
-        ReserveToken indexed pool,
+        Token indexed pool,
         uint256 rewardsAmount,
         uint256 poolTokenAmount,
         uint256 remainingRewards
@@ -163,7 +164,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function program(ReserveToken pool) external view returns (ProgramData memory) {
+    function program(Token pool) external view returns (ProgramData memory) {
         return _programs[pool];
     }
 
@@ -175,7 +176,7 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i++) {
-            list[i] = _programs[ReserveToken.wrap(_programByPool.at(i))];
+            list[i] = _programs[Token(_programByPool.at(i))];
         }
 
         return list;
@@ -184,7 +185,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function isProgramActive(ReserveToken pool) external view returns (bool) {
+    function isProgramActive(Token pool) external view returns (bool) {
         ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
@@ -204,19 +205,13 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function createProgram(
-        ReserveToken pool,
+        Token pool,
         IVault rewardsVault,
         uint256 totalRewards,
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    )
-        external
-        validAddress(address(ReserveToken.unwrap(pool)))
-        validAddress(address(rewardsVault))
-        onlyAdmin
-        nonReentrant
-    {
+    ) external validAddress(address(address(pool))) validAddress(address(rewardsVault)) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }
@@ -267,7 +262,7 @@ contract AutoCompoundingStakingRewards is
 
         _programs[pool] = p;
 
-        assert(_programByPool.add(ReserveToken.unwrap(pool)));
+        assert(_programByPool.add(address(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -282,7 +277,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function terminateProgram(ReserveToken pool) external onlyAdmin {
+    function terminateProgram(Token pool) external onlyAdmin {
         ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
@@ -297,7 +292,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function enableProgram(ReserveToken pool, bool status) external onlyAdmin {
+    function enableProgram(Token pool, bool status) external onlyAdmin {
         ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
@@ -317,7 +312,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
-    function processRewards(ReserveToken pool) external nonReentrant {
+    function processRewards(Token pool) external nonReentrant {
         ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
@@ -337,7 +332,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
-        p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
+        p.rewardsVault.burn(Token(address(p.poolToken)), poolTokenAmountToBurn);
 
         p.remainingRewards -= tokenAmountToDistribute;
         p.prevDistributionTimestamp = currTime;
@@ -381,7 +376,7 @@ contract AutoCompoundingStakingRewards is
      * @dev returns the amount of pool tokens to burn
      */
     function _poolTokenAmountToBurn(
-        ReserveToken pool,
+        Token pool,
         ProgramData memory p,
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
@@ -407,8 +402,8 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev returns whether the specified token is the network token
      */
-    function _isNetworkToken(ReserveToken token) private view returns (bool) {
-        return token.toIERC20() == _networkToken;
+    function _isNetworkToken(Token token) private view returns (bool) {
+        return token.isEqual(_networkToken);
     }
 
     /**

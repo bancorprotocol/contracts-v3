@@ -208,7 +208,7 @@ describe('Vault', () => {
                         break;
                 }
 
-                if (!tokenData.isNativeToken()) {
+                if (!tokenData.isNative()) {
                     reserveToken = await Contracts.TestERC20Burnable.attach(token.address);
                 }
 
@@ -224,7 +224,7 @@ describe('Vault', () => {
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
 
-            if (tokenData.isNativeToken()) {
+            if (tokenData.isNative()) {
                 it('should revert when attempting to burn ETH', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
                 });
@@ -314,27 +314,28 @@ describe('Vault', () => {
 
         beforeEach(async () => {
             testVault = await createTestVault();
+
+            await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
         });
 
         const testPause = () => {
             it('should pause the contract', async () => {
-                await testVault.connect(sender).pause();
+                const res = await testVault.connect(sender).pause();
+
+                await expect(res).to.emit(testVault, 'Paused').withArgs(sender.address);
 
                 expect(await testVault.isPaused()).to.be.true;
             });
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
-
-                    expect(await testVault.isPaused()).to.be.true;
                 });
 
                 it('should unpause the contract', async () => {
-                    await testVault.connect(sender).unpause();
+                    const res = await testVault.connect(sender).unpause();
 
-                    expect(await testVault.isPaused()).to.be.false;
+                    await expect(res).to.emit(testVault, 'Unpaused').withArgs(sender.address);
                 });
             });
         };
@@ -346,10 +347,7 @@ describe('Vault', () => {
 
             context('when paused', () => {
                 beforeEach(async () => {
-                    await testVault.connect(deployer).grantRole(Roles.Upgradeable.ROLE_ADMIN, admin.address);
                     await testVault.connect(admin).pause();
-
-                    expect(await testVault.isPaused()).to.be.true;
                 });
 
                 it('should revert when a non-admin is attempting unpause', async () => {
