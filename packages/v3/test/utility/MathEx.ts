@@ -64,19 +64,35 @@ describe('MathEx', () => {
         });
     };
 
-    const testWeightedAverage = (fraction1: Fraction<BigNumber>, fraction2: Fraction<BigNumber>, weight1: number, maxRelativeError: Decimal) => {
+    const testWeightedAverage = (
+        fraction1: Fraction<BigNumber>,
+        fraction2: Fraction<BigNumber>,
+        weight1: number,
+        maxRelativeError: Decimal
+    ) => {
         it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}%)`, async () => {
-            const expected = toDecimal(fraction1).mul(weight1).add(toDecimal(fraction2).mul(100 - weight1)).div(100);
+            const expected = toDecimal(fraction1)
+                .mul(weight1)
+                .add(toDecimal(fraction2).mul(100 - weight1))
+                .div(100);
             const actual = await mathContract.weightedAverage(fraction1, fraction2, toPPT(weight1));
             expect(actual).to.almostEqual({ n: expected, d: 1 }, { maxRelativeError });
         });
     };
 
-    const testIsInRange = (baseSample: Fraction<BigNumber>, offsetSample: Fraction<BigNumber>, maxDeviation: number) => {
+    const testIsInRange = (
+        baseSample: Fraction<BigNumber>,
+        offsetSample: Fraction<BigNumber>,
+        maxDeviation: number
+    ) => {
         it(`isInRange(${toString(baseSample)}, ${toString(offsetSample)}, ${maxDeviation}%)`, async () => {
             const mid = toDecimal(offsetSample);
-            const min = toDecimal(baseSample).mul(100 - maxDeviation).div(100);
-            const max = toDecimal(baseSample).mul(100 + maxDeviation).div(100);
+            const min = toDecimal(baseSample)
+                .mul(100 - maxDeviation)
+                .div(100);
+            const max = toDecimal(baseSample)
+                .mul(100 + maxDeviation)
+                .div(100);
             const expected = min.lte(mid) && mid.lte(max);
             const actual = await mathContract.isInRange(baseSample, offsetSample, toPPM(maxDeviation));
             expect(actual).to.equal(expected);

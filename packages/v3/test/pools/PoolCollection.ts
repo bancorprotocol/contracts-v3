@@ -2506,7 +2506,9 @@ describe('PoolCollection', () => {
                                             prevPoolData,
                                             blockNumber
                                         );
-                                        expect(poolData.averageRate.blockNumber).to.equal(expectedNewAverageRate.blockNumber);
+                                        expect(poolData.averageRate.blockNumber).to.equal(
+                                            expectedNewAverageRate.blockNumber
+                                        );
                                         expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
                                     }
                                 });

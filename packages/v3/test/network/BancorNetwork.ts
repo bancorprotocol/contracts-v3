@@ -2316,7 +2316,7 @@ describe('BancorNetwork', () => {
                             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
                             await reserveToken.connect(trader).approve(network.address, amount);
                         }
-    
+
                         await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
                         await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
                     }

@@ -1313,7 +1313,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint32 blockNumber = _blockNumber();
 
         if (data.averageRate.blockNumber != blockNumber) {
-            data.averageRate = AverageRate({ blockNumber: blockNumber, rate: _calcAverageRate(data.averageRate.rate, spotRate) });
+            data.averageRate = AverageRate({
+                blockNumber: blockNumber,
+                rate: _calcAverageRate(data.averageRate.rate, spotRate)
+            });
         }
     }
 
