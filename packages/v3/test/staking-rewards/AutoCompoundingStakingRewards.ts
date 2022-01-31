@@ -668,15 +668,20 @@ describe('AutoCompoundingStakingRewards', () => {
                     ]) {
                         it(`should distribute tokens after ${seconds} seconds`, async () => {
                             await autoCompoundingStakingRewards.setTime(seconds);
-                            const res1 = await autoCompoundingStakingRewards.processRewards(token.address); // distribute tokens
+
+                            // distribute tokens
+                            const res1 = await autoCompoundingStakingRewards.processRewards(token.address);
                             await expect(res1).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
                             await autoCompoundingStakingRewards.setTime(END_TIME + TOTAL_DURATION * 2);
-                            // eslint-disable-next-line max-len
-                            const res2 = await autoCompoundingStakingRewards.processRewards(token.address); // distribute tokens possibly one last time
+
+                            // distribute tokens possibly one last time
+                            const res2 = await autoCompoundingStakingRewards.processRewards(token.address);
                             if (seconds < END_TIME) {
                                 await expect(res2).to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
                                 await autoCompoundingStakingRewards.setTime(END_TIME + TOTAL_DURATION * 4);
-                                const res3 = await autoCompoundingStakingRewards.processRewards(token.address); // distribute tokens one last time
+
+                                // distribute tokens one last time
+                                const res3 = await autoCompoundingStakingRewards.processRewards(token.address);
                                 await expect(res3).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
                             } else {
                                 await expect(res2).not.to.emit(autoCompoundingStakingRewards, 'RewardsDistributed');
