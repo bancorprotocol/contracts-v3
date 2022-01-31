@@ -299,16 +299,15 @@ describe('AutoCompoundingStakingRewards', () => {
                     ).to.revertedWith('InvalidParam');
                 });
 
-                for (let startTime = 0; startTime < 3; startTime++) {
-                    for (let endTime = 0; endTime < 3; endTime++) {
-                        for (let currTime = 0; currTime < 3; currTime++) {
+                for (let startTime = 0; startTime < 4; startTime++) {
+                    for (let endTime = 0; endTime < 4; endTime++) {
+                        for (let currTime = 0; currTime < 4; currTime++) {
                             let isProgramTimingValid: boolean;
 
                             switch (distributionType) {
                                 case StakingRewardsDistributionType.Flat:
                                     isProgramTimingValid = currTime <= startTime && startTime < endTime;
                                     break;
-
                                 case StakingRewardsDistributionType.ExponentialDecay:
                                     isProgramTimingValid = currTime <= startTime && endTime === 0;
                                     break;
@@ -698,10 +697,10 @@ describe('AutoCompoundingStakingRewards', () => {
                     });
                 });
 
-                for (let startTime = 0; startTime < 3; startTime++) {
-                    for (let endTime = 0; endTime < 3; endTime++) {
-                        for (let creationTime = 0; creationTime < 3; creationTime++) {
-                            for (let elapsedTime = 0; elapsedTime < 3; elapsedTime++) {
+                for (let startTime = 0; startTime < 5; startTime++) {
+                    for (let endTime = 0; endTime < 5; endTime++) {
+                        for (let creationTime = 0; creationTime < 5; creationTime++) {
+                            for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
                                 const currTime = creationTime + elapsedTime;
 
                                 let isProgramTimingValid: boolean;
@@ -712,7 +711,6 @@ describe('AutoCompoundingStakingRewards', () => {
                                         isProgramTimingValid = creationTime <= startTime && startTime < endTime;
                                         isProgramTimingActive = startTime <= currTime && currTime <= endTime;
                                         break;
-
                                     case StakingRewardsDistributionType.ExponentialDecay:
                                         isProgramTimingValid = creationTime <= startTime && endTime === 0;
                                         isProgramTimingActive = startTime <= currTime;
