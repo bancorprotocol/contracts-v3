@@ -71,7 +71,7 @@ describe('MathEx', () => {
         weight2: number,
         maxRelativeError: Decimal
     ) => {
-        it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}%)`, async () => {
+        it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}, ${weight2})`, async () => {
             const expected = toDecimal(fraction1)
                 .mul(weight1)
                 .add(toDecimal(fraction2).mul(weight2))
