@@ -89,6 +89,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
+    uint32 private constant AVERAGE_RATE_MAX_DEVIATION_PPM = 10000; // %1
 
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
@@ -1309,7 +1310,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return MathEx.isInRange(fromFraction112(averageRate), spotRate, _networkSettings.averageRateMaxDeviationPPM());
+        return MathEx.isInRange(fromFraction112(averageRate), spotRate, AVERAGE_RATE_MAX_DEVIATION_PPM);
     }
 
     /**
@@ -1319,17 +1320,18 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint32 time = _time();
 
         if (data.averageRate.time != time) {
-            data.averageRate = AverageRate({
-                time: time,
-                rate: _calcAverageRate(data.averageRate.rate, spotRate)
-            });
+            data.averageRate = AverageRate({ time: time, rate: _calcAverageRate(data.averageRate.rate, spotRate) });
         }
     }
 
     /**
      * @dev calculates the average rate
      */
-    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate) private pure returns (Fraction112 memory) {
+    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate)
+        private
+        pure
+        returns (Fraction112 memory)
+    {
         return toFraction112(MathEx.weightedAverage(fromFraction112(averageRate), spotRate, AVERAGE_RATE_WEIGHT_PPT));
     }
 }

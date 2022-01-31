@@ -35,9 +35,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the flash-loan fee (in units of PPM)
     uint32 private _flashLoanFeePPM;
 
-    // maximum deviation of the average rate from the spot rate (in units of PPM)
-    uint32 private _averageRateMaxDeviationPPM;
-
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
 
@@ -75,11 +72,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the flash-loan fee is updated
      */
     event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
-
-    /**
-     * @dev triggered when the maximum deviation of the average rate from the spot rate  is updated
-     */
-    event AverageRateMaxDeviationPPMUpdated(uint32 prevDeviationPPM, uint32 newDeviationPPM);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -298,38 +290,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _flashLoanFeePPM = newFlashLoanFeePPM;
 
         emit FlashLoanFeePPMUpdated({ prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
-    }
-
-    /**
-     * @inheritdoc INetworkSettings
-     */
-    function averageRateMaxDeviationPPM() external view returns (uint32) {
-        return _averageRateMaxDeviationPPM;
-    }
-
-    /**
-     * @dev sets maximum deviation of the average rate from the spot rate (in units of PPM)
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setAverageRateMaxDeviationPPM(uint32 newAverageRateMaxDeviationPPM)
-        external
-        onlyAdmin
-        validPortion(newAverageRateMaxDeviationPPM)
-    {
-        uint32 prevAverageRateMaxDeviationPPM = _averageRateMaxDeviationPPM;
-        if (prevAverageRateMaxDeviationPPM == newAverageRateMaxDeviationPPM) {
-            return;
-        }
-
-        _averageRateMaxDeviationPPM = newAverageRateMaxDeviationPPM;
-
-        emit AverageRateMaxDeviationPPMUpdated({
-            prevDeviationPPM: prevAverageRateMaxDeviationPPM,
-            newDeviationPPM: newAverageRateMaxDeviationPPM
-        });
     }
 
     /**
