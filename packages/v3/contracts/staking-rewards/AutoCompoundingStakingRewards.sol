@@ -175,7 +175,7 @@ contract AutoCompoundingStakingRewards is
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i++) {
-            list[i] = _programs[ReserveToken.wrap(_programByPool.at(i))];
+            list[i] = _programs[ReserveToken(_programByPool.at(i))];
         }
 
         return list;
@@ -210,13 +210,7 @@ contract AutoCompoundingStakingRewards is
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    )
-        external
-        validAddress(address(ReserveToken.unwrap(pool)))
-        validAddress(address(rewardsVault))
-        onlyAdmin
-        nonReentrant
-    {
+    ) external validAddress(address(address(pool))) validAddress(address(rewardsVault)) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }
@@ -267,7 +261,7 @@ contract AutoCompoundingStakingRewards is
 
         _programs[pool] = p;
 
-        assert(_programByPool.add(ReserveToken.unwrap(pool)));
+        assert(_programByPool.add(address(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -337,7 +331,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
-        p.rewardsVault.burn(ReserveToken.wrap(address(p.poolToken)), poolTokenAmountToBurn);
+        p.rewardsVault.burn(ReserveToken(address(p.poolToken)), poolTokenAmountToBurn);
 
         p.remainingRewards -= tokenAmountToDistribute;
         p.prevDistributionTimestamp = currTime;

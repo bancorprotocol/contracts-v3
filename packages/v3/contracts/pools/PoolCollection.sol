@@ -302,7 +302,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         uint256 length = _pools.length();
         ReserveToken[] memory list = new ReserveToken[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ReserveToken.wrap(_pools.at(i));
+            list[i] = ReserveToken(_pools.at(i));
         }
         return list;
     }
@@ -735,7 +735,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      */
     function migratePoolIn(ReserveToken pool, Pool calldata data)
         external
-        validAddress(ReserveToken.unwrap(pool))
+        validAddress(address(pool))
         only(address(_poolCollectionUpgrader))
     {
         _addPool(pool, data);
@@ -770,7 +770,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @dev adds a pool
      */
     function _addPool(ReserveToken pool, Pool memory data) private {
-        if (!_pools.add(ReserveToken.unwrap(pool))) {
+        if (!_pools.add(address(pool))) {
             revert AlreadyExists();
         }
 
@@ -781,7 +781,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
      * @dev removes a pool
      */
     function _removePool(ReserveToken pool) private {
-        if (!_pools.remove(ReserveToken.unwrap(pool))) {
+        if (!_pools.remove(address(pool))) {
             revert DoesNotExist();
         }
 
@@ -1132,7 +1132,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             emit TradingLiquidityUpdated({
                 contextId: contextId,
                 pool: pool,
-                reserveToken: ReserveToken.wrap(address(_networkToken)),
+                reserveToken: ReserveToken(address(_networkToken)),
                 liquidity: newLiquidity.networkTokenTradingLiquidity
             });
         }

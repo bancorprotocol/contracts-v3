@@ -152,10 +152,10 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * @dev validates that the provided tokens are valid and unique
      */
     function _validTokensForTrade(ReserveToken sourceToken, ReserveToken targetToken) internal pure {
-        _validAddress(ReserveToken.unwrap(sourceToken));
-        _validAddress(ReserveToken.unwrap(targetToken));
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
 
-        if (ReserveToken.unwrap(sourceToken) == ReserveToken.unwrap(targetToken)) {
+        if (sourceToken == targetToken) {
             revert InvalidTokens();
         }
     }
@@ -313,7 +313,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         // the network token
         TradeAmounts memory sourceTradeAmounts = _poolCollection(sourceToken).tradeAmountAndFee(
             sourceToken,
-            ReserveToken.wrap(address(_networkToken)),
+            ReserveToken(address(_networkToken)),
             amount,
             targetAmount
         );
@@ -321,7 +321,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         return
             _poolCollection(targetToken)
                 .tradeAmountAndFee(
-                    ReserveToken.wrap(address(_networkToken)),
+                    ReserveToken(address(_networkToken)),
                     targetToken,
                     sourceTradeAmounts.amount,
                     targetAmount

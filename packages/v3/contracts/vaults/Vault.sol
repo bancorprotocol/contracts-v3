@@ -171,7 +171,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         } else if (token == _govToken) {
             _govTokenGovernance.burn(amount);
         } else {
-            IERC20Burnable(ReserveToken.unwrap(reserveToken)).burn(amount);
+            IERC20Burnable(address(reserveToken)).burn(amount);
         }
 
         emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });

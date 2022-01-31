@@ -40,10 +40,8 @@ jobs:
       - name: Install NPM Dependencies
         run: yarn install
 
-      # temporary remove lint check from CI since solhint doesn't fully support Solidity 0.8.10
-      # - name: Lint
-      #   run: yarn lint
-      #
+      - name: Lint
+        run: yarn lint
 
       - name: Test
         run: yarn test:ci
