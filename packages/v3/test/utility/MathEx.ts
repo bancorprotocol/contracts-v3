@@ -262,7 +262,7 @@ describe('MathEx', () => {
                         const fraction2 = { n: BigNumber.from(n), d: BigNumber.from(d) };
                         for (const weight1 of [1, 2, 4, 8]) {
                             for (const weight2 of [1, 2, 4, 8]) {
-                                testWeightedAverage(fraction1, fraction2, weight1, weight2, new Decimal('4e-155'));
+                                testWeightedAverage(fraction1, fraction2, weight1, weight2, new Decimal('1e-154'));
                             }
                         }
                     }
