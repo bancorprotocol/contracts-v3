@@ -27,7 +27,6 @@ import {
     TestMathEx__factory,
     TestOwned__factory,
     TestPendingWithdrawals__factory,
-    TestPoolAverageRate__factory,
     TestPoolCollection__factory,
     TestPoolCollectionUpgrader__factory,
     TestPoolCollectionWithdrawal__factory,
@@ -83,7 +82,6 @@ const getContracts = (signer?: Signer) => ({
     TestMasterPool: deployOrAttach('TestMasterPool', TestMasterPool__factory, signer),
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
-    TestPoolAverageRate: deployOrAttach('TestPoolAverageRate', TestPoolAverageRate__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
     TestPoolCollectionUpgrader: deployOrAttach(
         'TestPoolCollectionUpgrader',

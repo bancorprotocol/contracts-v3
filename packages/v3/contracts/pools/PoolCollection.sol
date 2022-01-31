@@ -12,7 +12,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Sint256, zeroFraction, isFractionValid, isFractionZero } from "../utility/Types.sol";
+import { Fraction, Fraction112, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { Time } from "../utility/Time.sol";
@@ -36,6 +36,7 @@ import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.so
 
 // prettier-ignore
 import {
+    AverageRate,
     IPoolCollection,
     PoolLiquidity,
     Pool,
@@ -47,8 +48,6 @@ import {
 } from "./interfaces/IPoolCollection.sol";
 
 import { IMasterPool } from "./interfaces/IMasterPool.sol";
-
-import { PoolAverageRate, AverageRate } from "./PoolAverageRate.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
@@ -86,9 +85,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
+    uint16 private constant AVERAGE_RATE_WEIGHT_PPT = 800; // 80%
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
+    uint32 private constant AVERAGE_RATE_MAX_DEVIATION_PPM = 10000; // %1
 
     // represents `(n1 - n2) / (d1 - d2)`
     struct Quotient {
@@ -268,7 +269,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!_isRateValid(rate)) {
+        if (!isFractionPositive(rate)) {
             revert InvalidRate();
         }
     }
@@ -345,7 +346,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             tradingFeePPM: _defaultTradingFeePPM,
             tradingEnabled: false,
             depositingEnabled: true,
-            averageRate: AverageRate({ time: 0, rate: zeroFraction() }),
+            averageRate: AverageRate({ time: 0, rate: zeroFraction112() }),
             depositLimit: 0,
             liquidity: PoolLiquidity({
                 networkTokenTradingLiquidity: 0,
@@ -494,7 +495,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
             revert InsufficientLiquidity();
         }
 
-        data.averageRate = AverageRate({ time: _time(), rate: PoolAverageRate.reducedRatio(fundingRate) });
+        data.averageRate = AverageRate({ time: _time(), rate: toFraction112(fundingRate) });
 
         data.tradingEnabled = true;
 
@@ -905,7 +906,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // ensure that the average rate is reset when the pool is being emptied
         if (amounts.newBaseTokenTradingLiquidity == 0) {
-            data.averageRate.rate = zeroFraction();
+            data.averageRate.rate = zeroFraction112();
         }
 
         // if the new network token trading liquidity is below the minimum liquidity for trading - reset the liquidity
@@ -997,7 +998,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = _isRateValid(fundingRate);
+        bool isFundingRateValid = isFractionPositive(fundingRate);
 
         // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
         // liquidity for trading
@@ -1017,7 +1018,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = PoolAverageRate.isValid(averageRate);
+        bool isAverageRateValid = data.averageRate.time != 0 && isFraction112Positive(averageRate.rate);
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
@@ -1032,7 +1033,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         if (isFundingRateValid) {
             effectiveFundingRate = fundingRate;
         } else if (isAverageRateValid) {
-            effectiveFundingRate = averageRate.rate;
+            effectiveFundingRate = fromFraction112(averageRate.rate);
         } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
@@ -1193,7 +1194,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
         data.liquidity.baseTokenTradingLiquidity = 0;
 
         // reset the recent average rage
-        data.averageRate = AverageRate({ time: 0, rate: zeroFraction() });
+        data.averageRate = AverageRate({ time: 0, rate: zeroFraction112() });
 
         // ensure that trading is disabled
         if (data.tradingEnabled) {
@@ -1294,44 +1295,43 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, Time, Utils 
     /**
      * @dev returns whether a pool's rate is stable
      */
-    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRate)
+    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
         private
         view
         returns (bool)
     {
-        // verify that the average rate of the pool isn't deviated too much from its spot rate
         Fraction memory spotRate = Fraction({
             n: liquidity.networkTokenTradingLiquidity,
             d: liquidity.baseTokenTradingLiquidity
         });
-        return
-            PoolAverageRate.isPoolRateStable(
-                spotRate,
-                averageRate,
-                _networkSettings.averageRateMaxDeviationPPM(),
-                _time()
-            );
+
+        Fraction112 memory averageRate = averageRateInfo.rate;
+        if (averageRateInfo.time != _time()) {
+            averageRate = _calcAverageRate(averageRate, spotRate);
+        }
+
+        return MathEx.isInRange(fromFraction112(averageRate), spotRate, AVERAGE_RATE_MAX_DEVIATION_PPM);
     }
 
     /**
      * @dev updates the average rate
      */
     function _updateAverageRate(Pool storage data, Fraction memory spotRate) private {
-        AverageRate memory currentAverageRate = data.averageRate;
-        AverageRate memory newAverageRate = PoolAverageRate.calcAverageRate(spotRate, currentAverageRate, _time());
+        uint32 time = _time();
 
-        if (
-            newAverageRate.time != currentAverageRate.time ||
-            !PoolAverageRate.isEqual(newAverageRate, currentAverageRate)
-        ) {
-            data.averageRate = newAverageRate;
+        if (data.averageRate.time != time) {
+            data.averageRate = AverageRate({ time: time, rate: _calcAverageRate(data.averageRate.rate, spotRate) });
         }
     }
 
     /**
-     * @dev returns whether a rate is valid
+     * @dev calculates the average rate
      */
-    function _isRateValid(Fraction memory rate) private pure returns (bool) {
-        return isFractionValid(rate) && !isFractionZero(rate);
+    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate)
+        private
+        pure
+        returns (Fraction112 memory)
+    {
+        return toFraction112(MathEx.weightedAverage(fromFraction112(averageRate), spotRate, AVERAGE_RATE_WEIGHT_PPT));
     }
 }

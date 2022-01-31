@@ -50,9 +50,4 @@ interface INetworkSettings is IUpgradeable {
      * @dev returns the flash-loan fee (in units of PPM)
      */
     function flashLoanFeePPM() external view returns (uint32);
-
-    /**
-     * @dev returns the maximum deviation of the average rate from the spot rate (in units of PPM)
-     */
-    function averageRateMaxDeviationPPM() external view returns (uint32);
 }
