@@ -2,6 +2,7 @@
 pragma solidity 0.8.11;
 
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
+import { PPT_RESOLUTION, PPM_RESOLUTION } from "./Constants.sol";
 
 uint256 constant ONE = 1 << 127;
 
@@ -88,6 +89,36 @@ library MathEx {
         }
 
         return Fraction({ n: n, d: ONE });
+    }
+
+    /**
+     * @dev returns the weighted average of two fractions
+     */
+    function weightedAverage(
+        Fraction memory fraction1,
+        Fraction memory fraction2,
+        uint16 weight1PPT
+    ) internal pure returns (Fraction memory) {
+        return
+            Fraction({
+                n: fraction1.n * fraction2.d * weight1PPT + fraction1.d * fraction2.n * (PPT_RESOLUTION - weight1PPT),
+                d: fraction1.d * fraction2.d * PPT_RESOLUTION
+            });
+    }
+
+    /**
+     * @dev returns whether or not the deviation of an offset sample from a base sample is within a permitted range
+     * for example, if the maximum permitted deviation is 5%, then evaluate `95% * base <= offset <= 105% * base`
+     */
+    function isInRange(
+        Fraction memory baseSample,
+        Fraction memory offsetSample,
+        uint32 maxDeviationPPM
+    ) internal pure returns (bool) {
+        Uint512 memory min = mul512(baseSample.n, offsetSample.d * (PPM_RESOLUTION - maxDeviationPPM));
+        Uint512 memory mid = mul512(baseSample.d, offsetSample.n * PPM_RESOLUTION);
+        Uint512 memory max = mul512(baseSample.n, offsetSample.d * (PPM_RESOLUTION + maxDeviationPPM));
+        return lte512(min, mid) && lte512(mid, max);
     }
 
     /**

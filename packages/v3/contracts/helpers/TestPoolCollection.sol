@@ -14,7 +14,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
-import { AverageRate } from "../pools/PoolAverageRate.sol";
+import { AverageRate } from "../pools/interfaces/IPoolCollection.sol";
 
 import { Time } from "../utility/Time.sol";
 

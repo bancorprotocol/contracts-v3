@@ -7,6 +7,7 @@ import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/dra
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
@@ -56,7 +57,7 @@ import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
 /**
  * @dev Bancor Network contract
  */
-contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, Time, Utils {
+contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, Time, Utils {
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     using TokenLibrary for Token;
@@ -70,6 +71,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     // the migration manager role is required for migrating liquidity
     bytes32 private constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
+
+    // the emergency manager role is required to pause/unpause the network
+    bytes32 private constant ROLE_EMERGENCY_STOPPER = keccak256("ROLE_EMERGENCY_STOPPER");
 
     // the address of the network token
     IERC20 private immutable _networkToken;
@@ -253,6 +257,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // set up administrative roles
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_EMERGENCY_STOPPER, ROLE_ADMIN);
     }
 
     // solhint-enable func-name-mixedcase
@@ -289,6 +294,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function roleMigrationManager() external pure returns (bytes32) {
         return ROLE_MIGRATION_MANAGER;
+    }
+
+    /**
+     * @dev returns the emergency stopper role
+     */
+    function roleEmergencyStopper() external pure returns (bytes32) {
+        return ROLE_EMERGENCY_STOPPER;
     }
 
     /**
@@ -480,7 +492,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         Token pool,
         uint256 tokenAmount
-    ) external payable validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    )
+        external
+        payable
+        validAddress(provider)
+        validAddress(address(pool))
+        greaterThanZero(tokenAmount)
+        whenNotPaused
+        nonReentrant
+    {
         _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
@@ -492,6 +512,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         payable
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
+        whenNotPaused
         nonReentrant
     {
         _depositFor(msg.sender, pool, tokenAmount, msg.sender);
@@ -508,7 +529,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(provider) validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    )
+        external
+        validAddress(provider)
+        validAddress(address(pool))
+        greaterThanZero(tokenAmount)
+        whenNotPaused
+        nonReentrant
+    {
         _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, v, r, s);
     }
 
@@ -522,14 +550,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) nonReentrant {
+    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant {
         _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, v, r, s);
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdraw(uint256 id) external nonReentrant {
+    function withdraw(uint256 id) external whenNotPaused nonReentrant {
         address provider = msg.sender;
         bytes32 contextId = _withdrawContextId(id, provider);
 
@@ -556,10 +584,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     )
         external
         payable
-        nonReentrant
         validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
+        whenNotPaused
+        nonReentrant
     {
         _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
     }
@@ -579,10 +608,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 s
     )
         external
-        nonReentrant
         validTokensForTrade(sourceToken, targetToken)
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
+        whenNotPaused
+        nonReentrant
     {
         address trader = msg.sender;
 
@@ -599,7 +629,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         IFlashLoanRecipient recipient,
         bytes calldata data
-    ) external nonReentrant validAddress(address(token)) greaterThanZero(amount) validAddress(address(recipient)) {
+    )
+        external
+        validAddress(address(token))
+        greaterThanZero(amount)
+        validAddress(address(recipient))
+        whenNotPaused
+        nonReentrant
+    {
         if (!_isNetworkToken(token) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
@@ -653,6 +690,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
+        whenNotPaused
         nonReentrant
         returns (uint256)
     {
@@ -669,7 +707,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(poolToken)) greaterThanZero(poolTokenAmount) nonReentrant returns (uint256) {
+    )
+        external
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
         poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
         return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
@@ -678,14 +723,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function cancelWithdrawal(uint256 id) external nonReentrant {
+    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant {
         _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function reinitWithdrawal(uint256 id) external nonReentrant {
+    function reinitWithdrawal(uint256 id) external whenNotPaused nonReentrant {
         _pendingWithdrawals.reinitWithdrawal(msg.sender, id);
     }
 
@@ -698,7 +743,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         uint256 availableAmount,
         uint256 originalAmount
-    ) external payable nonReentrant onlyRoleMember(ROLE_MIGRATION_MANAGER) {
+    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) nonReentrant {
         bytes32 contextId = keccak256(
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );
@@ -710,6 +755,35 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         emit FundsMigrated(contextId, token, provider, amount, availableAmount);
+    }
+
+    /**
+     * @dev returns whether the network is currently paused
+     */
+    function isPaused() external view returns (bool) {
+        return paused();
+    }
+
+    /**
+     * @dev pauses the network
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_EMERGENCY_STOPPER privilege
+     */
+    function pause() external onlyRoleMember(ROLE_EMERGENCY_STOPPER) {
+        _pause();
+    }
+
+    /**
+     * @dev resumes the network
+     *
+     * requirements:
+     *
+     * - the caller must have the ROLE_EMERGENCY_STOPPER privilege
+     */
+    function resume() external onlyRoleMember(ROLE_EMERGENCY_STOPPER) {
+        _unpause();
     }
 
     /**

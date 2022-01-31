@@ -31,6 +31,7 @@ describeDeployment('1642682506-network', ContractName.BancorNetworkV1, () => {
         await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
         await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [deployer, network.address]);
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER);
+        await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
         await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address]);
         await expectRoleMembers(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, [deployer, network.address]);
         await expectRoleMembers(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address]);
