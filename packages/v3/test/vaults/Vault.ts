@@ -208,7 +208,7 @@ describe('Vault', () => {
                         break;
                 }
 
-                if (!tokenData.isNativeToken()) {
+                if (!tokenData.isNative()) {
                     reserveToken = await Contracts.TestERC20Burnable.attach(token.address);
                 }
 
@@ -224,7 +224,7 @@ describe('Vault', () => {
                 expect(await getBalance(token, testVault.address)).to.equal(prevVaultBalance);
             });
 
-            if (tokenData.isNativeToken()) {
+            if (tokenData.isNative()) {
                 it('should revert when attempting to burn ETH', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
                 });

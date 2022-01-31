@@ -7,7 +7,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
@@ -21,7 +21,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
     // a mapping of network token funding limits per pool
-    mapping(ReserveToken => uint256) private _poolFundingLimits;
+    mapping(Token => uint256) private _poolFundingLimits;
 
     // below that amount, trading is disabled and co-investments use the initial rate
     uint256 private _minLiquidityForTrading;
@@ -41,17 +41,17 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev triggered when a token is added to the protection whitelist
      */
-    event TokenAddedToWhitelist(ReserveToken indexed token);
+    event TokenAddedToWhitelist(Token indexed token);
 
     /**
      * @dev triggered when a token is removed from the protection whitelist
      */
-    event TokenRemovedFromWhitelist(ReserveToken indexed token);
+    event TokenRemovedFromWhitelist(Token indexed token);
 
     /**
      * @dev triggered when a per-pool funding limit is updated
      */
-    event FundingLimitUpdated(ReserveToken indexed pool, uint256 prevLimit, uint256 newLimit);
+    event FundingLimitUpdated(Token indexed pool, uint256 prevLimit, uint256 newLimit);
 
     /**
      * @dev triggered when the minimum liquidity for trading is updated
@@ -108,11 +108,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelist() external view returns (ReserveToken[] memory) {
+    function protectedTokenWhitelist() external view returns (Token[] memory) {
         uint256 length = _protectedTokenWhitelist.length();
-        ReserveToken[] memory list = new ReserveToken[](length);
+        Token[] memory list = new Token[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = ReserveToken(_protectedTokenWhitelist.at(i));
+            list[i] = Token(_protectedTokenWhitelist.at(i));
         }
         return list;
     }
@@ -124,7 +124,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function addTokenToWhitelist(ReserveToken token) external onlyAdmin validExternalAddress(address(token)) {
+    function addTokenToWhitelist(Token token) external onlyAdmin validExternalAddress(address(token)) {
         if (!_protectedTokenWhitelist.add(address(token))) {
             revert AlreadyExists();
         }
@@ -139,7 +139,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function removeTokenFromWhitelist(ReserveToken token) external onlyAdmin {
+    function removeTokenFromWhitelist(Token token) external onlyAdmin {
         if (!_protectedTokenWhitelist.remove(address(token))) {
             revert DoesNotExist();
         }
@@ -150,14 +150,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function isTokenWhitelisted(ReserveToken token) external view returns (bool) {
+    function isTokenWhitelisted(Token token) external view returns (bool) {
         return _isTokenWhitelisted(token);
     }
 
     /**
      * @inheritdoc INetworkSettings
      */
-    function poolFundingLimit(ReserveToken pool) external view returns (uint256) {
+    function poolFundingLimit(Token pool) external view returns (uint256) {
         return _poolFundingLimits[pool];
     }
 
@@ -169,7 +169,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      * - the token must have been whitelisted
      */
-    function setFundingLimit(ReserveToken pool, uint256 amount) external onlyAdmin validAddress(address(pool)) {
+    function setFundingLimit(Token pool, uint256 amount) external onlyAdmin validAddress(address(pool)) {
         if (!_isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
@@ -287,7 +287,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev checks whether a given token is whitelisted
      */
-    function _isTokenWhitelisted(ReserveToken token) private view returns (bool) {
+    function _isTokenWhitelisted(Token token) private view returns (bool) {
         return _protectedTokenWhitelist.contains(address(token));
     }
 }

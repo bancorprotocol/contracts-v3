@@ -5,7 +5,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { IExternalProtectionVault } from "./interfaces/IExternalProtectionVault.sol";
 import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
@@ -76,7 +76,7 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
      */
     function isAuthorizedWithdrawal(
         address caller,
-        ReserveToken, /* reserveToken */
+        Token, /* Token */
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {

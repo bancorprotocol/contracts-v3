@@ -114,7 +114,7 @@ export class TokenData {
         return this._decimals === DEFAULT_DECIMALS;
     }
 
-    isNativeToken() {
+    isNative() {
         return this._symbol === TokenSymbol.ETH;
     }
 

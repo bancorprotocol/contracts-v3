@@ -15,7 +15,7 @@ import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
-import { ReserveToken } from "../../token/ReserveToken.sol";
+import { Token } from "../../token/Token.sol";
 
 import { IBancorNetworkInfo } from "./IBancorNetworkInfo.sol";
 import { IBancorNetwork } from "./IBancorNetwork.sol";
@@ -95,8 +95,8 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev returns the target amount by specifying the source amount
      */
     function tradeTargetAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 sourceAmount
     ) external view returns (uint256);
 
@@ -104,8 +104,8 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev returns the source amount by specifying the target amount
      */
     function tradeSourceAmount(
-        ReserveToken sourceToken,
-        ReserveToken targetToken,
+        Token sourceToken,
+        Token targetToken,
         uint256 targetAmount
     ) external view returns (uint256);
 

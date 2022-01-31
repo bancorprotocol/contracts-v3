@@ -6,7 +6,8 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -27,7 +28,7 @@ import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./i
 contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     using SafeERC20 for IPoolToken;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     error WithdrawalNotAllowed();
 
@@ -71,7 +72,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
      */
     event WithdrawalInitiated(
-        ReserveToken indexed pool,
+        Token indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -82,7 +83,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev triggered when a provider cancels a liquidity withdrawal request
      */
     event WithdrawalCancelled(
-        ReserveToken indexed pool,
+        Token indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -94,7 +95,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev triggered when a provider requests to reinitiate a liquidity withdrawal
      */
     event WithdrawalReinitiated(
-        ReserveToken indexed pool,
+        Token indexed pool,
         address indexed provider,
         uint256 indexed requestId,
         uint256 poolTokenAmount,
@@ -107,7 +108,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     event WithdrawalCompleted(
         bytes32 indexed contextId,
-        ReserveToken indexed pool,
+        Token indexed pool,
         address indexed provider,
         uint256 requestId,
         uint256 poolTokenAmount,
@@ -310,7 +311,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(provider, id);
 
-        // get the pool token value in reserve tokens
+        // get the pool token value in reserve/pool tokens
         uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
 
         // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
@@ -401,7 +402,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         uint256 poolTokenAmount
     ) private returns (uint256) {
         // make sure that the pool is valid
-        ReserveToken pool = poolToken.reserveToken();
+        Token pool = poolToken.reserveToken();
         if (!_network.isPoolValid(pool)) {
             revert InvalidPool();
         }
@@ -409,7 +410,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // record the current withdrawal request alongside previous pending withdrawal requests
         uint256 id = _nextWithdrawalRequestId++;
 
-        // get the pool token value in reserve tokens
+        // get the pool token value in reserve/pool tokens
         uint256 reserveTokenAmount = _poolTokenUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
@@ -436,10 +437,10 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     }
 
     /**
-     * @dev returns the pool token value in reserve tokens
+     * @dev returns the pool token value in tokens
      */
-    function _poolTokenUnderlying(ReserveToken pool, uint256 poolTokenAmount) private view returns (uint256) {
-        if (pool.toIERC20() == _networkToken) {
+    function _poolTokenUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
+        if (pool.isEqual(_networkToken)) {
             return _masterPool.poolTokenToUnderlying(poolTokenAmount);
         }
 

@@ -12,14 +12,15 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { IERC20Burnable } from "../token/interfaces/IERC20Burnable.sol";
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { Utils, AccessDenied, NotPayable, InvalidToken } from "../utility/Utils.sol";
 
 abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, Utils {
     using Address for address payable;
     using SafeERC20 for IERC20;
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     // the address of the network token
     IERC20 internal immutable _networkToken;
@@ -76,11 +77,11 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     // allows execution only by an authorized operation
     modifier whenAuthorized(
         address caller,
-        ReserveToken reserveToken,
+        Token token,
         address payable target,
         uint256 amount
     ) {
-        if (!isAuthorizedWithdrawal(caller, reserveToken, target, amount)) {
+        if (!isAuthorizedWithdrawal(caller, token, target, amount)) {
             revert AccessDenied();
         }
 
@@ -120,7 +121,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      * @inheritdoc IVault
      */
     function withdrawFunds(
-        ReserveToken reserveToken,
+        Token token,
         address payable target,
         uint256 amount
     )
@@ -129,52 +130,50 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         validAddress(target)
         nonReentrant
         whenNotPaused
-        whenAuthorized(msg.sender, reserveToken, target, amount)
+        whenAuthorized(msg.sender, token, target, amount)
     {
         if (amount == 0) {
             return;
         }
 
-        if (reserveToken.isNativeToken()) {
+        if (token.isNative()) {
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             target.sendValue(amount);
         } else {
-            reserveToken.safeTransfer(target, amount);
+            token.safeTransfer(target, amount);
         }
 
-        emit FundsWithdrawn({ token: reserveToken, caller: msg.sender, target: target, amount: amount });
+        emit FundsWithdrawn({ token: token, caller: msg.sender, target: target, amount: amount });
     }
 
     /**
      * @inheritdoc IVault
      */
-    function burn(ReserveToken reserveToken, uint256 amount)
+    function burn(Token token, uint256 amount)
         external
         nonReentrant
         whenNotPaused
-        whenAuthorized(msg.sender, reserveToken, payable(address(0)), amount)
+        whenAuthorized(msg.sender, token, payable(address(0)), amount)
     {
         if (amount == 0) {
             return;
         }
 
-        if (reserveToken.isNativeToken()) {
+        if (token.isNative()) {
             revert InvalidToken();
         }
 
-        IERC20 token = reserveToken.toIERC20();
-
         // allow vaults to burn network and governance tokens via their respective token governance modules
-        if (token == _networkToken) {
+        if (token.isEqual(_networkToken)) {
             _networkTokenGovernance.burn(amount);
-        } else if (token == _govToken) {
+        } else if (token.isEqual(_govToken)) {
             _govTokenGovernance.burn(amount);
         } else {
-            IERC20Burnable(address(reserveToken)).burn(amount);
+            IERC20Burnable(address(token)).burn(amount);
         }
 
-        emit FundsBurned({ token: reserveToken, caller: msg.sender, amount: amount });
+        emit FundsBurned({ token: token, caller: msg.sender, amount: amount });
     }
 
     /**
@@ -182,7 +181,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
      */
     function isAuthorizedWithdrawal(
         address caller,
-        ReserveToken reserveToken,
+        Token token,
         address target,
         uint256 amount
     ) internal view virtual returns (bool);

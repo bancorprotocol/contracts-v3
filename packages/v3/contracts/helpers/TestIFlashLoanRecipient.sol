@@ -5,7 +5,8 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IBancorNetwork, IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -13,7 +14,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 contract TestFlashLoanRecipient is IFlashLoanRecipient {
     using Address for address payable;
     using SafeERC20 for IERC20;
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     struct CallbackData {
         address caller;
@@ -37,9 +38,7 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
     receive() external payable {}
 
     function snapshot(IERC20 token) external {
-        ReserveToken reserveToken = ReserveToken(address(token));
-
-        _snapshots[token] = reserveToken.balanceOf(address(this));
+        _snapshots[token] = Token(address(token)).balanceOf(address(this));
     }
 
     function callbackData() external view returns (CallbackData memory) {
@@ -56,31 +55,31 @@ contract TestFlashLoanRecipient is IFlashLoanRecipient {
 
     function onFlashLoan(
         address caller,
-        IERC20 token,
+        IERC20 erc20Token,
         uint256 amount,
         uint256 feeAmount,
         bytes memory data
     ) external {
-        ReserveToken reserveToken = ReserveToken(address(token));
+        Token token = Token(address(erc20Token));
 
         _callbackData = CallbackData({
             caller: caller,
-            token: token,
+            token: erc20Token,
             amount: amount,
             feeAmount: feeAmount,
             data: data,
-            receivedAmount: reserveToken.balanceOf(address(this)) - _snapshots[token]
+            receivedAmount: token.balanceOf(address(this)) - _snapshots[erc20Token]
         });
 
         if (_reenter) {
-            _network.flashLoan(reserveToken, amount, IFlashLoanRecipient(address(this)), new bytes(0));
+            _network.flashLoan(token, amount, IFlashLoanRecipient(address(this)), new bytes(0));
         }
 
         uint256 returnAmount = _amountToReturn != 0 ? _amountToReturn : amount + feeAmount;
-        if (reserveToken.isNativeToken()) {
+        if (token.isNative()) {
             payable(msg.sender).sendValue(returnAmount);
         } else {
-            reserveToken.safeTransfer(msg.sender, returnAmount);
+            token.safeTransfer(msg.sender, returnAmount);
         }
     }
 }

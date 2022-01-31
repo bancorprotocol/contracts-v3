@@ -10,11 +10,11 @@ import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.so
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/Types.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
 interface IPoolCollectionBase {
-    function migratePoolOut(ReserveToken pool, IPoolCollection targetPoolCollection) external;
+    function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
 interface IPoolCollectionV1 is IPoolCollectionBase {
@@ -34,7 +34,7 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
         PoolLiquidityV1 liquidity; // the overall liquidity in the pool
     }
 
-    function poolData(ReserveToken reserveToken) external view returns (PoolV1 memory);
+    function poolData(Token token) external view returns (PoolV1 memory);
 }
 
 /**
@@ -56,7 +56,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
      */
     event PoolUpgraded(
         uint16 indexed poolType,
-        ReserveToken indexed pool,
+        Token indexed pool,
         IPoolCollection prevPoolCollection,
         IPoolCollection newPoolCollection,
         uint16 prevVersion,
@@ -105,7 +105,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolCollectionUpgrader
      */
-    function upgradePool(ReserveToken pool) external only(address(_network)) returns (IPoolCollection) {
+    function upgradePool(Token pool) external only(address(_network)) returns (IPoolCollection) {
         if (address(pool) == address(0)) {
             revert InvalidPool();
         }
@@ -147,7 +147,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
      * @dev upgrades a V1 pool to the latest pool version
      */
     function _upgradeFromV1(
-        ReserveToken pool,
+        Token pool,
         IPoolCollectionV1 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {

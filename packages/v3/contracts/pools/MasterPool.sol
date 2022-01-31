@@ -6,7 +6,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -32,7 +32,8 @@ import {
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { Vault } from "../vaults/Vault.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
@@ -43,7 +44,7 @@ import { PoolToken } from "./PoolToken.sol";
  * @dev Master Pool contract
  */
 contract MasterPool is IMasterPool, Vault {
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     error FundingLimitExceeded();
 
@@ -71,7 +72,7 @@ contract MasterPool is IMasterPool, Vault {
     uint256 internal _stakedBalance;
 
     // a mapping between pools and their current funding
-    mapping(ReserveToken => uint256) private _currentPoolFunding;
+    mapping(Token => uint256) private _currentPoolFunding;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 2] private __gap;
@@ -104,7 +105,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     event FundingRequested(
         bytes32 indexed contextId,
-        ReserveToken indexed pool,
+        Token indexed pool,
         uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
@@ -114,7 +115,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     event FundingRenounced(
         bytes32 indexed contextId,
-        ReserveToken indexed pool,
+        Token indexed pool,
         uint256 networkTokenAmount,
         uint256 poolTokenAmount
     );
@@ -185,7 +186,7 @@ contract MasterPool is IMasterPool, Vault {
 
     // solhint-enable func-name-mixedcase
 
-    modifier poolWhitelisted(ReserveToken pool) {
+    modifier poolWhitelisted(Token pool) {
         _poolWhitelisted(pool);
 
         _;
@@ -194,7 +195,7 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev validates that the provided pool is whitelisted
      */
-    function _poolWhitelisted(ReserveToken pool) internal view {
+    function _poolWhitelisted(Token pool) internal view {
         if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
@@ -252,11 +253,11 @@ contract MasterPool is IMasterPool, Vault {
      */
     function isAuthorizedWithdrawal(
         address caller,
-        ReserveToken reserveToken,
+        Token token,
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return reserveToken.toIERC20() == _poolToken && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller);
+        return token.isEqual(_poolToken) && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller);
     }
 
     /**
@@ -276,14 +277,14 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function currentPoolFunding(ReserveToken pool) external view returns (uint256) {
+    function currentPoolFunding(Token pool) external view returns (uint256) {
         return _currentPoolFunding[pool];
     }
 
     /**
      * @inheritdoc IMasterPool
      */
-    function availableFunding(ReserveToken pool) external view returns (uint256) {
+    function availableFunding(Token pool) external view returns (uint256) {
         return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
     }
 
@@ -340,7 +341,7 @@ contract MasterPool is IMasterPool, Vault {
         onlyRoleMember(ROLE_VAULT_MANAGER)
         greaterThanZero(networkTokenAmount)
     {
-        _masterVault.burn(ReserveToken(address(_networkToken)), networkTokenAmount);
+        _masterVault.burn(Token(address(_networkToken)), networkTokenAmount);
     }
 
     /**
@@ -420,7 +421,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     function requestFunding(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 networkTokenAmount
     ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentFunding = _currentPoolFunding[pool];
@@ -480,7 +481,7 @@ contract MasterPool is IMasterPool, Vault {
      */
     function renounceFunding(
         bytes32 contextId,
-        ReserveToken pool,
+        Token pool,
         uint256 networkTokenAmount
     ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
         uint256 currentStakedBalance = _stakedBalance;
@@ -509,7 +510,7 @@ contract MasterPool is IMasterPool, Vault {
         _poolToken.burn(poolTokenAmount);
 
         // burn all the network tokens from the master vault
-        _masterVault.burn(ReserveToken(address(_networkToken)), networkTokenAmount);
+        _masterVault.burn(Token(address(_networkToken)), networkTokenAmount);
 
         emit FundingRenounced({
             contextId: contextId,
@@ -530,7 +531,7 @@ contract MasterPool is IMasterPool, Vault {
      * @inheritdoc IMasterPool
      */
     function onFeesCollected(
-        ReserveToken pool,
+        Token pool,
         uint256 feeAmount,
         uint8 feeType
     ) external only(address(_network)) validAddress(address(pool)) {

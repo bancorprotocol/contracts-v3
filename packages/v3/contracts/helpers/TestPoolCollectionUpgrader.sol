@@ -7,14 +7,14 @@ import { IPoolCollection, Pool } from "../pools/interfaces/IPoolCollection.sol";
 
 import { PoolCollectionUpgrader } from "../pools/PoolCollectionUpgrader.sol";
 
-import { ReserveToken } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
 
 contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
     constructor(IBancorNetwork initNetwork) PoolCollectionUpgrader(initNetwork) {}
 
     function migratePoolInT(
         IPoolCollection poolCollection,
-        ReserveToken pool,
+        Token pool,
         Pool memory data
     ) external {
         poolCollection.migratePoolIn(pool, data);
@@ -22,7 +22,7 @@ contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
 
     function migratePoolOutT(
         IPoolCollection poolCollection,
-        ReserveToken pool,
+        Token pool,
         IPoolCollection targetPoolCollection
     ) external {
         poolCollection.migratePoolOut(pool, targetPoolCollection);

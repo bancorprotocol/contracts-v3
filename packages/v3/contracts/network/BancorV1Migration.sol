@@ -9,14 +9,15 @@ import { Utils } from "../utility/Utils.sol";
 
 import { BancorNetwork } from "./BancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { ReserveToken, ReserveTokenLibrary } from "../token/ReserveToken.sol";
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 interface IBancorConverterV1 {
-    function reserveTokens() external view returns (ReserveToken[] memory);
+    function reserveTokens() external view returns (Token[] memory);
 
     function removeLiquidity(
         uint256 amount,
-        ReserveToken[] memory reserveTokens,
+        Token[] memory reserveTokens,
         uint256[] memory reserveMinReturnAmounts
     ) external returns (uint256[] memory);
 }
@@ -27,7 +28,7 @@ interface IBancorConverterV1 {
 contract BancorV1Migration is ReentrancyGuard, Utils {
     using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
-    using ReserveTokenLibrary for ReserveToken;
+    using TokenLibrary for Token;
 
     // the network contract
     BancorNetwork private immutable _network;
@@ -63,13 +64,13 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
 
         IBancorConverterV1 converter = IBancorConverterV1(payable(poolToken.owner()));
 
-        ReserveToken[] memory reserveTokens = converter.reserveTokens();
+        Token[] memory reserveTokens = converter.reserveTokens();
 
         // ensure to migrate network token liquidity last, in order to reduce some cases when migration wouldn't have
         // been possible
-        ReserveToken[] memory orderedReserveTokens = new ReserveToken[](2);
+        Token[] memory orderedReserveTokens = new Token[](2);
         orderedReserveTokens[0] = reserveTokens[1].toERC20() == _networkToken ? reserveTokens[0] : reserveTokens[1];
-        orderedReserveTokens[1] = ReserveToken(address(_networkToken));
+        orderedReserveTokens[1] = Token(address(_networkToken));
 
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;
@@ -82,7 +83,7 @@ contract BancorV1Migration is ReentrancyGuard, Utils {
         );
 
         for (uint256 i = 0; i < 2; i++) {
-            if (orderedReserveTokens[i].isNativeToken()) {
+            if (orderedReserveTokens[i].isNative()) {
                 _network.depositFor{ value: orderedReserveAmounts[i] }(
                     msg.sender,
                     orderedReserveTokens[i],
