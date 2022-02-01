@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["dom", "esnext"],
+        "module": "commonjs",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "baseUrl": "./",
+        "paths": {
+            "@nomiclabs/hardhat-ethers/*": ["node_modules/@nomiclabs/hardhat-ethers/dist/src/*"],
+            "*": ["node_modules/*"]
+        }
+    },
+    "include": ["./components", "./utils", "./test", "./deploy"],
+    "files": ["./hardhat.config.ts"]
+}
