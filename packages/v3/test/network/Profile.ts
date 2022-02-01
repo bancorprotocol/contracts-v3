@@ -722,7 +722,7 @@ describe('Profile @profile', () => {
                 });
 
                 it('should complete multiple trades', async () => {
-                    const currentTime = await poolCollection.currentTime();
+                    const currentBlockNumber = await poolCollection.currentBlockNumber();
                     for (let i = 0; i < TRADES_COUNT; i++) {
                         if (!isSourceNativeToken) {
                             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -730,7 +730,7 @@ describe('Profile @profile', () => {
                         }
 
                         await performTrade(ZERO_ADDRESS, amount, trade, 'trade');
-                        await poolCollection.setTime(currentTime + i + 1);
+                        await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
                     }
                 });
             });
@@ -740,19 +740,17 @@ describe('Profile @profile', () => {
             const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
+            if (isSourceNativeToken || isSourceNetworkToken) {
+                return;
+            }
+
             context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
                 beforeEach(async () => {
                     await setupPools(source, target);
 
-                    if (!isSourceNativeToken) {
-                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                        await reserveToken.transfer(trader.address, amount);
-                    }
+                    const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                    await reserveToken.transfer(trader.address, amount);
                 });
-
-                if (isSourceNetworkToken || isSourceNativeToken) {
-                    return;
-                }
 
                 it('should complete a permitted trade', async () => {
                     await performTrade(ZERO_ADDRESS, amount, tradePermitted, 'trade permitted');

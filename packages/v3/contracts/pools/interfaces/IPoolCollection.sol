@@ -22,7 +22,7 @@ struct PoolLiquidity {
 }
 
 struct AverageRate {
-    uint32 time;
+    uint32 blockNumber;
     Fraction112 rate;
 }
 
