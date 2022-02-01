@@ -71,7 +71,7 @@ struct WithdrawalAmounts {
  *
  * notes:
  *
- * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
+ * - the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
     using TokenLibrary for Token;
@@ -92,14 +92,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10000; // %1
-
-    // represents `(n1 - n2) / (d1 - d2)`
-    struct Quotient {
-        uint256 n1;
-        uint256 n2;
-        uint256 d1;
-        uint256 d2;
-    }
+    // the average rate is recalculated based on the ratio between the weights of the rates
+    // the smaller the weights are, the larger the supported range of each one of the rates is
 
     // trading-related preprocessed data
     struct TradingParams {
