@@ -12,12 +12,14 @@
     },
     "author": "Bancor Team",
     "license": "SEE LICENSE IN LICENSE",
+    "main": "typechain/index.js",
+    "types": "typechain/index.d.ts",
     "files": [
-        "contracts/**/*.sol",
-        "!contracts/helpers",
-        "artifacts/contracts/**/*.json",
-        "typechain-types/**/*.ts",
-        "deployments/mainnet"
+        "/contracts/**/*.sol",
+        "!/contracts/helpers",
+        "/artifacts",
+        "/typechain-types",
+        "/deployments/mainnet"
     ],
     "scripts": {
         "build": "hardhat compile",
@@ -46,6 +48,7 @@
         "hardhat": "2.8.3"
     },
     "devDependencies": {
+        "@bancor/contracts-solidity": "^0.7.1",
         "@bancor/token-governance": "^0.1.8",
         "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
         "@nomiclabs/hardhat-etherscan": "^3.0.0",

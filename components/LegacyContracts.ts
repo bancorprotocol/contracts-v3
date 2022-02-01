@@ -1,3 +1,4 @@
+import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork as LegacyBancorNetwork,
     BancorNetwork__factory,
@@ -29,8 +30,7 @@ import {
     TestStandardPoolConverterFactory,
     TokenHolder__factory,
     TokenHolder
-} from '../../v2/typechain';
-import { deployOrAttach } from './ContractBuilder';
+} from '@bancor/contracts-solidity';
 
 /* eslint-disable camelcase */
 import {

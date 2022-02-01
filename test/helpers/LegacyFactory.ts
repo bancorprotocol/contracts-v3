@@ -1,15 +1,24 @@
 import { IERC20, TestBancorNetwork, MasterVault } from '../../components/Contracts';
 import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
+import { PPM_RESOLUTION } from '../../utils/Constants';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { utils } from 'ethers';
 
-const {
-    registry: { CONVERTER_FACTORY, CONVERTER_REGISTRY, CONVERTER_REGISTRY_DATA, BANCOR_NETWORK, NETWORK_SETTINGS },
-    roles: { ROLE_OWNER },
-    PPM_RESOLUTION
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-} = require('../../../v2/test/helpers/Constants');
+const { formatBytes32String, id } = utils;
+
+const Registry = {
+    BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
+    NETWORK_SETTINGS: formatBytes32String('NetworkSettings'),
+    CONVERTER_FACTORY: formatBytes32String('ConverterFactory'),
+    CONVERTER_REGISTRY: formatBytes32String('BancorConverterRegistry'),
+    CONVERTER_REGISTRY_DATA: formatBytes32String('BancorConverterRegistryData')
+};
+
+const Roles = {
+    ROLE_OWNER: id('RoleOwner')
+};
 
 export const createLegacySystem = async (
     owner: SignerWithAddress,
@@ -30,11 +39,11 @@ export const createLegacySystem = async (
 
     await converterFactory.registerTypedConverterFactory(standardPoolConverterFactory.address);
 
-    await contractRegistry.registerAddress(CONVERTER_FACTORY, converterFactory.address);
-    await contractRegistry.registerAddress(CONVERTER_REGISTRY, converterRegistry.address);
-    await contractRegistry.registerAddress(CONVERTER_REGISTRY_DATA, converterRegistryData.address);
-    await contractRegistry.registerAddress(BANCOR_NETWORK, legacyNetwork.address);
-    await contractRegistry.registerAddress(NETWORK_SETTINGS, legacyNetworkSettings.address);
+    await contractRegistry.registerAddress(Registry.CONVERTER_FACTORY, converterFactory.address);
+    await contractRegistry.registerAddress(Registry.CONVERTER_REGISTRY, converterRegistry.address);
+    await contractRegistry.registerAddress(Registry.CONVERTER_REGISTRY_DATA, converterRegistryData.address);
+    await contractRegistry.registerAddress(Registry.BANCOR_NETWORK, legacyNetwork.address);
+    await contractRegistry.registerAddress(Registry.NETWORK_SETTINGS, legacyNetworkSettings.address);
 
     const checkpointStore = await LegacyContracts.TestCheckpointStore.deploy();
     const liquidityProtectionStore = await LegacyContracts.LiquidityProtectionStore.deploy();
@@ -58,10 +67,10 @@ export const createLegacySystem = async (
         checkpointStore.address
     );
 
-    await checkpointStore.grantRole(ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSettings.grantRole(ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionStats.grantRole(ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSystemStore.grantRole(ROLE_OWNER, liquidityProtection.address);
+    await checkpointStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSettings.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionStats.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSystemStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
     await liquidityProtectionStore.transferOwnership(liquidityProtection.address);
     await liquidityProtection.acceptStoreOwnership();
     await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
@@ -74,7 +83,7 @@ export const createLegacySystem = async (
         DEFAULT_DECIMALS,
         PPM_RESOLUTION,
         [baseToken.address, networkToken.address],
-        [PPM_RESOLUTION.div(2), PPM_RESOLUTION.div(2)]
+        [PPM_RESOLUTION / 2, PPM_RESOLUTION / 2]
     );
 
     const anchorCount = await converterRegistry.getAnchorCount();

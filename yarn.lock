@@ -224,6 +224,13 @@
     "@babel/helper-validator-identifier" "^7.15.7"
     to-fast-properties "^2.0.0"
 
+"@bancor/contracts-solidity@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@bancor/contracts-solidity/-/contracts-solidity-0.7.1.tgz#e521f3e5eed7be6553dc0785f183ab3a7261fbb7"
+  integrity sha512-f1Je6E1c3Vfx2cY0OJh461E42f3rFnSieh5TA/R0YydKDRBPBNgT1u5Q+0OxLATqybfyabzSc2qFwBhDoimbkA==
+  dependencies:
+    hardhat "2.8.3"
+
 "@bancor/token-governance@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@bancor/token-governance/-/token-governance-0.1.8.tgz#132b5f94427b0b96770a03b76aae1da6de26e605"
