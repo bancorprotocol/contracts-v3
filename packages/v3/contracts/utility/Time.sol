@@ -2,7 +2,7 @@
 pragma solidity 0.8.11;
 
 /**
- * @dev time implementing contract
+ * @dev this contract abstracts the block timestamp in order to allow for more flexible control in tests
  */
 contract Time {
     /**

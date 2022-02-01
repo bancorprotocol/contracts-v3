@@ -26,7 +26,7 @@
         {
             "type": "depositTKN",
             "userId": "tknProvider",
-            "elapsed": 0,
+            "mined": false,
             "amount": "1000000",
             "expected": {
                 "tknBalances": {
@@ -63,7 +63,7 @@
         {
             "type": "depositTKN",
             "userId": "tknProvider",
-            "elapsed": 0,
+            "mined": false,
             "amount": "20%",
             "expected": {
                 "tknBalances": {
@@ -100,7 +100,7 @@
         {
             "type": "enableTrading",
             "userId": "",
-            "elapsed": 0,
+            "mined": false,
             "amount": {
                 "fundingRateN": 1,
                 "fundingRateD": 1
@@ -140,7 +140,7 @@
         {
             "type": "depositBNT",
             "userId": "bntProvider",
-            "elapsed": 0,
+            "mined": false,
             "amount": "100000",
             "expected": {
                 "tknBalances": {
@@ -177,7 +177,7 @@
         {
             "type": "tradeTKN",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "1000",
             "expected": {
                 "tknBalances": {
@@ -214,7 +214,7 @@
         {
             "type": "tradeBNT",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "1000",
             "expected": {
                 "tknBalances": {
@@ -251,7 +251,7 @@
         {
             "type": "tradeTKN",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "2000",
             "expected": {
                 "tknBalances": {
@@ -288,7 +288,7 @@
         {
             "type": "tradeBNT",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "2000",
             "expected": {
                 "tknBalances": {
@@ -325,7 +325,7 @@
         {
             "type": "tradeTKN",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "5000",
             "expected": {
                 "tknBalances": {
@@ -362,7 +362,7 @@
         {
             "type": "tradeBNT",
             "userId": "dayTrader",
-            "elapsed": 0,
+            "mined": false,
             "amount": "5000",
             "expected": {
                 "tknBalances": {

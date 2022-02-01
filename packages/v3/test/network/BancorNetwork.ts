@@ -2310,7 +2310,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should complete multiple trades', async () => {
-                    const currentTime = await poolCollection.currentTime();
+                    const currentBlockNumber = await poolCollection.currentBlockNumber();
                     for (let i = 0; i < TRADES_COUNT; i++) {
                         if (!isSourceNativeToken) {
                             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
@@ -2318,7 +2318,7 @@ describe('BancorNetwork', () => {
                         }
 
                         await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
-                        await poolCollection.setTime(currentTime + i + 1);
+                        await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
                     }
                 });
             });
@@ -2338,17 +2338,15 @@ describe('BancorNetwork', () => {
                     }
                 });
 
-                if (isSourceNetworkToken || isSourceNativeToken) {
-                    it('should revert when attempting to trade', async () => {
+                if (isSourceNativeToken || isSourceNetworkToken) {
+                    it('should revert when attempting a permitted trade', async () => {
                         await expect(tradePermitted(amount)).to.be.revertedWith('PermitUnsupported');
                     });
-
-                    return;
+                } else {
+                    it('should complete a permitted trade', async () => {
+                        await verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
+                    });
                 }
-
-                it('should complete a trade', async () => {
-                    await verifyTrade(trader, ZERO_ADDRESS, amount, tradePermitted);
-                });
             });
         };
 
@@ -3389,7 +3387,7 @@ describe('BancorNetwork Financial Verification', () => {
         type: string;
         userId: string;
         amount: string;
-        elapsed: number;
+        mined: boolean;
         expected: State;
     }
 
@@ -3405,7 +3403,6 @@ describe('BancorNetwork Financial Verification', () => {
     }
 
     let users: { [id: string]: SignerWithAddress };
-    let timestamp: number;
     let flow: Flow;
 
     let network: TestBancorNetwork;
@@ -3425,11 +3422,7 @@ describe('BancorNetwork Financial Verification', () => {
     let bntDecimals: number;
     let bntknDecimals: number;
     let bnbntDecimals: number;
-
-    const timeIncrease = async (delta: number) => {
-        timestamp += delta;
-        await network.setTime(timestamp);
-    };
+    let blockNumber: number;
 
     const decimalToInteger = (value: string | number, decimals: number) => {
         return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
@@ -3477,14 +3470,14 @@ describe('BancorNetwork Financial Verification', () => {
         const wei = await toWei(userId, amount, tknDecimals, baseToken);
         await network
             .connect(users[userId])
-            .trade(baseToken.address, networkToken.address, wei, 1, timestamp, users[userId].address);
+            .trade(baseToken.address, networkToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
     const tradeBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntDecimals, networkToken);
         await network
             .connect(users[userId])
-            .trade(networkToken.address, baseToken.address, wei, 1, timestamp, users[userId].address);
+            .trade(networkToken.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
     const enableTrading = async (rate: { fundingRateN: number; fundingRateD: number }) => {
@@ -3563,7 +3556,6 @@ describe('BancorNetwork Financial Verification', () => {
         const signers = await ethers.getSigners();
 
         users = {};
-        timestamp = 0;
         flow = JSON.parse(
             fs.readFileSync(path.join(__dirname, '..', 'data', `${fileName}.json`), { encoding: 'utf8' })
         );
@@ -3627,13 +3619,17 @@ describe('BancorNetwork Financial Verification', () => {
 
         expect(await baseToken.balanceOf(signers[0].address)).to.equal(0);
         expect(await networkToken.balanceOf(signers[0].address)).to.equal(0);
+
+        blockNumber = await poolCollection.currentBlockNumber();
     };
 
     const execute = async () => {
-        for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
-            console.log(`${n + 1} out of ${flow.operations.length}: after ${elapsed} seconds, ${type}(${amount})`);
+        for (const [n, { type, userId, amount, mined, expected }] of flow.operations.entries()) {
+            console.log(`${n + 1} out of ${flow.operations.length}: ${type}(${amount})`);
 
-            await timeIncrease(elapsed);
+            if (mined) {
+                await poolCollection.setBlockNumber(++blockNumber);
+            }
 
             switch (type) {
                 case 'depositTKN':
