@@ -17,17 +17,17 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
-    PPT_RESOLUTION,
     PPM_RESOLUTION,
     ZERO_ADDRESS,
     ZERO_FRACTION,
     ZERO_BYTES32,
     TradingStatusUpdateReason,
-    AVERAGE_RATE_WEIGHT_PPT,
+    EMA_AVERAGE_RATE_WEIGHT,
+    EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
-    AVERAGE_RATE_MAX_DEVIATION_PPM,
+    RATE_MAX_DEVIATION_PPM,
     PoolType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
@@ -1296,7 +1296,7 @@ describe('PoolCollection', () => {
                                     blockNumber: await poolCollection.currentBlockNumber(),
                                     rate: {
                                         n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + AVERAGE_RATE_MAX_DEVIATION_PPM + toPPM(0.5))
+                                        d: SPOT_RATE.d.mul(PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5))
                                     }
                                 });
 
@@ -2331,13 +2331,11 @@ describe('PoolCollection', () => {
                                         const newAverageRate = {
                                             n: averageRate.n
                                                 .mul(spotRate.d)
-                                                .mul(AVERAGE_RATE_WEIGHT_PPT)
-                                                .add(
-                                                    averageRate.d
-                                                        .mul(spotRate.n)
-                                                        .mul(PPT_RESOLUTION - AVERAGE_RATE_WEIGHT_PPT)
-                                                ),
-                                            d: averageRate.d.mul(spotRate.d).mul(PPT_RESOLUTION)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT)
+                                                .add(averageRate.d.mul(spotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
+                                            d: averageRate.d
+                                                .mul(spotRate.d)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
                                         };
                                         const scale = BigNumber.max(newAverageRate.n, newAverageRate.d)
                                             .sub(1)

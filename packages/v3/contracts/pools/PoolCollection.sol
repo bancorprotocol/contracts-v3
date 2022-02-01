@@ -71,7 +71,7 @@ struct WithdrawalAmounts {
  *
  * notes:
  *
- * - in Bancor V3, the address of reserve token serves as the pool unique ID in both contract functions and events
+ * - the address of reserve token serves as the pool unique ID in both contract functions and events
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
     using TokenLibrary for Token;
@@ -86,19 +86,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
-    uint16 private constant AVERAGE_RATE_WEIGHT_PPT = 800; // 80%
-    uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
-    uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+    uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
+    uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
-    uint32 private constant AVERAGE_RATE_MAX_DEVIATION_PPM = 10000; // %1
-
-    // represents `(n1 - n2) / (d1 - d2)`
-    struct Quotient {
-        uint256 n1;
-        uint256 n2;
-        uint256 d1;
-        uint256 d2;
-    }
+    uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
+    uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
+    uint32 private constant RATE_MAX_DEVIATION_PPM = 10000; // %1
+    // the average rate is recalculated based on the ratio between the weights of the rates
+    // the smaller the weights are, the larger the supported range of each one of the rates is
 
     // trading-related preprocessed data
     struct TradingParams {
@@ -1303,7 +1298,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return MathEx.isInRange(fromFraction112(averageRate), spotRate, AVERAGE_RATE_MAX_DEVIATION_PPM);
+        return MathEx.isInRange(fromFraction112(averageRate), spotRate, RATE_MAX_DEVIATION_PPM);
     }
 
     /**
@@ -1328,6 +1323,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         pure
         returns (Fraction112 memory)
     {
-        return toFraction112(MathEx.weightedAverage(fromFraction112(averageRate), spotRate, AVERAGE_RATE_WEIGHT_PPT));
+        return
+            toFraction112(
+                MathEx.weightedAverage(
+                    fromFraction112(averageRate),
+                    spotRate,
+                    EMA_AVERAGE_RATE_WEIGHT,
+                    EMA_SPOT_RATE_WEIGHT
+                )
+            );
     }
 }

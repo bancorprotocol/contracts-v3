@@ -12,9 +12,10 @@ contract TestMathEx {
     function weightedAverage(
         Fraction memory fraction1,
         Fraction memory fraction2,
-        uint16 weight1PPT
+        uint256 weight1,
+        uint256 weight2
     ) external pure returns (Fraction memory) {
-        return MathEx.weightedAverage(fraction1, fraction2, weight1PPT);
+        return MathEx.weightedAverage(fraction1, fraction2, weight1, weight2);
     }
 
     function isInRange(

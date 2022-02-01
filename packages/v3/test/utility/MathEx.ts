@@ -1,6 +1,6 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
-import { Fraction, toUint512, fromUint512, toString, toPPT, toPPM } from '../../utils/Types';
+import { Fraction, toUint512, fromUint512, toString, toPPM } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -68,14 +68,15 @@ describe('MathEx', () => {
         fraction1: Fraction<BigNumber>,
         fraction2: Fraction<BigNumber>,
         weight1: number,
+        weight2: number,
         maxRelativeError: Decimal
     ) => {
-        it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}%)`, async () => {
+        it(`weightedAverage(${toString(fraction1)}, ${toString(fraction2)}, ${weight1}, ${weight2})`, async () => {
             const expected = toDecimal(fraction1)
                 .mul(weight1)
-                .add(toDecimal(fraction2).mul(100 - weight1))
-                .div(100);
-            const actual = await mathContract.weightedAverage(fraction1, fraction2, toPPT(weight1));
+                .add(toDecimal(fraction2).mul(weight2))
+                .div(weight1 + weight2);
+            const actual = await mathContract.weightedAverage(fraction1, fraction2, weight1, weight2);
             expect(actual).to.almostEqual({ n: expected, d: 1 }, { maxRelativeError });
         });
     };
@@ -196,8 +197,10 @@ describe('MathEx', () => {
                 for (const n of [MAX_UINT64, MAX_UINT96]) {
                     for (const d of [MAX_UINT64, MAX_UINT96]) {
                         const fraction2 = { n, d };
-                        for (const weight1 of [20, 80]) {
-                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('5e-155'));
+                        for (const weight1 of [2, 8]) {
+                            for (const weight2 of [2, 8]) {
+                                testWeightedAverage(fraction1, fraction2, weight1, weight2, new Decimal('5e-155'));
+                            }
                         }
                     }
                 }
@@ -257,8 +260,10 @@ describe('MathEx', () => {
                 for (const n of [0, 1, 2, 3]) {
                     for (const d of [1, 2, 3, 4]) {
                         const fraction2 = { n: BigNumber.from(n), d: BigNumber.from(d) };
-                        for (const weight1 of [0, 20, 80, 100]) {
-                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('4e-155'));
+                        for (const weight1 of [1, 2, 4, 8]) {
+                            for (const weight2 of [1, 2, 4, 8]) {
+                                testWeightedAverage(fraction1, fraction2, weight1, weight2, new Decimal('1e-154'));
+                            }
                         }
                     }
                 }
@@ -271,8 +276,10 @@ describe('MathEx', () => {
                 for (const n of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                     for (const d of [MAX_UINT32, MAX_UINT64, MAX_UINT96, MAX_UINT128]) {
                         const fraction2 = { n, d };
-                        for (const weight1 of [0, 20, 80, 100]) {
-                            testWeightedAverage(fraction1, fraction2, weight1, new Decimal('2e-154'));
+                        for (const weight1 of [1, 2, 4, 8]) {
+                            for (const weight2 of [1, 2, 4, 8]) {
+                                testWeightedAverage(fraction1, fraction2, weight1, weight2, new Decimal('2e-154'));
+                            }
                         }
                     }
                 }

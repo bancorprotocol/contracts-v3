@@ -1,5 +1,5 @@
 import { duration } from './Time';
-import { toPPT, toPPM } from './Types';
+import { toPPM } from './Types';
 import Decimal from 'decimal.js';
 import { ethers } from 'ethers';
 
@@ -18,7 +18,6 @@ export const ZERO_BYTES = '0x';
 export const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000000000000000000';
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };
-export const PPT_RESOLUTION = 1_000;
 export const PPM_RESOLUTION = 1_000_000;
 
 export enum TradingStatusUpdateReason {
@@ -53,12 +52,12 @@ export const ExponentialDecay = {
 export const DEFAULT_LOCK_DURATION = duration.days(7);
 export const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 
-export const AVERAGE_RATE_WEIGHT_PPT = toPPT(80);
+export const EMA_AVERAGE_RATE_WEIGHT = 4;
+export const EMA_SPOT_RATE_WEIGHT = 1;
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
-
 export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
-export const AVERAGE_RATE_MAX_DEVIATION_PPM = 10000;
+export const RATE_MAX_DEVIATION_PPM = toPPM(1);
 
 export enum PoolType {
     Standard = 1
