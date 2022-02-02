@@ -80,7 +80,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     error DepositLimitExceeded();
     error InsufficientLiquidity();
     error InvalidRate();
-    error PoolRateUnstable();
+    error RateUnstable();
     error ReturnAmountTooLow();
     error TradingDisabled();
     error AlreadyEnabled();
@@ -855,7 +855,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             isFraction112Positive(averageRate.rate) &&
             !_isPoolRateStable(prevLiquidity, averageRate)
         ) {
-            revert PoolRateUnstable();
+            revert RateUnstable();
         }
 
         data.poolToken.burnFrom(address(_network), poolTokenAmount);

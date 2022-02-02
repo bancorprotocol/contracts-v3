@@ -1662,7 +1662,7 @@ describe('PoolCollection', () => {
                                             const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
                                             const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
                                             it(`withdrawal should ${
-                                                ok ? 'complete successfully' : 'revert with PoolRateUnstable'
+                                                ok ? 'complete successfully' : 'revert with RateUnstable'
                                             }`, async () => {
                                                 const { liquidity } = await poolCollection.poolData(token.address);
                                                 await poolCollection.setAverageRateT(token.address, {
@@ -1676,8 +1676,11 @@ describe('PoolCollection', () => {
                                                     await testMultipleWithdrawals(TradingLiquidityState.Update);
                                                 } else {
                                                     await expect(
-                                                        testWithdraw(totalBasePoolTokenAmount, TradingLiquidityState.Update)
-                                                    ).to.be.revertedWith('PoolRateUnstable');
+                                                        testWithdraw(
+                                                            totalBasePoolTokenAmount,
+                                                            TradingLiquidityState.Update
+                                                        )
+                                                    ).to.be.revertedWith('RateUnstable');
                                                 }
                                             });
                                         }
