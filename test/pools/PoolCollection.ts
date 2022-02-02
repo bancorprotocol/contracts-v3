@@ -1644,9 +1644,36 @@ describe('PoolCollection', () => {
                                 );
                             });
 
-                            it('should withdraw', async () => {
-                                await testMultipleWithdrawals(TradingLiquidityState.Update);
-                            });
+                            for (const ns of [-1, +1]) {
+                                for (const nx of [-1, 0, +1]) {
+                                    for (const ds of [-1, +1]) {
+                                        for (const dx of [-1, 0, +1]) {
+                                            const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
+                                            const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
+                                            const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
+                                            it(`withdrawal should ${
+                                                ok ? 'complete successfully' : 'revert with PoolRateUnstable'
+                                            }`, async () => {
+                                                const { liquidity } = await poolCollection.poolData(token.address);
+                                                await poolCollection.setAverageRateT(token.address, {
+                                                    blockNumber: 1,
+                                                    rate: {
+                                                        n: liquidity.networkTokenTradingLiquidity.mul(nf),
+                                                        d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                    }
+                                                });
+                                                if (ok) {
+                                                    await testMultipleWithdrawals(TradingLiquidityState.Update);
+                                                } else {
+                                                    await expect(
+                                                        testMultipleWithdrawals(TradingLiquidityState.Update)
+                                                    ).to.be.revertedWith('PoolRateUnstable');
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
                         }
                     );
 
