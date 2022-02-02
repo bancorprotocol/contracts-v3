@@ -2057,6 +2057,14 @@ describe('PoolCollection', () => {
 
                             const { liquidity } = await poolCollection.poolData(reserveToken.address);
 
+                            await poolCollection.setAverageRateT(reserveToken.address, {
+                                blockNumber: await poolCollection.currentBlockNumber(),
+                                rate: {
+                                    n: liquidity.networkTokenTradingLiquidity,
+                                    d: liquidity.baseTokenTradingLiquidity
+                                }
+                            });
+
                             expect(liquidity.networkTokenTradingLiquidity).lt(MIN_LIQUIDITY_FOR_TRADING);
                         });
 
