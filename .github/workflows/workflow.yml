@@ -12,11 +12,6 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 600
 
-    defaults:
-      run:
-        shell: bash
-        working-directory: packages/v3
-
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
@@ -28,14 +23,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '17'
-
-      - name: Install V2 NPM Dependencies
-        run: yarn install
-        working-directory: packages/v2
-
-      - name: Build V2
-        run: yarn build
-        working-directory: packages/v2
 
       - name: Install NPM Dependencies
         run: yarn install
