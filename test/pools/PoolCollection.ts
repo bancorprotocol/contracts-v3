@@ -1493,7 +1493,7 @@ describe('PoolCollection', () => {
                 });
 
                 const testWithdraw = async (
-                    poolTokenAmount: BigNumberish,
+                    poolTokenAmount: BigNumber,
                     expectTradingLiquidity: TradingLiquidityState
                 ) => {
                     const { liquidity: prevLiquidity, tradingEnabled: prevTradingEnabled } =
@@ -1598,7 +1598,7 @@ describe('PoolCollection', () => {
 
                 const testMultipleWithdrawals = async (expectTradingLiquidity: TradingLiquidityState) => {
                     for (let i = 0; i < COUNT; i++) {
-                        await testWithdraw(BigNumber.from(totalBasePoolTokenAmount).div(COUNT), expectTradingLiquidity);
+                        await testWithdraw(totalBasePoolTokenAmount.div(COUNT), expectTradingLiquidity);
                     }
                 };
 
@@ -1666,7 +1666,7 @@ describe('PoolCollection', () => {
                                                     await testMultipleWithdrawals(TradingLiquidityState.Update);
                                                 } else {
                                                     await expect(
-                                                        testMultipleWithdrawals(TradingLiquidityState.Update)
+                                                        testWithdraw(totalBasePoolTokenAmount, TradingLiquidityState.Update)
                                                     ).to.be.revertedWith('PoolRateUnstable');
                                                 }
                                             });
