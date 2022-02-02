@@ -13,7 +13,8 @@ artifacts
 typechain-types
 
 contracts/hardhat-dependency-compiler
-deployments
+deployments/*
+!deployments/data.ts
 !deployments/mainnet
 
 .coverage_artifacts
