@@ -12,8 +12,9 @@
         "paths": {
             "@nomiclabs/hardhat-ethers/*": ["node_modules/@nomiclabs/hardhat-ethers/dist/src/*"],
             "*": ["node_modules/*"]
-        }
+        },
+        "outDir": "./dist"
     },
-    "include": ["./components", "./utils", "./test", "./deploy"],
+    "include": ["./components", "./utils", "./test", "./deploy", "./typechain"],
     "files": ["./hardhat.config.ts"]
 }

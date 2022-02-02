@@ -1,6 +1,7 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
 import { Fraction, toUint512, fromUint512, toString, toPPM } from '../../utils/Types';
+import { max } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -118,7 +119,7 @@ describe('MathEx', () => {
 
     const testSubMax0 = (x: BigNumber, y: BigNumber) => {
         it(`subMax0(${x}, ${y})`, async () => {
-            const expected = BigNumber.max(x.sub(y), 0);
+            const expected = max(x.sub(y), 0);
             const actual = await mathContract.subMax0(x, y);
             expect(actual).to.equal(expected);
         });

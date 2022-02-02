@@ -7,12 +7,14 @@
 yarn-debug.log*
 yarn-error.log*
 
+dist
 cache
 artifacts
 typechain-types
 
 contracts/hardhat-dependency-compiler
-deployments
+deployments/*
+!deployments/data.ts
 !deployments/mainnet
 
 .coverage_artifacts

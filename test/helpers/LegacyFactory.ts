@@ -17,7 +17,7 @@ const Registry = {
 };
 
 const Roles = {
-    ROLE_OWNER: id('RoleOwner')
+    ROLE_OWNER: id('ROLE_OWNER')
 };
 
 export const createLegacySystem = async (
