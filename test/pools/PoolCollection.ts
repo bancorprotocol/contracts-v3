@@ -2465,7 +2465,7 @@ describe('PoolCollection', () => {
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
                                 const expectedAverageRate = async (poolData: PoolData, blockNumber: number) => {
-                                    if (blockNumber != poolData.averageRate.blockNumber) {
+                                    if (blockNumber !== poolData.averageRate.blockNumber) {
                                         const averageRate = poolData.averageRate.rate;
                                         const spotRate = {
                                             n: poolData.liquidity.networkTokenTradingLiquidity,
@@ -2660,16 +2660,18 @@ describe('PoolCollection', () => {
                                         // verify that the average rate has been updated
                                         const expectedNewAverageRate = await expectedAverageRate(
                                             prevPoolData,
-                                            interval
+                                            blockNumber
                                         );
-                                        expect(poolData.averageRate.time).to.equal(expectedNewAverageRate.time);
+                                        expect(poolData.averageRate.blockNumber).to.equal(
+                                            expectedNewAverageRate.blockNumber
+                                        );
                                         expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
                                     }
                                 });
 
                                 it('should perform an exact trade', async () => {
-                                    for (const interval of intervals) {
-                                        await poolCollection.setTime(interval);
+                                    for (const blockNumber of blockNumbers) {
+                                        await poolCollection.setBlockNumber(blockNumber);
 
                                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity: prevLiquidity } = prevPoolData;
