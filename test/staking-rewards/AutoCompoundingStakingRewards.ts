@@ -25,7 +25,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest, duration } from '../helpers/Time';
-import { transfer } from '../helpers/Utils';
+import { max, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -63,7 +63,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 tokenData,
                 balance: providerStake,
                 requestedLiquidity: tokenData.isNetworkToken()
-                    ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
+                    ? max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
                     : 0,
                 fundingRate: { n: 1, d: 2 }
             },

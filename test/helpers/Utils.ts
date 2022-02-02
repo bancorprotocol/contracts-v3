@@ -6,6 +6,11 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
+export const min = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).lt(b) ? BigNumber.from(a) : BigNumber.from(b);
+export const max = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).lt(b) ? BigNumber.from(b) : BigNumber.from(a);
+
 export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
     typeof account === 'string' ? account : account.address;
 

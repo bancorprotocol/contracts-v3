@@ -2877,6 +2877,7 @@ describe('BancorNetwork', () => {
                 describe(`base token (${isNative ? 'ETH' : 'ERC20'})`, () => {
                     beforeEach(async () => {
                         await initLegacySystem(isNative);
+
                         await addProtectedLiquidity(
                             poolToken.address,
                             baseToken,

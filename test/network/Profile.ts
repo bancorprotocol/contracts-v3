@@ -39,7 +39,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { latest, duration } from '../helpers/Time';
-import { createWallet, transfer } from '../helpers/Utils';
+import { max, createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
@@ -1024,7 +1024,7 @@ describe('Profile @profile', () => {
                     tokenData,
                     balance: providerStake,
                     requestedLiquidity: tokenData.isNetworkToken()
-                        ? BigNumber.max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
+                        ? max(BigNumber.from(providerStake), BigNumber.from(totalRewards)).mul(1000)
                         : 0,
                     fundingRate: FUNDING_RATE
                 },

@@ -34,7 +34,7 @@ import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
-import { transfer, getBalance } from '..//helpers/Utils';
+import { min, max, transfer, getBalance } from '..//helpers/Utils';
 import {
     createPool,
     createPoolCollection,
@@ -1128,8 +1128,8 @@ describe('PoolCollection', () => {
                             {
                                 expect(prevLiquidity.networkTokenTradingLiquidity).to.be.gte(0);
 
-                                let targetNetworkTokenTradingLiquidity = BigNumber.min(
-                                    BigNumber.min(
+                                let targetNetworkTokenTradingLiquidity = min(
+                                    min(
                                         await networkSettings.poolFundingLimit(token.address),
                                         prevLiquidity.baseTokenTradingLiquidity
                                             .mul(prevAverageRate.rate.n)
@@ -1143,12 +1143,12 @@ describe('PoolCollection', () => {
                                 if (
                                     targetNetworkTokenTradingLiquidity.gte(prevLiquidity.networkTokenTradingLiquidity)
                                 ) {
-                                    targetNetworkTokenTradingLiquidity = BigNumber.min(
+                                    targetNetworkTokenTradingLiquidity = min(
                                         targetNetworkTokenTradingLiquidity,
                                         prevLiquidity.networkTokenTradingLiquidity.mul(LIQUIDITY_GROWTH_FACTOR)
                                     );
                                 } else {
-                                    targetNetworkTokenTradingLiquidity = BigNumber.max(
+                                    targetNetworkTokenTradingLiquidity = max(
                                         targetNetworkTokenTradingLiquidity,
                                         prevLiquidity.networkTokenTradingLiquidity.div(LIQUIDITY_GROWTH_FACTOR)
                                     );
@@ -2337,7 +2337,7 @@ describe('PoolCollection', () => {
                                                 .mul(spotRate.d)
                                                 .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
                                         };
-                                        const scale = BigNumber.max(newAverageRate.n, newAverageRate.d)
+                                        const scale = max(newAverageRate.n, newAverageRate.d)
                                             .sub(1)
                                             .div(BigNumber.from(2).pow(112).sub(1))
                                             .add(1);

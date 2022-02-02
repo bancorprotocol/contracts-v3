@@ -15,7 +15,7 @@ import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createToken, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer } from '../helpers/Utils';
+import { min, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -500,7 +500,7 @@ describe('MasterPool', () => {
                 const prevPoolTokenBalance = await networkToken.balanceOf(masterPool.address);
                 const prevVaultTokenBalance = await networkToken.balanceOf(masterVault.address);
 
-                const reduceFundingAmount = BigNumber.min(prevFunding, amount);
+                const reduceFundingAmount = min(prevFunding, amount);
                 const expectedPoolTokenAmount = reduceFundingAmount
                     .mul(prevPoolTokenTotalSupply)
                     .div(prevStakedBalance);
