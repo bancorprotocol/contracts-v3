@@ -77,15 +77,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     using TokenLibrary for Token;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    error AlreadyEnabled();
     error DepositLimitExceeded();
     error InsufficientLiquidity();
+    error InvalidRate();
     error InsufficientReturnAmount();
     error InsufficientSourceAmount();
-    error InvalidRate();
     error RateUnstable();
     error ReturnAmountTooLow();
     error TradingDisabled();
+    error AlreadyEnabled();
 
     uint16 private constant POOL_TYPE = 1;
     uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
