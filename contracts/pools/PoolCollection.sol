@@ -77,13 +77,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     using TokenLibrary for Token;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error AlreadyEnabled();
     error DepositLimitExceeded();
     error InsufficientLiquidity();
-    error InvalidRate();
     error InsufficientReturnAmount();
     error InsufficientSourceAmount();
+    error InvalidRate();
+    error RateUnstable();
+    error ReturnAmountTooLow();
     error TradingDisabled();
-    error AlreadyEnabled();
 
     uint16 private constant POOL_TYPE = 1;
     uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
@@ -843,12 +845,22 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         WithdrawalAmounts memory amounts
     ) private {
         Pool storage data = _poolStorage(pool);
+        PoolLiquidity storage liquidity = data.liquidity;
+        PoolLiquidity memory prevLiquidity = liquidity;
+        AverageRate memory averageRate = data.averageRate;
+
+        if (
+            prevLiquidity.networkTokenTradingLiquidity != 0 &&
+            prevLiquidity.baseTokenTradingLiquidity != 0 &&
+            averageRate.blockNumber != 0 &&
+            isFraction112Positive(averageRate.rate) &&
+            !_isPoolRateStable(prevLiquidity, averageRate)
+        ) {
+            revert RateUnstable();
+        }
 
         data.poolToken.burnFrom(address(_network), poolTokenAmount);
         uint256 newPoolTokenTotalSupply = amounts.poolTokenTotalSupply - poolTokenAmount;
-
-        PoolLiquidity storage liquidity = data.liquidity;
-        PoolLiquidity memory prevLiquidity = liquidity;
 
         liquidity.stakedBalance = MathEx.mulDivF(
             liquidity.stakedBalance,
@@ -1010,7 +1022,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = data.averageRate.blockNumber != 0 && isFraction112Positive(averageRate.rate);
+        bool isAverageRateValid = averageRate.blockNumber != 0 && isFraction112Positive(averageRate.rate);
         if (
             liquidity.networkTokenTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
