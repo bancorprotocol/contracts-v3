@@ -577,15 +577,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
 
-        // adjust the trading liquidity based on the base token vault balance and funding limits
-        _updateTradingLiquidity(
-            contextId,
-            pool,
-            data,
-            data.liquidity,
-            zeroFraction(),
-            _networkSettings.minLiquidityForTrading()
-        );
+        {
+            Fraction memory averageRate = fromFraction112(data.averageRate.rate);
+            uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+
+            if (isFractionPositive(averageRate) && data.liquidity.networkTokenTradingLiquidity >= minLiquidityForTrading) {
+                // adjust the trading liquidity based on the base token vault balance and funding limits
+                _updateTradingLiquidity(
+                    contextId,
+                    pool,
+                    data,
+                    data.liquidity,
+                    averageRate,
+                    minLiquidityForTrading
+                );
+            } else {
+                // reset the trading liquidity
+                _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            }
+        }
 
         emit TokenDeposited({
             contextId: contextId,
@@ -846,15 +856,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Pool storage data = _poolStorage(pool);
         PoolLiquidity storage liquidity = data.liquidity;
         PoolLiquidity memory prevLiquidity = liquidity;
-        AverageRate memory averageRate = data.averageRate;
 
-        if (
-            prevLiquidity.networkTokenTradingLiquidity != 0 &&
-            prevLiquidity.baseTokenTradingLiquidity != 0 &&
-            averageRate.blockNumber != 0 &&
-            isFraction112Positive(averageRate.rate) &&
-            !_isPoolRateStable(prevLiquidity, averageRate)
-        ) {
+        if (!_isPoolRateStable(prevLiquidity, data.averageRate)) {
             revert RateUnstable();
         }
 
@@ -1001,16 +1004,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = isFractionPositive(fundingRate);
-
-        // if we aren't bootstrapping the pool, ensure that the network token trading liquidity is above the minimum
-        // liquidity for trading
-        if (liquidity.networkTokenTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
-            return;
-        }
-
         // ensure that the base token reserve isn't empty
         uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
         if (tokenReserveAmount == 0) {
@@ -1020,26 +1013,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         }
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
-        AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = averageRate.blockNumber != 0 && isFraction112Positive(averageRate.rate);
-        if (
-            liquidity.networkTokenTradingLiquidity != 0 &&
-            liquidity.baseTokenTradingLiquidity != 0 &&
-            isAverageRateValid &&
-            !_isPoolRateStable(liquidity, averageRate)
-        ) {
-            return;
-        }
-
-        // figure out the effective funding rate
-        Fraction memory effectiveFundingRate;
-        if (isFundingRateValid) {
-            effectiveFundingRate = fundingRate;
-        } else if (isAverageRateValid) {
-            effectiveFundingRate = fromFraction112(averageRate.rate);
-        } else {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
+        if (!_isPoolRateStable(liquidity, data.averageRate)) {
             return;
         }
 
@@ -1050,7 +1024,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetNetworkTokenTradingLiquidity = Math.min(
             Math.min(
                 _networkSettings.poolFundingLimit(pool),
-                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
+                MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d)
             ),
             liquidity.networkTokenTradingLiquidity + _masterPool.availableFunding(pool)
         );
@@ -1109,8 +1083,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // the base token)
         uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
             targetNetworkTokenTradingLiquidity,
-            effectiveFundingRate.d,
-            effectiveFundingRate.n
+            fundingRate.d,
+            fundingRate.n
         );
 
         // update the liquidity data of the pool
@@ -1305,6 +1279,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         });
 
         Fraction112 memory averageRate = averageRateInfo.rate;
+
+        if (!isFractionPositive(spotRate) || !isFraction112Positive(averageRate)) {
+            return true;
+        }
+
         if (averageRateInfo.blockNumber != _blockNumber()) {
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
