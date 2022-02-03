@@ -1493,7 +1493,7 @@ describe('PoolCollection', () => {
                 });
 
                 const testWithdraw = async (
-                    poolTokenAmount: BigNumberish,
+                    poolTokenAmount: BigNumber,
                     expectTradingLiquidity: TradingLiquidityState
                 ) => {
                     const { liquidity: prevLiquidity, tradingEnabled: prevTradingEnabled } =
@@ -1598,7 +1598,7 @@ describe('PoolCollection', () => {
 
                 const testMultipleWithdrawals = async (expectTradingLiquidity: TradingLiquidityState) => {
                     for (let i = 0; i < COUNT; i++) {
-                        await testWithdraw(BigNumber.from(totalBasePoolTokenAmount).div(COUNT), expectTradingLiquidity);
+                        await testWithdraw(totalBasePoolTokenAmount.div(COUNT), expectTradingLiquidity);
                     }
                 };
 
@@ -1644,9 +1644,47 @@ describe('PoolCollection', () => {
                                 );
                             });
 
-                            it('should withdraw', async () => {
-                                await testMultipleWithdrawals(TradingLiquidityState.Update);
-                            });
+                            // set each one of the average rate components as follows:
+                            // 1. slightly below the minimum permitted deviation of the spot rate from the average rate
+                            // 2. precisely at the minimum permitted deviation of the spot rate from the average rate
+                            // 3. slightly above the minimum permitted deviation of the spot rate from the average rate
+                            // 4. slightly below the maximum permitted deviation of the spot rate from the average rate
+                            // 5. precisely at the maximum permitted deviation of the spot rate from the average rate
+                            // 6. slightly above the maximum permitted deviation of the spot rate from the average rate
+                            // since the averate rate has 2 components, this method simulates 36 different scenarios:
+                            // - in some of them, the spot rate is within the permitted deviation from the average rate
+                            // - in some of them, the spot rate is outside the permitted deviation from the average rate
+                            for (const ns of [-1, +1]) {
+                                for (const nx of [-1, 0, +1]) {
+                                    for (const ds of [-1, +1]) {
+                                        for (const dx of [-1, 0, +1]) {
+                                            const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
+                                            const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
+                                            const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
+                                            it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
+                                                const { liquidity } = await poolCollection.poolData(token.address);
+                                                await poolCollection.setAverageRateT(token.address, {
+                                                    blockNumber: 1,
+                                                    rate: {
+                                                        n: liquidity.networkTokenTradingLiquidity.mul(nf),
+                                                        d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                    }
+                                                });
+                                                if (ok) {
+                                                    await testMultipleWithdrawals(TradingLiquidityState.Update);
+                                                } else {
+                                                    await expect(
+                                                        testWithdraw(
+                                                            totalBasePoolTokenAmount,
+                                                            TradingLiquidityState.Update
+                                                        )
+                                                    ).to.be.revertedWith('RateUnstable');
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
                         }
                     );
 
@@ -2056,6 +2094,14 @@ describe('PoolCollection', () => {
                             );
 
                             const { liquidity } = await poolCollection.poolData(reserveToken.address);
+
+                            await poolCollection.setAverageRateT(reserveToken.address, {
+                                blockNumber: await poolCollection.currentBlockNumber(),
+                                rate: {
+                                    n: liquidity.networkTokenTradingLiquidity,
+                                    d: liquidity.baseTokenTradingLiquidity
+                                }
+                            });
 
                             expect(liquidity.networkTokenTradingLiquidity).lt(MIN_LIQUIDITY_FOR_TRADING);
                         });
