@@ -1917,12 +1917,7 @@ describe('BancorNetwork', () => {
                 targetTokenAddress = targetToken.address
             } = overrides;
 
-            if (!value) {
-                value = BigNumber.from(0);
-                if (sourceTokenAddress === NATIVE_TOKEN_ADDRESS) {
-                    value = BigNumber.from(amount);
-                }
-            }
+            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
             return network
                 .connect(trader)
@@ -1942,9 +1937,7 @@ describe('BancorNetwork', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            if (!maxSourceAmount) {
-                maxSourceAmount = await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
-            }
+            maxSourceAmount ||= await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
 
             // for an exact trade, the send value (i.e., the amount to trade) is represented by the maximum source
             // amount
@@ -2015,13 +2008,8 @@ describe('BancorNetwork', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            if (!maxSourceAmount) {
-                maxSourceAmount = await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
-            }
-
-            if (!approvedAmount) {
-                approvedAmount = maxSourceAmount;
-            }
+            maxSourceAmount ||= await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
+            approvedAmount ||= maxSourceAmount;
 
             const signature = await permitContractSignature(
                 trader,
@@ -2077,8 +2065,8 @@ describe('BancorNetwork', () => {
 
             const prevMasterPoolStakedBalance = await masterPool.stakedBalance();
 
-            let sourceTradeAmounts!: TradeAmountsStructOutput;
-            let targetTradeAmounts!: TradeAmountsStructOutput;
+            let hop1!: TradeAmountsStructOutput;
+            let hop2!: TradeAmountsStructOutput;
 
             let restriction: BigNumber;
 
@@ -2086,7 +2074,7 @@ describe('BancorNetwork', () => {
                 restriction = MIN_RETURN_AMOUNT;
 
                 if (isSourceNetworkToken || isTargetNetworkToken) {
-                    targetTradeAmounts = await network.callStatic.tradePoolCollectionT(
+                    hop1 = await network.callStatic.tradePoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
@@ -2094,8 +2082,10 @@ describe('BancorNetwork', () => {
                         amount,
                         MIN_RETURN_AMOUNT
                     );
+
+                    hop2 = hop1;
                 } else {
-                    sourceTradeAmounts = await network.callStatic.tradePoolCollectionT(
+                    hop1 = await network.callStatic.tradePoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
@@ -2104,18 +2094,18 @@ describe('BancorNetwork', () => {
                         MIN_RETURN_AMOUNT
                     );
 
-                    targetTradeAmounts = await network.callStatic.tradePoolCollectionT(
+                    hop2 = await network.callStatic.tradePoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         networkToken.address,
                         targetToken.address,
-                        sourceTradeAmounts.amount,
+                        hop1.amount,
                         MIN_RETURN_AMOUNT
                     );
                 }
             } else {
                 if (isSourceNetworkToken || isTargetNetworkToken) {
-                    sourceTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    hop2 = await network.callStatic.tradeExactPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
@@ -2123,8 +2113,10 @@ describe('BancorNetwork', () => {
                         amount,
                         MAX_SOURCE_AMOUNT
                     );
+
+                    hop1 = hop2;
                 } else {
-                    targetTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    hop2 = await network.callStatic.tradeExactPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         networkToken.address,
@@ -2133,37 +2125,35 @@ describe('BancorNetwork', () => {
                         MAX_SOURCE_AMOUNT
                     );
 
-                    sourceTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    hop1 = await network.callStatic.tradeExactPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
                         networkToken.address,
-                        targetTradeAmounts.amount,
+                        hop2.amount,
                         MAX_SOURCE_AMOUNT
                     );
                 }
 
                 // set the maximum source amount to twice the actually required amount in order to test that only the
                 // required amount was debited
-                restriction = sourceTradeAmounts.amount.mul(2);
+                restriction = hop1.amount.mul(2);
             }
 
             let sourceAmount: BigNumber;
             let targetAmount: BigNumber;
-            let feeAmount: BigNumber;
+            const feeAmount = hop2.feeAmount;
 
             if (regularTrade) {
                 // for a regular trade, the input amount represents the source amount we are willing to trade
                 sourceAmount = BigNumber.from(amount);
                 targetAmount = await networkInfo.tradeTargetAmount(sourceToken.address, targetToken.address, amount);
-                feeAmount = targetTradeAmounts.feeAmount;
-                expect(targetAmount).to.equal(targetTradeAmounts.amount);
+                expect(targetAmount).to.equal(hop2.amount);
             } else {
                 // for an exact trade, the input amount represents the target amount we are looking to receive
                 sourceAmount = await networkInfo.tradeSourceAmount(sourceToken.address, targetToken.address, amount);
                 targetAmount = BigNumber.from(amount);
-                feeAmount = sourceTradeAmounts.feeAmount;
-                expect(sourceAmount).to.equal(sourceTradeAmounts.amount);
+                expect(sourceAmount).to.equal(hop1.amount);
             }
 
             const res = await tradeFunc(amount, {
@@ -2235,15 +2225,15 @@ describe('BancorNetwork', () => {
                         sourceAmount,
                         // for a regular trade, the target amount represents how many network tokens we have received,
                         // while for an exact trade, it represents how many source tokens we were required to trade
-                        regularTrade ? sourceTradeAmounts.amount : targetTradeAmounts.amount,
+                        regularTrade ? hop1.amount : hop2.amount,
                         traderAddress
                     );
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, networkToken.address, FeeType.Trading, sourceTradeAmounts.feeAmount);
+                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.feeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(sourceTradeAmounts.feeAmount));
+                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.feeAmount));
 
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2255,7 +2245,7 @@ describe('BancorNetwork', () => {
                         // for a regular trade, the source amount represents how many network tokens we were required to
                         // trade, while for an exact trade, it represents how many target tokens we have received by
                         // trading network tokens for them
-                        regularTrade ? sourceTradeAmounts.amount : targetTradeAmounts.amount,
+                        regularTrade ? hop1.amount : hop2.amount,
                         targetAmount,
                         traderAddress
                     );
@@ -2296,6 +2286,20 @@ describe('BancorNetwork', () => {
             }
         };
 
+        const approve = async (amount: BigNumberish, regularTrade: boolean) => {
+            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+
+            let sourceAmount;
+            if (regularTrade) {
+                sourceAmount = amount;
+            } else {
+                sourceAmount = await networkInfo.tradeSourceAmount(sourceToken.address, targetToken.address, amount);
+            }
+
+            await reserveToken.transfer(await trader.getAddress(), sourceAmount);
+            await reserveToken.connect(trader).approve(network.address, sourceAmount);
+        };
+
         const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
             const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
@@ -2316,21 +2320,7 @@ describe('BancorNetwork', () => {
                                 return;
                             }
 
-                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-
-                            let sourceAmount;
-                            if (regularTrade) {
-                                sourceAmount = testAmount;
-                            } else {
-                                sourceAmount = await networkInfo.tradeSourceAmount(
-                                    sourceToken.address,
-                                    targetToken.address,
-                                    testAmount
-                                );
-                            }
-
-                            await reserveToken.transfer(await trader.getAddress(), sourceAmount);
-                            await reserveToken.connect(trader).approve(network.address, sourceAmount);
+                            await approve(testAmount, regularTrade);
                         });
 
                         if (isSourceNativeToken) {
@@ -2514,29 +2504,30 @@ describe('BancorNetwork', () => {
             const isSourceNativeToken = source.tokenData.isNative();
 
             context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                const TRADES_COUNT = 2;
-
                 beforeEach(async () => {
                     await setupPools(source, target);
-
-                    if (!isSourceNativeToken) {
-                        const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                        await reserveToken.transfer(trader.address, amount.mul(BigNumber.from(TRADES_COUNT)));
-                    }
                 });
 
-                it('should complete multiple trades', async () => {
-                    const currentBlockNumber = await poolCollection.currentBlockNumber();
-                    for (let i = 0; i < TRADES_COUNT; i++) {
-                        if (!isSourceNativeToken) {
-                            const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                            await reserveToken.connect(trader).approve(network.address, amount);
-                        }
+                for (const regularTrade of [true, false]) {
+                    context(`${regularTrade ? 'regular' : 'exact'} trade`, () => {
+                        const tradeFunc = regularTrade ? trade : tradeExact;
 
-                        await verifyTrade(trader, ZERO_ADDRESS, amount, trade);
-                        await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
-                    }
-                });
+                        const TRADES_COUNT = 2;
+
+                        it('should complete multiple trades', async () => {
+                            const currentBlockNumber = await poolCollection.currentBlockNumber();
+
+                            for (let i = 0; i < TRADES_COUNT; i++) {
+                                if (!isSourceNativeToken) {
+                                    await approve(amount, regularTrade);
+                                }
+
+                                await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
+                                await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
+                            }
+                        });
+                    });
+                }
             });
         };
 
@@ -2544,28 +2535,18 @@ describe('BancorNetwork', () => {
             const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
-            context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+            context(`permitted trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+                beforeEach(async () => {
+                    await setupPools(source, target);
+                });
+
                 for (const regularTrade of [true, false]) {
                     context(`${regularTrade ? 'regular' : 'exact'} trade`, () => {
                         const tradeFunc = regularTrade ? tradePermitted : tradeExactPermitted;
 
                         beforeEach(async () => {
-                            await setupPools(source, target);
-
-                            let sourceAmount;
-                            if (regularTrade) {
-                                sourceAmount = amount;
-                            } else {
-                                sourceAmount = await networkInfo.tradeSourceAmount(
-                                    sourceToken.address,
-                                    targetToken.address,
-                                    amount
-                                );
-                            }
-
                             if (!isSourceNativeToken) {
-                                const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
-                                await reserveToken.transfer(trader.address, sourceAmount);
+                                await approve(amount, regularTrade);
                             }
                         });
 
@@ -2613,7 +2594,7 @@ describe('BancorNetwork', () => {
 
             for (const sourceBalance of [toWei(1_000_000), toWei(50_000_000)]) {
                 for (const targetBalance of [toWei(1_000_000), toWei(50_000_000)]) {
-                    for (const amount of [10_000, toWei(500_000)]) {
+                    for (const amount of [10_000, toWei(100)]) {
                         const TRADING_FEES = [0, 5];
                         for (const tradingFeePercent of TRADING_FEES) {
                             // if either the source or the target token is the network token - only test fee in one of
