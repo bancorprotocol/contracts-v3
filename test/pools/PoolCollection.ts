@@ -1661,9 +1661,7 @@ describe('PoolCollection', () => {
                                             const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
                                             const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
                                             const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
-                                            it(`withdrawal should ${
-                                                ok ? 'complete successfully' : 'revert with RateUnstable'
-                                            }`, async () => {
+                                            it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
                                                 const { liquidity } = await poolCollection.poolData(token.address);
                                                 await poolCollection.setAverageRateT(token.address, {
                                                     blockNumber: 1,
