@@ -281,6 +281,7 @@ describe('BancorNetworkInfo', () => {
 
     describe('trade amounts', () => {
         let network: TestBancorNetwork;
+        let networkToken: IERC20;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
@@ -291,7 +292,7 @@ describe('BancorNetworkInfo', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, poolCollection } = await createSystem());
+            ({ network, networkToken, networkInfo, networkSettings, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -413,6 +414,66 @@ describe('BancorNetworkInfo', () => {
                     await expect(
                         tradeSourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
                     ).to.be.revertedWith('InvalidTokens');
+                });
+
+                it('should return correct amounts', async () => {
+                    const isSourceNetworkToken = sourceToken.address === networkToken.address;
+                    const isTargetNetworkToken = targetToken.address === networkToken.address;
+
+                    let targetAmount: BigNumber;
+                    let sourceAmount: BigNumber;
+
+                    if (isSourceNetworkToken || isTargetNetworkToken) {
+                        ({ amount: targetAmount } = await poolCollection.tradeAmountAndFee(
+                            sourceToken.address,
+                            targetToken.address,
+                            testAmount,
+                            true
+                        ));
+
+                        ({ amount: sourceAmount } = await poolCollection.tradeAmountAndFee(
+                            sourceToken.address,
+                            targetToken.address,
+                            testAmount,
+                            false
+                        ));
+                    } else {
+                        const targetTradeAmounts = await poolCollection.tradeAmountAndFee(
+                            sourceToken.address,
+                            networkToken.address,
+                            testAmount,
+                            true
+                        );
+
+                        ({ amount: targetAmount } = await poolCollection.tradeAmountAndFee(
+                            networkToken.address,
+                            targetToken.address,
+                            targetTradeAmounts.amount,
+                            true
+                        ));
+
+                        const sourceTradeAmounts = await poolCollection.tradeAmountAndFee(
+                            networkToken.address,
+                            targetToken.address,
+                            testAmount,
+                            false
+                        );
+
+                        ({ amount: sourceAmount } = await poolCollection.tradeAmountAndFee(
+                            sourceToken.address,
+                            networkToken.address,
+                            sourceTradeAmounts.amount,
+                            false
+                        ));
+                    }
+
+                    expect(
+                        await networkInfo.tradeTargetAmount(sourceToken.address, targetToken.address, testAmount)
+                    ).to.equal(targetAmount);
+
+                    expect(
+                        await networkInfo.tradeSourceAmount(sourceToken.address, targetToken.address, testAmount)
+                    ).to.equal(sourceAmount);
                 });
             });
         };
