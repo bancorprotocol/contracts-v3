@@ -480,7 +480,7 @@ describe('Profile @profile', () => {
                 }
             });
 
-            context('during the withdrawal window duration', () => {
+            context('after the lock duration', () => {
                 const test = async (index: number) =>
                     profiler.profile(
                         `withdraw ${tokenData.symbol()}`,
@@ -494,10 +494,7 @@ describe('Profile @profile', () => {
                 };
 
                 beforeEach(async () => {
-                    const withdrawalDuration =
-                        (await pendingWithdrawals.lockDuration()) +
-                        (await pendingWithdrawals.withdrawalWindowDuration());
-                    await setTime(requests[0].creationTime + withdrawalDuration - 1);
+                    await setTime(requests[0].creationTime + (await pendingWithdrawals.lockDuration()) + 1);
                 });
 
                 context('with approvals', () => {
@@ -1122,13 +1119,6 @@ describe('Profile @profile', () => {
 
             it('should cancel a pending withdrawal request', async () => {
                 await profiler.profile('cancel withdrawal', network.connect(provider).cancelWithdrawal(id));
-            });
-
-            it('should reinitiate a pending withdrawal request', async () => {
-                const newTime = (await latest()) + duration.weeks(1);
-                await pendingWithdrawals.setTime(newTime);
-
-                await profiler.profile('reinit withdrawal', network.connect(provider).reinitWithdrawal(id));
             });
         });
     });

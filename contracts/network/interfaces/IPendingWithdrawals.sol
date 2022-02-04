@@ -43,11 +43,6 @@ interface IPendingWithdrawals is IUpgradeable {
     function lockDuration() external view returns (uint32);
 
     /**
-     * @dev returns withdrawal window duration
-     */
-    function withdrawalWindowDuration() external view returns (uint32);
-
-    /**
      * @dev returns the pending withdrawal requests count for a specific provider
      */
     function withdrawalRequestCount(address provider) external view returns (uint256);
@@ -86,23 +81,13 @@ interface IPendingWithdrawals is IUpgradeable {
     function cancelWithdrawal(address provider, uint256 id) external;
 
     /**
-     * @dev reinitiates a withdrawal request and restarts its cooldown durations
-     *
-     * requirements:
-     *
-     * - the caller must be the network contract
-     * - the provider must have already initiated a withdrawal and received the specified id
-     */
-    function reinitWithdrawal(address provider, uint256 id) external;
-
-    /**
      * @dev completes a withdrawal request and returns the pool token and its transferred amount
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - the current time is older than the lock duration but not older than the lock duration + withdrawal window duration
+     * - the current time is older than the lock duration
      */
     function completeWithdrawal(
         bytes32 contextId,

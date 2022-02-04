@@ -557,9 +557,7 @@ describe('BancorNetworkInfo', () => {
 
             expect(await networkInfo.isReadyForWithdrawal(id)).to.be.false;
 
-            const withdrawalDuration =
-                (await pendingWithdrawals.lockDuration()) + (await pendingWithdrawals.withdrawalWindowDuration());
-            await pendingWithdrawals.setTime(creationTime + withdrawalDuration - 1);
+            await pendingWithdrawals.setTime(creationTime + (await pendingWithdrawals.lockDuration()) + 1);
 
             expect(await networkInfo.isReadyForWithdrawal(id)).to.be.true;
         });

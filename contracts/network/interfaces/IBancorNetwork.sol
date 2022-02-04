@@ -266,15 +266,6 @@ interface IBancorNetwork is IUpgradeable {
     function cancelWithdrawal(uint256 id) external;
 
     /**
-     * @dev reinitiates a withdrawal request and restarts its cooldown durations
-     *
-     * requirements:
-     *
-     * - the caller must have already initiated a withdrawal and received the specified id
-     */
-    function reinitWithdrawal(uint256 id) external;
-
-    /**
      * @dev deposits liquidity during a migration
      */
     function migrateLiquidity(

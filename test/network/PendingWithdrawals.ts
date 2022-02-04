@@ -8,12 +8,7 @@ import Contracts, {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import {
-    ZERO_ADDRESS,
-    FeeType,
-    DEFAULT_LOCK_DURATION,
-    DEFAULT_WITHDRAWAL_WINDOW_DURATION
-} from '../../utils/Constants';
+import { ZERO_ADDRESS, FeeType, DEFAULT_LOCK_DURATION } from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -82,7 +77,6 @@ describe('PendingWithdrawals', () => {
             ]);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
 
         it('should emit events on initialization', async () => {
@@ -93,9 +87,6 @@ describe('PendingWithdrawals', () => {
             );
             const res = await pendingWithdrawals.initialize();
             await expect(res).to.emit(pendingWithdrawals, 'LockDurationUpdated').withArgs(0, DEFAULT_LOCK_DURATION);
-            await expect(res)
-                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(0, DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
     });
 
@@ -136,46 +127,6 @@ describe('PendingWithdrawals', () => {
                 .withArgs(newLockDuration, DEFAULT_LOCK_DURATION);
 
             expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
-        });
-    });
-
-    describe('withdrawal window duration', () => {
-        const newWithdrawalWindowDuration = duration.weeks(2);
-        let pendingWithdrawals: TestPendingWithdrawals;
-
-        beforeEach(async () => {
-            ({ pendingWithdrawals } = await createSystem());
-
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
-        });
-
-        it('should revert when a non-owner attempts to set the withdrawal window duration', async () => {
-            await expect(
-                pendingWithdrawals.connect(nonOwner).setWithdrawalWindowDuration(newWithdrawalWindowDuration)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should ignore updating to the same withdrawal window duration', async () => {
-            await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
-
-            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
-            await expect(res).not.to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated');
-        });
-
-        it('should be able to set and update the withdrawal window duration', async () => {
-            const res = await pendingWithdrawals.setWithdrawalWindowDuration(newWithdrawalWindowDuration);
-            await expect(res)
-                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(DEFAULT_WITHDRAWAL_WINDOW_DURATION, newWithdrawalWindowDuration);
-
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(newWithdrawalWindowDuration);
-
-            const res2 = await pendingWithdrawals.setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
-            await expect(res2)
-                .to.emit(pendingWithdrawals, 'WithdrawalWindowDurationUpdated')
-                .withArgs(newWithdrawalWindowDuration, DEFAULT_WITHDRAWAL_WINDOW_DURATION);
-
-            expect(await pendingWithdrawals.withdrawalWindowDuration()).to.equal(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
         });
     });
 
@@ -475,125 +426,6 @@ describe('PendingWithdrawals', () => {
                 });
             });
 
-            describe('reinitiation', () => {
-                let provider1: SignerWithAddress;
-                let poolTokenAmount: BigNumber;
-
-                before(async () => {
-                    [, provider1] = await ethers.getSigners();
-                });
-
-                beforeEach(async () => {
-                    ({ poolToken, token: reserveToken } = await setupFundedPool(
-                        {
-                            tokenData: new TokenData(TokenSymbol.TKN),
-                            balance: toWei(1_000_000),
-                            requestedLiquidity: toWei(1_000_000).mul(1000),
-                            fundingRate: { n: 1, d: 2 }
-                        },
-                        provider1,
-                        network,
-                        networkInfo,
-                        networkSettings,
-                        poolCollection
-                    ));
-
-                    poolTokenAmount = await poolToken.balanceOf(provider1.address);
-                });
-
-                it('should revert when attempting to reinitiate a non-existing withdrawal request', async () => {
-                    await expect(network.reinitWithdrawal(1)).to.be.revertedWith('AccessDenied');
-                });
-
-                context('with initiated withdrawal requests', () => {
-                    const testReinitWithdrawal = async (provider: SignerWithAddress, id: BigNumber) => {
-                        const providerBalance = await poolToken.balanceOf(provider.address);
-                        const pendingWithdrawalsBalance = await poolToken.balanceOf(pendingWithdrawals.address);
-                        const withdrawalRequestCount = await pendingWithdrawals.withdrawalRequestCount(
-                            provider.address
-                        );
-                        const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-
-                        await pendingWithdrawals.setTime(withdrawalRequest.createdAt + 1);
-
-                        const res = await network.connect(provider).reinitWithdrawal(id);
-                        await expect(res)
-                            .to.emit(pendingWithdrawals, 'WithdrawalReinitiated')
-                            .withArgs(
-                                reserveToken.address,
-                                provider.address,
-                                id,
-                                withdrawalRequest.poolTokenAmount,
-                                withdrawalRequest.reserveTokenAmount,
-                                (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
-                            );
-
-                        expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
-
-                        expect(await poolToken.balanceOf(provider.address)).to.equal(providerBalance);
-                        expect(await poolToken.balanceOf(pendingWithdrawals.address)).to.equal(
-                            pendingWithdrawalsBalance
-                        );
-                        expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
-                            withdrawalRequestCount
-                        );
-
-                        const withdrawalRequest2 = await pendingWithdrawals.withdrawalRequest(id);
-                        expect(withdrawalRequest2.provider).to.equal(withdrawalRequest.provider);
-                        expect(withdrawalRequest2.poolToken).to.equal(withdrawalRequest.poolToken);
-                        expect(withdrawalRequest2.poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
-                        expect(withdrawalRequest2.createdAt).to.gte(await pendingWithdrawals.currentTime());
-                        expect(withdrawalRequest2.createdAt).not.to.equal(withdrawalRequest.createdAt);
-                    };
-
-                    let id1: BigNumber;
-                    let id2: BigNumber;
-
-                    beforeEach(async () => {
-                        await poolToken.connect(provider1).approve(network.address, poolTokenAmount);
-
-                        const withdrawalAmount1 = BigNumber.from(1111);
-                        await network.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount1);
-                        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
-                        id1 = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-
-                        const withdrawalAmount2 = poolTokenAmount.sub(withdrawalAmount1);
-                        await network.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount2);
-                        const withdrawalRequestIds2 = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
-                        id2 = withdrawalRequestIds2[withdrawalRequestIds2.length - 1];
-                    });
-
-                    it('should revert when attempting to reinitiate a withdrawal request from a a non-network', async () => {
-                        const nonNetwork = deployer;
-
-                        await expect(
-                            pendingWithdrawals.connect(nonNetwork).reinitWithdrawal(provider1.address, id1)
-                        ).to.be.revertedWith('AccessDenied');
-                    });
-
-                    it("should revert when attempting to reinitiate another provider's request", async () => {
-                        const provider2 = (await ethers.getSigners())[5];
-
-                        await depositToPool(provider2, reserveToken, 1000, network);
-                        const poolTokenAmount2 = await poolToken.balanceOf(provider2.address);
-
-                        await poolToken.connect(provider2).approve(network.address, poolTokenAmount2);
-                        await network.connect(provider2).initWithdrawal(poolToken.address, poolTokenAmount2);
-                        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider2.address);
-                        const provider2Id = withdrawalRequestIds[0];
-
-                        await expect(network.connect(provider1).reinitWithdrawal(provider2Id)).to.be.revertedWith(
-                            'AccessDenied'
-                        );
-                    });
-
-                    it('should reinitiate withdrawal requests', async () => {
-                        await testReinitWithdrawal(provider1, id1);
-                        await testReinitWithdrawal(provider1, id2);
-                    });
-                });
-            });
-
             describe('completion', () => {
                 let provider: SignerWithAddress;
 
@@ -730,30 +562,11 @@ describe('PendingWithdrawals', () => {
                         });
                     });
 
-                    context('after the withdrawal window duration', () => {
+                    context('after the lock duration', () => {
                         beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-
-                            await pendingWithdrawals.setTime(creationTime + withdrawalDuration + 1);
-                        });
-
-                        it('should mark the request as not ready for withdrawal', async () => {
-                            expect(await pendingWithdrawals.isReadyForWithdrawal(id)).to.be.false;
-                        });
-
-                        it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
-                        });
-                    });
-
-                    context('during the withdrawal window duration', () => {
-                        beforeEach(async () => {
-                            const withdrawalDuration =
-                                (await pendingWithdrawals.lockDuration()) +
-                                (await pendingWithdrawals.withdrawalWindowDuration());
-                            await pendingWithdrawals.setTime(creationTime + withdrawalDuration - 1);
+                            await pendingWithdrawals.setTime(
+                                creationTime + (await pendingWithdrawals.lockDuration()) + 1
+                            );
                         });
 
                         it('should mark the request as ready for withdrawal', async () => {

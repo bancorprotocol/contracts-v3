@@ -950,9 +950,8 @@ describe('BancorNetwork', () => {
                 );
 
                 let prevTokenBalance = await getBalance(token, deployer);
-                const withdrawalDuration =
-                    (await pendingWithdrawals.lockDuration()) + (await pendingWithdrawals.withdrawalWindowDuration());
-                await setTime(creationTime + withdrawalDuration - 1);
+
+                await setTime(creationTime + (await pendingWithdrawals.lockDuration()) + 1);
 
                 await network.withdraw(id);
                 await expect(await getBalance(token, deployer)).to.be.gte(prevTokenBalance);
@@ -1675,7 +1674,7 @@ describe('BancorNetwork', () => {
                 await expect(network.connect(deployer).withdraw(requests[0].id)).to.be.revertedWith('AccessDenied');
             });
 
-            context('during the withdrawal window duration', () => {
+            context('after the lock duration', () => {
                 const test = async (index: number) => {
                     const request = requests[index];
                     const prevPoolTokenTotalSupply = await poolToken.totalSupply();
@@ -1738,10 +1737,7 @@ describe('BancorNetwork', () => {
                 };
 
                 beforeEach(async () => {
-                    const withdrawalDuration =
-                        (await pendingWithdrawals.lockDuration()) +
-                        (await pendingWithdrawals.withdrawalWindowDuration());
-                    await setTime(requests[0].creationTime + withdrawalDuration - 1);
+                    await setTime(requests[0].creationTime + (await pendingWithdrawals.lockDuration()) + 1);
                 });
 
                 if (tokenData.isNetworkToken()) {
@@ -3552,16 +3548,6 @@ describe('BancorNetwork', () => {
                 expect(withdrawalRequestIds).to.be.empty;
             });
 
-            it('should reinitiate a pending withdrawal request', async () => {
-                const newTime = (await latest()) + duration.weeks(1);
-                await pendingWithdrawals.setTime(newTime);
-
-                await network.connect(provider).reinitWithdrawal(id);
-
-                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-                expect(withdrawalRequest.createdAt).to.equal(newTime);
-            });
-
             context('when paused', () => {
                 beforeEach(async () => {
                     await network.connect(emergencyStopper).pause();
@@ -3569,10 +3555,6 @@ describe('BancorNetwork', () => {
 
                 it('should revert when attempting to cancel a pending withdrawal request', async () => {
                     await expect(network.connect(provider).cancelWithdrawal(id)).to.be.revertedWith('Pausable: paused');
-                });
-
-                it('should revert when attempting to reinitiate a pending withdrawal request', async () => {
-                    await expect(network.connect(provider).reinitWithdrawal(id)).to.be.revertedWith('Pausable: paused');
                 });
             });
         });
