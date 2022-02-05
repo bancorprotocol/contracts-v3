@@ -80,10 +80,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     error DepositLimitExceeded();
     error InsufficientLiquidity();
     error InvalidRate();
-    error InsufficientReturnAmount();
+    error InsufficientTargetAmount();
     error InsufficientSourceAmount();
     error RateUnstable();
-    error ReturnAmountTooLow();
     error TradingDisabled();
     error AlreadyEnabled();
 
@@ -648,7 +647,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // ensure that the target amount is above the requested minimum return amount
         if (tradeAmounts.amount < minReturnAmount) {
-            revert InsufficientReturnAmount();
+            revert InsufficientTargetAmount();
         }
 
         // perform the trade and update the liquidity

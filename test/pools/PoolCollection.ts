@@ -2147,7 +2147,7 @@ describe('PoolCollection', () => {
                                         1,
                                         MAX_UINT256
                                     )
-                                ).to.be.revertedWith('InsufficientReturnAmount');
+                                ).to.be.revertedWith('InsufficientTargetAmount');
                             });
 
                             it('should revert when an exact trade requires more tokens than provided', async () => {
