@@ -64,7 +64,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     error DeadlineExpired();
     error EthAmountMismatch();
-    error InvalidPoolForETH();
     error InsufficientFlashLoanReturn();
     error InvalidTokens();
     error PermitUnsupported();
@@ -1259,11 +1258,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address caller,
         uint256 amount
     ) private {
-        if (msg.value > 0) {
-            if (!token.isNative()) {
-                revert InvalidPoolForETH();
-            }
-
+        if (token.isNative()) {
             if (msg.value < amount) {
                 revert EthAmountMismatch();
             }
@@ -1277,8 +1272,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 payable(address(caller)).sendValue(msg.value - amount);
             }
         } else {
-            if (token.isNative()) {
-                revert InvalidPoolForETH();
+            if (msg.value > 0) {
+                revert EthAmountMismatch();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);

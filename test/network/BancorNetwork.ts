@@ -1349,7 +1349,7 @@ describe('BancorNetwork', () => {
 
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWith('InvalidPoolForETH');
+                                                    ).to.be.revertedWith('EthAmountMismatch');
                                                 });
 
                                                 it('should refund when attempting to deposit less than what was actually sent', async () => {
@@ -1370,7 +1370,7 @@ describe('BancorNetwork', () => {
                                                 it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWith('InvalidPoolForETH');
+                                                    ).to.be.revertedWith('EthAmountMismatch');
                                                 });
                                             }
                                         }
@@ -2356,7 +2356,7 @@ describe('BancorNetwork', () => {
 
                                 await expect(
                                     tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('InvalidPoolForETH');
+                                ).to.be.revertedWith('EthAmountMismatch');
                             });
 
                             it('should refund when attempting to trade less than what was actually sent', async () => {
@@ -2387,7 +2387,7 @@ describe('BancorNetwork', () => {
                         } else {
                             it('should revert when passing ETH with a non ETH trade', async () => {
                                 await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                    'InvalidPoolForETH'
+                                    'EthAmountMismatch'
                                 );
                             });
                         }
