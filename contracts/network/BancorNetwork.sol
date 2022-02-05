@@ -50,7 +50,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
-import { IBancorNetwork, IFlashLoanRecipient, Signature } from "./interfaces/IBancorNetwork.sol";
+import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
 import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
 
@@ -68,6 +68,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error InvalidTokens();
     error PermitUnsupported();
     error InsufficientFlashLoanReturn();
+
+    struct Signature {
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
 
     struct TradeParams {
         uint256 amount;
@@ -532,7 +538,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     )
         external
         validAddress(provider)
@@ -541,7 +549,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, signature);
+        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -551,9 +559,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant {
-        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, signature);
+        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -612,7 +622,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     )
         external
         validTokensForTrade(sourceToken, targetToken)
@@ -621,7 +633,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        _permit(sourceToken, sourceAmount, deadline, signature, msg.sender);
+        _permit(sourceToken, sourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         _trade(
             sourceToken,
@@ -672,7 +684,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     )
         external
         validTokensForTrade(sourceToken, targetToken)
@@ -681,7 +695,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        _permit(sourceToken, maxSourceAmount, deadline, signature, msg.sender);
+        _permit(sourceToken, maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         _trade(
             sourceToken,
@@ -776,7 +790,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolToken poolToken,
         uint256 poolTokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     )
         external
         validAddress(address(poolToken))
@@ -785,7 +801,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         returns (uint256)
     {
-        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, signature.v, signature.r, signature.s);
+        _permit(Token(address(poolToken)), poolTokenAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
@@ -984,7 +1000,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token token,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature,
+        Signature memory signature,
         address caller
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
@@ -1018,7 +1034,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        Signature memory signature
     ) private {
         address caller = msg.sender;
 

@@ -1415,7 +1415,15 @@ describe('BancorNetwork', () => {
                         );
 
                         await expect(
-                            network.depositForPermitted(ZERO_ADDRESS, token.address, amount, DEADLINE, signature)
+                            network.depositForPermitted(
+                                ZERO_ADDRESS,
+                                token.address,
+                                amount,
+                                DEADLINE,
+                                signature.v,
+                                signature.r,
+                                signature.s
+                            )
                         ).to.be.revertedWith('InvalidAddress');
                     });
 
@@ -1460,7 +1468,14 @@ describe('BancorNetwork', () => {
                                     case Method.DepositPermitted:
                                         return network
                                             .connect(sender)
-                                            .depositPermitted(poolAddress, amount, DEADLINE, signature);
+                                            .depositPermitted(
+                                                poolAddress,
+                                                amount,
+                                                DEADLINE,
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
+                                            );
 
                                     case Method.DepositForPermitted:
                                         return network
@@ -1470,7 +1485,9 @@ describe('BancorNetwork', () => {
                                                 poolAddress,
                                                 amount,
                                                 DEADLINE,
-                                                signature
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
                                             );
                                 }
                             };
@@ -1993,7 +2010,9 @@ describe('BancorNetwork', () => {
                     minReturnAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -2029,7 +2048,9 @@ describe('BancorNetwork', () => {
                     maxSourceAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -3495,10 +3516,24 @@ describe('BancorNetwork', () => {
 
             const retId = await network
                 .connect(provider)
-                .callStatic.initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature);
+                .callStatic.initWithdrawalPermitted(
+                    poolToken.address,
+                    poolTokenAmount,
+                    MAX_UINT256,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
             await network
                 .connect(provider)
-                .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature);
+                .initWithdrawalPermitted(
+                    poolToken.address,
+                    poolTokenAmount,
+                    MAX_UINT256,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
 
             const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
             const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
@@ -3533,7 +3568,14 @@ describe('BancorNetwork', () => {
                 await expect(
                     network
                         .connect(provider)
-                        .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature)
+                        .initWithdrawalPermitted(
+                            poolToken.address,
+                            poolTokenAmount,
+                            MAX_UINT256,
+                            signature.v,
+                            signature.r,
+                            signature.s
+                        )
                 ).to.be.revertedWith('Pausable: paused');
             });
         });

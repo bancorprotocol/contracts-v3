@@ -308,7 +308,14 @@ describe('Profile @profile', () => {
                                     case Method.DepositPermitted:
                                         return network
                                             .connect(sender)
-                                            .depositPermitted(poolAddress, amount, DEADLINE, signature);
+                                            .depositPermitted(
+                                                poolAddress,
+                                                amount,
+                                                DEADLINE,
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
+                                            );
 
                                     case Method.DepositForPermitted:
                                         return network
@@ -318,7 +325,9 @@ describe('Profile @profile', () => {
                                                 poolAddress,
                                                 amount,
                                                 DEADLINE,
-                                                signature
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
                                             );
                                 }
                             };
@@ -706,7 +715,9 @@ describe('Profile @profile', () => {
                     minReturnAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -742,7 +753,9 @@ describe('Profile @profile', () => {
                     maxSourceAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -1109,7 +1122,14 @@ describe('Profile @profile', () => {
                 'init withdrawal permitted',
                 network
                     .connect(provider)
-                    .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature)
+                    .initWithdrawalPermitted(
+                        poolToken.address,
+                        poolTokenAmount,
+                        MAX_UINT256,
+                        signature.v,
+                        signature.r,
+                        signature.s
+                    )
             );
         });
 
