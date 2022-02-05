@@ -87,7 +87,7 @@ interface IPendingWithdrawals is IUpgradeable {
      *
      * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
-     * - the current time is older than the lock duration
+     * - the lock duration has ended
      */
     function completeWithdrawal(
         bytes32 contextId,

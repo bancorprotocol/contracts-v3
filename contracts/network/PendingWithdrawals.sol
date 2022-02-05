@@ -390,8 +390,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     }
 
     /**
-     * @dev returns whether it's possible to withdraw a request at the provided time (i.e., that  he current time is
-     * older than the lock duration)
+     * @dev returns whether it's possible to withdraw a request at the provided time
      */
     function _canWithdrawAt(uint32 time, uint32 createdAt) private view returns (bool) {
         return createdAt + _lockDuration <= time;
