@@ -3,8 +3,8 @@
 pragma solidity 0.8.11;
 
 import { TestERC20Token } from "./TestERC20Token.sol";
-import { IUniswapV2Router02 } from "../v3-migrator/interfaces/IUniswapV2Router02.sol";
-import { IUniswapV2Pair } from "../v3-migrator/interfaces/IUniswapV2Pair.sol";
+import { IUniswapV2Router02 } from "../bancor-portal/interfaces/IUniswapV2Router02.sol";
+import { IUniswapV2Pair } from "../bancor-portal/interfaces/IUniswapV2Pair.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { Utils } from "../utility/Utils.sol";

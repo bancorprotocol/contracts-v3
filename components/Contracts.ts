@@ -38,7 +38,7 @@ import {
     TestUpgradeable__factory,
     TestVault__factory,
     TransparentUpgradeableProxyImmutable__factory,
-    V3Migrator__factory,
+    BancorPortal__factory,
     MockUniswapV2Router02__factory,
     MockUniswapV2Pair__factory
 } from '../typechain-types';
@@ -108,7 +108,7 @@ const getContracts = (signer?: Signer) => ({
         TransparentUpgradeableProxyImmutable__factory,
         signer
     ),
-    V3Migrator: deployOrAttach('V3Migrator', V3Migrator__factory, signer),
+    BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
     MockUniswapV2Router02: deployOrAttach('MockUniswapV2Router02', MockUniswapV2Router02__factory, signer),
     MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer)
 });

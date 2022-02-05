@@ -8,7 +8,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IV3Migratror } from "./interfaces/IV3Migratror.sol";
+import { IBancorPortal } from "./interfaces/IBancorPortal.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { IUniswapV2Pair } from "./interfaces/IUniswapV2Pair.sol";
@@ -20,7 +20,7 @@ import "hardhat/console.sol";
 /**
  * @dev One click liquidity migrations between other dexes into bancor v3
  */
-contract V3Migrator is IV3Migratror, ReentrancyGuardUpgradeable, Utils, Upgradeable {
+contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgradeable {
     using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
     using TokenLibrary for Token;
@@ -66,7 +66,7 @@ contract V3Migrator is IV3Migratror, ReentrancyGuardUpgradeable, Utils, Upgradea
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __V3Migrator_init();
+        __BancorPortal_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -74,17 +74,17 @@ contract V3Migrator is IV3Migratror, ReentrancyGuardUpgradeable, Utils, Upgradea
     /**
      * @dev initializes the contract and its parents
      */
-    function __V3Migrator_init() internal initializer {
+    function __BancorPortal_init() internal initializer {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
-        __V3Migrator_init_unchained();
+        __BancorPortal_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __V3Migrator_init_unchained() internal initializer {}
+    function __BancorPortal_init_unchained() internal initializer {}
 
     /**
      * @dev ETH receive callback

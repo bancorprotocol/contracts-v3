@@ -1,5 +1,5 @@
 import Contracts, {
-    V3Migrator,
+    BancorPortal,
     NetworkSettings,
     TestBancorNetwork,
     TestPoolCollection,
@@ -26,14 +26,14 @@ interface PoolBalances {
     [address: string]: BigNumber;
 }
 
-describe.only('V3-Migrator', () => {
-    // shouldHaveGap('V3Migrator', '_network');
+describe.only('bancor-portal', () => {
+    // shouldHaveGap('BancorPortal', '_network');
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let networkToken: IERC20;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
-    let v3Migrator: V3Migrator;
+    let bancorPortal: BancorPortal;
     let uniswapV2Pair: MockUniswapV2Pair;
     let uniswapV2Router02: MockUniswapV2Router02;
     let deployer: SignerWithAddress;
@@ -58,7 +58,7 @@ describe.only('V3-Migrator', () => {
             BigNumber.from(1_000_000),
             uniswapV2Pair.address
         );
-        v3Migrator = await createProxy(Contracts.V3Migrator, {
+        bancorPortal = await createProxy(Contracts.BancorPortal, {
             ctorArgs: [network.address, networkSettings.address, uniswapV2Router02.address, networkToken.address]
         });
 
@@ -66,24 +66,24 @@ describe.only('V3-Migrator', () => {
     });
 
     it("reverts when none of the pair's tokens are whitelisted", async () => {
-        await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+        await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
         const token0 = await createToken(new TokenData(TokenSymbol.TKN));
         const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
         await uniswapV2Pair.setTokens(token0.address, token1.address);
-        await expect(v3Migrator.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, 10)).to.be.revertedWith(
+        await expect(bancorPortal.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, 10)).to.be.revertedWith(
             'NotWhiteListed'
         );
     });
 
     it('reverts if the migration is not approved', async () => {
-        await expect(v3Migrator.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, 10)).to.be.revertedWith(
+        await expect(bancorPortal.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, 10)).to.be.revertedWith(
             'ERC20: transfer amount exceeds allowance'
         );
     });
 
     describe('transfers', () => {
         it("transfers funds to the user's wallet when only token0 is whitelisted", async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -91,7 +91,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it("transfers funds to the user's wallet when only token1 is whitelisted", async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -99,7 +99,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it("transfers funds to the user's wallet when token0 is eth and token1 is whitelisted", async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -107,7 +107,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it("transfers funds to the user's wallet when token0 is whitelisted and token1 is eth", async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -117,7 +117,7 @@ describe.only('V3-Migrator', () => {
 
     describe('deposits', () => {
         it('deposits funds when only token0 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -125,7 +125,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds when only token1 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -133,7 +133,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds of both tokens when possible', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: token0 } = await preparePoolAndToken(TokenSymbol.TKN);
             const { token: token1 } = await preparePoolAndToken(TokenSymbol.TKN1);
             await uniswapV2Pair.setTokens(token0.address, token1.address);
@@ -141,7 +141,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds when token0 is eth and token1 is unlisted', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -149,7 +149,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds when token0 is eth and token1 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const { token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN);
             await uniswapV2Pair.setTokens(whitelistedToken.address, whitelistedToken1.address);
@@ -157,7 +157,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds when token0 is unlisted and token1 is eth', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -165,7 +165,7 @@ describe.only('V3-Migrator', () => {
         });
 
         it('deposits funds when token0 is whitelisted and token1 is eth', async () => {
-            await uniswapV2Pair.connect(user).approve(v3Migrator.address, amount);
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, amount);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const { token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN);
             await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken.address);
@@ -183,7 +183,7 @@ describe.only('V3-Migrator', () => {
         const previousBalances = await getBalances([token0, token1], user);
 
         // execute
-        const res = await v3Migrator.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, amount);
+        const res = await bancorPortal.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, amount);
 
         // assert
         const newBalances = await getBalances([token0, token1], user);
@@ -218,7 +218,7 @@ describe.only('V3-Migrator', () => {
         const previousBalances = await getPoolBalances(token0, token1);
 
         // execute
-        await v3Migrator.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, amount);
+        await bancorPortal.connect(user).migrateUniswapV2Position(uniswapV2Pair.address, amount);
 
         // assert
         const newBalances = await getPoolBalances(token0, token1);
