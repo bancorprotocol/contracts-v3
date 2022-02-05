@@ -77,7 +77,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     struct TradeParams {
         uint256 amount;
-        uint256 restriction;
+        uint256 limit;
         bool regularTrade;
     }
 
@@ -605,7 +605,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _trade(
             sourceToken,
             targetToken,
-            TradeParams({ regularTrade: true, amount: sourceAmount, restriction: minReturnAmount }),
+            TradeParams({ regularTrade: true, amount: sourceAmount, limit: minReturnAmount }),
             msg.sender,
             beneficiary,
             deadline
@@ -638,7 +638,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _trade(
             sourceToken,
             targetToken,
-            TradeParams({ regularTrade: true, amount: sourceAmount, restriction: minReturnAmount }),
+            TradeParams({ regularTrade: true, amount: sourceAmount, limit: minReturnAmount }),
             msg.sender,
             beneficiary,
             deadline
@@ -667,7 +667,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _trade(
             sourceToken,
             targetToken,
-            TradeParams({ regularTrade: false, amount: targetAmount, restriction: maxSourceAmount }),
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: maxSourceAmount }),
             msg.sender,
             beneficiary,
             deadline
@@ -700,7 +700,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _trade(
             sourceToken,
             targetToken,
-            TradeParams({ regularTrade: false, amount: targetAmount, restriction: maxSourceAmount }),
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: maxSourceAmount }),
             msg.sender,
             beneficiary,
             deadline
@@ -1095,8 +1095,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev performs a regular or an exact trade:
      *
-     * - in case of a regular trade, the amount represents the source amount and the restriction the minimum return amount
-     * - in case of an exact trade, the amount represents the target amount and the restriction the maximum source amount
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      *
      * requirements:
      *
@@ -1127,7 +1127,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 sourceToken,
                 targetToken,
                 params.amount,
-                params.restriction,
+                params.limit,
                 deadline,
                 beneficiary
             )
@@ -1153,8 +1153,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev performs a single hop regular or an exact trade between the network token and a base token
      *
-     * - in case of a regular trade, the amount represents the source amount and the restriction the minimum return amount
-     * - in case of an exact trade, the amount represents the target amount and the restriction the maximum source amount
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      */
     function _tradeNetworkToken(
         bytes32 contextId,
@@ -1169,8 +1169,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         TradeAmounts memory tradeAmounts = params.regularTrade
-            ? poolCollection.trade(contextId, sourceToken, targetToken, params.amount, params.restriction)
-            : poolCollection.tradeExact(contextId, sourceToken, targetToken, params.amount, params.restriction);
+            ? poolCollection.trade(contextId, sourceToken, targetToken, params.amount, params.limit)
+            : poolCollection.tradeExact(contextId, sourceToken, targetToken, params.amount, params.limit);
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
@@ -1200,8 +1200,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev performs a double hop regular trade between two base tokens
      *
-     * - in case of a regular trade, the amount represents the source amount and the restriction the minimum return amount
-     * - in case of an exact trade, the amount represents the target amount and the restriction the maximum source amount
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      */
     function _tradeBaseTokens(
         bytes32 contextId,
@@ -1212,14 +1212,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         if (params.regularTrade) {
             uint256 sourceAmount = params.amount;
-            uint256 minReturnAmount = params.restriction;
+            uint256 minReturnAmount = params.limit;
 
             // trade source tokens to network tokens (while accepting any return amount)
             uint256 tradeAmount = _tradeNetworkToken(
                 contextId,
                 sourceToken,
                 false,
-                TradeParams({ regularTrade: true, amount: sourceAmount, restriction: 1 }),
+                TradeParams({ regularTrade: true, amount: sourceAmount, limit: 1 }),
                 trader
             );
 
@@ -1230,13 +1230,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                     contextId,
                     targetToken,
                     true,
-                    TradeParams({ regularTrade: true, amount: tradeAmount, restriction: minReturnAmount }),
+                    TradeParams({ regularTrade: true, amount: tradeAmount, limit: minReturnAmount }),
                     trader
                 );
         }
 
         uint256 targetAmount = params.amount;
-        uint256 maxSourceAmount = params.restriction;
+        uint256 maxSourceAmount = params.limit;
 
         // trade any amount of network tokens to get the requested target amount (we will use the actual traded amount
         // to restrict the trade from the source)
@@ -1244,7 +1244,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             targetToken,
             true,
-            TradeParams({ regularTrade: false, amount: targetAmount, restriction: type(uint256).max }),
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: type(uint256).max }),
             trader
         );
 
@@ -1253,7 +1253,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             sourceToken,
             false,
-            TradeParams({ regularTrade: false, amount: requiredNetworkTokenAmount, restriction: maxSourceAmount }),
+            TradeParams({ regularTrade: false, amount: requiredNetworkTokenAmount, limit: maxSourceAmount }),
             trader
         );
 

@@ -1917,7 +1917,7 @@ describe('BancorNetwork', () => {
 
         interface TradeOverrides {
             value?: BigNumberish;
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -1927,7 +1927,7 @@ describe('BancorNetwork', () => {
         const trade = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -1946,7 +1946,7 @@ describe('BancorNetwork', () => {
         const tradeExact = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -1974,7 +1974,7 @@ describe('BancorNetwork', () => {
         };
 
         interface TradePermittedOverrides {
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -1984,7 +1984,7 @@ describe('BancorNetwork', () => {
 
         const tradePermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             const {
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -2018,7 +2018,7 @@ describe('BancorNetwork', () => {
 
         const tradeExactPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             let {
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -2089,10 +2089,10 @@ describe('BancorNetwork', () => {
             let hop1!: TradeAmountsStructOutput;
             let hop2!: TradeAmountsStructOutput;
 
-            let restriction: BigNumber;
+            let limit: BigNumber;
 
             if (regularTrade) {
-                restriction = MIN_RETURN_AMOUNT;
+                limit = MIN_RETURN_AMOUNT;
 
                 if (isSourceNetworkToken || isTargetNetworkToken) {
                     hop1 = await network.callStatic.tradePoolCollectionT(
@@ -2158,7 +2158,7 @@ describe('BancorNetwork', () => {
 
                 // set the maximum source amount to twice the actually required amount in order to test that only the
                 // required amount was debited
-                restriction = hop1.amount.mul(2);
+                limit = hop1.amount.mul(2);
             }
 
             let sourceAmount: BigNumber;
@@ -2178,7 +2178,7 @@ describe('BancorNetwork', () => {
             }
 
             const res = await tradeFunc(amount, {
-                restriction,
+                limit,
                 beneficiary: beneficiaryAddress,
                 deadline
             });
@@ -2193,7 +2193,7 @@ describe('BancorNetwork', () => {
                     sourceToken.address,
                     targetToken.address,
                     amount,
-                    restriction,
+                    limit,
                     deadline,
                     beneficiary
                 ]
@@ -2414,9 +2414,9 @@ describe('BancorNetwork', () => {
                                     await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
                                 });
 
-                                it('should revert when attempting to trade using an invalid restriction', async () => {
+                                it('should revert when attempting to trade using an invalid limit', async () => {
                                     await expect(
-                                        tradeFunc(testAmount, { restriction: BigNumber.from(0) })
+                                        tradeFunc(testAmount, { limit: BigNumber.from(0) })
                                     ).to.be.revertedWith('ZeroValue');
                                 });
 
