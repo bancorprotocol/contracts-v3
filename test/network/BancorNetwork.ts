@@ -2424,7 +2424,7 @@ describe('BancorNetwork', () => {
                                     const deadline = (await latest()) - 1000;
 
                                     await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                        permitted ? 'ERC20Permit: expired deadline' : 'DeadlineExpired'
+                                        'DeadlineExpired'
                                     );
                                 });
 
