@@ -2186,7 +2186,7 @@ describe('BancorNetwork', () => {
             const transactionCost = await getTransactionCost(res);
 
             const contextId = solidityKeccak256(
-                ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'address'],
+                ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'bool', 'uint256', 'address'],
                 [
                     traderAddress,
                     await network.currentTime(),
@@ -2194,6 +2194,7 @@ describe('BancorNetwork', () => {
                     targetToken.address,
                     amount,
                     limit,
+                    regularTrade,
                     deadline,
                     beneficiary
                 ]

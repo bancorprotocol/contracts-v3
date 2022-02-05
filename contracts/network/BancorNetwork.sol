@@ -1119,6 +1119,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 targetToken,
                 params.amount,
                 params.limit,
+                params.regularTrade,
                 deadline,
                 beneficiary
             )
