@@ -276,22 +276,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     receive() external payable {}
 
-    modifier validTokensForTrade(Token sourceToken, Token targetToken) {
-        _validTokensForTrade(sourceToken, targetToken);
+    modifier validTradeParams(
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        uint256 limit,
+        uint256 deadline
+    ) {
+        _verifyTradeParams(sourceToken, targetToken, amount, limit, deadline);
 
         _;
-    }
-
-    /**
-     * @dev validates that the provided tokens are valid and unique
-     */
-    function _validTokensForTrade(Token sourceToken, Token targetToken) internal pure {
-        _validAddress(address(sourceToken));
-        _validAddress(address(targetToken));
-
-        if (sourceToken == targetToken) {
-            revert InvalidTokens();
-        }
     }
 
     /**
@@ -593,15 +587,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    )
-        external
-        payable
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(sourceAmount)
-        greaterThanZero(minReturnAmount)
-        whenNotPaused
-        nonReentrant
-    {
+    ) external payable whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
         _trade(
             sourceToken,
             targetToken,
@@ -625,14 +613,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(sourceAmount)
-        greaterThanZero(minReturnAmount)
-        whenNotPaused
-        nonReentrant
-    {
+    ) external whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
         _permit(sourceToken, sourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         _trade(
@@ -655,15 +638,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    )
-        external
-        payable
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(targetAmount)
-        greaterThanZero(maxSourceAmount)
-        whenNotPaused
-        nonReentrant
-    {
+    ) external payable whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
         _trade(
             sourceToken,
             targetToken,
@@ -687,14 +664,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(targetAmount)
-        greaterThanZero(maxSourceAmount)
-        whenNotPaused
-        nonReentrant
-    {
+    ) external whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
         _permit(sourceToken, maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         _trade(
@@ -1093,6 +1065,31 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @dev verifies that the provided trade params are valid
+     */
+    function _verifyTradeParams(
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        uint256 limit,
+        uint256 deadline
+    ) internal view {
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
+
+        if (sourceToken == targetToken) {
+            revert InvalidTokens();
+        }
+
+        _greaterThanZero(amount);
+        _greaterThanZero(limit);
+
+        if (deadline < _time()) {
+            revert DeadlineExpired();
+        }
+    }
+
+    /**
      * @dev performs a regular or an exact trade:
      *
      * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
@@ -1110,11 +1107,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary,
         uint256 deadline
     ) private {
-        uint32 currentTime = _time();
-        if (deadline < currentTime) {
-            revert DeadlineExpired();
-        }
-
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
             beneficiary = trader;
@@ -1123,7 +1115,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = keccak256(
             abi.encodePacked(
                 trader,
-                currentTime,
+                _time(),
                 sourceToken,
                 targetToken,
                 params.amount,
