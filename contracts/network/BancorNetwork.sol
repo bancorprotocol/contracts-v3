@@ -1241,15 +1241,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         // trade source tokens to the exact amount of network tokens (while respecting the maximum source amount)
-        uint256 resAmount = _tradeNetworkToken(
-            contextId,
-            sourceToken,
-            false,
-            TradeParams({ regularTrade: false, amount: requiredNetworkTokenAmount, limit: maxSourceAmount }),
-            trader
-        );
-
-        return resAmount;
+        return
+            _tradeNetworkToken(
+                contextId,
+                sourceToken,
+                false,
+                TradeParams({ regularTrade: false, amount: requiredNetworkTokenAmount, limit: maxSourceAmount }),
+                trader
+            );
     }
 
     /**
