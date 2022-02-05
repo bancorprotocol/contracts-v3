@@ -11,6 +11,7 @@ import 'dotenv/config';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
+import 'hardhat-watcher';
 import { HardhatUserConfig } from 'hardhat/config';
 import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
@@ -137,6 +138,14 @@ const config: HardhatUserConfig = {
 
     etherscan: {
         apiKey: ETHERSCAN_API_KEY
+    },
+
+    watcher: {
+        test: {
+            tasks: [{ command: 'test' }],
+            files: ['./test/**/*', './contracts/**/*'],
+            verbose: true
+        }
     },
 
     mocha: mochaOptions()
