@@ -2392,7 +2392,7 @@ describe('BancorNetwork', () => {
                             });
                         }
 
-                        const options = !isSourceNetworkToken && !isSourceNativeToken ? [false, true] : [false];
+                        const options = isSourceNetworkToken || isSourceNativeToken ? [false] : [false, true];
                         for (const permitted of options) {
                             context(`${permitted ? 'permitted' : 'direct'} trade`, () => {
                                 const tradePermittedFunc = regularTrade ? tradePermitted : tradeExactPermitted;
