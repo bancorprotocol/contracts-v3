@@ -23,7 +23,6 @@ import {
     Utils,
     AlreadyExists,
     DoesNotExist,
-    InvalidPool,
     InvalidToken,
     InvalidType,
     NotEmpty } from "../utility/Utils.sol";
@@ -65,9 +64,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     error DeadlineExpired();
     error EthAmountMismatch();
+    error InvalidPoolForETH();
+    error InsufficientFlashLoanReturn();
     error InvalidTokens();
     error PermitUnsupported();
-    error InsufficientFlashLoanReturn();
 
     struct Signature {
         uint8 v;
@@ -1262,7 +1262,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         if (msg.value > 0) {
             if (!token.isNative()) {
-                revert InvalidPool();
+                revert InvalidPoolForETH();
             }
 
             if (msg.value < amount) {
@@ -1279,7 +1279,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             }
         } else {
             if (token.isNative()) {
-                revert InvalidPool();
+                revert InvalidPoolForETH();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);
