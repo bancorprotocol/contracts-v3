@@ -308,7 +308,14 @@ describe('Profile @profile', () => {
                                     case Method.DepositPermitted:
                                         return network
                                             .connect(sender)
-                                            .depositPermitted(poolAddress, amount, DEADLINE, signature);
+                                            .depositPermitted(
+                                                poolAddress,
+                                                amount,
+                                                DEADLINE,
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
+                                            );
 
                                     case Method.DepositForPermitted:
                                         return network
@@ -318,7 +325,9 @@ describe('Profile @profile', () => {
                                                 poolAddress,
                                                 amount,
                                                 DEADLINE,
-                                                signature
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
                                             );
                                 }
                             };
@@ -610,7 +619,7 @@ describe('Profile @profile', () => {
 
         interface TradeOverrides {
             value?: BigNumberish;
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -620,7 +629,7 @@ describe('Profile @profile', () => {
         const trade = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -639,7 +648,7 @@ describe('Profile @profile', () => {
         const tradeExact = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -667,7 +676,7 @@ describe('Profile @profile', () => {
         };
 
         interface TradePermittedOverrides {
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -677,7 +686,7 @@ describe('Profile @profile', () => {
 
         const tradePermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             const {
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -703,13 +712,15 @@ describe('Profile @profile', () => {
                     minReturnAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
         const tradeExactPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             let {
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -739,7 +750,9 @@ describe('Profile @profile', () => {
                     maxSourceAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -760,10 +773,10 @@ describe('Profile @profile', () => {
             const permitted = [tradePermitted, tradeExactPermitted].includes(tradeFunc as any);
 
             const deadline = MAX_UINT256;
-            let restriction: BigNumber;
+            let limit: BigNumber;
 
             if (regularTrade) {
-                restriction = MIN_RETURN_AMOUNT;
+                limit = MIN_RETURN_AMOUNT;
             } else {
                 let sourceTradeAmounts: TradeAmountsStructOutput;
                 if (isSourceNetworkToken || isTargetNetworkToken) {
@@ -797,7 +810,7 @@ describe('Profile @profile', () => {
 
                 // set the maximum source amount to twice the actually required amount in order to test that only the
                 // required amount was debited
-                restriction = sourceTradeAmounts.amount.mul(2);
+                limit = sourceTradeAmounts.amount.mul(2);
             }
 
             const sourceSymbol = isSourceNativeToken ? TokenSymbol.ETH : await (sourceToken as TestERC20Token).symbol();
@@ -807,7 +820,7 @@ describe('Profile @profile', () => {
                 `${permitted ? 'permitted ' : ''}${
                     regularTrade ? 'regular' : 'exact'
                 } trade ${sourceSymbol} -> ${targetSymbol}`,
-                tradeFunc(amount, { restriction, beneficiary: beneficiaryAddress, deadline })
+                tradeFunc(amount, { limit, beneficiary: beneficiaryAddress, deadline })
             );
         };
 
@@ -1106,7 +1119,14 @@ describe('Profile @profile', () => {
                 'init withdrawal permitted',
                 network
                     .connect(provider)
-                    .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature)
+                    .initWithdrawalPermitted(
+                        poolToken.address,
+                        poolTokenAmount,
+                        MAX_UINT256,
+                        signature.v,
+                        signature.r,
+                        signature.s
+                    )
             );
         });
 

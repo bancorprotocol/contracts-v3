@@ -1348,7 +1348,7 @@ describe('BancorNetwork', () => {
 
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWith('InvalidPool');
+                                                    ).to.be.revertedWith('EthAmountMismatch');
                                                 });
 
                                                 it('should refund when attempting to deposit less than what was actually sent', async () => {
@@ -1369,7 +1369,7 @@ describe('BancorNetwork', () => {
                                                 it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWith('InvalidPool');
+                                                    ).to.be.revertedWith('EthAmountMismatch');
                                                 });
                                             }
                                         }
@@ -1414,7 +1414,15 @@ describe('BancorNetwork', () => {
                         );
 
                         await expect(
-                            network.depositForPermitted(ZERO_ADDRESS, token.address, amount, DEADLINE, signature)
+                            network.depositForPermitted(
+                                ZERO_ADDRESS,
+                                token.address,
+                                amount,
+                                DEADLINE,
+                                signature.v,
+                                signature.r,
+                                signature.s
+                            )
                         ).to.be.revertedWith('InvalidAddress');
                     });
 
@@ -1459,7 +1467,14 @@ describe('BancorNetwork', () => {
                                     case Method.DepositPermitted:
                                         return network
                                             .connect(sender)
-                                            .depositPermitted(poolAddress, amount, DEADLINE, signature);
+                                            .depositPermitted(
+                                                poolAddress,
+                                                amount,
+                                                DEADLINE,
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
+                                            );
 
                                     case Method.DepositForPermitted:
                                         return network
@@ -1469,7 +1484,9 @@ describe('BancorNetwork', () => {
                                                 poolAddress,
                                                 amount,
                                                 DEADLINE,
-                                                signature
+                                                signature.v,
+                                                signature.r,
+                                                signature.s
                                             );
                                 }
                             };
@@ -1896,7 +1913,7 @@ describe('BancorNetwork', () => {
 
         interface TradeOverrides {
             value?: BigNumberish;
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -1906,7 +1923,7 @@ describe('BancorNetwork', () => {
         const trade = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -1925,7 +1942,7 @@ describe('BancorNetwork', () => {
         const tradeExact = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -1953,7 +1970,7 @@ describe('BancorNetwork', () => {
         };
 
         interface TradePermittedOverrides {
-            restriction?: BigNumberish;
+            limit?: BigNumberish;
             deadline?: BigNumberish;
             beneficiary?: string;
             sourceTokenAddress?: string;
@@ -1963,7 +1980,7 @@ describe('BancorNetwork', () => {
 
         const tradePermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             const {
-                restriction: minReturnAmount = MIN_RETURN_AMOUNT,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -1989,13 +2006,15 @@ describe('BancorNetwork', () => {
                     minReturnAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
         const tradeExactPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             let {
-                restriction: maxSourceAmount,
+                limit: maxSourceAmount,
                 deadline = MAX_UINT256,
                 beneficiary = ZERO_ADDRESS,
                 sourceTokenAddress = sourceToken.address,
@@ -2025,7 +2044,9 @@ describe('BancorNetwork', () => {
                     maxSourceAmount,
                     deadline,
                     beneficiary,
-                    signature
+                    signature.v,
+                    signature.r,
+                    signature.s
                 );
         };
 
@@ -2064,10 +2085,10 @@ describe('BancorNetwork', () => {
             let hop1!: TradeAmountsStructOutput;
             let hop2!: TradeAmountsStructOutput;
 
-            let restriction: BigNumber;
+            let limit: BigNumber;
 
             if (regularTrade) {
-                restriction = MIN_RETURN_AMOUNT;
+                limit = MIN_RETURN_AMOUNT;
 
                 if (isSourceNetworkToken || isTargetNetworkToken) {
                     hop1 = await network.callStatic.tradePoolCollectionT(
@@ -2133,7 +2154,7 @@ describe('BancorNetwork', () => {
 
                 // set the maximum source amount to twice the actually required amount in order to test that only the
                 // required amount was debited
-                restriction = hop1.amount.mul(2);
+                limit = hop1.amount.mul(2);
             }
 
             let sourceAmount: BigNumber;
@@ -2153,7 +2174,7 @@ describe('BancorNetwork', () => {
             }
 
             const res = await tradeFunc(amount, {
-                restriction,
+                limit,
                 beneficiary: beneficiaryAddress,
                 deadline
             });
@@ -2161,14 +2182,15 @@ describe('BancorNetwork', () => {
             const transactionCost = await getTransactionCost(res);
 
             const contextId = solidityKeccak256(
-                ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'address'],
+                ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'bool', 'uint256', 'address'],
                 [
                     traderAddress,
                     await network.currentTime(),
                     sourceToken.address,
                     targetToken.address,
                     amount,
-                    restriction,
+                    limit,
+                    regularTrade,
                     deadline,
                     beneficiary
                 ]
@@ -2331,7 +2353,7 @@ describe('BancorNetwork', () => {
 
                                 await expect(
                                     tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('InvalidPool');
+                                ).to.be.revertedWith('EthAmountMismatch');
                             });
 
                             it('should refund when attempting to trade less than what was actually sent', async () => {
@@ -2362,12 +2384,12 @@ describe('BancorNetwork', () => {
                         } else {
                             it('should revert when passing ETH with a non ETH trade', async () => {
                                 await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                    'InvalidPool'
+                                    'EthAmountMismatch'
                                 );
                             });
                         }
 
-                        const options = !isSourceNetworkToken && !isSourceNativeToken ? [false, true] : [false];
+                        const options = isSourceNetworkToken || isSourceNativeToken ? [false] : [false, true];
                         for (const permitted of options) {
                             context(`${permitted ? 'permitted' : 'direct'} trade`, () => {
                                 const tradePermittedFunc = regularTrade ? tradePermitted : tradeExactPermitted;
@@ -2389,9 +2411,9 @@ describe('BancorNetwork', () => {
                                     await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
                                 });
 
-                                it('should revert when attempting to trade using an invalid restriction', async () => {
+                                it('should revert when attempting to trade using an invalid limit', async () => {
                                     await expect(
-                                        tradeFunc(testAmount, { restriction: BigNumber.from(0) })
+                                        tradeFunc(testAmount, { limit: BigNumber.from(0) })
                                     ).to.be.revertedWith('ZeroValue');
                                 });
 
@@ -2399,7 +2421,7 @@ describe('BancorNetwork', () => {
                                     const deadline = (await latest()) - 1000;
 
                                     await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                        permitted ? 'ERC20Permit: expired deadline' : 'DeadlineExpired'
+                                        'DeadlineExpired'
                                     );
                                 });
 
@@ -3074,7 +3096,7 @@ describe('BancorNetwork', () => {
                     [reserve1Amount, reserve2Amount],
                     1,
                     {
-                        value: value
+                        value
                     }
                 );
 
@@ -3491,10 +3513,24 @@ describe('BancorNetwork', () => {
 
             const retId = await network
                 .connect(provider)
-                .callStatic.initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature);
+                .callStatic.initWithdrawalPermitted(
+                    poolToken.address,
+                    poolTokenAmount,
+                    MAX_UINT256,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
             await network
                 .connect(provider)
-                .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature);
+                .initWithdrawalPermitted(
+                    poolToken.address,
+                    poolTokenAmount,
+                    MAX_UINT256,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
 
             const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
             const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
@@ -3529,7 +3565,14 @@ describe('BancorNetwork', () => {
                 await expect(
                     network
                         .connect(provider)
-                        .initWithdrawalPermitted(poolToken.address, poolTokenAmount, MAX_UINT256, signature)
+                        .initWithdrawalPermitted(
+                            poolToken.address,
+                            poolTokenAmount,
+                            MAX_UINT256,
+                            signature.v,
+                            signature.r,
+                            signature.s
+                        )
                 ).to.be.revertedWith('Pausable: paused');
             });
         });

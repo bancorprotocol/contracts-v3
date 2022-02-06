@@ -19,12 +19,6 @@ import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionU
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
-struct Signature {
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-}
-
 /**
  * @dev Flash-loan recipient interface
  */
@@ -123,7 +117,9 @@ interface IBancorNetwork is IUpgradeable {
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external;
 
     /**
@@ -138,7 +134,9 @@ interface IBancorNetwork is IUpgradeable {
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external;
 
     /**
@@ -183,7 +181,9 @@ interface IBancorNetwork is IUpgradeable {
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external;
 
     /**
@@ -216,7 +216,9 @@ interface IBancorNetwork is IUpgradeable {
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external;
 
     /**
@@ -253,7 +255,9 @@ interface IBancorNetwork is IUpgradeable {
         IPoolToken poolToken,
         uint256 poolTokenAmount,
         uint256 deadline,
-        Signature calldata signature
+        uint8 v,
+        bytes32 r,
+        bytes32 s
     ) external returns (uint256);
 
     /**
