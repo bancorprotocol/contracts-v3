@@ -3100,7 +3100,7 @@ describe('BancorNetwork', () => {
                     [reserve1Amount, reserve2Amount],
                     1,
                     {
-                        value: value
+                        value
                     }
                 );
 
