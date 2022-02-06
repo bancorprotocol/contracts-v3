@@ -38,7 +38,19 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     IUniswapV2Router02 private immutable _uniswapV2Router;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 3] private __gap;
+    uint256[MAX_GAP - 0] private __gap;
+
+    /**
+     * @dev triggered after a succesful uniswap v2 migration
+     */
+    event UniswapV2PositionMigrated(
+        Token indexed pool,
+        address indexed provider,
+        Token indexed tokenA,
+        Token tokenB,
+        uint256 amountA,
+        uint256 amountB
+    );
 
     error NotWhiteListed();
 
@@ -92,16 +104,27 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     receive() external payable {}
 
     /**
-     * @dev returns the program data of a pool
+     * @inheritdoc IBancorPortal
      */
     function migrateUniswapV2Position(IUniswapV2Pair pair, uint256 amount)
         external
         nonReentrant
         validAddress(address(pair))
+        greaterThanZero(amount)
+        returns (uint256 depositedAmountA, uint256 depositedAmountB)
     {
-        _migrateUniswapV2Position(_uniswapV2Router, pair, amount);
+        (uint256 amountA, uint256 amountB) = _migrateUniswapV2Position(_uniswapV2Router, pair, amount);
+        return (amountA, amountB);
     }
 
+    /**
+     * @dev migrates funds from a uniswap v2 pair into a bancor v3 pool
+     * - unsupported tokens will be transferred to the caller
+     *
+     * requirements:
+     *
+     * - the caller must have approved the pair to transfer the liquidity on its behalf
+     */
     function _migrateUniswapV2Position(
         IUniswapV2Router02 router,
         IUniswapV2Pair pair,
@@ -119,6 +142,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         bool[] memory whitelist = new bool[](2);
         whitelist[0] = _networkSettings.isTokenWhitelisted(tokens[0]);
         whitelist[1] = _networkSettings.isTokenWhitelisted(tokens[1]);
+        if (address(tokens[0]) == address(_networkToken)) whitelist[0] = true;
+        if (address(tokens[1]) == address(_networkToken)) whitelist[1] = true;
         if (!whitelist[0] && !whitelist[1]) {
             revert NotWhiteListed();
         }
@@ -151,6 +176,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         return (deposited[0], deposited[1]);
     }
 
+    /**
+     * @dev deposits [amount] into a pool of [token]
+     */
     function _deposit(Token token, uint256 amount) private {
         if (token.isNative()) {
             _network.depositFor{ value: amount }(msg.sender, token, amount);
@@ -160,6 +188,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         }
     }
 
+    /**
+     * @dev transfer [amount] of [token] to the caller
+     */
     function _transferToWallet(Token token, uint256 amount) private {
         if (token.isNative()) {
             payable(msg.sender).transfer(amount);
@@ -168,6 +199,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         }
     }
 
+    /**
+     * @dev fetch [amount] of liquidity from [pair] of [token0] and [token1]
+     */
     function _uniV2RemoveLiquidity(
         Token token0,
         Token token1,
