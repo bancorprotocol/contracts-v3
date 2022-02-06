@@ -23,7 +23,6 @@ import {
     Utils,
     AlreadyExists,
     DoesNotExist,
-    InvalidPool,
     InvalidToken,
     InvalidType,
     NotEmpty } from "../utility/Utils.sol";
@@ -65,9 +64,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     error DeadlineExpired();
     error EthAmountMismatch();
+    error InsufficientFlashLoanReturn();
     error InvalidTokens();
     error PermitUnsupported();
-    error InsufficientFlashLoanReturn();
+
+    struct Signature {
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
+    struct TradeParams {
+        uint256 amount;
+        uint256 limit;
+        bool regularTrade;
+    }
 
     // the migration manager role is required for migrating liquidity
     bytes32 private constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
@@ -264,22 +275,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     receive() external payable {}
 
-    modifier validTokensForTrade(Token sourceToken, Token targetToken) {
-        _validTokensForTrade(sourceToken, targetToken);
+    modifier validTradeParams(
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        uint256 limit,
+        uint256 deadline
+    ) {
+        _verifyTradeParams(sourceToken, targetToken, amount, limit, deadline);
 
         _;
-    }
-
-    /**
-     * @dev validates that the provided tokens are valid and unique
-     */
-    function _validTokensForTrade(Token sourceToken, Token targetToken) internal pure {
-        _validAddress(address(sourceToken));
-        _validAddress(address(targetToken));
-
-        if (sourceToken == targetToken) {
-            revert InvalidTokens();
-        }
     }
 
     /**
@@ -537,7 +542,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, v, r, s);
+        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -551,7 +556,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 r,
         bytes32 s
     ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant {
-        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, v, r, s);
+        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -581,16 +586,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    )
-        external
-        payable
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(sourceAmount)
-        greaterThanZero(minReturnAmount)
-        whenNotPaused
-        nonReentrant
-    {
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
+    ) external payable whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
+        _trade(
+            sourceToken,
+            targetToken,
+            TradeParams({ regularTrade: true, amount: sourceAmount, limit: minReturnAmount }),
+            msg.sender,
+            beneficiary,
+            deadline
+        );
     }
 
     /**
@@ -606,19 +612,70 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-        validTokensForTrade(sourceToken, targetToken)
-        greaterThanZero(sourceAmount)
-        greaterThanZero(minReturnAmount)
-        whenNotPaused
-        nonReentrant
-    {
-        address trader = msg.sender;
+    ) external whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
-        _permit(sourceToken, sourceAmount, deadline, v, r, s, trader);
+        _permit(sourceToken, sourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
-        _trade(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, trader);
+        _trade(
+            sourceToken,
+            targetToken,
+            TradeParams({ regularTrade: true, amount: sourceAmount, limit: minReturnAmount }),
+            msg.sender,
+            beneficiary,
+            deadline
+        );
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function tradeExact(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
+        _trade(
+            sourceToken,
+            targetToken,
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: maxSourceAmount }),
+            msg.sender,
+            beneficiary,
+            deadline
+        );
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function tradeExactPermitted(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount,
+        uint256 deadline,
+        address beneficiary,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external whenNotPaused nonReentrant {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
+        _permit(sourceToken, maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
+
+        _trade(
+            sourceToken,
+            targetToken,
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: maxSourceAmount }),
+            msg.sender,
+            beneficiary,
+            deadline
+        );
     }
 
     /**
@@ -715,7 +772,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         returns (uint256)
     {
-        poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
+        _permit(Token(address(poolToken)), poolTokenAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
 
         return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
@@ -914,9 +971,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token token,
         uint256 tokenAmount,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s,
+        Signature memory signature,
         address caller
     ) private {
         // neither the network token nor ETH support EIP2612 permit requests
@@ -926,7 +981,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner safeTransferFrom will revert
-        IERC20Permit(address(token)).permit(caller, address(this), tokenAmount, deadline, v, r, s);
+        IERC20Permit(address(token)).permit(
+            caller,
+            address(this),
+            tokenAmount,
+            deadline,
+            signature.v,
+            signature.r,
+            signature.s
+        );
     }
 
     /**
@@ -942,13 +1005,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token pool,
         uint256 tokenAmount,
         uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        Signature memory signature
     ) private {
         address caller = msg.sender;
 
-        _permit(pool, tokenAmount, deadline, v, r, s, caller);
+        _permit(pool, tokenAmount, deadline, signature, caller);
 
         _depositBaseTokenFor(
             _depositContextId(provider, pool, tokenAmount, caller),
@@ -1003,7 +1064,35 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a trade and returns the target amount and fee
+     * @dev verifies that the provided trade params are valid
+     */
+    function _verifyTradeParams(
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        uint256 limit,
+        uint256 deadline
+    ) internal view {
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
+
+        if (sourceToken == targetToken) {
+            revert InvalidTokens();
+        }
+
+        _greaterThanZero(amount);
+        _greaterThanZero(limit);
+
+        if (deadline < _time()) {
+            revert DeadlineExpired();
+        }
+    }
+
+    /**
+     * @dev performs a regular or an exact trade:
+     *
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      *
      * requirements:
      *
@@ -1012,17 +1101,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _trade(
         Token sourceToken,
         Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        uint256 deadline,
+        TradeParams memory params,
+        address trader,
         address beneficiary,
-        address trader
+        uint256 deadline
     ) private {
-        uint32 currentTime = _time();
-        if (deadline < currentTime) {
-            revert DeadlineExpired();
-        }
-
         // ensure the beneficiary is set
         if (beneficiary == address(0)) {
             beneficiary = trader;
@@ -1031,59 +1114,59 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId = keccak256(
             abi.encodePacked(
                 trader,
-                currentTime,
+                _time(),
                 sourceToken,
                 targetToken,
-                sourceAmount,
-                minReturnAmount,
+                params.amount,
+                params.limit,
+                params.regularTrade,
                 deadline,
                 beneficiary
             )
         );
 
         // perform either a single or double hop trade, based on the source and the target pool
-        uint256 tradeAmount;
+        uint256 retAmount;
         if (_isNetworkToken(sourceToken)) {
-            tradeAmount = _tradeNetworkToken(contextId, targetToken, true, sourceAmount, minReturnAmount, trader);
+            retAmount = _tradeNetworkToken(contextId, targetToken, true, params, trader);
         } else if (_isNetworkToken(targetToken)) {
-            tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, minReturnAmount, trader);
+            retAmount = _tradeNetworkToken(contextId, sourceToken, false, params, trader);
         } else {
-            tradeAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, trader);
+            retAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
         }
 
         // transfer the tokens from the trader to the vault
-        _depositToMasterVault(sourceToken, trader, sourceAmount);
+        _depositToMasterVault(sourceToken, trader, params.regularTrade ? params.amount : retAmount);
 
         // transfer the target tokens/ETH to the beneficiary
-        _masterVault.withdrawFunds(targetToken, payable(beneficiary), tradeAmount);
+        _masterVault.withdrawFunds(targetToken, payable(beneficiary), params.regularTrade ? retAmount : params.amount);
     }
 
     /**
-     * @dev performs a single hop trade between the network token and a base token
+     * @dev performs a single hop regular or an exact trade between the network token and a base token
+     *
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      */
     function _tradeNetworkToken(
         bytes32 contextId,
         Token pool,
         bool isSourceNetworkToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
+        TradeParams memory params,
         address trader
     ) private returns (uint256) {
         Token masterPool = Token(address(_networkToken));
         (Token sourceToken, Token targetToken) = isSourceNetworkToken ? (masterPool, pool) : (pool, masterPool);
-        TradeAmounts memory tradeAmounts = _poolCollection(pool).trade(
-            contextId,
-            sourceToken,
-            targetToken,
-            sourceAmount,
-            minReturnAmount
-        );
 
-        IMasterPool cachedMasterPool = _masterPool;
+        IPoolCollection poolCollection = _poolCollection(pool);
+
+        TradeAmounts memory tradeAmounts = params.regularTrade
+            ? poolCollection.trade(contextId, sourceToken, targetToken, params.amount, params.limit)
+            : poolCollection.tradeExact(contextId, sourceToken, targetToken, params.amount, params.limit);
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
-            cachedMasterPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
+            _masterPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
         }
 
         emit TokensTraded({
@@ -1091,8 +1174,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: pool,
             sourceToken: sourceToken,
             targetToken: targetToken,
-            sourceAmount: sourceAmount,
-            targetAmount: tradeAmounts.amount,
+            sourceAmount: params.regularTrade ? params.amount : tradeAmounts.amount,
+            targetAmount: params.regularTrade ? tradeAmounts.amount : params.amount,
             trader: trader
         });
 
@@ -1107,22 +1190,65 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a double hop trade between two base tokens
+     * @dev performs a double hop regular trade between two base tokens
+     *
+     * - in case of a regular trade, the amount represents the source amount and the limit is the minimum return amount
+     * - in case of an exact trade, the amount represents the target amount and the limit is the maximum source amount
      */
     function _tradeBaseTokens(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
+        TradeParams memory params,
         address trader
     ) private returns (uint256) {
-        // trade the source token to the network token (while accepting any return amount)
-        uint256 tradeAmount = _tradeNetworkToken(contextId, sourceToken, false, sourceAmount, 1, trader);
+        if (params.regularTrade) {
+            uint256 sourceAmount = params.amount;
+            uint256 minReturnAmount = params.limit;
 
-        // trade the received network token target amount to the target token (while respecting the minimum return
-        // amount)
-        return _tradeNetworkToken(contextId, targetToken, true, tradeAmount, minReturnAmount, trader);
+            // trade source tokens to network tokens (while accepting any return amount)
+            uint256 tradeAmount = _tradeNetworkToken(
+                contextId,
+                sourceToken,
+                false,
+                TradeParams({ regularTrade: true, amount: sourceAmount, limit: 1 }),
+                trader
+            );
+
+            // trade the received network token target amount to target tokens (while respecting the minimum return
+            // amount)
+            return
+                _tradeNetworkToken(
+                    contextId,
+                    targetToken,
+                    true,
+                    TradeParams({ regularTrade: true, amount: tradeAmount, limit: minReturnAmount }),
+                    trader
+                );
+        }
+
+        uint256 targetAmount = params.amount;
+        uint256 maxSourceAmount = params.limit;
+
+        // trade any amount of network tokens to get the requested target amount (we will use the actual traded amount
+        // to restrict the trade from the source)
+        uint256 requiredNetworkTokenAmount = _tradeNetworkToken(
+            contextId,
+            targetToken,
+            true,
+            TradeParams({ regularTrade: false, amount: targetAmount, limit: type(uint256).max }),
+            trader
+        );
+
+        // trade source tokens to the exact amount of network tokens (while respecting the maximum source amount)
+        return
+            _tradeNetworkToken(
+                contextId,
+                sourceToken,
+                false,
+                TradeParams({ regularTrade: false, amount: requiredNetworkTokenAmount, limit: maxSourceAmount }),
+                trader
+            );
     }
 
     /**
@@ -1133,21 +1259,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address caller,
         uint256 amount
     ) private {
-        if (msg.value > 0) {
-            if (!token.isNative()) {
-                revert InvalidPool();
-            }
-
-            if (msg.value != amount) {
+        if (token.isNative()) {
+            if (msg.value < amount) {
                 revert EthAmountMismatch();
             }
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(address(_masterVault)).sendValue(amount);
+
+            // refund the caller for the remaining ETH
+            if (msg.value > amount) {
+                payable(address(caller)).sendValue(msg.value - amount);
+            }
         } else {
-            if (token.isNative()) {
-                revert InvalidPool();
+            if (msg.value > 0) {
+                revert EthAmountMismatch();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);

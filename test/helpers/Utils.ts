@@ -11,7 +11,7 @@ export const min = (a: BigNumberish, b: BigNumberish) =>
 export const max = (a: BigNumberish, b: BigNumberish) =>
     BigNumber.from(a).gt(b) ? BigNumber.from(a) : BigNumber.from(b);
 
-export const toAddress = (account: string | SignerWithAddress | BaseContract) =>
+export const toAddress = (account: string | SignerWithAddress | Wallet | BaseContract) =>
     typeof account === 'string' ? account : account.address;
 
 export const getTransactionGas = async (res: ContractTransaction) => {
@@ -26,7 +26,7 @@ export const getTransactionCost = async (res: ContractTransaction) => {
     return receipt.effectiveGasPrice.mul(await getTransactionGas(res));
 };
 
-export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress) => {
+export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress | Wallet) => {
     const accountAddress = toAddress(account);
     const tokenAddress = token.address;
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {

@@ -128,6 +128,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return poolCollection.trade(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
+    function tradeExactPoolCollectionT(
+        IPoolCollection poolCollection,
+        bytes32 contextId,
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount
+    ) external returns (TradeAmounts memory) {
+        return poolCollection.tradeExact(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount);
+    }
+
     function approveT(
         IERC20 token,
         address spender,

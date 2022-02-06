@@ -42,8 +42,10 @@ uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
 struct TradeAmounts {
-    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
-    uint256 feeAmount; // the trading fee amount
+    // the source/target amount (depending on the context) resulting from the trade
+    uint256 amount;
+    // the trading fee amount
+    uint256 feeAmount;
 }
 
 /**
@@ -157,7 +159,7 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade and returns the target amount and fee
+     * @dev performs a trade and returns the target amount and the resulting fee
      *
      * requirements:
      *
@@ -169,6 +171,21 @@ interface IPoolCollection is IVersioned {
         Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
+    ) external returns (TradeAmounts memory);
+
+    /**
+     * @dev performs a trade for an exact target amount and returns the required source amount and the resulting fee
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function tradeExact(
+        bytes32 contextId,
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount
     ) external returns (TradeAmounts memory);
 
     /**
