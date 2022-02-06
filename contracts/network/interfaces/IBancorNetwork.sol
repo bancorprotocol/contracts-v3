@@ -152,13 +152,13 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external;
 
     /**
-     * @dev performs a trade
+     * @dev performs a trade by specifying the input source amount
      *
      * requirements:
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
-    function trade(
+    function tradeBySource(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
@@ -168,13 +168,14 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev performs a trade by providing an EIP712 typed signature for an EIP2612 permit request
+     * @dev performs a trade by specifying the input source amount and providing an EIP712 typed signature for an
+     * EIP2612 permit request
      *
      * requirements:
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function tradePermitted(
+    function tradeBySourcePermitted(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
@@ -187,12 +188,13 @@ interface IBancorNetwork is IUpgradeable {
     ) external;
 
     /**
-     * @dev performs a trade for an exact target amount
+     * @dev performs a trade by specifying the output target amount
+     *
      * requirements:
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
-    function tradeExact(
+    function tradeByTarget(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,
@@ -202,14 +204,14 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev performs a trade for an exact target amount by providing an EIP712 typed signature for an EIP2612 permit
-     * request and returns the target amount and fee
+     * @dev performs a trade by specifying the output target amount and providing an EIP712 typed signature for an
+     * EIP2612 permit request and returns the target amount and fee
      *
      * requirements:
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function tradeExactPermitted(
+    function tradeByTargetPermitted(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,

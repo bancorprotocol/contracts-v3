@@ -77,24 +77,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     using TokenLibrary for Token;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error AlreadyEnabled();
     error DepositLimitExceeded();
     error InsufficientLiquidity();
-    error InvalidRate();
-    error InsufficientTargetAmount();
     error InsufficientSourceAmount();
+    error InsufficientTargetAmount();
+    error InvalidRate();
     error RateUnstable();
     error TradingDisabled();
-    error AlreadyEnabled();
 
     uint16 private constant POOL_TYPE = 1;
-    uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
-    uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10000; // %1
-    // the average rate is recalculated based on the ratio between the weights of the rates
-    // the smaller the weights are, the larger the supported range of each one of the rates is
+
+    // the average rate is recalculated based on the ratio between the weights of the rates the smaller the weights are,
+    // the larger the supported range of each one of the rates is
+    uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
+    uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
 
     // trading-related preprocessed data
     struct TradingParams {
@@ -623,7 +624,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function trade(
+    function tradeBySource(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -659,7 +660,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeExact(
+    function tradeByTarget(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -695,18 +696,27 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeAmountAndFee(
+    function tradeOutputAndFeeBySource(
         Token sourceToken,
         Token targetToken,
-        uint256 amount,
-        bool targetAmount
-    ) external view greaterThanZero(amount) returns (TradeAmounts memory) {
+        uint256 sourceAmount
+    ) external view greaterThanZero(sourceAmount) returns (TradeAmounts memory) {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        return
-            targetAmount
-                ? _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount)
-                : _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount);
+        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradeInputAndFeeByTarget(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount
+    ) external view greaterThanZero(targetAmount) returns (TradeAmounts memory) {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
     }
 
     /**

@@ -330,19 +330,19 @@ describe('BancorNetworkInfo', () => {
             sourceTokenAddress?: string;
             targetTokenAddress?: string;
         }
-        const tradeTargetAmount = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
+        const tradeOutputBySource = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
             const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
 
-            return networkInfo.tradeTargetAmount(sourceTokenAddress, targetTokenAddress, amount);
+            return networkInfo.tradeOutputBySource(sourceTokenAddress, targetTokenAddress, amount);
         };
 
-        const tradeSourceAmount = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
+        const tradeInputByTarget = async (amount: number, overrides: TradeAmountsOverrides = {}) => {
             const { sourceTokenAddress = sourceToken.address, targetTokenAddress = targetToken.address } = overrides;
 
-            return networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
+            return networkInfo.tradeInputByTarget(sourceTokenAddress, targetTokenAddress, amount);
         };
 
-        const testTradesAmounts = (source: PoolSpec, target: PoolSpec) => {
+        const testTradesOutputs = (source: PoolSpec, target: PoolSpec) => {
             const isSourceNativeToken = source.tokenData.isNative();
 
             context(`when trading from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
@@ -361,27 +361,27 @@ describe('BancorNetworkInfo', () => {
 
                 it('should revert when attempting to query using an invalid source pool', async () => {
                     await expect(
-                        tradeTargetAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                        tradeOutputBySource(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');
                     await expect(
-                        tradeSourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                        tradeInputByTarget(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');
                 });
 
                 it('should revert when attempting to query using an invalid target pool', async () => {
                     await expect(
-                        tradeTargetAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                        tradeOutputBySource(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');
                     await expect(
-                        tradeSourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                        tradeInputByTarget(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');
                 });
 
                 it('should revert when attempting to  query using an invalid amount', async () => {
                     const amount = 0;
 
-                    await expect(tradeTargetAmount(amount)).to.be.revertedWith('ZeroValue');
-                    await expect(tradeSourceAmount(amount)).to.be.revertedWith('ZeroValue');
+                    await expect(tradeOutputBySource(amount)).to.be.revertedWith('ZeroValue');
+                    await expect(tradeInputByTarget(amount)).to.be.revertedWith('ZeroValue');
                 });
 
                 it('should revert when attempting to query using unsupported tokens', async () => {
@@ -392,27 +392,27 @@ describe('BancorNetworkInfo', () => {
 
                     // unknown source token
                     await expect(
-                        tradeTargetAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                        tradeOutputBySource(testAmount, { sourceTokenAddress: reserveToken2.address })
                     ).to.be.revertedWith('InvalidToken');
                     await expect(
-                        tradeSourceAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
+                        tradeInputByTarget(testAmount, { sourceTokenAddress: reserveToken2.address })
                     ).to.be.revertedWith('InvalidToken');
 
                     // unknown target token
                     await expect(
-                        tradeTargetAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                        tradeOutputBySource(testAmount, { targetTokenAddress: reserveToken2.address })
                     ).to.be.revertedWith('InvalidToken');
                     await expect(
-                        tradeSourceAmount(testAmount, { targetTokenAddress: reserveToken2.address })
+                        tradeInputByTarget(testAmount, { targetTokenAddress: reserveToken2.address })
                     ).to.be.revertedWith('InvalidToken');
                 });
 
                 it('should revert when attempting to query using same source and target tokens', async () => {
                     await expect(
-                        tradeTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                        tradeOutputBySource(testAmount, { targetTokenAddress: sourceToken.address })
                     ).to.be.revertedWith('InvalidTokens');
                     await expect(
-                        tradeSourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
+                        tradeInputByTarget(testAmount, { targetTokenAddress: sourceToken.address })
                     ).to.be.revertedWith('InvalidTokens');
                 });
 
@@ -424,55 +424,49 @@ describe('BancorNetworkInfo', () => {
                     let sourceAmount: BigNumber;
 
                     if (isSourceNetworkToken || isTargetNetworkToken) {
-                        ({ amount: targetAmount } = await poolCollection.tradeAmountAndFee(
+                        ({ amount: targetAmount } = await poolCollection.tradeOutputAndFeeBySource(
                             sourceToken.address,
                             targetToken.address,
-                            testAmount,
-                            true
+                            testAmount
                         ));
 
-                        ({ amount: sourceAmount } = await poolCollection.tradeAmountAndFee(
+                        ({ amount: sourceAmount } = await poolCollection.tradeInputAndFeeByTarget(
                             sourceToken.address,
                             targetToken.address,
-                            testAmount,
-                            false
+                            testAmount
                         ));
                     } else {
-                        const targetTradeAmounts = await poolCollection.tradeAmountAndFee(
+                        const targetTradeOutput = await poolCollection.tradeOutputAndFeeBySource(
                             sourceToken.address,
                             networkToken.address,
-                            testAmount,
-                            true
+                            testAmount
                         );
 
-                        ({ amount: targetAmount } = await poolCollection.tradeAmountAndFee(
+                        ({ amount: targetAmount } = await poolCollection.tradeOutputAndFeeBySource(
                             networkToken.address,
                             targetToken.address,
-                            targetTradeAmounts.amount,
-                            true
+                            targetTradeOutput.amount
                         ));
 
-                        const sourceTradeAmounts = await poolCollection.tradeAmountAndFee(
+                        const sourceTradeAmounts = await poolCollection.tradeInputAndFeeByTarget(
                             networkToken.address,
                             targetToken.address,
-                            testAmount,
-                            false
+                            testAmount
                         );
 
-                        ({ amount: sourceAmount } = await poolCollection.tradeAmountAndFee(
+                        ({ amount: sourceAmount } = await poolCollection.tradeInputAndFeeByTarget(
                             sourceToken.address,
                             networkToken.address,
-                            sourceTradeAmounts.amount,
-                            false
+                            sourceTradeAmounts.amount
                         ));
                     }
 
                     expect(
-                        await networkInfo.tradeTargetAmount(sourceToken.address, targetToken.address, testAmount)
+                        await networkInfo.tradeOutputBySource(sourceToken.address, targetToken.address, testAmount)
                     ).to.equal(targetAmount);
 
                     expect(
-                        await networkInfo.tradeSourceAmount(sourceToken.address, targetToken.address, testAmount)
+                        await networkInfo.tradeInputByTarget(sourceToken.address, targetToken.address, testAmount)
                     ).to.equal(sourceAmount);
                 });
             });
@@ -488,7 +482,7 @@ describe('BancorNetworkInfo', () => {
             [TokenSymbol.ETH, TokenSymbol.TKN]
         ]) {
             // perform a basic/sanity suite over a fixed input
-            testTradesAmounts(
+            testTradesOutputs(
                 {
                     tokenData: new TokenData(sourceSymbol),
                     balance: toWei(1_000_000),

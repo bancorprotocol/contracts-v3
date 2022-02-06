@@ -159,13 +159,13 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade and returns the target amount and the resulting fee
+     * @dev performs a trade by specifying the source amount and returns the target amount and the resulting fee
      *
      * requirements:
      *
      * - the caller must be the network contract
      */
-    function trade(
+    function tradeBySource(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -174,13 +174,13 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev performs a trade for an exact target amount and returns the required source amount and the resulting fee
+     * @dev performs a trade by specifying the target amount and returns the required source amount and the resulting fee
      *
      * requirements:
      *
      * - the caller must be the network contract
      */
-    function tradeExact(
+    function tradeByTarget(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -189,14 +189,21 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're
-     * interested in the target or source amount
+     * @dev returns the output amount and fee when trading by specifying the source amount
      */
-    function tradeAmountAndFee(
+    function tradeOutputAndFeeBySource(
         Token sourceToken,
         Token targetToken,
-        uint256 amount,
-        bool targetAmount
+        uint256 sourceAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the input amount and fee when trading by specifying the target amount
+     */
+    function tradeInputAndFeeByTarget(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount
     ) external view returns (TradeAmounts memory);
 
     /**
