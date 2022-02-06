@@ -787,13 +787,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function reinitWithdrawal(uint256 id) external whenNotPaused nonReentrant {
-        _pendingWithdrawals.reinitWithdrawal(msg.sender, id);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
     function migrateLiquidity(
         Token token,
         address provider,

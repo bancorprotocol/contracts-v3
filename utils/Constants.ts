@@ -50,7 +50,6 @@ export const ExponentialDecay = {
 };
 
 export const DEFAULT_LOCK_DURATION = duration.days(7);
-export const DEFAULT_WITHDRAWAL_WINDOW_DURATION = duration.days(3);
 
 export const EMA_AVERAGE_RATE_WEIGHT = 4;
 export const EMA_SPOT_RATE_WEIGHT = 1;
