@@ -11,7 +11,7 @@ import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
 import { Token } from "../../token/Token.sol";
 
-import { IPoolCollection, TradeAmounts } from "../../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
