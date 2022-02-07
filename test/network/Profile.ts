@@ -1394,42 +1394,10 @@ describe('Profile @profile', () => {
 
             const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(2);
 
-            const addProtectedLiquidity = async (
-                poolTokenAddress: string,
-                token: IERC20,
-                tokenAddress: string,
-                amount: BigNumber,
-                isNativeToken: boolean,
-                from: SignerWithAddress
-            ) => {
-                let value = BigNumber.from(0);
-                if (isNativeToken) {
-                    value = amount;
-                } else {
-                    await token.connect(from).approve(liquidityProtection.address, amount);
-                }
-
-                return liquidityProtection
-                    .connect(from)
-                    .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
-            };
-
-            const setTime = async (time: number) => {
-                now = time;
-
-                for (const t of [converter, checkpointStore, liquidityProtection]) {
-                    if (t) {
-                        await t.setTime(now);
-                    }
-                }
-            };
-
-            const initLegacySystem = async (isNativeToken: boolean) => {
+            const initLegacySystem = async (isNative: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
-                baseToken = (await createToken(
-                    new TokenData(isNativeToken ? TokenSymbol.ETH : TokenSymbol.TKN)
-                )) as IERC20;
+                baseToken = (await createToken(new TokenData(isNative ? TokenSymbol.ETH : TokenSymbol.TKN))) as IERC20;
 
                 ({
                     checkpointStore,
@@ -1463,11 +1431,10 @@ describe('Profile @profile', () => {
                 await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
 
                 // ensure that the trading is enabled with sufficient funding
-                if (isNativeToken) {
+                if (isNative) {
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                 } else {
-                    const reserveToken = await Contracts.TestERC20Token.attach(baseToken.address);
-                    await reserveToken.approve(network.address, INITIAL_LIQUIDITY);
+                    await baseToken.approve(network.address, INITIAL_LIQUIDITY);
 
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY);
                 }
@@ -1477,7 +1444,7 @@ describe('Profile @profile', () => {
                 await networkToken.approve(converter.address, reserve2Amount);
 
                 let value = BigNumber.from(0);
-                if (isNativeToken) {
+                if (isNative) {
                     value = reserve1Amount;
                 } else {
                     await baseToken.approve(converter.address, reserve1Amount);
@@ -1497,77 +1464,91 @@ describe('Profile @profile', () => {
                 await setTime(await latest());
             };
 
-            for (const isNative of [false, true]) {
-                describe(`base token (${isNative ? 'ETH' : 'ERC20'})`, () => {
-                    beforeEach(async () => {
-                        await initLegacySystem(isNative);
+            const addProtectedLiquidity = async (
+                poolToken: DSToken,
+                reserveToken: IERC20,
+                isNative: boolean,
+                amount: BigNumber,
+                from: SignerWithAddress
+            ) => {
+                let value = BigNumber.from(0);
+                if (isNative) {
+                    value = amount;
+                } else {
+                    await reserveToken.connect(from).approve(liquidityProtection.address, amount);
+                }
 
-                        await addProtectedLiquidity(
-                            poolToken.address,
-                            baseToken,
-                            baseToken.address,
-                            BigNumber.from(1000),
-                            isNative,
-                            owner
-                        );
+                return liquidityProtection
+                    .connect(from)
+                    .addLiquidity(poolToken.address, reserveToken.address, amount, { value });
+            };
+
+            const setTime = async (time: number) => {
+                now = time;
+
+                for (const t of [converter, checkpointStore, liquidityProtection]) {
+                    await t.setTime(now);
+                }
+            };
+
+            for (const numOfPositions of [1, 2, 5, 10]) {
+                for (const tokenSymbol of [TokenSymbol.TKN, TokenSymbol.ETH]) {
+                    const isNative = tokenSymbol == TokenSymbol.ETH;
+                    describe(tokenSymbol, () => {
+                        beforeEach(async () => {
+                            await initLegacySystem(isNative);
+
+                            for (let i = 1; i <= numOfPositions; i++) {
+                                await addProtectedLiquidity(
+                                    poolToken,
+                                    baseToken,
+                                    isNative,
+                                    BigNumber.from(1000 * i),
+                                    owner
+                                );
+                            }
+                        });
+
+                        it('verifies that the caller can migrate positions', async () => {
+                            await liquidityProtection.setTime(now + duration.seconds(1));
+                            const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
+                            await profiler.profile(
+                                `migrate ${numOfPositions} positions of ${tokenSymbol}`,
+                                liquidityProtection.migratePositions(protectionIds)
+                            );
+                        });
+                    });
+                }
+
+                describe(TokenSymbol.BNT, () => {
+                    beforeEach(async () => {
+                        await initLegacySystem(false);
+
+                        const amount = BigNumber.from(100_000);
+                        await baseToken.transfer(provider.address, amount);
+                        await baseToken.connect(provider).approve(network.address, amount);
+                        await network.connect(provider).deposit(baseToken.address, amount);
+
+                        for (let i = 1; i <= numOfPositions; i++) {
+                            const amount1 = BigNumber.from(5000 * i);
+                            await baseToken.transfer(provider.address, amount1);
+                            await addProtectedLiquidity(poolToken, baseToken, false, amount1, provider);
+
+                            const amount2 = BigNumber.from(1000 * i);
+                            await addProtectedLiquidity(poolToken, networkToken, false, amount2, owner);
+                        }
                     });
 
                     it('verifies that the caller can migrate positions', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         await liquidityProtection.setTime(now + duration.seconds(1));
+                        const protectionIds = await liquidityProtectionStore.protectedLiquidityIds(owner.address);
                         await profiler.profile(
-                            'migratePositions',
-                            liquidityProtection.migratePositions([protectionId])
-                        );
-                    });
-
-                    it('verifies that the owner can migrate system pool tokens', async () => {
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await profiler.profile(
-                            'migrateSystemPoolTokens',
-                            liquidityProtection.migrateSystemPoolTokens([poolToken.address])
+                            `migrate ${numOfPositions} positions of ${TokenSymbol.BNT}`,
+                            liquidityProtection.migratePositions(protectionIds)
                         );
                     });
                 });
             }
-
-            describe('network token', () => {
-                beforeEach(async () => {
-                    await initLegacySystem(false);
-
-                    const amount = BigNumber.from(100_000);
-                    await baseToken.transfer(provider.address, amount);
-                    await baseToken.connect(provider).approve(network.address, amount);
-                    await network.connect(provider).deposit(baseToken.address, amount);
-
-                    const amount1 = BigNumber.from(5000);
-                    await baseToken.transfer(provider.address, amount1);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        baseToken,
-                        baseToken.address,
-                        amount1,
-                        false,
-                        provider
-                    );
-
-                    const amount2 = BigNumber.from(1000);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        networkToken,
-                        networkToken.address,
-                        amount2,
-                        false,
-                        owner
-                    );
-                });
-
-                it('verifies that the caller can migrate positions', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await profiler.profile('migratePositions', liquidityProtection.migratePositions([protectionId]));
-                });
-            });
         };
 
         for (const { totalSupply, reserve1Amount, reserve2Amount } of [
