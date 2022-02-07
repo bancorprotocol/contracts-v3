@@ -289,7 +289,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns either the source amount or the target amount by specifying the source and the target tokens
+     * @dev returns either the source amount or the target amount by providing the source and the target tokens
      * and whether we're interested in the target or the source amount
      */
     function _tradeOutputAmount(
@@ -317,13 +317,13 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         // return the target amount by simulating double-hop trade from the source token to the target token via the
         // network token
         if (bySourceAmount) {
-            uint256 networkAmount = _poolCollection(sourceToken)
+            uint256 targetAmount = _poolCollection(sourceToken)
                 .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_networkToken)), amount)
                 .amount;
 
             return
                 _poolCollection(targetToken)
-                    .tradeOutputAndFeeBySourceAmount(Token(address(_networkToken)), targetToken, networkAmount)
+                    .tradeOutputAndFeeBySourceAmount(Token(address(_networkToken)), targetToken, targetAmount)
                     .amount;
         }
 

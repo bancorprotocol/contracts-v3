@@ -1082,7 +1082,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a trade by specifying either the source or target amount:
+     * @dev performs a trade by providing either the source or target amount:
      *
      * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
      *   amount
@@ -1142,7 +1142,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a single hop between the network token and a base token trade by specifying either the source or
+     * @dev performs a single hop between the network token and a base token trade by providing either the source or
      * the target amount
      *
      * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
@@ -1192,7 +1192,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a double hop trade between two base tokens by specifying either the source or the target amount
+     * @dev performs a double hop trade between two base tokens by providing either the source or the target amount
      *
      * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
      *   amount

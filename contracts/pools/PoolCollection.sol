@@ -1263,7 +1263,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @dev returns the target amount and fee by providing the source amount
      */
     function _targetAmountAndFee(
         uint256 sourceBalance,
@@ -1282,7 +1282,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the source amount and fee by specifying the target amount
+     * @dev returns the source amount and fee by providing the target amount
      */
     function _sourceAmountAndFee(
         uint256 sourceBalance,

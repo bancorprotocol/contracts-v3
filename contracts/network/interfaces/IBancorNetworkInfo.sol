@@ -92,7 +92,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
 
     /**
-     * @dev returns the output amount when trading by specify the source amount
+     * @dev returns the output amount when trading by providing the source amount
      */
     function tradeOutputBySourceAmount(
         Token sourceToken,
@@ -101,7 +101,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     ) external view returns (uint256);
 
     /**
-     * @dev returns the input amount when trading by specify the target amount
+     * @dev returns the input amount when trading by providing the target amount
      */
     function tradeInputByTargetAmount(
         Token sourceToken,

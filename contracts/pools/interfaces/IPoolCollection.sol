@@ -159,7 +159,7 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade by specifying the source amount and returns the target amount and the resulting fee
+     * @dev performs a trade by providing the source amount and returns the target amount and the resulting fee
      *
      * requirements:
      *
@@ -174,7 +174,7 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev performs a trade by specifying the target amount and returns the required source amount and the resulting fee
+     * @dev performs a trade by providing the target amount and returns the required source amount and the resulting fee
      *
      * requirements:
      *
@@ -189,7 +189,7 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev returns the output amount and fee when trading by specifying the source amount
+     * @dev returns the output amount and fee when trading by providing the source amount
      */
     function tradeOutputAndFeeBySourceAmount(
         Token sourceToken,
@@ -198,7 +198,7 @@ interface IPoolCollection is IVersioned {
     ) external view returns (TradeAmounts memory);
 
     /**
-     * @dev returns the input amount and fee when trading by specifying the target amount
+     * @dev returns the input amount and fee when trading by providing the target amount
      */
     function tradeInputAndFeeByTargetAmount(
         Token sourceToken,
