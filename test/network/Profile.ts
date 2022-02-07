@@ -1414,20 +1414,6 @@ describe('Profile @profile', () => {
                     .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
             };
 
-            const getProtection = async (protectionId: BigNumber) => {
-                const protection = await liquidityProtectionStore.protectedLiquidity(protectionId);
-                return {
-                    provider: protection[0],
-                    poolToken: protection[1],
-                    reserveToken: protection[2],
-                    poolAmount: protection[3],
-                    reserveAmount: protection[4],
-                    reserveRateN: protection[5],
-                    reserveRateD: protection[6],
-                    timestamp: protection[7]
-                };
-            };
-
             const setTime = async (time: number) => {
                 now = time;
 
