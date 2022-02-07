@@ -94,7 +94,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     /**
      * @dev returns the output amount when trading by specify the source amount
      */
-    function tradeOutputBySource(
+    function tradeOutputBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
@@ -103,7 +103,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     /**
      * @dev returns the input amount when trading by specify the target amount
      */
-    function tradeInputByTarget(
+    function tradeInputByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount

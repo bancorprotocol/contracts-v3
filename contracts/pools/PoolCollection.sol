@@ -624,7 +624,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeBySource(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -660,7 +660,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeByTarget(
+    function tradeByTargetAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -696,7 +696,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeOutputAndFeeBySource(
+    function tradeOutputAndFeeBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
@@ -709,7 +709,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeInputAndFeeByTarget(
+    function tradeInputAndFeeByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount

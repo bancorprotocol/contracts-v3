@@ -158,7 +158,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
-    function tradeBySource(
+    function tradeBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
@@ -175,7 +175,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function tradeBySourcePermitted(
+    function tradeBySourceAmountPermitted(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
@@ -194,7 +194,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
      */
-    function tradeByTarget(
+    function tradeByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,
@@ -211,7 +211,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have provided a valid and unused EIP712 typed signature
      */
-    function tradeByTargetPermitted(
+    function tradeByTargetAmountPermitted(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,

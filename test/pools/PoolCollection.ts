@@ -1815,11 +1815,11 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('TradingDisabled');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(sourceToken.address, targetToken.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, targetToken.address, 1)
                         ).to.be.revertedWith('TradingDisabled');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(sourceToken.address, targetToken.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, targetToken.address, 1)
                         ).to.be.revertedWith('TradingDisabled');
                     });
                 });
@@ -1841,7 +1841,7 @@ describe('PoolCollection', () => {
                         await expect(
                             poolCollection
                                 .connect(nonNetwork)
-                                .tradeBySource(
+                                .tradeBySourceAmount(
                                     CONTEXT_ID,
                                     sourceToken.address,
                                     targetToken.address,
@@ -1853,7 +1853,7 @@ describe('PoolCollection', () => {
                         await expect(
                             poolCollection
                                 .connect(nonNetwork)
-                                .tradeByTarget(
+                                .tradeByTargetAmount(
                                     CONTEXT_ID,
                                     sourceToken.address,
                                     targetToken.address,
@@ -1887,11 +1887,11 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(ZERO_ADDRESS, targetToken.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(ZERO_ADDRESS, targetToken.address, 1)
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(ZERO_ADDRESS, targetToken.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(ZERO_ADDRESS, targetToken.address, 1)
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -1919,11 +1919,11 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(sourceToken.address, ZERO_ADDRESS, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, ZERO_ADDRESS, 1)
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(sourceToken.address, ZERO_ADDRESS, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, ZERO_ADDRESS, 1)
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -1953,11 +1953,19 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(reserveToken2.address, networkToken.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(
+                                reserveToken2.address,
+                                networkToken.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(reserveToken2.address, networkToken.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(
+                                reserveToken2.address,
+                                networkToken.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -1987,11 +1995,19 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(networkToken.address, reserveToken2.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(
+                                networkToken.address,
+                                reserveToken2.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(networkToken.address, reserveToken2.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(
+                                networkToken.address,
+                                reserveToken2.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -2021,11 +2037,19 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(reserveToken.address, reserveToken2.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(
+                                reserveToken.address,
+                                reserveToken2.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(reserveToken.address, reserveToken2.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(
+                                reserveToken.address,
+                                reserveToken2.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -2053,11 +2077,15 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(networkToken.address, networkToken.address, 1)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(
+                                networkToken.address,
+                                networkToken.address,
+                                1
+                            )
                         ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(networkToken.address, networkToken.address, 1)
+                            poolCollection.tradeInputAndFeeByTargetAmount(networkToken.address, networkToken.address, 1)
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
@@ -2085,11 +2113,11 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('ZeroValue');
 
                         await expect(
-                            poolCollection.tradeOutputAndFeeBySource(sourceToken.address, targetToken.address, 0)
+                            poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, targetToken.address, 0)
                         ).to.be.revertedWith('ZeroValue');
 
                         await expect(
-                            poolCollection.tradeInputAndFeeByTarget(sourceToken.address, targetToken.address, 0)
+                            poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, targetToken.address, 0)
                         ).to.be.revertedWith('ZeroValue');
                     });
 
@@ -2178,7 +2206,7 @@ describe('PoolCollection', () => {
 
                             // trade enough network tokens out such that the total network token liquidity for trading
                             // falls bellow the minimum liquidity for trading
-                            const { amount } = await poolCollection.tradeInputAndFeeByTarget(
+                            const { amount } = await poolCollection.tradeInputAndFeeByTargetAmount(
                                 reserveToken.address,
                                 networkToken.address,
                                 networkTokenTradeAmountToTrade
@@ -2187,7 +2215,7 @@ describe('PoolCollection', () => {
                             // we will use the "full trade" function since we must to ensure that the tokens will also
                             // leave the master vault
                             await reserveToken.connect(deployer).approve(network.address, amount);
-                            await network.tradeBySource(
+                            await network.tradeBySourceAmount(
                                 reserveToken.address,
                                 networkToken.address,
                                 amount,
@@ -2350,7 +2378,7 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
                                     await expect(
-                                        poolCollection.tradeOutputAndFeeBySource(
+                                        poolCollection.tradeOutputAndFeeBySourceAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
@@ -2358,7 +2386,7 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
                                     await expect(
-                                        poolCollection.tradeInputAndFeeByTarget(
+                                        poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
@@ -2411,7 +2439,7 @@ describe('PoolCollection', () => {
                                     );
 
                                     await expect(
-                                        poolCollection.tradeOutputAndFeeBySource(
+                                        poolCollection.tradeOutputAndFeeBySourceAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
@@ -2419,7 +2447,7 @@ describe('PoolCollection', () => {
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
                                     await expect(
-                                        poolCollection.tradeInputAndFeeByTarget(
+                                        poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
@@ -2449,7 +2477,7 @@ describe('PoolCollection', () => {
 
                                 it('should revert when attempting to query the source amount', async () => {
                                     await expect(
-                                        poolCollection.tradeInputAndFeeByTarget(
+                                        poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmount
@@ -2477,7 +2505,7 @@ describe('PoolCollection', () => {
                                     });
 
                                     it('should not revert when attempting to query the source amount', async () => {
-                                        await poolCollection.tradeInputAndFeeByTarget(
+                                        await poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmount
@@ -2486,7 +2514,7 @@ describe('PoolCollection', () => {
 
                                     it('should revert when attempting to query the source amount', async () => {
                                         await expect(
-                                            poolCollection.tradeInputAndFeeByTarget(
+                                            poolCollection.tradeInputAndFeeByTargetAmount(
                                                 sourceToken.address,
                                                 targetToken.address,
                                                 targetAmount.add(1)
@@ -2606,13 +2634,13 @@ describe('PoolCollection', () => {
                                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity: prevLiquidity } = prevPoolData;
 
-                                        const targetAmountAndFee = await poolCollection.tradeOutputAndFeeBySource(
+                                        const targetAmountAndFee = await poolCollection.tradeOutputAndFeeBySourceAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
                                         );
 
-                                        const sourceAmountAndFee = await poolCollection.tradeInputAndFeeByTarget(
+                                        const sourceAmountAndFee = await poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmountAndFee.amount
@@ -2723,13 +2751,13 @@ describe('PoolCollection', () => {
                                         const prevPoolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity: prevLiquidity } = prevPoolData;
 
-                                        const sourceAmountAndFee = await poolCollection.tradeInputAndFeeByTarget(
+                                        const sourceAmountAndFee = await poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
                                         );
 
-                                        const targetAmountAndFee = await poolCollection.tradeOutputAndFeeBySource(
+                                        const targetAmountAndFee = await poolCollection.tradeOutputAndFeeBySourceAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             sourceAmountAndFee.amount

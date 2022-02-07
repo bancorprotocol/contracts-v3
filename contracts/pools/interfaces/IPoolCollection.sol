@@ -165,7 +165,7 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function tradeBySource(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -180,7 +180,7 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function tradeByTarget(
+    function tradeByTargetAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -191,7 +191,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns the output amount and fee when trading by specifying the source amount
      */
-    function tradeOutputAndFeeBySource(
+    function tradeOutputAndFeeBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
@@ -200,7 +200,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns the input amount and fee when trading by specifying the target amount
      */
-    function tradeInputAndFeeByTarget(
+    function tradeInputAndFeeByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
