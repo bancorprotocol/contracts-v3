@@ -2163,7 +2163,7 @@ describe('PoolCollection', () => {
                                 await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                             });
 
-                            it('should revert when a the result of a trade by source is below the minimum return', async () => {
+                            it('should revert when the result of a trade by source is below the minimum return', async () => {
                                 await expect(
                                     network.tradeBySourcePoolCollectionT(
                                         poolCollection.address,
