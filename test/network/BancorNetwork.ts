@@ -3018,14 +3018,6 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const setTime = async (time: number) => {
-                now = time;
-
-                for (const t of [converter, checkpointStore, liquidityProtection]) {
-                    await t.setTime(now);
-                }
-            };
-
             const initLegacySystem = async (isNativeToken: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
@@ -3098,7 +3090,10 @@ describe('BancorNetwork', () => {
 
                 await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
 
-                await setTime(await latest());
+                now = await latest();
+                await converter.setTime(now);
+                await checkpointStore.setTime(now);
+                await liquidityProtection.setTime(now);
             };
 
             for (const tokenSymbol of [TokenSymbol.TKN, TokenSymbol.ETH]) {

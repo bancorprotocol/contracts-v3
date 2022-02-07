@@ -1461,7 +1461,10 @@ describe('Profile @profile', () => {
 
                 await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
 
-                await setTime(await latest());
+                now = await latest();
+                await converter.setTime(now);
+                await checkpointStore.setTime(now);
+                await liquidityProtection.setTime(now);
             };
 
             const addProtectedLiquidity = async (
@@ -1481,14 +1484,6 @@ describe('Profile @profile', () => {
                 return liquidityProtection
                     .connect(from)
                     .addLiquidity(poolToken.address, reserveToken.address, amount, { value });
-            };
-
-            const setTime = async (time: number) => {
-                now = time;
-
-                for (const t of [converter, checkpointStore, liquidityProtection]) {
-                    await t.setTime(now);
-                }
             };
 
             for (const numOfPositions of [1, 2, 5, 10]) {
