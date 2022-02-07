@@ -841,8 +841,9 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `${permitted ? 'permitted ' : ''}${bySourceAmount ? 'by source amount' : 'by target amount'} amount
-                } trade ${sourceSymbol} -> ${targetSymbol}`,
+                `${permitted ? 'permitted ' : ''}trade by providing the ${
+                    bySourceAmount ? 'source' : 'target'
+                } amount ${sourceSymbol} -> ${targetSymbol}`,
                 tradeFunc(amount, { limit, beneficiary: beneficiaryAddress, deadline })
             );
         };
@@ -874,7 +875,7 @@ describe('Profile @profile', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'by source amount' : 'by target amount'} amount`, () => {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         const TRADES_COUNT = 2;
@@ -911,7 +912,7 @@ describe('Profile @profile', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`permitted ${bySourceAmount ? 'by source amount' : 'by target amount'} amount`, () => {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
 
                         beforeEach(async () => {

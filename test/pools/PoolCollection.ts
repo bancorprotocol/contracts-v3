@@ -2163,7 +2163,7 @@ describe('PoolCollection', () => {
                                 await setTradingLiquidity(networkTokenTradingLiquidity, baseTokenTradingLiquidity);
                             });
 
-                            it('should revert when the result of a trade by source is below the minimum return', async () => {
+                            it('should revert when the result of a trade by providing the source amount is below the minimum return', async () => {
                                 await expect(
                                     network.tradeBySourcePoolCollectionT(
                                         poolCollection.address,
@@ -2176,7 +2176,7 @@ describe('PoolCollection', () => {
                                 ).to.be.revertedWith('InsufficientTargetAmount');
                             });
 
-                            it('should revert when a trade by target requires more tokens than provided', async () => {
+                            it('should revert when a trade by providing the target amount requires more tokens than provided', async () => {
                                 await expect(
                                     network.tradeByTargetPoolCollectionT(
                                         poolCollection.address,
@@ -2237,7 +2237,7 @@ describe('PoolCollection', () => {
                             expect(liquidity.networkTokenTradingLiquidity).lt(MIN_LIQUIDITY_FOR_TRADING);
                         });
 
-                        it('should allow trading by source', async () => {
+                        it('should allow trading by providing the source amount', async () => {
                             const res = await network.tradeBySourcePoolCollectionT(
                                 poolCollection.address,
                                 CONTEXT_ID,
@@ -2250,7 +2250,7 @@ describe('PoolCollection', () => {
                             await expect(res).to.emit(poolCollection, 'TradingLiquidityUpdated');
                         });
 
-                        it('should allow trading by target', async () => {
+                        it('should allow trading by providing the target amount', async () => {
                             const res = await network.tradeByTargetPoolCollectionT(
                                 poolCollection.address,
                                 CONTEXT_ID,
@@ -2627,7 +2627,7 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                                 });
 
-                                it('should perform a trade by source', async () => {
+                                it('should perform a trade by providing the source amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
@@ -2744,7 +2744,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                it('should perform a trade by target', async () => {
+                                it('should perform a trade by providing the target amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 

@@ -2375,7 +2375,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'by source amount' : 'by target amount'} amount`, () => {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
                         const tradeDirectFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         beforeEach(async () => {
@@ -2529,7 +2529,8 @@ describe('BancorNetwork', () => {
                                                     })
                                                 ).to.be.revertedWith('ERC20Permit: invalid signature');
                                             } else {
-                                                // reduce the approved amount and perform a trade by source
+                                                // reduce the approved amount and perform a trade by providing the source
+                                                // amount
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     sourceToken.address
                                                 );
@@ -2574,7 +2575,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'by source amount' : 'by target amount'} amount`, () => {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         const TRADES_COUNT = 2;
@@ -2606,7 +2607,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'by source amount' : 'by target amount'} amount`, () => {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
 
                         beforeEach(async () => {
