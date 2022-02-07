@@ -1084,10 +1084,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev performs a trade by specifying either the source or target amount:
      *
-     * - in case of specifying the source amount, the amount represents the source amount and the limit is the minimum
-     *   return amount
-     * - in case of specifying the target amount, the amount represents the target amount and the limit is the maximum
-     *   source amount
+     * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
+     *   amount
+     * - when trading by the target amount, the amount represents the target amount and the limit is the maximum source
+     *   amount
      *
      * requirements:
      *
@@ -1145,10 +1145,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev performs a single hop between the network token and a base token trade by specifying either the source or
      * the target amount
      *
-     * - in case of specifying the source amount, the amount represents the source amount and the limit is the minimum
-     *   return amount
-     * - in case of specifying the target amount, the amount represents the target amount and the limit is the maximum
-     *   source amount
+     * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
+     *   amount
+     * - when trading by the target amount, the amount represents the target amount and the limit is the maximum source
+     *   amount
      */
     function _tradeNetworkToken(
         bytes32 contextId,
@@ -1194,10 +1194,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev performs a double hop trade between two base tokens by specifying either the source or the target amount
      *
-     * - in case of specifying the source amount, the amount represents the source amount and the limit is the minimum
-     *   return amount
-     * - in case of specifying the target amount, the amount represents the target amount and the limit is the maximum
-     *   source amount
+     * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
+     *   amount
+     * - when trading by the target amount, the amount represents the target amount and the limit is the maximum source
+     *   amount
      */
     function _tradeBaseTokens(
         bytes32 contextId,
