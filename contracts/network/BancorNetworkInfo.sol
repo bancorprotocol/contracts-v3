@@ -289,8 +289,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns the target or source amounts by specifying the source and the target tokens and whether we're
-     * interested in the target or source amount
+     * @dev returns either the source amount or the target amount by specifying the source and the target tokens
+     * and whether we're interested in the target or the source amount
      */
     function _tradeOutputAmount(
         Token sourceToken,
