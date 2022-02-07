@@ -159,7 +159,7 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade by providing the source amount and returns the target amount and the resulting fee
+     * @dev performs a trade by providing the source amount and returns the target amount and the associated fee
      *
      * requirements:
      *
@@ -174,7 +174,7 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev performs a trade by providing the target amount and returns the required source amount and the resulting fee
+     * @dev performs a trade by providing the target amount and returns the required source amount and the associated fee
      *
      * requirements:
      *
