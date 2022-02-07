@@ -2331,7 +2331,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'regular' : 'exact'} trade`, () => {
+                    context(`${bySourceAmount ? 'by source' : 'by target'} amount`, () => {
                         const tradeDirectFunc = bySourceAmount ? tradeBySource : tradeByTarget;
 
                         beforeEach(async () => {
@@ -2485,7 +2485,7 @@ describe('BancorNetwork', () => {
                                                     })
                                                 ).to.be.revertedWith('ERC20Permit: invalid signature');
                                             } else {
-                                                // reduce the approved amount and perform a regular trade
+                                                // reduce the approved amount and perform a trade by source
                                                 const reserveToken = await Contracts.TestERC20Token.attach(
                                                     sourceToken.address
                                                 );
@@ -2530,7 +2530,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'regular' : 'exact'} trade`, () => {
+                    context(`${bySourceAmount ? 'by source' : 'by target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySource : tradeByTarget;
 
                         const TRADES_COUNT = 2;
@@ -2562,7 +2562,7 @@ describe('BancorNetwork', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'regular' : 'exact'} trade`, () => {
+                    context(`${bySourceAmount ? 'by source' : 'by target'} amount`, () => {
                         const tradeFunc = bySourceAmount ? tradeBySourcePermitted : tradeByTargetPermitted;
 
                         beforeEach(async () => {

@@ -1192,8 +1192,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a double hop regular trade between two base tokens by specifying either the source or the target
-     * amount
+     * @dev performs a double hop trade between two base tokens by specifying either the source or the target amount
      *
      * - in case of specifying the source amount, the amount represents the source amount and the limit is the minimum
      *   return amount
