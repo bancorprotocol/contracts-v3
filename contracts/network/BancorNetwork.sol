@@ -1162,15 +1162,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         IPoolCollection poolCollection = _poolCollection(pool);
 
-<<<<<<< HEAD
         TradeAmountAndNetworkFee memory tradeAmounts = params.bySourceAmount
-            ? poolCollection.tradeBySource(contextId, sourceToken, targetToken, params.amount, params.limit)
-            : poolCollection.tradeByTarget(contextId, sourceToken, targetToken, params.amount, params.limit);
-=======
-        TradeAmounts memory tradeAmounts = params.bySourceAmount
             ? poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, params.amount, params.limit)
             : poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, params.amount, params.limit);
->>>>>>> dev
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
