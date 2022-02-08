@@ -400,7 +400,6 @@ describe.only('bancor-portal', () => {
                 expect(newBalances[token1.address].eq(previousBalances[token1.address])).to.be.true;
             }
         }
-        console.log(previousBalances, newBalances);
     };
 
     /**
