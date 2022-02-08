@@ -42,8 +42,10 @@ uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
 struct TradeAmounts {
-    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
-    uint256 feeAmount; // the trading fee amount
+    // the source/target amount (depending on the context) resulting from the trade
+    uint256 amount;
+    // the trading fee amount
+    uint256 feeAmount;
 }
 
 /**
@@ -157,13 +159,13 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade and returns the target amount and fee
+     * @dev performs a trade by providing the source amount and returns the target amount and the associated fee
      *
      * requirements:
      *
      * - the caller must be the network contract
      */
-    function trade(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -172,14 +174,36 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmounts memory);
 
     /**
-     * @dev returns the target or source amount and fee by specifying the source and the target tokens and whether we're
-     * interested in the target or source amount
+     * @dev performs a trade by providing the target amount and returns the required source amount and the associated fee
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
      */
-    function tradeAmountAndFee(
+    function tradeByTargetAmount(
+        bytes32 contextId,
         Token sourceToken,
         Token targetToken,
-        uint256 amount,
-        bool targetAmount
+        uint256 targetAmount,
+        uint256 maxSourceAmount
+    ) external returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the output amount and fee when trading by providing the source amount
+     */
+    function tradeOutputAndFeeBySourceAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount
+    ) external view returns (TradeAmounts memory);
+
+    /**
+     * @dev returns the input amount and fee when trading by providing the target amount
+     */
+    function tradeInputAndFeeByTargetAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount
     ) external view returns (TradeAmounts memory);
 
     /**

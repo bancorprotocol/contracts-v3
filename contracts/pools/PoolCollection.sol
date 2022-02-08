@@ -77,24 +77,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     using TokenLibrary for Token;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error AlreadyEnabled();
     error DepositLimitExceeded();
     error InsufficientLiquidity();
+    error InsufficientSourceAmount();
+    error InsufficientTargetAmount();
     error InvalidRate();
     error RateUnstable();
-    error ReturnAmountTooLow();
     error TradingDisabled();
-    error AlreadyEnabled();
-    error ZeroTargetAmount();
 
     uint16 private constant POOL_TYPE = 1;
-    uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
-    uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10000; // %1
-    // the average rate is recalculated based on the ratio between the weights of the rates
-    // the smaller the weights are, the larger the supported range of each one of the rates is
+
+    // the average rate is recalculated based on the ratio between the weights of the rates the smaller the weights are,
+    // the larger the supported range of each one of the rates is
+    uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
+    uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
 
     // trading-related preprocessed data
     struct TradingParams {
@@ -623,7 +624,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function trade(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -645,49 +646,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             sourceAmount
         );
 
-        // ensure that the trade gives something in return
-        if (tradeAmounts.amount == 0) {
-            revert ZeroTargetAmount();
-        }
-
         // ensure that the target amount is above the requested minimum return amount
         if (tradeAmounts.amount < minReturnAmount) {
-            revert ReturnAmountTooLow();
+            revert InsufficientTargetAmount();
         }
 
-        Pool storage data = _poolData[params.pool];
-
-        // update the recent average rate
-        _updateAverageRate(
-            data,
-            Fraction({
-                n: params.liquidity.networkTokenTradingLiquidity,
-                d: params.liquidity.baseTokenTradingLiquidity
-            })
-        );
-
-        // sync the reserve balances
-        PoolLiquidity memory newLiquidity;
-        if (params.isSourceNetworkToken) {
-            // if the target token is a base token, make sure to add the fee to the staked balance
-            newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: params.sourceBalance + sourceAmount,
-                baseTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
-                stakedBalance: params.liquidity.stakedBalance + tradeAmounts.feeAmount
-            });
-        } else {
-            newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: params.targetBalance - tradeAmounts.amount,
-                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
-                stakedBalance: params.liquidity.stakedBalance
-            });
-        }
-
-        // update the liquidity in the pool
-        PoolLiquidity memory prevLiquidity = data.liquidity;
-        data.liquidity = newLiquidity;
-
-        _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
+        // perform the trade and update the liquidity
+        _performTrade(contextId, params, sourceAmount, tradeAmounts.amount, tradeAmounts.feeAmount);
 
         return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
     }
@@ -695,18 +660,63 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeAmountAndFee(
+    function tradeByTargetAmount(
+        bytes32 contextId,
         Token sourceToken,
         Token targetToken,
-        uint256 amount,
-        bool targetAmount
-    ) external view greaterThanZero(amount) returns (TradeAmounts memory) {
+        uint256 targetAmount,
+        uint256 maxSourceAmount
+    )
+        external
+        only(address(_network))
+        greaterThanZero(targetAmount)
+        greaterThanZero(maxSourceAmount)
+        returns (TradeAmounts memory)
+    {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        return
+        TradeAmounts memory sourceAmounts = _sourceAmountAndFee(
+            params.sourceBalance,
+            params.targetBalance,
+            params.tradingFeePPM,
             targetAmount
-                ? _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount)
-                : _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, amount);
+        );
+
+        // ensure that the user has provided enough tokens to make the trade
+        if (sourceAmounts.amount > maxSourceAmount) {
+            revert InsufficientSourceAmount();
+        }
+
+        // perform the trade and update the liquidity
+        _performTrade(contextId, params, sourceAmounts.amount, targetAmount, sourceAmounts.feeAmount);
+
+        return TradeAmounts({ amount: sourceAmounts.amount, feeAmount: sourceAmounts.feeAmount });
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradeOutputAndFeeBySourceAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount
+    ) external view greaterThanZero(sourceAmount) returns (TradeAmounts memory) {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradeInputAndFeeByTargetAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount
+    ) external view greaterThanZero(targetAmount) returns (TradeAmounts memory) {
+        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+
+        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
     }
 
     /**
@@ -1253,7 +1263,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @dev returns the target amount and fee by providing the source amount
      */
     function _targetAmountAndFee(
         uint256 sourceBalance,
@@ -1272,7 +1282,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the source amount and fee by specifying the target amount
+     * @dev returns the source amount and fee by providing the target amount
      */
     function _sourceAmountAndFee(
         uint256 sourceBalance,
@@ -1289,6 +1299,51 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
         return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
+    }
+
+    /**
+     * @dev performs a trade and updates the trading liquidity
+     */
+    function _performTrade(
+        bytes32 contextId,
+        TradingParams memory params,
+        uint256 sourceAmount,
+        uint256 targetAmount,
+        uint256 feeAmount
+    ) private {
+        Pool storage data = _poolData[params.pool];
+
+        // update the recent average rate
+        _updateAverageRate(
+            data,
+            Fraction({
+                n: params.liquidity.networkTokenTradingLiquidity,
+                d: params.liquidity.baseTokenTradingLiquidity
+            })
+        );
+
+        // sync the reserve balances
+        PoolLiquidity memory newLiquidity;
+        if (params.isSourceNetworkToken) {
+            // if the target token is a base token, make sure to add the fee to the staked balance
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                baseTokenTradingLiquidity: params.targetBalance - targetAmount,
+                stakedBalance: params.liquidity.stakedBalance + feeAmount
+            });
+        } else {
+            newLiquidity = PoolLiquidity({
+                networkTokenTradingLiquidity: params.targetBalance - targetAmount,
+                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                stakedBalance: params.liquidity.stakedBalance
+            });
+        }
+
+        // update the liquidity in the pool
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+        data.liquidity = newLiquidity;
+
+        _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
     }
 
     /**
