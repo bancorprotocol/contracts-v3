@@ -626,7 +626,7 @@ describe('Profile @profile', () => {
             targetTokenAddress?: string;
         }
 
-        const trade = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -640,12 +640,20 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .trade(sourceTokenAddress, targetTokenAddress, amount, minReturnAmount, deadline, beneficiary, {
-                    value
-                });
+                .tradeBySourceAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    minReturnAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
-        const tradeExact = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -656,10 +664,14 @@ describe('Profile @profile', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
 
-            // for an exact trade, the send value (i.e., the amount to trade) is represented by the maximum source
-            // amount
+            // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
+            // maximum source amount
             if (!value) {
                 value = BigNumber.from(0);
 
@@ -670,9 +682,17 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeExact(sourceTokenAddress, targetTokenAddress, amount, maxSourceAmount, deadline, beneficiary, {
-                    value
-                });
+                .tradeByTargetAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    maxSourceAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
         interface TradePermittedOverrides {
@@ -684,7 +704,7 @@ describe('Profile @profile', () => {
             approvedAmount?: BigNumberish;
         }
 
-        const tradePermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             const {
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
@@ -705,7 +725,7 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradePermitted(
+                .tradeBySourceAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
                     amount,
@@ -718,7 +738,7 @@ describe('Profile @profile', () => {
                 );
         };
 
-        const tradeExactPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             let {
                 limit: maxSourceAmount,
                 deadline = MAX_UINT256,
@@ -729,7 +749,11 @@ describe('Profile @profile', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeSourceAmount(sourceTokenAddress, targetTokenAddress, amount);
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
             approvedAmount ||= maxSourceAmount;
 
             const signature = await permitContractSignature(
@@ -743,7 +767,7 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeExactPermitted(
+                .tradeByTargetAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
                     amount,
@@ -769,18 +793,18 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = sourceToken.address === networkToken.address;
             const isTargetNetworkToken = targetToken.address === networkToken.address;
 
-            const regularTrade = [trade, tradePermitted].includes(tradeFunc as any);
-            const permitted = [tradePermitted, tradeExactPermitted].includes(tradeFunc as any);
+            const bySourceAmount = [tradeBySourceAmount, tradeBySourceAmountPermitted].includes(tradeFunc as any);
+            const permitted = [tradeBySourceAmountPermitted, tradeByTargetAmountPermitted].includes(tradeFunc as any);
 
             const deadline = MAX_UINT256;
             let limit: BigNumber;
 
-            if (regularTrade) {
+            if (bySourceAmount) {
                 limit = MIN_RETURN_AMOUNT;
             } else {
                 let sourceTradeAmounts: TradeAmountsStructOutput;
                 if (isSourceNetworkToken || isTargetNetworkToken) {
-                    sourceTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    sourceTradeAmounts = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
@@ -789,7 +813,7 @@ describe('Profile @profile', () => {
                         MAX_SOURCE_AMOUNT
                     );
                 } else {
-                    const targetTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    const targetTradeOutput = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         networkToken.address,
@@ -798,12 +822,12 @@ describe('Profile @profile', () => {
                         MAX_SOURCE_AMOUNT
                     );
 
-                    sourceTradeAmounts = await network.callStatic.tradeExactPoolCollectionT(
+                    sourceTradeAmounts = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
                         networkToken.address,
-                        targetTradeAmounts.amount,
+                        targetTradeOutput.amount,
                         MAX_SOURCE_AMOUNT
                     );
                 }
@@ -817,21 +841,25 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `${permitted ? 'permitted ' : ''}${
-                    regularTrade ? 'regular' : 'exact'
-                } trade ${sourceSymbol} -> ${targetSymbol}`,
+                `${permitted ? 'permitted ' : ''}trade by providing the ${
+                    bySourceAmount ? 'source' : 'target'
+                } amount ${sourceSymbol} -> ${targetSymbol}`,
                 tradeFunc(amount, { limit, beneficiary: beneficiaryAddress, deadline })
             );
         };
 
-        const approve = async (amount: BigNumberish, regularTrade: boolean) => {
+        const approve = async (amount: BigNumberish, bySourceAmount: boolean) => {
             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
 
             let sourceAmount;
-            if (regularTrade) {
+            if (bySourceAmount) {
                 sourceAmount = amount;
             } else {
-                sourceAmount = await networkInfo.tradeSourceAmount(sourceToken.address, targetToken.address, amount);
+                sourceAmount = await networkInfo.tradeInputByTargetAmount(
+                    sourceToken.address,
+                    targetToken.address,
+                    amount
+                );
             }
 
             await reserveToken.transfer(await trader.getAddress(), sourceAmount);
@@ -846,9 +874,9 @@ describe('Profile @profile', () => {
                     await setupPools(source, target);
                 });
 
-                for (const regularTrade of [true, false]) {
-                    context(`${regularTrade ? 'regular' : 'exact'} trade`, () => {
-                        const tradeFunc = regularTrade ? trade : tradeExact;
+                for (const bySourceAmount of [true, false]) {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         const TRADES_COUNT = 2;
 
@@ -857,7 +885,7 @@ describe('Profile @profile', () => {
 
                             for (let i = 0; i < TRADES_COUNT; i++) {
                                 if (!isSourceNativeToken) {
-                                    await approve(amount, regularTrade);
+                                    await approve(amount, bySourceAmount);
                                 }
 
                                 await performTrade(ZERO_ADDRESS, amount, tradeFunc);
@@ -883,12 +911,12 @@ describe('Profile @profile', () => {
                     await setupPools(source, target);
                 });
 
-                for (const regularTrade of [true, false]) {
-                    context(`permitted ${regularTrade ? 'regular' : 'exact'} trade`, () => {
-                        const tradeFunc = regularTrade ? tradePermitted : tradeExactPermitted;
+                for (const bySourceAmount of [true, false]) {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
 
                         beforeEach(async () => {
-                            await approve(amount, regularTrade);
+                            await approve(amount, bySourceAmount);
                         });
 
                         it('should complete a permitted trade', async () => {
