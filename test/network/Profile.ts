@@ -1515,7 +1515,7 @@ describe('Profile @profile', () => {
                     });
                 }
 
-                describe(TokenSymbol.BNT, () => {
+                describe.only(TokenSymbol.BNT, () => {
                     beforeEach(async () => {
                         await initLegacySystem(false);
 
