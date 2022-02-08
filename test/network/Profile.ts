@@ -1547,16 +1547,16 @@ describe('Profile @profile', () => {
         };
 
         for (const { totalSupply, reserve1Amount, reserve2Amount } of [
-            {
-                totalSupply: BigNumber.from(10_000_000),
-                reserve1Amount: BigNumber.from(1_000_000),
-                reserve2Amount: BigNumber.from(2_500_000)
-            },
-            {
-                totalSupply: toWei(10_000_000),
-                reserve1Amount: BigNumber.from(1_000_000),
-                reserve2Amount: BigNumber.from(2_500_000)
-            },
+//          {
+//              totalSupply: BigNumber.from(10_000_000),
+//              reserve1Amount: BigNumber.from(1_000_000),
+//              reserve2Amount: BigNumber.from(2_500_000)
+//          },
+//          {
+//              totalSupply: toWei(10_000_000),
+//              reserve1Amount: BigNumber.from(1_000_000),
+//              reserve2Amount: BigNumber.from(2_500_000)
+//          },
             {
                 totalSupply: BigNumber.from(10_000_000),
                 reserve1Amount: toWei(1_000_000),
