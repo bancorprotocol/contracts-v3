@@ -9,7 +9,6 @@ import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { Utils } from "../utility/Utils.sol";
 import { TestERC20Token } from "./TestERC20Token.sol";
-import "hardhat/console.sol";
 
 contract MockUniswapV2Router02 is TestERC20Token, Utils {
     using SafeERC20 for IERC20;
@@ -27,29 +26,19 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
     }
 
     function removeLiquidity(
-        address tokenA,
-        address tokenB,
+        address, /*tokenA*/
+        address, /*tokenB*/
         uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB) {
+        uint256, /*amountAMin*/
+        uint256, /*amountBMin*/
+        address, /*to*/
+        uint256 /*deadline*/
+    ) external returns (uint256, uint256) {
         // mimic approval
         Token(address(_pair)).safeTransferFrom(msg.sender, address(_pair), liquidity);
         // mimic uniswap burn
         _pair.burn(msg.sender, liquidity);
-
-        if (
-            amountAMin > 0 ||
-            amountBMin > 0 ||
-            deadline > 0 ||
-            to == address(0) ||
-            tokenA == address(0) ||
-            tokenB == address(0)
-        ) {
-            return (liquidity, liquidity);
-        }
+        return (liquidity, liquidity);
     }
 
     function removeLiquidityETH(

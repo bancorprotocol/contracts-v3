@@ -39,7 +39,6 @@ import { Vault } from "../vaults/Vault.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
 
 import { PoolToken } from "./PoolToken.sol";
-import "hardhat/console.sol";
 
 /**
  * @dev Master Pool contract

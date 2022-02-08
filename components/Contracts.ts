@@ -40,7 +40,8 @@ import {
     TransparentUpgradeableProxyImmutable__factory,
     BancorPortal__factory,
     MockUniswapV2Router02__factory,
-    MockUniswapV2Pair__factory
+    MockUniswapV2Pair__factory,
+    MockUniswapV2Factory__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
@@ -110,7 +111,8 @@ const getContracts = (signer?: Signer) => ({
     ),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
     MockUniswapV2Router02: deployOrAttach('MockUniswapV2Router02', MockUniswapV2Router02__factory, signer),
-    MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer)
+    MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer),
+    MockUniswapV2Factory: deployOrAttach('MockUniswapV2Factory', MockUniswapV2Factory__factory, signer)
 });
 
 export type ContractsType = ReturnType<typeof getContracts>;
