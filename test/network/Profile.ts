@@ -626,7 +626,7 @@ describe('Profile @profile', () => {
             targetTokenAddress?: string;
         }
 
-        const tradeBySource = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -640,12 +640,20 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeBySource(sourceTokenAddress, targetTokenAddress, amount, minReturnAmount, deadline, beneficiary, {
-                    value
-                });
+                .tradeBySourceAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    minReturnAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
-        const tradeByTarget = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -656,7 +664,11 @@ describe('Profile @profile', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeInputByTarget(sourceTokenAddress, targetTokenAddress, amount);
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
 
             // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
             // maximum source amount
@@ -670,9 +682,17 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeByTarget(sourceTokenAddress, targetTokenAddress, amount, maxSourceAmount, deadline, beneficiary, {
-                    value
-                });
+                .tradeByTargetAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    maxSourceAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
         interface TradePermittedOverrides {
@@ -684,7 +704,7 @@ describe('Profile @profile', () => {
             approvedAmount?: BigNumberish;
         }
 
-        const tradeBySourcePermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             const {
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
@@ -705,7 +725,7 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeBySourcePermitted(
+                .tradeBySourceAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
                     amount,
@@ -718,7 +738,7 @@ describe('Profile @profile', () => {
                 );
         };
 
-        const tradeByTargetPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
             let {
                 limit: maxSourceAmount,
                 deadline = MAX_UINT256,
@@ -729,7 +749,11 @@ describe('Profile @profile', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeInputByTarget(sourceTokenAddress, targetTokenAddress, amount);
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
             approvedAmount ||= maxSourceAmount;
 
             const signature = await permitContractSignature(
@@ -743,7 +767,7 @@ describe('Profile @profile', () => {
 
             return network
                 .connect(trader)
-                .tradeByTargetPermitted(
+                .tradeByTargetAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
                     amount,
@@ -769,8 +793,8 @@ describe('Profile @profile', () => {
             const isSourceNetworkToken = sourceToken.address === networkToken.address;
             const isTargetNetworkToken = targetToken.address === networkToken.address;
 
-            const bySourceAmount = [tradeBySource, tradeBySourcePermitted].includes(tradeFunc as any);
-            const permitted = [tradeBySourcePermitted, tradeByTargetPermitted].includes(tradeFunc as any);
+            const bySourceAmount = [tradeBySourceAmount, tradeBySourceAmountPermitted].includes(tradeFunc as any);
+            const permitted = [tradeBySourceAmountPermitted, tradeByTargetAmountPermitted].includes(tradeFunc as any);
 
             const deadline = MAX_UINT256;
             let limit: BigNumber;
@@ -817,8 +841,9 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `${permitted ? 'permitted ' : ''}${bySourceAmount ? 'by source' : 'by target'} amount
-                } trade ${sourceSymbol} -> ${targetSymbol}`,
+                `${permitted ? 'permitted ' : ''}trade by providing the ${
+                    bySourceAmount ? 'source' : 'target'
+                } amount ${sourceSymbol} -> ${targetSymbol}`,
                 tradeFunc(amount, { limit, beneficiary: beneficiaryAddress, deadline })
             );
         };
@@ -830,7 +855,11 @@ describe('Profile @profile', () => {
             if (bySourceAmount) {
                 sourceAmount = amount;
             } else {
-                sourceAmount = await networkInfo.tradeInputByTarget(sourceToken.address, targetToken.address, amount);
+                sourceAmount = await networkInfo.tradeInputByTargetAmount(
+                    sourceToken.address,
+                    targetToken.address,
+                    amount
+                );
             }
 
             await reserveToken.transfer(await trader.getAddress(), sourceAmount);
@@ -846,8 +875,8 @@ describe('Profile @profile', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`${bySourceAmount ? 'by source' : 'by target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySource : tradeByTarget;
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         const TRADES_COUNT = 2;
 
@@ -883,8 +912,8 @@ describe('Profile @profile', () => {
                 });
 
                 for (const bySourceAmount of [true, false]) {
-                    context(`permitted ${bySourceAmount ? 'by source' : 'by target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySourcePermitted : tradeByTargetPermitted;
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
 
                         beforeEach(async () => {
                             await approve(amount, bySourceAmount);

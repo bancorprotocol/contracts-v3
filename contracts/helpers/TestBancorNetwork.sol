@@ -125,7 +125,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmountAndNetworkFee memory) {
-        return poolCollection.tradeBySource(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
+        return poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
     function tradeByTargetPoolCollectionT(
@@ -136,7 +136,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 targetAmount,
         uint256 maxSourceAmount
     ) external returns (TradeAmountAndNetworkFee memory) {
-        return poolCollection.tradeByTarget(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount);
+        return poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount);
     }
 
     function approveT(

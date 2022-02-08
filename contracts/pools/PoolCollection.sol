@@ -624,7 +624,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeBySource(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -671,7 +671,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeByTarget(
+    function tradeByTargetAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -718,7 +718,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeOutputAndFeeBySource(
+    function tradeOutputAndFeeBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
@@ -731,7 +731,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function tradeInputAndFeeByTarget(
+    function tradeInputAndFeeByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
@@ -1285,7 +1285,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the target amount and fee by specifying the source amount
+     * @dev returns the target amount and fee by providing the source amount
      */
     function _targetAmountAndFee(
         uint256 sourceBalance,
@@ -1304,7 +1304,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the source amount and fee by specifying the target amount
+     * @dev returns the source amount and fee by providing the target amount
      */
     function _sourceAmountAndFee(
         uint256 sourceBalance,

@@ -163,13 +163,13 @@ interface IPoolCollection is IVersioned {
     ) external;
 
     /**
-     * @dev performs a trade by specifying the source amount and returns the target amount and the resulting fee
+     * @dev performs a trade by providing the source amount and returns the target amount and the associated fee
      *
      * requirements:
      *
      * - the caller must be the network contract
      */
-    function tradeBySource(
+    function tradeBySourceAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -178,13 +178,13 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmountAndNetworkFee memory);
 
     /**
-     * @dev performs a trade by specifying the target amount and returns the required source amount and the resulting fee
+     * @dev performs a trade by providing the target amount and returns the required source amount and the associated fee
      *
      * requirements:
      *
      * - the caller must be the network contract
      */
-    function tradeByTarget(
+    function tradeByTargetAmount(
         bytes32 contextId,
         Token sourceToken,
         Token targetToken,
@@ -193,18 +193,18 @@ interface IPoolCollection is IVersioned {
     ) external returns (TradeAmountAndNetworkFee memory);
 
     /**
-     * @dev returns the output amount and fee when trading by specifying the source amount
+     * @dev returns the output amount and fee when trading by providing the source amount
      */
-    function tradeOutputAndFeeBySource(
+    function tradeOutputAndFeeBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
     ) external view returns (TradeAmountAndFee memory);
 
     /**
-     * @dev returns the input amount and fee when trading by specifying the target amount
+     * @dev returns the input amount and fee when trading by providing the target amount
      */
-    function tradeInputAndFeeByTarget(
+    function tradeInputAndFeeByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
