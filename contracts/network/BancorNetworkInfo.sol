@@ -262,23 +262,23 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function tradeTargetAmount(
+    function tradeOutputBySourceAmount(
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(sourceAmount) returns (uint256) {
-        return _tradeAmount(sourceToken, targetToken, sourceAmount, true);
+        return _tradeOutputAmount(sourceToken, targetToken, sourceAmount, true);
     }
 
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function tradeSourceAmount(
+    function tradeInputByTargetAmount(
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
     ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
-        return _tradeAmount(sourceToken, targetToken, targetAmount, false);
+        return _tradeOutputAmount(sourceToken, targetToken, targetAmount, false);
     }
 
     /**
@@ -289,49 +289,53 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns the target or source amount by specifying the source and the target tokens and whether we're
-     * interested in the target or source amount
+     * @dev returns either the source amount or the target amount by providing the source and the target tokens
+     * and whether we're interested in the target or the source amount
      */
-    function _tradeAmount(
+    function _tradeOutputAmount(
         Token sourceToken,
         Token targetToken,
         uint256 amount,
-        bool targetAmount
+        bool bySourceAmount
     ) private view returns (uint256) {
-        // return the trade amount when trading the network token to the base token
-        if (_isNetworkToken(sourceToken)) {
-            return
-                _poolCollection(targetToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
-        }
+        bool isSourceNetworkToken = _isNetworkToken(sourceToken);
+        bool isTargetNetworkToken = _isNetworkToken(targetToken);
 
-        // return the trade amount when trading the base token to the network token
-        if (_isNetworkToken(targetToken)) {
+        // return the trade amount when trading the network token
+        if (isSourceNetworkToken || isTargetNetworkToken) {
+            Token token = isSourceNetworkToken ? targetToken : sourceToken;
+            IPoolCollection poolCollection = _poolCollection(token);
+
             return
-                _poolCollection(sourceToken).tradeAmountAndFee(sourceToken, targetToken, amount, targetAmount).amount;
+                (
+                    bySourceAmount
+                        ? poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken, targetToken, amount)
+                        : poolCollection.tradeInputAndFeeByTargetAmount(sourceToken, targetToken, amount)
+                ).amount;
         }
 
         // return the target amount by simulating double-hop trade from the source token to the target token via the
         // network token
-        if (targetAmount) {
-            uint256 sourceAmount = _poolCollection(sourceToken)
-                .tradeAmountAndFee(sourceToken, Token(address(_networkToken)), amount, true)
+        if (bySourceAmount) {
+            uint256 targetAmount = _poolCollection(sourceToken)
+                .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_networkToken)), amount)
                 .amount;
 
             return
                 _poolCollection(targetToken)
-                    .tradeAmountAndFee(Token(address(_networkToken)), targetToken, sourceAmount, true)
+                    .tradeOutputAndFeeBySourceAmount(Token(address(_networkToken)), targetToken, targetAmount)
                     .amount;
         }
 
         // return the source amount by simulating a "reverse" double-hop trade from the source token to the target token
         // via the network token
         uint256 requireNetworkAmount = _poolCollection(targetToken)
-            .tradeAmountAndFee(Token(address(_networkToken)), targetToken, amount, false)
+            .tradeInputAndFeeByTargetAmount(Token(address(_networkToken)), targetToken, amount)
             .amount;
 
         return
             _poolCollection(sourceToken)
-                .tradeAmountAndFee(sourceToken, Token(address(_networkToken)), requireNetworkAmount, false)
+                .tradeInputAndFeeByTargetAmount(sourceToken, Token(address(_networkToken)), requireNetworkAmount)
                 .amount;
     }
 
