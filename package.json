@@ -42,7 +42,7 @@
         "lint:ts": "yarn eslint components deploy test utils",
         "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
         "snyk-protect": "snyk protect",
-        "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain/**/*.d.ts\" dist/typechain",
+        "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain/**/*.d.ts\" dist/typechain && husky install",
         "clean": "rm -rf artifacts cache coverage typechain-types",
         "hh": "hardhat"
     },
@@ -91,6 +91,7 @@
         "hardhat-dependency-compiler": "^1.1.2",
         "hardhat-deploy": "^0.10.4",
         "humanize-duration": "^3.27.1",
+        "husky": "^7.0.4",
         "lodash": "^4.17.21",
         "mocha": "^9.1.4",
         "mocha-silent-reporter": "^1.0.0",
