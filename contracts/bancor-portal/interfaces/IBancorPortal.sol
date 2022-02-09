@@ -29,7 +29,7 @@ interface IBancorPortal is IUpgradeable {
      * - unsupported tokens will be transferred to the caller.
      *
      * - returns the deposited amount for each token in the same order as stored in
-     *   uniswaps's pair, 0 for unsupported tokens.
+     *   sushiswap's pair, 0 for unsupported tokens.
      *
      * requirements:
      *

@@ -42,22 +42,17 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
     }
 
     function removeLiquidityETH(
-        address token,
+        address, /*token*/
         uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountETH) {
+        uint256, /*amountETHMin*/
+        address, /*to*/
+        uint256 /*deadline*/
+    ) external returns (uint256, uint256) {
         // mimic approval
         Token(address(_pair)).safeTransferFrom(msg.sender, address(_pair), liquidity);
 
         // mimic uniswap burn
         _pair.burn(msg.sender, liquidity);
-
-        // ignore unused fFisnunction parameters
-        if (amountTokenMin > 0 || amountETHMin > 0 || deadline > 0 || token != address(0) || to != address(0)) {
-            return (liquidity, liquidity);
-        }
+        return (liquidity, liquidity);
     }
 }
