@@ -15,7 +15,7 @@ import { BancorNetwork } from "../network/BancorNetwork.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
-import { IPoolCollection, TradeAmountAndNetworkFee } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -124,7 +124,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmountAndNetworkFee memory) {
+    ) external returns (TradeAmountAndFee memory) {
         return poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount);
     }
 
@@ -135,7 +135,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         Token targetToken,
         uint256 targetAmount,
         uint256 maxSourceAmount
-    ) external returns (TradeAmountAndNetworkFee memory) {
+    ) external returns (TradeAmountAndFee memory) {
         return poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount);
     }
 

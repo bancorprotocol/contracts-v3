@@ -46,12 +46,6 @@ struct TradeAmountAndFee {
     uint256 feeAmount; // the trading fee amount
 }
 
-struct TradeAmountAndNetworkFee {
-    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
-    uint256 feeAmount; // the trading fee amount
-    uint256 networkFeeAmount; // the network fee amount
-}
-
 /**
  * @dev Pool Collection interface
  */
@@ -175,7 +169,7 @@ interface IPoolCollection is IVersioned {
         Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmountAndNetworkFee memory);
+    ) external returns (TradeAmountAndFee memory);
 
     /**
      * @dev performs a trade by providing the target amount and returns the required source amount and the associated fee
@@ -190,7 +184,7 @@ interface IPoolCollection is IVersioned {
         Token targetToken,
         uint256 targetAmount,
         uint256 maxSourceAmount
-    ) external returns (TradeAmountAndNetworkFee memory);
+    ) external returns (TradeAmountAndFee memory);
 
     /**
      * @dev returns the output amount and fee when trading by providing the source amount

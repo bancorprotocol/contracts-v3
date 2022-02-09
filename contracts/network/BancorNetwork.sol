@@ -34,7 +34,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IPoolCollection, TradeAmountAndNetworkFee } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 // prettier-ignore
@@ -1162,7 +1162,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        TradeAmountAndNetworkFee memory tradeAmounts = params.bySourceAmount
+        TradeAmountAndFee memory tradeAmounts = params.bySourceAmount
             ? poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, params.amount, params.limit)
             : poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, params.amount, params.limit);
 

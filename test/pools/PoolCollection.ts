@@ -2530,18 +2530,26 @@ describe('PoolCollection', () => {
                         sourceBalance: BigNumber;
                         targetBalance: BigNumber;
                         tradingFeePPM: number;
+                        networkFeePPM: number;
                         amount: BigNumber;
                         blockNumbers: number[];
                     }
 
                     const testTrading = (spec: Spec) => {
-                        const { sourceBalance, targetBalance, tradingFeePPM, amount, blockNumbers } = spec;
+                        const { sourceBalance, targetBalance, tradingFeePPM, networkFeePPM, amount, blockNumbers } =
+                            spec;
 
                         context(
-                            `with (${[sourceBalance, targetBalance, tradingFeePPM, amount]}) [${blockNumbers}]`,
+                            `with (${[
+                                sourceBalance,
+                                targetBalance,
+                                tradingFeePPM,
+                                networkFeePPM,
+                                amount
+                            ]}) [${blockNumbers}]`,
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
-                                const expectedAverageRate = async (poolData: PoolData, blockNumber: number) => {
+                                const expectedAverageRate = (poolData: PoolData, blockNumber: number) => {
                                     if (blockNumber !== poolData.averageRate.blockNumber) {
                                         const averageRate = poolData.averageRate.rate;
                                         const spotRate = {
@@ -2562,42 +2570,65 @@ describe('PoolCollection', () => {
                                             .div(BigNumber.from(2).pow(112).sub(1))
                                             .add(1);
                                         return {
-                                            blockNumber: blockNumber,
+                                            blockNumber,
                                             rate: { n: newAverageRate.n.div(scale), d: newAverageRate.d.div(scale) }
                                         };
                                     }
                                     return poolData.averageRate;
                                 };
 
-                                const expectedTargetAmountAndFee = (sourceAmount: BigNumber, poolData: PoolData) => {
-                                    const { liquidity } = poolData;
+                                const expectedNetworkFeeAmount = (
+                                    feeAmount: BigNumber,
+                                    networkTokenTradingLiquidity: BigNumber,
+                                    baseTokenTradingLiquidity: BigNumber
+                                ) => {
+                                    const fullNetworkFeeAmount = feeAmount.mul(networkFeePPM).div(PPM_RESOLUTION);
 
+                                    if (isSourceNetworkToken) {
+                                        return expectedTargetAmountAndFee(
+                                            fullNetworkFeeAmount,
+                                            0,
+                                            networkTokenTradingLiquidity,
+                                            baseTokenTradingLiquidity
+                                        ).amount;
+                                    }
+
+                                    return fullNetworkFeeAmount;
+                                };
+
+                                const expectedTargetAmountAndFee = (
+                                    sourceAmount: BigNumber,
+                                    tradingFeePPM: number,
+                                    networkTokenTradingLiquidity: BigNumber,
+                                    baseTokenTradingLiquidity: BigNumber
+                                ) => {
                                     const sourceTokenBalance = isSourceNetworkToken
-                                        ? liquidity.networkTokenTradingLiquidity
-                                        : liquidity.baseTokenTradingLiquidity;
+                                        ? networkTokenTradingLiquidity
+                                        : baseTokenTradingLiquidity;
                                     const targetTokenBalance = isSourceNetworkToken
-                                        ? liquidity.baseTokenTradingLiquidity
-                                        : liquidity.networkTokenTradingLiquidity;
+                                        ? baseTokenTradingLiquidity
+                                        : networkTokenTradingLiquidity;
 
-                                    const amount = new Decimal(targetTokenBalance.toString())
-                                        .mul(sourceAmount.toString())
+                                    const amount = targetTokenBalance
+                                        .mul(sourceAmount)
                                         .div(sourceTokenBalance.add(sourceAmount).toString());
-                                    const feeAmount = new Decimal(amount.toString())
-                                        .mul(poolData.tradingFeePPM)
-                                        .div(PPM_RESOLUTION);
+                                    const feeAmount = amount.mul(tradingFeePPM).div(PPM_RESOLUTION);
 
                                     return { amount: amount.sub(feeAmount), feeAmount };
                                 };
 
-                                const expectedSourceAmountAndFee = (targetAmount: BigNumber, poolData: PoolData) => {
-                                    const { liquidity } = poolData;
-
+                                const expectedSourceAmountAndFee = (
+                                    targetAmount: BigNumber,
+                                    tradingFeePPM: number,
+                                    networkTokenTradingLiquidity: BigNumber,
+                                    baseTokenTradingLiquidity: BigNumber
+                                ) => {
                                     const sourceTokenBalance = isSourceNetworkToken
-                                        ? liquidity.networkTokenTradingLiquidity
-                                        : liquidity.baseTokenTradingLiquidity;
+                                        ? networkTokenTradingLiquidity
+                                        : baseTokenTradingLiquidity;
                                     const targetTokenBalance = isSourceNetworkToken
-                                        ? liquidity.baseTokenTradingLiquidity
-                                        : liquidity.networkTokenTradingLiquidity;
+                                        ? baseTokenTradingLiquidity
+                                        : networkTokenTradingLiquidity;
 
                                     const feeAmount = targetAmount
                                         .mul(tradingFeePPM)
@@ -2611,6 +2642,8 @@ describe('PoolCollection', () => {
                                 };
 
                                 beforeEach(async () => {
+                                    await networkSettings.setNetworkFeePPM(networkFeePPM);
+
                                     const networkTokenTradingLiquidity = isSourceNetworkToken
                                         ? sourceBalance
                                         : targetBalance;
@@ -2664,12 +2697,40 @@ describe('PoolCollection', () => {
                                             MIN_RETURN_AMOUNT
                                         );
 
-                                        const expectedTargetAmounts = expectedTargetAmountAndFee(amount, prevPoolData);
+                                        const expectedTargetAmounts = expectedTargetAmountAndFee(
+                                            amount,
+                                            tradingFeePPM,
+                                            prevLiquidity.networkTokenTradingLiquidity,
+                                            prevLiquidity.baseTokenTradingLiquidity
+                                        );
+
+                                        let newNetworkTokenTradingLiquidity =
+                                            prevLiquidity.networkTokenTradingLiquidity;
+                                        let newBaseTokenTradingLiquidity = prevLiquidity.baseTokenTradingLiquidity;
+                                        if (isSourceNetworkToken) {
+                                            newNetworkTokenTradingLiquidity =
+                                                newNetworkTokenTradingLiquidity.add(amount);
+                                            newBaseTokenTradingLiquidity = newBaseTokenTradingLiquidity.sub(
+                                                expectedTargetAmounts.amount
+                                            );
+                                        } else {
+                                            newNetworkTokenTradingLiquidity = newNetworkTokenTradingLiquidity.sub(
+                                                expectedTargetAmounts.amount
+                                            );
+                                            newBaseTokenTradingLiquidity = newBaseTokenTradingLiquidity.add(amount);
+                                        }
+
+                                        const expectedNetworkFee = expectedNetworkFeeAmount(
+                                            expectedTargetAmounts.feeAmount,
+                                            newNetworkTokenTradingLiquidity,
+                                            newBaseTokenTradingLiquidity
+                                        );
+
                                         expect(targetAmountAndFee.amount).to.almostEqual(expectedTargetAmounts.amount, {
                                             maxRelativeError: new Decimal('0.0000000000000000001')
                                         });
                                         expect(targetAmountAndFee.feeAmount).to.almostEqual(
-                                            expectedTargetAmounts.feeAmount,
+                                            expectedTargetAmounts.feeAmount.sub(expectedNetworkFee),
                                             {
                                                 maxRelativeError: new Decimal('0.000000000000000006'),
                                                 relation: Relation.LesserOrEqual
@@ -2686,6 +2747,9 @@ describe('PoolCollection', () => {
                                                 relation: Relation.GreaterOrEqual
                                             }
                                         );
+
+                                        expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
+                                        expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -2710,25 +2774,28 @@ describe('PoolCollection', () => {
 
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
-                                        expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
-                                        expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
-
                                         if (isSourceNetworkToken) {
+                                            const fullNetworkFeeAmount = expectedTargetAmounts.feeAmount
+                                                .mul(networkFeePPM)
+                                                .div(PPM_RESOLUTION);
+
                                             expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.networkTokenTradingLiquidity.add(amount)
+                                                newNetworkTokenTradingLiquidity.sub(expectedNetworkFee)
                                             );
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.baseTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                                newBaseTokenTradingLiquidity.add(fullNetworkFeeAmount)
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance.add(tradeAmounts.feeAmount)
+                                                prevLiquidity.stakedBalance
+                                                    .add(tradeAmounts.feeAmount)
+                                                    .sub(fullNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.baseTokenTradingLiquidity.add(amount)
+                                                newBaseTokenTradingLiquidity
                                             );
                                             expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.networkTokenTradingLiquidity.sub(tradeAmounts.amount)
+                                                newNetworkTokenTradingLiquidity
                                             );
                                         }
 
@@ -2781,12 +2848,40 @@ describe('PoolCollection', () => {
                                             MAX_SOURCE_AMOUNT
                                         );
 
-                                        const expectedSourceAmounts = expectedSourceAmountAndFee(amount, prevPoolData);
+                                        const expectedSourceAmounts = expectedSourceAmountAndFee(
+                                            amount,
+                                            tradingFeePPM,
+                                            prevLiquidity.networkTokenTradingLiquidity,
+                                            prevLiquidity.baseTokenTradingLiquidity
+                                        );
+
+                                        let newNetworkTokenTradingLiquidity =
+                                            prevLiquidity.networkTokenTradingLiquidity;
+                                        let newBaseTokenTradingLiquidity = prevLiquidity.baseTokenTradingLiquidity;
+                                        if (isSourceNetworkToken) {
+                                            newNetworkTokenTradingLiquidity = newNetworkTokenTradingLiquidity.add(
+                                                expectedSourceAmounts.amount
+                                            );
+                                            newBaseTokenTradingLiquidity = newBaseTokenTradingLiquidity.sub(amount);
+                                        } else {
+                                            newNetworkTokenTradingLiquidity =
+                                                newNetworkTokenTradingLiquidity.sub(amount);
+                                            newBaseTokenTradingLiquidity = newBaseTokenTradingLiquidity.add(
+                                                expectedSourceAmounts.amount
+                                            );
+                                        }
+
+                                        const expectedNetworkFee = expectedNetworkFeeAmount(
+                                            expectedSourceAmounts.feeAmount,
+                                            newNetworkTokenTradingLiquidity,
+                                            newBaseTokenTradingLiquidity
+                                        );
+
                                         expect(sourceAmountAndFee.amount).to.almostEqual(expectedSourceAmounts.amount, {
                                             maxRelativeError: new Decimal('0.0000000000000000001')
                                         });
                                         expect(sourceAmountAndFee.feeAmount).to.almostEqual(
-                                            expectedSourceAmounts.feeAmount,
+                                            expectedSourceAmounts.feeAmount.sub(expectedNetworkFee),
                                             {
                                                 maxRelativeError: new Decimal('0.000000000000000006'),
                                                 relation: Relation.LesserOrEqual
@@ -2799,10 +2894,14 @@ describe('PoolCollection', () => {
                                         expect(targetAmountAndFee.feeAmount).to.almostEqual(
                                             sourceAmountAndFee.feeAmount,
                                             {
+                                                maxAbsoluteError: new Decimal(1),
                                                 maxRelativeError: new Decimal('0.000000000000000002'),
                                                 relation: Relation.LesserOrEqual
                                             }
                                         );
+
+                                        expect(tradeAmounts.amount).to.equal(sourceAmountAndFee.amount);
+                                        expect(tradeAmounts.feeAmount).to.equal(sourceAmountAndFee.feeAmount);
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -2827,25 +2926,28 @@ describe('PoolCollection', () => {
 
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
-                                        expect(tradeAmounts.amount).to.equal(sourceAmountAndFee.amount);
-                                        expect(tradeAmounts.feeAmount).to.equal(sourceAmountAndFee.feeAmount);
-
                                         if (isSourceNetworkToken) {
+                                            const fullNetworkFeeAmount = expectedSourceAmounts.feeAmount
+                                                .mul(networkFeePPM)
+                                                .div(PPM_RESOLUTION);
+
                                             expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.networkTokenTradingLiquidity.add(tradeAmounts.amount)
+                                                newNetworkTokenTradingLiquidity.sub(expectedNetworkFee)
                                             );
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.baseTokenTradingLiquidity.sub(amount)
+                                                newBaseTokenTradingLiquidity.add(fullNetworkFeeAmount)
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance.add(tradeAmounts.feeAmount)
+                                                prevLiquidity.stakedBalance
+                                                    .add(tradeAmounts.feeAmount)
+                                                    .sub(fullNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.baseTokenTradingLiquidity.add(tradeAmounts.amount)
+                                                newBaseTokenTradingLiquidity
                                             );
                                             expect(liquidity.networkTokenTradingLiquidity).to.equal(
-                                                prevLiquidity.networkTokenTradingLiquidity.sub(amount)
+                                                newNetworkTokenTradingLiquidity
                                             );
                                         }
 
@@ -2868,14 +2970,17 @@ describe('PoolCollection', () => {
                         for (const sourceBalance of [1_000_000, 5_000_000]) {
                             for (const targetBalance of [1_000_000, 5_000_000]) {
                                 for (const tradingFeePercent of [0, 10]) {
-                                    for (const amount of [1_000]) {
-                                        testTrading({
-                                            sourceBalance: toWei(sourceBalance),
-                                            targetBalance: toWei(targetBalance),
-                                            tradingFeePPM: toPPM(tradingFeePercent),
-                                            amount: toWei(amount),
-                                            blockNumbers: [0, 200, 500, 500, 600]
-                                        });
+                                    for (const networkFeePercent of [0, 20]) {
+                                        for (const amount of [1_000]) {
+                                            testTrading({
+                                                sourceBalance: toWei(sourceBalance),
+                                                targetBalance: toWei(targetBalance),
+                                                tradingFeePPM: toPPM(tradingFeePercent),
+                                                networkFeePPM: toPPM(networkFeePercent),
+                                                amount: toWei(amount),
+                                                blockNumbers: [0, 200, 500, 500, 600]
+                                            });
+                                        }
                                     }
                                 }
                             }
@@ -2886,14 +2991,17 @@ describe('PoolCollection', () => {
                         for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
                             for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
                                 for (const tradingFeePercent of [0, 1, 10]) {
-                                    for (const amount of [1_000, 10_000, 100_000]) {
-                                        testTrading({
-                                            sourceBalance: toWei(sourceBalance),
-                                            targetBalance: toWei(targetBalance),
-                                            tradingFeePPM: toPPM(tradingFeePercent),
-                                            amount: toWei(amount),
-                                            blockNumbers: [0, 1, 2, 10, 10, 100, 200, 400, 500]
-                                        });
+                                    for (const networkFeePercent of [0, 20]) {
+                                        for (const amount of [1_000, 10_000, 100_000]) {
+                                            testTrading({
+                                                sourceBalance: toWei(sourceBalance),
+                                                targetBalance: toWei(targetBalance),
+                                                tradingFeePPM: toPPM(tradingFeePercent),
+                                                networkFeePPM: toPPM(networkFeePercent),
+                                                amount: toWei(amount),
+                                                blockNumbers: [0, 1, 2, 10, 10, 100, 200, 400, 500]
+                                            });
+                                        }
                                     }
                                 }
                             }

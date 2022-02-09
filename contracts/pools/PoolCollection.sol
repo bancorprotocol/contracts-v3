@@ -13,7 +13,20 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Fraction112, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
+
+// prettier-ignore
+import {
+    Fraction,
+    Fraction112,
+    Sint256,
+    zeroFraction,
+    zeroFraction112,
+    isFractionPositive,
+    isFraction112Positive,
+    toFraction112,
+    fromFraction112
+} from "../utility/Types.sol";
+
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
@@ -44,8 +57,7 @@ import {
     TRADING_STATUS_UPDATE_DEFAULT,
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
-    TradeAmountAndFee,
-    TradeAmountAndNetworkFee
+    TradeAmountAndFee
 } from "./interfaces/IPoolCollection.sol";
 
 import { IMasterPool } from "./interfaces/IMasterPool.sol";
@@ -105,6 +117,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token pool;
         bool isSourceNetworkToken;
         uint32 tradingFeePPM;
+    }
+
+    struct NetworkFeeAmounts {
+        uint256 feeAmount;
+        uint256 tradedTargetAmount;
+    }
+
+    struct TradeAmountAndFullFees {
+        TradeAmountAndFee tradeAmounts;
+        NetworkFeeAmounts networkFeeAmounts;
     }
 
     // the network contract
@@ -635,36 +657,32 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmountAndNetworkFee memory)
+        returns (TradeAmountAndFee memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        TradeAmountAndFee memory tradeAmounts = _targetAmountAndFee(
-            params.sourceBalance,
-            params.targetBalance,
-            params.tradingFeePPM,
-            sourceAmount
-        );
+        // return the trading amounts, fee (which already includes the network fee amount), and network fee amounts
+        TradeAmountAndFullFees memory targetAmountsAndFullFees = _targetAmountAndFee(params, sourceAmount);
 
         // ensure that the target amount is above the requested minimum return amount
-        if (tradeAmounts.amount < minReturnAmount) {
+        if (targetAmountsAndFullFees.tradeAmounts.amount < minReturnAmount) {
             revert InsufficientTargetAmount();
         }
 
         // perform the trade and update the liquidity
-        uint256 networkFeeAmount = _performTrade(
+        _performTrade(
             contextId,
             params,
             sourceAmount,
-            tradeAmounts.amount,
-            tradeAmounts.feeAmount
+            targetAmountsAndFullFees.tradeAmounts.amount,
+            targetAmountsAndFullFees.tradeAmounts.feeAmount,
+            targetAmountsAndFullFees.networkFeeAmounts
         );
 
         return
-            TradeAmountAndNetworkFee({
-                amount: tradeAmounts.amount,
-                feeAmount: tradeAmounts.feeAmount,
-                networkFeeAmount: networkFeeAmount
+            TradeAmountAndFee({
+                amount: targetAmountsAndFullFees.tradeAmounts.amount,
+                feeAmount: targetAmountsAndFullFees.tradeAmounts.feeAmount
             });
     }
 
@@ -682,36 +700,32 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         greaterThanZero(targetAmount)
         greaterThanZero(maxSourceAmount)
-        returns (TradeAmountAndNetworkFee memory)
+        returns (TradeAmountAndFee memory)
     {
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
-        TradeAmountAndFee memory sourceAmounts = _sourceAmountAndFee(
-            params.sourceBalance,
-            params.targetBalance,
-            params.tradingFeePPM,
-            targetAmount
-        );
+        // return the trading amounts, fee (which already includes the network fee amount), and network fee amounts
+        TradeAmountAndFullFees memory sourceAmountsAndFullFees = _sourceAmountAndFee(params, targetAmount);
 
         // ensure that the user has provided enough tokens to make the trade
-        if (sourceAmounts.amount > maxSourceAmount) {
+        if (sourceAmountsAndFullFees.tradeAmounts.amount > maxSourceAmount) {
             revert InsufficientSourceAmount();
         }
 
         // perform the trade and update the liquidity
-        uint256 networkFeeAmount = _performTrade(
+        _performTrade(
             contextId,
             params,
-            sourceAmounts.amount,
+            sourceAmountsAndFullFees.tradeAmounts.amount,
             targetAmount,
-            sourceAmounts.feeAmount
+            sourceAmountsAndFullFees.tradeAmounts.feeAmount,
+            sourceAmountsAndFullFees.networkFeeAmounts
         );
 
         return
-            TradeAmountAndNetworkFee({
-                amount: sourceAmounts.amount,
-                feeAmount: sourceAmounts.feeAmount,
-                networkFeeAmount: networkFeeAmount
+            TradeAmountAndFee({
+                amount: sourceAmountsAndFullFees.tradeAmounts.amount,
+                feeAmount: sourceAmountsAndFullFees.tradeAmounts.feeAmount
             });
     }
 
@@ -723,9 +737,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token targetToken,
         uint256 sourceAmount
     ) external view greaterThanZero(sourceAmount) returns (TradeAmountAndFee memory) {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
+        return _targetAmountAndFee(_tradeParams(sourceToken, targetToken), sourceAmount).tradeAmounts;
     }
 
     /**
@@ -736,9 +748,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token targetToken,
         uint256 targetAmount
     ) external view greaterThanZero(targetAmount) returns (TradeAmountAndFee memory) {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
+        return _sourceAmountAndFee(_tradeParams(sourceToken, targetToken), targetAmount).tradeAmounts;
     }
 
     /**
@@ -1287,7 +1297,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @dev returns the target amount and fee by providing the source amount
      */
-    function _targetAmountAndFee(
+    function _targetAmountAndTradingFee(
         uint256 sourceBalance,
         uint256 targetBalance,
         uint32 tradingFeePPM,
@@ -1304,9 +1314,41 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns the source amount and fee by providing the target amount
+     * @dev returns the target amount and fees by providing the source amount
      */
-    function _sourceAmountAndFee(
+    function _targetAmountAndFee(TradingParams memory params, uint256 sourceAmount)
+        private
+        view
+        returns (TradeAmountAndFullFees memory)
+    {
+        TradeAmountAndFee memory tradeAmounts = _targetAmountAndTradingFee(
+            params.sourceBalance,
+            params.targetBalance,
+            params.tradingFeePPM,
+            sourceAmount
+        );
+
+        NetworkFeeAmounts memory networkFeeAmounts = _networkFeeAmount(
+            params,
+            sourceAmount,
+            tradeAmounts.amount,
+            tradeAmounts.feeAmount
+        );
+
+        return
+            TradeAmountAndFullFees({
+                tradeAmounts: TradeAmountAndFee({
+                    amount: tradeAmounts.amount,
+                    feeAmount: tradeAmounts.feeAmount - networkFeeAmounts.feeAmount
+                }),
+                networkFeeAmounts: networkFeeAmounts
+            });
+    }
+
+    /**
+     * @dev returns the target amount and fee by providing the source amount
+     */
+    function _sourceAmountAndTradingFee(
         uint256 sourceBalance,
         uint256 targetBalance,
         uint32 tradingFeePPM,
@@ -1324,6 +1366,72 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
+     * @dev returns the source amount and fees by providing the target amount
+     */
+    function _sourceAmountAndFee(TradingParams memory params, uint256 targetAmount)
+        private
+        view
+        returns (TradeAmountAndFullFees memory)
+    {
+        TradeAmountAndFee memory tradeAmounts = _sourceAmountAndTradingFee(
+            params.sourceBalance,
+            params.targetBalance,
+            params.tradingFeePPM,
+            targetAmount
+        );
+
+        NetworkFeeAmounts memory networkFeeAmounts = _networkFeeAmount(
+            params,
+            tradeAmounts.amount,
+            targetAmount,
+            tradeAmounts.feeAmount
+        );
+
+        return
+            TradeAmountAndFullFees({
+                tradeAmounts: TradeAmountAndFee({
+                    amount: tradeAmounts.amount,
+                    feeAmount: tradeAmounts.feeAmount - networkFeeAmounts.feeAmount
+                }),
+                networkFeeAmounts: networkFeeAmounts
+            });
+    }
+
+    /**
+     * @dev returns the network fee amount
+     */
+    function _networkFeeAmount(
+        TradingParams memory params,
+        uint256 sourceAmount,
+        uint256 targetAmount,
+        uint256 feeAmount
+    ) private view returns (NetworkFeeAmounts memory) {
+        uint32 networkFeePPM = _networkSettings.networkFeePPM();
+        if (networkFeePPM == 0) {
+            return NetworkFeeAmounts({ feeAmount: 0, tradedTargetAmount: 0 });
+        }
+
+        // calculate the full network fee amount
+        uint256 fullNetworkFeeAmount = MathEx.mulDivF(feeAmount, networkFeePPM, PPM_RESOLUTION);
+
+        if (params.isSourceNetworkToken) {
+            // trade the network fee (taken from the base token) to the network token
+            return
+                NetworkFeeAmounts({
+                    feeAmount: _targetAmountAndTradingFee(
+                        params.sourceBalance + sourceAmount,
+                        params.targetBalance - targetAmount,
+                        0,
+                        fullNetworkFeeAmount
+                    ).amount,
+                    tradedTargetAmount: fullNetworkFeeAmount
+                });
+        }
+
+        return NetworkFeeAmounts({ feeAmount: fullNetworkFeeAmount, tradedTargetAmount: fullNetworkFeeAmount });
+    }
+
+    /**
      * @dev performs a trade, updates the trading liquidity, and returns the protocol revenue
      */
     function _performTrade(
@@ -1331,8 +1439,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         TradingParams memory params,
         uint256 sourceAmount,
         uint256 targetAmount,
-        uint256 feeAmount
-    ) private returns (uint256) {
+        uint256 feeAmount,
+        NetworkFeeAmounts memory networkFeeAmounts
+    ) private {
         Pool storage data = _poolData[params.pool];
 
         // update the recent average rate
@@ -1344,36 +1453,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             })
         );
 
-        // process the network fee and protocol revenue
-        uint256 fullNetworkFeeAmount = MathEx.mulDivF(feeAmount, _networkSettings.networkFeePPM(), PPM_RESOLUTION);
-        uint256 networkFeeAmount;
-
         // sync the reserve balances and process the network fee
         PoolLiquidity memory newLiquidity;
+        uint256 newSourceBalance = params.sourceBalance + sourceAmount;
+        uint256 newTargetBalance = params.targetBalance - targetAmount;
 
         if (params.isSourceNetworkToken) {
-            // trade the network fee (taken from the base token) to the network token
-            uint256 newNetworkTokenBalance = params.sourceBalance + sourceAmount;
-            uint256 newBaseTokenBalance = params.targetBalance - targetAmount;
-            networkFeeAmount = _targetAmountAndFee(newNetworkTokenBalance, newBaseTokenBalance, 0, fullNetworkFeeAmount)
-                .amount;
-
-            // exclude the network fee from the trading liquidity and the staked balance
+            // since we have received the network fee in base tokens and have traded them for network tokens (so that
+            // the network fee is always kept in network tokens), we'd need to adapt the trading liquidity and the
+            // staked balance accordingly
             newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: newNetworkTokenBalance - networkFeeAmount,
-                baseTokenTradingLiquidity: newBaseTokenBalance + fullNetworkFeeAmount,
-                stakedBalance: params.liquidity.stakedBalance - fullNetworkFeeAmount
+                networkTokenTradingLiquidity: newSourceBalance - networkFeeAmounts.feeAmount,
+                baseTokenTradingLiquidity: newTargetBalance + networkFeeAmounts.tradedTargetAmount,
+                stakedBalance: params.liquidity.stakedBalance + feeAmount - networkFeeAmounts.tradedTargetAmount
             });
         } else {
-            // take the network fee directly from the trading fee
-            feeAmount -= fullNetworkFeeAmount;
-
-            networkFeeAmount = fullNetworkFeeAmount;
-
             // exclude the network fee from the trading liquidity
             newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: params.targetBalance - targetAmount,
-                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
+                networkTokenTradingLiquidity: newTargetBalance,
+                baseTokenTradingLiquidity: newSourceBalance,
                 stakedBalance: params.liquidity.stakedBalance
             });
         }
@@ -1384,8 +1482,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         data.liquidity = newLiquidity;
 
         _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
-
-        return networkFeeAmount;
     }
 
     /**

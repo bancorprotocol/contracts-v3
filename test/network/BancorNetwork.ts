@@ -26,7 +26,7 @@ import {
     TestStandardPoolConverter,
     TokenGovernance
 } from '../../components/LegacyContracts';
-import { TradeAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
@@ -2114,8 +2114,8 @@ describe('BancorNetwork', () => {
 
             const prevMasterPoolStakedBalance = await masterPool.stakedBalance();
 
-            let hop1!: TradeAmountsStructOutput;
-            let hop2!: TradeAmountsStructOutput;
+            let hop1!: TradeAmountAndFeeStructOutput;
+            let hop2!: TradeAmountAndFeeStructOutput;
 
             let limit: BigNumber;
 
