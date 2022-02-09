@@ -1162,13 +1162,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        TradeAmountAndFee memory tradeAmounts = params.bySourceAmount
+        TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
             ? poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, params.amount, params.limit)
             : poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, params.amount, params.limit);
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
-            _masterPool.onFeesCollected(pool, tradeAmounts.feeAmount, TRADING_FEE);
+            _masterPool.onFeesCollected(pool, tradeAmountsAndFee.feeAmount, TRADING_FEE);
         }
 
         emit TokensTraded({
@@ -1176,8 +1176,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             pool: pool,
             sourceToken: sourceToken,
             targetToken: targetToken,
-            sourceAmount: params.bySourceAmount ? params.amount : tradeAmounts.amount,
-            targetAmount: params.bySourceAmount ? tradeAmounts.amount : params.amount,
+            sourceAmount: params.bySourceAmount ? params.amount : tradeAmountsAndFee.amount,
+            targetAmount: params.bySourceAmount ? tradeAmountsAndFee.amount : params.amount,
             trader: trader
         });
 
@@ -1185,10 +1185,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId: contextId,
             token: targetToken,
             feeType: TRADING_FEE,
-            amount: tradeAmounts.feeAmount
+            amount: tradeAmountsAndFee.feeAmount
         });
 
-        return tradeAmounts.amount;
+        return tradeAmountsAndFee.amount;
     }
 
     /**

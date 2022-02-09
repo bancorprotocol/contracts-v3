@@ -1321,7 +1321,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         returns (TradeAmountAndFullFees memory)
     {
-        TradeAmountAndFee memory tradeAmounts = _targetAmountAndTradingFee(
+        TradeAmountAndFee memory tradeAmountsAndFee = _targetAmountAndTradingFee(
             params.sourceBalance,
             params.targetBalance,
             params.tradingFeePPM,
@@ -1331,15 +1331,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         NetworkFeeAmounts memory networkFeeAmounts = _networkFeeAmount(
             params,
             sourceAmount,
-            tradeAmounts.amount,
-            tradeAmounts.feeAmount
+            tradeAmountsAndFee.amount,
+            tradeAmountsAndFee.feeAmount
         );
 
         return
             TradeAmountAndFullFees({
-                tradeAmounts: TradeAmountAndFee({
-                    amount: tradeAmounts.amount,
-                    feeAmount: tradeAmounts.feeAmount - networkFeeAmounts.feeAmount
+                tradeAmountsAndFee: TradeAmountAndFee({
+                    amount: tradeAmountsAndFee.amount,
+                    feeAmount: tradeAmountsAndFee.feeAmount - networkFeeAmounts.feeAmount
                 }),
                 networkFeeAmounts: networkFeeAmounts
             });
