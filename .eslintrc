@@ -1,7 +1,7 @@
 {
     "extends": ["standard", "prettier", "plugin:@typescript-eslint/recommended"],
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint"],
+    "plugins": ["@typescript-eslint", "mocha"],
     "env": {
         "mocha": true
     },
@@ -28,6 +28,7 @@
         "arrow-body-style": "off",
         "no-loop-func": "off",
         "no-unused-expressions": "off",
+        "mocha/no-exclusive-tests": "error",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off"
