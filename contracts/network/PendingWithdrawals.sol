@@ -33,7 +33,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     error WithdrawalNotAllowed();
 
     uint32 private constant DEFAULT_LOCK_DURATION = 7 days;
-    uint32 private constant DEFAULT_WITHDRAWAL_WINDOW_DURATION = 3 days;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -47,9 +46,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     // the lock duration
     uint32 private _lockDuration;
 
-    // the withdrawal window duration
-    uint32 private _withdrawalWindowDuration;
-
     // a mapping between accounts and their pending withdrawal requests
     uint256 private _nextWithdrawalRequestId;
     mapping(address => EnumerableSetUpgradeable.UintSet) private _withdrawalRequestIdsByProvider;
@@ -62,11 +58,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev triggered when the lock duration is updated
      */
     event LockDurationUpdated(uint32 prevLockDuration, uint32 newLockDuration);
-
-    /**
-     * @dev triggered when withdrawal window duration
-     */
-    event WithdrawalWindowDurationUpdated(uint32 prevWithdrawalWindowDuration, uint32 newWithdrawalWindowDuration);
 
     /**
      * @dev triggered when a provider requests to initiate a liquidity withdrawal
@@ -83,18 +74,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev triggered when a provider cancels a liquidity withdrawal request
      */
     event WithdrawalCancelled(
-        Token indexed pool,
-        address indexed provider,
-        uint256 indexed requestId,
-        uint256 poolTokenAmount,
-        uint256 reserveTokenAmount,
-        uint32 timeElapsed
-    );
-
-    /**
-     * @dev triggered when a provider requests to reinitiate a liquidity withdrawal
-     */
-    event WithdrawalReinitiated(
         Token indexed pool,
         address indexed provider,
         uint256 indexed requestId,
@@ -152,7 +131,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     function __PendingWithdrawals_init_unchained() internal onlyInitializing {
         _setLockDuration(DEFAULT_LOCK_DURATION);
-        _setWithdrawalWindowDuration(DEFAULT_WITHDRAWAL_WINDOW_DURATION);
     }
 
     // solhint-enable func-name-mixedcase
@@ -184,28 +162,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     function setLockDuration(uint32 newLockDuration) external onlyAdmin {
         _setLockDuration(newLockDuration);
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function withdrawalWindowDuration() external view returns (uint32) {
-        return _withdrawalWindowDuration;
-    }
-
-    /**
-     * @dev sets withdrawal window duration
-     *
-     * notes:
-     *
-     * - updating it will affect existing locked positions retroactively
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) external onlyAdmin {
-        _setWithdrawalWindowDuration(newWithdrawalWindowDuration);
     }
 
     /**
@@ -263,30 +219,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         }
 
         _cancelWithdrawal(request, id);
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function reinitWithdrawal(address provider, uint256 id) external only(address(_network)) {
-        WithdrawalRequest storage request = _withdrawalRequests[id];
-
-        if (request.provider != provider) {
-            revert AccessDenied();
-        }
-
-        uint32 currentTime = _time();
-
-        emit WithdrawalReinitiated({
-            pool: request.poolToken.reserveToken(),
-            provider: provider,
-            requestId: id,
-            poolTokenAmount: request.poolTokenAmount,
-            reserveTokenAmount: request.reserveTokenAmount,
-            timeElapsed: currentTime - request.createdAt
-        });
-
-        request.createdAt = currentTime;
     }
 
     /**
@@ -370,27 +302,6 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         _lockDuration = newLockDuration;
 
         emit LockDurationUpdated({ prevLockDuration: prevLockDuration, newLockDuration: newLockDuration });
-    }
-
-    /**
-     * @dev sets withdrawal window duration
-     *
-     * notes:
-     *
-     * - updating it will affect existing locked positions retroactively
-     */
-    function _setWithdrawalWindowDuration(uint32 newWithdrawalWindowDuration) private {
-        uint32 prevWithdrawalWindowDuration = _withdrawalWindowDuration;
-        if (prevWithdrawalWindowDuration == newWithdrawalWindowDuration) {
-            return;
-        }
-
-        _withdrawalWindowDuration = newWithdrawalWindowDuration;
-
-        emit WithdrawalWindowDurationUpdated({
-            prevWithdrawalWindowDuration: prevWithdrawalWindowDuration,
-            newWithdrawalWindowDuration: newWithdrawalWindowDuration
-        });
     }
 
     /**
@@ -479,13 +390,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     }
 
     /**
-     * @dev returns whether it's possible to withdraw a request at the provided time (i.e., that it's older than the
-     * lock duration but not older than the lock duration + withdrawal window duration)
+     * @dev returns whether it's possible to withdraw a request at the provided time
      */
     function _canWithdrawAt(uint32 time, uint32 createdAt) private view returns (bool) {
-        uint32 withdrawalStartTime = createdAt + _lockDuration;
-        uint32 withdrawalEndTime = withdrawalStartTime + _withdrawalWindowDuration;
-
-        return withdrawalStartTime <= time && time <= withdrawalEndTime;
+        return createdAt + _lockDuration <= time;
     }
 }
