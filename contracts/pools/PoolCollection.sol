@@ -379,7 +379,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return false;
         }
 
-        return _isPoolRateStable(data.liquidity, data.averageRate);
+        return _isPoolRateValidAndStable(data.liquidity, data.averageRate);
     }
 
     /**
@@ -582,16 +582,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             Fraction memory averageRate = fromFraction112(data.averageRate.rate);
             uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
 
-            if (isFractionPositive(averageRate) && data.liquidity.networkTokenTradingLiquidity >= minLiquidityForTrading) {
+            if (
+                isFractionPositive(averageRate) && data.liquidity.networkTokenTradingLiquidity >= minLiquidityForTrading
+            ) {
                 // adjust the trading liquidity based on the base token vault balance and funding limits
-                _updateTradingLiquidity(
-                    contextId,
-                    pool,
-                    data,
-                    data.liquidity,
-                    averageRate,
-                    minLiquidityForTrading
-                );
+                _updateTradingLiquidity(contextId, pool, data, data.liquidity, averageRate, minLiquidityForTrading);
             } else {
                 // reset the trading liquidity
                 _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
@@ -867,7 +862,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         PoolLiquidity storage liquidity = data.liquidity;
         PoolLiquidity memory prevLiquidity = liquidity;
 
-        if (!_isPoolRateStable(prevLiquidity, data.averageRate)) {
+        // if the pool rate is valid and unstable, then revert
+        if (_isPoolRateValidAndUnstable(prevLiquidity, data.averageRate)) {
             revert RateUnstable();
         }
 
@@ -1022,8 +1018,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // try to check whether the pool is stable (when both reserves and the average rate are available)
-        if (!_isPoolRateStable(liquidity, data.averageRate)) {
+        // if the pool rate is valid and unstable, then return
+        if (_isPoolRateValidAndUnstable(liquidity, data.averageRate)) {
             return;
         }
 
@@ -1288,13 +1284,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Pool storage data = _poolData[params.pool];
 
         // update the recent average rate
-        _updateAverageRate(
-            data,
-            Fraction({
-                n: params.liquidity.networkTokenTradingLiquidity,
-                d: params.liquidity.baseTokenTradingLiquidity
-            })
-        );
+        _updateAverageRate(data, params.liquidity);
 
         // sync the reserve balances
         PoolLiquidity memory newLiquidity;
@@ -1321,26 +1311,49 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns whether a pool's rate is stable
+     * @dev returns whether the pool's rate is valid and stable
      */
-    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
+    function _isPoolRateValidAndStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
         private
         view
         returns (bool)
     {
-        Fraction memory spotRate = Fraction({
-            n: liquidity.networkTokenTradingLiquidity,
-            d: liquidity.baseTokenTradingLiquidity
-        });
+        Fraction memory spotRate = _spotRate(liquidity);
 
+        return
+            isFractionPositive(spotRate) &&
+            isFraction112Positive(averageRateInfo.rate) &&
+            _isPoolRateStable(spotRate, averageRateInfo);
+    }
+
+    /**
+     * @dev returns whether the pool's rate is valid and unstable
+     */
+    function _isPoolRateValidAndUnstable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
+        private
+        view
+        returns (bool)
+    {
+        Fraction memory spotRate = _spotRate(liquidity);
+
+        return
+            isFractionPositive(spotRate) &&
+            isFraction112Positive(averageRateInfo.rate) &&
+            !_isPoolRateStable(spotRate, averageRateInfo);
+    }
+
+    /**
+     * @dev returns whether the pool's rate is stable
+     */
+    function _isPoolRateStable(Fraction memory spotRate, AverageRate memory averageRateInfo)
+        private
+        view
+        returns (bool)
+    {
         Fraction112 memory averageRate = averageRateInfo.rate;
 
-        if (!isFractionPositive(spotRate) || !isFraction112Positive(averageRate)) {
-            return true;
-        }
-
         if (averageRateInfo.blockNumber != _blockNumber()) {
-            averageRate = _calcAverageRate(averageRate, spotRate);
+            averageRate = _averageRate(averageRate, spotRate);
         }
 
         return MathEx.isInRange(fromFraction112(averageRate), spotRate, RATE_MAX_DEVIATION_PPM);
@@ -1349,21 +1362,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @dev updates the average rate
      */
-    function _updateAverageRate(Pool storage data, Fraction memory spotRate) private {
+    function _updateAverageRate(Pool storage data, PoolLiquidity memory liquidity) private {
         uint32 blockNumber = _blockNumber();
 
         if (data.averageRate.blockNumber != blockNumber) {
             data.averageRate = AverageRate({
                 blockNumber: blockNumber,
-                rate: _calcAverageRate(data.averageRate.rate, spotRate)
+                rate: _averageRate(data.averageRate.rate, _spotRate(liquidity))
             });
         }
     }
 
     /**
-     * @dev calculates the average rate
+     * @dev returns the average rate
      */
-    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory spotRate)
+    function _averageRate(Fraction112 memory averageRate, Fraction memory spotRate)
         private
         pure
         returns (Fraction112 memory)
@@ -1377,5 +1390,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                     EMA_SPOT_RATE_WEIGHT
                 )
             );
+    }
+
+    /**
+     * @dev returns the spot rate
+     */
+    function _spotRate(PoolLiquidity memory liquidity) private pure returns (Fraction memory) {
+        return Fraction({ n: liquidity.networkTokenTradingLiquidity, d: liquidity.baseTokenTradingLiquidity });
     }
 }
