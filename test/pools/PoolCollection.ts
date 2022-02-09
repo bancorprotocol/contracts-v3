@@ -2811,7 +2811,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                it('should perform a trade by providing the target amount', async () => {
+                                it.only('should perform a trade by providing the target amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
