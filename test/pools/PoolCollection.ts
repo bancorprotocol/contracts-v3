@@ -2649,7 +2649,7 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                                 });
 
-                                it('should perform a trade by providing the source amount', async () => {
+                                it.only('should perform a trade by providing the source amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
@@ -2747,6 +2747,9 @@ describe('PoolCollection', () => {
 
                                         expect(tradeAmounts.amount).to.equal(targetAmountAndFee.amount);
                                         expect(tradeAmounts.feeAmount).to.equal(targetAmountAndFee.feeAmount);
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
+                                        );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -2810,7 +2813,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                it('should perform a trade by providing the target amount', async () => {
+                                it.only('should perform a trade by providing the target amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
@@ -2909,6 +2912,9 @@ describe('PoolCollection', () => {
 
                                         expect(tradeAmounts.amount).to.equal(sourceAmountAndFee.amount);
                                         expect(tradeAmounts.feeAmount).to.equal(sourceAmountAndFee.feeAmount);
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
+                                        );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;

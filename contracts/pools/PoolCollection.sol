@@ -124,7 +124,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 baseTokenFeeAmount;
     }
 
-    struct TradeAmountAndFullFees {
+    struct TradeAmountAndTradingFee {
+        uint256 amount;
+        uint256 feeAmount;
+    }
+
+    struct TradeAmountAndInternalFees {
         uint256 amount;
         uint256 feeAmount;
         NetworkFeeAmounts networkFeeAmounts;
@@ -663,10 +668,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         // return the trading amounts, fee (which already includes the network fee amount), and network fee amounts
-        TradeAmountAndFullFees memory targetAmountsAndFullFees = _targetAmountAndFee(params, sourceAmount);
+        TradeAmountAndInternalFees memory targetAmountsAndInternalFees = _targetAmountAndFee(params, sourceAmount);
 
         // ensure that the target amount is above the requested minimum return amount
-        if (targetAmountsAndFullFees.amount < minReturnAmount) {
+        if (targetAmountsAndInternalFees.amount < minReturnAmount) {
             revert InsufficientTargetAmount();
         }
 
@@ -675,15 +680,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             contextId,
             params,
             sourceAmount,
-            targetAmountsAndFullFees.amount,
-            targetAmountsAndFullFees.feeAmount,
-            targetAmountsAndFullFees.networkFeeAmounts
+            targetAmountsAndInternalFees.amount,
+            targetAmountsAndInternalFees.feeAmount,
+            targetAmountsAndInternalFees.networkFeeAmounts
         );
 
         return
             TradeAmountAndFee({
-                amount: targetAmountsAndFullFees.amount,
-                feeAmount: targetAmountsAndFullFees.feeAmount
+                amount: targetAmountsAndInternalFees.amount,
+                feeAmount: targetAmountsAndInternalFees.feeAmount,
+                networkFeeAmount: targetAmountsAndInternalFees.networkFeeAmounts.networkTokenFeeAmount
             });
     }
 
@@ -706,10 +712,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         TradingParams memory params = _tradeParams(sourceToken, targetToken);
 
         // return the trading amounts, fee (which already includes the network fee amount), and network fee amounts
-        TradeAmountAndFullFees memory sourceAmountsAndFullFees = _sourceAmountAndFee(params, targetAmount);
+        TradeAmountAndInternalFees memory sourceAmountsAndInternalFees = _sourceAmountAndFee(params, targetAmount);
 
         // ensure that the user has provided enough tokens to make the trade
-        if (sourceAmountsAndFullFees.amount > maxSourceAmount) {
+        if (sourceAmountsAndInternalFees.amount > maxSourceAmount) {
             revert InsufficientSourceAmount();
         }
 
@@ -717,16 +723,17 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         _performTrade(
             contextId,
             params,
-            sourceAmountsAndFullFees.amount,
+            sourceAmountsAndInternalFees.amount,
             targetAmount,
-            sourceAmountsAndFullFees.feeAmount,
-            sourceAmountsAndFullFees.networkFeeAmounts
+            sourceAmountsAndInternalFees.feeAmount,
+            sourceAmountsAndInternalFees.networkFeeAmounts
         );
 
         return
             TradeAmountAndFee({
-                amount: sourceAmountsAndFullFees.amount,
-                feeAmount: sourceAmountsAndFullFees.feeAmount
+                amount: sourceAmountsAndInternalFees.amount,
+                feeAmount: sourceAmountsAndInternalFees.feeAmount,
+                networkFeeAmount: sourceAmountsAndInternalFees.networkFeeAmounts.networkTokenFeeAmount
             });
     }
 
@@ -738,11 +745,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token targetToken,
         uint256 sourceAmount
     ) external view greaterThanZero(sourceAmount) returns (TradeAmountAndFee memory) {
-        TradeAmountAndFullFees memory tradeAmounts = _targetAmountAndFee(
+        TradeAmountAndInternalFees memory targetAmountsAndInternalFees = _targetAmountAndFee(
             _tradeParams(sourceToken, targetToken),
             sourceAmount
         );
-        return TradeAmountAndFee({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+        return
+            TradeAmountAndFee({
+                amount: targetAmountsAndInternalFees.amount,
+                feeAmount: targetAmountsAndInternalFees.feeAmount,
+                networkFeeAmount: targetAmountsAndInternalFees.networkFeeAmounts.networkTokenFeeAmount
+            });
     }
 
     /**
@@ -753,11 +765,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token targetToken,
         uint256 targetAmount
     ) external view greaterThanZero(targetAmount) returns (TradeAmountAndFee memory) {
-        TradeAmountAndFullFees memory tradeAmounts = _sourceAmountAndFee(
+        TradeAmountAndInternalFees memory sourceAmountsAndInternalFees = _sourceAmountAndFee(
             _tradeParams(sourceToken, targetToken),
             targetAmount
         );
-        return TradeAmountAndFee({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+        return
+            TradeAmountAndFee({
+                amount: sourceAmountsAndInternalFees.amount,
+                feeAmount: sourceAmountsAndInternalFees.feeAmount,
+                networkFeeAmount: sourceAmountsAndInternalFees.networkFeeAmounts.networkTokenFeeAmount
+            });
     }
 
     /**
@@ -1311,7 +1328,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetBalance,
         uint32 tradingFeePPM,
         uint256 sourceAmount
-    ) private pure returns (TradeAmountAndFee memory) {
+    ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0 || targetBalance == 0) {
             revert InsufficientLiquidity();
         }
@@ -1319,7 +1336,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
         uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
 
-        return TradeAmountAndFee({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
+        return TradeAmountAndTradingFee({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
     }
 
     /**
@@ -1328,9 +1345,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     function _targetAmountAndFee(TradingParams memory params, uint256 sourceAmount)
         private
         view
-        returns (TradeAmountAndFullFees memory)
+        returns (TradeAmountAndInternalFees memory)
     {
-        TradeAmountAndFee memory tradeAmountsAndFee = _targetAmountAndTradingFee(
+        TradeAmountAndTradingFee memory tradeAmountsAndFee = _targetAmountAndTradingFee(
             params.sourceBalance,
             params.targetBalance,
             params.tradingFeePPM,
@@ -1345,7 +1362,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         );
 
         return
-            TradeAmountAndFullFees({
+            TradeAmountAndInternalFees({
                 amount: tradeAmountsAndFee.amount,
                 feeAmount: tradeAmountsAndFee.feeAmount -
                     (
@@ -1365,7 +1382,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetBalance,
         uint32 tradingFeePPM,
         uint256 targetAmount
-    ) private pure returns (TradeAmountAndFee memory) {
+    ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0) {
             revert InsufficientLiquidity();
         }
@@ -1374,7 +1391,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 fullTargetAmount = targetAmount + feeAmount;
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
-        return TradeAmountAndFee({ amount: sourceAmount, feeAmount: feeAmount });
+        return TradeAmountAndTradingFee({ amount: sourceAmount, feeAmount: feeAmount });
     }
 
     /**
@@ -1383,9 +1400,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     function _sourceAmountAndFee(TradingParams memory params, uint256 targetAmount)
         private
         view
-        returns (TradeAmountAndFullFees memory)
+        returns (TradeAmountAndInternalFees memory)
     {
-        TradeAmountAndFee memory tradeAmountsAndFee = _sourceAmountAndTradingFee(
+        TradeAmountAndTradingFee memory tradeAmountsAndFee = _sourceAmountAndTradingFee(
             params.sourceBalance,
             params.targetBalance,
             params.tradingFeePPM,
@@ -1400,7 +1417,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         );
 
         return
-            TradeAmountAndFullFees({
+            TradeAmountAndInternalFees({
                 amount: tradeAmountsAndFee.amount,
                 feeAmount: tradeAmountsAndFee.feeAmount -
                     (
