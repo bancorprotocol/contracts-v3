@@ -35,8 +35,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the flash-loan fee (in units of PPM)
     uint32 private _flashLoanFeePPM;
 
+    // the percentage of the converted network tokens to be sent to the caller of the burning event (in units of PPM)
+    uint32 private _vortexBurnRewardPPM;
+
+    // the maximum burn reward to be sent to the caller of the burning event
+    uint256 private _vortexBurnRewardMaxAmount;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 5] private __gap;
+    uint256[MAX_GAP - 6] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -72,6 +78,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the flash-loan fee is updated
      */
     event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+
+    /**
+     * @dev triggered when the Vortex burn reward percentage is updated
+     */
+    event VortexBurnRewardUpdated(uint32 prevBurnRewardPPM, uint32 newBurnRewardPPM);
+
+    /**
+     * @dev triggered when the Vortex burn reward max amount is updated
+     */
+    event VortexBurnRewardMaxAmountUpdated(uint256 prevBurnRewardMaxAmount, uint256 newBurnRewardMaxAmount);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -282,6 +298,67 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _flashLoanFeePPM = newFlashLoanFeePPM;
 
         emit FlashLoanFeePPMUpdated({ prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function vortexBurnRewardPPM() external view returns (uint32) {
+        return _vortexBurnRewardPPM;
+    }
+
+    /**
+     * @dev sets he percentage of the converted network tokens to be sent to the caller of the burning event (in units
+     * of PPM)
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function setVortexBurnRewardPPM(uint32 newVortexBurnRewardPPM) external onlyAdmin validFee(newVortexBurnRewardPPM) {
+        uint32 prevVortexBurnRewardPPM = _vortexBurnRewardPPM;
+        if (prevVortexBurnRewardPPM == newVortexBurnRewardPPM) {
+            return;
+        }
+
+        _vortexBurnRewardPPM = newVortexBurnRewardPPM;
+
+        emit VortexBurnRewardUpdated({
+            prevBurnRewardPPM: prevVortexBurnRewardPPM,
+            newBurnRewardPPM: newVortexBurnRewardPPM
+        });
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function vortexBurnRewardMaxAmount() external view returns (uint256) {
+        return _vortexBurnRewardMaxAmount;
+    }
+
+    /**
+     * @dev the maximum burn reward to be sent to the caller of the burning event
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function setVortexBurnRewardMaxAmount(uint32 newVortexBurnRewardMaxAmount)
+        external
+        onlyAdmin
+        greaterThanZero(newVortexBurnRewardMaxAmount)
+    {
+        uint256 prevVortexBurnRewardMaxAmount = _vortexBurnRewardMaxAmount;
+        if (prevVortexBurnRewardMaxAmount == newVortexBurnRewardMaxAmount) {
+            return;
+        }
+
+        _vortexBurnRewardMaxAmount = newVortexBurnRewardMaxAmount;
+
+        emit VortexBurnRewardMaxAmountUpdated({
+            prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
+            newBurnRewardMaxAmount: newVortexBurnRewardMaxAmount
+        });
     }
 
     /**

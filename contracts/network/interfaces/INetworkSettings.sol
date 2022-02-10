@@ -50,4 +50,15 @@ interface INetworkSettings is IUpgradeable {
      * @dev returns the flash-loan fee (in units of PPM)
      */
     function flashLoanFeePPM() external view returns (uint32);
+
+    /**
+     * @dev returns the percentage of the converted network tokens to be sent to the caller of the burning event (in
+     * units of PPM)
+     */
+    function vortexBurnRewardPPM() external view returns (uint32);
+
+    /**
+     * @dev returns the maximum burn reward to be sent to the caller of the burning event
+     */
+    function vortexBurnRewardMaxAmount() external view returns (uint256);
 }
