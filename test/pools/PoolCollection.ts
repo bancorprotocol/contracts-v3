@@ -2649,7 +2649,7 @@ describe('PoolCollection', () => {
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                                 });
 
-                                it.only('should perform a trade by providing the source amount', async () => {
+                                it('should perform a trade by providing the source amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
@@ -2813,7 +2813,7 @@ describe('PoolCollection', () => {
                                     }
                                 });
 
-                                it.only('should perform a trade by providing the target amount', async () => {
+                                it('should perform a trade by providing the target amount', async () => {
                                     for (const blockNumber of blockNumbers) {
                                         await poolCollection.setBlockNumber(blockNumber);
 
