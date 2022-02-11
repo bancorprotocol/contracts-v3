@@ -38,7 +38,7 @@ interface TokenAndPoolTokenBundle {
     poolToken?: PoolToken;
 }
 
-describe.only('bancor-portal', () => {
+describe('bancor-portal', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let networkToken: IERC20;
