@@ -274,7 +274,6 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
                 deposited[i] = delta;
                 _deposit(tokens[i], deposited[i]);
             } else {
-                deposited[i] = 0;
                 _transferToWallet(tokens[i], delta);
             }
         }
@@ -289,7 +288,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev deposits [amount] into a pool of [token]
+     * @dev deposits given amount into a pool of given token
      */
     function _deposit(Token token, uint256 amount) private {
         if (token.isNative()) {
@@ -301,7 +300,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev transfer [amount] of [token] to the caller
+     * @dev transfer given amount of given token to the caller
      */
     function _transferToWallet(Token token, uint256 amount) private {
         if (token.isNative()) {
