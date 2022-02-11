@@ -709,6 +709,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     ) external view greaterThanZero(sourceAmount) returns (TradeAmountAndFee memory) {
         TradeIntermediateResult memory result = _initTrade(bytes32(0), sourceToken, targetToken, sourceAmount, 1, true);
 
+        _processTrade(result);
+
         return TradeAmountAndFee({ amount: result.targetAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
 
@@ -728,6 +730,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             type(uint256).max,
             false
         );
+
+        _processTrade(result);
 
         return TradeAmountAndFee({ amount: result.sourceAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
@@ -1383,13 +1387,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             result.stakedBalance += result.tradingFeeAmount;
         }
 
-        _processNetworkFeeAmount(result);
+        _processNetworkFee(result);
     }
 
     /**
      * @dev processes the network fee and updates the in-memory intermediate result
      */
-    function _processNetworkFeeAmount(TradeIntermediateResult memory result) private view {
+    function _processNetworkFee(TradeIntermediateResult memory result) private view {
         uint32 networkFeePPM = _networkSettings.networkFeePPM();
         if (networkFeePPM == 0) {
             return;
