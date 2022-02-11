@@ -5,6 +5,10 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import { IUniswapV2Factory } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import { IUniswapV2Router02 } from "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -15,9 +19,6 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { NetworkSettings } from "../network/NetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IUniswapV2Pair } from "./interfaces/IUniswapV2Pair.sol";
-import { IUniswapV2Router02 } from "./interfaces/IUniswapV2Router02.sol";
-import { IUniswapV2Factory } from "./interfaces/IUniswapV2Factory.sol";
 import { IBancorPortal } from "./interfaces/IBancorPortal.sol";
 
 import "./MigrationResult.sol";

@@ -69,6 +69,8 @@
         "@types/prompt": "^1.1.2",
         "@typescript-eslint/eslint-plugin": "^5.10.0",
         "@typescript-eslint/parser": "^5.10.0",
+        "@uniswap/v2-core": "^1.0.1",
+        "@uniswap/v2-periphery": "^1.1.0-beta.0",
         "chai": "^4.3.4",
         "chai-arrays": "^2.2.0",
         "copyfiles": "^2.4.1",

@@ -3,7 +3,6 @@ pragma solidity 0.8.11;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IUniswapV2Pair } from "../../bancor-portal/interfaces/IUniswapV2Pair.sol";
 import { Token } from "../../token/Token.sol";
 
 import "../UniswapV2PositionMigration.sol";
