@@ -1,4 +1,4 @@
-import { deploy, ContractName, DeploymentTag } from '../utils/Deploy';
+import { deploy, ContractName, DeploymentTag, isMainnet } from '../utils/Deploy';
 import { BigNumber } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -16,7 +16,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 };
 
 func.id = ContractName.MockUniswapV2PairV1;
-
+func.skip = async () => isMainnet();
 func.tags = [DeploymentTag.V3, ContractName.MockUniswapV2PairV1];
 
 export default func;
