@@ -1,12 +1,16 @@
 import {
     AutoCompoundingStakingRewards,
-    BancorV1Migration,
     BancorNetwork,
     BancorNetworkInfo,
+    BancorPortal,
+    BancorV1Migration,
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterPool,
     MasterVault,
+    MockUniswapV2Factory,
+    MockUniswapV2Pair,
+    MockUniswapV2Router02,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -54,14 +58,18 @@ enum LegacyContractName {
 enum NewContractName {
     AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
     BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
-    BancorNetworkV1 = 'BancorNetworkV1',
-    BancorV1MigrationV1 = 'BancorV1MigrationV1',
     BancorNetworkProxy = 'BancorNetworkProxy',
+    BancorNetworkV1 = 'BancorNetworkV1',
+    BancorPortalV1 = 'BancorPortalV1',
+    BancorV1MigrationV1 = 'BancorV1MigrationV1',
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
-    MasterPoolV1 = 'MasterPoolV1',
     MasterPoolTokenV1 = 'MasterPoolTokenV1',
+    MasterPoolV1 = 'MasterPoolV1',
     MasterVaultV1 = 'MasterVaultV1',
+    MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
+    MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
+    MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
     NetworkSettingsV1 = 'NetworkSettingsV1',
     PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
@@ -70,7 +78,10 @@ enum NewContractName {
     ProxyAdmin = 'ProxyAdmin'
 }
 
-export const ContractName = { ...LegacyContractName, ...NewContractName } as const;
+export const ContractName = {
+    ...LegacyContractName,
+    ...NewContractName
+} as const;
 export type ContractName = LegacyContractName | NewContractName;
 
 export enum DeploymentTag {
@@ -89,15 +100,19 @@ const DeployedNewContracts = {
     AutoCompoundingStakingRewardsV1: deployed<AutoCompoundingStakingRewards>(
         ContractName.AutoCompoundingStakingRewardsV1
     ),
-    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
-    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
     BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
+    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
+    BancorPortalV1: deployed<BancorPortal>(ContractName.BancorPortalV1),
+    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
     ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
     ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
-    MasterPoolV1: deployed<MasterPool>(ContractName.MasterPoolV1),
     MasterPoolTokenV1: deployed<PoolToken>(ContractName.MasterPoolTokenV1),
+    MasterPoolV1: deployed<MasterPool>(ContractName.MasterPoolV1),
     MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
+    MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
+    MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
+    MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
     NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
     PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
@@ -106,7 +121,10 @@ const DeployedNewContracts = {
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
 };
 
-export const DeployedContracts = { ...DeployedLegacyContracts, ...DeployedNewContracts };
+export const DeployedContracts = {
+    ...DeployedLegacyContracts,
+    ...DeployedNewContracts
+};
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
