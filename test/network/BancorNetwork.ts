@@ -2191,7 +2191,7 @@ describe('BancorNetwork', () => {
 
             let sourceAmount: BigNumber;
             let targetAmount: BigNumber;
-            const feeAmount = hop2.feeAmount;
+            const tradingFeeAmount = hop2.tradingFeeAmount;
 
             if (bySourceAmount) {
                 // when specifying the source amount, the input amount represents the source amount we are willing to trade
@@ -2253,7 +2253,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
             } else if (isTargetNetworkToken) {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2269,9 +2269,9 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(feeAmount));
+                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(tradingFeeAmount));
             } else {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2290,9 +2290,9 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.feeAmount);
+                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.feeAmount));
+                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.tradingFeeAmount));
 
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2311,7 +2311,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
             }
 
             // ensure that the correct amount was transferred from the trader to the vault
