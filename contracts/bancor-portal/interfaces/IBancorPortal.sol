@@ -6,6 +6,8 @@ import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol"
 import { IUniswapV2Pair } from "../../bancor-portal/interfaces/IUniswapV2Pair.sol";
 import { Token } from "../../token/Token.sol";
 
+import "../UniswapV2PositionMigration.sol";
+
 interface IBancorPortal is IUpgradeable {
     /**
      * @dev migrates funds from a uniswap v2 pair into a bancor v3 pool
@@ -22,7 +24,7 @@ interface IBancorPortal is IUpgradeable {
         Token token0,
         Token token1,
         uint256 amount
-    ) external returns (uint256 depositedAmountA, uint256 depositedAmountB);
+    ) external returns (UniswapV2PositionMigration memory);
 
     /**
      * @dev migrates funds from a sushiswap v1 pair into a bancor v3 pool
@@ -39,5 +41,5 @@ interface IBancorPortal is IUpgradeable {
         Token token0,
         Token token1,
         uint256 amount
-    ) external returns (uint256 depositedAmountA, uint256 depositedAmountB);
+    ) external returns (UniswapV2PositionMigration memory);
 }

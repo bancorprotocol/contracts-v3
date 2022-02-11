@@ -4,28 +4,27 @@ pragma solidity 0.8.11;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
-import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
-import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IBancorPortal } from "./interfaces/IBancorPortal.sol";
+
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils } from "../utility/Utils.sol";
+
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
+import { NetworkSettings } from "../network/NetworkSettings.sol";
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+
 import { IUniswapV2Pair } from "./interfaces/IUniswapV2Pair.sol";
 import { IUniswapV2Router02 } from "./interfaces/IUniswapV2Router02.sol";
 import { IUniswapV2Factory } from "./interfaces/IUniswapV2Factory.sol";
-import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { NetworkSettings } from "../network/NetworkSettings.sol";
+import { IBancorPortal } from "./interfaces/IBancorPortal.sol";
 
-struct MigrationResult {
-    address tokenA;
-    address tokenB;
-    uint256 amountA;
-    uint256 amountB;
-}
+import "./MigrationResult.sol";
+import "./UniswapV2PositionMigration.sol";
 
 /**
- * @dev One click liquidity migrations between other dexes into bancor v3
+ * @dev one click liquidity migration between other DEXes into Bancor v3
  */
 contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgradeable {
     using SafeERC20 for IERC20;
@@ -56,8 +55,10 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
+    uint32 private constant THREE_HOURS = 10800;
+
     /**
-     * @dev triggered after a succesful uniswap v2 migration
+     * @dev triggered after a succesful Uniswap V2 migration
      */
     event UniswapV2PositionMigrated(
         address indexed provider,
@@ -68,7 +69,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     );
 
     /**
-     * @dev triggered after a succesful sushiswap v1 migration
+     * @dev triggered after a succesful Sushiswap V1 migration
      */
     event SushiswapV2PositionMigrated(
         address indexed provider,
@@ -78,7 +79,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         uint256 amountB
     );
 
-    error TokensNotSupported();
+    error UnsupportedTokens();
     error NoPairForTokens();
 
     /**
@@ -159,7 +160,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(amount)
-        returns (uint256, uint256)
+        returns (UniswapV2PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
             _uniswapV2Router,
@@ -177,7 +178,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             amountB: res.amountB
         });
 
-        return (res.amountA, res.amountB);
+        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
@@ -193,7 +194,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(amount)
-        returns (uint256, uint256)
+        returns (UniswapV2PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
             _sushiswapV2Router,
@@ -211,11 +212,11 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             amountB: res.amountB
         });
 
-        return (res.amountA, res.amountB);
+        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
-     * @dev migrates funds from a uniswap v2 pair into a bancor v3 pool
+     * @dev migrates funds from a Uniswap V2 pair into a Bancor V3 pool
      * - unsupported tokens will be transferred to the caller
      *
      * requirements:
@@ -240,38 +241,34 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token(address(pair)).safeTransferFrom(msg.sender, address(this), amount);
 
         // arrange tokens in an array
-        Token[] memory tokens = new Token[](2);
-        tokens[0] = token0;
-        tokens[1] = token1;
+        Token[2] memory tokens = [token0, token1];
 
         // look for relevant whitelisted pools, revert if there are none
-        bool[] memory whitelist = new bool[](2);
-        for (uint8 i = 0; i < 2; i++) {
-            whitelist[i] = _networkSettings.isTokenWhitelisted(tokens[i]);
+        bool[2] memory whitelist;
+        for (uint256 i = 0; i < 2; i++) {
             if (address(tokens[i]) == address(_networkToken)) {
                 whitelist[i] = true;
+            } else {
+                whitelist[i] = _networkSettings.isTokenWhitelisted(tokens[i]);
             }
         }
         if (!whitelist[0] && !whitelist[1]) {
-            revert TokensNotSupported();
+            revert UnsupportedTokens();
         }
 
         // save state
-        uint256[] memory previousBalances = new uint256[](2);
-        previousBalances[0] = tokens[0].balanceOf(address(pair));
-        previousBalances[1] = tokens[1].balanceOf(address(pair));
+        uint256[2] memory previousBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
 
         // remove liquidity from uniswap
         _uniV2RemoveLiquidity(tokens, pair, router, amount);
 
         // save new state
-        uint256[] memory newBalances = new uint256[](2);
-        newBalances[0] = tokens[0].balanceOf(address(pair));
-        newBalances[1] = tokens[1].balanceOf(address(pair));
+        uint256[2] memory newBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
 
         // migrate funds
-        uint256[] memory deposited = new uint256[](2);
-        for (uint8 i = 0; i < 2; i++) {
+        uint256[2] memory deposited;
+
+        for (uint256 i = 0; i < 2; i++) {
             uint256 delta = previousBalances[i] - newBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
@@ -315,17 +312,17 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev fetch [amount] of liquidity from [pair] of [token0] and [token1]
+     * @dev removes liquidity from Uniswap's pair, transfer funds to self.
      */
     function _uniV2RemoveLiquidity(
-        Token[] memory tokens,
+        Token[2] memory tokens,
         IUniswapV2Pair pair,
         IUniswapV2Router02 router,
         uint256 amount
     ) private {
         IERC20(address(pair)).safeApprove(address(router), amount);
 
-        uint256 deadline = block.timestamp + 10800;
+        uint256 deadline = block.timestamp + THREE_HOURS;
         if (tokens[0].isNative()) {
             router.removeLiquidityETH(address(tokens[1]), amount, 1, 1, address(this), deadline);
         } else if (tokens[1].isNative()) {

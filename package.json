@@ -25,7 +25,7 @@
         "build": "hardhat compile",
         "rebuild": "yarn clean && yarn build",
         "test": "NODE_OPTIONS=\"--max-old-space-size=8192 ${CI:+--openssl-legacy-provider}\" hardhat test",
-        "watch": "NODE_OPTIONS=\"--max-old-space-size=30000 ${CI:+--openssl-legacy-provider}\" hardhat watch test",
+        "watch": "hardhat watch test",
         "testb": "BAIL=1 yarn test",
         "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192 --openssl-legacy-provider'} hardhat coverage",
         "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",

@@ -31,9 +31,7 @@ contract MockUniswapV2Pair is TestERC20Token, Utils {
     }
 
     function burn(address to, uint256 amount) external {
-        Token[] memory tokens = new Token[](2);
-        tokens[0] = token0;
-        tokens[1] = token1;
+        Token[2] memory tokens = [token0, token1];
 
         for (uint256 i = 0; i < 2; i++) {
             if (tokens[i].isNative()) {
