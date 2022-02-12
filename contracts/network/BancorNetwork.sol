@@ -738,7 +738,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
-            poolCollection.onFeesCollected(token, feeAmount);
+            poolCollection.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
         }
 
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));

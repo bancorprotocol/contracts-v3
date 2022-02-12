@@ -599,7 +599,8 @@ describe('PendingWithdrawals', () => {
                                     await network.onPoolCollectionFeesCollectedT(
                                         poolCollection.address,
                                         reserveToken.address,
-                                        feeAmount
+                                        feeAmount,
+                                        FeeType.Trading
                                     );
                                 }
                             });
