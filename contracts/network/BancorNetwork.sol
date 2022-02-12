@@ -1168,7 +1168,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
-            _masterPool.onFeesCollected(pool, tradeAmountsAndFee.feeAmount, TRADING_FEE);
+            _masterPool.onFeesCollected(pool, tradeAmountsAndFee.tradingFeeAmount, TRADING_FEE);
         }
 
         emit TokensTraded({
@@ -1185,7 +1185,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId: contextId,
             token: targetToken,
             feeType: TRADING_FEE,
-            amount: tradeAmountsAndFee.feeAmount
+            amount: tradeAmountsAndFee.tradingFeeAmount
         });
 
         return tradeAmountsAndFee.amount;
