@@ -30,7 +30,7 @@ import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCol
 import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
-import { toWei, toPPM } from '../../utils/Types';
+import { toWei, toPPM, fromPPM } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createPool,
@@ -1890,7 +1890,7 @@ describe('BancorNetwork', () => {
                 .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
         });
 
-        const setupPools = async (source: PoolSpec, target: PoolSpec) => {
+        const setupPools = async (source: PoolSpec, target: PoolSpec, networkFeePPM: number) => {
             trader = await createWallet();
 
             ({ token: sourceToken } = await setupFundedPool(
@@ -1910,6 +1910,10 @@ describe('BancorNetwork', () => {
                 networkSettings,
                 poolCollection
             ));
+
+            if (networkFeePPM) {
+                await networkSettings.setNetworkFeePPM(networkFeePPM);
+            }
 
             // increase the network token liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
@@ -2191,7 +2195,6 @@ describe('BancorNetwork', () => {
 
             let sourceAmount: BigNumber;
             let targetAmount: BigNumber;
-            const tradingFeeAmount = hop2.tradingFeeAmount;
 
             if (bySourceAmount) {
                 // when specifying the source amount, the input amount represents the source amount we are willing to trade
@@ -2211,6 +2214,13 @@ describe('BancorNetwork', () => {
                 );
                 targetAmount = BigNumber.from(amount);
                 expect(sourceAmount).to.equal(hop1.amount);
+            }
+
+            let pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
+            if (isSourceNetworkToken || isTargetNetworkToken) {
+                pendingNetworkFeeAmount = pendingNetworkFeeAmount.add(hop1.networkFeeAmount);
+            } else {
+                pendingNetworkFeeAmount = pendingNetworkFeeAmount.add(hop1.networkFeeAmount.add(hop2.networkFeeAmount));
             }
 
             const res = await tradeFunc(amount, {
@@ -2253,7 +2263,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
             } else if (isTargetNetworkToken) {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2269,9 +2279,11 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(tradingFeeAmount));
+                expect(masterPoolStakedBalance).to.equal(
+                    prevMasterPoolStakedBalance.add(hop2.tradingFeeAmount.sub(hop2.networkFeeAmount))
+                );
             } else {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2292,7 +2304,9 @@ describe('BancorNetwork', () => {
                     .to.emit(network, 'FeesCollected')
                     .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.tradingFeeAmount));
+                expect(masterPoolStakedBalance).to.equal(
+                    prevMasterPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
+                );
 
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2311,8 +2325,10 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
             }
+
+            expect(await network.pendingNetworkFeeAmount()).to.equal(pendingNetworkFeeAmount);
 
             // ensure that the correct amount was transferred from the trader to the vault
             expect(await getBalance(sourceToken, traderAddress)).to.equal(
@@ -2363,275 +2379,292 @@ describe('BancorNetwork', () => {
             await reserveToken.connect(trader).approve(network.address, sourceAmount);
         };
 
-        const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
+        const testTradesBasic = (source: PoolSpec, target: PoolSpec, networkFeePPM: number) => {
             const isSourceNativeToken = source.tokenData.isNative();
             const isSourceNetworkToken = source.tokenData.isNetworkToken();
 
-            context(`basic trades from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
-                const testAmount = BigNumber.from(10_000);
+            context(
+                `basic trades from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}, network fee=${fromPPM(
+                    networkFeePPM
+                )}%`,
+                () => {
+                    const testAmount = BigNumber.from(10_000);
 
-                beforeEach(async () => {
-                    await setupPools(source, target);
-                });
+                    beforeEach(async () => {
+                        await setupPools(source, target, networkFeePPM);
+                    });
 
-                for (const bySourceAmount of [true, false]) {
-                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeDirectFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
+                    for (const bySourceAmount of [true, false]) {
+                        context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                            const tradeDirectFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
-                        beforeEach(async () => {
-                            if (isSourceNativeToken) {
-                                return;
-                            }
-
-                            await approve(testAmount, bySourceAmount);
-                        });
-
-                        if (isSourceNativeToken) {
-                            it('should revert when attempting to trade more than what was actually sent', async () => {
-                                const missingAmount = 1;
-
-                                await expect(
-                                    tradeDirectFunc(testAmount, {
-                                        value: testAmount.sub(missingAmount)
-                                    })
-                                ).to.be.revertedWith('EthAmountMismatch');
-
-                                await expect(
-                                    tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('EthAmountMismatch');
-                            });
-
-                            it('should refund when attempting to trade less than what was actually sent', async () => {
-                                let sourceAmount;
-                                if (bySourceAmount) {
-                                    sourceAmount = testAmount;
-                                } else {
-                                    sourceAmount = await networkInfo.tradeInputByTargetAmount(
-                                        sourceToken.address,
-                                        targetToken.address,
-                                        testAmount
-                                    );
+                            beforeEach(async () => {
+                                if (isSourceNativeToken) {
+                                    return;
                                 }
 
-                                const extraAmount = 100_000;
-                                const prevTraderBalance = await getBalance(sourceToken, trader);
-
-                                const res = await tradeDirectFunc(testAmount, {
-                                    value: sourceAmount.add(extraAmount)
-                                });
-
-                                const transactionCost = await getTransactionCost(res);
-
-                                expect(await getBalance(sourceToken, trader)).equal(
-                                    prevTraderBalance.sub(sourceAmount).sub(transactionCost)
-                                );
+                                await approve(testAmount, bySourceAmount);
                             });
-                        } else {
-                            it('should revert when passing ETH with a non ETH trade', async () => {
-                                await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                    'EthAmountMismatch'
-                                );
-                            });
-                        }
 
-                        const options = isSourceNetworkToken || isSourceNativeToken ? [false] : [false, true];
-                        for (const permitted of options) {
-                            context(`${permitted ? 'permitted' : 'direct'} trade`, () => {
-                                const tradeBySourceAmountPermittedFunc = bySourceAmount
-                                    ? tradeBySourceAmountPermitted
-                                    : tradeByTargetAmountPermitted;
-                                const tradeFunc = permitted ? tradeBySourceAmountPermittedFunc : tradeDirectFunc;
+                            if (isSourceNativeToken) {
+                                it('should revert when attempting to trade more than what was actually sent', async () => {
+                                    const missingAmount = 1;
 
-                                it('should revert when attempting to trade using an invalid source pool', async () => {
                                     await expect(
-                                        tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                                    ).to.be.revertedWith('InvalidAddress');
-                                });
+                                        tradeDirectFunc(testAmount, {
+                                            value: testAmount.sub(missingAmount)
+                                        })
+                                    ).to.be.revertedWith('EthAmountMismatch');
 
-                                it('should revert when attempting to trade using an invalid target pool', async () => {
                                     await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                                    ).to.be.revertedWith('InvalidAddress');
+                                        tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
+                                    ).to.be.revertedWith('EthAmountMismatch');
                                 });
 
-                                it('should revert when attempting to trade using an invalid amount', async () => {
-                                    await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
-                                });
-
-                                it('should revert when attempting to trade using an invalid limit', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { limit: BigNumber.from(0) })
-                                    ).to.be.revertedWith('ZeroValue');
-                                });
-
-                                it('should revert when attempting to trade using an expired deadline', async () => {
-                                    const deadline = (await latest()) - 1000;
-
-                                    await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                        'DeadlineExpired'
-                                    );
-                                });
-
-                                it('should revert when attempting to trade unsupported tokens', async () => {
-                                    const reserveToken2 = await createTestToken();
-
-                                    if (!permitted) {
-                                        await reserveToken2.transfer(await trader.getAddress(), testAmount);
-                                        await reserveToken2.connect(trader).approve(network.address, testAmount);
+                                it('should refund when attempting to trade less than what was actually sent', async () => {
+                                    let sourceAmount;
+                                    if (bySourceAmount) {
+                                        sourceAmount = testAmount;
+                                    } else {
+                                        sourceAmount = await networkInfo.tradeInputByTargetAmount(
+                                            sourceToken.address,
+                                            targetToken.address,
+                                            testAmount
+                                        );
                                     }
 
-                                    // unknown source token
-                                    await expect(
-                                        tradeFunc(testAmount, { sourceTokenAddress: reserveToken2.address })
-                                    ).to.be.revertedWith('InvalidToken');
+                                    const extraAmount = 100_000;
+                                    const prevTraderBalance = await getBalance(sourceToken, trader);
 
-                                    // unknown target token
-                                    await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: reserveToken2.address })
-                                    ).to.be.revertedWith('InvalidToken');
+                                    const res = await tradeDirectFunc(testAmount, {
+                                        value: sourceAmount.add(extraAmount)
+                                    });
+
+                                    const transactionCost = await getTransactionCost(res);
+
+                                    expect(await getBalance(sourceToken, trader)).equal(
+                                        prevTraderBalance.sub(sourceAmount).sub(transactionCost)
+                                    );
                                 });
-
-                                it('should revert when attempting to trade using same source and target tokens', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
-                                    ).to.be.revertedWith('InvalidTokens');
+                            } else {
+                                it('should revert when passing ETH with a non ETH trade', async () => {
+                                    await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
+                                        'EthAmountMismatch'
+                                    );
                                 });
+                            }
 
-                                it('should support a custom beneficiary', async () => {
-                                    const trader2 = (await ethers.getSigners())[9];
+                            const options = isSourceNetworkToken || isSourceNativeToken ? [false] : [false, true];
+                            for (const permitted of options) {
+                                context(`${permitted ? 'permitted' : 'direct'} trade`, () => {
+                                    const tradeBySourceAmountPermittedFunc = bySourceAmount
+                                        ? tradeBySourceAmountPermitted
+                                        : tradeByTargetAmountPermitted;
+                                    const tradeFunc = permitted ? tradeBySourceAmountPermittedFunc : tradeDirectFunc;
 
-                                    await verifyTrade(trader, trader2.address, testAmount, tradeFunc);
-                                });
+                                    it('should revert when attempting to trade using an invalid source pool', async () => {
+                                        await expect(
+                                            tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                                        ).to.be.revertedWith('InvalidAddress');
+                                    });
 
-                                if (!isSourceNativeToken) {
-                                    context('with an insufficient approval', () => {
+                                    it('should revert when attempting to trade using an invalid target pool', async () => {
+                                        await expect(
+                                            tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                                        ).to.be.revertedWith('InvalidAddress');
+                                    });
+
+                                    it('should revert when attempting to trade using an invalid amount', async () => {
+                                        await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
+                                    });
+
+                                    it('should revert when attempting to trade using an invalid limit', async () => {
+                                        await expect(
+                                            tradeFunc(testAmount, { limit: BigNumber.from(0) })
+                                        ).to.be.revertedWith('ZeroValue');
+                                    });
+
+                                    it('should revert when attempting to trade using an expired deadline', async () => {
+                                        const deadline = (await latest()) - 1000;
+
+                                        await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
+                                            'DeadlineExpired'
+                                        );
+                                    });
+
+                                    it('should revert when attempting to trade unsupported tokens', async () => {
+                                        const reserveToken2 = await createTestToken();
+
+                                        if (!permitted) {
+                                            await reserveToken2.transfer(await trader.getAddress(), testAmount);
+                                            await reserveToken2.connect(trader).approve(network.address, testAmount);
+                                        }
+
+                                        // unknown source token
+                                        await expect(
+                                            tradeFunc(testAmount, { sourceTokenAddress: reserveToken2.address })
+                                        ).to.be.revertedWith('InvalidToken');
+
+                                        // unknown target token
+                                        await expect(
+                                            tradeFunc(testAmount, { targetTokenAddress: reserveToken2.address })
+                                        ).to.be.revertedWith('InvalidToken');
+                                    });
+
+                                    it('should revert when attempting to trade using same source and target tokens', async () => {
+                                        await expect(
+                                            tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
+                                        ).to.be.revertedWith('InvalidTokens');
+                                    });
+
+                                    it('should support a custom beneficiary', async () => {
+                                        const trader2 = (await ethers.getSigners())[9];
+
+                                        await verifyTrade(trader, trader2.address, testAmount, tradeFunc);
+                                    });
+
+                                    if (!isSourceNativeToken) {
+                                        context('with an insufficient approval', () => {
+                                            it('should revert when attempting to trade', async () => {
+                                                const missingAmount = 10;
+
+                                                let sourceAmount;
+
+                                                if (bySourceAmount) {
+                                                    sourceAmount = testAmount;
+                                                } else {
+                                                    sourceAmount = await networkInfo.tradeInputByTargetAmount(
+                                                        sourceToken.address,
+                                                        targetToken.address,
+                                                        testAmount
+                                                    );
+                                                }
+
+                                                if (permitted) {
+                                                    // perform a permitted trade while signing a permit over an amount lower
+                                                    // than the required amount
+                                                    await expect(
+                                                        tradeBySourceAmountPermittedFunc(testAmount, {
+                                                            approvedAmount: sourceAmount.sub(missingAmount)
+                                                        })
+                                                    ).to.be.revertedWith('ERC20Permit: invalid signature');
+                                                } else {
+                                                    // reduce the approved amount and perform a trade by providing the source
+                                                    // amount
+                                                    const reserveToken = await Contracts.TestERC20Token.attach(
+                                                        sourceToken.address
+                                                    );
+                                                    await reserveToken.connect(trader).approve(network.address, 0);
+                                                    await reserveToken
+                                                        .connect(trader)
+                                                        .approve(network.address, sourceAmount.sub(missingAmount));
+
+                                                    await expect(tradeFunc(testAmount)).to.be.revertedWith(
+                                                        source.tokenData.errors().exceedsAllowance
+                                                    );
+                                                }
+                                            });
+                                        });
+                                    }
+
+                                    context('when paused', () => {
+                                        beforeEach(async () => {
+                                            await network.connect(emergencyStopper).pause();
+                                        });
+
                                         it('should revert when attempting to trade', async () => {
-                                            const missingAmount = 10;
-
-                                            let sourceAmount;
-
-                                            if (bySourceAmount) {
-                                                sourceAmount = testAmount;
-                                            } else {
-                                                sourceAmount = await networkInfo.tradeInputByTargetAmount(
-                                                    sourceToken.address,
-                                                    targetToken.address,
-                                                    testAmount
-                                                );
-                                            }
-
-                                            if (permitted) {
-                                                // perform a permitted trade while signing a permit over an amount lower
-                                                // than the required amount
-                                                await expect(
-                                                    tradeBySourceAmountPermittedFunc(testAmount, {
-                                                        approvedAmount: sourceAmount.sub(missingAmount)
-                                                    })
-                                                ).to.be.revertedWith('ERC20Permit: invalid signature');
-                                            } else {
-                                                // reduce the approved amount and perform a trade by providing the source
-                                                // amount
-                                                const reserveToken = await Contracts.TestERC20Token.attach(
-                                                    sourceToken.address
-                                                );
-                                                await reserveToken.connect(trader).approve(network.address, 0);
-                                                await reserveToken
-                                                    .connect(trader)
-                                                    .approve(network.address, sourceAmount.sub(missingAmount));
-
-                                                await expect(tradeFunc(testAmount)).to.be.revertedWith(
-                                                    source.tokenData.errors().exceedsAllowance
-                                                );
-                                            }
+                                            await expect(tradeFunc(testAmount)).to.be.revertedWith('Pausable: paused');
                                         });
                                     });
-                                }
-
-                                context('when paused', () => {
-                                    beforeEach(async () => {
-                                        await network.connect(emergencyStopper).pause();
-                                    });
-
-                                    it('should revert when attempting to trade', async () => {
-                                        await expect(tradeFunc(testAmount)).to.be.revertedWith('Pausable: paused');
-                                    });
                                 });
-                            });
-                        }
-                    });
+                            }
+                        });
+                    }
                 }
-            });
+            );
 
             // perform permitted trades suite over a fixed input
-            testPermittedTrades(source, target, toWei(1000));
+            testPermittedTrades(source, target, toPPM(20), toWei(1000));
         };
 
-        const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
+        const testTrades = (source: PoolSpec, target: PoolSpec, networkFeePPM: number, amount: BigNumber) => {
             const isSourceNativeToken = source.tokenData.isNative();
 
-            context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                beforeEach(async () => {
-                    await setupPools(source, target);
-                });
+            context(
+                `trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}, network fee=${fromPPM(
+                    networkFeePPM
+                )}%`,
+                () => {
+                    beforeEach(async () => {
+                        await setupPools(source, target, networkFeePPM);
+                    });
 
-                for (const bySourceAmount of [true, false]) {
-                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
+                    for (const bySourceAmount of [true, false]) {
+                        context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                            const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
-                        const TRADES_COUNT = 2;
+                            const TRADES_COUNT = 2;
 
-                        it('should complete multiple trades', async () => {
-                            const currentBlockNumber = await poolCollection.currentBlockNumber();
+                            it('should complete multiple trades', async () => {
+                                const currentBlockNumber = await poolCollection.currentBlockNumber();
 
-                            for (let i = 0; i < TRADES_COUNT; i++) {
+                                for (let i = 0; i < TRADES_COUNT; i++) {
+                                    if (!isSourceNativeToken) {
+                                        await approve(amount, bySourceAmount);
+                                    }
+
+                                    await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
+                                    await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
+                                }
+                            });
+                        });
+                    }
+                }
+            );
+        };
+
+        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, networkFeePPM: number, amount: BigNumber) => {
+            const isSourceNativeToken = source.tokenData.isNative();
+            const isSourceNetworkToken = source.tokenData.isNetworkToken();
+
+            context(
+                `permitted trade ${amount} tokens from ${specToString(source)} to ${specToString(
+                    target
+                )}, network fee=${fromPPM(networkFeePPM)}%`,
+                () => {
+                    beforeEach(async () => {
+                        await setupPools(source, target, networkFeePPM);
+                    });
+
+                    for (const bySourceAmount of [true, false]) {
+                        context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                            const tradeFunc = bySourceAmount
+                                ? tradeBySourceAmountPermitted
+                                : tradeByTargetAmountPermitted;
+
+                            beforeEach(async () => {
                                 if (!isSourceNativeToken) {
                                     await approve(amount, bySourceAmount);
                                 }
+                            });
 
-                                await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
-                                await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
+                            if (isSourceNativeToken || isSourceNetworkToken) {
+                                it('should revert when attempting a permitted trade', async () => {
+                                    await expect(tradeFunc(amount)).to.be.revertedWith('PermitUnsupported');
+                                });
+                            } else {
+                                it('should complete a permitted trade', async () => {
+                                    await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
+                                });
                             }
                         });
-                    });
+                    }
                 }
-            });
-        };
-
-        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNative();
-            const isSourceNetworkToken = source.tokenData.isNetworkToken();
-
-            context(`permitted trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                beforeEach(async () => {
-                    await setupPools(source, target);
-                });
-
-                for (const bySourceAmount of [true, false]) {
-                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
-
-                        beforeEach(async () => {
-                            if (!isSourceNativeToken) {
-                                await approve(amount, bySourceAmount);
-                            }
-                        });
-
-                        if (isSourceNativeToken || isSourceNetworkToken) {
-                            it('should revert when attempting a permitted trade', async () => {
-                                await expect(tradeFunc(amount)).to.be.revertedWith('PermitUnsupported');
-                            });
-                        } else {
-                            it('should complete a permitted trade', async () => {
-                                await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
-                            });
-                        }
-                    });
-                }
-            });
+            );
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            [TokenSymbol.TKN, TokenSymbol.BNT],
+            // [TokenSymbol.TKN, TokenSymbol.BNT],
             [TokenSymbol.TKN, TokenSymbol.ETH],
             [TokenSymbol.TKN1, TokenSymbol.TKN2],
             [TokenSymbol.BNT, TokenSymbol.ETH],
@@ -2655,57 +2688,61 @@ describe('BancorNetwork', () => {
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
                     fundingRate: FUNDING_RATE
-                }
+                },
+                0
             );
 
-            for (const sourceBalance of [toWei(1_000_000), toWei(50_000_000)]) {
-                for (const targetBalance of [toWei(1_000_000), toWei(50_000_000)]) {
+            for (const sourceBalance of [toWei(1_000_000), toWei(100_000_000)]) {
+                for (const targetBalance of [toWei(1_000_000), toWei(100_000_000)]) {
                     for (const amount of [10_000, toWei(100)]) {
-                        const TRADING_FEES = [0, 5];
-                        for (const tradingFeePercent of TRADING_FEES) {
-                            // if either the source or the target token is the network token - only test fee in one of
-                            // the directions
-                            if (sourceTokenData.isNetworkToken() || targetTokenData.isNetworkToken()) {
-                                testTrades(
-                                    {
-                                        tokenData: new TokenData(sourceSymbol),
-                                        balance: sourceBalance,
-                                        requestedLiquidity: sourceBalance.mul(1000),
-                                        tradingFeePPM: sourceTokenData.isNetworkToken()
-                                            ? undefined
-                                            : toPPM(tradingFeePercent),
-                                        fundingRate: FUNDING_RATE
-                                    },
-                                    {
-                                        tokenData: new TokenData(targetSymbol),
-                                        balance: targetBalance,
-                                        requestedLiquidity: targetBalance.mul(1000),
-                                        tradingFeePPM: targetTokenData.isNetworkToken()
-                                            ? undefined
-                                            : toPPM(tradingFeePercent),
-                                        fundingRate: FUNDING_RATE
-                                    },
-                                    BigNumber.from(amount)
-                                );
-                            } else {
-                                for (const tradingFeePercent2 of TRADING_FEES) {
+                        for (const tradingFeePercent of [0, 5]) {
+                            for (const networkFeePercent of [0, 20]) {
+                                // if either the source or the target token is the network token - only test fee in one of
+                                // the directions
+                                if (sourceTokenData.isNetworkToken() || targetTokenData.isNetworkToken()) {
                                     testTrades(
                                         {
                                             tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
                                             requestedLiquidity: sourceBalance.mul(1000),
-                                            tradingFeePPM: toPPM(tradingFeePercent),
+                                            tradingFeePPM: sourceTokenData.isNetworkToken()
+                                                ? undefined
+                                                : toPPM(tradingFeePercent),
                                             fundingRate: FUNDING_RATE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
                                             requestedLiquidity: targetBalance.mul(1000),
-                                            tradingFeePPM: toPPM(tradingFeePercent2),
+                                            tradingFeePPM: targetTokenData.isNetworkToken()
+                                                ? undefined
+                                                : toPPM(tradingFeePercent),
                                             fundingRate: FUNDING_RATE
                                         },
+                                        toPPM(networkFeePercent),
                                         BigNumber.from(amount)
                                     );
+                                } else {
+                                    for (const tradingFeePercent2 of [0, 5]) {
+                                        testTrades(
+                                            {
+                                                tokenData: new TokenData(sourceSymbol),
+                                                balance: sourceBalance,
+                                                requestedLiquidity: sourceBalance.mul(1000),
+                                                tradingFeePPM: toPPM(tradingFeePercent),
+                                                fundingRate: FUNDING_RATE
+                                            },
+                                            {
+                                                tokenData: new TokenData(targetSymbol),
+                                                balance: targetBalance,
+                                                requestedLiquidity: targetBalance.mul(1000),
+                                                tradingFeePPM: toPPM(tradingFeePercent2),
+                                                fundingRate: FUNDING_RATE
+                                            },
+                                            toPPM(networkFeePercent),
+                                            BigNumber.from(amount)
+                                        );
+                                    }
                                 }
                             }
                         }

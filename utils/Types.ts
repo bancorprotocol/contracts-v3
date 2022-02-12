@@ -106,5 +106,5 @@ export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
     return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
 };
 
-export const toPPM = (percent: number): number => percent * (PPM_RESOLUTION / 100);
-export const fromPPM = (ppm: number): number => ppm / (PPM_RESOLUTION / 100);
+export const toPPM = (percent: number | undefined): number => (percent ? percent * (PPM_RESOLUTION / 100) : 0);
+export const fromPPM = (ppm: number | undefined): number => (ppm ? ppm / (PPM_RESOLUTION / 100) : 0);
