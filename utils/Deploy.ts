@@ -81,7 +81,8 @@ enum NewContractName {
 export const ContractName = {
     ...LegacyContractName,
     ...NewContractName
-} as const;
+};
+
 export type ContractName = LegacyContractName | NewContractName;
 
 export enum DeploymentTag {

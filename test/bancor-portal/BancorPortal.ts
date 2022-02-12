@@ -366,7 +366,9 @@ describe('bancor-portal', () => {
         // prepare uniswap mocks
         await transfer(deployer, token0, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, token1, uniswapV2Pair.address, AMOUNT);
-        deployer.sendTransaction({ to: uniswapV2Pair.address, value: AMOUNT });
+        if (isNativeToken(token0) || isNativeToken(token1)) {
+            deployer.sendTransaction({ to: uniswapV2Pair.address, value: AMOUNT });
+        }
 
         // save state
         const previousBalances = await getBalances([token0, token1], user);

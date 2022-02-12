@@ -19,10 +19,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { NetworkSettings } from "../network/NetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IBancorPortal } from "./interfaces/IBancorPortal.sol";
-
-import "./MigrationResult.sol";
-import "./UniswapV2PositionMigration.sol";
+import { IBancorPortal, MigrationResult, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
 
 /**
  * @dev one click liquidity migration between other DEXes into Bancor v3
