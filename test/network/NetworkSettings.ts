@@ -6,6 +6,7 @@ import { createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('NetworkSettings', () => {
@@ -48,8 +49,10 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
-            expect(await networkSettings.vortexBurnRewardPPM()).to.equal(0);
-            expect(await networkSettings.vortexBurnRewardMaxAmount()).to.equal(0);
+            expect(await networkSettings.vortexSettings()).to.equal({
+                burnRewardPPM: 0,
+                burnRewardMaxAmount: BigNumber.from(0)
+            });
         });
     });
 
@@ -282,82 +285,50 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('vortex burn reward percentage', () => {
-        const newVortexBurnRewardPPM = toPPM(50);
+    describe('vortex settings', () => {
+        const newVortexSettings = {
+            burnRewardPPM: toPPM(10),
+            burnRewardMaxAmount: toWei(100)
+        };
 
-        beforeEach(async () => {
-            expect(await networkSettings.vortexBurnRewardPPM()).to.equal(0);
+        it('should revert when a non-admin attempts to set the vortex settings', async () => {
+            await expect(networkSettings.connect(nonOwner).setVortexSettings(newVortexSettings)).to.be.revertedWith(
+                'AccessDenied'
+            );
         });
 
-        it('should revert when a non-admin attempts to set the vortex burn reward percentage', async () => {
+        it('should revert when setting the vortex settings to an invalid value', async () => {
             await expect(
-                networkSettings.connect(nonOwner).setVortexBurnRewardPPM(newVortexBurnRewardPPM)
-            ).to.be.revertedWith('AccessDenied');
+                networkSettings.setVortexSettings({
+                    burnRewardPPM: PPM_RESOLUTION + 1,
+                    burnRewardMaxAmount: toWei(100)
+                })
+            ).to.be.revertedWith('InvalidFee');
+
+            await expect(
+                networkSettings.setVortexSettings({
+                    burnRewardPPM: toPPM(10),
+                    burnRewardMaxAmount: 0
+                })
+            ).to.be.revertedWith('ZeroValue');
         });
 
-        it('should revert when setting the vortex burn reward percentage to an invalid value', async () => {
-            await expect(networkSettings.setVortexBurnRewardPPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
-        });
+        it('should ignore updating to the same vortex settings', async () => {
+            await networkSettings.setVortexSettings(newVortexSettings);
 
-        it('should ignore updating to the same vortex burn reward max amount percentage', async () => {
-            await networkSettings.setVortexBurnRewardPPM(newVortexBurnRewardPPM);
-
-            const res = await networkSettings.setVortexBurnRewardPPM(newVortexBurnRewardPPM);
+            const res = await networkSettings.setVortexSettings(newVortexSettings);
             await expect(res).not.to.emit(networkSettings, 'VortexBurnRewardUpdated');
         });
 
-        it('should be able to set and update the vortex burn reward percentage', async () => {
-            const res = await networkSettings.setVortexBurnRewardPPM(newVortexBurnRewardPPM);
-            await expect(res).to.emit(networkSettings, 'VortexBurnRewardUpdated').withArgs(0, newVortexBurnRewardPPM);
-
-            expect(await networkSettings.vortexBurnRewardPPM()).to.equal(newVortexBurnRewardPPM);
-
-            const res2 = await networkSettings.setVortexBurnRewardPPM(0);
-            await expect(res2).to.emit(networkSettings, 'VortexBurnRewardUpdated').withArgs(newVortexBurnRewardPPM, 0);
-
-            expect(await networkSettings.vortexBurnRewardPPM()).to.equal(0);
-        });
-    });
-
-    describe('vortex burn reward max amount', () => {
-        const newVortexBurnRewardMaxAmount = toPPM(50);
-
-        beforeEach(async () => {
-            expect(await networkSettings.vortexBurnRewardMaxAmount()).to.equal(0);
-        });
-
-        it('should revert when a non-admin attempts to set the vortex burn reward max amount', async () => {
-            await expect(
-                networkSettings.connect(nonOwner).setVortexBurnRewardMaxAmount(newVortexBurnRewardMaxAmount)
-            ).to.be.revertedWith('AccessDenied');
-        });
-
-        it('should revert when setting the vortex burn reward max amount to an invalid value', async () => {
-            await expect(networkSettings.setVortexBurnRewardMaxAmount(0)).to.be.revertedWith('ZeroValue');
-        });
-
-        it('should ignore updating to the same vortex burn reward max amount', async () => {
-            await networkSettings.setVortexBurnRewardMaxAmount(newVortexBurnRewardMaxAmount);
-
-            const res = await networkSettings.setVortexBurnRewardMaxAmount(newVortexBurnRewardMaxAmount);
-            await expect(res).not.to.emit(networkSettings, 'VortexBurnRewardMaxAmountUpdated');
-        });
-
-        it('should be able to set and update the vortex burn reward max amount', async () => {
-            const res = await networkSettings.setVortexBurnRewardMaxAmount(newVortexBurnRewardMaxAmount);
+        it('should be able to set and update the vortex settings', async () => {
+            const res = await networkSettings.setVortexSettings(newVortexSettings);
             await expect(res)
-                .to.emit(networkSettings, 'VortexBurnRewardMaxAmountUpdated')
-                .withArgs(0, newVortexBurnRewardMaxAmount);
+                .to.emit(networkSettings, 'VortexBurnRewardUpdated')
+                .withArgs(0, newVortexSettings.burnRewardPPM, 0, newVortexSettings.burnRewardMaxAmount);
 
-            expect(await networkSettings.vortexBurnRewardMaxAmount()).to.equal(newVortexBurnRewardMaxAmount);
-
-            const newVortexBurnRewardMaxAmount2 = 100;
-            const res2 = await networkSettings.setVortexBurnRewardMaxAmount(newVortexBurnRewardMaxAmount2);
-            await expect(res2)
-                .to.emit(networkSettings, 'VortexBurnRewardMaxAmountUpdated')
-                .withArgs(newVortexBurnRewardMaxAmount, newVortexBurnRewardMaxAmount2);
-
-            expect(await networkSettings.vortexBurnRewardMaxAmount()).to.equal(newVortexBurnRewardMaxAmount2);
+            const vortexSettings = await networkSettings.vortexSettings();
+            expect(vortexSettings.burnRewardPPM).to.equal(newVortexSettings.burnRewardPPM);
+            expect(vortexSettings.burnRewardMaxAmount).to.equal(newVortexSettings.burnRewardMaxAmount);
         });
     });
 });

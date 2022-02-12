@@ -7,6 +7,13 @@ import { Token } from "../../token/Token.sol";
 
 error NotWhitelisted();
 
+struct VortexSettings {
+    // the percentage of the converted network tokens to be sent to the caller of the burning event (in units of PPM)
+    uint32 burnRewardPPM;
+    // the maximum burn reward to be sent to the caller of the burning event
+    uint256 burnRewardMaxAmount;
+}
+
 /**
  * @dev Network Settings interface
  */
@@ -52,13 +59,7 @@ interface INetworkSettings is IUpgradeable {
     function flashLoanFeePPM() external view returns (uint32);
 
     /**
-     * @dev returns the percentage of the converted network tokens to be sent to the caller of the burning event (in
-     * units of PPM)
+     * @dev returns the vortex settings
      */
-    function vortexBurnRewardPPM() external view returns (uint32);
-
-    /**
-     * @dev returns the maximum burn reward to be sent to the caller of the burning event
-     */
-    function vortexBurnRewardMaxAmount() external view returns (uint256);
+    function vortexSettings() external view returns (VortexSettings memory);
 }
