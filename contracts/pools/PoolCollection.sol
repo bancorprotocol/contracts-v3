@@ -1333,12 +1333,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
         uint256 fullTargetAmount = targetAmount + tradingFeeAmount;
+        uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
-        return
-            TradeAmountAndFee({
-                amount: MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount),
-                tradingFeeAmount: tradingFeeAmount
-            });
+        return TradeAmountAndFee({ amount: sourceAmount, tradingFeeAmount: tradingFeeAmount });
     }
 
     /**
