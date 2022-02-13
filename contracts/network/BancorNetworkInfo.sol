@@ -13,7 +13,6 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
-import { TradeAmounts } from "../pools/interfaces/IPoolCollection.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
