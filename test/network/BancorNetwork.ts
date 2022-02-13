@@ -932,7 +932,7 @@ describe('BancorNetwork', () => {
             expect(await targetPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
-                const isNative = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
+                const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
 
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(targetPoolCollection.address);
 
@@ -981,7 +981,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNative) {
+                if (isNativeToken) {
                     transactionCost = await getTransactionCost(res);
                 }
 
@@ -1005,7 +1005,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNative) {
+                if (isNativeToken) {
                     transactionCost = await getTransactionCost(res2);
                 }
 
@@ -2664,7 +2664,7 @@ describe('BancorNetwork', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            // [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.BNT],
             [TokenSymbol.TKN, TokenSymbol.ETH],
             [TokenSymbol.TKN1, TokenSymbol.TKN2],
             [TokenSymbol.BNT, TokenSymbol.ETH],
@@ -3037,23 +3037,22 @@ describe('BancorNetwork', () => {
             };
 
             const addProtectedLiquidity = async (
-                poolTokenAddress: string,
-                token: IERC20,
-                tokenAddress: string,
-                amount: BigNumber,
+                poolToken: DSToken,
+                reserveToken: IERC20,
                 isNativeToken: boolean,
+                amount: BigNumber,
                 from: SignerWithAddress
             ) => {
                 let value = BigNumber.from(0);
                 if (isNativeToken) {
                     value = amount;
                 } else {
-                    await token.connect(from).approve(liquidityProtection.address, amount);
+                    await reserveToken.connect(from).approve(liquidityProtection.address, amount);
                 }
 
                 return liquidityProtection
                     .connect(from)
-                    .addLiquidity(poolTokenAddress, tokenAddress, amount, { value });
+                    .addLiquidity(poolToken.address, reserveToken.address, amount, { value });
             };
 
             const getProtection = async (protectionId: BigNumber) => {
@@ -3104,16 +3103,6 @@ describe('BancorNetwork', () => {
                 };
             };
 
-            const setTime = async (time: number) => {
-                now = time;
-
-                for (const t of [converter, checkpointStore, liquidityProtection]) {
-                    if (t) {
-                        await t.setTime(now);
-                    }
-                }
-            };
-
             const initLegacySystem = async (isNativeToken: boolean) => {
                 [owner, provider] = await ethers.getSigners();
 
@@ -3159,8 +3148,7 @@ describe('BancorNetwork', () => {
                 if (isNativeToken) {
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY, { value: INITIAL_LIQUIDITY });
                 } else {
-                    const reserveToken = await Contracts.TestERC20Token.attach(baseToken.address);
-                    await reserveToken.approve(network.address, INITIAL_LIQUIDITY);
+                    await baseToken.approve(network.address, INITIAL_LIQUIDITY);
 
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY);
                 }
@@ -3187,22 +3175,19 @@ describe('BancorNetwork', () => {
 
                 await liquidityProtectionSettings.addPoolToWhitelist(poolToken.address);
 
-                await setTime(await latest());
+                now = await latest();
+                await converter.setTime(now);
+                await checkpointStore.setTime(now);
+                await liquidityProtection.setTime(now);
             };
 
-            for (const isNative of [false, true]) {
-                describe(`base token (${isNative ? 'ETH' : 'ERC20'})`, () => {
+            for (const tokenSymbol of [TokenSymbol.TKN, TokenSymbol.ETH]) {
+                const isNativeToken = tokenSymbol === TokenSymbol.ETH;
+                describe(tokenSymbol, () => {
                     beforeEach(async () => {
-                        await initLegacySystem(isNative);
+                        await initLegacySystem(isNativeToken);
 
-                        await addProtectedLiquidity(
-                            poolToken.address,
-                            baseToken,
-                            baseToken.address,
-                            BigNumber.from(1000),
-                            isNative,
-                            owner
-                        );
+                        await addProtectedLiquidity(poolToken, baseToken, isNativeToken, BigNumber.from(1000), owner);
                     });
 
                     it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
@@ -3226,8 +3211,8 @@ describe('BancorNetwork', () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         const protection = await getProtection(protectionId);
 
-                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNative);
-                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNative);
+                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
+                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
@@ -3241,13 +3226,13 @@ describe('BancorNetwork', () => {
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
-                        const transactionCost = isNative ? await getTransactionCost(res) : BigNumber.from(0);
+                        const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
 
                         // verify protected liquidities
                         expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                         // verify stats
-                        const poolStats = await getPoolStats(poolToken, baseToken, isNative);
+                        const poolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
                         expect(poolStats.totalPoolAmount).to.equal(
                             prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
                         );
@@ -3255,7 +3240,7 @@ describe('BancorNetwork', () => {
                             prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
                         );
 
-                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNative);
+                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
                         expect(providerStats.totalProviderAmount).to.equal(
                             prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
                         );
@@ -3352,7 +3337,7 @@ describe('BancorNetwork', () => {
                 });
             }
 
-            describe('network token', () => {
+            describe(TokenSymbol.BNT, () => {
                 beforeEach(async () => {
                     await initLegacySystem(false);
 
@@ -3363,24 +3348,10 @@ describe('BancorNetwork', () => {
 
                     const amount1 = BigNumber.from(5000);
                     await baseToken.transfer(provider.address, amount1);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        baseToken,
-                        baseToken.address,
-                        amount1,
-                        false,
-                        provider
-                    );
+                    await addProtectedLiquidity(poolToken, baseToken, false, amount1, provider);
 
                     const amount2 = BigNumber.from(1000);
-                    await addProtectedLiquidity(
-                        poolToken.address,
-                        networkToken,
-                        networkToken.address,
-                        amount2,
-                        false,
-                        owner
-                    );
+                    await addProtectedLiquidity(poolToken, networkToken, false, amount2, owner);
                 });
 
                 it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
