@@ -4,6 +4,7 @@ pragma solidity 0.8.11;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import { IUniswapV2Factory } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
@@ -28,6 +29,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     using SafeERC20 for IERC20;
     using SafeERC20 for IPoolToken;
     using TokenLibrary for Token;
+    using Address for address payable;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -302,7 +304,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     function _transferToWallet(Token token, uint256 amount) private {
         if (token.isNative()) {
-            payable(msg.sender).transfer(amount);
+            payable(msg.sender).sendValue(amount);
         } else {
             token.toIERC20().safeTransfer(msg.sender, amount);
         }
