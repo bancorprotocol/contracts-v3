@@ -49,10 +49,10 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
-            expect(await networkSettings.vortexSettings()).to.equal({
-                burnRewardPPM: 0,
-                burnRewardMaxAmount: BigNumber.from(0)
-            });
+
+            const vortexSettings = await networkSettings.vortexSettings();
+            expect(vortexSettings.burnRewardPPM).to.equal(0);
+            expect(vortexSettings.burnRewardMaxAmount).to.equal(0);
         });
     });
 
