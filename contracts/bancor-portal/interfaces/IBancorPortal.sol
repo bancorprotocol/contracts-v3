@@ -6,8 +6,8 @@ import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol"
 import { Token } from "../../token/Token.sol";
 
 struct MigrationResult {
-    address tokenA;
-    address tokenB;
+    Token tokenA;
+    Token tokenB;
     uint256 amountA;
     uint256 amountB;
 }

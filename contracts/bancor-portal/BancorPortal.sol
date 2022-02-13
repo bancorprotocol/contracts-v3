@@ -62,8 +62,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     event UniswapV2PositionMigrated(
         address indexed provider,
-        address indexed tokenA,
-        address indexed tokenB,
+        Token indexed tokenA,
+        Token indexed tokenB,
         uint256 amountA,
         uint256 amountB
     );
@@ -73,8 +73,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     event SushiswapV2PositionMigrated(
         address indexed provider,
-        address indexed tokenA,
-        address indexed tokenB,
+        Token indexed tokenA,
+        Token indexed tokenB,
         uint256 amountA,
         uint256 amountB
     );
@@ -278,13 +278,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             }
         }
 
-        return
-            MigrationResult({
-                tokenA: address(tokens[0]),
-                tokenB: address(tokens[1]),
-                amountA: deposited[0],
-                amountB: deposited[1]
-            });
+        return MigrationResult({ tokenA: tokens[0], tokenB: tokens[1], amountA: deposited[0], amountB: deposited[1] });
     }
 
     /**
