@@ -13,7 +13,20 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction, Fraction112, Sint256, zeroFraction, zeroFraction112, isFractionPositive, isFraction112Positive, toFraction112, fromFraction112 } from "../utility/Types.sol";
+
+// prettier-ignore
+import {
+    Fraction,
+    Fraction112,
+    Sint256,
+    zeroFraction,
+    zeroFraction112,
+    isFractionPositive,
+    isFraction112Positive,
+    toFraction112,
+    fromFraction112
+} from "../utility/Types.sol";
+
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
@@ -44,8 +57,7 @@ import {
     TRADING_STATUS_UPDATE_DEFAULT,
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
-    TradeAmounts,
-    TradeAmounts
+    TradeAmountAndFee
 } from "./interfaces/IPoolCollection.sol";
 
 import { IMasterPool } from "./interfaces/IMasterPool.sol";
@@ -97,14 +109,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     uint256 private constant EMA_AVERAGE_RATE_WEIGHT = 4;
     uint256 private constant EMA_SPOT_RATE_WEIGHT = 1;
 
-    // trading-related preprocessed data
-    struct TradingParams {
+    struct TradeIntermediateResult {
+        uint256 sourceAmount;
+        uint256 targetAmount;
+        uint256 limit;
+        uint256 tradingFeeAmount;
+        uint256 networkFeeAmount;
         uint256 sourceBalance;
         uint256 targetBalance;
-        PoolLiquidity liquidity;
+        uint256 stakedBalance;
         Token pool;
         bool isSourceNetworkToken;
+        bool bySourceAmount;
         uint32 tradingFeePPM;
+        bytes32 contextId;
     }
 
     // the network contract
@@ -635,26 +653,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         greaterThanZero(sourceAmount)
         greaterThanZero(minReturnAmount)
-        returns (TradeAmounts memory)
+        returns (TradeAmountAndFee memory)
     {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        TradeAmounts memory tradeAmounts = _targetAmountAndFee(
-            params.sourceBalance,
-            params.targetBalance,
-            params.tradingFeePPM,
-            sourceAmount
+        TradeIntermediateResult memory result = _initTrade(
+            contextId,
+            sourceToken,
+            targetToken,
+            sourceAmount,
+            minReturnAmount,
+            true
         );
 
-        // ensure that the target amount is above the requested minimum return amount
-        if (tradeAmounts.amount < minReturnAmount) {
-            revert InsufficientTargetAmount();
-        }
+        _performTrade(result);
 
-        // perform the trade and update the liquidity
-        _performTrade(contextId, params, sourceAmount, tradeAmounts.amount, tradeAmounts.feeAmount);
-
-        return TradeAmounts({ amount: tradeAmounts.amount, feeAmount: tradeAmounts.feeAmount });
+        return TradeAmountAndFee({ amount: result.targetAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
 
     /**
@@ -671,26 +683,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         greaterThanZero(targetAmount)
         greaterThanZero(maxSourceAmount)
-        returns (TradeAmounts memory)
+        returns (TradeAmountAndFee memory)
     {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
-
-        TradeAmounts memory sourceAmounts = _sourceAmountAndFee(
-            params.sourceBalance,
-            params.targetBalance,
-            params.tradingFeePPM,
-            targetAmount
+        TradeIntermediateResult memory result = _initTrade(
+            contextId,
+            sourceToken,
+            targetToken,
+            targetAmount,
+            maxSourceAmount,
+            false
         );
 
-        // ensure that the user has provided enough tokens to make the trade
-        if (sourceAmounts.amount > maxSourceAmount) {
-            revert InsufficientSourceAmount();
-        }
+        _performTrade(result);
 
-        // perform the trade and update the liquidity
-        _performTrade(contextId, params, sourceAmounts.amount, targetAmount, sourceAmounts.feeAmount);
-
-        return TradeAmounts({ amount: sourceAmounts.amount, feeAmount: sourceAmounts.feeAmount });
+        return TradeAmountAndFee({ amount: result.sourceAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
 
     /**
@@ -700,10 +706,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
-    ) external view greaterThanZero(sourceAmount) returns (TradeAmounts memory) {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+    ) external view greaterThanZero(sourceAmount) returns (TradeAmountAndFee memory) {
+        TradeIntermediateResult memory result = _initTrade(bytes32(0), sourceToken, targetToken, sourceAmount, 1, true);
 
-        return _targetAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, sourceAmount);
+        _processTrade(result);
+
+        return TradeAmountAndFee({ amount: result.targetAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
 
     /**
@@ -713,10 +721,19 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
-    ) external view greaterThanZero(targetAmount) returns (TradeAmounts memory) {
-        TradingParams memory params = _tradeParams(sourceToken, targetToken);
+    ) external view greaterThanZero(targetAmount) returns (TradeAmountAndFee memory) {
+        TradeIntermediateResult memory result = _initTrade(
+            bytes32(0),
+            sourceToken,
+            targetToken,
+            targetAmount,
+            type(uint256).max,
+            false
+        );
 
-        return _sourceAmountAndFee(params.sourceBalance, params.targetBalance, params.tradingFeePPM, targetAmount);
+        _processTrade(result);
+
+        return TradeAmountAndFee({ amount: result.sourceAmount, tradingFeeAmount: result.tradingFeeAmount });
     }
 
     /**
@@ -1223,127 +1240,214 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns trading params
+     * @dev returns initial trading params
      */
-    function _tradeParams(Token sourceToken, Token targetToken) private view returns (TradingParams memory params) {
+    function _initTrade(
+        bytes32 contextId,
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        uint256 limit,
+        bool bySourceAmount
+    ) private view returns (TradeIntermediateResult memory result) {
         // ensure that the network token is either the source or the target pool
         bool isSourceNetworkToken = sourceToken.isEqual(_networkToken);
         bool isTargetNetworkToken = targetToken.isEqual(_networkToken);
+
         if (isSourceNetworkToken && !isTargetNetworkToken) {
-            params.isSourceNetworkToken = true;
-            params.pool = targetToken;
+            result.isSourceNetworkToken = true;
+            result.pool = targetToken;
         } else if (!isSourceNetworkToken && isTargetNetworkToken) {
-            params.isSourceNetworkToken = false;
-            params.pool = sourceToken;
+            result.isSourceNetworkToken = false;
+            result.pool = sourceToken;
         } else {
             // the network token isn't one of the pools or is both of them
             revert DoesNotExist();
         }
 
-        Pool memory data = _poolData[params.pool];
+        Pool memory data = _poolData[result.pool];
         if (!_validPool(data)) {
             revert DoesNotExist();
         }
-
-        params.liquidity = data.liquidity;
-        params.tradingFeePPM = data.tradingFeePPM;
 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
             revert TradingDisabled();
         }
 
-        if (params.isSourceNetworkToken) {
-            params.sourceBalance = params.liquidity.networkTokenTradingLiquidity;
-            params.targetBalance = params.liquidity.baseTokenTradingLiquidity;
+        result.contextId = contextId;
+        result.bySourceAmount = bySourceAmount;
+
+        if (result.bySourceAmount) {
+            result.sourceAmount = amount;
         } else {
-            params.sourceBalance = params.liquidity.baseTokenTradingLiquidity;
-            params.targetBalance = params.liquidity.networkTokenTradingLiquidity;
+            result.targetAmount = amount;
         }
+
+        result.limit = limit;
+        result.tradingFeePPM = data.tradingFeePPM;
+
+        PoolLiquidity memory liquidity = data.liquidity;
+        if (result.isSourceNetworkToken) {
+            result.sourceBalance = liquidity.networkTokenTradingLiquidity;
+            result.targetBalance = liquidity.baseTokenTradingLiquidity;
+        } else {
+            result.sourceBalance = liquidity.baseTokenTradingLiquidity;
+            result.targetBalance = liquidity.networkTokenTradingLiquidity;
+        }
+
+        result.stakedBalance = liquidity.stakedBalance;
     }
 
     /**
-     * @dev returns the target amount and fee by providing the source amount
+     * @dev returns trade amount and fee by providing the source amount
      */
-    function _targetAmountAndFee(
+    function _tradeAmountAndFeeBySourceAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
         uint32 tradingFeePPM,
         uint256 sourceAmount
-    ) private pure returns (TradeAmounts memory) {
+    ) private pure returns (TradeAmountAndFee memory) {
         if (sourceBalance == 0 || targetBalance == 0) {
             revert InsufficientLiquidity();
         }
 
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
-        uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
 
-        return TradeAmounts({ amount: targetAmount - feeAmount, feeAmount: feeAmount });
+        return TradeAmountAndFee({ amount: targetAmount - tradingFeeAmount, tradingFeeAmount: tradingFeeAmount });
     }
 
     /**
-     * @dev returns the source amount and fee by providing the target amount
+     * @dev returns trade amount and fee by providing either the target amount
      */
-    function _sourceAmountAndFee(
+    function _tradeAmountAndFeeByTargetAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
         uint32 tradingFeePPM,
         uint256 targetAmount
-    ) private pure returns (TradeAmounts memory) {
+    ) private pure returns (TradeAmountAndFee memory) {
         if (sourceBalance == 0) {
             revert InsufficientLiquidity();
         }
 
-        uint256 feeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
-        uint256 fullTargetAmount = targetAmount + feeAmount;
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
+        uint256 fullTargetAmount = targetAmount + tradingFeeAmount;
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
-        return TradeAmounts({ amount: sourceAmount, feeAmount: feeAmount });
+        return TradeAmountAndFee({ amount: sourceAmount, tradingFeeAmount: tradingFeeAmount });
     }
 
     /**
-     * @dev performs a trade and updates the trading liquidity
+     * @dev processes a trade by providing either the source or the target amount and updates the in-memory intermediate
+     * result
      */
-    function _performTrade(
-        bytes32 contextId,
-        TradingParams memory params,
-        uint256 sourceAmount,
-        uint256 targetAmount,
-        uint256 feeAmount
-    ) private {
-        Pool storage data = _poolData[params.pool];
+    function _processTrade(TradeIntermediateResult memory result) private view {
+        TradeAmountAndFee memory tradeAmountAndFee;
+
+        if (result.bySourceAmount) {
+            tradeAmountAndFee = _tradeAmountAndFeeBySourceAmount(
+                result.sourceBalance,
+                result.targetBalance,
+                result.tradingFeePPM,
+                result.sourceAmount
+            );
+
+            result.targetAmount = tradeAmountAndFee.amount;
+
+            // ensure that the target amount is above the requested minimum return amount
+            if (result.targetAmount < result.limit) {
+                revert InsufficientTargetAmount();
+            }
+        } else {
+            tradeAmountAndFee = _tradeAmountAndFeeByTargetAmount(
+                result.sourceBalance,
+                result.targetBalance,
+                result.tradingFeePPM,
+                result.targetAmount
+            );
+
+            result.sourceAmount = tradeAmountAndFee.amount;
+
+            // ensure that the user has provided enough tokens to make the trade
+            if (result.sourceAmount > result.limit) {
+                revert InsufficientSourceAmount();
+            }
+        }
+
+        result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
+
+        // sync the trading and staked balance
+        result.sourceBalance += result.sourceAmount;
+        result.targetBalance -= result.targetAmount;
+
+        if (result.isSourceNetworkToken) {
+            result.stakedBalance += result.tradingFeeAmount;
+        }
+
+        _processNetworkFee(result);
+    }
+
+    /**
+     * @dev processes the network fee and updates the in-memory intermediate result
+     */
+    function _processNetworkFee(TradeIntermediateResult memory result) private view {
+        uint32 networkFeePPM = _networkSettings.networkFeePPM();
+        if (networkFeePPM == 0) {
+            return;
+        }
+
+        // calculate the target network fee amount and update the trading fee amount accordingly
+        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
+        result.tradingFeeAmount -= targetNetworkFeeAmount;
+
+        if (!result.isSourceNetworkToken) {
+            result.networkFeeAmount = targetNetworkFeeAmount;
+
+            return;
+        }
+
+        // trade the network fee (taken from the base token) to the network token
+        result.networkFeeAmount = _tradeAmountAndFeeBySourceAmount(
+            result.targetBalance,
+            result.sourceBalance,
+            0,
+            targetNetworkFeeAmount
+        ).amount;
+
+        // since we have received the network fee in base tokens and have traded them for network tokens (so that
+        // the network fee is always kept in network tokens), we'd need to adapt the trading liquidity and the
+        // staked balance accordingly
+        result.targetBalance += targetNetworkFeeAmount;
+        result.sourceBalance -= result.networkFeeAmount;
+        result.stakedBalance -= targetNetworkFeeAmount;
+    }
+
+    /**
+     * @dev performs a trade
+     */
+    function _performTrade(TradeIntermediateResult memory result) private {
+        Pool storage data = _poolData[result.pool];
+        PoolLiquidity memory prevLiquidity = data.liquidity;
 
         // update the recent average rate
         _updateAverageRate(
             data,
-            Fraction({
-                n: params.liquidity.networkTokenTradingLiquidity,
-                d: params.liquidity.baseTokenTradingLiquidity
-            })
+            Fraction({ n: prevLiquidity.networkTokenTradingLiquidity, d: prevLiquidity.baseTokenTradingLiquidity })
         );
 
-        // sync the reserve balances
-        PoolLiquidity memory newLiquidity;
-        if (params.isSourceNetworkToken) {
-            // if the target token is a base token, make sure to add the fee to the staked balance
-            newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: params.sourceBalance + sourceAmount,
-                baseTokenTradingLiquidity: params.targetBalance - targetAmount,
-                stakedBalance: params.liquidity.stakedBalance + feeAmount
-            });
-        } else {
-            newLiquidity = PoolLiquidity({
-                networkTokenTradingLiquidity: params.targetBalance - targetAmount,
-                baseTokenTradingLiquidity: params.sourceBalance + sourceAmount,
-                stakedBalance: params.liquidity.stakedBalance
-            });
-        }
+        _processTrade(result);
 
-        // update the liquidity in the pool
-        PoolLiquidity memory prevLiquidity = data.liquidity;
+        // sync the reserve balances and process the network fee
+        PoolLiquidity memory newLiquidity = PoolLiquidity({
+            networkTokenTradingLiquidity: result.isSourceNetworkToken ? result.sourceBalance : result.targetBalance,
+            baseTokenTradingLiquidity: result.isSourceNetworkToken ? result.targetBalance : result.sourceBalance,
+            stakedBalance: result.stakedBalance
+        });
+
+        _dispatchTradingLiquidityEvents(result.contextId, result.pool, prevLiquidity, newLiquidity);
+
         data.liquidity = newLiquidity;
-
-        _dispatchTradingLiquidityEvents(contextId, params.pool, prevLiquidity, newLiquidity);
     }
 
     /**
