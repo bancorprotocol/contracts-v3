@@ -49,9 +49,9 @@ describe('NetworkSettings', () => {
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
 
-            const vortexSettings = await networkSettings.vortexSettings();
-            expect(vortexSettings.burnRewardPPM).to.equal(0);
-            expect(vortexSettings.burnRewardMaxAmount).to.equal(0);
+            const vortexRewards = await networkSettings.vortexRewards();
+            expect(vortexRewards.burnRewardPPM).to.equal(0);
+            expect(vortexRewards.burnRewardMaxAmount).to.equal(0);
         });
     });
 
@@ -284,28 +284,28 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('vortex settings', () => {
-        const newVortexSettings = {
+    describe('vortex rewards', () => {
+        const newVortexRewards = {
             burnRewardPPM: toPPM(10),
             burnRewardMaxAmount: toWei(100)
         };
 
         it('should revert when a non-admin attempts to set the vortex settings', async () => {
-            await expect(networkSettings.connect(nonOwner).setVortexSettings(newVortexSettings)).to.be.revertedWith(
+            await expect(networkSettings.connect(nonOwner).setVortexRewards(newVortexRewards)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
 
         it('should revert when setting the vortex settings to an invalid value', async () => {
             await expect(
-                networkSettings.setVortexSettings({
+                networkSettings.setVortexRewards({
                     burnRewardPPM: PPM_RESOLUTION + 1,
                     burnRewardMaxAmount: toWei(100)
                 })
             ).to.be.revertedWith('InvalidFee');
 
             await expect(
-                networkSettings.setVortexSettings({
+                networkSettings.setVortexRewards({
                     burnRewardPPM: toPPM(10),
                     burnRewardMaxAmount: 0
                 })
@@ -313,21 +313,21 @@ describe('NetworkSettings', () => {
         });
 
         it('should ignore updating to the same vortex settings', async () => {
-            await networkSettings.setVortexSettings(newVortexSettings);
+            await networkSettings.setVortexRewards(newVortexRewards);
 
-            const res = await networkSettings.setVortexSettings(newVortexSettings);
+            const res = await networkSettings.setVortexRewards(newVortexRewards);
             await expect(res).not.to.emit(networkSettings, 'VortexBurnRewardUpdated');
         });
 
         it('should be able to set and update the vortex settings', async () => {
-            const res = await networkSettings.setVortexSettings(newVortexSettings);
+            const res = await networkSettings.setVortexRewards(newVortexRewards);
             await expect(res)
                 .to.emit(networkSettings, 'VortexBurnRewardUpdated')
-                .withArgs(0, newVortexSettings.burnRewardPPM, 0, newVortexSettings.burnRewardMaxAmount);
+                .withArgs(0, newVortexRewards.burnRewardPPM, 0, newVortexRewards.burnRewardMaxAmount);
 
-            const vortexSettings = await networkSettings.vortexSettings();
-            expect(vortexSettings.burnRewardPPM).to.equal(newVortexSettings.burnRewardPPM);
-            expect(vortexSettings.burnRewardMaxAmount).to.equal(newVortexSettings.burnRewardMaxAmount);
+            const vortexRewards = await networkSettings.vortexRewards();
+            expect(vortexRewards.burnRewardPPM).to.equal(newVortexRewards.burnRewardPPM);
+            expect(vortexRewards.burnRewardMaxAmount).to.equal(newVortexRewards.burnRewardMaxAmount);
         });
     });
 });
