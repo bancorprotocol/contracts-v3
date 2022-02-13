@@ -1,6 +1,6 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+set -e
 
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin"
+. "$(dirname "$0")/.setup.sh"
 
 yarn lint
