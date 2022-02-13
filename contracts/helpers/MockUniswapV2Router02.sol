@@ -39,7 +39,9 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
         // mimic uniswap burn
         _pair.burn(msg.sender, liquidity);
 
-        return (liquidity, liquidity);
+        amountA = liquidity;
+        amountB = liquidity;
+        return (amountA, amountB);
     }
 
     function removeLiquidityETH(
@@ -56,6 +58,8 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
         // mimic uniswap burn
         _pair.burn(msg.sender, liquidity);
 
-        return (liquidity, liquidity);
+        amountToken = liquidity;
+        amountETH = liquidity;
+        return (amountToken, amountETH);
     }
 }
