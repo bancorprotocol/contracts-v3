@@ -124,14 +124,6 @@ describe('BancorPortal', () => {
             ).to.be.revertedWith('ZeroValue()');
         });
 
-        it('reverts if the input amount is less than 0', async () => {
-            const token0 = await createToken(new TokenData(TokenSymbol.TKN));
-            const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Factory.setTokens(token0.address, token1.address);
-            await expect(bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, -1)).to.be
-                .reverted;
-        });
-
         it('reverts if there is no uniswap pair for specified tokens', async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const token0 = await createToken(new TokenData(TokenSymbol.TKN));
