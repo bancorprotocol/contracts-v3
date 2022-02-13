@@ -26,7 +26,7 @@ import {
     TestStandardPoolConverter,
     TokenGovernance
 } from '../../components/LegacyContracts';
-import { TradeAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
@@ -1972,7 +1972,7 @@ describe('BancorNetwork', () => {
                 amount
             );
 
-            // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
             // maximum source amount
             if (!value) {
                 value = BigNumber.from(0);
@@ -2114,8 +2114,8 @@ describe('BancorNetwork', () => {
 
             const prevMasterPoolStakedBalance = await masterPool.stakedBalance();
 
-            let hop1!: TradeAmountsStructOutput;
-            let hop2!: TradeAmountsStructOutput;
+            let hop1!: TradeAmountAndFeeStructOutput;
+            let hop2!: TradeAmountAndFeeStructOutput;
 
             let limit: BigNumber;
 
@@ -2191,10 +2191,10 @@ describe('BancorNetwork', () => {
 
             let sourceAmount: BigNumber;
             let targetAmount: BigNumber;
-            const feeAmount = hop2.feeAmount;
+            const tradingFeeAmount = hop2.tradingFeeAmount;
 
             if (bySourceAmount) {
-                // when specifying the source amount, the input amount represents the source amount we are willing to trade
+                // when providing the source amount, the input amount represents the source amount we are willing to trade
                 sourceAmount = BigNumber.from(amount);
                 targetAmount = await networkInfo.tradeOutputBySourceAmount(
                     sourceToken.address,
@@ -2203,7 +2203,7 @@ describe('BancorNetwork', () => {
                 );
                 expect(targetAmount).to.equal(hop2.amount);
             } else {
-                // when specifying the target amount, the input amount represents the target amount we are looking to receive
+                // when providing the target amount, the input amount represents the target amount we are looking to receive
                 sourceAmount = await networkInfo.tradeInputByTargetAmount(
                     sourceToken.address,
                     targetToken.address,
@@ -2253,7 +2253,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
             } else if (isTargetNetworkToken) {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2269,9 +2269,9 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(feeAmount));
+                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(tradingFeeAmount));
             } else {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2281,8 +2281,8 @@ describe('BancorNetwork', () => {
                         sourceToken.address,
                         networkToken.address,
                         sourceAmount,
-                        // when specifying the source amount, the target amount represents how many network tokens we
-                        // have received, while when specifying the source target, it represents how many source tokens
+                        // when providing the source amount, the target amount represents how many network tokens we
+                        // have received, while when providing the source target, it represents how many source tokens
                         // we were required to trade
                         bySourceAmount ? hop1.amount : hop2.amount,
                         traderAddress
@@ -2290,9 +2290,9 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.feeAmount);
+                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.tradingFeeAmount);
 
-                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.feeAmount));
+                expect(masterPoolStakedBalance).to.equal(prevMasterPoolStakedBalance.add(hop1.tradingFeeAmount));
 
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2301,8 +2301,8 @@ describe('BancorNetwork', () => {
                         targetToken.address,
                         networkToken.address,
                         targetToken.address,
-                        // when specifying the source amount, the source amount represents how many network tokens we
-                        // were required to trade, while when specifying the target amount, it represents how many
+                        // when providing the source amount, the source amount represents how many network tokens we
+                        // were required to trade, while when providing the target amount, it represents how many
                         // target tokens we have received by trading network tokens for them
                         bySourceAmount ? hop1.amount : hop2.amount,
                         targetAmount,
@@ -2311,7 +2311,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, feeAmount);
+                    .withArgs(contextId, targetToken.address, FeeType.Trading, tradingFeeAmount);
             }
 
             // ensure that the correct amount was transferred from the trader to the vault

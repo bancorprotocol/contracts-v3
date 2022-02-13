@@ -15,7 +15,7 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountsStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     MAX_UINT256,
     PPM_RESOLUTION,
@@ -670,7 +670,7 @@ describe('Profile @profile', () => {
                 amount
             );
 
-            // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
             // maximum source amount
             if (!value) {
                 value = BigNumber.from(0);
@@ -802,7 +802,7 @@ describe('Profile @profile', () => {
             if (bySourceAmount) {
                 limit = MIN_RETURN_AMOUNT;
             } else {
-                let sourceTradeAmounts: TradeAmountsStructOutput;
+                let sourceTradeAmounts: TradeAmountAndFeeStructOutput;
                 if (isSourceNetworkToken || isTargetNetworkToken) {
                     sourceTradeAmounts = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,

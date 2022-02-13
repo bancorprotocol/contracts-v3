@@ -41,11 +41,9 @@ uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
 uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 
-struct TradeAmounts {
-    // the source/target amount (depending on the context) resulting from the trade
-    uint256 amount;
-    // the trading fee amount
-    uint256 feeAmount;
+struct TradeAmountAndFee {
+    uint256 amount; // the source/target amount (depending on the context) resulting from the trade
+    uint256 tradingFeeAmount; // the trading fee amount
 }
 
 /**
@@ -171,7 +169,7 @@ interface IPoolCollection is IVersioned {
         Token targetToken,
         uint256 sourceAmount,
         uint256 minReturnAmount
-    ) external returns (TradeAmounts memory);
+    ) external returns (TradeAmountAndFee memory);
 
     /**
      * @dev performs a trade by providing the target amount and returns the required source amount and the associated fee
@@ -186,7 +184,7 @@ interface IPoolCollection is IVersioned {
         Token targetToken,
         uint256 targetAmount,
         uint256 maxSourceAmount
-    ) external returns (TradeAmounts memory);
+    ) external returns (TradeAmountAndFee memory);
 
     /**
      * @dev returns the output amount and fee when trading by providing the source amount
@@ -195,7 +193,7 @@ interface IPoolCollection is IVersioned {
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount
-    ) external view returns (TradeAmounts memory);
+    ) external view returns (TradeAmountAndFee memory);
 
     /**
      * @dev returns the input amount and fee when trading by providing the target amount
@@ -204,7 +202,7 @@ interface IPoolCollection is IVersioned {
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount
-    ) external view returns (TradeAmounts memory);
+    ) external view returns (TradeAmountAndFee memory);
 
     /**
      * @dev notifies the pool of accrued fees
