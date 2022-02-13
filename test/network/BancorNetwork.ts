@@ -932,7 +932,7 @@ describe('BancorNetwork', () => {
             expect(await targetPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
-                const isNative = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
+                const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
 
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(targetPoolCollection.address);
 
@@ -981,7 +981,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNative) {
+                if (isNativeToken) {
                     transactionCost = await getTransactionCost(res);
                 }
 
@@ -1005,7 +1005,7 @@ describe('BancorNetwork', () => {
                     network
                 );
 
-                if (isNative) {
+                if (isNativeToken) {
                     transactionCost = await getTransactionCost(res2);
                 }
 
@@ -3002,12 +3002,12 @@ describe('BancorNetwork', () => {
             const addProtectedLiquidity = async (
                 poolToken: DSToken,
                 reserveToken: IERC20,
-                isNative: boolean,
+                isNativeToken: boolean,
                 amount: BigNumber,
                 from: SignerWithAddress
             ) => {
                 let value = BigNumber.from(0);
-                if (isNative) {
+                if (isNativeToken) {
                     value = amount;
                 } else {
                     await reserveToken.connect(from).approve(liquidityProtection.address, amount);
@@ -3145,12 +3145,12 @@ describe('BancorNetwork', () => {
             };
 
             for (const tokenSymbol of [TokenSymbol.TKN, TokenSymbol.ETH]) {
-                const isNative = tokenSymbol === TokenSymbol.ETH;
+                const isNativeToken = tokenSymbol === TokenSymbol.ETH;
                 describe(tokenSymbol, () => {
                     beforeEach(async () => {
-                        await initLegacySystem(isNative);
+                        await initLegacySystem(isNativeToken);
 
-                        await addProtectedLiquidity(poolToken, baseToken, isNative, BigNumber.from(1000), owner);
+                        await addProtectedLiquidity(poolToken, baseToken, isNativeToken, BigNumber.from(1000), owner);
                     });
 
                     it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
@@ -3174,8 +3174,8 @@ describe('BancorNetwork', () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         const protection = await getProtection(protectionId);
 
-                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNative);
-                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNative);
+                        const prevPoolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
+                        const prevProviderStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
@@ -3189,13 +3189,13 @@ describe('BancorNetwork', () => {
                         const prevGovBalance = await govToken.balanceOf(owner.address);
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
-                        const transactionCost = isNative ? await getTransactionCost(res) : BigNumber.from(0);
+                        const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
 
                         // verify protected liquidities
                         expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
                         // verify stats
-                        const poolStats = await getPoolStats(poolToken, baseToken, isNative);
+                        const poolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
                         expect(poolStats.totalPoolAmount).to.equal(
                             prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
                         );
@@ -3203,7 +3203,7 @@ describe('BancorNetwork', () => {
                             prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
                         );
 
-                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNative);
+                        const providerStats = await getProviderStats(owner, poolToken, baseToken, isNativeToken);
                         expect(providerStats.totalProviderAmount).to.equal(
                             prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
                         );
