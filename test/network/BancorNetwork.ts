@@ -3145,7 +3145,7 @@ describe('BancorNetwork', () => {
             };
 
             for (const tokenSymbol of [TokenSymbol.TKN, TokenSymbol.ETH]) {
-                const isNativeToken = tokenSymbol == TokenSymbol.ETH;
+                const isNativeToken = tokenSymbol === TokenSymbol.ETH;
                 describe(tokenSymbol, () => {
                     beforeEach(async () => {
                         await initLegacySystem(isNativeToken);
