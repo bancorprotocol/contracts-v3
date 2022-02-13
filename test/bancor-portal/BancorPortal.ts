@@ -7,10 +7,10 @@ import Contracts, {
     BancorNetworkInfo,
     MockUniswapV2Router02,
     MockUniswapV2Pair,
-    MasterPool,
     PoolToken,
     MockUniswapV2Factory
 } from '../../components/Contracts';
+import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { createSystem, createToken, TokenWithAddress, createProxy, setupFundedPool } from '../helpers/Factory';
@@ -38,11 +38,10 @@ interface TokenAndPoolTokenBundle {
     poolToken?: PoolToken;
 }
 
-describe('bancor-portal', () => {
+describe('BancorPortal', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let networkToken: IERC20;
-    let masterPool: MasterPool;
     let masterPoolToken: PoolToken;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
@@ -63,24 +62,20 @@ describe('bancor-portal', () => {
     });
 
     beforeEach(async () => {
-        ({ network, networkSettings, networkToken, poolCollection, networkInfo, masterPool } = await createSystem());
-        masterPoolToken = await Contracts.PoolToken.attach(await masterPool.poolToken());
-        uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy(
-            'UniswapV2Pair',
-            'UniswapV2Pair',
-            BigNumber.from(100_000_000)
-        );
+        ({ network, networkSettings, networkToken, poolCollection, networkInfo, masterPoolToken } =
+            await createSystem());
+        uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy('UniswapV2Pair', 'UniswapV2Pair', 100_000_000);
         uniswapV2Router02 = await Contracts.MockUniswapV2Router02.deploy(
             'UniswapV2Router02',
             'UniswapV2Router02',
-            BigNumber.from(100_000_000),
+            100_000_000,
             uniswapV2Pair.address
         );
 
         uniswapV2Factory = await Contracts.MockUniswapV2Factory.deploy(
             'UniswapV2Factory',
             'UniswapV2Factory',
-            BigNumber.from(100_000_000),
+            100_000_000,
             uniswapV2Pair.address
         );
         bancorPortal = await createProxy(Contracts.BancorPortal, {
@@ -160,6 +155,56 @@ describe('bancor-portal', () => {
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(user.address, whitelistedToken0.address, whitelistedToken1.address, AMOUNT, AMOUNT);
+        });
+    });
+
+    describe('construction', () => {
+        const a = NATIVE_TOKEN_ADDRESS; // random valid address
+
+        it('reverts when initializing with an invalid network contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(ZERO_ADDRESS, a, a, a, a, a, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid networkSettings contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, ZERO_ADDRESS, a, a, a, a, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid networkToken contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, a, ZERO_ADDRESS, a, a, a, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid uniswapV2Router contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, a, a, ZERO_ADDRESS, a, a, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid sushiswapV2Router contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, a, a, a, ZERO_ADDRESS, a, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid sushiswapV2Factory contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, a, a, a, a, ZERO_ADDRESS, a)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('reverts when initializing with an invalid network contract', async () => {
+            await expect(Contracts.BancorPortal.deploy(a, a, a, a, a, a, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should be initialized', async () => {
+            expect(await bancorPortal.version()).to.equal(1);
         });
     });
 
@@ -362,6 +407,20 @@ describe('bancor-portal', () => {
         });
     });
 
+    describe('sushiswap', () => {
+        it('emits a sushiswap event post succesful sushiswap migration', async () => {
+            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
+            await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
+            const res = await testDeposit([{ token: whitelistedToken, poolToken }, { token: unlistedToken }], true);
+            expect(res)
+                .to.emit(bancorPortal, 'SushiswapV2PositionMigrated')
+                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
+        });
+    });
+
     const testTransfer = async (token0: TokenWithAddress, token1: TokenWithAddress) => {
         // prepare uniswap mocks
         await transfer(deployer, token0, uniswapV2Pair.address, AMOUNT);
@@ -399,7 +458,10 @@ describe('bancor-portal', () => {
         }
     };
 
-    const testDeposit = async (bundles: Array<TokenAndPoolTokenBundle>): Promise<ContractTransaction> => {
+    const testDeposit = async (
+        bundles: Array<TokenAndPoolTokenBundle>,
+        sushiSwap = false
+    ): Promise<ContractTransaction> => {
         // fund uniswap mock
         await transfer(deployer, bundles[0].token, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, bundles[1].token, uniswapV2Pair.address, AMOUNT);
@@ -410,9 +472,10 @@ describe('bancor-portal', () => {
         const whitelist = await getWhitelist(bundles[0].token.address, bundles[1].token.address);
 
         // execute
-        const res = await bancorPortal
-            .connect(user)
-            .migrateUniswapV2Position(bundles[0].token.address, bundles[1].token.address, AMOUNT);
+        const migrationFuction = sushiSwap
+            ? bancorPortal.connect(user).migrateSushiswapV1Position
+            : bancorPortal.connect(user).migrateUniswapV2Position;
+        const res = await migrationFuction(bundles[0].token.address, bundles[1].token.address, AMOUNT);
         const newStakedBalances = await getStakedBalances(bundles[0].token, bundles[1].token);
         const newPoolTokenBalances = await getPoolTokenBalances(bundles[0].poolToken, bundles[1].poolToken);
 
