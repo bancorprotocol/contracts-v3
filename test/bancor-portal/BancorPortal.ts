@@ -209,8 +209,11 @@ describe('BancorPortal', () => {
     });
 
     describe('transfers', () => {
-        it("transfers funds to the user's wallet when only token0 is whitelisted", async () => {
+        beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
+        });
+
+        it("transfers funds to the user's wallet when only token0 is whitelisted", async () => {
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -219,7 +222,6 @@ describe('BancorPortal', () => {
         });
 
         it("transfers funds to the user's wallet when only token1 is whitelisted", async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -228,7 +230,6 @@ describe('BancorPortal', () => {
         });
 
         it("transfers funds to the user's wallet when token0 is the native token and token1 is whitelisted", async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -237,7 +238,6 @@ describe('BancorPortal', () => {
         });
 
         it("transfers funds to the user's wallet when token0 is whitelisted and token1 is the native token", async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -247,8 +247,11 @@ describe('BancorPortal', () => {
     });
 
     describe('deposits', () => {
-        it('deposits when only token0 is whitelisted', async () => {
+        beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
+        });
+
+        it('deposits when only token0 is whitelisted', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -260,7 +263,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when only token1 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -272,7 +274,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits both tokens when possible', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken: poolToken0, token: token0 } = await preparePoolAndToken(TokenSymbol.TKN);
             const { poolToken: poolToken1, token: token1 } = await preparePoolAndToken(TokenSymbol.TKN1);
             await uniswapV2Pair.setTokens(token0.address, token1.address);
@@ -287,7 +288,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is the native token and token1 is unlisted', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -299,7 +299,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is the native token and token1 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken: poolToken0, token: whitelistedToken0 } = await preparePoolAndToken(TokenSymbol.ETH);
             const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN);
             await uniswapV2Pair.setTokens(whitelistedToken0.address, whitelistedToken1.address);
@@ -314,7 +313,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is unlisted and token1 is the native token', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
@@ -326,7 +324,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is whitelisted and token1 is the native token', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken: poolToken0, token: whitelistedToken0 } = await preparePoolAndToken(TokenSymbol.TKN);
             const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
             await uniswapV2Pair.setTokens(whitelistedToken0.address, whitelistedToken1.address);
@@ -341,7 +338,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is bnt and token1 is unlisted', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
@@ -358,7 +354,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is unlisted and token1 is bnt', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
@@ -375,7 +370,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is bnt and token1 is whitelisted', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
@@ -391,7 +385,6 @@ describe('BancorPortal', () => {
         });
 
         it('deposits when token0 is whitelisted and token1 is bnt', async () => {
-            await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
