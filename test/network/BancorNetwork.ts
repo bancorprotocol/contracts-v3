@@ -2664,7 +2664,7 @@ describe('BancorNetwork', () => {
         };
 
         for (const [sourceSymbol, targetSymbol] of [
-            // [TokenSymbol.TKN, TokenSymbol.BNT],
+            [TokenSymbol.TKN, TokenSymbol.BNT],
             [TokenSymbol.TKN, TokenSymbol.ETH],
             [TokenSymbol.TKN1, TokenSymbol.TKN2],
             [TokenSymbol.BNT, TokenSymbol.ETH],
