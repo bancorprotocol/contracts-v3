@@ -674,7 +674,7 @@ describe('Profile @profile', () => {
                 amount
             );
 
-            // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
             // maximum source amount
             if (!value) {
                 value = BigNumber.from(0);

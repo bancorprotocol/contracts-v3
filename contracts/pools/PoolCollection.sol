@@ -1282,6 +1282,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // ensure that the network token is either the source or the target pool
         bool isSourceNetworkToken = sourceToken.isEqual(_networkToken);
         bool isTargetNetworkToken = targetToken.isEqual(_networkToken);
+
         if (isSourceNetworkToken && !isTargetNetworkToken) {
             result.isSourceNetworkToken = true;
             result.pool = targetToken;
@@ -1328,7 +1329,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns trade amount and fee by specifying the source amount
+     * @dev returns trade amount and fee by providing the source amount
      */
     function _tradeAmountAndFeeBySourceAmount(
         uint256 sourceBalance,
@@ -1348,7 +1349,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns trade amount and fee by specifying either the target amount
+     * @dev returns trade amount and fee by providing either the target amount
      */
     function _tradeAmountAndFeeByTargetAmount(
         uint256 sourceBalance,
@@ -1362,16 +1363,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
         uint256 fullTargetAmount = targetAmount + tradingFeeAmount;
+        uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
-        return
-            TradeAmountAndTradingFee({
-                amount: MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount),
-                tradingFeeAmount: tradingFeeAmount
-            });
+        return TradeAmountAndTradingFee({ amount: sourceAmount, tradingFeeAmount: tradingFeeAmount });
     }
 
     /**
-     * @dev processes a trade by specifying either the source or the target amount and updates the in-memory intermediate
+     * @dev processes a trade by providing either the source or the target amount and updates the in-memory intermediate
      * result
      */
     function _processTrade(TradeIntermediateResult memory result) private view {
@@ -1429,12 +1427,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // calculate the full network fee amount and update the trading fee amount accordingly
-        uint256 fullNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
-        result.tradingFeeAmount -= fullNetworkFeeAmount;
+        // calculate the target network fee amount and update the trading fee amount accordingly
+        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
+        result.tradingFeeAmount -= targetNetworkFeeAmount;
 
         if (!result.isSourceNetworkToken) {
-            result.networkFeeAmount = fullNetworkFeeAmount;
+            result.networkFeeAmount = targetNetworkFeeAmount;
 
             return;
         }
@@ -1444,15 +1442,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             result.targetBalance,
             result.sourceBalance,
             0,
-            fullNetworkFeeAmount
+            targetNetworkFeeAmount
         ).amount;
 
         // since we have received the network fee in base tokens and have traded them for network tokens (so that
         // the network fee is always kept in network tokens), we'd need to adapt the trading liquidity and the
         // staked balance accordingly
-        result.targetBalance += fullNetworkFeeAmount;
+        result.targetBalance += targetNetworkFeeAmount;
         result.sourceBalance -= result.networkFeeAmount;
-        result.stakedBalance -= fullNetworkFeeAmount;
+        result.stakedBalance -= targetNetworkFeeAmount;
     }
 
     /**

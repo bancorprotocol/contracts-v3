@@ -1976,7 +1976,7 @@ describe('BancorNetwork', () => {
                 amount
             );
 
-            // when specifying the target amount, the send value (i.e., the amount to trade) is represented by the
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
             // maximum source amount
             if (!value) {
                 value = BigNumber.from(0);
@@ -2197,7 +2197,7 @@ describe('BancorNetwork', () => {
             let targetAmount: BigNumber;
 
             if (bySourceAmount) {
-                // when specifying the source amount, the input amount represents the source amount we are willing to trade
+                // when providing the source amount, the input amount represents the source amount we are willing to trade
                 sourceAmount = BigNumber.from(amount);
                 targetAmount = await networkInfo.tradeOutputBySourceAmount(
                     sourceToken.address,
@@ -2206,7 +2206,7 @@ describe('BancorNetwork', () => {
                 );
                 expect(targetAmount).to.equal(hop2.amount);
             } else {
-                // when specifying the target amount, the input amount represents the target amount we are looking to receive
+                // when providing the target amount, the input amount represents the target amount we are looking to receive
                 sourceAmount = await networkInfo.tradeInputByTargetAmount(
                     sourceToken.address,
                     targetToken.address,
@@ -2293,8 +2293,8 @@ describe('BancorNetwork', () => {
                         sourceToken.address,
                         networkToken.address,
                         sourceAmount,
-                        // when specifying the source amount, the target amount represents how many network tokens we
-                        // have received, while when specifying the source target, it represents how many source tokens
+                        // when providing the source amount, the target amount represents how many network tokens we
+                        // have received, while when providing the source target, it represents how many source tokens
                         // we were required to trade
                         bySourceAmount ? hop1.amount : hop2.amount,
                         traderAddress
@@ -2315,8 +2315,8 @@ describe('BancorNetwork', () => {
                         targetToken.address,
                         networkToken.address,
                         targetToken.address,
-                        // when specifying the source amount, the source amount represents how many network tokens we
-                        // were required to trade, while when specifying the target amount, it represents how many
+                        // when providing the source amount, the source amount represents how many network tokens we
+                        // were required to trade, while when providing the target amount, it represents how many
                         // target tokens we have received by trading network tokens for them
                         bySourceAmount ? hop1.amount : hop2.amount,
                         targetAmount,

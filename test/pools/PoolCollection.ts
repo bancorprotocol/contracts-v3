@@ -2583,21 +2583,21 @@ describe('PoolCollection', () => {
                                     networkTokenTradingLiquidity: BigNumber,
                                     baseTokenTradingLiquidity: BigNumber
                                 ) => {
-                                    const fullNetworkFeeAmount = feeAmount.mul(networkFeePPM).div(PPM_RESOLUTION);
+                                    const targetNetworkFeeAmount = feeAmount.mul(networkFeePPM).div(PPM_RESOLUTION);
 
                                     if (isSourceNetworkToken) {
                                         return {
                                             networkTokenFeeAmount: expectedTargetAmountAndFee(
-                                                fullNetworkFeeAmount,
+                                                targetNetworkFeeAmount,
                                                 0,
                                                 baseTokenTradingLiquidity,
                                                 networkTokenTradingLiquidity
                                             ).amount,
-                                            fullNetworkFeeAmount
+                                            targetNetworkFeeAmount
                                         };
                                     }
 
-                                    return { networkTokenFeeAmount: fullNetworkFeeAmount, fullNetworkFeeAmount: 0 };
+                                    return { networkTokenFeeAmount: targetNetworkFeeAmount, targetNetworkFeeAmount: 0 };
                                 };
 
                                 const expectedTargetAmountAndFee = (
@@ -2726,7 +2726,7 @@ describe('PoolCollection', () => {
                                         expect(targetAmountAndFee.tradingFeeAmount).to.almostEqual(
                                             expectedTargetAmounts.tradingFeeAmount.sub(
                                                 isSourceNetworkToken
-                                                    ? expectedNetworkFees.fullNetworkFeeAmount
+                                                    ? expectedNetworkFees.targetNetworkFeeAmount
                                                     : expectedNetworkFees.networkTokenFeeAmount
                                             ),
                                             {
@@ -2778,7 +2778,7 @@ describe('PoolCollection', () => {
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
                                         if (isSourceNetworkToken) {
-                                            const fullNetworkFeeAmount = expectedTargetAmounts.tradingFeeAmount
+                                            const targetNetworkFeeAmount = expectedTargetAmounts.tradingFeeAmount
                                                 .mul(networkFeePPM)
                                                 .div(PPM_RESOLUTION);
 
@@ -2789,13 +2789,13 @@ describe('PoolCollection', () => {
                                             );
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
                                                 newBaseTokenTradingLiquidity.add(
-                                                    expectedNetworkFees.fullNetworkFeeAmount
+                                                    expectedNetworkFees.targetNetworkFeeAmount
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
                                                 prevLiquidity.stakedBalance
                                                     .add(expectedTargetAmounts.tradingFeeAmount)
-                                                    .sub(fullNetworkFeeAmount)
+                                                    .sub(targetNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
@@ -2894,7 +2894,7 @@ describe('PoolCollection', () => {
                                         expect(sourceAmountAndFee.tradingFeeAmount).to.almostEqual(
                                             expectedSourceAmounts.tradingFeeAmount.sub(
                                                 isSourceNetworkToken
-                                                    ? expectedNetworkFees.fullNetworkFeeAmount
+                                                    ? expectedNetworkFees.targetNetworkFeeAmount
                                                     : expectedNetworkFees.networkTokenFeeAmount
                                             ),
                                             {
@@ -2947,7 +2947,7 @@ describe('PoolCollection', () => {
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
                                         if (isSourceNetworkToken) {
-                                            const fullNetworkFeeAmount = expectedSourceAmounts.tradingFeeAmount
+                                            const targetNetworkFeeAmount = expectedSourceAmounts.tradingFeeAmount
                                                 .mul(networkFeePPM)
                                                 .div(PPM_RESOLUTION);
 
@@ -2958,13 +2958,13 @@ describe('PoolCollection', () => {
                                             );
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
                                                 newBaseTokenTradingLiquidity.add(
-                                                    expectedNetworkFees.fullNetworkFeeAmount
+                                                    expectedNetworkFees.targetNetworkFeeAmount
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
                                                 prevLiquidity.stakedBalance
                                                     .add(expectedSourceAmounts.tradingFeeAmount)
-                                                    .sub(fullNetworkFeeAmount)
+                                                    .sub(targetNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
