@@ -2749,6 +2749,9 @@ describe('PoolCollection', () => {
                                         expect(tradeAmounts.tradingFeeAmount).to.equal(
                                             targetAmountAndFee.tradingFeeAmount
                                         );
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
+                                        );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -2914,6 +2917,9 @@ describe('PoolCollection', () => {
                                         expect(tradeAmounts.amount).to.equal(sourceAmountAndFee.amount);
                                         expect(tradeAmounts.tradingFeeAmount).to.equal(
                                             sourceAmountAndFee.tradingFeeAmount
+                                        );
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
                                         );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);

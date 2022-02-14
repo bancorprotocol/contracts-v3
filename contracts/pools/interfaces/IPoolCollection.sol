@@ -44,6 +44,7 @@ uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 struct TradeAmountAndFee {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
     uint256 tradingFeeAmount; // the trading fee amount
+    uint256 networkFeeAmount; // the network fee amount (always in units of network token)
 }
 
 /**
