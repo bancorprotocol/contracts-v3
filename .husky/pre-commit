@@ -3,4 +3,4 @@ set -e
 
 . "$(dirname "$0")/.setup.sh"
 
-yarn lint
+yarn pretty-quick --bail

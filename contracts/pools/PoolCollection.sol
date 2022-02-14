@@ -764,7 +764,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function onFeesCollected(Token pool, uint256 feeAmount) external only(address(_network)) {
+    function onFeesCollected(
+        Token pool,
+        uint256 feeAmount,
+        uint8 /*feeType*/
+    ) external only(address(_network)) {
         if (feeAmount == 0) {
             return;
         }
