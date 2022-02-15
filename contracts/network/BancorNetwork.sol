@@ -1184,10 +1184,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         TradeParams memory params,
         address trader
     ) private returns (TradeAmountAndNetworkFee memory) {
-        TradeTokens memory tokens = TradeTokens({
-            sourceToken: isSourceNetworkToken ? Token(address(_networkToken)) : pool,
-            targetToken: isSourceNetworkToken ? pool : Token(address(_networkToken))
-        });
+        TradeTokens memory tokens = isSourceNetworkToken
+            ? TradeTokens({ sourceToken: Token(address(_networkToken)), targetToken: pool })
+            : TradeTokens({ sourceToken: pool, targetToken: Token(address(_networkToken)) });
 
         TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
             ? _poolCollection(pool).tradeBySourceAmount(
@@ -1214,10 +1213,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             );
         }
 
-        TradeAmounts memory tradeAmounts = TradeAmounts({
-            sourceAmount: params.bySourceAmount ? params.amount : tradeAmountsAndFee.amount,
-            targetAmount: params.bySourceAmount ? tradeAmountsAndFee.amount : params.amount
-        });
+        TradeAmounts memory tradeAmounts = params.bySourceAmount
+            ? TradeAmounts({ sourceAmount: params.amount, targetAmount: tradeAmountsAndFee.amount })
+            : TradeAmounts({ sourceAmount: tradeAmountsAndFee.amount, targetAmount: params.amount });
 
         emit TokensTraded({
             contextId: contextId,
