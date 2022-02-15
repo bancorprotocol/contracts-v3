@@ -26,12 +26,6 @@ export enum TradingStatusUpdateReason {
     MinLiquidity = 2
 }
 
-export enum FeeType {
-    Trading = 0,
-    Withdrawal = 1,
-    FlashLoan = 2
-}
-
 export enum StakingRewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1

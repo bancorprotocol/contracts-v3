@@ -212,11 +212,7 @@ interface IPoolCollection is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function onFeesCollected(
-        Token pool,
-        uint256 feeAmount,
-        uint8 feeType
-    ) external;
+    function onFeesCollected(Token pool, uint256 feeAmount) external;
 
     /**
      * @dev migrates a pool to this pool collection

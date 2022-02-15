@@ -155,6 +155,6 @@ interface IMasterPool is IVault {
     function onFeesCollected(
         Token pool,
         uint256 feeAmount,
-        uint8 feeType
+        bool isTradeFee
     ) external;
 }
