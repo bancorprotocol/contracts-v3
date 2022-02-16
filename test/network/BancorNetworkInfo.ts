@@ -635,11 +635,10 @@ describe('BancorNetworkInfo', () => {
 
                         const underlyingAmount = await networkInfo.poolTokenToUnderlying(pool.address, poolTokenAmount);
 
-                        expect(underlyingAmount).to.be.closeTo(
+                        expect(underlyingAmount).to.be.equal(
                             tokenData.isNetworkToken()
                                 ? await masterPool.poolTokenToUnderlying(poolTokenAmount)
-                                : await poolCollection.poolTokenToUnderlying(pool.address, poolTokenAmount),
-                            1
+                                : await poolCollection.poolTokenToUnderlying(pool.address, poolTokenAmount)
                         );
                     });
                 });
