@@ -43,7 +43,8 @@ const { formatBytes32String } = utils;
 describe('BancorNetworkInfo', () => {
     let deployer: SignerWithAddress;
 
-    const FUNDING_RATE = { n: 1, d: 2 };
+    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BASE_TOKEN_FUNDING_RATE = 2;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
     shouldHaveGap('BancorNetworkInfo');
@@ -496,13 +497,15 @@ describe('BancorNetworkInfo', () => {
                     tokenData: new TokenData(sourceSymbol),
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 {
                     tokenData: new TokenData(targetSymbol),
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 }
             );
         }
@@ -537,7 +540,8 @@ describe('BancorNetworkInfo', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
                     requestedLiquidity: BALANCE.mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 provider,
                 network,
