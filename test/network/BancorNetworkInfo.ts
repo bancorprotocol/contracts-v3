@@ -11,16 +11,19 @@ import Contracts, {
     TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader
+    TestPoolCollectionUpgrader,
+    MasterPool
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { ZERO_ADDRESS } from '../../utils/Constants';
+import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
     createSystem,
     createTestToken,
+    createPool,
+    createToken,
     depositToPool,
     setupFundedPool,
     PoolSpec,
@@ -32,8 +35,10 @@ import { latest } from '../helpers/Time';
 import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, Wallet } from 'ethers';
+import { BigNumber, Wallet, utils } from 'ethers';
 import { ethers } from 'hardhat';
+
+const { formatBytes32String } = utils;
 
 describe('BancorNetworkInfo', () => {
     let deployer: SignerWithAddress;
@@ -559,5 +564,92 @@ describe('BancorNetworkInfo', () => {
 
             expect(await networkInfo.isReadyForWithdrawal(id)).to.be.true;
         });
+    });
+
+    describe('pool token calculations', () => {
+        const testPoolTokenCalculations = async (tokenData: TokenData) => {
+            let networkSettings: NetworkSettings;
+            let network: TestBancorNetwork;
+            let networkToken: IERC20;
+            let networkInfo: BancorNetworkInfo;
+            let poolCollection: TestPoolCollection;
+            let masterPool: MasterPool;
+            let pool: TokenWithAddress;
+            let reserveToken: TokenWithAddress;
+            let fundingManager: SignerWithAddress;
+
+            const CONTEXT_ID = formatBytes32String('CTX');
+            const BASE_TOKEN_LIQUIDITY = toWei(1_000_000_000);
+            const NETWORK_TOKEN_LIQUIDITY = toWei(1_000_000_000);
+
+            before(async () => {
+                [, fundingManager] = await ethers.getSigners();
+            });
+
+            beforeEach(async () => {
+                ({ networkSettings, network, networkToken, networkInfo, masterPool, poolCollection } =
+                    await createSystem());
+
+                if (tokenData.isNetworkToken()) {
+                    pool = networkToken;
+                    reserveToken = await createTestToken();
+
+                    await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                    await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
+
+                    await masterPool.grantRole(Roles.MasterPool.ROLE_FUNDING_MANAGER, fundingManager.address);
+                    await masterPool
+                        .connect(fundingManager)
+                        .requestFunding(CONTEXT_ID, reserveToken.address, NETWORK_TOKEN_LIQUIDITY);
+                } else {
+                    reserveToken = await createToken(tokenData);
+                    pool = reserveToken;
+
+                    await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                    await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+
+                    await network.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        deployer.address,
+                        reserveToken.address,
+                        BASE_TOKEN_LIQUIDITY
+                    );
+                }
+
+                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            });
+
+            for (const tokenAmount of [0, 1000, toWei(10_000), toWei(1_000_000)]) {
+                context(`underlying amount of ${tokenAmount.toString()}`, () => {
+                    it('should properly convert between underlying amount and pool token amount', async () => {
+                        const poolTokenAmount = await networkInfo.underlyingToPoolToken(pool.address, tokenAmount);
+
+                        expect(poolTokenAmount).to.equal(
+                            tokenData.isNetworkToken()
+                                ? await masterPool.underlyingToPoolToken(tokenAmount)
+                                : await poolCollection.underlyingToPoolToken(pool.address, tokenAmount)
+                        );
+
+                        const underlyingAmount = await networkInfo.poolTokenToUnderlying(pool.address, poolTokenAmount);
+
+                        expect(underlyingAmount).to.be.closeTo(
+                            tokenData.isNetworkToken()
+                                ? await masterPool.poolTokenToUnderlying(poolTokenAmount)
+                                : await poolCollection.poolTokenToUnderlying(pool.address, poolTokenAmount),
+                            1
+                        );
+                    });
+                });
+            }
+        };
+
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            context(symbol, () => {
+                testPoolTokenCalculations(new TokenData(symbol));
+            });
+        }
     });
 });
