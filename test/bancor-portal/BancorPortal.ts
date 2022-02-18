@@ -427,7 +427,7 @@ describe('BancorPortal', () => {
 
         // assert
         const newBalances = await getBalances([token0, token1], user);
-        const whitelist = await getWhitelist(token0.address, token1.address);
+        const whitelist = await getWhitelist(token0, token1);
         if (whitelist[token0.address] && whitelist[token1.address]) {
             expect(newBalances[token0.address].eq(previousBalances[token0.address].add(AMOUNT))).to.be.true;
             expect(newBalances[token1.address].eq(previousBalances[token1.address].add(AMOUNT))).to.be.true;
@@ -456,7 +456,7 @@ describe('BancorPortal', () => {
         // save state
         const previousStakedBalances = await getStakedBalances(bundles[0].token, bundles[1].token);
         const previousPoolTokenBalances = await getPoolTokenBalances(bundles[0].poolToken, bundles[1].poolToken);
-        const whitelist = await getWhitelist(bundles[0].token.address, bundles[1].token.address);
+        const whitelist = await getWhitelist(bundles[0].token, bundles[1].token);
 
         // execute
         const migrationFuction = sushiSwap
@@ -515,11 +515,11 @@ describe('BancorPortal', () => {
         return balances;
     };
 
-    const getWhitelist = async (token0: string, token1: string): Promise<Whitelist> => {
-        const whitelist: Whitelist = {};
-        whitelist[token0] = token0 === networkToken.address ? true : await networkSettings.isTokenWhitelisted(token0);
-        whitelist[token1] = token1 === networkToken.address ? true : await networkSettings.isTokenWhitelisted(token1);
-        return whitelist;
+    const getWhitelist = async (token0: TokenWithAddress, token1: TokenWithAddress): Promise<Whitelist> => {
+        return {
+            [token0.address]: isNetworkToken(token0) || (await networkSettings.isTokenWhitelisted(token0.address)),
+            [token1.address]: isNetworkToken(token1) || (await networkSettings.isTokenWhitelisted(token1.address))
+        };
     };
 
     const preparePoolAndToken = async (symbol: TokenSymbol) => {

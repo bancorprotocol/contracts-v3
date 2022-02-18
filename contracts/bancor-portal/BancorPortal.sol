@@ -31,6 +31,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     using TokenLibrary for Token;
     using Address for address payable;
 
+    uint32 private constant MAX_DEADLINE = 10800;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -54,8 +56,6 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
-
-    uint32 private constant MAX_DEADLINE = 10800;
 
     /**
      * @dev triggered after a succesful Uniswap V2 migration
@@ -245,7 +245,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
-        for (uint256 i = 0; i < 2; i++) {
+        for (uint256 i = 0; i < 2; ++i) {
             whitelist[i] = _isNetworkToken(tokens[i]) || _networkSettings.isTokenWhitelisted(tokens[i]);
         }
         if (!whitelist[0] && !whitelist[1]) {
@@ -264,7 +264,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // migrate funds
         uint256[2] memory deposited;
 
-        for (uint256 i = 0; i < 2; i++) {
+        for (uint256 i = 0; i < 2; ++i) {
             uint256 delta = previousBalances[i] - newBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
