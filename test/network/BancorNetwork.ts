@@ -27,7 +27,7 @@ import {
     TokenGovernance
 } from '../../components/LegacyContracts';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
-import { FeeType, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei, toPPM, fromPPM } from '../../utils/Types';
@@ -2258,12 +2258,11 @@ describe('BancorNetwork', () => {
                         targetToken.address,
                         sourceAmount,
                         targetAmount,
+                        sourceAmount,
+                        hop2.tradingFeeAmount,
+                        hop2.networkFeeAmount,
                         traderAddress
                     );
-
-                await expect(res)
-                    .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
             } else if (isTargetNetworkToken) {
                 await expect(res)
                     .to.emit(network, 'TokensTraded')
@@ -2274,12 +2273,11 @@ describe('BancorNetwork', () => {
                         networkToken.address,
                         sourceAmount,
                         targetAmount,
+                        targetAmount,
+                        hop2.tradingFeeAmount,
+                        hop2.tradingFeeAmount,
                         traderAddress
                     );
-
-                await expect(res)
-                    .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
 
                 expect(masterPoolStakedBalance).to.equal(
                     prevMasterPoolStakedBalance.add(hop2.tradingFeeAmount.sub(hop2.networkFeeAmount))
@@ -2297,12 +2295,11 @@ describe('BancorNetwork', () => {
                         // have received, while when providing the source target, it represents how many source tokens
                         // we were required to trade
                         bySourceAmount ? hop1.amount : hop2.amount,
+                        bySourceAmount ? hop1.amount : hop2.amount,
+                        hop1.tradingFeeAmount,
+                        hop1.tradingFeeAmount,
                         traderAddress
                     );
-
-                await expect(res)
-                    .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, networkToken.address, FeeType.Trading, hop1.tradingFeeAmount);
 
                 expect(masterPoolStakedBalance).to.equal(
                     prevMasterPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
@@ -2320,12 +2317,11 @@ describe('BancorNetwork', () => {
                         // target tokens we have received by trading network tokens for them
                         bySourceAmount ? hop1.amount : hop2.amount,
                         targetAmount,
+                        bySourceAmount ? hop1.amount : hop2.amount,
+                        hop2.tradingFeeAmount,
+                        hop2.networkFeeAmount,
                         traderAddress
                     );
-
-                await expect(res)
-                    .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, targetToken.address, FeeType.Trading, hop2.tradingFeeAmount);
             }
 
             expect(await network.pendingNetworkFeeAmount()).to.equal(pendingNetworkFeeAmount);
@@ -2893,11 +2889,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
-                    .withArgs(contextId, token.address, deployer.address, LOAN_AMOUNT);
-
-                await expect(res)
-                    .to.emit(network, 'FeesCollected')
-                    .withArgs(contextId, token.address, FeeType.FlashLoan, FEE_AMOUNT);
+                    .withArgs(contextId, token.address, deployer.address, LOAN_AMOUNT, FEE_AMOUNT);
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.caller).to.equal(deployer.address);

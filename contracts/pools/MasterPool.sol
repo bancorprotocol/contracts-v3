@@ -17,7 +17,6 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
-import { TRADING_FEE } from "../network/FeeTypes.sol";
 
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
@@ -533,7 +532,7 @@ contract MasterPool is IMasterPool, Vault {
     function onFeesCollected(
         Token pool,
         uint256 feeAmount,
-        uint8 feeType
+        bool isTradeFee
     ) external only(address(_network)) validAddress(address(pool)) {
         if (feeAmount == 0) {
             return;
@@ -542,7 +541,7 @@ contract MasterPool is IMasterPool, Vault {
         // increase the staked balance by the given amount
         _stakedBalance += feeAmount;
 
-        if (feeType == TRADING_FEE) {
+        if (isTradeFee) {
             // increase the current funding for the specified pool by the given amount
             _currentPoolFunding[pool] += feeAmount;
         }
