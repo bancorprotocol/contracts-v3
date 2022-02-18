@@ -41,7 +41,6 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
 
         amountA = liquidity;
         amountB = liquidity;
-        return (amountA, amountB);
     }
 
     function removeLiquidityETH(
@@ -60,6 +59,5 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
 
         amountToken = liquidity;
         amountETH = liquidity;
-        return (amountToken, amountETH);
     }
 }

@@ -55,7 +55,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
-    uint32 private constant THREE_HOURS = 10800;
+    uint32 private constant MAX_DEADLINE = 10800;
 
     /**
      * @dev triggered after a succesful Uniswap V2 migration
@@ -246,17 +246,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
         for (uint256 i = 0; i < 2; i++) {
-            if (address(tokens[i]) == address(_networkToken)) {
-                whitelist[i] = true;
-            } else {
-                whitelist[i] = _networkSettings.isTokenWhitelisted(tokens[i]);
-            }
+            whitelist[i] = _isNetworkToken(tokens[i]) || _networkSettings.isTokenWhitelisted(tokens[i]);
         }
         if (!whitelist[0] && !whitelist[1]) {
             revert UnsupportedTokens();
         }
 
-        // save state
+        // save states
         uint256[2] memory previousBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
 
         // remove liquidity from uniswap
@@ -315,7 +311,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     ) private {
         IERC20(address(pair)).safeApprove(address(router), amount);
 
-        uint256 deadline = block.timestamp + THREE_HOURS;
+        uint256 deadline = block.timestamp + MAX_DEADLINE;
         if (tokens[0].isNative()) {
             router.removeLiquidityETH(address(tokens[1]), amount, 1, 1, address(this), deadline);
         } else if (tokens[1].isNative()) {

@@ -392,9 +392,14 @@ describe('BancorPortal', () => {
         });
     });
 
-    describe('sushiswap', () => {
-        it('emits a sushiswap event post succesful sushiswap migration', async () => {
+    // it is assumed sushiswap is identical to uniswap and therefore already tested.
+    // this block is intended to verify the existance of a sushiswap external function, and its io signature.
+    describe('SushiSwap', () => {
+        beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
+        });
+
+        it('emits a sushiswap event post succesful sushiswap migration', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
@@ -443,10 +448,7 @@ describe('BancorPortal', () => {
         }
     };
 
-    const testDeposit = async (
-        bundles: Array<TokenAndPoolTokenBundle>,
-        sushiSwap = false
-    ): Promise<ContractTransaction> => {
+    const testDeposit = async (bundles: TokenAndPoolTokenBundle[], sushiSwap = false): Promise<ContractTransaction> => {
         // fund uniswap mock
         await transfer(deployer, bundles[0].token, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, bundles[1].token, uniswapV2Pair.address, AMOUNT);
