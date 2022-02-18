@@ -153,13 +153,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     function migrateUniswapV2Position(
         Token token0,
         Token token1,
-        uint256 amount
+        uint256 poolTokenAmount
     )
         external
         nonReentrant
         validAddress(address(token0))
         validAddress(address(token1))
-        greaterThanZero(amount)
+        greaterThanZero(poolTokenAmount)
         returns (UniswapV2PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
@@ -167,7 +167,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             _uniswapV2Factory,
             token0,
             token1,
-            amount
+            poolTokenAmount,
+            msg.sender
         );
 
         emit UniswapV2PositionMigrated({
@@ -187,13 +188,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     function migrateSushiSwapV1Position(
         Token token0,
         Token token1,
-        uint256 amount
+        uint256 poolTokenAmount
     )
         external
         nonReentrant
         validAddress(address(token0))
         validAddress(address(token1))
-        greaterThanZero(amount)
+        greaterThanZero(poolTokenAmount)
         returns (UniswapV2PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
@@ -201,7 +202,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             _sushiSwapV2Factory,
             token0,
             token1,
-            amount
+            poolTokenAmount,
+            msg.sender
         );
 
         emit SushiSwapV2PositionMigrated({
@@ -228,7 +230,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IUniswapV2Factory factory,
         Token token0,
         Token token1,
-        uint256 amount
+        uint256 poolTokenAmount,
+        address provider
     ) private returns (MigrationResult memory) {
         // get Uniswap's pair
         address pairAddress = factory.getPair(address(token0), address(token1));
@@ -238,14 +241,14 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         }
 
         // transfer the tokens from the caller
-        Token(address(pair)).safeTransferFrom(msg.sender, address(this), amount);
+        Token(address(pair)).safeTransferFrom(provider, address(this), poolTokenAmount);
 
         // arrange tokens in an array
         Token[2] memory tokens = [token0, token1];
 
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
-        for (uint256 i = 0; i < 2; ++i) {
+        for (uint256 i = 0; i < 2; i++) {
             whitelist[i] = _isNetworkToken(tokens[i]) || _networkSettings.isTokenWhitelisted(tokens[i]);
         }
         if (!whitelist[0] && !whitelist[1]) {
@@ -253,24 +256,21 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         }
 
         // save states
-        uint256[2] memory previousBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
+        uint256[2] memory previousBalances = [tokens[0].balanceOf(address(this)), tokens[1].balanceOf(address(this))];
 
         // remove liquidity from Uniswap
-        _uniV2RemoveLiquidity(tokens, pair, router, amount);
-
-        // save new state
-        uint256[2] memory newBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
+        _uniV2RemoveLiquidity(tokens, pair, router, poolTokenAmount);
 
         // migrate funds
         uint256[2] memory deposited;
 
-        for (uint256 i = 0; i < 2; ++i) {
-            uint256 delta = previousBalances[i] - newBalances[i];
+        for (uint256 i = 0; i < 2; i++) {
+            uint256 delta = tokens[i].balanceOf(address(this)) - previousBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
-                _deposit(tokens[i], deposited[i]);
+                _deposit(tokens[i], deposited[i], provider);
             } else {
-                _transferToWallet(tokens[i], delta);
+                _transferToProvider(tokens[i], delta, provider);
             }
         }
 
@@ -280,23 +280,31 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev deposits given amount into a pool of given token
      */
-    function _deposit(Token token, uint256 amount) private {
+    function _deposit(
+        Token token,
+        uint256 amount,
+        address provider
+    ) private {
         if (token.isNative()) {
-            _network.depositFor{ value: amount }(msg.sender, token, amount);
+            _network.depositFor{ value: amount }(provider, token, amount);
         } else {
             token.toIERC20().safeApprove(address(_network), amount);
-            _network.depositFor(msg.sender, token, amount);
+            _network.depositFor(provider, token, amount);
         }
     }
 
     /**
      * @dev transfer given amount of given token to the caller
      */
-    function _transferToWallet(Token token, uint256 amount) private {
+    function _transferToProvider(
+        Token token,
+        uint256 amount,
+        address provider
+    ) private {
         if (token.isNative()) {
-            payable(msg.sender).sendValue(amount);
+            payable(provider).sendValue(amount);
         } else {
-            token.toIERC20().safeTransfer(msg.sender, amount);
+            token.toIERC20().safeTransfer(provider, amount);
         }
     }
 
@@ -307,17 +315,25 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token[2] memory tokens,
         IUniswapV2Pair pair,
         IUniswapV2Router02 router,
-        uint256 amount
+        uint256 poolTokenAmount
     ) private {
-        IERC20(address(pair)).safeApprove(address(router), amount);
+        IERC20(address(pair)).safeApprove(address(router), poolTokenAmount);
 
         uint256 deadline = block.timestamp + MAX_DEADLINE;
         if (tokens[0].isNative()) {
-            router.removeLiquidityETH(address(tokens[1]), amount, 1, 1, address(this), deadline);
+            router.removeLiquidityETH(address(tokens[1]), poolTokenAmount, 1, 1, address(this), deadline);
         } else if (tokens[1].isNative()) {
-            router.removeLiquidityETH(address(tokens[0]), amount, 1, 1, address(this), deadline);
+            router.removeLiquidityETH(address(tokens[0]), poolTokenAmount, 1, 1, address(this), deadline);
         } else {
-            router.removeLiquidity(address(tokens[0]), address(tokens[1]), amount, 1, 1, address(this), deadline);
+            router.removeLiquidity(
+                address(tokens[0]),
+                address(tokens[1]),
+                poolTokenAmount,
+                1,
+                1,
+                address(this),
+                deadline
+            );
         }
     }
 
