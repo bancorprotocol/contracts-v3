@@ -51,8 +51,6 @@ import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
-import { TRADING_FEE, FLASH_LOAN_FEE } from "./FeeTypes.sol";
-
 /**
  * @dev Bancor Network contract
  */
@@ -83,6 +81,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     struct TradeAmountAndNetworkFee {
         uint256 amount;
         uint256 networkFeeAmount;
+    }
+
+    struct TradeTokens {
+        Token sourceToken;
+        Token targetToken;
+    }
+
+    struct TradeAmounts {
+        uint256 sourceAmount;
+        uint256 targetAmount;
     }
 
     // the migration manager role is required for migrating liquidity
@@ -187,18 +195,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token indexed targetToken,
         uint256 sourceAmount,
         uint256 targetAmount,
+        uint256 networkTokenAmount,
+        uint256 targetFeeAmount,
+        uint256 networkTokenFeeAmount,
         address trader
     );
 
     /**
      * @dev triggered when a flash-loan is completed
      */
-    event FlashLoanCompleted(bytes32 indexed contextId, Token indexed token, address indexed borrower, uint256 amount);
-
-    /**
-     * @dev triggered when trading/flash-loan fees are collected
-     */
-    event FeesCollected(bytes32 indexed contextId, Token indexed token, uint8 indexed feeType, uint256 amount);
+    event FlashLoanCompleted(
+        bytes32 indexed contextId,
+        Token indexed token,
+        address indexed borrower,
+        uint256 amount,
+        uint256 feeAmount
+    );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -734,18 +746,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         if (_isNetworkToken(token)) {
             IMasterPool cachedMasterPool = _masterPool;
 
-            cachedMasterPool.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
+            cachedMasterPool.onFeesCollected(token, feeAmount, false);
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
-            poolCollection.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
+            poolCollection.onFeesCollected(token, feeAmount);
         }
 
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
 
-        emit FlashLoanCompleted({ contextId: contextId, token: token, borrower: msg.sender, amount: amount });
-
-        emit FeesCollected({ contextId: contextId, token: token, feeType: FLASH_LOAN_FEE, amount: feeAmount });
+        emit FlashLoanCompleted({
+            contextId: contextId,
+            token: token,
+            borrower: msg.sender,
+            amount: amount,
+            feeAmount: feeAmount
+        });
     }
 
     /**
@@ -1168,39 +1184,52 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         TradeParams memory params,
         address trader
     ) private returns (TradeAmountAndNetworkFee memory) {
-        Token masterPool = Token(address(_networkToken));
-        (Token sourceToken, Token targetToken) = isSourceNetworkToken ? (masterPool, pool) : (pool, masterPool);
-
-        IPoolCollection poolCollection = _poolCollection(pool);
+        TradeTokens memory tokens = isSourceNetworkToken
+            ? TradeTokens({ sourceToken: Token(address(_networkToken)), targetToken: pool })
+            : TradeTokens({ sourceToken: pool, targetToken: Token(address(_networkToken)) });
 
         TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
-            ? poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, params.amount, params.limit)
-            : poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, params.amount, params.limit);
+            ? _poolCollection(pool).tradeBySourceAmount(
+                contextId,
+                tokens.sourceToken,
+                tokens.targetToken,
+                params.amount,
+                params.limit
+            )
+            : _poolCollection(pool).tradeByTargetAmount(
+                contextId,
+                tokens.sourceToken,
+                tokens.targetToken,
+                params.amount,
+                params.limit
+            );
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
             _masterPool.onFeesCollected(
                 pool,
                 tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
-                TRADING_FEE
+                true
             );
         }
+
+        TradeAmounts memory tradeAmounts = params.bySourceAmount
+            ? TradeAmounts({ sourceAmount: params.amount, targetAmount: tradeAmountsAndFee.amount })
+            : TradeAmounts({ sourceAmount: tradeAmountsAndFee.amount, targetAmount: params.amount });
 
         emit TokensTraded({
             contextId: contextId,
             pool: pool,
-            sourceToken: sourceToken,
-            targetToken: targetToken,
-            sourceAmount: params.bySourceAmount ? params.amount : tradeAmountsAndFee.amount,
-            targetAmount: params.bySourceAmount ? tradeAmountsAndFee.amount : params.amount,
+            sourceToken: tokens.sourceToken,
+            targetToken: tokens.targetToken,
+            sourceAmount: tradeAmounts.sourceAmount,
+            targetAmount: tradeAmounts.targetAmount,
+            networkTokenAmount: isSourceNetworkToken ? tradeAmounts.sourceAmount : tradeAmounts.targetAmount,
+            targetFeeAmount: tradeAmountsAndFee.tradingFeeAmount,
+            networkTokenFeeAmount: isSourceNetworkToken
+                ? tradeAmountsAndFee.networkFeeAmount
+                : tradeAmountsAndFee.tradingFeeAmount,
             trader: trader
-        });
-
-        emit FeesCollected({
-            contextId: contextId,
-            token: targetToken,
-            feeType: TRADING_FEE,
-            amount: tradeAmountsAndFee.tradingFeeAmount
         });
 
         return

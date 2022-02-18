@@ -8,7 +8,7 @@ import Contracts, {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import { ZERO_ADDRESS, FeeType, DEFAULT_LOCK_DURATION } from '../../utils/Constants';
+import { ZERO_ADDRESS, DEFAULT_LOCK_DURATION } from '../../utils/Constants';
 import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -590,17 +590,12 @@ describe('PendingWithdrawals', () => {
                                 const feeAmount = toWei(100_000);
 
                                 if (tokenData.isNetworkToken()) {
-                                    await network.onNetworkTokenFeesCollectedT(
-                                        reserveToken.address,
-                                        feeAmount,
-                                        FeeType.Trading
-                                    );
+                                    await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, true);
                                 } else {
                                     await network.onPoolCollectionFeesCollectedT(
                                         poolCollection.address,
                                         reserveToken.address,
-                                        feeAmount,
-                                        FeeType.Trading
+                                        feeAmount
                                     );
                                 }
                             });

@@ -9,7 +9,7 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { FeeType, PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
+import { PPM_RESOLUTION, ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, toPPM } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -949,39 +949,41 @@ describe('MasterPool', () => {
             await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
         });
 
-        it('should revert when attempting to notify about collected fee from a non-network', async () => {
-            const nonNetwork = deployer;
+        for (const tradeFee of [true, false]) {
+            context(`${tradeFee ? 'trade' : 'other'} fees`, () => {
+                it('should revert when attempting to notify about collected fee from a non-network', async () => {
+                    const nonNetwork = deployer;
 
-            await expect(
-                masterPool.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, FeeType.Trading)
-            ).to.be.revertedWith('AccessDenied');
-        });
+                    await expect(
+                        masterPool.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, tradeFee)
+                    ).to.be.revertedWith('AccessDenied');
+                });
 
-        it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
-            await expect(network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, 1, FeeType.Trading)).to.be.revertedWith(
-                'InvalidAddress'
-            );
-        });
-
-        for (const [name, type] of Object.entries(FeeType).filter(([, v]) => typeof v === 'number')) {
-            for (const feeAmount of [0, 12_345, toWei(12_345)]) {
-                it(`should collect ${name} fees of ${feeAmount.toString()}`, async () => {
-                    const prevStakedBalance = await masterPool.stakedBalance();
-                    const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
-                    const prevAvailableFunding = await masterPool.availableFunding(reserveToken.address);
-                    const expectedFunding = type === FeeType.Trading ? feeAmount : 0;
-
-                    await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, type);
-
-                    expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
-                    expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
-                        prevFunding.add(expectedFunding)
-                    );
-                    expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
-                        prevAvailableFunding.sub(expectedFunding)
+                it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
+                    await expect(network.onNetworkTokenFeesCollectedT(ZERO_ADDRESS, 1, tradeFee)).to.be.revertedWith(
+                        'InvalidAddress'
                     );
                 });
-            }
+
+                for (const feeAmount of [0, 12_345, toWei(12_345)]) {
+                    it(`should collect fees of ${feeAmount.toString()}`, async () => {
+                        const prevStakedBalance = await masterPool.stakedBalance();
+                        const prevFunding = await masterPool.currentPoolFunding(reserveToken.address);
+                        const prevAvailableFunding = await masterPool.availableFunding(reserveToken.address);
+                        const expectedFunding = tradeFee ? feeAmount : 0;
+
+                        await network.onNetworkTokenFeesCollectedT(reserveToken.address, feeAmount, tradeFee);
+
+                        expect(await masterPool.stakedBalance()).to.equal(prevStakedBalance.add(feeAmount));
+                        expect(await masterPool.currentPoolFunding(reserveToken.address)).to.equal(
+                            prevFunding.add(expectedFunding)
+                        );
+                        expect(await masterPool.availableFunding(reserveToken.address)).to.equal(
+                            prevAvailableFunding.sub(expectedFunding)
+                        );
+                    });
+                }
+            });
         }
     });
 

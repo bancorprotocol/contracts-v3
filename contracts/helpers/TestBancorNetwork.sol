@@ -104,18 +104,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function onNetworkTokenFeesCollectedT(
         Token pool,
         uint256 amount,
-        uint8 feeType
+        bool isTraderFee
     ) external {
-        _masterPool.onFeesCollected(pool, amount, feeType);
+        _masterPool.onFeesCollected(pool, amount, isTraderFee);
     }
 
     function onPoolCollectionFeesCollectedT(
         IPoolCollection poolCollection,
         Token pool,
-        uint256 amount,
-        uint8 feeType
+        uint256 amount
     ) external {
-        poolCollection.onFeesCollected(pool, amount, feeType);
+        poolCollection.onFeesCollected(pool, amount);
     }
 
     function tradeBySourcePoolCollectionT(
