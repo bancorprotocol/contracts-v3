@@ -392,8 +392,8 @@ describe('BancorPortal', () => {
         });
     });
 
-    // it is assumed SushiSwap is identical to Uniswap and therefore already tested.
-    // this block is intended to verify the existance of a SushiSwap external function, and its io signature.
+    // it is assumed SushiSwap is identical to Uniswap and therefore already tested
+    // this block is intended to verify the existance of a SushiSwap external function, and its I/O signature
     describe('SushiSwap', () => {
         beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
@@ -460,7 +460,7 @@ describe('BancorPortal', () => {
 
         // execute
         const migrationFuction = sushiSwap
-            ? bancorPortal.connect(user).migrateSushiswapV1Position
+            ? bancorPortal.connect(user).migrateSushiSwapV1Position
             : bancorPortal.connect(user).migrateUniswapV2Position;
         const res = await migrationFuction(bundles[0].token.address, bundles[1].token.address, AMOUNT);
         const newStakedBalances = await getStakedBalances(bundles[0].token, bundles[1].token);
