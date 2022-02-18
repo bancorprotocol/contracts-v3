@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-
-. "$(dirname "$0")/.setup.sh"
-
-yarn pretty-quick --bail
