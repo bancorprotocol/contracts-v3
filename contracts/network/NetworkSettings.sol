@@ -9,7 +9,7 @@ import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 
-import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract
@@ -35,8 +35,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the flash-loan fee (in units of PPM)
     uint32 private _flashLoanFeePPM;
 
+    // the settings of the Vortex
+    VortexRewards private _vortexRewards;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 5] private __gap;
+    uint256[MAX_GAP - 7] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -72,6 +75,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the flash-loan fee is updated
      */
     event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+
+    /**
+     * @dev triggered when the settings of the Vortex are updated
+     */
+    event VortexBurnRewardUpdated(
+        uint32 prevBurnRewardPPM,
+        uint32 newBurnRewardPPM,
+        uint256 prevBurnRewardMaxAmount,
+        uint256 newBurnRewardMaxAmount
+    );
 
     /**
      * @dev fully initializes the contract and its parents
@@ -282,6 +295,46 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _flashLoanFeePPM = newFlashLoanFeePPM;
 
         emit FlashLoanFeePPMUpdated({ prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function vortexRewards() external view returns (VortexRewards memory) {
+        return _vortexRewards;
+    }
+
+    /**
+     * @dev sets the settings of the Vortex
+     *
+     * requirements:
+     *s
+     * - the caller must be the admin of the contract
+     */
+    function setVortexRewards(VortexRewards calldata rewards)
+        external
+        onlyAdmin
+        validFee(rewards.burnRewardPPM)
+        greaterThanZero(rewards.burnRewardMaxAmount)
+    {
+        uint32 prevVortexBurnRewardPPM = _vortexRewards.burnRewardPPM;
+        uint256 prevVortexBurnRewardMaxAmount = _vortexRewards.burnRewardMaxAmount;
+
+        if (
+            prevVortexBurnRewardPPM == rewards.burnRewardPPM &&
+            prevVortexBurnRewardMaxAmount == rewards.burnRewardMaxAmount
+        ) {
+            return;
+        }
+
+        _vortexRewards = rewards;
+
+        emit VortexBurnRewardUpdated({
+            prevBurnRewardPPM: prevVortexBurnRewardPPM,
+            newBurnRewardPPM: rewards.burnRewardPPM,
+            prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
+            newBurnRewardMaxAmount: rewards.burnRewardMaxAmount
+        });
     }
 
     /**

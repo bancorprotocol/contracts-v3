@@ -80,6 +80,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool bySourceAmount;
     }
 
+    struct TradeAmountAndNetworkFee {
+        uint256 amount;
+        uint256 networkFeeAmount;
+    }
+
     // the migration manager role is required for migrating liquidity
     bytes32 private constant ROLE_MIGRATION_MANAGER = keccak256("ROLE_MIGRATION_MANAGER");
 
@@ -131,8 +136,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
+    // the pending network fees amount to be burned by the vortex
+    uint256 internal _pendingNetworkFeeAmount;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 9] private __gap;
+    uint256[MAX_GAP - 10] private __gap;
 
     /**
      * @dev triggered when a new pool collection is added
@@ -730,7 +738,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
-            poolCollection.onFeesCollected(token, feeAmount);
+            poolCollection.onFeesCollected(token, feeAmount, FLASH_LOAN_FEE);
         }
 
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
@@ -1121,24 +1129,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         // perform either a single or double hop trade, based on the source and the target pool
-        uint256 retAmount;
+        TradeAmountAndNetworkFee memory tradeResult;
         if (_isNetworkToken(sourceToken)) {
-            retAmount = _tradeNetworkToken(contextId, targetToken, true, params, trader);
+            tradeResult = _tradeNetworkToken(contextId, targetToken, true, params, trader);
         } else if (_isNetworkToken(targetToken)) {
-            retAmount = _tradeNetworkToken(contextId, sourceToken, false, params, trader);
+            tradeResult = _tradeNetworkToken(contextId, sourceToken, false, params, trader);
         } else {
-            retAmount = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
+            tradeResult = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
         }
 
         // transfer the tokens from the trader to the vault
-        _depositToMasterVault(sourceToken, trader, params.bySourceAmount ? params.amount : retAmount);
+        _depositToMasterVault(sourceToken, trader, params.bySourceAmount ? params.amount : tradeResult.amount);
 
         // transfer the target tokens/ETH to the beneficiary
         _masterVault.withdrawFunds(
             targetToken,
             payable(beneficiary),
-            params.bySourceAmount ? retAmount : params.amount
+            params.bySourceAmount ? tradeResult.amount : params.amount
         );
+
+        // update the pending network fees amount to be burned by the vortex
+        _pendingNetworkFeeAmount += tradeResult.networkFeeAmount;
     }
 
     /**
@@ -1156,7 +1167,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isSourceNetworkToken,
         TradeParams memory params,
         address trader
-    ) private returns (uint256) {
+    ) private returns (TradeAmountAndNetworkFee memory) {
         Token masterPool = Token(address(_networkToken));
         (Token sourceToken, Token targetToken) = isSourceNetworkToken ? (masterPool, pool) : (pool, masterPool);
 
@@ -1168,7 +1179,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // if the target token is the network token, notify the master pool on collected fees
         if (!isSourceNetworkToken) {
-            _masterPool.onFeesCollected(pool, tradeAmountsAndFee.tradingFeeAmount, TRADING_FEE);
+            _masterPool.onFeesCollected(
+                pool,
+                tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
+                TRADING_FEE
+            );
         }
 
         emit TokensTraded({
@@ -1188,7 +1203,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             amount: tradeAmountsAndFee.tradingFeeAmount
         });
 
-        return tradeAmountsAndFee.amount;
+        return
+            TradeAmountAndNetworkFee({
+                amount: tradeAmountsAndFee.amount,
+                networkFeeAmount: tradeAmountsAndFee.networkFeeAmount
+            });
     }
 
     /**
@@ -1205,13 +1224,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token targetToken,
         TradeParams memory params,
         address trader
-    ) private returns (uint256) {
+    ) private returns (TradeAmountAndNetworkFee memory) {
         if (params.bySourceAmount) {
             uint256 sourceAmount = params.amount;
             uint256 minReturnAmount = params.limit;
 
             // trade source tokens to network tokens (while accepting any return amount)
-            uint256 tradeAmount = _tradeNetworkToken(
+            TradeAmountAndNetworkFee memory targetHop1 = _tradeNetworkToken(
                 contextId,
                 sourceToken,
                 false,
@@ -1221,14 +1240,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // trade the received network token target amount to target tokens (while respecting the minimum return
             // amount)
-            return
-                _tradeNetworkToken(
-                    contextId,
-                    targetToken,
-                    true,
-                    TradeParams({ bySourceAmount: true, amount: tradeAmount, limit: minReturnAmount }),
-                    trader
-                );
+            TradeAmountAndNetworkFee memory targetHop2 = _tradeNetworkToken(
+                contextId,
+                targetToken,
+                true,
+                TradeParams({ bySourceAmount: true, amount: targetHop1.amount, limit: minReturnAmount }),
+                trader
+            );
+
+            targetHop2.networkFeeAmount += targetHop1.networkFeeAmount;
+
+            return targetHop2;
         }
 
         uint256 targetAmount = params.amount;
@@ -1236,7 +1258,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // trade any amount of network tokens to get the requested target amount (we will use the actual traded amount
         // to restrict the trade from the source)
-        uint256 requiredNetworkTokenAmount = _tradeNetworkToken(
+        TradeAmountAndNetworkFee memory sourceHop1 = _tradeNetworkToken(
             contextId,
             targetToken,
             true,
@@ -1245,14 +1267,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         // trade source tokens to the required amount of network tokens (while respecting the maximum source amount)
-        return
-            _tradeNetworkToken(
-                contextId,
-                sourceToken,
-                false,
-                TradeParams({ bySourceAmount: false, amount: requiredNetworkTokenAmount, limit: maxSourceAmount }),
-                trader
-            );
+        TradeAmountAndNetworkFee memory sourceHop2 = _tradeNetworkToken(
+            contextId,
+            sourceToken,
+            false,
+            TradeParams({ bySourceAmount: false, amount: sourceHop1.amount, limit: maxSourceAmount }),
+            trader
+        );
+
+        sourceHop2.networkFeeAmount += sourceHop1.networkFeeAmount;
+
+        return sourceHop2;
     }
 
     /**

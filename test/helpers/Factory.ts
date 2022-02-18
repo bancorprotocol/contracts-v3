@@ -402,13 +402,8 @@ export interface PoolSpec {
     tradingFeePPM?: number;
 }
 
-export const specToString = (spec: PoolSpec) => {
-    if (spec.tradingFeePPM !== undefined) {
-        return `${spec.tokenData.symbol()} (balance=${spec.balance}, fee=${fromPPM(spec.tradingFeePPM)}%)`;
-    }
-
-    return `${spec.tokenData.symbol()} (balance=${spec.balance})`;
-};
+export const specToString = (spec: PoolSpec) =>
+    `${spec.tokenData.symbol()} (balance=${spec.balance}, trading fee=${fromPPM(spec.tradingFeePPM)}%)`;
 
 const setupPool = async (
     spec: PoolSpec,

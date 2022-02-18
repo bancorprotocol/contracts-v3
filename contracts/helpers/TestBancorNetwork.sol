@@ -112,9 +112,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function onPoolCollectionFeesCollectedT(
         IPoolCollection poolCollection,
         Token pool,
-        uint256 amount
+        uint256 amount,
+        uint8 feeType
     ) external {
-        poolCollection.onFeesCollected(pool, amount);
+        poolCollection.onFeesCollected(pool, amount, feeType);
     }
 
     function tradeBySourcePoolCollectionT(
@@ -145,6 +146,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 amount
     ) external {
         token.safeApprove(spender, amount);
+    }
+
+    function pendingNetworkFeeAmount() external view returns (uint256) {
+        return _pendingNetworkFeeAmount;
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

@@ -28,7 +28,8 @@ import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
     RATE_MAX_DEVIATION_PPM,
-    PoolType
+    PoolType,
+    FeeType
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -2749,6 +2750,9 @@ describe('PoolCollection', () => {
                                         expect(tradeAmounts.tradingFeeAmount).to.equal(
                                             targetAmountAndFee.tradingFeeAmount
                                         );
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
+                                        );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -2915,6 +2919,9 @@ describe('PoolCollection', () => {
                                         expect(tradeAmounts.tradingFeeAmount).to.equal(
                                             sourceAmountAndFee.tradingFeeAmount
                                         );
+                                        expect(tradeAmounts.networkFeeAmount).to.equal(
+                                            expectedNetworkFees.networkTokenFeeAmount
+                                        );
 
                                         const poolData = await poolCollection.poolData(reserveToken.address);
                                         const { liquidity } = poolData;
@@ -3051,13 +3058,13 @@ describe('PoolCollection', () => {
             const nonNetwork = deployer;
 
             await expect(
-                poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, 1)
+                poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, FeeType.FlashLoan)
             ).to.be.revertedWith('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
-                network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, 1)
+                network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, 1, FeeType.FlashLoan)
             ).to.be.revertedWith('DoesNotExist');
         });
 
@@ -3065,7 +3072,12 @@ describe('PoolCollection', () => {
             const reserveToken2 = await createTestToken();
 
             await expect(
-                network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, 1)
+                network.onPoolCollectionFeesCollectedT(
+                    poolCollection.address,
+                    reserveToken2.address,
+                    1,
+                    FeeType.FlashLoan
+                )
             ).to.be.revertedWith('DoesNotExist');
         });
 
@@ -3073,7 +3085,12 @@ describe('PoolCollection', () => {
             it(`should collect fees of ${feeAmount.toString()}`, async () => {
                 const prevPoolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
-                await network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken.address, feeAmount);
+                await network.onPoolCollectionFeesCollectedT(
+                    poolCollection.address,
+                    reserveToken.address,
+                    feeAmount,
+                    FeeType.FlashLoan
+                );
 
                 const poolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
