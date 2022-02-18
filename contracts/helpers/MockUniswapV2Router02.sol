@@ -36,7 +36,7 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
     ) external returns (uint256 amountA, uint256 amountB) {
         // mimic approval
         Token(address(_pair)).safeTransferFrom(msg.sender, address(_pair), liquidity);
-        // mimic uniswap burn
+        // mimic Uniswap burn
         _pair.burn(msg.sender, liquidity);
 
         amountA = liquidity;
@@ -54,7 +54,7 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
         // mimic approval
         Token(address(_pair)).safeTransferFrom(msg.sender, address(_pair), liquidity);
 
-        // mimic uniswap burn
+        // mimic Uniswap burn
         _pair.burn(msg.sender, liquidity);
 
         amountToken = liquidity;

@@ -19,11 +19,11 @@ struct UniswapV2PositionMigration {
 
 interface IBancorPortal is IUpgradeable {
     /**
-     * @dev migrates funds from a uniswap v2 pair into a bancor v3 pool
+     * @dev migrates funds from a Uniswap v2 pair into a bancor v3 pool
      * - unsupported tokens will be transferred to the caller.
      *
      * - returns the deposited amount for each token in the same order as stored in
-     *   uniswaps's pair, 0 for unsupported tokens.
+     *   Uniswap's pair, 0 for unsupported tokens.
      *
      * requirements:
      *
@@ -36,11 +36,11 @@ interface IBancorPortal is IUpgradeable {
     ) external returns (UniswapV2PositionMigration memory);
 
     /**
-     * @dev migrates funds from a sushiswap v1 pair into a bancor v3 pool
+     * @dev migrates funds from a SushiSwap v1 pair into a bancor v3 pool
      * - unsupported tokens will be transferred to the caller.
      *
      * - returns the deposited amount for each token in the same order as stored in
-     *   sushiswap's pair, 0 for unsupported tokens.
+     *   SushiSwap's pair, 0 for unsupported tokens.
      *
      * requirements:
      *

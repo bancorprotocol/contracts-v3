@@ -124,7 +124,7 @@ describe('BancorPortal', () => {
             ).to.be.revertedWith('ZeroValue()');
         });
 
-        it('reverts if there is no uniswap pair for specified tokens', async () => {
+        it('reverts if there is no Uniswap pair for specified tokens', async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
             const token0 = await createToken(new TokenData(TokenSymbol.TKN));
             const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
@@ -177,13 +177,13 @@ describe('BancorPortal', () => {
             );
         });
 
-        it('reverts when initializing with an invalid sushiswapV2Router contract', async () => {
+        it('reverts when initializing with an invalid sushiSwapV2Router contract', async () => {
             await expect(Contracts.BancorPortal.deploy(a, a, a, a, ZERO_ADDRESS, a, a)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('reverts when initializing with an invalid sushiswapV2Factory contract', async () => {
+        it('reverts when initializing with an invalid sushiSwapV2Factory contract', async () => {
             await expect(Contracts.BancorPortal.deploy(a, a, a, a, a, ZERO_ADDRESS, a)).to.be.revertedWith(
                 'InvalidAddress'
             );
@@ -392,27 +392,27 @@ describe('BancorPortal', () => {
         });
     });
 
-    // it is assumed sushiswap is identical to uniswap and therefore already tested.
-    // this block is intended to verify the existance of a sushiswap external function, and its io signature.
+    // it is assumed SushiSwap is identical to Uniswap and therefore already tested.
+    // this block is intended to verify the existance of a SushiSwap external function, and its io signature.
     describe('SushiSwap', () => {
         beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
         });
 
-        it('emits a sushiswap event post succesful sushiswap migration', async () => {
+        it('emits a SushiSwap event post succesful SushiSwap migration', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
             const res = await testDeposit([{ token: whitelistedToken, poolToken }, { token: unlistedToken }], true);
             expect(res)
-                .to.emit(bancorPortal, 'SushiswapV2PositionMigrated')
+                .to.emit(bancorPortal, 'SushiSwapV2PositionMigrated')
                 .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
         });
     });
 
     const testTransfer = async (token0: TokenWithAddress, token1: TokenWithAddress) => {
-        // prepare uniswap mocks
+        // prepare Uniswap mocks
         await transfer(deployer, token0, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, token1, uniswapV2Pair.address, AMOUNT);
         if (isNativeToken(token0) || isNativeToken(token1)) {
@@ -449,7 +449,7 @@ describe('BancorPortal', () => {
     };
 
     const testDeposit = async (bundles: TokenAndPoolTokenBundle[], sushiSwap = false): Promise<ContractTransaction> => {
-        // fund uniswap mock
+        // fund Uniswap mock
         await transfer(deployer, bundles[0].token, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, bundles[1].token, uniswapV2Pair.address, AMOUNT);
 

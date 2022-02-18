@@ -42,17 +42,17 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // the address of the network token
     IERC20 private immutable _networkToken;
 
-    // uniswap v2 router
+    // Uniswap v2 router
     IUniswapV2Router02 private immutable _uniswapV2Router;
 
-    // uniswap v2 factory
+    // Uniswap v2 factory
     IUniswapV2Factory private immutable _uniswapV2Factory;
 
-    // sushiswap v2 router
-    IUniswapV2Router02 private immutable _sushiswapV2Router;
+    // SushiSwap v2 router
+    IUniswapV2Router02 private immutable _sushiSwapV2Router;
 
-    // sushiswap v2 factory
-    IUniswapV2Factory private immutable _sushiswapV2Factory;
+    // SushiSwap v2 factory
+    IUniswapV2Factory private immutable _sushiwapV2Factory;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -69,9 +69,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     );
 
     /**
-     * @dev triggered after a succesful Sushiswap V1 migration
+     * @dev triggered after a succesful SushiSwap V1 migration
      */
-    event SushiswapV2PositionMigrated(
+    event SushiSwapV2PositionMigrated(
         address indexed provider,
         Token indexed tokenA,
         Token indexed tokenB,
@@ -91,24 +91,24 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IERC20 networkToken,
         IUniswapV2Router02 uniswapV2Router,
         IUniswapV2Factory uniswapV2Factory,
-        IUniswapV2Router02 sushiswapV2Router,
-        IUniswapV2Factory sushiswapV2Factory
+        IUniswapV2Router02 sushiSwapV2Router,
+        IUniswapV2Factory sushiwapV2Factory
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
         validAddress(address(networkToken))
         validAddress(address(uniswapV2Router))
         validAddress(address(uniswapV2Factory))
-        validAddress(address(sushiswapV2Router))
-        validAddress(address(sushiswapV2Factory))
+        validAddress(address(sushiSwapV2Router))
+        validAddress(address(sushiwapV2Factory))
     {
         _network = network;
         _networkSettings = networkSettings;
         _networkToken = networkToken;
         _uniswapV2Router = uniswapV2Router;
         _uniswapV2Factory = uniswapV2Factory;
-        _sushiswapV2Router = sushiswapV2Router;
-        _sushiswapV2Factory = sushiswapV2Factory;
+        _sushiSwapV2Router = sushiSwapV2Router;
+        _sushiwapV2Factory = sushiwapV2Factory;
     }
 
     /**
@@ -197,14 +197,14 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         returns (UniswapV2PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
-            _sushiswapV2Router,
-            _sushiswapV2Factory,
+            _sushiSwapV2Router,
+            _sushiwapV2Factory,
             token0,
             token1,
             amount
         );
 
-        emit SushiswapV2PositionMigrated({
+        emit SushiSwapV2PositionMigrated({
             provider: msg.sender,
             tokenA: res.tokenA,
             tokenB: res.tokenB,
@@ -230,7 +230,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token token1,
         uint256 amount
     ) private returns (MigrationResult memory) {
-        // get uniswap's pair
+        // get Uniswap's pair
         address pairAddress = factory.getPair(address(token0), address(token1));
         IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
         if (address(pair) == address(0)) {
@@ -255,7 +255,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // save states
         uint256[2] memory previousBalances = [tokens[0].balanceOf(address(pair)), tokens[1].balanceOf(address(pair))];
 
-        // remove liquidity from uniswap
+        // remove liquidity from Uniswap
         _uniV2RemoveLiquidity(tokens, pair, router, amount);
 
         // save new state

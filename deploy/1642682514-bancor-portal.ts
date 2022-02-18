@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiswapRouter, sushiswapFactory } =
+    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory } =
         await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
@@ -20,8 +20,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
                 networkToken.address,
                 uniswapV2Router02,
                 uniswapV2Factory,
-                sushiswapRouter,
-                sushiswapFactory
+                sushiSwapRouter,
+                sushiSwapFactory
             ]
         });
     } else {
