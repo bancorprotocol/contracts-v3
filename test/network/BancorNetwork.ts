@@ -3714,7 +3714,7 @@ describe('BancorNetwork', () => {
             });
         });
 
-        context('without pending network fees', () => {
+        context('with pending network fees', () => {
             beforeEach(async () => {
                 await tradeBySourceAmount(
                     deployer,
@@ -3748,7 +3748,7 @@ describe('BancorNetwork', () => {
                     await network.connect(emergencyStopper).pause();
                 });
 
-                it('should revert when attempting to deposit', async () => {
+                it('should revert when attempting to withdraw the pending network fees', async () => {
                     await expect(network.connect(networkFeeManager).withdrawNetworkFees()).to.be.revertedWith(
                         'Pausable: paused'
                     );
