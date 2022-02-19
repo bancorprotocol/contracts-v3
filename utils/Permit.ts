@@ -1,7 +1,7 @@
 import Contracts, { IERC20 } from '../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from './Constants';
 import { NATIVE_TOKEN_ADDRESS } from './TokenData';
-import { TypedDataUtils, signTypedMessage } from 'eth-sig-util';
+import { TypedDataUtils, SignTypedDataVersion, signTypedData } from '@metamask/eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
 import { BigNumber, BigNumberish, Wallet, BaseContract, utils } from 'ethers';
 
@@ -32,7 +32,8 @@ export const domainSeparator = (name: string, verifyingContract: string) => {
         TypedDataUtils.hashStruct(
             'EIP712Domain',
             { name, version: VERSION, chainId: HARDHAT_CHAIN_ID, verifyingContract },
-            { EIP712Domain: EIP712_DOMAIN }
+            { EIP712Domain: EIP712_DOMAIN },
+            SignTypedDataVersion.V4
         ).toString('hex')
     );
 };
@@ -62,7 +63,11 @@ export const permitSignature = async (
     deadline: BigNumberish
 ) => {
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
-    const signature = signTypedMessage(Buffer.from(wallet.privateKey.slice(2), 'hex'), { data });
+    const signature = signTypedData({
+        privateKey: Buffer.from(wallet.privateKey.slice(2), 'hex'),
+        data,
+        version: SignTypedDataVersion.V4
+    });
     return fromRpcSig(signature);
 };
 
