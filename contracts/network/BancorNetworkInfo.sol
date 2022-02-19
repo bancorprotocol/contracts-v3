@@ -288,6 +288,26 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
+        return
+            _isNetworkToken(pool)
+                ? _masterPool.poolTokenToUnderlying(poolTokenAmount)
+                : _poolCollection(pool).poolTokenToUnderlying(pool, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
+        return
+            _isNetworkToken(pool)
+                ? _masterPool.underlyingToPoolToken(tokenAmount)
+                : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
+    }
+
+    /**
      * @dev returns either the source amount or the target amount by providing the source and the target tokens
      * and whether we're interested in the target or the source amount
      */
