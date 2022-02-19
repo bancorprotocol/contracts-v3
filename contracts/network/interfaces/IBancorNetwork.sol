@@ -281,4 +281,13 @@ interface IBancorNetwork is IUpgradeable {
         uint256 availableAmount,
         uint256 originalAmount
     ) external payable;
+
+    /**
+     * @dev withdraws pending network fees
+     *
+     * requirements:
+     *
+     * - * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
+     */
+    function withdrawNetworkFees() external;
 }

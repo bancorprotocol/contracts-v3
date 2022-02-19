@@ -86,15 +86,15 @@ describe('BancorNetwork', () => {
         trader: SignerWithAddress,
         sourceToken: TokenWithAddress,
         targetToken: TokenWithAddress,
-        amount: BigNumber,
-        minReturnAmount: BigNumber,
+        amount: BigNumberish,
+        minReturnAmount: BigNumberish,
         deadline: BigNumberish,
         beneficiary: string,
         network: TestBancorNetwork
     ) => {
         let value = BigNumber.from(0);
         if (sourceToken.address === NATIVE_TOKEN_ADDRESS) {
-            value = amount;
+            value = BigNumber.from(amount);
         } else {
             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
 
@@ -286,6 +286,7 @@ describe('BancorNetwork', () => {
             await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
             await expectRole(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, Roles.Upgradeable.ROLE_ADMIN);
+            await expectRole(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
 
             expect(await network.isPaused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
@@ -344,7 +345,7 @@ describe('BancorNetwork', () => {
                     await network.connect(emergencyStopper).pause();
                 });
 
-                it('should revert when a non-emergency stopper is attempting resume', async () => {
+                it('should revert when attempting to resume', async () => {
                     await expect(network.connect(sender).resume()).to.be.revertedWith('AccessDenied');
                 });
             });
@@ -3646,6 +3647,111 @@ describe('BancorNetwork', () => {
 
                 it('should revert when attempting to cancel a pending withdrawal request', async () => {
                     await expect(network.connect(provider).cancelWithdrawal(id)).to.be.revertedWith('Pausable: paused');
+                });
+            });
+        });
+    });
+
+    describe('network fees management', () => {
+        let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
+        let networkSettings: NetworkSettings;
+        let networkToken: IERC20;
+        let poolCollection: TestPoolCollection;
+        let token: TokenWithAddress;
+
+        let emergencyStopper: SignerWithAddress;
+        let networkFeeManager: SignerWithAddress;
+
+        const INITIAL_LIQUIDITY = toWei(50_000_000);
+        const TRADING_FEE_PPM = toPPM(10);
+        const NETWORK_FEE_PPM = toPPM(20);
+
+        before(async () => {
+            [, emergencyStopper, networkFeeManager] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setNetworkFeePPM(NETWORK_FEE_PPM);
+
+            ({ token } = await setupFundedPool(
+                {
+                    tokenData: new TokenData(TokenSymbol.TKN),
+                    balance: INITIAL_LIQUIDITY,
+                    requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
+                    fundingRate: FUNDING_RATE,
+                    tradingFeePPM: TRADING_FEE_PPM
+                },
+                deployer,
+                network,
+                networkInfo,
+                networkSettings,
+                poolCollection
+            ));
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, networkFeeManager.address);
+        });
+
+        it('should revert when a non-network fee manager is attempting to withdraw the fees', async () => {
+            await expect(network.connect(deployer).pause()).to.be.revertedWith('AccessDenied');
+        });
+
+        context('without any pending network fees', () => {
+            it('should not withdraw any pending network fees', async () => {
+                const prevNetworkBalance = await networkToken.balanceOf(networkFeeManager.address);
+
+                await network.connect(networkFeeManager).withdrawNetworkFees();
+
+                expect(await networkToken.balanceOf(networkFeeManager.address)).to.equal(prevNetworkBalance);
+            });
+        });
+
+        context('with pending network fees', () => {
+            beforeEach(async () => {
+                await tradeBySourceAmount(
+                    deployer,
+                    networkToken,
+                    token,
+                    toWei(1000),
+                    1,
+                    MAX_UINT256,
+                    deployer.address,
+                    network
+                );
+
+                expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
+            });
+
+            it('should withdraw all the pending network fees', async () => {
+                const prevNetworkBalance = await networkToken.balanceOf(networkFeeManager.address);
+                const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
+
+                await network.connect(networkFeeManager).withdrawNetworkFees();
+
+                expect(await networkToken.balanceOf(networkFeeManager.address)).to.equal(
+                    prevNetworkBalance.add(pendingNetworkFeeAmount)
+                );
+
+                expect(await network.pendingNetworkFeeAmount()).to.equal(0);
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when attempting to withdraw the pending network fees', async () => {
+                    await expect(network.connect(networkFeeManager).withdrawNetworkFees()).to.be.revertedWith(
+                        'Pausable: paused'
+                    );
                 });
             });
         });
