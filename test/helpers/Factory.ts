@@ -28,7 +28,7 @@ import { isProfiling } from '../../components/Profiler';
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, Fraction, toWei, Addressable } from '../../utils/Types';
+import { fromPPM, toWei, Addressable } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
@@ -398,7 +398,8 @@ export interface PoolSpec {
     tokenData: TokenData;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
-    fundingRate: Fraction;
+    networkTokenRate: BigNumberish;
+    baseTokenRate: BigNumberish;
     tradingFeePPM?: number;
 }
 
@@ -441,7 +442,7 @@ const setupPool = async (
     await depositToPool(provider, token, spec.balance, network);
 
     if (enableTrading) {
-        await poolCollection.enableTrading(token.address, spec.fundingRate);
+        await poolCollection.enableTrading(token.address, spec.networkTokenRate, spec.baseTokenRate);
     }
 
     return { poolToken, token };

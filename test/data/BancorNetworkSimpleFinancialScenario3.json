@@ -102,8 +102,8 @@
             "userId": "",
             "mined": false,
             "amount": {
-                "fundingRateN": 1,
-                "fundingRateD": 1
+                "networkTokenRate": 1,
+                "baseTokenRate": 1
             },
             "expected": {
                 "tknBalances": {
